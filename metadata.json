@@ -1,0 +1,6 @@
+{
+  "name": "Bsenexus",
+  "description": "Track latest BSE corporate announcements, board meeting outcomes, financial results, and regulatory filings in real time on Bsenexus.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
