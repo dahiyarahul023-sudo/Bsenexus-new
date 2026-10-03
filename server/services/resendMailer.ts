@@ -11,13 +11,22 @@
  * /send-receipt endpoint answers 503 so the client can fall back to mailto.
  */
 
-/** Raw key is read here and never leaves the server. */
+/** Raw key is read here and never leaves the server. Checks standard key names. */
 function getApiKey(): string {
-  return String(process.env.RESEND_API_KEY || '').trim();
+  return String(
+    process.env.RESEND_API_KEY ||
+    process.env.RESEND_KEY ||
+    process.env.VITE_RESEND_API_KEY ||
+    ''
+  ).trim();
 }
 
 export function getResendFromEmail(): string {
-  return String(process.env.RESEND_FROM_EMAIL || 'receipts@bsenexus.in').trim();
+  const custom = String(process.env.RESEND_FROM_EMAIL || '').trim();
+  if (custom) {
+    return custom.includes('<') ? custom : `BSE Nexus <${custom}>`;
+  }
+  return 'BSE Nexus <receipts@bsenexus.in>';
 }
 
 export function isResendConfigured(): boolean {
@@ -40,6 +49,8 @@ export interface ResendSendResult {
 /**
  * Send one transactional email via Resend. Returns { ok } — never throws
  * for API-level failures so the route can map them to clean 4xx/5xx.
+ * If the configured domain is unverified in Resend, automatically tries
+ * onboarding@resend.dev fallback.
  */
 export async function sendReceiptEmail(input: ReceiptEmailInput): Promise<ResendSendResult> {
   const apiKey = getApiKey();
@@ -50,6 +61,8 @@ export async function sendReceiptEmail(input: ReceiptEmailInput): Promise<Resend
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
     return { ok: false, error: 'invalid-email' };
   }
+
+  const primaryFrom = getResendFromEmail();
   let res: Response;
   try {
     res = await fetch('https://api.resend.com/emails', {
@@ -59,7 +72,7 @@ export async function sendReceiptEmail(input: ReceiptEmailInput): Promise<Resend
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: getResendFromEmail(),
+        from: primaryFrom,
         to: [to],
         subject: input.subject,
         html: input.html,
@@ -70,19 +83,52 @@ export async function sendReceiptEmail(input: ReceiptEmailInput): Promise<Resend
     console.error('[Resend] network error:', err?.message || err);
     return { ok: false, error: 'network-error' };
   }
+
   let data: any = null;
   try {
     data = await res.json();
   } catch {
     /* non-JSON body — fall through to status handling */
   }
+
   if (res.ok && data?.id) {
     return { ok: true, id: String(data.id) };
   }
+
+  // If custom domain is not yet verified in Resend, retry once with onboarding@resend.dev
+  const rawMsg = String((data && (data.message || data.error)) || '');
+  if (!res.ok && rawMsg.toLowerCase().includes('not verified') && !primaryFrom.includes('onboarding@resend.dev')) {
+    console.warn('[Resend] Domain unverified; retrying with onboarding@resend.dev fallback...');
+    try {
+      const retryRes = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: 'BSE Nexus <onboarding@resend.dev>',
+          to: [to],
+          subject: input.subject,
+          html: input.html,
+          text: input.text,
+        }),
+      });
+      const retryData = await retryRes.json().catch(() => null);
+      if (retryRes.ok && retryData?.id) {
+        return { ok: true, id: String(retryData.id) };
+      }
+      res = retryRes;
+      data = retryData || data;
+    } catch (retryErr: any) {
+      console.warn('[Resend] Fallback attempt failed:', retryErr?.message || retryErr);
+    }
+  }
+
   const apiError =
     (data && (data.message || data.error)) || `resend-http-${res.status}`;
   console.error('[Resend] send failed:', res.status, apiError);
-  return { ok: false, error: String(apiError).slice(0, 200) };
+  return { ok: false, error: String(apiError).slice(0, 250) };
 }
 
 /** Escape user-controlled text for the HTML receipt. */
@@ -131,15 +177,15 @@ export function buildReceiptEmail(d: ReceiptEmailData): { subject: string; html:
     ? `1x ${d.planLabel} (${d.validityDays} days)`
     : `1x ${d.planLabel}`;
   const total = `₹${Number(d.amount).toFixed(2)} ${d.currency}`;
-  const subject = `Bsenexus invoice — ${d.orderId}`;
+  const subject = `BSE Nexus invoice — ${d.orderId}`;
 
   const text = [
-    'Bsenexus — Invoice',
+    'BSE Nexus — Invoice',
     '--------------------------------',
     `Invoice No.: ${d.orderId}`,
     `Issued Date: ${formatDate(d.paidAtIso)}`,
     `Valid Until: ${formatDate(d.validUntilIso)}`,
-    'From: Bsenexus (bsenexus.in)',
+    'From: BSE Nexus (bsenexus.in)',
     '--------------------------------',
     `Item: ${planLine}`,
     `Total: ${total} (PAID via Cashfree)`,
@@ -153,7 +199,7 @@ export function buildReceiptEmail(d: ReceiptEmailData): { subject: string; html:
   const html = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f1f5f9;font-family:Arial,Helvetica,sans-serif;">
 <div style="max-width:560px;margin:0 auto;padding:24px;">
 <div style="background:#0f172a;border-radius:16px 16px 0 0;padding:24px;text-align:center;">
-<div style="color:#ffffff;font-size:22px;font-weight:800;letter-spacing:-0.5px;">Bsenexus</div>
+<div style="color:#ffffff;font-size:22px;font-weight:800;letter-spacing:-0.5px;">BSE Nexus</div>
 <div style="color:#94a3b8;font-size:12px;margin-top:4px;">Payment Invoice</div>
 </div>
 <div style="background:#ffffff;border-radius:0 0 16px 16px;padding:24px;color:#0f172a;">

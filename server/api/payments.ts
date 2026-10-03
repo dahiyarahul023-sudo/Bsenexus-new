@@ -18,6 +18,7 @@ import { getUserProfile, invalidateUserProfileCache } from '../database/usersDao
 import { sanitizeUserId } from '../database/watchlistDao.js';
 import {
   recordPendingOrder,
+  getPaymentOrder,
   getPendingOrdersForUser,
   getGrantedOrdersForUser,
   markOrderFailed,
@@ -866,7 +867,7 @@ paymentsRouter.get('/history', requireAuth, async (req, res) => {
 // ---------------------------------------------------------------------------
 const sendReceiptLimiter = rateLimit({
   windowMs: 10 * 60 * 1000,
-  max: 5,
+  max: 20,
   standardHeaders: true,
   legacyHeaders: false,
   validate: { xForwardedForHeader: false, forwardedHeader: false, default: true },
@@ -890,18 +891,21 @@ paymentsRouter.post('/send-receipt', requireAuth, sendReceiptLimiter, async (req
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(toEmail)) {
       return res.status(400).json({ success: false, error: 'Please enter a valid email address.' });
     }
-    // Ownership check: the order must be one of THIS user's granted orders.
-    let orders: Awaited<ReturnType<typeof getGrantedOrdersForUser>>;
+    // Ownership check: direct order lookup first, with user-orders fallback
+    let order: Awaited<ReturnType<typeof getPaymentOrder>> = null;
     try {
-      orders = await getGrantedOrdersForUser(uid);
+      order = await getPaymentOrder(orderId);
     } catch (err: any) {
       if (isPaymentStoreUnavailable(err)) {
         return paymentUnavailable(res, 'Receipt email is temporarily unavailable. Please retry in a moment.');
       }
-      throw err;
     }
-    const order = orders.find((o) => o.orderId === orderId);
-    if (!order) {
+    const isUserAdmin = Boolean((req as any).user?.isAdmin || (req as any).user?.isOwner);
+    if (!order || (order.uid !== uid && !isUserAdmin)) {
+      const orders = await getGrantedOrdersForUser(uid).catch(() => []);
+      order = orders.find((o) => o.orderId === orderId) || null;
+    }
+    if (!order || (order.uid !== uid && !isUserAdmin)) {
       return res.status(403).json({ success: false, error: 'This order does not belong to your account.' });
     }
     const plan = (PRO_PLANS as Record<string, { id: string; label: string; amountPaise: number; currency: string; validityDays: number }>)[order.planId];
@@ -926,13 +930,19 @@ paymentsRouter.post('/send-receipt', requireAuth, sendReceiptLimiter, async (req
       if (result.error === 'invalid-email') {
         return res.status(400).json({ success: false, error: 'Please enter a valid email address.' });
       }
+      if (result.error === 'not-configured') {
+        return res.status(503).json({ success: false, error: 'not-configured' });
+      }
       console.error('[Payments] send-receipt failed:', result.error);
-      return res.status(502).json({ success: false, error: 'Could not send the email. Please try again.' });
+      const userFacing = result.error && result.error.length < 180
+        ? result.error
+        : 'Could not send the email. Please check your email configuration and try again.';
+      return res.status(400).json({ success: false, error: userFacing });
     }
     return res.json({ success: true });
   } catch (err: any) {
     console.error('[Payments] send-receipt error:', err?.message || err);
-    return res.status(503).json({ success: false, error: 'Could not send the email. Please try again.' });
+    return res.status(500).json({ success: false, error: 'Could not send the email: ' + (err?.message || 'unexpected error') });
   }
 });
 

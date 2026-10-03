@@ -263,8 +263,7 @@ export function ProReceiptView() {
         return;
       }
       if (result.fallbackToMailto) {
-        // Server mailer not configured yet — fall back to the mail app.
-        window.location.href = buildReceiptMailto(receipt, to);
+        setEmailError('Direct delivery is not configured on server (RESEND_API_KEY missing in Secrets).');
         return;
       }
       setEmailError(result.error || 'Could not send the email. Please try again.');
@@ -480,7 +479,18 @@ export function ProReceiptView() {
           </button>
         </div>
         {emailError && (
-          <p className="mt-1.5 text-[11px] font-semibold text-rose-300 px-1">{emailError}</p>
+          <div className="mt-1.5 px-1 space-y-1">
+            <p className="text-[11px] font-semibold text-rose-300 leading-snug">{emailError}</p>
+            <button
+              type="button"
+              onClick={() => {
+                if (receipt) window.location.href = buildReceiptMailto(receipt, email.trim() || '');
+              }}
+              className="text-[10px] text-white/70 hover:text-white underline cursor-pointer"
+            >
+              Or open in your email app (mailto)
+            </button>
+          </div>
         )}
         {sentOk && !emailError && (
           <p className="mt-1.5 text-[11px] font-semibold text-emerald-300 px-1">Invoice sent to {email.trim()}.</p>
