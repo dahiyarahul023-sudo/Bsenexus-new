@@ -481,7 +481,6 @@ export async function fetchAndSyncResultsCalendar(
       if (isSupabaseConfigured()) {
         const rows: Record<string, any>[] = [];
         for (const item of cachedCalendar) {
-          if (rows.length >= 400) break;
           if (!item || !item.id) continue;
           rows.push({
             id: item.id,
@@ -491,10 +490,14 @@ export async function fetchAndSyncResultsCalendar(
           });
         }
         if (rows.length > 0) {
-          const { error } = await getSupabase()
-            .from('results_calendar')
-            .upsert(rows, { onConflict: 'id' });
-          if (error) throw error;
+          const CHUNK_SIZE = 100;
+          for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
+            const chunk = rows.slice(i, i + CHUNK_SIZE);
+            const { error } = await getSupabase()
+              .from('results_calendar')
+              .upsert(chunk, { onConflict: 'id' });
+            if (error) throw error;
+          }
         }
       }
     } catch (syncErr: any) {

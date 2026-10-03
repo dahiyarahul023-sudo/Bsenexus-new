@@ -379,8 +379,9 @@ interface WriteTask {
   lastAttemptAt?: number;
 }
 
-const MAX_WRITE_ATTEMPTS = 5;
-const BACKOFF_DELAYS = [1000, 5000, 15000, 30000, 60000];
+const MAX_WRITE_ATTEMPTS = 10;
+const BACKOFF_DELAYS = [1000, 3000, 5000, 10000, 20000, 30000];
+const ANNOUNCEMENT_WRITE_BATCH_SIZE = 50;
 
 const supabaseWriteQueue: Map<string, WriteTask> = new Map();
 let isQueueWorkerRunning = false;
@@ -414,7 +415,7 @@ async function processSupabaseQueue() {
           continue;
         }
         tasksToProcess.push(task);
-        if (tasksToProcess.length >= 400) break;
+        if (tasksToProcess.length >= ANNOUNCEMENT_WRITE_BATCH_SIZE) break;
       }
 
       if (tasksToProcess.length === 0) break;
@@ -423,10 +424,11 @@ async function processSupabaseQueue() {
         // Read-modify-write: tasks may carry partial updates (e.g. {is_sent: 1}),
         // so merge each over the stored document before the whole-row upsert.
         // One read + one upsert per batch — the Firestore batch.set(merge) equivalent.
+        // Fetch only 'id, data' in chunks of 50 to avoid HTTP URI size limits.
         const ids = tasksToProcess.map(t => t.docId);
         const { data: existingRows, error: readError } = await getSupabase()
           .from(ANNOUNCEMENTS_TABLE)
-          .select('*')
+          .select('id, data')
           .in('id', ids);
         if (readError) throw readError;
 
@@ -549,10 +551,10 @@ export async function deleteAnnouncementsFromStorageAndCloud(idsToDelete: string
   // 2. Persist to local disk
   writeLocalJson(ANNOUNCEMENTS_FILE, announcementsMemoryCache);
 
-  // 3. Batch delete from Supabase
+  // 3. Batch delete from Supabase (safe chunk size to prevent HTTP URI length overflow)
   if (isSupabaseConfigured()) {
     try {
-      const BATCH_LIMIT = 400;
+      const BATCH_LIMIT = 50;
       for (let i = 0; i < idsToDelete.length; i += BATCH_LIMIT) {
         const chunk = idsToDelete.slice(i, i + BATCH_LIMIT);
         const { error } = await getSupabase()
