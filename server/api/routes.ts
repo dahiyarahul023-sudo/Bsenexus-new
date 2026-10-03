@@ -125,6 +125,14 @@ apiRouter.get("/market-guides/:slug", (req, res) => {
   });
 });
 
+// Public client config — only values safe to expose in the browser.
+// (Sentry DSN is public by design; it identifies the project, it is not a secret key.)
+apiRouter.get("/config/public", (_req, res) => {
+  res.json({
+    sentryDsn: process.env.SENTRY_DSN || process.env.VITE_SENTRY_DSN || null,
+  });
+});
+
 // Health Check Endpoint with Circuit Breakers & Cache Telemetry
 apiRouter.get("/health", (_req, res) => {
   res.json({ 
