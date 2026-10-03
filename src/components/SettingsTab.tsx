@@ -176,6 +176,7 @@ export function SettingsTab({
   const [tgAlertsEnabled, setTgAlertsEnabled] = useState(true);
   const [isTogglingTgAlerts, setIsTogglingTgAlerts] = useState(false);
   const [tgAiSummaryEnabled, setTgAiSummaryEnabled] = useState(true);
+  const [isTogglingTgAiSummary, setIsTogglingTgAiSummary] = useState(false);
   const [tgAlertScope, setTgAlertScope] = useState<'WATCHLIST_ONLY' | 'ALL_MARKET'>('WATCHLIST_ONLY');
   const [tgSummaryLang, setTgSummaryLang] = useState<'hinglish' | 'english'>('english');
   const [isSavingTg, setIsSavingTg] = useState(false);
@@ -508,6 +509,23 @@ export function SettingsTab({
     const ok = await updateTelegramPreferences({ alertsEnabled: next });
     setIsTogglingTgAlerts(false);
     if (!ok) setTgAlertsEnabled(!next); // roll back — server rejected (e.g. Pro gate)
+  };
+
+  // AI Summary toggle now mirrors the alerts toggle pattern: instant save +
+  // optimistic UI + rollback on failure. Previously this only updated local
+  // state and required clicking Save — inconsistent UX. Now consistent.
+  const handleToggleTgAiSummary = async () => {
+    if (!user || user.isAnonymous) {
+      setIsAuthModalOpen?.(true);
+      return;
+    }
+    if (isTogglingTgAiSummary) return;
+    const next = !tgAiSummaryEnabled;
+    setTgAiSummaryEnabled(next); // optimistic
+    setIsTogglingTgAiSummary(true);
+    const ok = await updateTelegramPreferences({ aiSummaryEnabled: next });
+    setIsTogglingTgAiSummary(false);
+    if (!ok) setTgAiSummaryEnabled(!next); // roll back — server rejected
   };
 
   const handleSaveTelegram = async (e?: React.FormEvent) => {
@@ -2438,25 +2456,34 @@ export function SettingsTab({
                       </p>
                     </div>
 
-                    {/* Toggle Switch */}
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={tgAlertsEnabled}
-                      disabled={isTogglingTgAlerts}
-                      onClick={handleToggleTgAlerts}
-                      className={cn(
-                        "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden",
-                        tgAlertsEnabled ? "bg-emerald-600 dark:bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
-                      )}
-                    >
-                      <span
+                    {/* Toggle Switch — WCAG 2.5.5 compliant touch target via 44x44 wrapper + focus-visible ring */}
+                    <div className="flex min-h-[44px] min-w-[44px] items-center justify-center">
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={tgAlertsEnabled}
+                        aria-label="Toggle Telegram alerts"
+                        disabled={isTogglingTgAlerts}
+                        onClick={handleToggleTgAlerts}
                         className={cn(
-                          "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out",
-                          tgAlertsEnabled ? "translate-x-5" : "translate-x-0"
+                          "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out",
+                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#12131C]",
+                          isTogglingTgAlerts && "opacity-60 cursor-wait",
+                          tgAlertsEnabled ? "bg-emerald-600 dark:bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
                         )}
-                      />
-                    </button>
+                      >
+                        {isTogglingTgAlerts ? (
+                          <span className="pointer-events-none absolute left-0.5 inline-block h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                        ) : (
+                          <span
+                            className={cn(
+                              "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out",
+                              tgAlertsEnabled ? "translate-x-5" : "translate-x-0"
+                            )}
+                          />
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -2490,24 +2517,34 @@ export function SettingsTab({
                       </p>
                     </div>
 
-                    {/* Toggle Switch */}
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={tgAiSummaryEnabled}
-                      onClick={() => setTgAiSummaryEnabled(!tgAiSummaryEnabled)}
-                      className={cn(
-                        "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden",
-                        tgAiSummaryEnabled ? "bg-purple-600 dark:bg-purple-500" : "bg-slate-300 dark:bg-slate-700"
-                      )}
-                    >
-                      <span
+                    {/* Toggle Switch — WCAG 2.5.5 compliant + focus-visible + per-toggle loading */}
+                    <div className="flex min-h-[44px] min-w-[44px] items-center justify-center">
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={tgAiSummaryEnabled}
+                        aria-label="Toggle Gemini AI summary reply"
+                        disabled={isTogglingTgAiSummary}
+                        onClick={handleToggleTgAiSummary}
                         className={cn(
-                          "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out",
-                          tgAiSummaryEnabled ? "translate-x-5" : "translate-x-0"
+                          "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out",
+                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#12131C]",
+                          isTogglingTgAiSummary && "opacity-60 cursor-wait",
+                          tgAiSummaryEnabled ? "bg-purple-600 dark:bg-purple-500" : "bg-slate-300 dark:bg-slate-700"
                         )}
-                      />
-                    </button>
+                      >
+                        {isTogglingTgAiSummary ? (
+                          <span className="pointer-events-none absolute left-0.5 inline-block h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                        ) : (
+                          <span
+                            className={cn(
+                              "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out",
+                              tgAiSummaryEnabled ? "translate-x-5" : "translate-x-0"
+                            )}
+                          />
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
                 </>)}

@@ -1048,7 +1048,52 @@ apiRouter.post("/users/profile", requireAuth, async (req, res) => {
       sanitizedPatch.muteInAppNotifications = Boolean(body.muteInAppNotifications);
     }
     if (body.notificationPreferences !== undefined && typeof body.notificationPreferences === 'object' && body.notificationPreferences !== null) {
-      sanitizedPatch.notificationPreferences = body.notificationPreferences;
+      // SECURITY (1 Oct 2026 audit): Strict field whitelist for notificationPreferences.
+      // Previously the entire client-supplied object was passed through — a malicious
+      // client could inject arbitrary fields that would land in the users/<uid> doc.
+      // Now we keep ONLY the known, type-safe fields from UserNotificationPreferences.
+      // Any unknown key is silently dropped.
+      const rawNp = body.notificationPreferences as Record<string, any>;
+      const cleanedNp: Record<string, any> = {};
+      // Boolean toggles
+      const booleanKeys = [
+        'resultsAndEarnings', 'orderWinsAndExpansion', 'dividendsAndBonus',
+        'acquisitionsAndMergers', 'creditRatings', 'muteRoutineFilings',
+        'muteInAppNotifications', 'stocksHighPriority', 'stocksMediumPriority',
+        'stocksLowPriority', 'concallsAndInvestorMeets', 'boardMeetingsAndOutcomes',
+        'insiderTradingAndSAST', 'creditRatingChanges', 'annualReportsAndAudits',
+        'telegramNewsAlerts', 'telegramAlertsEnabled', 'telegramAiSummaryEnabled',
+      ];
+      for (const k of booleanKeys) {
+        if (k in rawNp && typeof rawNp[k] === 'boolean') cleanedNp[k] = rawNp[k];
+      }
+      // String array fields
+      if (Array.isArray(rawNp.telegramNewsSources)) {
+        cleanedNp.telegramNewsSources = rawNp.telegramNewsSources.filter((s: any) => typeof s === 'string').slice(0, 50);
+      }
+      if (Array.isArray(rawNp.telegramNewsCategories)) {
+        cleanedNp.telegramNewsCategories = rawNp.telegramNewsCategories.filter((s: any) => typeof s === 'string').slice(0, 50);
+      }
+      // Enum fields with strict validation
+      if (rawNp.telegramAlertScope === 'WATCHLIST_ONLY' || rawNp.telegramAlertScope === 'ALL_MARKET') {
+        cleanedNp.telegramAlertScope = rawNp.telegramAlertScope;
+      }
+      if (rawNp.aiSummaryLang === 'hinglish' || rawNp.aiSummaryLang === 'english') {
+        cleanedNp.aiSummaryLang = rawNp.aiSummaryLang;
+      }
+      if (rawNp.designTheme === 'classic' || rawNp.designTheme === 'softglass') {
+        cleanedNp.designTheme = rawNp.designTheme;
+      }
+      if (rawNp.alertPriority === 'HIGH_ONLY' || rawNp.alertPriority === 'HIGH_MEDIUM' || rawNp.alertPriority === 'ALL') {
+        cleanedNp.alertPriority = rawNp.alertPriority;
+      }
+      if (rawNp.alertScope === 'WATCHLIST_ONLY' || rawNp.alertScope === 'ALL_MARKET') {
+        cleanedNp.alertScope = rawNp.alertScope;
+      }
+      if (rawNp.alertCategory === 'ALL' || rawNp.alertCategory === 'RESULTS_ONLY' || rawNp.alertCategory === 'RESULTS_AND_CONCALLS' || rawNp.alertCategory === 'RESULTS_AND_MATERIAL') {
+        cleanedNp.alertCategory = rawNp.alertCategory;
+      }
+      sanitizedPatch.notificationPreferences = cleanedNp;
     }
 
     // Telegram is Pro-only: block link/enable attempts here too, so the
