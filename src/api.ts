@@ -52,6 +52,7 @@ export async function customFetch(url: string, options: RequestInit = {}) {
             });
           }
         } catch (refreshErr) {
+          if ((refreshErr as any)?.name === 'AbortError' || options.signal?.aborted) throw refreshErr;
           console.warn('Firebase token force-refresh failed:', refreshErr);
         }
       }
@@ -76,6 +77,9 @@ export async function customFetch(url: string, options: RequestInit = {}) {
 
     return res;
   } catch (error: any) {
+    // Cancellation is control flow, not an outage. Preserve it for callers
+    // so superseded requests do not trigger failure UI or rollback.
+    if (error?.name === 'AbortError' || options.signal?.aborted) throw error;
     // Notify frontend of network disruption
     window.dispatchEvent(new CustomEvent('network-status', { detail: { isOnline: false, error: error.message || 'Connection lost' } }));
 
@@ -87,5 +91,4 @@ export async function customFetch(url: string, options: RequestInit = {}) {
     });
   }
 }
-
 

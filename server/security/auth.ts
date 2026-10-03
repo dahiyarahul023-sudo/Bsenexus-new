@@ -9,6 +9,7 @@ import { getUserProfile, saveUserProfile } from '../database/usersDao.js';
 import { reconcilePaymentEntitlement } from '../database/paymentEntitlementsDao.js';
 import { isPaymentStoreUnavailable } from '../database/paymentStore.js';
 import { verifyRecaptchaToken } from './recaptchaService.js';
+import { getFirebaseIdentity, hasTrustedSessionRoles } from './firebaseIdentity.js';
 import { 
   getAccountKey, 
   checkAccountProtection, 
@@ -95,6 +96,9 @@ export const authMiddleware = async (req: express.Request, _res: express.Respons
       token = token.trim();
       try {
         const decoded: any = jwt.verify(token, JWT_SECRET);
+        if (!hasTrustedSessionRoles(decoded, ADMIN_EMAIL)) {
+          throw new Error('Privileged session requires a verified owner email. Sign in again.');
+        }
         (req as any).user = decoded;
         return next();
       } catch (jwtErr) {
@@ -106,12 +110,14 @@ export const authMiddleware = async (req: express.Request, _res: express.Respons
             if (adminAuth) {
               try {
                 const fbDecoded = await adminAuth.verifyIdToken(token, false);
-                const isAnonymous = (fbDecoded as any).firebase?.sign_in_provider === 'anonymous' || !fbDecoded.email;
-                const isOwner = !isAnonymous && fbDecoded.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+                const identity = getFirebaseIdentity(fbDecoded, ADMIN_EMAIL);
+                const isAnonymous = !identity;
+                const isOwner = identity?.isOwner === true;
                 (req as any).user = {
                   uid: fbDecoded.uid,
                   rawUid: fbDecoded.uid,
                   email: fbDecoded.email,
+                  emailVerified: identity?.emailVerified === true,
                   name: fbDecoded.name || (fbDecoded as any).displayName || (isAnonymous ? 'Guest Trader' : 'User'),
                   isOwner,
                   isAdmin: isOwner,
@@ -368,16 +374,17 @@ authRouter.post('/session', authRateLimiter, async (req, res) => {
       return res.status(401).json({ success: false, error: "Invalid or expired Firebase ID token." });
     }
 
-    // Authentication succeeded: safely reset account protection counter
+    const identity = getFirebaseIdentity(decodedToken, ADMIN_EMAIL);
+    if (!identity) {
+      await recordFailedAttempt(accountKey);
+      return res.status(401).json({ success: false, error: 'A non-anonymous Firebase account with an email is required.' });
+    }
     await resetAccountProtection(accountKey);
 
-    const uid = decodedToken.uid;
-    const email = decodedToken.email || req.body?.email || '';
-    const displayName = decodedToken.name || (decodedToken as any).displayName || req.body?.displayName || '';
+    const { uid, email, displayName, emailVerified, isOwner } = identity;
 
     const cleanUid = uid.trim().replace(/[^a-zA-Z0-9_-]/g, '_');
-    const isOwner = email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
-    const existingIsAdmin = (req as any).user?.isAdmin === true || isOwner;
+    const existingIsAdmin = isOwner;
 
     // Restore any durable paid entitlement before trial/profile logic runs.
     // If the payment store cannot be read, do not mint a session that could
@@ -436,7 +443,7 @@ authRouter.post('/session', authRateLimiter, async (req, res) => {
 
     // Sign token with real clean UID, preserving admin/owner and pro privileges in claims
     const token = jwt.sign(
-      { uid: cleanUid, rawUid: cleanUid, email, displayName, isOwner, isAdmin: existingIsAdmin, isPro, auth: true },
+      { uid: cleanUid, rawUid: cleanUid, email, displayName, emailVerified, isOwner, isAdmin: existingIsAdmin, isPro, auth: true },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -480,7 +487,7 @@ authRouter.post('/login', authRateLimiter, async (req, res) => {
   // Strict Security Rule: Standalone PIN login without prior Administrator authentication is blocked.
   // Attackers cannot guess or brute-force PINs without authenticating with the Admin Google/Email account first.
   const currentUser = (req as any).user;
-  const isAuthorizedAdmin = currentUser && !currentUser.isAnonymous && currentUser.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+  const isAuthorizedAdmin = currentUser && !currentUser.isAnonymous && currentUser.emailVerified === true && currentUser.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
   if (!isAuthorizedAdmin) {
     await simulateCredentialVerificationDelay();
@@ -582,7 +589,7 @@ authRouter.post('/login', authRateLimiter, async (req, res) => {
       return res.status(401).json({ success: false, error: "PIN entry requires prior Firebase authentication." });
     }
     const token = jwt.sign(
-      { auth: true, isAdmin: true, uid: elevatedUid, rawUid: elevatedUid, email: ADMIN_EMAIL, isOwner: true },
+      { auth: true, isAdmin: true, uid: elevatedUid, rawUid: elevatedUid, email: ADMIN_EMAIL, emailVerified: true, isOwner: true },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -621,7 +628,7 @@ authRouter.post('/verify-pin', authRateLimiter, async (req, res) => {
 
   // Strict Security Rule: User must be signed in with the authorized Administrator account
   const currentUser = (req as any).user;
-  const isAuthorizedAdmin = currentUser && !currentUser.isAnonymous && currentUser.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+  const isAuthorizedAdmin = currentUser && !currentUser.isAnonymous && currentUser.emailVerified === true && currentUser.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
   if (!isAuthorizedAdmin) {
     await simulateCredentialVerificationDelay();
@@ -718,7 +725,7 @@ authRouter.post('/verify-pin', authRateLimiter, async (req, res) => {
       return res.status(401).json({ success: false, error: "PIN entry requires prior Firebase authentication." });
     }
     const token = jwt.sign(
-      { auth: true, isAdmin: true, uid: elevatedUid, rawUid: elevatedUid, email: ADMIN_EMAIL, isOwner: true },
+      { auth: true, isAdmin: true, uid: elevatedUid, rawUid: elevatedUid, email: ADMIN_EMAIL, emailVerified: true, isOwner: true },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -769,6 +776,9 @@ authRouter.get('/status', async (req, res) => {
 
   try {
     const decoded: any = jwt.verify(token, JWT_SECRET);
+    if (!hasTrustedSessionRoles(decoded, ADMIN_EMAIL)) {
+      throw new Error('Privileged session requires a verified owner email.');
+    }
     res.json({ 
       isAuthenticated: true, 
       hasPin, 
@@ -784,4 +794,3 @@ authRouter.get('/status', async (req, res) => {
     });
   }
 });
-

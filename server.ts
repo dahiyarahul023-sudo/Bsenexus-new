@@ -6,6 +6,8 @@ import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import compression from "compression";
 import { createServer as createViteServer } from "vite";
+import { createServer as createHttpServer } from 'node:http';
+import { listenForStartup, resolveServerPort } from './server/utils/serverStartup.js';
 
 import { authMiddleware, authRouter, apiRateLimiter, authRateLimiter } from "./server/security/auth.js";
 import { apiRouter } from "./server/api/routes.js";
@@ -38,7 +40,6 @@ process.on('uncaughtException', (err: any) => {
 });
 
 const app = express();
-const PORT = 3000;
 
 // Trust reverse proxy (Cloud Run / Nginx) so client IP and rate-limiting work properly
 app.set('trust proxy', 1);
@@ -6393,9 +6394,16 @@ function getSpaRouteCacheControl(reqPath: string): string {
 }
 
 async function startServer() {
+  const PORT = resolveServerPort();
+  const httpServer = createHttpServer(app);
+  let vite: Awaited<ReturnType<typeof createViteServer>> | undefined;
   if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
+    vite = await createViteServer({
+      server: {
+        middlewareMode: true,
+        // Share Express's listener instead of opening a second HMR port.
+        hmr: process.env.DISABLE_HMR === 'true' ? false : { server: httpServer },
+      },
       appType: "spa",
     });
 
@@ -6544,14 +6552,17 @@ async function startServer() {
     });
   }
 
-  const httpServer = app.listen(PORT, "0.0.0.0", async () => {
-    console.log(`Server running on port ${PORT}`);
-    // Restore the admin's durable storage mode and auto-recover from quota
-    // fallback without waiting for a manual switch or Pacific midnight.
-    startStorageRecoveryProbe();
-    try { await addLog('INFO', 'SYSTEM', 'Bsenexus Server Started'); } catch(e) { console.error('DB connect err:', e); }
-  });
-
+  try {
+    await listenForStartup(httpServer, PORT);
+  } catch (error) {
+    await vite?.close();
+    throw error;
+  }
+  console.log(`Server running on port ${PORT}`);
+  // Restore the admin's durable storage mode and auto-recover from quota
+  // fallback without waiting for a manual switch or Pacific midnight.
+  startStorageRecoveryProbe();
+  void addLog('INFO', 'SYSTEM', 'Bsenexus Server Started').catch(error => console.error('DB connect err:', error));
   // PERF-006 (1 Oct 2026 audit): Graceful shutdown handler.
   // Cloud Run sends SIGTERM ~10s before killing the instance. Without this:
   // - In-flight HTTP requests are aborted mid-response
@@ -6579,6 +6590,7 @@ async function startServer() {
       try { clearInterval(handle); } catch {}
     }
     console.log(`[Shutdown] Cleared ${trackedIntervals.length} background intervals`);
+    void vite?.close().catch(error => console.error('[Shutdown] Vite close error:', error));
 
     // 3. Give in-flight requests up to 8s to complete, then force-exit
     // (Cloud Run's SIGTERM grace is ~10s; leave 2s buffer for cleanup)
@@ -6593,5 +6605,9 @@ async function startServer() {
 }
 
 if (process.env.NODE_ENV !== 'test' && !process.env.TEST_RUNNER && !process.argv.some(a => a.includes('test'))) {
-  startServer();
+  startServer().catch(error => {
+    console.error('[Startup] Server failed to start:', error?.message || error);
+    for (const handle of trackedIntervals) clearInterval(handle);
+    process.exit(1);
+  });
 }

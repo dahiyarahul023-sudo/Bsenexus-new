@@ -14,6 +14,7 @@ import { auth, googleProvider } from '../firebase';
 import { UserProfile, UserNotificationPreferences } from '../types';
 import { customFetch } from '../api';
 import { reportSyncStatus, withRetry } from '../utils/retry';
+import { createPreferenceSaveQueue } from '../utils/preferenceSaveQueue';
 import { executeRecaptcha } from '../utils/recaptcha';
 import type { PaymentReceipt } from '../utils/cashfree';
 import { recoverPendingPayments } from '../utils/cashfree';
@@ -241,7 +242,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Sync profile strictly through backend APIs backed by Admin SDK
+  // Sync profile through backend APIs; the server uses Supabase for profiles.
   const syncUserProfile = async (firebaseUser: any) => {
     if (!firebaseUser || !firebaseUser.uid) {
       return null;
@@ -1072,101 +1073,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Fix 1+2 (1 Oct 2026 audit): Debounce + rollback + cancel pending requests
-  // for updateNotificationPreferences. Previously:
-  // - Optimistic update without rollback on failure (state stayed "saved" locally
-  //   even when server rejected)
-  // - Rapid toggles could fire N parallel requests; last-write-wins semantics
-  //   caused incorrect final state when responses arrived out of order
-  // Now:
-  // - Optimistic update + full rollback (state + localStorage) on failure
-  // - 350ms debounce coalesces rapid toggles into one request
-  // - AbortController cancels in-flight request when a newer one is queued
-  // - Caller gets a boolean promise that resolves ONLY when the FINAL state
-  //   is confirmed by the server (older in-flight callers reject silently)
-  const notifPrefsAbortRef = React.useRef<AbortController | null>(null);
-  const notifPrefsDebounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Pending resolver queue — every call gets a promise; the final call's
-  // resolver is called when the server confirms; older ones are rejected
-  // silently so the caller's await throws (UI typically ignores these).
-  const notifPrefsPendingResolversRef = React.useRef<Array<{ resolve: (v: boolean) => void; reject: (e: any) => void }>>([]);
+  // Use a fresh profile between renders and serialize debounced writes. An
+  // aborted HTTP request may still finish on the server, so do not race writes.
+  const preferenceStateRef = React.useRef({ user, profile, saveLocalSession });
+  preferenceStateRef.current = { user, profile, saveLocalSession };
+  const preferenceQueueRef = React.useRef<ReturnType<typeof createPreferenceSaveQueue<UserNotificationPreferences>> | null>(null);
+  useEffect(() => {
+    const uid = user?.uid;
+    const queue = createPreferenceSaveQueue<UserNotificationPreferences>({
+      read: () => {
+        const current = preferenceStateRef.current;
+        return current.profile && current.user?.uid === uid
+          ? current.profile.notificationPreferences || defaultNotificationPreferences
+          : null;
+      },
+      apply: prefs => {
+        const current = preferenceStateRef.current;
+        if (!current.profile || current.user?.uid !== uid) return;
+        const next = { ...current.profile, notificationPreferences: prefs };
+        preferenceStateRef.current = { ...current, profile: next };
+        setProfile(next);
+        current.saveLocalSession(current.user, next);
+      },
+      save: async prefs => {
+        if (preferenceStateRef.current.user?.uid !== uid) throw new Error('Account changed before preferences were saved.');
+        const res = await customFetch('/api/users/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ notificationPreferences: prefs }),
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body?.error || `Server responded with status ${res.status}`);
+        }
+      },
+      status: (state, error) => {
+        if (preferenceStateRef.current.user?.uid === uid) {
+          reportSyncStatus(state, error ? `Notification prefs update failed: ${(error as any)?.message || error}` : undefined);
+        }
+      },
+    });
+    preferenceQueueRef.current = queue;
+    return () => {
+      queue.dispose();
+      if (preferenceQueueRef.current === queue) preferenceQueueRef.current = null;
+    };
+  }, [user?.uid]);
 
   const updateNotificationPreferences = async (newPrefs: Partial<UserNotificationPreferences>): Promise<boolean> => {
-    if (!profile) return false;
-
-    // Capture the previous state for rollback BEFORE applying optimistic update.
-    const previousPrefs = profile.notificationPreferences;
-    const updated = { ...previousPrefs, ...newPrefs };
-    const updatedProfile = { ...profile, notificationPreferences: updated };
-
-    // Optimistic update — UI flips immediately for snappy feel
-    setProfile(updatedProfile);
-    saveLocalSession(user, updatedProfile);
-    reportSyncStatus('syncing');
-
-    // Cancel any in-flight request — the latest call wins.
-    if (notifPrefsAbortRef.current) {
-      notifPrefsAbortRef.current.abort();
-      notifPrefsAbortRef.current = null;
-    }
-
-    return new Promise<boolean>((resolve, reject) => {
-      notifPrefsPendingResolversRef.current.push({ resolve, reject });
-
-      // Debounce: coalesce rapid successive toggles into one server call.
-      if (notifPrefsDebounceRef.current) {
-        clearTimeout(notifPrefsDebounceRef.current);
-      }
-      notifPrefsDebounceRef.current = setTimeout(async () => {
-        notifPrefsDebounceRef.current = null;
-        const controller = new AbortController();
-        notifPrefsAbortRef.current = controller;
-        // Snapshot the resolvers we're about to settle — capture before push happens again
-        const resolversToSettle = notifPrefsPendingResolversRef.current.splice(0);
-        try {
-          const res = await customFetch('/api/users/profile', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ notificationPreferences: updated }),
-            signal: controller.signal,
-          });
-          if (!res.ok) {
-            const errData = await res.json().catch(() => ({}));
-            throw new Error(errData?.error || `Server responded with status ${res.status}`);
-          }
-          reportSyncStatus('synced');
-          resolversToSettle.forEach(r => r.resolve(true));
-        } catch (e: any) {
-          // AbortError = a newer call superseded this one — settle as false silently.
-          if (e?.name === 'AbortError') {
-            resolversToSettle.forEach(r => r.resolve(false));
-            return;
-          }
-          // Real failure — rollback optimistic update so UI reflects truth.
-          console.warn('Notification prefs update rolled back:', e);
-          setProfile(prev => prev ? { ...prev, notificationPreferences: previousPrefs } : prev);
-          // Update localStorage cache too so a reload doesn't resurrect the lie.
-          if (user) {
-            try {
-              const cached = localStorage.getItem(STORAGE_SESSION_KEY);
-              if (cached) {
-                const parsed = JSON.parse(cached);
-                if (parsed?.profile) {
-                  parsed.profile.notificationPreferences = previousPrefs;
-                  localStorage.setItem(STORAGE_SESSION_KEY, JSON.stringify(parsed));
-                }
-              }
-            } catch { /* non-fatal */ }
-          }
-          reportSyncStatus('failed', `Notification prefs update failed: ${e?.message || e}`);
-          resolversToSettle.forEach(r => r.resolve(false));
-        } finally {
-          if (notifPrefsAbortRef.current === controller) {
-            notifPrefsAbortRef.current = null;
-          }
-        }
-      }, 350);
-    });
+    if (!preferenceStateRef.current.profile) return false;
+    return preferenceQueueRef.current?.update(newPrefs) ?? false;
   };
 
   const updateTelegramPreferences = async (options: UpdateTelegramOptions): Promise<boolean> => {
