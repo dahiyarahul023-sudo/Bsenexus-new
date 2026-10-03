@@ -18,7 +18,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { X, Mail, Printer, Scissors, Copy, Check } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { buildReceiptMailto, formatReceiptDate, type PaymentReceipt } from '../utils/cashfree';
+import { buildReceiptMailto, sendReceiptByEmail, formatReceiptDate, type PaymentReceipt } from '../utils/cashfree';
 
 /* ------------------------------------------------------------------ */
 /* Code 128 (subset B) barcode — renders the invoice number as an SVG. */
@@ -124,7 +124,7 @@ function ThermalReceiptPaper({ r }: { r: PaymentReceipt }) {
         </div>
       </div>
 
-      <p className="text-center text-[15px] font-black tracking-[0.14em]">BSENEXUS</p>
+      <p className="text-center text-[15px] font-black tracking-[0.14em]">BSE NEXUS</p>
       <p className="text-center text-[10px] font-bold tracking-[0.28em] text-slate-500 mt-1">
         PRO MEMBERSHIP RECEIPT
       </p>
@@ -172,7 +172,7 @@ function ThermalReceiptPaper({ r }: { r: PaymentReceipt }) {
       <p className="text-center text-[10px] font-bold tracking-[0.22em] text-slate-500 leading-relaxed">
         THANK YOU FOR CHOOSING
         <br />
-        BSENEXUS PRO
+        BSE NEXUS PRO
       </p>
 
       <div className="mt-3">
@@ -188,7 +188,7 @@ function buildPlainTextReceipt(r: PaymentReceipt): string {
     : 'Pro Monthly (30 days)';
   const amount = `₹${Number(r.amount).toFixed(2)}`;
   return [
-    'BSENEXUS - PRO MEMBERSHIP RECEIPT',
+    'BSE NEXUS - PRO MEMBERSHIP RECEIPT',
     `Invoice: ${r.orderId}`,
     `Issued: ${formatReceiptDate(r.paidAt)}`,
     `Valid until: ${formatReceiptDate(new Date(r.validUntil).toISOString())}`,
@@ -204,6 +204,8 @@ export function ProReceiptView() {
   const { receipt, setReceipt, user, profile } = useAuth();
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
+  const [sentOk, setSentOk] = useState(false);
   const [printKey, setPrintKey] = useState(0);
   const [tearing, setTearing] = useState(false);
   const [torn, setTorn] = useState(false);
@@ -245,15 +247,30 @@ export function ProReceiptView() {
 
   if (!receipt) return null;
 
-  const sendReceipt = () => {
+  const sendReceipt = async () => {
     const to = email.trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
       setEmailError('Please enter a valid email address.');
       return;
     }
     setEmailError(null);
-    // Opens the user's own mail app with the invoice prefilled.
-    window.location.href = buildReceiptMailto(receipt, to);
+    setSentOk(false);
+    setSending(true);
+    try {
+      const result = await sendReceiptByEmail(receipt.orderId, to);
+      if (result.ok) {
+        setSentOk(true);
+        return;
+      }
+      if (result.fallbackToMailto) {
+        // Server mailer not configured yet — fall back to the mail app.
+        window.location.href = buildReceiptMailto(receipt, to);
+        return;
+      }
+      setEmailError(result.error || 'Could not send the email. Please try again.');
+    } finally {
+      setSending(false);
+    }
   };
 
   const doReprint = () => {
@@ -444,28 +461,32 @@ export function ProReceiptView() {
           )}
         </div>
 
-        {/* Send invoice to email (mailto — unchanged behaviour) */}
+        {/* Send invoice to email (one-tap via server; mailto fallback) */}
         <div className="mt-5 bg-white rounded-2xl p-3 flex items-center gap-2">
           <Mail size={16} className="text-slate-400 shrink-0 ml-1" />
           <input
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => { setEmail(e.target.value); setSentOk(false); }}
             placeholder="Email for invoice"
             className="flex-1 min-w-0 bg-transparent text-[13px] font-medium text-slate-900 placeholder:text-slate-400 outline-none"
           />
           <button
             onClick={sendReceipt}
-            className="shrink-0 px-4 py-2 rounded-xl bg-slate-950 text-white text-[12px] font-bold hover:opacity-90 active:scale-95 transition-all"
+            disabled={sending}
+            className="shrink-0 px-4 py-2 rounded-xl bg-slate-950 text-white text-[12px] font-bold hover:opacity-90 active:scale-95 transition-all disabled:opacity-60"
           >
-            Send
+            {sending ? 'Sending…' : sentOk ? 'Sent ✓' : 'Send'}
           </button>
         </div>
         {emailError && (
           <p className="mt-1.5 text-[11px] font-semibold text-rose-300 px-1">{emailError}</p>
         )}
+        {sentOk && !emailError && (
+          <p className="mt-1.5 text-[11px] font-semibold text-emerald-300 px-1">Invoice sent to {email.trim()}.</p>
+        )}
         <p className="mt-1.5 text-[10px] text-white/50 px-1">
-          Opens your mail app with the invoice addressed to this email.
+          Sends the invoice straight to this email — no mail app needed.
         </p>
 
         <button

@@ -112,12 +112,12 @@ export function buildReceiptMailto(r: PaymentReceipt, toEmail: string): string {
     ? `1x ${r.planLabel}${r.validityDays ? ` (${r.validityDays} days)` : ''}`
     : '1x Pro Monthly (30 days)';
   const lines = [
-    'Bsenexus — Invoice',
+    'BSE Nexus — Invoice',
     '--------------------------------',
     `Invoice No.: ${r.orderId}`,
     `Issued Date: ${formatReceiptDate(r.paidAt)}`,
     `Valid Until: ${formatReceiptDate(new Date(r.validUntil).toISOString())}`,
-    'From: Bsenexus (bsenexus.in)',
+    'From: BSE Nexus (bsenexus.in)',
     `To: ${toEmail.trim()}`,
     '--------------------------------',
     `Item: ${planLine}`,
@@ -128,7 +128,7 @@ export function buildReceiptMailto(r: PaymentReceipt, toEmail: string): string {
     'Thank you for going Pro!',
     'bsenexus.in',
   ];
-  const subject = `Bsenexus invoice — ${r.orderId}`;
+  const subject = `BSE Nexus invoice — ${r.orderId}`;
   return `mailto:${encodeURIComponent(toEmail.trim())}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(lines.join('\n'))}`;
 }
 
@@ -244,5 +244,33 @@ export function hasUsedTrial(uid?: string | null): boolean {
     return localStorage.getItem(`bse_trial_used_${uid}`) === '1';
   } catch {
     return false;
+  }
+}
+
+/**
+ * Send the Pro invoice by email via the server (Resend). One tap — no mail
+ * app opens. The server verifies the order belongs to the signed-in user
+ * before sending. If the server mailer is not configured yet
+ * (RESEND_API_KEY missing), this returns fallbackToMailto so the UI can
+ * fall back to the old mailto flow.
+ */
+export async function sendReceiptByEmail(
+  orderId: string,
+  toEmail: string,
+): Promise<{ ok: boolean; fallbackToMailto?: boolean; error?: string }> {
+  try {
+    const res = await customFetch('/api/payments/send-receipt', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderId, toEmail: toEmail.trim() }),
+    });
+    const data = await res.json().catch(() => null);
+    if (res.ok && data?.success) return { ok: true };
+    if (res.status === 503 && data?.error === 'not-configured') {
+      return { ok: false, fallbackToMailto: true };
+    }
+    return { ok: false, error: data?.error || 'Could not send the email. Please try again.' };
+  } catch {
+    return { ok: false, error: 'Could not send the email. Please try again.' };
   }
 }

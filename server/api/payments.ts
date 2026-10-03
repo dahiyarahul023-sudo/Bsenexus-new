@@ -31,9 +31,10 @@ import {
   isPaymentStoreUnavailable,
 } from '../database/paymentStore.js';
 import {
-  isFirestoreQuotaExceeded,
-  isAdminPermissionDenied,
-} from '../database/localStore.js';
+  isResendConfigured,
+  sendReceiptEmail,
+  buildReceiptEmail,
+} from '../services/resendMailer.js';
 
 /** Extract the verified uid from the authenticated request (local copy — avoids a routes.ts import cycle). */
 function getReqUserId(req: express.Request): string {
@@ -380,13 +381,6 @@ paymentsRouter.post('/create-order', requireAuth, async (req, res) => {
     const orderId = `BN_${PLAN_CODES[plan.id as PlanId]}_${cleanCustomerId.slice(0, 10)}_${Date.now()}`;
     const base = siteUrl(req);
 
-    if (isFirestoreQuotaExceeded() || isAdminPermissionDenied()) {
-      return paymentUnavailable(
-        res,
-        'Secure payment setup is temporarily unavailable. Please try again in a moment.',
-      );
-    }
-
     // Payment isolation: the durable Firestore reconciliation record must
     // exist BEFORE Cashfree checkout starts. If it cannot be confirmed,
     // do not take the user to payment — otherwise a paid gateway order
@@ -423,7 +417,7 @@ paymentsRouter.post('/create-order', requireAuth, async (req, res) => {
           return_url: `${base}/?cf_order_id=${orderId}`,
           notify_url: `${base}/api/payments/webhook`,
         },
-        order_note: `${plan.label} — Bsenexus`,
+        order_note: `${plan.label} — BSE Nexus`,
       }),
     });
 
@@ -464,14 +458,13 @@ paymentsRouter.post('/create-order', requireAuth, async (req, res) => {
       currency: plan.currency,
     });
   } catch (err: any) {
+    console.error('[Payments] create-order error:', err?.message || err);
     if (isPaymentStoreUnavailable(err)) {
-      console.warn('[Payments] create-order: payment store unavailable:', err?.message || err);
       return paymentUnavailable(
         res,
         'Payments are temporarily unavailable. Please retry in a moment; no payment was started.',
       );
     }
-    console.error('[Payments] create-order error:', err?.message || err);
     return res.status(200).json({ success: false, error: 'Could not start payment: ' + (err?.message || 'unexpected error') });
   }
 });
@@ -504,15 +497,10 @@ paymentsRouter.get('/verify', requireAuth, async (req, res) => {
       // The paid amount + currency must match that plan exactly, else fail closed.
       const planId = planIdFromOrderId(orderId);
       const plan = PRO_PLANS[planId];
-      // BUGFIX (1 Oct 2026 audit LOGIC-026 + LOGIC-027): Amount comparison was
-      // using float arithmetic (Number(amount) !== paise/100) which can fail for
-      // non-integer rupees due to IEEE 754 representation. Currency comparison
-      // was case-sensitive with no trim — 'inr' or ' INR ' would fail. Now:
-      // (a) amount compared in integer paise, (b) currency trimmed + uppercased.
-      const paidAmountPaise = Math.round(Number(order.order_amount) * 100);
-      const paidCurrency = String(order.order_currency || '').trim().toUpperCase();
-      if (paidAmountPaise !== plan.amountPaise || paidCurrency !== plan.currency.toUpperCase()) {
-        console.warn('[Payments] verify amount mismatch:', orderId, paidAmountPaise, paidCurrency, 'expected', plan.id);
+      const paidAmount = Number(order.order_amount);
+      const paidCurrency = String(order.order_currency || '');
+      if (paidAmount !== plan.amountPaise / 100 || paidCurrency !== plan.currency) {
+        console.warn('[Payments] verify amount mismatch:', orderId, paidAmount, paidCurrency, 'expected', plan.id);
         return res.status(200).json({ success: false, paid: false, error: 'Payment amount does not match the selected plan.' });
       }
       const paidAtMs = await fetchSuccessfulPaymentTime(orderId, order);
@@ -566,19 +554,13 @@ paymentsRouter.get('/status', requireAuth, async (req, res) => {
 
     let entitlement = null;
     let repaired = false;
-    if (!isFirestoreQuotaExceeded() && !isAdminPermissionDenied()) {
-      try {
-        const reconciled = await reconcilePaymentEntitlement(uid);
-        entitlement = reconciled.entitlement;
-        repaired = reconciled.repaired;
-      } catch (err) {
-        if (!isAdmin && !isPaymentStoreUnavailable(err)) throw err;
-        console.warn('[Payments] status: payment entitlement unavailable for fallback:', (err as Error)?.message || err);
-      }
-    } else if (isAdmin) {
-      console.warn('[Payments] status: storage quota exceeded or local mode; bypassing entitlement check for admin');
-    } else {
-      console.warn('[Payments] status: storage quota exceeded or local mode; falling back to durable profile');
+    try {
+      const reconciled = await reconcilePaymentEntitlement(uid);
+      entitlement = reconciled.entitlement;
+      repaired = reconciled.repaired;
+    } catch (err) {
+      if (!isAdmin) throw err;
+      console.warn('[Payments] status: payment entitlement unavailable for admin fallback:', (err as Error)?.message || err);
     }
 
     const paidExpiresAt = Number(entitlement?.proExpiresAt || 0);
@@ -614,14 +596,13 @@ paymentsRouter.get('/status', requireAuth, async (req, res) => {
       autoRenew: 'coming_soon' as const,
     });
   } catch (err: any) {
+    console.error('[Payments] status error:', err?.message || err);
     if (isPaymentStoreUnavailable(err)) {
-      console.warn('[Payments] status: payment store unavailable:', err?.message || err);
       return paymentUnavailable(
         res,
         'Subscription status is temporarily unavailable. Your payment record is not lost; please retry in a moment.',
       );
     }
-    console.error('[Payments] status error:', err?.message || err);
     return res.status(503).json({ success: false, error: 'Could not load subscription status.' });
   }
 });
@@ -710,7 +691,7 @@ paymentsRouter.post('/recover', requireAuth, paymentRecoveryLimiter, async (req,
           }
           const planId = planIdFromOrderId(candidate.orderId);
           const plan = PRO_PLANS[planId];
-          if (Math.round(Number(order.order_amount) * 100) !== plan.amountPaise || String(order.order_currency || '').trim().toUpperCase() !== plan.currency.toUpperCase()) {
+          if (Number(order.order_amount) !== plan.amountPaise / 100 || String(order.order_currency || '') !== plan.currency) {
             if (candidate.orderId !== legacyOrderId) {
               await markOrderFailed(candidate.orderId, 'recover: amount/currency mismatch').catch((e: any) => console.warn('[Payments] markOrderFailed failed:', candidate.orderId, e?.message || e));
             }
@@ -803,7 +784,7 @@ paymentsRouter.post('/claim', requireAuth, paymentRecoveryLimiter, async (req, r
 
     const planId = planIdFromOrderId(orderId);
     const plan = PRO_PLANS[planId];
-    if (Math.round(Number(order.order_amount) * 100) !== plan.amountPaise || String(order.order_currency || '').trim().toUpperCase() !== plan.currency.toUpperCase()) {
+    if (Number(order.order_amount) !== plan.amountPaise / 100 || String(order.order_currency || '') !== plan.currency) {
       console.warn('[Payments] claim amount mismatch:', orderId);
       return res.status(200).json({ success: false, error: 'The payment amount does not match the selected plan.' });
     }
@@ -877,6 +858,85 @@ paymentsRouter.get('/history', requireAuth, async (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
+// POST /api/payments/send-receipt — email the Pro invoice via Resend.
+// Body: { orderId, toEmail }. The order MUST belong to the signed-in user
+// (verified against their granted orders); amounts come from PRO_PLANS
+// server-side, never from the client. Until RESEND_API_KEY is configured
+// this answers 503 so the client can fall back to the mailto flow.
+// ---------------------------------------------------------------------------
+const sendReceiptLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: { xForwardedForHeader: false, forwardedHeader: false, default: true },
+  message: { success: false, error: 'Too many receipt emails. Please wait a few minutes and try again.' },
+});
+
+paymentsRouter.post('/send-receipt', requireAuth, sendReceiptLimiter, async (req, res) => {
+  try {
+    const uid = getReqUserId(req);
+    if (!uid || uid === 'guest') {
+      return res.status(401).json({ success: false, error: 'Not signed in.' });
+    }
+    if (!isResendConfigured()) {
+      return res.status(503).json({ success: false, error: 'not-configured' });
+    }
+    const orderId = String(req.body?.orderId || '').trim();
+    const toEmail = String(req.body?.toEmail || '').trim();
+    if (!orderId) {
+      return res.status(400).json({ success: false, error: 'Missing order id.' });
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(toEmail)) {
+      return res.status(400).json({ success: false, error: 'Please enter a valid email address.' });
+    }
+    // Ownership check: the order must be one of THIS user's granted orders.
+    let orders: Awaited<ReturnType<typeof getGrantedOrdersForUser>>;
+    try {
+      orders = await getGrantedOrdersForUser(uid);
+    } catch (err: any) {
+      if (isPaymentStoreUnavailable(err)) {
+        return paymentUnavailable(res, 'Receipt email is temporarily unavailable. Please retry in a moment.');
+      }
+      throw err;
+    }
+    const order = orders.find((o) => o.orderId === orderId);
+    if (!order) {
+      return res.status(403).json({ success: false, error: 'This order does not belong to your account.' });
+    }
+    const plan = (PRO_PLANS as Record<string, { id: string; label: string; amountPaise: number; currency: string; validityDays: number }>)[order.planId];
+    const email = buildReceiptEmail({
+      orderId: order.orderId,
+      planLabel: plan ? plan.label : 'Pro',
+      validityDays: plan ? plan.validityDays : undefined,
+      amount: (plan ? plan.amountPaise : order.amountPaise) / 100,
+      currency: order.currency || 'INR',
+      paidAtIso: order.paidAt
+        ? new Date(order.paidAt).toISOString()
+        : order.grantedAt
+          ? new Date(order.grantedAt).toISOString()
+          : new Date(order.updatedAt).toISOString(),
+      validUntilIso: order.proExpiresAt
+        ? new Date(order.proExpiresAt).toISOString()
+        : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      paymentMethod: (order as any).paymentMethod || undefined,
+    });
+    const result = await sendReceiptEmail({ to: toEmail, ...email });
+    if (!result.ok) {
+      if (result.error === 'invalid-email') {
+        return res.status(400).json({ success: false, error: 'Please enter a valid email address.' });
+      }
+      console.error('[Payments] send-receipt failed:', result.error);
+      return res.status(502).json({ success: false, error: 'Could not send the email. Please try again.' });
+    }
+    return res.json({ success: true });
+  } catch (err: any) {
+    console.error('[Payments] send-receipt error:', err?.message || err);
+    return res.status(503).json({ success: false, error: 'Could not send the email. Please try again.' });
+  }
+});
+
+// ---------------------------------------------------------------------------
 // POST /api/payments/webhook — Cashfree server-to-server notification.
 // NOTE: this route MUST receive the raw body (see server.ts) because the
 // signature is computed over timestamp + raw JSON bytes.
@@ -932,9 +992,8 @@ paymentsRouter.post('/webhook', async (req, res) => {
       const rawUid: string = order?.customer_details?.customer_id || '';
       const planId = planIdFromOrderId(orderId);
       const plan = PRO_PLANS[planId];
-      // BUGFIX (1 Oct 2026 audit LOGIC-026 + LOGIC-027): Integer paise comparison + case-insensitive currency.
-      const amountOk = Math.round(Number(order?.order_amount || 0) * 100) === plan.amountPaise;
-      const currencyOk = String(order?.order_currency || '').trim().toUpperCase() === plan.currency.toUpperCase();
+      const amountOk = Number(order?.order_amount) === plan.amountPaise / 100;
+      const currencyOk = String(order?.order_currency || '') === plan.currency;
       if (order?.order_status === 'PAID' && rawUid && amountOk && currencyOk) {
         const uid = sanitizeUserId(rawUid);
         const { alreadyGranted } = await grantWithLedger(uid, orderId, planId, 'webhook', {
