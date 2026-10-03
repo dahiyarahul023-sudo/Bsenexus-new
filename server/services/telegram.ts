@@ -57,6 +57,10 @@ export async function pingTelegram() {
 export async function sendToTelegram(text: string, customChatId?: string | null): Promise<TelegramSendResult> {
   const settings = await getSettings();
   const botToken = settings.botToken || process.env.TELEGRAM_BOT_TOKEN;
+  const sharedChatId = String(settings.chatId || process.env.TELEGRAM_CHAT_ID || '').trim();
+  if (customChatId && String(customChatId).trim() === sharedChatId) {
+    return { success: false, error: 'Personal delivery cannot target the shared Telegram channel.' };
+  }
   const targetChatId = customChatId || settings.chatId || process.env.TELEGRAM_CHAT_ID;
   if (!botToken || !targetChatId) {
      return { success: false, error: 'Telegram not configured' };

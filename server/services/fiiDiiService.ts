@@ -37,7 +37,7 @@ const NSE_HEADERS = {
  * Fetches verified FII & DII cash market provisional trading data from NSE.
  * Includes circuit-breaker protection and in-memory cache.
  */
-export async function getLiveFiiDiiData(forceRefresh = false): Promise<FiiDiiFlowData> {
+export async function getLiveFiiDiiData(forceRefresh = false): Promise<FiiDiiFlowData | null> {
   const now = Date.now();
   if (!forceRefresh && cachedFiiDii && (now - lastFetchTime < CACHE_TTL_MS)) {
     return cachedFiiDii;
@@ -63,13 +63,15 @@ export async function getLiveFiiDiiData(forceRefresh = false): Promise<FiiDiiFlo
       const fiiRow = rawData.find((r: any) => r.category === 'FII/FPI' || r.category?.includes('FII'));
 
       if (diiRow && fiiRow) {
-        const diiNet = parseFloat(String(diiRow.netValue || '0').replace(/,/g, ''));
-        const diiBuy = parseFloat(String(diiRow.buyValue || '0').replace(/,/g, ''));
-        const diiSell = parseFloat(String(diiRow.sellValue || '0').replace(/,/g, ''));
+        const diiNet = parseFloat(String(diiRow.netValue ?? '').replace(/,/g, ''));
+        const diiBuy = parseFloat(String(diiRow.buyValue ?? '').replace(/,/g, ''));
+        const diiSell = parseFloat(String(diiRow.sellValue ?? '').replace(/,/g, ''));
 
-        const fiiNet = parseFloat(String(fiiRow.netValue || '0').replace(/,/g, ''));
-        const fiiBuy = parseFloat(String(fiiRow.buyValue || '0').replace(/,/g, ''));
-        const fiiSell = parseFloat(String(fiiRow.sellValue || '0').replace(/,/g, ''));
+        const fiiNet = parseFloat(String(fiiRow.netValue ?? '').replace(/,/g, ''));
+        const fiiBuy = parseFloat(String(fiiRow.buyValue ?? '').replace(/,/g, ''));
+        const fiiSell = parseFloat(String(fiiRow.sellValue ?? '').replace(/,/g, ''));
+
+        if (![diiNet, diiBuy, diiSell, fiiNet, fiiBuy, fiiSell].every(Number.isFinite)) throw new Error('NSE fund-flow response is incomplete');
 
         const netBalance = Number((diiNet + fiiNet).toFixed(2));
         const dateStr = diiRow.date || fiiRow.date || 'Latest Session';
@@ -110,17 +112,6 @@ export async function getLiveFiiDiiData(forceRefresh = false): Promise<FiiDiiFlo
     return cachedFiiDii;
   }
 
-  // Realistic fallback based on standard daily range if network fails
-  return {
-    fiiNet: -2977.86,
-    diiNet: 2686.05,
-    netBalance: -291.81,
-    fiiBuy: 13194.76,
-    fiiSell: 16172.62,
-    diiBuy: 15221.98,
-    diiSell: 12535.93,
-    dateStr: 'Latest Trading Session',
-    flowInsight: 'Domestic institutions infused +₹2,686 Cr, absorbing FII selling of -₹2,978 Cr.',
-    timestamp: now
-  };
+  // No source/cache evidence means unavailable; never invent fund flows.
+  return null;
 }

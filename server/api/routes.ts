@@ -6,9 +6,11 @@ import { saveFeedback, getAllFeedback, markFeedbackRead } from "../database/feed
 import { getRecentAnnouncements, markAnnouncementSent, getAnnouncementById, processedBloomFilter, sentBloomFilter, isAnnouncementProcessed, isAnnouncementSent, getBloomFilterDiagnostics } from "../database/announcementDao.js";
 import { generateDirectSummary, generateAndSendSummary, askAppHelpAI } from "../services/gemini.js";
 import { escapeHTML } from "../utils/helpers.js";
+import { resolvePersonalTelegramTarget } from '../utils/telegramTarget.js';
 import { resumeFirestoreNetwork, pauseFirestoreNetwork, persistStorageMode } from "../database/firebase.js";
 import { requireAuth, requireAdmin, requireProOrAdmin, aiRateLimiter, telegramRateLimiter, apiRateLimiter } from "../security/auth.js";
 import { runSecurityAudit, executeSimulatedPenTest } from "../security/hardening.js";
+import { fetchBseDocument, isAllowedBseDocumentUrl, readBoundedDocument } from '../utils/bseDocument.js';
 import {
   getAllWatchlists,
   renameWatchlist,
@@ -93,7 +95,7 @@ import { getMarketGuides, getMarketGuideBySlug } from "../services/marketGuidesS
 export const apiRouter = express.Router();
 
 // Mount Super SEO Suite (11 Verified Skills Engine)
-apiRouter.use("/seo", seoRouter);
+apiRouter.use("/seo", requireAdmin, aiRateLimiter, seoRouter);
 
 // Cashfree one-time Pro payments (create-order / verify / webhook / status)
 apiRouter.use("/payments", paymentsRouter);
@@ -226,20 +228,7 @@ export function getReqUserId(req: express.Request): string {
 
 // SSRF Safe URL Validator (strictly restricts fetch/proxy to official BSE India domains)
 function isAllowedBseUrl(urlStr: string): boolean {
-  try {
-    const parsed = new URL(urlStr);
-    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-      return false;
-    }
-    const hostname = parsed.hostname.toLowerCase();
-    return (
-      hostname === 'www.bseindia.com' ||
-      hostname === 'bseindia.com' ||
-      hostname.endsWith('.bseindia.com')
-    );
-  } catch {
-    return false;
-  }
+  return isAllowedBseDocumentUrl(urlStr);
 }
 
 function sanitizeSafeUrl(urlStr?: string): string | null {
@@ -477,7 +466,7 @@ apiRouter.get("/announcements/:id", async (req, res) => {
   }
 });
 
-apiRouter.post("/announcements/refresh", async (_req, res) => {
+apiRouter.post("/announcements/refresh", requireAuth, aiRateLimiter, async (_req, res) => {
   try {
     const bseRes = await backfillRecentAnnouncements(3);
     const announcements = await getRecentAnnouncements(100);
@@ -502,7 +491,7 @@ apiRouter.post("/billing/reset-quota", requireAdmin, async (req, res) => {
   res.json({ success: true, message: "AI Quota reset successfully", status });
 });
 
-apiRouter.post("/announcements/:id/generate-summary", aiRateLimiter, async (req, res) => {
+apiRouter.post("/announcements/:id/generate-summary", requireAuth, aiRateLimiter, async (req, res) => {
   // Hoisted for the catch block: release the free-demo claim + refund quota on ANY throw.
   let uid = '';
   let isAdminUser = false;
@@ -598,9 +587,7 @@ apiRouter.post("/announcements/:id/generate-summary", aiRateLimiter, async (req,
         summaryLang
       );
     } catch (genErr: any) {
-      // Generation threw — refund the atomically-consumed quota + release free demo
-      if (quotaConsumed) { try { await refundServerAiQuota(uid, isAdminUser); } catch {} }
-      if (isFreeDemo) { try { await releaseFreeSummaryDemo(uid); } catch {} }
+      // The outer catch owns cleanup; refund each reservation only once.
       throw genErr;
     }
     if (!summary) {
@@ -909,7 +896,7 @@ apiRouter.post("/users/test-telegram", requireProOrAdmin, telegramRateLimiter, a
     const isAiSummaryOn = userProf?.notificationPreferences?.telegramAiSummaryEnabled !== false;
     const isAlertsOn = userProf?.notificationPreferences?.telegramAlertsEnabled !== false;
 
-    const testMsg = `👋 <b>Bsenexus Personal Alert Test</b>\n\nHello <b>${escapeHTML(userName)}</b>!\n\nYour personal Telegram instant alert connection is <b>ACTIVE & VERIFIED</b>.\n\n⚙️ <b>Current Configuration:</b>\n• Alert Status: ${isAlertsOn ? '🔔 <b>Active (ON)</b>' : '🔕 <b>Muted/Paused (OFF)</b>'}\n• Gemini AI Summary: ${isAiSummaryOn ? '✨ <b>Enabled (ON)</b>' : '⚡ <b>Disabled (Raw Filings Only)</b>'}\n\nYou will receive real-time corporate filings for your Watchlist stocks directly to this chat.\n\n🕒 <i>${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</i>`;
+    const testMsg = `👋 <b>Bsenexus Personal Alert Test</b>\n\nHello <b>${escapeHTML(userName)}</b>!\n\nYour personal Telegram test was <b>DELIVERED</b>.\n\n⚙️ <b>Current Configuration:</b>\n• Alert Status: ${isAlertsOn ? '🔔 <b>Active (ON)</b>' : '🔕 <b>Muted/Paused (OFF)</b>'}\n• Gemini AI Summary: ${isAiSummaryOn ? '✨ <b>Enabled (ON)</b>' : '⚡ <b>Disabled (Raw Filings Only)</b>'}\n\nYou will receive real-time corporate filings for your Watchlist stocks directly to this chat.\n\n🕒 <i>${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</i>`;
 
     const result = await sendToTelegram(testMsg, cleanChatId);
     if (result.success) {
@@ -1276,7 +1263,7 @@ apiRouter.patch("/watchlists/:id/name", requireProOrAdmin, async (req, res) => {
   res.json({ success: true });
 });
 
-apiRouter.post("/send-to-telegram-manual", requireProOrAdmin, telegramRateLimiter, async (req, res) => {
+apiRouter.post("/send-to-telegram-manual", requireAdmin, telegramRateLimiter, async (req, res) => {
   try {
     const { newsId, companyName, subject, details, category, pdfLink, attachmentUrl, scripCode, calendarUrl } = req.body;
 
@@ -1303,10 +1290,6 @@ apiRouter.post("/send-to-telegram-manual", requireProOrAdmin, telegramRateLimite
       messageText += `\n📄 <a href="${escapeHTML(effectivePdf)}">View Attachment (PDF)</a>\n`;
     }
     messageText += `\n🕒 <i>${formattedDate}</i>`;
-
-    if (newsId) {
-      await markAnnouncementSent(newsId);
-    }
 
     const telegramRes = await sendToTelegram(messageText);
 
@@ -1335,7 +1318,7 @@ apiRouter.post("/send-to-telegram-manual", requireProOrAdmin, telegramRateLimite
   }
 });
 
-apiRouter.post("/send-holiday-telegram", requireProOrAdmin, async (req, res) => {
+apiRouter.post("/send-holiday-telegram", requireAdmin, telegramRateLimiter, async (req, res) => {
   try {
     const { name, date, day, isMuhuratTrading, muhuratTiming, description, calendarUrl } = req.body;
     if (!name || !date) {
@@ -1388,7 +1371,7 @@ apiRouter.get("/results-calendar", async (req, res) => {
   }
 });
 
-apiRouter.post("/results-calendar/refresh", async (req, res) => {
+apiRouter.post("/results-calendar/refresh", requireAuth, aiRateLimiter, async (req, res) => {
   try {
     const mode = (req.query.mode as string) || req.body?.mode;
     const filter = (req.query.filter as string || "all") as 'all' | 'today' | 'upcoming' | 'recent';
@@ -1396,6 +1379,7 @@ apiRouter.post("/results-calendar/refresh", async (req, res) => {
     const uid = getReqUserId(req);
 
     if (mode === 'full') {
+      if (!(req as any).user?.isAdmin) return res.status(403).json({ success: false, error: 'Full system sync requires administrator access' });
       // Run full 200+ stock library scan in background non-blocking
       fetchAndSyncResultsCalendar(true).catch(console.error);
       const data = await getResultsCalendarData(filter, watchlistId, uid);
@@ -1416,7 +1400,7 @@ apiRouter.post("/results-calendar/refresh", async (req, res) => {
   }
 });
 
-apiRouter.post("/results-calendar/telegram-broadcast", requireProOrAdmin, telegramRateLimiter, async (req, res) => {
+apiRouter.post("/results-calendar/telegram-broadcast", requireAdmin, telegramRateLimiter, async (req, res) => {
   try {
     const forceAll = Boolean(req.body?.forceAll);
     const result = await broadcastUpcomingMeetingsToTelegram({ forceAll });
@@ -1494,7 +1478,7 @@ apiRouter.get("/news/stock/:symbol", async (req, res) => {
   }
 });
 
-apiRouter.post("/news/summarize", aiRateLimiter, async (req, res) => {
+apiRouter.post("/news/summarize", requireAuth, aiRateLimiter, async (req, res) => {
   // Hoisted for the catch block: release the free-demo claim + refund quota on ANY throw.
   let uid = '';
   let isAdminUser = false;
@@ -1559,9 +1543,7 @@ apiRouter.post("/news/summarize", aiRateLimiter, async (req, res) => {
     try {
       summary = await generateDirectSummary(companyTarget, title, details, 'NEWS');
     } catch (genErr: any) {
-      if (quotaConsumed) { try { await refundServerAiQuota(uid, isAdminUser); } catch {} }
-      if (isFreeDemo) { try { await releaseFreeSummaryDemo(uid); } catch {} }
-      throw genErr;
+      throw genErr; // The outer catch owns cleanup.
     }
 
     if (!summary) {
@@ -1599,7 +1581,13 @@ apiRouter.post("/news/telegram/send", requireProOrAdmin, telegramRateLimiter, as
     if (!newsItem || !newsItem.title) {
       return res.status(400).json({ success: false, error: "News item payload required" });
     }
-    const result = await sendNewsToTelegram(newsItem, chatId);
+    let destination = chatId;
+    if ((req as any).user?.isAdmin !== true) {
+      const [profile, settings] = await Promise.all([getUserProfile(getReqUserId(req)), getSettings()]);
+      try { destination = resolvePersonalTelegramTarget(profile?.telegramChatId, chatId, settings.chatId || process.env.TELEGRAM_CHAT_ID); }
+      catch (error: any) { return res.status(403).json({ success: false, error: error.message }); }
+    }
+    const result = await sendNewsToTelegram(newsItem, destination);
     res.json(result);
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
@@ -1610,7 +1598,13 @@ apiRouter.post("/news/telegram/digest", requireProOrAdmin, telegramRateLimiter, 
   try {
     const uid = getReqUserId(req);
     const { chatId } = req.body;
-    const result = await sendWatchlistNewsDigestToTelegram(uid, chatId);
+    let destination = chatId;
+    if ((req as any).user?.isAdmin !== true) {
+      const [profile, settings] = await Promise.all([getUserProfile(uid), getSettings()]);
+      try { destination = resolvePersonalTelegramTarget(profile?.telegramChatId, chatId, settings.chatId || process.env.TELEGRAM_CHAT_ID); }
+      catch (error: any) { return res.status(403).json({ success: false, error: error.message }); }
+    }
+    const result = await sendWatchlistNewsDigestToTelegram(uid, destination);
     res.json(result);
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
@@ -1877,7 +1871,7 @@ apiRouter.get("/stock-results-history", async (req, res) => {
 // which is bounded at 8s wait + 10-min cooldown + in-flight dedupe. The fetch
 // continues in the background if it doesn't land within 8s; the client gets
 // an immediate response and can re-query for the filled history.
-apiRouter.post("/stocks/:scripCode/fetch-deep-history", async (req, res) => {
+apiRouter.post("/stocks/:scripCode/fetch-deep-history", requireProOrAdmin, aiRateLimiter, async (req, res) => {
   try {
     const scripCode = req.params.scripCode;
     const { symbol, years } = req.body;
@@ -1897,7 +1891,7 @@ apiRouter.post("/stocks/:scripCode/fetch-deep-history", async (req, res) => {
 });
 
 // Deep Historical Sync for all active Watchlist stocks (1 to 5 years)
-apiRouter.post("/watchlist/fetch-deep-history", async (req, res) => {
+apiRouter.post("/watchlist/fetch-deep-history", requireAdmin, aiRateLimiter, async (req, res) => {
   try {
     const { years } = req.body;
     const result = await fetchDeepHistoricalResultsForWatchlist(parseInt(years, 10) || 1);
@@ -1908,7 +1902,7 @@ apiRouter.post("/watchlist/fetch-deep-history", async (req, res) => {
 });
 
 // Boost Priority for 10-day Pre-Result Announcements Window
-apiRouter.post("/stocks/:scripCode/boost-runup-priority", async (req, res) => {
+apiRouter.post("/stocks/:scripCode/boost-runup-priority", requireAdmin, async (req, res) => {
   try {
     const scripCode = req.params.scripCode;
     const { symbol, resultDate, windowDays } = req.body;
@@ -2006,7 +2000,7 @@ apiRouter.get("/pdf-open", async (req, res) => {
       if (!isAllowedBseUrl(testUrl)) continue;
 
       try {
-        const response = await fetch(testUrl, {
+        const response = await fetchBseDocument(testUrl, {
           method: 'GET',
           headers: {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
@@ -2023,8 +2017,7 @@ apiRouter.get("/pdf-open", async (req, res) => {
             res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400');
             res.setHeader('Content-Type', 'application/pdf');
             res.setHeader('Content-Disposition', `inline; filename="${cleanSafeName}"`);
-            const arrayBuffer = await response.arrayBuffer();
-            return res.send(Buffer.from(arrayBuffer));
+            return res.send(await readBoundedDocument(response));
           } else if (testUrl.includes('anndet_new.aspx')) {
             return res.redirect(testUrl);
           }
@@ -2101,8 +2094,7 @@ apiRouter.all("/company-intel/:identifier/ai-overview", requireProOrAdmin, aiRat
     try {
       aiOverview = await generateCompanyAiOverview(scripCode, symbol, overviewLang);
     } catch (genErr: any) {
-      if (quotaConsumed) { try { await refundServerAiQuota(uid, isAdminUser); } catch {} }
-      throw genErr;
+      throw genErr; // The outer catch owns cleanup.
     }
     if (!aiOverview) {
       if (quotaConsumed) { try { await refundServerAiQuota(uid, isAdminUser); } catch {} }
@@ -2576,7 +2568,7 @@ apiRouter.get("/security/audit", requireAdmin, async (req, res) => {
 // Execute simulated live penetration test against endpoints
 apiRouter.post("/security/pen-test", requireAdmin, async (req, res) => {
   try {
-    const penTestReport = await executeSimulatedPenTest('http://localhost:3000');
+    const penTestReport = await executeSimulatedPenTest(`http://127.0.0.1:${Number(process.env.PORT) || 3000}`);
     await addLog('INFO', 'SECURITY', `Simulated Penetration Test executed: ${penTestReport.blockedAttacks}/${penTestReport.totalAttacks} attack vectors blocked successfully`);
     res.json({ success: true, ...penTestReport });
   } catch (err: any) {
@@ -2629,10 +2621,6 @@ apiRouter.get("/admin/bloom-test", requireAdmin, async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
-
-
-
-
 
 
 

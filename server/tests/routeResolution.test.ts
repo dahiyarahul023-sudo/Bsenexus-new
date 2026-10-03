@@ -15,10 +15,9 @@ describe('Route Resolution & Dedicated Pages Architecture (/pricing, /guides, 40
     assert.ok(fs.existsSync(notFoundPath), 'src/components/NotFoundPage.tsx must exist');
 
     const pricingCode = fs.readFileSync(pricingPath, 'utf8');
-    // Confirmed claims from LandingPage.tsx
-    assert.ok(pricingCode.includes('₹499'), 'Pricing must reflect confirmed ₹499/mo launch pricing');
-    assert.ok(pricingCode.includes('100% Free') || pricingCode.includes('Free'), 'Pricing must reflect Free Community tier');
-    assert.ok(!pricingCode.includes('₹999') && !pricingCode.includes('₹1999'), 'Pricing must not fabricate enterprise pricing');
+    assert.ok(pricingCode.includes('PRO_PLAN_LIST'), 'Pricing must read the current shared catalogue');
+    assert.ok(pricingCode.includes('onChoosePlan(plan.id)'), 'Plan choices must connect to checkout');
+    assert.ok(pricingCode.includes('Free public filings'), 'Free community access must be explained');
 
     const guidesCode = fs.readFileSync(guidesPath, 'utf8');
     assert.ok(guidesCode.includes('SEBI') || guidesCode.includes('Regulation 30'), 'Guides must cover SEBI regulations');
@@ -76,7 +75,7 @@ describe('Route Resolution & Dedicated Pages Architecture (/pricing, /guides, 40
 
     // Canonical & Title for pricing
     assert.ok(serverCode.includes('canonical: "https://bsenexus.in/pricing"'), 'Pricing canonical must be https://bsenexus.in/pricing');
-    assert.ok(serverCode.includes('Pricing & Plans — 100% Free Launch Access | Bsenexus'), 'Pricing title must be defined');
+    assert.ok(serverCode.includes('Pricing — Pro Plans from ₹59 | Bsenexus'), 'Pricing title must be defined');
 
     // Canonical & Title for guides
     assert.ok(serverCode.includes('canonical: "https://bsenexus.in/guides"'), 'Guides canonical must be https://bsenexus.in/guides');
@@ -94,12 +93,12 @@ describe('Route Resolution & Dedicated Pages Architecture (/pricing, /guides, 40
 
     // Test Pricing HTML
     const pricingHtml = renderPricingPage();
-    assert.ok(pricingHtml.includes('<title>Pricing &amp; Plans — 100% Free Launch Access | Bsenexus</title>'), 'Pricing title must match');
+    assert.ok(pricingHtml.includes('<title>Pricing — Pro Plans from ₹59 | Bsenexus</title>'), 'Pricing title must match');
     assert.ok(pricingHtml.includes('<link rel="canonical" href="https://bsenexus.in/pricing"'), 'Pricing canonical link');
-    assert.ok(pricingHtml.includes('<meta property="og:title" content="Pricing &amp; Plans — 100% Free Launch Access | Bsenexus"'), 'Pricing OG title');
+    assert.ok(pricingHtml.includes('<meta property="og:title" content="Pricing — Pro Plans from ₹59 | Bsenexus"'), 'Pricing OG title');
     assert.ok(pricingHtml.includes('<meta property="og:url" content="https://bsenexus.in/pricing"'), 'Pricing OG url');
     assert.ok(pricingHtml.includes('<h1>'), 'Pricing page must have an h1 element');
-    assert.ok(pricingHtml.includes('₹499'), 'Pricing page must show ₹499 launch rate');
+    assert.ok(pricingHtml.includes('₹59') && pricingHtml.includes('₹199') && pricingHtml.includes('₹999') && pricingHtml.includes('₹1,799'), 'Pricing must show all current one-time rates');
     assert.ok(pricingHtml.includes('Free'), 'Pricing page must show Free tier');
 
     // Test Guides HTML

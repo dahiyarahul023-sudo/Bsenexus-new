@@ -46,6 +46,7 @@ import { parseShareablePath } from './utils/shareUrls';
 import { FilingPage } from './components/filing/FilingPage';
 import { ResultsPage } from './components/results/ResultsPage';
 import { NoteEditorHost } from './components/notes/NoteEditor';
+const PricingPage = lazy(() => import('./components/PricingPage').then(m => ({ default: m.PricingPage })));
 const GuidesPage = lazy(() => import('./components/GuidesPage').then(m => ({ default: m.GuidesPage })));
 const CompaniesPage = lazy(() => import('./components/CompaniesPage').then(m => ({ default: m.CompaniesPage })));
 const TrustPage = lazy(() => import('./components/TrustPages').then(m => ({ default: m.TrustPage })));
@@ -72,6 +73,7 @@ function getAppPathRoute(): 'home' | 'pricing' | 'guides' | 'companies' | 'about
     path.startsWith('/announcements') ||
     path.startsWith('/filing/') ||
     path.startsWith('/results/') ||
+    path === '/settings' ||
     path === '/live' ||
     path.startsWith('/results-calendar') ||
     path.startsWith('/watchlist') ||
@@ -244,6 +246,7 @@ function AppContent() {
         const pathname = window.location.pathname.toLowerCase().replace(/\/+$/, '');
         if (pathname === '/announcements') return 'dashboard';
         if (pathname === '/live') return 'dashboard';
+        if (pathname === '/settings') return 'settings';
         if (pathname === '/results-calendar') return 'results-calendar';
         if (pathname === '/watchlist' || pathname === '/watchlists') return 'watchlists';
 
@@ -301,12 +304,12 @@ function AppContent() {
   const [settings, setSettings] = useState<any>({});
   const [logs, setLogs] = useState([]);
   const [watchlists, setWatchlists] = useState<any[]>([]);
-  const [health, setHealth] = useState({ bse: { status: 'stable', latency: 85 }, telegram: { status: 'connected', latency: 120 } });
+  const [health, setHealth] = useState({ bse: { status: 'unknown', latency: 0 }, telegram: { status: 'unknown', latency: 0 } });
   
   const { user, profile, authLoading, isAdmin, isPro, adminUnlocked, logout, 
     setIsAuthModalOpen, setIsProModalOpen, setCheckoutPlanId,
     isAuthModalOpen, isProModalOpen, isAdminPinModalOpen,
-    isPaidProActive, updateNotificationPreferences
+    isPaidProActive, updateNotificationPreferences, openCheckout
   } = useAuth();
   const [serverAuth, setServerAuth] = useState<{ isAuthenticated: boolean; hasPin: boolean } | null>(null);
 
@@ -315,12 +318,29 @@ function AppContent() {
   // silently — guest sessions are ONLY ever created by the dedicated guest button
   // inside that modal. After a successful explicit login, we complete the entry.
   const pendingTerminalTabRef = useRef<string | null>(null);
+  const pendingCheckoutPlanRef = useRef<string | null>(null);
+  const choosePaidPlan = (planId: string) => {
+    setCheckoutPlanId(planId);
+    if (!user || user.isAnonymous) {
+      pendingCheckoutPlanRef.current = planId;
+      setIsAuthModalOpen(true);
+    } else openCheckout(planId);
+  };
+  useEffect(() => {
+    if (user && !user.isAnonymous && pendingCheckoutPlanRef.current) {
+      const planId = pendingCheckoutPlanRef.current;
+      pendingCheckoutPlanRef.current = null;
+      setIsAuthModalOpen(false);
+      openCheckout(planId);
+    }
+  }, [user]);
   const prevAuthModalOpenRef = useRef(false);
   useEffect(() => {
     // If the modal was closed without a successful login, drop the pending intent
     // so a later unrelated sign-in doesn't unexpectedly jump into the terminal.
     if (prevAuthModalOpenRef.current && !isAuthModalOpen && !user) {
       pendingTerminalTabRef.current = null;
+      pendingCheckoutPlanRef.current = null;
     }
     prevAuthModalOpenRef.current = isAuthModalOpen;
   }, [isAuthModalOpen, user]);
@@ -409,6 +429,11 @@ function AppContent() {
       const sharedUrl = searchParams.get('url') || '';
       const queryParam = searchParams.get('q') || searchParams.get('stock') || searchParams.get('scrip') || '';
 
+      if (actionParam === 'checkout') {
+        const planParam = searchParams.get('plan');
+        if (isValidPlanId(planParam)) choosePaidPlan(planParam as string);
+      }
+
       if (actionParam === 'upgrade' || actionParam === 'trial' || actionParam === 'pro') {
         // /pricing deep links pass ?plan=pro_yearly etc. — preselect it in checkout.
         const planParam = searchParams.get('plan');
@@ -459,6 +484,8 @@ function AppContent() {
       return;
     }
     if (typeof window === 'undefined') return;
+
+    if (parseShareablePath(window.location.pathname) || getAppPathRoute() !== 'home') return;
 
     let targetPath = '/';
     switch (activeTab) {
@@ -567,7 +594,7 @@ function AppContent() {
   // When user successfully signs in, immediately navigate inside to the live terminal dashboard
   const prevUserRef = useRef<any>(null);
   useEffect(() => {
-    if (user && !prevUserRef.current) {
+    if (user && !prevUserRef.current && !parseShareablePath(window.location.pathname) && getAppPathRoute() === 'home') {
       setActiveTab(prev => (prev === 'home' ? 'dashboard' : prev));
     }
     prevUserRef.current = user;
@@ -758,6 +785,8 @@ function AppContent() {
       <>
         <FilingPage onBack={exitShareRoute} />
         <NoteEditorHost />
+        {isAuthModalOpen && <AuthModal />}
+        {isProModalOpen && <ProUpgradeModal />}
       </>
     );
   }
@@ -767,8 +796,20 @@ function AppContent() {
       <>
         <ResultsPage onBack={exitShareRoute} />
         <NoteEditorHost />
+        {isAuthModalOpen && <AuthModal />}
+        {isProModalOpen && <ProUpgradeModal />}
       </>
     );
+  }
+
+  if (currentRoute === 'pricing') {
+    return <>
+      <TabErrorBoundary label="pricing"><Suspense fallback={<TabFallback />}>
+        <PricingPage onChoosePlan={choosePaidPlan} />
+      </Suspense></TabErrorBoundary>
+      {isAuthModalOpen && <AuthModal />}
+      {isProModalOpen && <ProUpgradeModal />}
+    </>;
   }
 
   if (currentRoute === 'guides') {

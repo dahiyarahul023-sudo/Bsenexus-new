@@ -727,7 +727,20 @@ export function buildDefaultStoryChapters(session: MarketSessionInfo = getISTMar
     slides: chapter1Slides
   };
 
-  return [chapter1, chapter2, chapter3, chapter4];
+  // Templates reserve layout only. Financial facts come exclusively from
+  // source responses, never from examples on a failed or partial request.
+  return [chapter1, chapter2, chapter3, chapter4].map(chapter => ({
+    ...chapter,
+    slides: chapter.slides.map(slide => ({
+      ...slide, title: `${chapter.title}: data unavailable`,
+      description: 'Source data has not loaded. Retry later or open the source feed.',
+      tagline: 'Waiting for source data', badge: 'Unavailable', imageCaption: '',
+      bulletPoints: [], statsLabel: undefined, statsValue: undefined,
+      indicesSummary: undefined, marketTrend: undefined, movers: [], fiiDiiData: undefined,
+      upcomingResults: [], corporateActions: [],
+      actionPill: { symbol: '', scripCode: '', name: '' },
+    })),
+  }));
 }
 
 let cachedLiveStoryChapters: StoryChapter[] | null = null;
@@ -777,28 +790,12 @@ export async function fetchLiveStoryChapters(): Promise<StoryChapter[]> {
 
         const s0 = chapters[0].slides[0];
         s0.marketTrend = trend;
-        if (s0.indicesSummary) {
-          s0.indicesSummary.sensex = {
-            price: sensex.price,
-            change: sensex.change,
-            changePercent: sensex.changePercent,
-            dayHigh: sensex.dayHigh,
-            dayLow: sensex.dayLow
-          };
-          if (nifty) {
-            s0.indicesSummary.nifty = {
-              price: nifty.price,
-              change: nifty.change,
-              changePercent: nifty.changePercent,
-              dayHigh: nifty.dayHigh,
-              dayLow: nifty.dayLow
-            };
-          }
-          if (typeof feed.indices.advanceCount === 'number') {
-            s0.indicesSummary.advanceCount = feed.indices.advanceCount;
-            s0.indicesSummary.declineCount = feed.indices.declineCount;
-          }
+        if (sensex && nifty) {
+          s0.indicesSummary = { sensex, nifty,
+            advanceCount: feed.indices.advanceCount ?? 0,
+            declineCount: feed.indices.declineCount ?? 0 };
         }
+
         s0.accentGradient = isBull
           ? 'from-emerald-950/90 via-slate-900 to-[#0e0c18]'
           : 'from-rose-950/90 via-slate-900 to-[#0e0c18]';

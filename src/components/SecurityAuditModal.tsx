@@ -26,6 +26,7 @@ interface PenTestResult {
   payload: string;
   expected: string;
   actualStatus: number;
+  outcome?: 'blocked' | 'unexpected' | 'inconclusive';
   blocked: boolean;
   mitigation: string;
 }
@@ -38,7 +39,7 @@ interface SecurityAuditModalProps {
 export const SecurityAuditModal: React.FC<SecurityAuditModalProps> = ({ isOpen, onClose }) => {
   const { isAdmin } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [score, setScore] = useState<number>(100);
+  const [score, setScore] = useState<number>(0);
   const [checks, setChecks] = useState<SecurityCheck[]>([]);
   const [filterCategory, setFilterCategory] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -57,7 +58,7 @@ export const SecurityAuditModal: React.FC<SecurityAuditModalProps> = ({ isOpen, 
         const data = await res.json();
         if (data.success && Array.isArray(data.checks)) {
           setChecks(data.checks);
-          setScore(data.score || 100);
+          setScore(data.score ?? 0);
         }
       }
     } catch (err) {
@@ -128,11 +129,11 @@ export const SecurityAuditModal: React.FC<SecurityAuditModalProps> = ({ isOpen, 
                   20-Point Launch Security Audit
                 </h2>
                 <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
-                  {score}% Hardened
+                  {score}% checks passed
                 </span>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Production-grade verification: API keys, RLS, IDOR defense, rate limits &amp; red-team simulation
+                Evidence checklist and anonymous route probes. Unverified checks remain pending.
               </p>
             </div>
           </div>
@@ -175,12 +176,12 @@ export const SecurityAuditModal: React.FC<SecurityAuditModalProps> = ({ isOpen, 
             <ActionButton
               onClick={runPenTest}
               isLoading={runningPenTest}
-              loadingText="Simulating Attacks..."
+              loadingText="Checking Guards..."
               variant="danger"
               size="sm"
               icon={<Play size={12} />}
             >
-              Attack Your Own App
+              Check Anonymous Guards
             </ActionButton>
 
             <ActionButton
@@ -257,9 +258,9 @@ export const SecurityAuditModal: React.FC<SecurityAuditModalProps> = ({ isOpen, 
                     </div>
 
                     <div className="shrink-0 flex sm:flex-col items-center sm:items-end justify-between gap-1 pt-1 sm:pt-0">
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/80">
-                        <CheckCircle2 size={12} className="text-emerald-500" />
-                        Hardened
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-300 dark:border-slate-600">
+                        {item.status === 'passed' ? <CheckCircle2 size={12} className="text-emerald-500" /> : <AlertTriangle size={12} className="text-amber-500" />}
+                        {item.status === 'passed' ? 'Passed' : item.status === 'failed' ? 'Failed' : 'Unverified'}
                       </span>
                     </div>
                   </div>
@@ -273,7 +274,7 @@ export const SecurityAuditModal: React.FC<SecurityAuditModalProps> = ({ isOpen, 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Terminal size={16} className="text-emerald-400" />
-                    <span className="text-xs font-mono font-bold">Simulated Red-Team Penetration Harness</span>
+                    <span className="text-xs font-mono font-bold">Anonymous Route Guard Checks</span>
                   </div>
                   {penTestSummary && (
                     <span className="text-xs font-mono text-emerald-400 bg-emerald-950/70 border border-emerald-800 px-2 py-0.5 rounded">
@@ -282,7 +283,7 @@ export const SecurityAuditModal: React.FC<SecurityAuditModalProps> = ({ isOpen, 
                   )}
                 </div>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  Directly tests unauthenticated administrative routes, IDOR cross-tenant mutations, SQLi/NoSQL payloads, parameter field tampering, and SSRF external URL proxy handlers.
+                  Sends read-only anonymous requests to six guarded routes. This does not test authenticated tenant isolation, SQL injection or SSRF.
                 </p>
               </div>
 
@@ -293,9 +294,9 @@ export const SecurityAuditModal: React.FC<SecurityAuditModalProps> = ({ isOpen, 
                     isRunning={true}
                     simulatedSteps={[
                       { label: 'Probing unauthorized administrative endpoints...', durationMs: 900 },
-                      { label: 'Simulating IDOR cross-tenant data mutations...', durationMs: 1200 },
-                      { label: 'Fuzzing SQLi, NoSQL & shell escape vectors...', durationMs: 1400 },
-                      { label: 'Checking SSRF external proxy domain whitelist...', durationMs: 1000 }
+                      { label: 'Checking authenticated-only route guards...', durationMs: 1200 },
+                      { label: 'Waiting for HTTP guard responses...', durationMs: 1400 },
+                      { label: 'Recording observed status codes...', durationMs: 1000 }
                     ]}
                   />
                   <div className="space-y-2.5 animate-pulse">
@@ -332,7 +333,7 @@ export const SecurityAuditModal: React.FC<SecurityAuditModalProps> = ({ isOpen, 
                             ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
                             : 'bg-rose-100 text-rose-800 dark:bg-rose-950/70 dark:text-rose-300'
                         }`}>
-                          {test.blocked ? `Blocked (HTTP ${test.actualStatus})` : `Exposed (${test.actualStatus})`}
+                          {test.blocked ? `Blocked (HTTP ${test.actualStatus})` : test.outcome === 'inconclusive' ? 'Inconclusive' : `Unexpected HTTP ${test.actualStatus}`}
                         </span>
                       </div>
 
@@ -364,7 +365,7 @@ export const SecurityAuditModal: React.FC<SecurityAuditModalProps> = ({ isOpen, 
                       No Penetration Test Run Yet
                     </p>
                     <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-                      Click &ldquo;Attack Your Own App&rdquo; to launch automated simulated exploits against all 6 major attack vectors.
+                      Click &ldquo;Check Anonymous Guards&rdquo; to launch automated simulated exploits against all 6 major attack vectors.
                     </p>
                   </div>
                   <button

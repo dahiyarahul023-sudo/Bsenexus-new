@@ -2269,7 +2269,7 @@ ${jsonLd}
             <li class="feature-item"><span class="check-icon">&#10003;</span><span>One-time payment, no commitment</span></li>
           </ul>
         </div>
-        <a href="https://bsenexus.in/?action=upgrade&amp;plan=pro_weekly" class="card-btn btn-sec">Choose Weekly</a>
+        <a href="https://bsenexus.in/?action=checkout&amp;plan=pro_weekly" class="card-btn btn-sec">Choose Weekly</a>
       </div>
 
       <!-- Pro Monthly -->
@@ -2290,7 +2290,7 @@ ${jsonLd}
             <li class="feature-item"><span class="check-icon">&#10003;</span><span>One-time payment via Cashfree</span></li>
           </ul>
         </div>
-        <a href="https://bsenexus.in/?action=upgrade&amp;plan=pro_monthly" class="card-btn btn-pri">Choose Monthly</a>
+        <a href="https://bsenexus.in/?action=checkout&amp;plan=pro_monthly" class="card-btn btn-pri">Choose Monthly</a>
       </div>
 
       <!-- Pro 6-Month -->
@@ -2309,7 +2309,7 @@ ${jsonLd}
             <li class="feature-item"><span class="check-icon">&#10003;</span><span>Set and forget for half a year</span></li>
           </ul>
         </div>
-        <a href="https://bsenexus.in/?action=upgrade&amp;plan=pro_halfyearly" class="card-btn btn-sec">Choose 6-Month</a>
+        <a href="https://bsenexus.in/?action=checkout&amp;plan=pro_halfyearly" class="card-btn btn-sec">Choose 6-Month</a>
       </div>
 
       <!-- Pro Yearly -->
@@ -2328,7 +2328,7 @@ ${jsonLd}
             <li class="feature-item"><span class="check-icon">&#10003;</span><span>Lowest effective monthly cost</span></li>
           </ul>
         </div>
-        <a href="https://bsenexus.in/?action=upgrade&amp;plan=pro_yearly" class="card-btn btn-sec">Choose Yearly</a>
+        <a href="https://bsenexus.in/?action=checkout&amp;plan=pro_yearly" class="card-btn btn-sec">Choose Yearly</a>
       </div>
     </div>
 
@@ -6160,7 +6160,7 @@ const TAB_SEO_CONFIG: Record<string, TabSeoMeta> = {
     canonical: "https://bsenexus.in/guides",
   },
   pricing: {
-    title: "Pricing & Plans — 100% Free Launch Access | Bsenexus",
+    title: "Pricing — Pro Plans from ₹59 | Bsenexus",
     description: "Explore Bsenexus transparent pricing. 100% Free access to Community and Pro intelligence features during launch: latest BSE filings, Gemini AI summaries, and Telegram alerts on Bsenexus.",
     canonical: "https://bsenexus.in/pricing",
   },

@@ -514,8 +514,7 @@ export async function fetchAndSyncResultsCalendar(
 
         if (newlyFoundUpcoming.length > 0) {
           for (const item of newlyFoundUpcoming) {
-            notifiedMeetingIds.add(item.id);
-            const daysText = item.daysLeft === 0 ? '🔥 <b>TODAY (आज)</b>' : `⏳ <b>${item.daysLeft} days remaining</b>`;
+                    const daysText = item.daysLeft === 0 ? '🔥 <b>TODAY (आज)</b>' : `⏳ <b>${item.daysLeft} days remaining</b>`;
             const telegramMsg = 
               `📅 <b>UPCOMING BOARD MEETING SCHEDULED</b>\n\n` +
               `🏢 <b>${item.companyName} (${item.symbol})</b>\n` +
@@ -1665,6 +1664,7 @@ export async function broadcastUpcomingMeetingsToTelegram(options: { forceAll?: 
 
     const res = await sendToTelegram(telegramMsg).catch(e => ({ success: false, error: e.message }));
     if (res && res.success) {
+      notifiedMeetingIds.add(item.id);
       sentCount++;
     }
   }

@@ -82,6 +82,7 @@ export function parseShareablePath(pathname: string):
   | { kind: 'filing'; symbol: string; newsId: string }
   | { kind: 'results'; symbol: string; quarterKey: string }
   | null {
+  try {
   const parts = (pathname || '').split('/').filter(Boolean);
   if (parts.length === 3 && parts[0].toLowerCase() === 'filing') {
     const symbol = decodeURIComponent(parts[1] || '').trim();
@@ -93,5 +94,6 @@ export function parseShareablePath(pathname: string):
     const quarterKey = decodeURIComponent(parts[2] || '').trim();
     if (symbol && quarterKey) return { kind: 'results', symbol, quarterKey };
   }
+  } catch { /* Malformed percent escapes are invalid links, not app crashes. */ }
   return null;
 }

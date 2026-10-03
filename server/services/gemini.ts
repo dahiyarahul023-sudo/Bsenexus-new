@@ -1,4 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
+import { fetchBseDocument, readBoundedDocument } from '../utils/bseDocument.js';
 import { sendReplyToTelegram } from "./telegram.js";
 import { addLog } from "../database/logDao.js";
 import { updateAnnouncementSummary, getAnnouncementById, getRecentAnnouncements } from "../database/announcementDao.js";
@@ -160,10 +161,9 @@ async function generateLocalizedSummary(company: string, subject: string, detail
     if (pdfLink && (category === 'RESULTS' || category === 'CONFERENCE_CALL')) {
       try {
         addLog('INFO', 'GEMINI', `[${company}] Downloading filing PDF from BSE...`);
-        const res = await fetch(pdfLink, { signal: AbortSignal.timeout(25000) });
+        const res = await fetchBseDocument(pdfLink, { signal: AbortSignal.timeout(25000) });
         if (res.ok) {
-          const arrayBuffer = await res.arrayBuffer();
-          const buffer = Buffer.from(arrayBuffer);
+          const buffer = await readBoundedDocument(res);
           const sizeMB = (buffer.length / (1024 * 1024)).toFixed(2);
 
           if (buffer.length <= 20 * 1024 * 1024) {

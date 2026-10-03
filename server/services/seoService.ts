@@ -1,4 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
+import { fetchPublicPage } from '../utils/publicPage.js';
 import { addLog } from "../database/logDao.js";
 
 let aiClient: GoogleGenAI | null = null;
@@ -22,29 +23,7 @@ CRITICAL WRITING RULES (STRICT ANTI-AI SLOP):
 // Helper to safely extract readable text from a URL
 export async function fetchPageContent(urlStr: string): Promise<{ title: string; content: string; metaDescription: string }> {
   try {
-    const parsed = new URL(urlStr);
-    if (!['http:', 'https:'].includes(parsed.protocol)) {
-      throw new Error("Invalid URL protocol. Only HTTP and HTTPS are permitted.");
-    }
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 12000);
-
-    const response = await fetch(urlStr, {
-      signal: controller.signal,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 BSE-Nexus-SEO-Auditor/2.0',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-      }
-    });
-
-    clearTimeout(timeout);
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch URL: HTTP ${response.status} ${response.statusText}`);
-    }
-
-    const html = await response.text();
+    const html = await fetchPublicPage(urlStr);
 
     // Extract title
     const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);

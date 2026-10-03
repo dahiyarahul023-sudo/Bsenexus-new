@@ -259,8 +259,8 @@ export function LandingPage({
   onEnterTerminal,
   theme,
   setTheme,
-  bseHealth = { status: 'stable', latency: 85 },
-  telegramHealth = { status: 'connected', latency: 120 }
+  bseHealth = { status: 'unknown', latency: 0 },
+  telegramHealth = { status: 'unknown', latency: 0 }
 }: LandingPageProps) {
   const { user, profile, isPro, isAdmin, setIsAuthModalOpen, setIsProModalOpen } = useAuth();
 
@@ -309,7 +309,7 @@ export function LandingPage({
       </a>
       
       {/* 1. TOP LIVE REAL-TIME MARKET TICKER TAPE */}
-      <MarketTickerTape bseLatency={bseHealth.latency || 85} />
+      <MarketTickerTape bseLatency={bseHealth.latency || 0} />
 
       {/* 2. NAVBAR (Apple Frosted Glass Chrome) */}
       <header className="sticky top-0 z-40 bg-white/80 dark:bg-[#12131C]/80 backdrop-blur-xl backdrop-saturate-180 border-b border-slate-200/60 dark:border-white/10 shadow-xs transition-colors">

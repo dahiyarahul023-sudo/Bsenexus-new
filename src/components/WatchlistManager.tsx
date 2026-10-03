@@ -726,16 +726,8 @@ export function WatchlistManager() {
   const handleManualSendTelegram = async (item: any) => {
     if (!item) return;
 
-    if (!isProOrAdmin) {
-      if (!user || user.isAnonymous) {
-        setIsAuthModalOpen(true);
-        alert('🔒 Google Sign-In Required: Sign in with Google to activate your 1-Week Free Pro trial to broadcast to Telegram!');
-      } else {
-        setIsProModalOpen(true);
-        alert(`🔒 Direct Telegram Broadcasting is a Pro feature.
-
-Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to dispatch instant alerts to Telegram!`);
-      }
+    if (!isAdmin) {
+      alert('Shared Telegram channel broadcasts require an administrator. Personal Pro news alerts use your configured destination.');
       return;
     }
 

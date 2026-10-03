@@ -139,26 +139,33 @@ create or replace function grant_payment_atomic(
   p_order_id text, p_amount_paise int
 ) returns jsonb
 language plpgsql
-security definer
+security invoker
+set search_path = ''
 as $$
 declare v_current bigint;
 begin
   select expires_at into v_current
-  from payment_entitlements where uid = p_uid for update;
+  from public.payment_entitlements where uid = p_uid for update;
 
   if not found then
-    insert into payment_entitlements (uid, plan_id, expires_at, granted_at, last_order_id)
+    insert into public.payment_entitlements (uid, plan_id, expires_at, granted_at, last_order_id)
     values (p_uid, p_plan_id, p_expires_at,
             (extract(epoch from now()) * 1000)::bigint, p_order_id);
   elsif p_expires_at > v_current then
-    update payment_entitlements
+    update public.payment_entitlements
     set plan_id = p_plan_id, expires_at = p_expires_at, last_order_id = p_order_id
     where uid = p_uid;
   end if;
 
-  insert into payment_orders (order_id, uid, plan_id, amount_paise, status)
+  insert into public.payment_orders (order_id, uid, plan_id, amount_paise, status)
   values (p_order_id, p_uid, p_plan_id, p_amount_paise, 'PAID')
   on conflict (order_id) do update set status = 'PAID';
 
   return jsonb_build_object('ok', true);
 end $$;
+
+-- Table RLS does not revoke a function's default PUBLIC EXECUTE privilege.
+revoke all on function public.grant_payment_atomic(text, text, bigint, text, int)
+  from public, anon, authenticated;
+grant execute on function public.grant_payment_atomic(text, text, bigint, text, int)
+  to service_role;

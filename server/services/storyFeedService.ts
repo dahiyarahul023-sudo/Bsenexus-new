@@ -173,11 +173,11 @@ export interface LiveStoryFeedResponse {
   indices: {
     sensex: { price: number; change: number; changePercent: number; dayHigh?: number; dayLow?: number };
     nifty: { price: number; change: number; changePercent: number; dayHigh?: number; dayLow?: number };
-    indiavix: { price: number; change: number; changePercent: number };
+    indiavix: { price: number; change: number; changePercent: number } | null;
     advanceCount: number;
     declineCount: number;
     marketBreadth: string;
-  };
+  } | null;
   movers: {
     topGainers: LiveMoverItem[];
     topLosers: LiveMoverItem[];
@@ -187,7 +187,7 @@ export interface LiveStoryFeedResponse {
     todayMeetings: any[];
     upcomingMeetings: any[];
   };
-  fiiDii: FiiDiiFlowData;
+  fiiDii: FiiDiiFlowData | null;
   fresh18hAnnouncements: Array<{
     id: string;
     scripCode: string;
@@ -423,18 +423,6 @@ export async function getLiveStoryFeed(): Promise<LiveStoryFeedResponse> {
   const todayMeetings = todayMeetingsList.slice(0, 6);
   const upcomingMeetings = upcomingMeetingsList.slice(0, 10);
 
-  const fallbackFiiDii: FiiDiiFlowData = {
-    fiiNet: -2977.86,
-    diiNet: 2686.05,
-    netBalance: -291.81,
-    fiiBuy: 13194.76,
-    fiiSell: 16172.62,
-    diiBuy: 15221.98,
-    diiSell: 12535.93,
-    dateStr: 'Latest Trading Session',
-    flowInsight: 'Domestic institutions infused +₹2,686 Cr, offsetting FII net outflow of -₹2,978 Cr.',
-    timestamp: now
-  };
 
   const advanceCount = movers.filter(m => m.changePercent > 0).length;
   const declineCount = movers.filter(m => m.changePercent < 0).length;
@@ -451,30 +439,30 @@ export async function getLiveStoryFeed(): Promise<LiveStoryFeedResponse> {
       description: sessionDesc,
       shouldShowYesterdayMovers
     },
-    indices: {
+    indices: sensexItem && niftyItem ? {
       sensex: {
-        price: sensexItem?.price || 76853.87,
-        change: sensexItem?.change || -381.59,
-        changePercent: sensexItem?.changePercent || -0.49,
+        price: sensexItem.price,
+        change: sensexItem.change,
+        changePercent: sensexItem.changePercent,
         dayHigh: sensexItem?.dayHigh,
         dayLow: sensexItem?.dayLow
       },
       nifty: {
-        price: niftyItem?.price || 24048.20,
-        change: niftyItem?.change || -106.70,
-        changePercent: niftyItem?.changePercent || -0.44,
+        price: niftyItem.price,
+        change: niftyItem.change,
+        changePercent: niftyItem.changePercent,
         dayHigh: niftyItem?.dayHigh,
         dayLow: niftyItem?.dayLow
       },
-      indiavix: {
-        price: vixItem?.price || 13.45,
-        change: vixItem?.change || 0.22,
-        changePercent: vixItem?.changePercent || 1.66
-      },
+      indiavix: vixItem ? {
+        price: vixItem.price,
+        change: vixItem.change,
+        changePercent: vixItem.changePercent
+      } : null,
       advanceCount,
       declineCount,
       marketBreadth
-    },
+    } : null,
     movers: {
       topGainers,
       topLosers,
@@ -484,7 +472,7 @@ export async function getLiveStoryFeed(): Promise<LiveStoryFeedResponse> {
       todayMeetings,
       upcomingMeetings
     },
-    fiiDii: fiiDii || fallbackFiiDii,
+    fiiDii,
     fresh18hAnnouncements,
     fresh18hNewsStories
   };

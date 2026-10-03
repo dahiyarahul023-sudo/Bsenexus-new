@@ -1,6 +1,12 @@
 import { test, describe, beforeEach } from 'node:test';
 import assert from 'node:assert';
-import {
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+process.chdir(fs.mkdtempSync(path.join(os.tmpdir(), 'bsenexus-account-test-')));
+delete process.env.SUPABASE_URL;
+delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+const {
   getAccountKey,
   checkAccountProtection,
   recordFailedAttempt,
@@ -8,7 +14,7 @@ import {
   getSanitizedClientIp,
   simulateCredentialVerificationDelay,
   getAccountProtectionConfig
-} from '../security/accountRateLimiter.js';
+} = await import('../security/accountRateLimiter.js');
 
 describe('Per-Account Rate Limiting & Protection Suite', () => {
   const config = getAccountProtectionConfig();

@@ -21,7 +21,7 @@ export function MarketTickerTape({
   compact = false,
   bseLatency = 85
 }: MarketTickerTapeProps) {
-  const { indices, isMarketOpen, marketSession, marketStatusText, sessionBadge, loading, refresh } = useMarketIndices();
+  const { indices, isMarketOpen, marketSession, marketStatusText, sessionBadge, stale, loading, refresh } = useMarketIndices();
   const [isHovered, setIsHovered] = useState(false);
 
   const formatPrice = (idx: MarketIndexItem) => {
@@ -59,6 +59,7 @@ export function MarketTickerTape({
   };
 
   const getSessionBadgeStyle = () => {
+    if (!indices.length || stale) return { dotBg: 'bg-slate-400', ping: false, label: stale ? 'CACHED / STALE' : loading ? 'LOADING DATA' : 'DATA UNAVAILABLE', color: 'text-slate-500', badgeBg: 'bg-slate-100' };
     switch (marketSession) {
       case 'REGULAR':
         return {
@@ -152,6 +153,7 @@ export function MarketTickerTape({
             className="animate-ticker-smooth flex items-center gap-4 sm:gap-7 py-0.5 tabular-nums"
             style={{ animationPlayState: isHovered ? 'paused' : 'running' }}
           >
+            {!indices.length && <span className="text-slate-500 whitespace-nowrap">{loading ? 'Loading quotes…' : 'No verified quotes available'}</span>}
             {tickerItems.map((idx, i) => {
               const { change } = getChangeValues(idx);
               const isPositive = change >= 0;

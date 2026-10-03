@@ -1,11 +1,17 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import express from 'express';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import cookieParser from 'cookie-parser';
 import jwt from 'jsonwebtoken';
 import { getFirebaseIdentity, hasTrustedSessionRoles } from '../security/firebaseIdentity.js';
 import { getFirebaseAuth } from '../security/firebaseAdmin.js';
 
+process.chdir(fs.mkdtempSync(path.join(os.tmpdir(), 'bsenexus-auth-test-')));
+delete process.env.SUPABASE_URL;
+delete process.env.SUPABASE_SERVICE_ROLE_KEY;
 process.env.JWT_SECRET ||= 'regression-test-secret-with-no-production-access';
 process.env.NODE_ENV = 'test';
 const { authMiddleware, authRouter, requireAdmin } = await import('../security/auth.js');

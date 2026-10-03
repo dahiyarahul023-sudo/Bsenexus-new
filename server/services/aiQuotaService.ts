@@ -1,5 +1,8 @@
 import { readLocalJson, writeLocalJson } from '../database/localStore.js';
 import { getUserProfile } from '../database/usersDao.js';
+import { createKeyedSerial } from '../utils/keyedSerial.js';
+
+const serializeQuota = createKeyedSerial();
 
 const AI_USAGE_FILE = 'ai_usage.json';
 
@@ -16,7 +19,7 @@ export async function checkServerAiQuota(
   isAdminUser: boolean
 ): Promise<{ allowed: boolean; remaining: number; dailyLimit: number; error?: string; isPro?: boolean }> {
   // 1. Admin/Owner always has full unlimited AI generation
-  if (isAdminUser || uid === 'admin') {
+  if (isAdminUser) {
     return { allowed: true, remaining: Infinity, dailyLimit: Infinity, isPro: true };
   }
 
@@ -90,7 +93,7 @@ export async function consumeServerAiQuota(
   isAdminUser: boolean
 ): Promise<{ remaining: number; dailyLimit: number; isPro: boolean }> {
   // 1. Admin / Owner has unlimited
-  if (isAdminUser || uid === 'admin') {
+  if (isAdminUser) {
     return { remaining: Infinity, dailyLimit: Infinity, isPro: true };
   }
 
@@ -130,17 +133,19 @@ export async function checkAndConsumeServerAiQuota(
   uid: string,
   isAdminUser: boolean
 ): Promise<{ allowed: boolean; remaining: number; dailyLimit: number; error?: string; isPro?: boolean }> {
-  const check = await checkServerAiQuota(uid, isAdminUser);
-  if (!check.allowed) {
-    return check;
-  }
-  const consumed = await consumeServerAiQuota(uid, isAdminUser);
-  return {
-    allowed: true,
-    remaining: consumed.remaining,
-    dailyLimit: consumed.dailyLimit,
-    isPro: consumed.isPro
-  };
+  // No request in this process can pass the same user's check before this
+  // reservation commits. Cloud Run instances still need a durable SQL quota.
+  return serializeQuota(uid, async () => {
+    const check = await checkServerAiQuota(uid, isAdminUser);
+    if (!check.allowed || !Number.isFinite(check.dailyLimit)) return check;
+    // Do not await a second profile read between the check and local write.
+    const usageKey = `${uid}_${getTodayKeyIST()}`;
+    const usageMap = readLocalJson<Record<string, number>>(AI_USAGE_FILE, {});
+    const used = usageMap[usageKey] || 0;
+    usageMap[usageKey] = used + 1;
+    writeLocalJson(AI_USAGE_FILE, usageMap);
+    return { ...check, remaining: Math.max(0, check.dailyLimit - used - 1) };
+  });
 }
 
 /**
@@ -162,7 +167,7 @@ export async function refundServerAiQuota(
   isAdminUser: boolean
 ): Promise<void> {
   // Admin/owner: unlimited, no refund needed
-  if (isAdminUser || uid === 'admin') return;
+  if (isAdminUser) return;
   // Guest: no quota to refund
   if (!uid || uid === 'guest' || uid.startsWith('guest_') || uid.startsWith('trader_')) return;
 
@@ -184,7 +189,7 @@ export async function getServerAiQuotaStatus(
   uid: string,
   isAdminUser: boolean
 ): Promise<{ tier: 'guest' | 'free' | 'pro' | 'admin'; dailyLimit: number; usedToday: number; remaining: number; canGenerate: boolean; proDaysLeft?: number }> {
-  if (isAdminUser || uid === 'admin') {
+  if (isAdminUser) {
     return {
       tier: 'admin',
       dailyLimit: Infinity,

@@ -33,147 +33,16 @@ const processedCache = new Set<string>();
 export const processedBloomFilter = new BloomFilter(100000, 0.005);
 export const sentBloomFilter = new BloomFilter(50000, 0.005);
 
-const DEFAULT_SEED_ANNOUNCEMENTS = [
-  {
-    id: "ann_500325_20260924_01",
-    newsId: "ann_500325_20260924_01",
-    scrip_cd: 500325,
-    symbol: "RELIANCE",
-    companyName: "RELIANCE INDUSTRIES LTD.",
-    subject: "Financial Results For The Quarter And Year Ended March 31 - SEBI LODR Reg 33",
-    details: "The Board of Directors of Reliance Industries Limited at its meeting held today considered and approved the Audited Standalone and Consolidated Financial Results for the quarter and year ended March 31. Key highlights: Consolidated Revenue from Operations reached ₹2,64,831 Cr (+11.3% YoY). EBITDA stood at ₹47,150 Cr (+14.2% YoY). Net Profit (PAT) after tax rose to ₹21,243 Cr (+10.8% YoY). Digital Services (Jio) and Retail segments continued strong momentum.",
-    category: "RESULTS",
-    priority: "HIGH",
-    bseTime: "24/09/2026 16:45:12",
-    bseTimestamp: Date.now() - 3600000,
-    fetched_at: Date.now() - 3600000,
-    pdfLink: "https://www.bseindia.com/xml-data/corpfiling/AttachLive/500325_Outcome_2026.pdf",
-    aiSummary: "• Consolidated Revenue: ₹2,64,831 Cr (+11.3% YoY)\n• EBITDA: ₹47,150 Cr (+14.2% YoY)\n• Net Profit (PAT): ₹21,243 Cr (+10.8% YoY)\n• Core driver: Retail footfalls and 5G subscriber expansion.\n• Recommendation: Final Dividend of ₹10.00 per equity share approved.",
-    is_sent: 1
-  },
-  {
-    id: "ann_532540_20260924_02",
-    newsId: "ann_532540_20260924_02",
-    scrip_cd: 532540,
-    symbol: "TCS",
-    companyName: "TATA CONSULTANCY SERVICES LTD.",
-    subject: "Outcome of Board Meeting - Audited Results & Final Dividend Declaration",
-    details: "Tata Consultancy Services Ltd. has informed the Exchange that the Board of Directors at its meeting recommended a Final Dividend of ₹28 per equity share of ₹1 each for the financial year. Constant currency revenue growth was 5.4% YoY. Net margin held firm at 26.0%.",
-    category: "RESULTS",
-    priority: "HIGH",
-    bseTime: "24/09/2026 15:32:00",
-    bseTimestamp: Date.now() - 7200000,
-    fetched_at: Date.now() - 7200000,
-    pdfLink: "https://www.bseindia.com/xml-data/corpfiling/AttachLive/532540_Outcome_2026.pdf",
-    aiSummary: "• Revenue from operations: ₹62,440 Cr (+4.8% YoY)\n• Operating margin: 26.0% (steady QoQ)\n• Net profit (PAT): ₹12,434 Cr (+6.2% YoY)\n• Final dividend: ₹28.00 per share with record date in next fortnight.",
-    is_sent: 1
-  },
-  {
-    id: "ann_500510_20260924_03",
-    newsId: "ann_500510_20260924_03",
-    scrip_cd: 500510,
-    symbol: "LT",
-    companyName: "LARSEN & TOUBRO LTD.",
-    subject: "Heavy Civil Infrastructure Secures Major Order under Regulation 30",
-    details: "Larsen & Toubro's Heavy Civil Infrastructure business vertical has secured a significant order in the range of ₹5,000 Cr to ₹10,000 Cr for the construction of key underground metro railway systems and high-speed rail viaducts.",
-    category: "HIGH_PRIORITY",
-    priority: "HIGH",
-    bseTime: "24/09/2026 14:15:20",
-    bseTimestamp: Date.now() - 10800000,
-    fetched_at: Date.now() - 10800000,
-    pdfLink: "https://www.bseindia.com/xml-data/corpfiling/AttachLive/500510_OrderWin_2026.pdf",
-    aiSummary: "• Order size: Major order between ₹5,000 Cr – ₹10,000 Cr.\n• Segment: Heavy Civil Infrastructure (Underground Metro & High-Speed Rail).\n• Revenue visibility: Enhances FY27-28 execution pipeline.",
-    is_sent: 1
-  },
-  {
-    id: "ann_500209_20260924_04",
-    newsId: "ann_500209_20260924_04",
-    scrip_cd: 500209,
-    symbol: "INFY",
-    companyName: "INFOSYS LTD.",
-    subject: "Schedule of Earnings Conference Call for Institutional Investors",
-    details: "Infosys Limited will host an earnings conference call with analysts and institutional investors to discuss the audited financial results for the quarter ended. Dial-in details and web-stream links are attached.",
-    category: "CONFERENCE_CALL",
-    priority: "MEDIUM",
-    bseTime: "24/09/2026 12:40:00",
-    bseTimestamp: Date.now() - 14400000,
-    fetched_at: Date.now() - 14400000,
-    pdfLink: "https://www.bseindia.com/xml-data/corpfiling/AttachLive/500209_Concall_2026.pdf",
-    aiSummary: "• Event: Institutional Earnings Call.\n• Focus: Q2 financial performance, deal total contract value (TCV), and attrition metrics.",
-    is_sent: 0
-  },
-  {
-    id: "ann_500180_20260924_05",
-    newsId: "ann_500180_20260924_05",
-    scrip_cd: 500180,
-    symbol: "HDFCBANK",
-    companyName: "HDFC BANK LTD.",
-    subject: "SEBI LODR Regulation 30 Corporate Intimation & Branch Network Expansion",
-    details: "HDFC Bank Limited has submitted an intimation under Regulation 30 regarding opening of new commercial and rural banking branches, augmenting retail deposit mobilization.",
-    category: "OTHER",
-    priority: "MEDIUM",
-    bseTime: "24/09/2026 11:20:00",
-    bseTimestamp: Date.now() - 18000000,
-    fetched_at: Date.now() - 18000000,
-    pdfLink: "https://www.bseindia.com/xml-data/corpfiling/AttachLive/500180_Intimation_2026.pdf",
-    aiSummary: "• Corporate development: Branch footprint expansion across Tier-2/3 cities to strengthen CASA deposit ratio.",
-    is_sent: 0
-  },
-  {
-    id: "ann_532454_20260924_06",
-    newsId: "ann_532454_20260924_06",
-    scrip_cd: 532454,
-    symbol: "BHARTIARTL",
-    companyName: "BHARTI AIRTEL LTD.",
-    subject: "Board Meeting Intimation to Consider Financial Results & Interim Dividend",
-    details: "Notice is hereby given that a meeting of the Board of Directors of Bharti Airtel Ltd is scheduled to be held to consider and approve the Unaudited Financial Results (Standalone and Consolidated) and consideration of Interim Dividend.",
-    category: "RESULTS",
-    priority: "HIGH",
-    bseTime: "24/09/2026 10:05:00",
-    bseTimestamp: Date.now() - 21600000,
-    fetched_at: Date.now() - 21600000,
-    pdfLink: "https://www.bseindia.com/xml-data/corpfiling/AttachLive/532454_Notice_2026.pdf",
-    aiSummary: "• Board Meeting: Scheduled to consider financial results and dividend approval.\n• Trading Window: Closed for designated persons as per SEBI PIT regulations.",
-    is_sent: 1
-  },
-  {
-    id: "ann_500875_20260924_07",
-    newsId: "ann_500875_20260924_07",
-    scrip_cd: 500875,
-    symbol: "ITC",
-    companyName: "ITC LTD.",
-    subject: "Financial Results for the Quarter - Record Segment Revenue in FMCG",
-    details: "ITC Limited has declared its quarterly financial statements. FMCG Others segment registered robust growth led by staples and branded packaged foods. Hotels business reported revenue surge.",
-    category: "RESULTS",
-    priority: "HIGH",
-    bseTime: "24/09/2026 09:45:00",
-    bseTimestamp: Date.now() - 25200000,
-    fetched_at: Date.now() - 25200000,
-    pdfLink: "https://www.bseindia.com/xml-data/corpfiling/AttachLive/500875_Outcome_2026.pdf",
-    aiSummary: "• Gross Revenue: ₹18,600 Cr (+7.5% YoY)\n• FMCG-Others EBIT margin expanded 80 bps.\n• Hotels demerger process progressing on track.",
-    is_sent: 1
-  },
-  {
-    id: "ann_500034_20260924_08",
-    newsId: "ann_500034_20260924_08",
-    scrip_cd: 500034,
-    symbol: "BAJFINANCE",
-    companyName: "BAJAJ FINANCE LTD.",
-    subject: "Assets Under Management (AUM) crosses ₹3.5 Lakh Crore Milestone",
-    details: "Bajaj Finance Limited shares quarterly operational performance update. New customer additions remained strong at 3.8 million during the quarter. Asset quality metrics remain healthy.",
-    category: "HIGH_PRIORITY",
-    priority: "HIGH",
-    bseTime: "24/09/2026 09:15:00",
-    bseTimestamp: Date.now() - 28800000,
-    fetched_at: Date.now() - 28800000,
-    pdfLink: "https://www.bseindia.com/xml-data/corpfiling/AttachLive/500034_AUM_Update_2026.pdf",
-    aiSummary: "• Total AUM: ₹3,54,000 Cr (+31% YoY)\n• Customer franchise: Reached 88 million.\n• Liquidity buffer maintained at comfortable surplus.",
-    is_sent: 1
-  }
-];
+// Never present demonstration filings as exchange data. These exact legacy
+// fixture IDs may remain in an old local cache; exclude them from reads too.
+const LEGACY_DEMO_IDS = new Set([
+  'ann_500325_20260924_01', 'ann_532540_20260924_02', 'ann_500510_20260924_03',
+  'ann_500209_20260924_04', 'ann_500180_20260924_05', 'ann_532454_20260924_06',
+  'ann_500875_20260924_07', 'ann_500034_20260924_08'
+]);
 
 let loadedLocal = readLocalJson<any[]>(ANNOUNCEMENTS_FILE, []);
-let announcementsMemoryCache: any[] = (loadedLocal && loadedLocal.length > 0) ? loadedLocal : [...DEFAULT_SEED_ANNOUNCEMENTS];
+let announcementsMemoryCache: any[] = (Array.isArray(loadedLocal) ? loadedLocal : []).filter(item => !LEGACY_DEMO_IDS.has(item?.id));
 
 let saveDiskTimer: NodeJS.Timeout | null = null;
 function scheduleLocalDiskSave() {
@@ -233,6 +102,7 @@ export async function initAnnouncementCache() {
     }
 
     for (const row of rows) {
+      if (LEGACY_DEMO_IDS.has(row.id)) continue;
       processedCache.add(row.id);
       processedBloomFilter.add(row.id);
       const dataItem = row.data || {};
@@ -289,7 +159,7 @@ export async function initAnnouncementCache() {
 }
 
 export async function getAnnouncementById(newsId: string): Promise<any | null> {
-  if (!newsId) return null;
+  if (!newsId || LEGACY_DEMO_IDS.has(newsId)) return null;
   const inMem = announcementsMemoryCache.find(a => a.id === newsId || a.newsId === newsId);
   if (inMem) return inMem;
 

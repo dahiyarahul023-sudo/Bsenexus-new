@@ -73,8 +73,8 @@ export function Layout({
   onTabChange, 
   theme, 
   setTheme, 
-  bseHealth = { status: 'stable', latency: 85 },
-  telegramHealth = { status: 'connected', latency: 120 },
+  bseHealth = { status: 'unknown', latency: 0 },
+  telegramHealth = { status: 'unknown', latency: 0 },
   isRunning = true,
   onToggleEngine
 }: LayoutProps) {
@@ -803,7 +803,7 @@ export function Layout({
       </AnimatePresence>
 
       {/* Live Market Ticker Tape - Responsive for Mobile and Desktop */}
-      <MarketTickerTape bseLatency={bseHealth?.latency || 85} />
+      <MarketTickerTape bseLatency={bseHealth?.latency || 0} />
 
       {/* Main Content Area with Smooth Layout Transition and Keyboard Focus Target */}
       <main id="main-content" tabIndex={-1} className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-3 pb-24 md:pb-6 transition-all duration-200 focus:outline-none">
@@ -969,12 +969,12 @@ export function Layout({
       </AnimatePresence>
 
       {/* Modern Compact Footer with Grouped Help & Legal (Clean Instagram Style) */}
-      <footer className="border-t border-slate-200/80 dark:border-slate-800/80 bg-white/90 dark:bg-[#0F172A]/90 backdrop-blur-md py-3 text-xs text-slate-500 dark:text-slate-400 pb-16 md:pb-3">
+      <footer className="border-t border-slate-200/80 dark:border-slate-800/80 bg-white/90 dark:bg-[#0F172A]/90 backdrop-blur-md py-3 text-xs text-slate-500 dark:text-slate-400 pb-24 md:pb-3 md:pr-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-[11px]">
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            <span className="font-semibold text-slate-700 dark:text-slate-300">Bsenexus Active</span>
-            <span className="text-slate-400 dark:text-slate-500 hidden sm:inline">• Live Ingestion (~{bseHealth.latency || 85}ms)</span>
+            <span className="font-semibold text-slate-700 dark:text-slate-300">{bseHealth.status === 'stable' ? 'BSE source responding' : bseHealth.status === 'down' ? 'BSE source unavailable' : 'BSE source unverified'}</span>
+            <span className="text-slate-400 dark:text-slate-500 hidden sm:inline">{bseHealth.latency > 0 ? `• Source request (${bseHealth.latency}ms)` : '• Source latency unverified'}</span>
           </div>
 
           {/* Social Icons row */}

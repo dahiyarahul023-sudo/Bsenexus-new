@@ -265,7 +265,7 @@ export function ResultsCalendar() {
       });
       const data = await res.json();
       if (data && data.success) {
-        setDeepHistoryMsg(`✅ Fetched +${data.newlySaved || 0} historical filings (${years} Yr BSE Sync). Total ${data.totalHistoryCount || 0} results/meetings indexed.`);
+        setDeepHistoryMsg(data.message || `History sync requested for ${years} year(s). Completion and new filing counts are not confirmed yet.`);
         // Reload stock history
         const histRes = await customFetch(`/api/stock-results-history?symbol=${encodeURIComponent(symbol)}&scripCode=${encodeURIComponent(scripCode)}`);
         const histData = await histRes.json();
@@ -288,6 +288,7 @@ export function ResultsCalendar() {
   // Boost Priority for 10/20-day Pre-Result Window
   const handleBoostRunupPriority = async (scripCode: string, symbol: string, resultDateStr: string, customDays?: number) => {
     if (!scripCode || !resultDateStr) return;
+    if (!isAdmin) { setBoostRunupMsg('Shared filing priority changes require an administrator.'); return; }
     const daysToUse = customDays || runupWindowDays || 10;
     setIsBoostingRunup(true);
     setBoostRunupMsg(null);
@@ -352,6 +353,7 @@ export function ResultsCalendar() {
 
   // Deep Sync 1-5 Years for entire Watchlist
   const handleDeepSyncWatchlist = async (years: number) => {
+    if (!isAdmin) { setWatchlistSyncFeedback('Global watchlist history sync requires an administrator.'); return; }
     setIsSyncingWatchlistHistory(true);
     setWatchlistSyncFeedback(null);
     try {

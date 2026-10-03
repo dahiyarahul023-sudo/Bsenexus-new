@@ -160,7 +160,7 @@ export function saveAlertRule(rule: Partial<AlertRule> & { name: string }, userI
   // If modifying existing rule, enforce ownership (cannot overwrite other users or system rules)
   if (existingIdx >= 0) {
     const existing = rulesCache[existingIdx];
-    if (existing.userId === 'system' || (existing.userId !== userId && userId !== 'admin')) {
+    if (existing.userId === 'system' || existing.userId !== userId) {
       throw new Error("Cannot modify system or another user's alert rule");
     }
   }
@@ -196,7 +196,7 @@ export function toggleAlertRule(id: string, enabled: boolean, userId: string = '
   const rule = rulesCache.find(r => r.id === id);
   if (rule) {
     // Only owner or admin can toggle
-    if (rule.userId !== 'system' && rule.userId !== userId && userId !== 'admin') {
+    if (rule.userId === 'system' || rule.userId !== userId) {
       return false;
     }
     rule.enabled = enabled;
@@ -212,7 +212,7 @@ export function deleteAlertRule(id: string, userId: string = 'guest'): boolean {
   if (!rule) return false;
   // System rules cannot be deleted; user can only delete their own rules
   if (rule.userId === 'system') return false;
-  if (rule.userId !== userId && userId !== 'admin') return false;
+  if (rule.userId !== userId) return false;
 
   const prevLen = rulesCache.length;
   rulesCache = rulesCache.filter(r => r.id !== id);

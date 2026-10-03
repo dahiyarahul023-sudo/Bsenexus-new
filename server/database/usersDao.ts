@@ -277,7 +277,7 @@ export async function generateUniqueUsername(
   // Try appending incremental suffixes: 1, 2, 3 ... 999
   let counter = 1;
   while (counter < 1000) {
-    const candidate = `${cleanBase}${counter}`.slice(0, 25);
+    const candidate = `${cleanBase.slice(0, 25 - String(counter).length)}${counter}`;
     const check = await isUsernameAvailable(candidate, excludeUid, userEmail);
     if (check.available) {
       return candidate;
@@ -329,7 +329,7 @@ export async function cleanAndDeduplicateAllUsernames(): Promise<{ cleanedCount:
         let counter = 1;
         let uniqueCandidate = currentUsername;
         while (seenUsernames.has(uniqueCandidate) || RESERVED_USERNAMES.has(uniqueCandidate)) {
-          uniqueCandidate = `${currentUsername}${counter}`.slice(0, 25);
+          uniqueCandidate = `${currentUsername.slice(0, 25 - String(counter).length)}${counter}`;
           counter++;
         }
 
@@ -570,7 +570,8 @@ export async function claimFreeSummaryDemo(uid: string): Promise<boolean> {
         return !!won;
       } catch (err: any) {
         console.warn(`[UsersDao] Free-demo claim notice for ${uid}:`, err?.message || err);
-        // fall through to the serialized local fallback
+        // A cloud outage must not reissue a supposedly one-time demo.
+        throw new PaymentStoreUnavailableError('claim free summary demo', err);
       }
     }
     const localUsersMap = readLocalJson<Record<string, UserProfile>>(USERS_FILE, {});

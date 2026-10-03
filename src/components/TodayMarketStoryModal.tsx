@@ -644,7 +644,7 @@ export function TodayMarketStoryModal({
           {/* ======================================================== */}
           {/* FLOATING BOTTOM ACTION PILL (Direct 360° Intelligence)   */}
           {/* ======================================================== */}
-          {currentSlide.actionPill && (
+          {currentSlide.actionPill?.symbol && (
             <div className="absolute bottom-3 left-4 right-4 z-30 pointer-events-auto">
               <motion.button
                 whileHover={{ scale: 1.02 }}
