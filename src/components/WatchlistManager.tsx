@@ -579,11 +579,24 @@ export function WatchlistManager() {
     isOpen: boolean;
     title: string;
     description: string;
-    actionType: 'clear_list' | 'clear_all' | 'reset_defaults';
+    actionType: 'clear_list' | 'clear_all' | 'reset_defaults' | 'delete_list';
     listId?: string;
     listName?: string;
     stockCount?: number;
   } | null>(null);
+
+  const [confirmationBusy, setConfirmationBusy] = useState(false);
+  const [confirmationError, setConfirmationError] = useState<string | null>(null);
+  const confirmationBusyRef = useRef(false);
+  useEffect(() => {setConfirmationError(null);},[confirmModalState]);
+  useEffect(() => {
+    if (!confirmModalState?.isOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !confirmationBusyRef.current) setConfirmModalState(null);
+    };
+    document.addEventListener('keydown',onKeyDown);
+    return () => document.removeEventListener('keydown',onKeyDown);
+  },[confirmModalState?.isOpen]);
 
   // Disclosures Feed states
   const [announcements, setAnnouncements] = useState<any[]>(() => {
@@ -1025,9 +1038,19 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
   const handleDeleteList = async (id: string) => {
     const listToDelete = watchlists.find(w => String(w.id) === String(id));
     if (!listToDelete) return;
-    if (confirm(`Are you sure you want to delete "${listToDelete.name}" watchlist?`)) {
-      await customFetch(`/api/watchlists/${id}`, { method: 'DELETE' });
-      fetchWatchlists();
+    setConfirmModalState({isOpen:true,title:'Delete watchlist?',description:`Delete "${listToDelete.name}" and its stocks from your account?`,actionType:'delete_list',listId:id});
+  };
+
+  const executeDeleteList = async (id: string) => {
+    const listToDelete = watchlists.find(w => String(w.id) === String(id));
+    if (!listToDelete) throw new Error('Watchlist not found. Refresh your lists and retry.');
+    {
+      const response = await customFetch(`/api/watchlists/${id}`, { method: 'DELETE' });
+      const result = await response.json().catch(() => null);
+      if (!response.ok || result?.success !== true) throw new Error(result?.error || 'Could not delete the watchlist. Please retry.');
+      setWatchlists(prev => prev.filter(list => String(list.id) !== String(id)));
+      setActiveListId(prev => String(prev) === String(id) ? 'ALL' : prev);
+      await fetchWatchlists();
 
       if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current);
       setUndoToast({
@@ -1040,10 +1063,14 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
             body: JSON.stringify({ name: listToDelete.name })
           });
           const created = await res.json().catch(() => null);
-          if (created?.id && Array.isArray(listToDelete.items)) {
+          if (!res.ok || !created?.id) {
+            setUndoToast(prev => prev ? {...prev,message:'Restore failed. Retry Undo.'} : prev);
+            return;
+          }
+          if (Array.isArray(listToDelete.items)) {
             for (const it of listToDelete.items) {
               const parsed = parseSymbolItem(it);
-              await customFetch(`/api/watchlists/${created.id}/symbols`, {
+              const restored = await customFetch(`/api/watchlists/${created.id}/symbols`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1052,6 +1079,12 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
                   category: parsed.category
                 })
               });
+              if (!restored.ok) {
+                await fetchWatchlists();
+                setUndoToast(null);
+                setConfirmationError('Watchlist recreated, but some stocks could not be restored. Check the list before adding missing stocks.');
+                return;
+              }
             }
           }
           fetchWatchlists();
@@ -4128,9 +4161,10 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
         </div>
       )}
 
+      {confirmationError && !confirmModalState && <p role="alert" className="fixed bottom-24 left-4 right-4 z-50 p-3 rounded-xl bg-rose-100 text-rose-800 text-xs">{confirmationError}</p>}
       {/* Safety Confirmation Dialog Modal */}
       {confirmModalState?.isOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-150 overscroll-contain">
+        <div role="dialog" aria-modal="true" aria-labelledby="watchlist-confirm-title" className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-150 overscroll-contain">
           <div className="bg-white dark:bg-[#1E1C2B] border border-slate-200 dark:border-[#38324E] rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4">
             <div className="flex items-start gap-3">
               <div className={cn(
@@ -4142,16 +4176,18 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
                 {confirmModalState.actionType === 'reset_defaults' ? <RotateCcw size={20} /> : <AlertTriangle size={20} />}
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">{confirmModalState.title}</h3>
+                <h3 id="watchlist-confirm-title" className="text-sm font-extrabold text-slate-900 dark:text-white">{confirmModalState.title}</h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">{confirmModalState.description}</p>
               </div>
             </div>
 
+            {confirmationError && <p role="alert" className="text-xs text-rose-600">{confirmationError}</p>}
             <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-[#2D283E] select-none">
               <motion.button
                 type="button"
                 whileTap={buttonTap}
                 transition={springSnappy}
+                disabled={confirmationBusy}
                 onClick={() => setConfirmModalState(null)}
                 className="px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#2A263D] rounded-xl transition-colors cursor-pointer min-h-[44px] flex items-center"
               >
@@ -4161,18 +4197,29 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
                 type="button"
                 whileTap={buttonTap}
                 transition={springSnappy}
+                disabled={confirmationBusy}
                 onClick={async () => {
+                  if (confirmationBusyRef.current) return;
+                  confirmationBusyRef.current = true;
+                  setConfirmationBusy(true);
+                  setConfirmationError(null);
                   const state = confirmModalState;
-                  setConfirmModalState(null);
-                  if (state.actionType === 'clear_list' && state.listId) {
-                    await customFetch(`/api/watchlists/${state.listId}/symbols`, { method: 'DELETE' });
-                    fetchWatchlists();
-                  } else if (state.actionType === 'clear_all') {
-                    await customFetch(`/api/watchlists/all/symbols`, { method: 'DELETE' });
-                    fetchWatchlists();
-                  } else if (state.actionType === 'reset_defaults') {
-                    await customFetch(`/api/watchlists/reset-default`, { method: 'POST' });
-                    fetchWatchlists();
+                  try {
+                    if (state.actionType === 'delete_list' && state.listId) {
+                      await executeDeleteList(state.listId);
+                    } else {
+                      const url = state.actionType === 'clear_list' ? `/api/watchlists/${state.listId}/symbols` : state.actionType === 'clear_all' ? '/api/watchlists/all/symbols' : '/api/watchlists/reset-default';
+                      const response = await customFetch(url,{method:state.actionType === 'reset_defaults' ? 'POST' : 'DELETE'});
+                      const result = await response.json().catch(() => null);
+                      if (!response.ok || result?.success !== true) throw new Error(result?.error || 'The operation failed. Please retry.');
+                      await fetchWatchlists();
+                    }
+                    setConfirmModalState(null);
+                  } catch (error) {
+                    setConfirmationError(error instanceof Error ? error.message : 'The operation failed. Please retry.');
+                  } finally {
+                    confirmationBusyRef.current = false;
+                    setConfirmationBusy(false);
                   }
                 }}
                 className={cn(
@@ -4182,7 +4229,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
                     : "bg-rose-600 hover:bg-rose-700 dark:bg-rose-600"
                 )}
               >
-                {confirmModalState.actionType === 'reset_defaults' ? 'Confirm Reset' : 'Yes, Delete'}
+                {confirmationBusy ? 'Saving...' : confirmModalState.actionType === 'reset_defaults' ? 'Confirm Reset' : 'Yes, Delete'}
               </motion.button>
             </div>
           </div>

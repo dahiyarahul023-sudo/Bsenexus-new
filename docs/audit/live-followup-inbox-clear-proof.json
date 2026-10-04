@@ -1,0 +1,10 @@
+{
+  "migrationAppliedTwice": true,
+  "callerOnlyClear": true,
+  "sharedAndOtherRowsPreserved": true,
+  "newNotificationsVisible": true,
+  "watermarkNeverMovesBackwards": true,
+  "reservedIdentitiesRejected": true,
+  "anonymousAndAuthenticatedDenied": true,
+  "liveMultiReplicaTest": false
+}

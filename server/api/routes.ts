@@ -638,9 +638,14 @@ apiRouter.post("/watchlists", requireProOrAdmin, async (req, res) => {
 
 apiRouter.delete("/watchlists/:id", requireProOrAdmin, async (req, res) => {
   const uid = getReqUserId(req);
-  await deleteWatchlist(req.params.id, uid);
-  invalidateMonitorConfigCache();
-  res.json({ success: true });
+  try {
+    const deleted = await deleteWatchlist(req.params.id, uid);
+    if (!deleted) return res.status(404).json({success:false,error:'Watchlist not found in your account.'});
+    invalidateMonitorConfigCache();
+    res.json({ success: true });
+  } catch {
+    res.status(503).json({success:false,error:'Watchlist storage is unavailable. Please retry.'});
+  }
 });
 
 apiRouter.delete("/watchlists/all/symbols", requireProOrAdmin, async (req, res) => {
