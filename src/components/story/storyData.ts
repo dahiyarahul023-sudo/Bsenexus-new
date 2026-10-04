@@ -107,7 +107,7 @@ export interface StoryChapter {
 // SESSION & FRESHNESS TIMING CONSTRAINTS
 // 1. Major corporate news retention: Max 18 hours
 // 2. Next trading day 09:00 AM IST: Market moves automatically removed
-// 3. Trading day 03:00 PM IST (15:00): Fresh closing moves published
+// 3. Trading day 03:30 PM IST (15:30): Fresh closing moves published
 // ==========================================
 export const MAX_MAJOR_STORY_AGE_HOURS = 18;
 export const MAX_MAJOR_STORY_AGE_MS = MAX_MAJOR_STORY_AGE_HOURS * 60 * 60 * 1000;
@@ -144,31 +144,27 @@ export function getISTMarketSession(now: Date = new Date()): MarketSessionInfo {
   const year = partMap.year;
   const month = partMap.month;
   const day = partMap.day;
-  const hour = parseInt(partMap.hour || '0', 10);
+  const hour = parseInt(partMap.hour || '0', 10) % 24;
   const minute = parseInt(partMap.minute || '0', 10);
   const dateStr = `${year}-${month}-${day}`;
 
-  const istDateObj = new Date(`${dateStr}T${partMap.hour}:${partMap.minute}:${partMap.second}+05:30`);
-  const dayOfWeek = istDateObj.getDay(); // 0=Sun, 6=Sat
+  const dayOfWeek = new Date(`${dateStr}T12:00:00Z`).getUTCDay(); // 0=Sun, 6=Sat
 
   const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
   const isHoliday = Boolean(isDateMarketHoliday(dateStr));
   const isTradingDay = !isWeekend && !isHoliday;
 
-  // Trading day between 09:00 AM and 15:00 (3:00 PM):
+  // Trading day between 09:00 AM and 15:30 (3:30 PM):
   // Yesterday's market moves are expired and MUST be removed.
-  // At 15:00 (3:00 PM), fresh closing moves arrive.
-  const isMorningToMarketHours = isTradingDay && (hour >= 9 && hour < 15);
-  const isMarketHours = isTradingDay && (
-    (hour === 9 && minute >= 0) || 
-    (hour > 9 && hour < 15) || 
-    (hour === 15 && minute <= 30)
-  );
+  // At 15:30 (3:30 PM), fresh closing moves arrive.
+  const totalMinutes = hour * 60 + minute;
+  const isMorningToMarketHours = isTradingDay && totalMinutes >= 540 && totalMinutes < 930;
+  const isMarketHours = isTradingDay && totalMinutes >= 555 && totalMinutes < 930;
 
   let showMarketMoves = false;
   let sessionEdition: 'MORNING_RADAR' | 'MARKET_WRAP' | 'WEEKEND_EDITION' = 'MARKET_WRAP';
   let editionLabel = "Market Wrap & Moves";
-  let editionBadge = "3:00 PM CLOSING EDITION";
+  let editionBadge = "3:30 PM CLOSING EDITION";
   let storySessionId = `${dateStr}_closing`;
 
   if (isWeekend || isHoliday) {
@@ -178,18 +174,18 @@ export function getISTMarketSession(now: Date = new Date()): MarketSessionInfo {
     showMarketMoves = false;
     storySessionId = `${dateStr}_weekend`;
   } else if (isMorningToMarketHours) {
-    // 09:00 AM to 03:00 PM on trading day: previous session moves EXPIRED!
+    // 09:00 AM to 03:30 PM on trading day: previous session moves EXPIRED!
     showMarketMoves = false;
     sessionEdition = 'MORNING_RADAR';
     editionLabel = "Morning Market Radar";
     editionBadge = "09:00 AM MORNING EDITION";
     storySessionId = `${dateStr}_morning`;
   } else {
-    // From 15:00 (3:00 PM) until next day 09:00 AM: fresh closing wrap
+    // From 15:30 (3:30 PM) until next day 09:00 AM: fresh closing wrap
     showMarketMoves = true;
     sessionEdition = 'MARKET_WRAP';
     editionLabel = "Dalal Street Closing Wrap & Movers";
-    editionBadge = "3:00 PM CLOSING EDITION";
+    editionBadge = "3:30 PM CLOSING EDITION";
     storySessionId = `${dateStr}_closing`;
   }
 
@@ -277,7 +273,7 @@ export function buildDefaultStoryChapters(session: MarketSessionInfo = getISTMar
   const chapter1Slides: StorySlide[] = [];
 
   if (session.showMarketMoves) {
-    // 3:00 PM CLOSING EDITION (until next trading day 09:00 AM)
+    // 3:30 PM CLOSING EDITION (until next trading day 09:00 AM)
     // Includes Sentiment, Top Gainers, Top Losers, and Heavyweights
     chapter1Slides.push(
       {
@@ -437,7 +433,7 @@ export function buildDefaultStoryChapters(session: MarketSessionInfo = getISTMar
         bulletPoints: [
           'Previous session moves cleared automatically at 09:00 AM market open',
           'Benchmarks monitor key support and resistance pivots for morning volume',
-          'Fresh trading day closing moves will be published at 3:00 PM market wrap'
+          'Fresh trading day closing moves will be published at 3:30 PM market wrap'
         ],
         statsLabel: 'Morning Market Pivot',
         statsValue: 'SENSEX 77,200 Support',
@@ -763,8 +759,8 @@ export function getAllSlides(chapters: StoryChapter[]): StorySlide[] {
 // ==========================================
 // DYNAMIC LIVE STORY HYDRATION
 // Aggregates real backend data with session rules:
-// - 09:00 AM IST on next trading day: Market moves removed until 3:00 PM
-// - 03:00 PM IST on trading day: Fresh closing moves published
+// - 09:00 AM IST on next trading day: Market moves removed until 3:30 PM
+// - 03:30 PM IST on trading day: Fresh closing moves published
 // - Major News & Disclosures: Max 18 hours retention strictly enforced
 // ==========================================
 export async function fetchLiveStoryChapters(): Promise<StoryChapter[]> {
@@ -831,7 +827,7 @@ export async function fetchLiveStoryChapters(): Promise<StoryChapter[]> {
         }
       }
 
-      // If Session Shows Market Moves (After 3:00 PM closing until next day 9:00 AM)
+      // If Session Shows Market Moves (After 3:30 PM closing until next day 9:00 AM)
       if (session.showMarketMoves && feed.movers) {
         // Slide 1: Real Top Gainers
         if (chapters[0]?.slides[1] && feed.movers.topGainers?.length > 0) {

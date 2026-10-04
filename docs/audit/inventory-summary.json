@@ -1,27 +1,24 @@
 {
-  "baseline_sha": "55d35a16a0a0b09017f685af4f4170acc2d30b3e",
-  "baseline_tracked_blobs": 284,
-  "working_inventory": {
-    "files": 293,
-    "textLines": 101326,
-    "sourceFiles": 228,
-    "importEdges": 696,
-    "routes": 183,
-    "mounts": 24,
-    "controls": 1069,
-    "networkCalls": 210,
-    "storeCalls": 212,
-    "envNames": 77,
-    "unresolvedImports": 0
-  },
-  "finding_count": 44,
-  "counts_are_occurrences_not_distinct_features": true,
-  "test_status": "See validation.md, including repeat-run isolation",
+  "generatedAt": "2026-10-04T05:36:33.715Z",
   "limitations": [
     "Static extraction is a map, not proof that a control works.",
     "Computed imports, HTTP URLs, runtime dependencies and SSR HTML require manual verification.",
-    "Viewport emulation is not real-device certification.",
-    "No live database mutation, real payment, or cloud republish performed.",
-    "Manual line-by-line review of every source line and every visible control is not complete."
-  ]
+    "Viewport emulation is not real-device certification."
+  ],
+  "counts": {
+    "files": 297,
+    "textLines": 101547,
+    "sourceFiles": 230,
+    "importEdges": 714,
+    "routes": 184,
+    "mounts": 25,
+    "controls": 1069,
+    "networkCalls": 216,
+    "storeCalls": 214,
+    "envNames": 77,
+    "unresolvedImports": 0
+  },
+  "sourceBase": "2094d1be82d1be87fc63c5d5fb8e3af3bfe789a3",
+  "snapshot": "follow-up PR working tree",
+  "originalFilesPreserved": 284
 }

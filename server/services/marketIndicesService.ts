@@ -36,6 +36,7 @@ export interface MarketIndexItem {
   lastUpdated: string;
   description?: string;
   source?: string;
+  stale?: boolean;
 }
 
 export interface MarketOverviewData {
@@ -45,6 +46,15 @@ export interface MarketOverviewData {
   lastRefreshed: number;
   marketStatusText: string;
   sessionBadge: string;
+  stale?: boolean;
+  fetchAttemptedAt?: number;
+}
+
+/** Successful quote observations are distinct from an attempted source refresh. */
+export function buildMarketFreshnessSnapshot(items: MarketIndexItem[], refreshedIds: Set<string>, attemptedAt: number) {
+  const indices = items.filter(item=>item.source !== 'UNAVAILABLE').map(item=>({...item,stale:!refreshedIds.has(item.id)}));
+  const times=indices.map(item=>Date.parse(item.lastUpdated)).filter(Number.isFinite);
+  return {indices,stale:indices.some(item=>item.stale),lastRefreshed:times.length?Math.min(...times):0,fetchAttemptedAt:attemptedAt};
 }
 
 // Indian Stock Exchange (NSE/BSE) Official Trading Holidays (Month-Day format MM-DD)
@@ -532,6 +542,7 @@ async function executeInternalFetch(): Promise<MarketOverviewData> {
   const now = Date.now();
   const { isMarketOpen, session, statusText, sessionBadge } = getMarketSessionStatus();
 
+  const refreshedIds = new Set<string>();
   // Execute Direct BSE & Direct NSE in parallel
   const [bseSensex, nseIndices] = await Promise.all([
     fetchDirectBseSensex(),
@@ -541,27 +552,27 @@ async function executeInternalFetch(): Promise<MarketOverviewData> {
   // Update rolling state from Direct Official feeds
   if (bseSensex) {
     const idx = ROLLING_INDICES_STATE.findIndex(r => r.id === 'sensex');
-    if (idx !== -1) ROLLING_INDICES_STATE[idx] = bseSensex;
+    if (idx !== -1) { ROLLING_INDICES_STATE[idx] = bseSensex; refreshedIds.add(bseSensex.id); }
   }
 
   if (nseIndices.nifty50) {
     const idx = ROLLING_INDICES_STATE.findIndex(r => r.id === 'nifty50');
-    if (idx !== -1) ROLLING_INDICES_STATE[idx] = nseIndices.nifty50;
+    if (idx !== -1) { ROLLING_INDICES_STATE[idx] = nseIndices.nifty50; refreshedIds.add(nseIndices.nifty50.id); }
   }
 
   if (nseIndices.banknifty) {
     const idx = ROLLING_INDICES_STATE.findIndex(r => r.id === 'banknifty');
-    if (idx !== -1) ROLLING_INDICES_STATE[idx] = nseIndices.banknifty;
+    if (idx !== -1) { ROLLING_INDICES_STATE[idx] = nseIndices.banknifty; refreshedIds.add(nseIndices.banknifty.id); }
   }
 
   if (nseIndices.niftymidcap) {
     const idx = ROLLING_INDICES_STATE.findIndex(r => r.id === 'niftymidcap');
-    if (idx !== -1) ROLLING_INDICES_STATE[idx] = nseIndices.niftymidcap;
+    if (idx !== -1) { ROLLING_INDICES_STATE[idx] = nseIndices.niftymidcap; refreshedIds.add(nseIndices.niftymidcap.id); }
   }
 
   if (nseIndices.indiavix) {
     const idx = ROLLING_INDICES_STATE.findIndex(r => r.id === 'indiavix');
-    if (idx !== -1) ROLLING_INDICES_STATE[idx] = nseIndices.indiavix;
+    if (idx !== -1) { ROLLING_INDICES_STATE[idx] = nseIndices.indiavix; refreshedIds.add(nseIndices.indiavix.id); }
   }
 
   // Check if any symbols still need refresh (e.g. USDINR or missing values)
@@ -580,16 +591,15 @@ async function executeInternalFetch(): Promise<MarketOverviewData> {
       const cfg = missingConfigs[i];
       if (res.status === 'fulfilled' && res.value) {
         const idx = ROLLING_INDICES_STATE.findIndex(r => r.id === cfg.id);
-        if (idx !== -1) ROLLING_INDICES_STATE[idx] = res.value;
+        if (idx !== -1) { ROLLING_INDICES_STATE[idx] = res.value; refreshedIds.add(res.value.id); }
       }
     });
   }
 
   cachedMarketData = {
-    indices: ROLLING_INDICES_STATE.filter(item => item.source !== 'UNAVAILABLE'),
+    ...buildMarketFreshnessSnapshot(ROLLING_INDICES_STATE, refreshedIds, now),
     isMarketOpen,
     marketSession: session,
-    lastRefreshed: now,
     marketStatusText: statusText,
     sessionBadge
   };

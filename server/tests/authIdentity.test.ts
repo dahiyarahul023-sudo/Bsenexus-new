@@ -81,3 +81,17 @@ test('real middleware permits a verified owner Firebase token', async t => {
     assert.equal((await fetch(`${base}/admin`, { headers: { Authorization: 'Bearer firebase.verified.token' } })).status, 200);
   });
 });
+
+test('unverified login body identifiers cannot contaminate another account and revoked tokens are checked', async t => {
+  const protection=await import('../security/accountRateLimiter.js');
+  const target='innocent@example.test';
+  const before=await protection.checkAccountProtection(protection.getAccountKey(target));
+  let revokedCheck: boolean | undefined;
+  t.mock.method(getFirebaseAuth(),'verifyIdToken',async (_token: string, checkRevoked?: boolean)=>{revokedCheck=checkRevoked;throw new Error('revoked');});
+  await withServer(async base=>{
+    const response=await fetch(base+'/auth/session',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({idToken:'revoked.test.token',email:target,identifier:target})});
+    assert.equal(response.status,401);
+  });
+  assert.equal(revokedCheck,true);
+  assert.equal((await protection.checkAccountProtection(protection.getAccountKey(target))).failedAttempts,before.failedAttempts);
+});

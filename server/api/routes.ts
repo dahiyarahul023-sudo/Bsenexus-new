@@ -49,7 +49,7 @@ import {
 import { getStorageStatusReport, runAutoStorageCleanup, triggerManualTestStorageAlert, pruneAnnouncementsByPercentage } from "../services/storageMonitor.js";
 import { getManualStorageMode, setManualStorageMode, resetQuotaExceededFlag, isFirestoreQuotaExceeded, resetAdminPermissionDenied, isAdminPermissionDenied } from "../database/localStore.js";
 import { getCompanyIntelligence, generateCompanyAiOverview, fetchStockQuote } from "../services/companyIntelService.js";
-import { getAllNotifications, getUnreadNotificationCount, markNotificationRead, markNotificationsReadBatch, markAllNotificationsRead, clearAllNotifications } from "../database/notificationDao.js";
+import { filterNotifications, getAllNotifications, getUnreadNotificationCount, markNotificationRead, markNotificationsReadBatch, markAllNotificationsRead, clearAllNotifications } from "../database/notificationDao.js";
 import { circuitRegistry } from "../utils/circuitBreaker.js";
 import { 
   fetchGeneralMarketNews, 
@@ -69,7 +69,7 @@ import {
   releaseFreeSummaryDemo
 } from "../database/usersDao.js";
 import { getAllAlertRules, saveAlertRule, toggleAlertRule, deleteAlertRule } from "../database/alertRulesDao.js";
-import { checkServerAiQuota, consumeServerAiQuota, checkAndConsumeServerAiQuota, refundServerAiQuota, getServerAiQuotaStatus, resetServerAiQuota } from "../services/aiQuotaService.js";
+import { checkServerAiQuota, consumeServerAiQuota, checkAndConsumeServerAiQuota, refundServerAiQuota, completeServerAiQuotaReservation, getServerAiQuotaStatus, resetServerAiQuota } from "../services/aiQuotaService.js";
 import { classifyMaterialEvent } from "../services/timelineClassifier.js";
 import { searchCompany } from "./search.js";
 import { fetchLiveMarketIndices, getMarketSessionStatus } from "../services/marketIndicesService.js";
@@ -479,16 +479,20 @@ apiRouter.post("/announcements/refresh", requireAuth, aiRateLimiter, async (_req
 apiRouter.get("/billing/quota", async (req, res) => {
   const uid = getReqUserId(req);
   const isAdminUser = (req as any).user?.isAdmin === true;
-  const status = await getServerAiQuotaStatus(uid, isAdminUser);
-  res.json(status);
+  try {
+    const status = await getServerAiQuotaStatus(uid, isAdminUser);
+    res.json(status);
+  } catch { res.status(503).json({ success: false, error: "AI usage storage is unavailable. Please retry shortly." }); }
 });
 
 apiRouter.post("/billing/reset-quota", requireAdmin, async (req, res) => {
-  const uid = getReqUserId(req);
-  await resetServerAiQuota(uid);
-  const status = await getServerAiQuotaStatus(uid, true);
-  await addLog('INFO', 'AI_QUOTA', `AI summary quota reset for user ${uid}`);
-  res.json({ success: true, message: "AI Quota reset successfully", status });
+  try {
+    const uid = getReqUserId(req);
+    await resetServerAiQuota(uid);
+    const status = await getServerAiQuotaStatus(uid, true);
+    await addLog('INFO', 'AI_QUOTA', `AI summary quota reset for user ${uid}`);
+    res.json({ success: true, message: "AI Quota reset successfully", status });
+  } catch { res.status(503).json({ success: false, error: "AI usage storage is unavailable. Please retry shortly." }); }
 });
 
 apiRouter.post("/announcements/:id/generate-summary", requireAuth, aiRateLimiter, async (req, res) => {
@@ -497,6 +501,7 @@ apiRouter.post("/announcements/:id/generate-summary", requireAuth, aiRateLimiter
   let isAdminUser = false;
   let isFreeDemo = false;
   let quotaConsumed = false;
+  let quotaReservationId: string | undefined;
   let consumed: { remaining: number; dailyLimit: number; isPro: boolean } = { remaining: 0, dailyLimit: 0, isPro: false };
   try {
     uid = getReqUserId(req);
@@ -568,6 +573,7 @@ apiRouter.post("/announcements/:id/generate-summary", requireAuth, aiRateLimiter
         });
       }
       consumed = { remaining: quotaCheck.remaining, dailyLimit: quotaCheck.dailyLimit, isPro: quotaCheck.isPro };
+      quotaReservationId = quotaCheck.reservationId;
       quotaConsumed = true; // track for refund on generation failure
     }
 
@@ -592,7 +598,7 @@ apiRouter.post("/announcements/:id/generate-summary", requireAuth, aiRateLimiter
     }
     if (!summary) {
       // Generation failed (returned null) — refund quota + release free demo
-      if (quotaConsumed) { try { await refundServerAiQuota(uid, isAdminUser); } catch {} }
+      if (quotaConsumed) { try { await refundServerAiQuota(uid, isAdminUser, quotaReservationId); } catch {} }
       if (isFreeDemo) { try { await releaseFreeSummaryDemo(uid); } catch {} }
       return res.status(500).json({
         success: false,
@@ -600,6 +606,7 @@ apiRouter.post("/announcements/:id/generate-summary", requireAuth, aiRateLimiter
       });
     }
 
+    completeServerAiQuotaReservation(quotaReservationId);
     // Quota was already consumed atomically above; nothing more to burn.
     res.json({
       success: true,
@@ -613,8 +620,8 @@ apiRouter.post("/announcements/:id/generate-summary", requireAuth, aiRateLimiter
   } catch (e: any) {
     // Generation threw — release the free demo claim + refund quota so the user can retry it
     if (isFreeDemo) { try { await releaseFreeSummaryDemo(uid); } catch {} }
-    if (quotaConsumed) { try { await refundServerAiQuota(uid, isAdminUser); } catch {} }
-    res.status(500).json({ error: e.message });
+    if (quotaConsumed) { try { await refundServerAiQuota(uid, isAdminUser, quotaReservationId); } catch {} }
+    res.status(isPaymentStoreUnavailable(e) ? 503 : 500).json({ error: isPaymentStoreUnavailable(e) ? "AI usage storage is unavailable. Please retry shortly." : e.message });
   }
 });
 
@@ -708,7 +715,8 @@ apiRouter.get(
 
 apiRouter.patch("/watchlists/:id/toggle", requireProOrAdmin, async (req, res) => {
   const uid = getReqUserId(req);
-  await toggleWatchlist(req.params.id, req.body.isActive, uid);
+  if (typeof req.body?.isActive !== 'boolean') return res.status(400).json({ success: false, error: 'isActive must be a boolean.' });
+  if (!await toggleWatchlist(req.params.id, req.body.isActive, uid)) return res.status(404).json({ success: false, error: 'Watchlist not found.' });
   syncWatchlistHistoricalData().catch(console.error);
   res.json({ success: true });
 });
@@ -1259,7 +1267,8 @@ apiRouter.post("/test-bse", requireAdmin, async (req, res) => {
 
 apiRouter.patch("/watchlists/:id/name", requireProOrAdmin, async (req, res) => {
   const uid = getReqUserId(req);
-  await renameWatchlist(req.params.id, req.body.name, uid);
+  if (typeof req.body?.name !== 'string' || !req.body.name.trim() || req.body.name.trim().length > 100) return res.status(400).json({ success: false, error: 'Watchlist name must contain 1–100 characters.' });
+  if (!await renameWatchlist(req.params.id, req.body.name, uid)) return res.status(404).json({ success: false, error: 'Watchlist not found.' });
   res.json({ success: true });
 });
 
@@ -1484,6 +1493,7 @@ apiRouter.post("/news/summarize", requireAuth, aiRateLimiter, async (req, res) =
   let isAdminUser = false;
   let isFreeDemo = false;
   let quotaConsumed = false;
+  let quotaReservationId: string | undefined;
   try {
     const { title, snippet, source, symbol, companyName, link } = req.body;
     if (!title) {
@@ -1534,6 +1544,7 @@ apiRouter.post("/news/summarize", requireAuth, aiRateLimiter, async (req, res) =
         });
       }
       consumed = { remaining: quotaCheck.remaining, dailyLimit: quotaCheck.dailyLimit, isPro: quotaCheck.isPro };
+      quotaReservationId = quotaCheck.reservationId;
       quotaConsumed = true;
     }
 
@@ -1547,11 +1558,12 @@ apiRouter.post("/news/summarize", requireAuth, aiRateLimiter, async (req, res) =
     }
 
     if (!summary) {
-      if (quotaConsumed) { try { await refundServerAiQuota(uid, isAdminUser); } catch {} }
+      if (quotaConsumed) { try { await refundServerAiQuota(uid, isAdminUser, quotaReservationId); } catch {} }
       if (isFreeDemo) { try { await releaseFreeSummaryDemo(uid); } catch {} }
       return res.status(500).json({ success: false, error: "Gemini AI was unable to summarize this news story." });
     }
 
+    completeServerAiQuotaReservation(quotaReservationId);
     // Quota was already consumed atomically above; nothing more to burn.
     res.json({
       success: true,
@@ -1563,7 +1575,7 @@ apiRouter.post("/news/summarize", requireAuth, aiRateLimiter, async (req, res) =
   } catch (err: any) {
     // Generation threw — release the free demo claim + refund quota so the user can retry it
     if (isFreeDemo) { try { await releaseFreeSummaryDemo(uid); } catch {} }
-    if (quotaConsumed) { try { await refundServerAiQuota(uid, isAdminUser); } catch {} }
+    if (quotaConsumed) { try { await refundServerAiQuota(uid, isAdminUser, quotaReservationId); } catch {} }
     // Payment-store outage must never silently treat a paid user as Free.
     if (isPaymentStoreUnavailable(err)) {
       return res.status(503).json({
@@ -2058,6 +2070,7 @@ apiRouter.all("/company-intel/:identifier/ai-overview", requireProOrAdmin, aiRat
   let uid = '';
   let isAdminUser = false;
   let quotaConsumed = false;
+  let quotaReservationId: string | undefined;
   try {
     uid = getReqUserId(req);
     isAdminUser = (req as any).user?.isAdmin === true;
@@ -2076,6 +2089,7 @@ apiRouter.all("/company-intel/:identifier/ai-overview", requireProOrAdmin, aiRat
         dailyLimit: quotaCheck.dailyLimit
       });
     }
+    quotaReservationId = quotaCheck.reservationId;
     quotaConsumed = true;
     const consumed = { remaining: quotaCheck.remaining, dailyLimit: quotaCheck.dailyLimit, isPro: quotaCheck.isPro };
 
@@ -2097,10 +2111,11 @@ apiRouter.all("/company-intel/:identifier/ai-overview", requireProOrAdmin, aiRat
       throw genErr; // The outer catch owns cleanup.
     }
     if (!aiOverview) {
-      if (quotaConsumed) { try { await refundServerAiQuota(uid, isAdminUser); } catch {} }
+      if (quotaConsumed) { try { await refundServerAiQuota(uid, isAdminUser, quotaReservationId); } catch {} }
       return res.status(500).json({ success: false, error: "Gemini AI was unable to generate company overview." });
     }
 
+    completeServerAiQuotaReservation(quotaReservationId);
     // Quota was already consumed atomically above; nothing more to burn.
     res.json({
       success: true,
@@ -2110,8 +2125,8 @@ apiRouter.all("/company-intel/:identifier/ai-overview", requireProOrAdmin, aiRat
       isPro: consumed.isPro
     });
   } catch (err: any) {
-    if (quotaConsumed) { try { await refundServerAiQuota(uid, isAdminUser); } catch {} }
-    res.status(500).json({ success: false, error: err.message });
+    if (quotaConsumed) { try { await refundServerAiQuota(uid, isAdminUser, quotaReservationId); } catch {} }
+    res.status(isPaymentStoreUnavailable(err) ? 503 : 500).json({ success: false, error: isPaymentStoreUnavailable(err) ? "AI usage storage is unavailable. Please retry shortly." : err.message });
   }
 });
 
@@ -2177,7 +2192,8 @@ apiRouter.get("/notifications", async (req, res) => {
     const type = typeof req.query.type === 'string' ? req.query.type : undefined;
     const unreadOnly = req.query.unreadOnly === 'true';
 
-    const notifs = getAllNotifications(uid, limitParam, { watchlistOnly, type, unreadOnly });
+    const inbox = await getAllNotifications(uid, 500, { watchlistOnly: false });
+    const notifs = filterNotifications(inbox, limitParam, { watchlistOnly, type, unreadOnly });
 
     let isMuted = false;
     if (uid && uid !== 'guest') {
@@ -2189,12 +2205,12 @@ apiRouter.get("/notifications", async (req, res) => {
 
     // While muted, the bell stays silent: unread badges report zero.
     // (Existing notifications remain listed; only new triggers are suppressed.)
-    const unreadCount = isMuted ? 0 : getUnreadNotificationCount(uid, false);
-    const watchlistUnreadCount = isMuted ? 0 : getUnreadNotificationCount(uid, true);
+    const unreadCount = isMuted ? 0 : inbox.filter(n=>!n.isRead).length;
+    const watchlistUnreadCount = isMuted ? 0 : inbox.filter(n=>!n.isRead && n.isWatchlist).length;
 
     res.json({ notifications: notifs, unreadCount, watchlistUnreadCount, muteInAppNotifications: isMuted });
   } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(isPaymentStoreUnavailable(err) ? 503 : 500).json({ success: false, error: isPaymentStoreUnavailable(err) ? "Notification storage is unavailable. Please retry shortly." : err.message });
   }
 });
 
@@ -2209,20 +2225,20 @@ apiRouter.get("/notifications/unread-count", async (req, res) => {
         isMuted = Boolean(profile.muteInAppNotifications ?? profile.notificationPreferences?.muteInAppNotifications);
       }
     }
-    const count = isMuted ? 0 : getUnreadNotificationCount(uid, watchlistOnly);
+    const count = isMuted ? 0 : await getUnreadNotificationCount(uid, watchlistOnly);
     res.json({ unreadCount: count });
   } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(isPaymentStoreUnavailable(err) ? 503 : 500).json({ success: false, error: isPaymentStoreUnavailable(err) ? "Notification storage is unavailable. Please retry shortly." : err.message });
   }
 });
 
 apiRouter.post("/notifications/:id/read", requireAuth, async (req, res) => {
   try {
     const uid = getReqUserId(req);
-    const ok = markNotificationRead(req.params.id, uid);
-    res.json({ success: ok });
+    const ok = await markNotificationRead(req.params.id, uid);
+    res.status(ok ? 200 : 404).json({ success: ok });
   } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(isPaymentStoreUnavailable(err) ? 503 : 500).json({ success: false, error: isPaymentStoreUnavailable(err) ? "Notification storage is unavailable. Please retry shortly." : err.message });
   }
 });
 
@@ -2230,30 +2246,30 @@ apiRouter.post("/notifications/read-batch", requireAuth, async (req, res) => {
   try {
     const uid = getReqUserId(req);
     const ids = Array.isArray(req.body.ids) ? req.body.ids : [];
-    const count = markNotificationsReadBatch(ids, uid);
+    const count = await markNotificationsReadBatch(ids, uid);
     res.json({ success: true, updatedCount: count });
   } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(isPaymentStoreUnavailable(err) ? 503 : 500).json({ success: false, error: isPaymentStoreUnavailable(err) ? "Notification storage is unavailable. Please retry shortly." : err.message });
   }
 });
 
 apiRouter.post("/notifications/read-all", requireAuth, async (req, res) => {
   try {
     const uid = getReqUserId(req);
-    markAllNotificationsRead(uid);
+    await markAllNotificationsRead(uid);
     res.json({ success: true });
   } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(isPaymentStoreUnavailable(err) ? 503 : 500).json({ success: false, error: isPaymentStoreUnavailable(err) ? "Notification storage is unavailable. Please retry shortly." : err.message });
   }
 });
 
 apiRouter.delete("/notifications", requireAuth, async (req, res) => {
   try {
     const uid = getReqUserId(req);
-    clearAllNotifications(uid);
+    await clearAllNotifications(uid);
     res.json({ success: true });
   } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(isPaymentStoreUnavailable(err) ? 503 : 500).json({ success: false, error: isPaymentStoreUnavailable(err) ? "Notification storage is unavailable. Please retry shortly." : err.message });
   }
 });
 
@@ -2308,7 +2324,7 @@ apiRouter.post("/notifications/toggle-mute", requireAuth, async (req, res) => {
 
     res.json({ success: true, muteInAppNotifications: shouldMute });
   } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(isPaymentStoreUnavailable(err) ? 503 : 500).json({ success: false, error: isPaymentStoreUnavailable(err) ? "Notification storage is unavailable. Please retry shortly." : err.message });
   }
 });
 
@@ -2341,7 +2357,7 @@ apiRouter.patch("/alert-rules/:id/toggle", requireAuth, async (req, res) => {
     const uid = getReqUserId(req);
     const { enabled } = req.body;
     const ok = toggleAlertRule(req.params.id, Boolean(enabled), uid);
-    res.json({ success: ok });
+    res.status(ok ? 200 : 404).json({ success: ok });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -2351,7 +2367,7 @@ apiRouter.delete("/alert-rules/:id", requireAuth, async (req, res) => {
   try {
     const uid = getReqUserId(req);
     const ok = deleteAlertRule(req.params.id, uid);
-    res.json({ success: ok });
+    res.status(ok ? 200 : 404).json({ success: ok });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }

@@ -740,7 +740,7 @@ export function LandingPage({
                   Smart Telegram Alert Rules & Sound Chimes
                 </h3>
                 <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Build custom rule filters triggering on Dividend, Bonus, Buyback, Order Win, Loss, Resignation keywords. Supports rich markdown dispatch to unlimited Telegram channels with custom notification chimes.
+                  Build custom rule filters triggering on Dividend, Bonus, Buyback, Order Win, Loss, Resignation keywords. Supports formatted Telegram alerts to your saved personal destination; shared channel broadcasts are managed by the administrator.
                 </p>
                 <div className="flex flex-wrap gap-1.5 pt-1">
                   <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 whitespace-nowrap select-none">Keyword Rules</span>
@@ -1238,7 +1238,7 @@ export function LandingPage({
               Connect your watchlist, receive BSE announcements, and get AI filing summaries
             </h2>
             <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
-              From raw exchange PDF submission to institutional-grade insights on your phone in seconds.
+              Read exchange filings and request AI summaries with links to the source document.
             </p>
           </Reveal>
 
@@ -1290,7 +1290,7 @@ export function LandingPage({
                   <span>Continuous BSE Stream</span>
                 </h3>
                 <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed mb-4">
-                  Our cloud engine continuously polls BSE India official disclosure endpoints every 15 seconds, grabbing new filings immediately.
+                  Our server polls BSE India disclosure endpoints. Filing freshness depends on exchange availability, polling, caching and retries.
                 </p>
               </div>
               <div className="pt-2 border-t border-blue-200/60 dark:border-blue-900/60 flex items-center justify-between text-[11px] font-bold text-blue-600 dark:text-blue-400">
@@ -1338,7 +1338,7 @@ export function LandingPage({
                   Instant Alerts
                 </h3>
                 <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed mb-4">
-                  Alerts are delivered to your Telegram channel and in-app notification inbox in ~2 seconds with custom audio chimes so you can act before market reaction.
+                  Eligible alerts are sent to your saved Telegram destination and notification inbox. Delivery times vary with source availability, processing and Telegram.
                 </p>
               </div>
               <div className="pt-2 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between text-[11px] font-bold text-rose-600 dark:text-rose-400">
@@ -1738,7 +1738,7 @@ export function LandingPage({
               </h2>
 
               <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
-                Filter out general market noise. Build unlimited watchlists by theme (e.g. Dividend Yielders, Defense Order Winners, SME Breakouts) and receive announcements exclusively for the tickers you hold.
+                Filter out general market noise. Organize watchlists by theme (e.g. Dividend Yielders, Defense Order Winners, SME Breakouts) and receive announcements exclusively for the tickers you hold.
               </p>
 
               <div className="space-y-3 pt-2">
@@ -1977,7 +1977,7 @@ export function LandingPage({
               </h2>
 
               <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
-                Connect your private channel or group. Receive instant markdown-formatted corporate filing summaries delivered directly to Telegram within seconds of exchange publication.
+                Connect your private channel or group. Receive formatted corporate filing alerts at your saved destination. Availability and delivery times depend on the source and processing.
               </p>
 
               <div className="space-y-3 pt-2">
@@ -1991,7 +1991,7 @@ export function LandingPage({
                 </div>
                 <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
                   <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0" />
-                  <span>Pro Plan: Unlimited Telegram Channel Broadcasts (one-time plans from ₹{getLowestPlanPrice()} after 1-week free trial)</span>
+                  <span>Pro Plan: Personal Telegram Alerts (one-time plans from ₹{getLowestPlanPrice()} after 1-week free trial)</span>
                 </div>
               </div>
 
@@ -2007,7 +2007,7 @@ export function LandingPage({
                   onClick={() => scrollToSection('pricing')}
                   className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold transition-all cursor-pointer"
                 >
-                  <span>View Pro Features (100% Free)</span>
+                  <span>View Pro Features & Trial</span>
                 </button>
               </div>
             </Reveal>
@@ -2024,13 +2024,13 @@ export function LandingPage({
           <Reveal className="text-center max-w-3xl mx-auto space-y-3 mb-12 sm:mb-16">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-xs font-bold border border-emerald-200 dark:border-emerald-800">
               <Zap className="w-3.5 h-3.5 fill-emerald-500" />
-              <span>Launch Special • 100% Free Access</span>
+              <span>Free Viewing • 7-Day Pro Trial</span>
             </div>
             <h2 className="text-2xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
-              Fast Filing Alerts, Free For All Early Users
+              Free Filing Feed, Optional Pro Features
             </h2>
             <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
-              We are currently giving 100% free access to all Pro features — including unlimited watchlists, Telegram alerts, and AI financial breakdowns. No credit card required.
+              View the filing feed for free. Eligible signed-in accounts receive a 7-day Pro trial. Paid Pro plans are one-time purchases; AI generation is limited to 100 summaries per day.
             </p>
           </Reveal>
 
@@ -2064,15 +2064,15 @@ export function LandingPage({
               sub={monthlyPlan.sub}
               features={[
                 'Everything in Free, plus:',
-                'Unlimited Watchlists & Priority Ticker Groups',
-                'Broadcast to Personal & Channel Telegram',
-                'Unlimited High-Priority Gemini AI Financial Extraction',
+                'Watchlists & Priority Ticker Groups',
+                'Personal Telegram Filing Alerts',
+                'Up to 100 AI summaries per day (IST reset)',
                 'Filter & Mute Routine Administrative Filings',
                 'Export Watchlists & Financial Summaries (CSV / JSON)',
               ]}
               ctaLabel={<span className="inline-flex items-center gap-2"><Zap className="w-4 h-4" /> Claim 1-Week Free Trial — ₹0</span>}
               onCta={() => setIsProModalOpen(true)}
-              footnote={<>1st week free — no card required. Then one-time plans from ₹{getLowestPlanPrice()}, cancel anytime.</>}
+              footnote={<>1st week free — no card required. Then one-time plans from ₹{getLowestPlanPrice()}, no automatic renewal.</>}
               className="h-full"
             />
 
@@ -2094,9 +2094,9 @@ export function LandingPage({
               {[
                 { feature: 'BSE India disclosure ingestion', free: 'Included', pro: 'Included (Priority Server)' },
                 { feature: 'Coverage across 5,000+ Listed Scrips', free: 'Full 5,000+', pro: 'Full 5,000+' },
-                { feature: 'AI filing summaries', free: '1 one-time demo', pro: 'High-Priority Instant' },
-                { feature: 'Watchlist Capacity', free: '—', pro: 'Unlimited Lists' },
-                { feature: 'Telegram Notifications', free: '—', pro: 'Unlimited Channels & Groups' },
+                { feature: 'AI filing summaries', free: '1 one-time demo', pro: '100 summaries/day' },
+                { feature: 'Watchlist Capacity', free: '—', pro: 'Watchlist tools' },
+                { feature: 'Telegram Notifications', free: '—', pro: 'Saved personal destination' },
                 { feature: 'Routine Administrative Filter', free: 'Basic', pro: 'Advanced Smart Mute' },
                 { feature: 'Earnings & Board Meeting Calendar', free: 'Included', pro: 'Included + Docket Export' },
                 { feature: 'Data Export (Watchlists, CSV)', free: '—', pro: 'Included' },
@@ -2263,7 +2263,7 @@ export function LandingPage({
               </p>
               <div className="pt-2">
                 <a href="/pricing" className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline">
-                  <span>Explore Free Launch Access</span>
+                  <span>Explore Plans & Trial</span>
                   <ArrowRight className="w-3 h-3" />
                 </a>
               </div>

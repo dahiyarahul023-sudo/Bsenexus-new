@@ -1,0 +1,13 @@
+{
+  "migrationAppliedTwice": true,
+  "parallelAttempts": 110,
+  "allowed": 100,
+  "duplicateReservationNoDoubleCharge": true,
+  "doubleRefundNoDoubleCredit": true,
+  "crossUserRefundDenied": true,
+  "resetThenLateRefundSafe": true,
+  "previousDayRefundSafe": true,
+  "anonDenied": true,
+  "authenticatedDenied": true,
+  "engine": "isolated PostgreSQL/PGlite; one embedded connection; multi-process live test pending"
+}

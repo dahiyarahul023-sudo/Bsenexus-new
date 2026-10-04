@@ -17,6 +17,8 @@ export interface MarketIndexItem {
   lastUpdated: string;
   description?: string;
   tick?: 'UP' | 'DOWN' | null;
+  source?: string;
+  stale?: boolean;
 }
 
 export interface MarketOverviewState {
@@ -51,7 +53,7 @@ export function useMarketIndices() {
       const res = await customFetch('/api/market/indices');
       if (res.ok) {
         const json = await res.json();
-        if (json.indices && Array.isArray(json.indices) && true) {
+        if (json.indices && Array.isArray(json.indices)) {
           // Compare with previous price to detect ticks
           const updatedIndices = json.indices.map((item: MarketIndexItem) => {
             const oldPrice = prevPricesRef.current[item.id];
@@ -71,10 +73,10 @@ export function useMarketIndices() {
             isMarketOpen: Boolean(json.isMarketOpen),
             marketSession: json.marketSession || 'CLOSED',
             marketStatusText: updatedIndices.length ? (json.marketStatusText || (json.isMarketOpen ? 'Market Open' : 'Market Closed')) : 'Market data unavailable',
-            sessionBadge: updatedIndices.length ? (json.sessionBadge || (json.isMarketOpen ? 'MARKET LIVE' : 'CLOSED')) : 'UNAVAILABLE',
-            lastRefreshed: updatedIndices.length ? (Number(json.lastRefreshed) || Date.now()) : 0,
+            sessionBadge: updatedIndices.length ? (json.stale ? 'STALE' : (json.sessionBadge || (json.isMarketOpen ? 'MARKET LIVE' : 'CLOSED'))) : 'UNAVAILABLE',
+            lastRefreshed: updatedIndices.length ? (Number(json.lastRefreshed) || 0) : 0,
             loading: false,
-            stale: false
+            stale: Boolean(json.stale) || updatedIndices.some((item: MarketIndexItem) => item.stale === true)
           });
 
           // Reset tick flash after 2 seconds

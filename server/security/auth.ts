@@ -109,7 +109,7 @@ export const authMiddleware = async (req: express.Request, _res: express.Respons
             const adminAuth = getFirebaseAuth();
             if (adminAuth) {
               try {
-                const fbDecoded = await adminAuth.verifyIdToken(token, false);
+                const fbDecoded = await adminAuth.verifyIdToken(token, true);
                 const identity = getFirebaseIdentity(fbDecoded, ADMIN_EMAIL);
                 const isAnonymous = !identity;
                 const isOwner = identity?.isOwner === true;
@@ -280,8 +280,9 @@ export const authRouter = express.Router();
 // Session login for Firebase-authenticated users: Verifies Firebase ID Token
 authRouter.post('/session', authRateLimiter, async (req, res) => {
   try {
-    const rawIdentifier = req.body?.email || req.body?.identifier || 'firebase_session_account';
-    const accountKey = getAccountKey(rawIdentifier);
+    // Before token verification, only the sanitized IP is a trustworthy risk key.
+    // Unverified body emails must never lock or reset another user's account.
+    const accountKey = getAccountKey(`session-ip:${getSanitizedClientIp(req)}`);
 
     // Enforce per-account protection against distributed credential stuffing / token brute-force
     const acctProtection = await checkAccountProtection(accountKey);
@@ -347,7 +348,7 @@ authRouter.post('/session', authRateLimiter, async (req, res) => {
 
     if (auth) {
       try {
-        decodedToken = await auth.verifyIdToken(idToken, false);
+        decodedToken = await auth.verifyIdToken(idToken, true);
       } catch {
         // Fallback gracefully without noisy console warning
       }
@@ -379,7 +380,12 @@ authRouter.post('/session', authRateLimiter, async (req, res) => {
       await recordFailedAttempt(accountKey);
       return res.status(401).json({ success: false, error: 'A non-anonymous Firebase account with an email is required.' });
     }
-    await resetAccountProtection(accountKey);
+    const verifiedAccountKey = getAccountKey(`session-uid:${identity.uid}`);
+    const verifiedProtection = await checkAccountProtection(verifiedAccountKey);
+    if (!verifiedProtection.allowed) {
+      return res.status(429).json({ success: false, code: 'ACCOUNT_LOCKED', error: 'Verified account is temporarily locked.', remainingSec: verifiedProtection.remainingLockoutSec });
+    }
+    await resetAccountProtection(verifiedAccountKey);
 
     const { uid, email, displayName, emailVerified, isOwner } = identity;
 

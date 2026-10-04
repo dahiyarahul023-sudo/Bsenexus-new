@@ -470,7 +470,7 @@ export async function deleteWatchlist(id: string, userId?: string): Promise<void
   });
 }
 
-export async function toggleWatchlist(id: string, isActive: boolean, userId?: string): Promise<void> {
+export async function toggleWatchlist(id: string, isActive: boolean, userId?: string): Promise<boolean> {
   const uid = sanitizeUserId(userId);
   return withUidLock(uid, async () => {
     const current = await getAllWatchlists(uid);
@@ -478,7 +478,9 @@ export async function toggleWatchlist(id: string, isActive: boolean, userId?: st
     if (found) {
       found.is_active = isActive ? 1 : 0;
       await persistUserWatchlists(uid, current);
+      return true;
     }
+    return false;
   });
 }
 
@@ -700,7 +702,7 @@ export async function updateSymbolsPriorityBatch(
   });
 }
 
-export async function renameWatchlist(id: string, newName: string, userId?: string): Promise<void> {
+export async function renameWatchlist(id: string, newName: string, userId?: string): Promise<boolean> {
   const uid = sanitizeUserId(userId);
   return withUidLock(uid, async () => {
     const current = await getAllWatchlists(uid);
@@ -708,7 +710,9 @@ export async function renameWatchlist(id: string, newName: string, userId?: stri
     if (found) {
       found.name = newName.trim() || found.name;
       await persistUserWatchlists(uid, current);
+      return true;
     }
+    return false;
   });
 }
 

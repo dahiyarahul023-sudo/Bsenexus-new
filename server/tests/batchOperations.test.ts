@@ -55,12 +55,12 @@ describe('Batch Inserts and Updates Tests', () => {
     assert.ok(found2, 'Second announcement present in cache');
   });
 
-  test('addNotificationsBatch and markNotificationsReadBatch work correctly', () => {
+  test('addNotificationsBatch and markNotificationsReadBatch work correctly', async () => {
     const runId = Date.now();
     const notifId1 = `test_notif_${runId}_1`;
     const notifId2 = `test_notif_${runId}_2`;
 
-    const added = addNotificationsBatch([
+    const added = await addNotificationsBatch([
       {
         id: notifId1,
         title: `TCS Results Alert ${runId}`,
@@ -89,11 +89,11 @@ describe('Batch Inserts and Updates Tests', () => {
     const addedIds = added.map(n => n.id);
 
     // Mark both as read in batch
-    const updatedCount = markNotificationsReadBatch(addedIds, `test_user_${runId}`);
+    const updatedCount = await markNotificationsReadBatch(addedIds, `test_user_${runId}`);
     assert.strictEqual(updatedCount, 2, 'Both notifications marked as read');
 
     // Re-marking should return 0 updated
-    const secondUpdate = markNotificationsReadBatch(addedIds, `test_user_${runId}`);
+    const secondUpdate = await markNotificationsReadBatch(addedIds, `test_user_${runId}`);
     assert.strictEqual(secondUpdate, 0, 'Already read notifications should not be updated again');
   });
 
