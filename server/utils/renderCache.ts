@@ -171,7 +171,9 @@ export class RenderCache {
         return next();
       }
 
-      const key = options.keyGenerator ? options.keyGenerator(req) : `${req.baseUrl || ''}${req.path}`;
+      const identity = options.publicCache === false ? `|uid:${(req as any).user?.uid || 'guest'}` : '';
+      if (options.publicCache === false) { res.vary('Authorization'); res.vary('Cookie'); }
+      const key = options.keyGenerator ? options.keyGenerator(req) : `${req.baseUrl || ''}${req.url || req.path}${identity}`;
       const cached = this.get(key);
 
       // Check conditional If-None-Match header
@@ -186,6 +188,12 @@ export class RenderCache {
         const cacheVisibility = options.publicCache === false ? 'private' : 'public';
         res.setHeader('Cache-Control', `${cacheVisibility}, max-age=${maxAgeSec}, stale-while-revalidate=${swr}`);
 
+        if (cached.headers) {
+          for (const [hName, hVal] of Object.entries(cached.headers)) {
+            res.setHeader(hName, hVal);
+          }
+        }
+
         // If client already has fresh ETag, return 304 Not Modified
         if (clientEtag && clientEtag === cached.etag) {
           return res.status(304).end();
@@ -193,11 +201,6 @@ export class RenderCache {
 
         res.status(cached.statusCode);
         res.setHeader('Content-Type', cached.contentType);
-        if (cached.headers) {
-          for (const [hName, hVal] of Object.entries(cached.headers)) {
-            res.setHeader(hName, hVal);
-          }
-        }
         return res.send(cached.body);
       }
 
@@ -213,9 +216,14 @@ export class RenderCache {
           const swr = options.staleWhileRevalidateSec || Math.max(60, maxAgeSec * 2);
           const cacheVisibility = options.publicCache === false ? 'private' : 'public';
 
-          const entry = this.set(key, bodyContent, contentType, options);
+          const retainedHeaders: Record<string,string> = {};
+          for (const name of ['Cache-Control','X-BSE-Source-Blocked','X-BSE-Feed-Stale','X-BSE-Feed-Updated-At']) {
+            const value = res.getHeader(name);
+            if (typeof value === 'string') retainedHeaders[name] = value;
+          }
+          const entry = this.set(key, bodyContent, contentType, options, res.statusCode, retainedHeaders);
           res.setHeader('ETag', entry.etag);
-          res.setHeader('Cache-Control', `${cacheVisibility}, max-age=${maxAgeSec}, stale-while-revalidate=${swr}`);
+          res.setHeader('Cache-Control', retainedHeaders['Cache-Control'] || `${cacheVisibility}, max-age=${maxAgeSec}, stale-while-revalidate=${swr}`);
 
           if (clientEtag && clientEtag === entry.etag) {
             return res.status(304).end();

@@ -1,3 +1,5 @@
+> Latest follow-up: [FOLLOWUP_2026-10-04.md](FOLLOWUP_2026-10-04.md), [Muse console-only instructions](MUSE_CONSOLE_ONLY.md). Register now has 45 findings; original audit counts/evidence below are historical. Follow-up is staged on a migration-dependent PR.
+
 # Bsenexus audit — repository map and verified findings
 
 Audit baseline: `dahiyarahul023-sudo/Bsenexus-new`, main `55d35a16a0a0b09017f685af4f4170acc2d30b3e`. All 284 baseline blobs were materialized and matched their Git blob SHA. Latest storageMonitor numeric-scrip fix is preserved. This report covers this repository, not every repository in the account.

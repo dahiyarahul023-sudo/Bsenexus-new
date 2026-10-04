@@ -90,8 +90,8 @@ export function generateInstantHeuristicSummary(
     output += `• **Filing Context:** ${sentences.slice(0, 2).join(' ')}\n`;
   }
 
-  output += `\n<i>⚡ Instant structured extraction active. Full PDF attached in filing.</i>`;
-  return output;
+  output += `\n<i>Check the original filing to verify figures and context.</i>`;
+  return "**Heuristic extraction — not a Gemini-generated summary. Based only on the supplied headline and details; full PDF has not been analyzed.**\n\n" + output;
 }
 
 /**

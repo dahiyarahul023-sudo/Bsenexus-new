@@ -1,3 +1,5 @@
+> Superseded for current Muse tasks by [MUSE_CONSOLE_ONLY.md](MUSE_CONSOLE_ONLY.md). Cloud incident resolved per Rahul. Muse should not write code; old investigation/test design below is historical context.
+
 # Rahul ke liye audit handoff aur Muse/browser agent ka kaam
 
 Repo: dahiyarahul023-sudo/Bsenexus-new. Baseline main commit 55d35a16a0a0b09017f685af4f4170acc2d30b3e. Isi repo ko audit kiya hai; saari GitHub repositories ka audit nahi hua.

@@ -65,6 +65,9 @@ export async function runPaymentStore<T>(
   timeoutMs = 10_000,
 ): Promise<T> {
   if (!isSupabaseConfigured()) {
+    // Callers may already have constructed a rejecting async operation.
+    // Observe that rejection before failing closed to avoid an unhandled promise.
+    void promise.catch(() => {});
     throw new PaymentStoreUnavailableError(operation, new Error('Supabase not configured'));
   }
 

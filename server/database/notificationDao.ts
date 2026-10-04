@@ -1,3 +1,4 @@
+import { runPaymentStore, PaymentStoreUnavailableError } from './paymentStore.js';
 import { getSupabase, isSupabaseConfigured } from './supabase.js';
 import { readLocalJson, writeLocalJson } from './localStore.js';
 
@@ -19,10 +20,15 @@ export interface AppNotification {
 }
 
 const NOTIFICATIONS_FILE = 'notifications.json';
-// Initial load: filter out any legacy non-watchlist junk from disk
-let rawLoaded = readLocalJson<AppNotification[]>(NOTIFICATIONS_FILE, []);
-let notificationsCache: AppNotification[] = rawLoaded.filter(n => Boolean(n.isWatchlist));
-writeLocalJson(NOTIFICATIONS_FILE, notificationsCache);
+// Preserve legitimate inbox records across local development restarts.
+let notificationsCache = readLocalJson<AppNotification[]>(NOTIFICATIONS_FILE, []);
+const RECEIPTS_FILE = 'notification_receipts.json';
+let localReceipts = readLocalJson<Record<string, string[]>>(RECEIPTS_FILE, {});
+function needsCloud(): boolean { return isSupabaseConfigured() || process.env.NODE_ENV === 'production'; }
+async function cloud<T>(operation: string, run: () => Promise<T>): Promise<T> {
+  if (!isSupabaseConfigured()) throw new PaymentStoreUnavailableError(operation);
+  return runPaymentStore(operation, Promise.resolve().then(run));
+}
 
 let saveDiskTimer: NodeJS.Timeout | null = null;
 function scheduleSave() {
@@ -75,35 +81,22 @@ function fromRow(r: any): AppNotification {
   };
 }
 
-// --- Supabase persistence (fire-and-forget; never blocks the caller) ---
+// Cloud writes are awaited; a configured store failure is never reported as success.
 // The local JSON file lives on Cloud Run's ephemeral filesystem, so without
 // this the inbox goes empty on every restart/republish.
 
-function persistNotificationToCloud(n: AppNotification): void {
-  if (!isSupabaseConfigured()) return;
-  void (async () => {
-    try {
-      const { error } = await getSupabase().from(NOTIFICATIONS_TABLE).upsert(toRow(n), { onConflict: 'id' });
-      if (error) throw error;
-    } catch { /* fire-and-forget: local cache is the source of truth for reads */ }
-  })();
-}
-
-function deleteNotificationFromCloud(id: string): void {
-  if (!isSupabaseConfigured()) return;
-  void (async () => {
-    try {
-      const { error } = await getSupabase().from(NOTIFICATIONS_TABLE).delete().eq('id', id);
-      if (error) throw error;
-    } catch { /* fire-and-forget */ }
-  })();
+async function persistNotificationToCloud(n: AppNotification): Promise<void> {
+  if (!needsCloud()) return;
+  await cloud('persist notification', async () => {
+    const { error } = await getSupabase().from(NOTIFICATIONS_TABLE).upsert(toRow(n), { onConflict: 'id' });
+    if (error) throw error;
+  });
 }
 
 let notificationsCloudInitDone = false;
 /** One-time background restore of notifications from Supabase into the memory cache. */
 export async function initNotificationsFromCloud(): Promise<void> {
   if (notificationsCloudInitDone) return;
-  notificationsCloudInitDone = true;
   if (!isSupabaseConfigured()) return;
   try {
     const { data, error } = await getSupabase()
@@ -112,6 +105,7 @@ export async function initNotificationsFromCloud(): Promise<void> {
       .order('timestamp', { ascending: false })
       .limit(MAX_CACHED);
     if (error) throw error;
+    notificationsCloudInitDone = true;
     const seen = new Set(notificationsCache.map(n => n.id));
     let added = 0;
     for (const row of data || []) {
@@ -138,43 +132,45 @@ export interface NotificationFilterOptions {
   unreadOnly?: boolean;
 }
 
-export function getAllNotifications(userId: string = 'guest', limit: number = 100, options: NotificationFilterOptions = {}): AppNotification[] {
-  let filtered = notificationsCache.filter(n => {
-    if (!n.userId || n.userId === 'system' || n.userId === 'all') return true;
-    return n.userId === userId;
-  });
-
-  // Default to Watchlist Only unless explicitly disabled
-  if (options.watchlistOnly !== false) {
-    filtered = filtered.filter(n => Boolean(n.isWatchlist));
+async function readInbox(userId: string): Promise<AppNotification[]> {
+  let visible: AppNotification[];
+  let readIds: Set<string>;
+  if (needsCloud()) {
+    const snapshot = await cloud('read notification inbox', async () => {
+      const {data,error}=await getSupabase().from(NOTIFICATIONS_TABLE).select('*').in('user_id',[userId,'system','all']).order('timestamp',{ascending:false}).limit(MAX_CACHED);
+      if(error)throw error;
+      if(!data?.length)return {items:[],readIds:[]};
+      const receipts=await getSupabase().from('user_notification_receipts').select('notification_id').eq('user_id',userId).in('notification_id',data.map(row=>row.id));
+      if(receipts.error)throw receipts.error;
+      return { items: (data || []).map(fromRow), readIds: (receipts.data || []).map(r=>r.notification_id) };
+    });
+    visible = snapshot.items;
+    readIds = new Set(snapshot.readIds);
+  } else {
+    visible = notificationsCache.filter(n=>!n.userId || ['system','all',userId].includes(n.userId));
+    readIds = new Set(localReceipts[userId] || []);
   }
-
-  if (options.unreadOnly) {
-    filtered = filtered.filter(n => !n.isRead);
-  }
-
-  if (options.type && options.type !== 'ALL') {
-    if (options.type === 'RESULTS') {
-      filtered = filtered.filter(n => n.type === 'RESULT' || n.type === 'BOARD_MEETING');
-    } else if (options.type === 'ACTIONS') {
-      filtered = filtered.filter(n => n.type === 'DIVIDEND' || n.type === 'BUYBACK' || n.type === 'BONUS_SPLIT');
-    } else if (options.type === 'ORDERS') {
-      filtered = filtered.filter(n => n.type === 'ORDER_WIN');
-    }
-  }
-
-  return filtered.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)).slice(0, limit);
+  // Legacy shared isRead was global; it must never decide another user's receipt.
+  return visible.map(n=>({...n, isRead: readIds.has(n.id) || (n.userId===userId && n.isRead)}));
 }
 
-export function getUnreadNotificationCount(userId: string = 'guest', watchlistOnly: boolean = true): number {
-  return notificationsCache.filter(n => {
-    const userMatch = !n.userId || n.userId === 'system' || n.userId === 'all' || n.userId === userId;
-    const wlMatch = !watchlistOnly || Boolean(n.isWatchlist);
-    return userMatch && wlMatch && !n.isRead;
-  }).length;
+export async function getAllNotifications(userId: string = 'guest', limit = 100, options: NotificationFilterOptions = {}): Promise<AppNotification[]> {
+  return filterNotifications(await readInbox(userId),limit,options);
+}
+export function filterNotifications(items: AppNotification[],limit=100,options: NotificationFilterOptions={}): AppNotification[] {
+  let filtered = items;
+  if (options.watchlistOnly !== false) filtered = filtered.filter(n=>Boolean(n.isWatchlist));
+  if (options.unreadOnly) filtered = filtered.filter(n=>!n.isRead);
+  if (options.type==='RESULTS') filtered=filtered.filter(n=>['RESULT','BOARD_MEETING'].includes(n.type));
+  else if (options.type==='ACTIONS') filtered=filtered.filter(n=>['DIVIDEND','BUYBACK','BONUS_SPLIT'].includes(n.type));
+  else if (options.type==='ORDERS') filtered=filtered.filter(n=>n.type==='ORDER_WIN');
+  return filtered.sort((a,b)=>b.timestamp-a.timestamp).slice(0,Math.max(1,Math.min(MAX_CACHED,limit)));
+}
+export async function getUnreadNotificationCount(userId = 'guest', watchlistOnly = true): Promise<number> {
+  return (await getAllNotifications(userId,MAX_CACHED,{watchlistOnly,unreadOnly:true})).length;
 }
 
-export function addNotification(notif: Omit<AppNotification, 'id' | 'timestamp' | 'isRead'> & { id?: string; timestamp?: number; isRead?: boolean }): AppNotification {
+export async function addNotification(notif: Omit<AppNotification, 'id' | 'timestamp' | 'isRead'> & { id?: string; timestamp?: number; isRead?: boolean }): Promise<AppNotification> {
   const ownerId = notif.userId && typeof notif.userId === 'string' ? notif.userId : 'system';
   const id = notif.id || `notif_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
   
@@ -186,6 +182,7 @@ export function addNotification(notif: Omit<AppNotification, 'id' | 'timestamp' 
   );
 
   if (existing) {
+    await persistNotificationToCloud({ ...existing, isWatchlist: Boolean(existing.isWatchlist || notif.isWatchlist) });
     if (notif.isWatchlist && !existing.isWatchlist) {
       existing.isWatchlist = true;
       scheduleSave();
@@ -201,146 +198,63 @@ export function addNotification(notif: Omit<AppNotification, 'id' | 'timestamp' 
     userId: ownerId
   };
 
+  await persistNotificationToCloud(newNotif);
   notificationsCache.unshift(newNotif);
   if (notificationsCache.length > MAX_CACHED) {
     notificationsCache = notificationsCache.slice(0, MAX_CACHED);
   }
 
   scheduleSave();
-  persistNotificationToCloud(newNotif);
   return newNotif;
 }
 
-export function addNotificationsBatch(
-  notifs: (Omit<AppNotification, 'id' | 'timestamp' | 'isRead'> & { id?: string; timestamp?: number; isRead?: boolean })[]
-): AppNotification[] {
-  if (!Array.isArray(notifs) || notifs.length === 0) return [];
-
-  const added: AppNotification[] = [];
-  let modified = false;
-
-  for (const notif of notifs) {
-    if (!notif) continue;
-    const ownerId = notif.userId && typeof notif.userId === 'string' ? notif.userId : 'system';
-    const id = notif.id || `notif_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-
-    const existing = notificationsCache.find(n => 
-      (n.userId === ownerId) &&
-      ((notif.newsId && n.newsId === notif.newsId) ||
-      (n.symbol === notif.symbol && n.title === notif.title && Math.abs(n.timestamp - (notif.timestamp || Date.now())) < 7200000))
-    );
-
-    if (existing) {
-      if (notif.isWatchlist && !existing.isWatchlist) {
-        existing.isWatchlist = true;
-        modified = true;
-      }
-      added.push(existing);
-      continue;
-    }
-
-    const newNotif: AppNotification = {
-      id,
-      timestamp: notif.timestamp || Date.now(),
-      isRead: notif.isRead || false,
-      ...notif,
-      userId: ownerId
-    };
-
-    notificationsCache.unshift(newNotif);
-    added.push(newNotif);
-    persistNotificationToCloud(newNotif);
-    modified = true;
-  }
-
-  if (notificationsCache.length > MAX_CACHED) {
-    notificationsCache = notificationsCache.slice(0, MAX_CACHED);
-  }
-
-  if (modified) {
-    scheduleSave();
-  }
-
+export async function addNotificationsBatch(notifs: (Omit<AppNotification,'id'|'timestamp'|'isRead'> & {id?: string; timestamp?: number; isRead?: boolean})[]): Promise<AppNotification[]> {
+  if (!Array.isArray(notifs)) return [];
+  const added: AppNotification[]=[];
+  for (const notif of notifs) if (notif) added.push(await addNotification(notif));
   return added;
 }
 
-function markReadStatusToCloud(ids: string[]): void {
-  if (!ids.length || !isSupabaseConfigured()) return;
-  void (async () => {
-    try {
-      const { error } = await getSupabase()
-        .from(NOTIFICATIONS_TABLE)
-        .update({ is_read: true })
-        .in('id', ids.slice(0, MAX_CACHED));
-      if (error) throw error;
-    } catch { /* never break the request path on bookkeeping */ }
-  })();
-}
-
-export function markNotificationsReadBatch(ids: string[], userId: string = 'guest'): number {
-  if (!Array.isArray(ids) || ids.length === 0) return 0;
-  const idSet = new Set(ids);
-  let changedCount = 0;
-  const changedIds: string[] = [];
-
-  notificationsCache = notificationsCache.map(n => {
-    if (idSet.has(n.id) && (n.userId === userId || !n.userId || n.userId === 'system' || n.userId === 'all')) {
-      if (!n.isRead) {
-        changedCount++;
-        changedIds.push(n.id);
-        return { ...n, isRead: true };
-      }
-    }
-    return n;
-  });
-
-  if (changedCount > 0) {
-    scheduleSave();
-    markReadStatusToCloud(changedIds);
+export async function markNotificationsReadBatch(ids: string[], userId = 'guest'): Promise<number> {
+  if (!Array.isArray(ids) || !ids.length) return 0;
+  const requested = new Set(ids.filter(id=>typeof id==='string').slice(0,MAX_CACHED));
+  const changed = (await readInbox(userId)).filter(n=>requested.has(n.id) && !n.isRead);
+  if (!changed.length) return 0;
+  if (needsCloud()) {
+    await cloud('mark notification receipts', async () => {
+      const {error}=await getSupabase().from('user_notification_receipts').upsert(changed.map(n=>({user_id:userId,notification_id:n.id,read_at:Date.now()})),{onConflict:'user_id,notification_id'});
+      if(error)throw error;
+    });
+  } else {
+    localReceipts[userId]=[...new Set([...(localReceipts[userId] || []),...changed.map(n=>n.id)])];
+    writeLocalJson(RECEIPTS_FILE,localReceipts);
   }
-  return changedCount;
+  return changed.length;
+}
+export async function markNotificationRead(id: string,userId='guest'): Promise<boolean> {
+  const exists=(await readInbox(userId)).some(n=>n.id===id);
+  if (!exists) return false;
+  await markNotificationsReadBatch([id],userId);
+  return true;
+}
+export async function markAllNotificationsRead(userId='guest'): Promise<void> {
+  await markNotificationsReadBatch((await readInbox(userId)).map(n=>n.id),userId);
 }
 
-export function markNotificationRead(id: string, userId: string = 'guest'): boolean {
-  let changed = false;
-  notificationsCache = notificationsCache.map(n => {
-    if (n.id === id && (n.userId === userId || !n.userId || n.userId === 'system' || n.userId === 'all')) {
-      changed = true;
-      return { ...n, isRead: true };
-    }
-    return n;
-  });
-  if (changed) {
-    scheduleSave();
-    markReadStatusToCloud([id]);
+export async function clearAllNotifications(userId: string = 'guest'): Promise<void> {
+  if (needsCloud()) {
+    await cloud('clear personal notifications', async () => {
+      const {error}=await getSupabase().from(NOTIFICATIONS_TABLE).delete().eq('user_id',userId);
+      if(error)throw error;
+    });
   }
-  return changed;
-}
-
-export function markAllNotificationsRead(userId: string = 'guest'): void {
-  const changedIds: string[] = [];
-  notificationsCache = notificationsCache.map(n => {
-    if (n.userId === userId || !n.userId || n.userId === 'system' || n.userId === 'all') {
-      if (!n.isRead) changedIds.push(n.id);
-      return { ...n, isRead: true };
-    }
-    return n;
-  });
-  scheduleSave();
-  markReadStatusToCloud(changedIds);
-}
-
-export function clearAllNotifications(userId: string = 'guest'): void {
   const prevCount = notificationsCache.length;
-  const removedIds: string[] = [];
   notificationsCache = notificationsCache.filter(n => {
     // Only delete notifications that strictly belong to the calling user
     if (n.userId === userId) {
-      removedIds.push(n.id);
       return false;
     }
     if (userId === 'guest' && (!n.userId || n.userId === 'guest')) {
-      removedIds.push(n.id);
       return false;
     }
     // Keep system-wide, broadcast, and other users' notifications
@@ -348,6 +262,6 @@ export function clearAllNotifications(userId: string = 'guest'): void {
   });
   if (notificationsCache.length !== prevCount) {
     scheduleSave();
-    removedIds.forEach(deleteNotificationFromCloud);
+
   }
 }

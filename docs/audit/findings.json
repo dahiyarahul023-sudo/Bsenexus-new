@@ -70,10 +70,10 @@
     "severity": "High",
     "channel": "Security",
     "title": "AI quota is local to revision/instance",
-    "status": "open",
+    "status": "code fixed; live migration and multi-replica checks pending",
     "file": "server/services/aiQuotaService.ts",
-    "evidence": "Usage lives in ai_usage.json on process.cwd()/data; process mutex cannot synchronize two Cloud Run instances or survive ephemeral reset.",
-    "next_action": "Use durable transactional counter keyed by verified UID + IST day, idempotent generation ID and atomic reservation/refund. Test two replicas and restart before enabling scale.",
+    "evidence": "New 003 migration and DAO reserve usage in PostgreSQL by verified UID/IST day. Service-only RPC uses per-user transaction lock and once-only reservation refunds. Isolated 110 attempts allowed 100. Production/configured cloud refuses local fallback.",
+    "next_action": "Apply 003 before rollout; verify two staging replicas/restart and unknown-commit failure recovery.",
     "line": 1
   },
   {
@@ -125,10 +125,10 @@
     "severity": "High",
     "channel": "Security",
     "title": "Logout/revocation do not invalidate stolen server sessions immediately",
-    "status": "open",
+    "status": "partially fixed; server JWT revocation open",
     "file": "server/security/auth.ts",
-    "evidence": "JWT lifetime is 7d; logout clears cookie only. Firebase ID token verification explicitly passes false for revoked checks. Browser stores auth/Firebase tokens in localStorage.",
-    "next_action": "Shorter sessions and durable session versions/revocation; enforce Firebase revocation for sensitive flows; minimize JS-readable token retention. Test stolen pre-logout token after logout/revoke.",
+    "evidence": "Firebase ID-token verification now checks revocation; server-issued JWT remains 7d and logout clears cookie only.",
+    "next_action": "Design durable server-session revocation; do not treat Firebase check as local JWT revocation.",
     "line": 112
   },
   {
@@ -147,10 +147,10 @@
     "severity": "Medium",
     "channel": "Security",
     "title": "Session account lock key uses unverified request identifier",
-    "status": "open",
+    "status": "code fixed; distributed limiter still limited",
     "file": "server/security/auth.ts",
-    "evidence": "/session derives accountKey from body.email/body.identifier or shared default before verifying token. Rotating input evades per-account intent; targeting another email can contaminate its counter.",
-    "next_action": "Bind post-verification limits to verified UID; separate pre-auth IP/risk key. Do not rely on unverified email for authenticated identity.",
+    "evidence": "Session failure key no longer trusts body email/identifier. Pre-verification risk key is sanitized IP; successful account key uses verified UID. Regression confirms target email counter is unchanged.",
+    "next_action": "Verify real login/revoked Firebase tokens; account counter distributed atomicity remains separate.",
     "line": 1
   },
   {
@@ -224,10 +224,10 @@
     "severity": "High",
     "channel": "Data integrity",
     "title": "Hardcoded prices looked like current market data",
-    "status": "code fixed; source-age labeling still open",
+    "status": "partially fixed; provider timestamp verification pending",
     "file": "src/hooks/useMarketIndices.ts",
-    "evidence": "Frontend DEFAULT_INDICES and backend rolling seeds supplied exact numbers despite source failure. Initial state is empty; unavailable entries excluded; client failures with real cache mark stale.",
-    "next_action": "Verify real quote timestamps. Server top-level lastRefreshed can still be now while individual quote is cached; badge needs per-source age threshold.",
+    "evidence": "Failed server refresh flags retained quotes stale and preserves quote observation time; client propagates stale state. Fetch attempt is separate.",
+    "next_action": "Verify source quote timestamp/age and genuine cached data on live API.",
     "line": 1
   },
   {
@@ -257,10 +257,10 @@
     "severity": "Medium",
     "channel": "Data integrity",
     "title": "Gemini label can hide heuristic fallback",
-    "status": "open",
+    "status": "partially fixed; structured provenance pending",
     "file": "server/services/gemini.ts",
-    "evidence": "Missing API key can return a fallback extraction while UI uses Gemini/neural synthesis language. Response provenance is not a consistent field.",
-    "next_action": "Return provider/mode/source coverage/cachedAt and label heuristic output; require full document evidence before claiming financial breakdown completion.",
+    "evidence": "New heuristic summaries explicitly identify non-Gemini headline/detail extraction and state full PDF not analyzed. Old cached outputs may lack label.",
+    "next_action": "Add structured provider/document/cache provenance and migration of legacy cache labels.",
     "line": 1
   },
   {
@@ -268,10 +268,10 @@
     "severity": "Medium",
     "channel": "Data integrity",
     "title": "Market story close time/holiday sources disagree",
-    "status": "open",
+    "status": "partially fixed; exchange calendar open",
     "file": "src/components/story/storyData.ts",
-    "evidence": "Story moves switch at 15:00 IST while polling market-hours helper uses 15:30; holiday logic appears split between year-aware frontend and static backend lists.",
-    "next_action": "Use a single dated exchange calendar/session service; test 15:00,15:29,15:30, holiday and Muhurat sessions against official announcements.",
+    "evidence": "Story closes at15:30 IST; regular hours09:15\u201315:30 exclusive, tested at boundary/weekend. Existing holiday/Muhurat sources remain unverified.",
+    "next_action": "Unify dated official exchange calendar after source verification.",
     "line": 1
   },
   {
@@ -290,10 +290,10 @@
     "severity": "High",
     "channel": "Data integrity",
     "title": "Notification persistence can disappear without caller noticing",
-    "status": "open",
+    "status": "partially fixed; migration/live and outbox pending",
     "file": "server/database/notificationDao.ts",
-    "evidence": "Cloud writes are fire-and-forget and errors swallowed; missing notifications table in initial schema. Reads use local cache and initializer removes non-watchlist disk records.",
-    "next_action": "Durable outbox/inbox transactions, explicit persistence failures and correct schema; test restart/two replicas/no-cloud and retention semantics.",
+    "evidence": "Cloud writes now awaited and failure propagated; reads from scoped Supabase inbox. Local startup no longer discards valid non-watchlist records. 004 supplies compatible missing table.",
+    "next_action": "Inspect existing table types; apply004 before deploy; verify restart/two replicas and design durable producer outbox.",
     "line": 1
   },
   {
@@ -301,10 +301,10 @@
     "severity": "Medium",
     "channel": "Data integrity",
     "title": "One user marks shared notifications read for everyone",
-    "status": "open",
+    "status": "code fixed; live migration pending",
     "file": "server/database/notificationDao.ts",
-    "evidence": "markRead APIs accept system/all notifications and update global isRead on the common record; no per-user receipt table.",
-    "next_action": "Store user_notification_receipts(user_id,notification_id,read_at); verify A reads while B remains unread.",
+    "evidence": "Per-user receipts replace shared global isRead writes. A reads shared notification while B remains unread in regression; own clear preserves shared/other records.",
+    "next_action": "Apply004, test A/B on real staging sessions; define retention/pagination.",
     "line": 304
   },
   {
@@ -336,7 +336,7 @@
     "title": "Save Note login host missing on standalone filing/results",
     "status": "code fixed; browser verified",
     "file": "src/App.tsx",
-    "evidence": "Standalone share branch rendered NoteEditorHost but no AuthModal. Guest Save note → Sign in now displays login; Pro fixture opens New note editor.",
+    "evidence": "Standalone share branch rendered NoteEditorHost but no AuthModal. Guest Save note \u2192 Sign in now displays login; Pro fixture opens New note editor.",
     "next_action": "Verify durable real note CRUD after real authentication; local fixture is not cloud sync proof.",
     "line": 1
   },
@@ -392,7 +392,7 @@
     "status": "code fixed for audited surfaces",
     "file": "src/App.tsx",
     "evidence": "Initial defaults were stable=85ms and connected=120ms; footer labeled request latency Live Ingestion. Initial health is now unknown/0 and footer says source request or unverified.",
-    "next_action": "Measure publication→first fetch→durable save→API→paint→Telegram separately; remove any remaining hardcoded marketing latency claims.",
+    "next_action": "Measure publication\u2192first fetch\u2192durable save\u2192API\u2192paint\u2192Telegram separately; remove any remaining hardcoded marketing latency claims.",
     "line": 1
   },
   {
@@ -411,10 +411,10 @@
     "severity": "Low",
     "channel": "Routing and controls",
     "title": "Inspect button has no action handler",
-    "status": "open; confirmed static control",
+    "status": "code fixed; live browser check pending",
     "file": "src/components/AdminDiagnostics.tsx",
-    "evidence": "Inspect near approved diagnostic rules is a plain button without handler; six other plain button no-onClick occurrences are form submit controls and not automatically broken.",
-    "next_action": "Implement detail view or remove/disable placeholder with clear description. Do not classify submit buttons as inert from onClick alone.",
+    "evidence": "Inspect now opens existing selected-error detail modal and stops row click propagation.",
+    "next_action": "Muse checks actual modal/trace/close on desktop and mobile.",
     "line": 820
   },
   {
@@ -422,10 +422,10 @@
     "severity": "Medium",
     "channel": "Routing and controls",
     "title": "Mutation can report success for unknown watchlist ID",
-    "status": "open",
+    "status": "code fixed",
     "file": "server/api/routes.ts",
-    "evidence": "Rename/toggle DAO silently does nothing when owned list not found; route still returns success=true. User isolation is retained but outcome can lie.",
-    "next_action": "DAO should return changed/notFound and API respond 404 for a missing owned record; test wrong ID and other user ID without leaking ownership.",
+    "evidence": "DAO returns false for missing owned record; rename/toggle respond404 and validate input400. Owner-only mutation regression passed.",
+    "next_action": "Muse verifies stale/deleted list UI error, no ownership leak.",
     "line": 1
   },
   {
@@ -433,10 +433,10 @@
     "severity": "Medium",
     "channel": "Routing and controls",
     "title": "Marketing unlimited/instant/free promises exceed verified behavior",
-    "status": "open",
+    "status": "partially fixed; fixture/copy review pending",
     "file": "src/components/LandingPage.tsx",
-    "evidence": "Copy claims all Pro free, unlimited scrips/channels and seconds after publication while backend applies paid plans/100 daily AI budget/polling/circuit backoff. Landing contains explicitly SAMPLE rows plus other hardcoded dated narrative fixtures.",
-    "next_action": "Audit visible copy against feature contract and provenance; label every illustrative dataset. Publish clear plan limits and measured latency percentiles, not guarantees.",
+    "evidence": "Audited Landing claims corrected: no universal freePro, unlimitedAI or guaranteed2s delivery; describes eligible7-daytrial,100dailyquota andone-timeplans.",
+    "next_action": "Review remaining marketing/data fixtures against real feature contract.",
     "line": 1
   },
   {
@@ -455,10 +455,10 @@
     "severity": "Medium",
     "channel": "Performance",
     "title": "Polling/cache/backoff add visible filing delay",
-    "status": "open; code intervals measured",
+    "status": "partially fixed; live timings pending",
     "file": "server/utils/helpers.ts",
-    "evidence": "20s backend market polling, 5m off-hours, blocked-source backoff 20/60/300s; frontend feed 30s; announcement server cache 15s and browser freshness/SWR; quote frontend 60s. Intervals overlap; do not add them as a guaranteed SLA.",
-    "next_action": "Record event stage timestamps and p50/p95/p99 before changes; prioritize feed freshness over deep history/news calls, invalidate feed cache after new durable insert, consider SSE if measured bottleneck is client polling.",
+    "evidence": "Local feed cache invalidates on filing changes; query/user cache separation and stale-header preservation fixed. Polling/backoff/source-to-screen latency remains to measure.",
+    "next_action": "Muse captures stage timestamps; do not claim fastest or guaranteed latency.",
     "line": 441
   },
   {
@@ -477,10 +477,21 @@
     "severity": "High",
     "channel": "Deployment",
     "title": "Current republish precondition failure remains unverified",
-    "status": "pending live logs",
+    "status": "resolved per Rahul; deployment details pending",
     "file": "server.ts",
-    "evidence": "Screenshots show untitled/us-west1 in groovy-coda-l9v0l (confirm exact project ID); last successful publish Oct3 22:15:17 IST. Visible UpdateService version conflict around19:55 IST precedes that success, so it cannot alone explain later failed retry.",
-    "next_action": "Use latest attempt timestamp and both Cloud Run revision + audit logs via cloudlogging link. Export current service/revision metadata and error status; do not delete working service or unpublish to diagnose.",
+    "evidence": "Rahul says Muse fixed previous Cloud publish failure. Codex has not read new revision/console evidence.",
+    "next_action": "Muse records working revision and deploys new PR only after003/004 migrations.",
     "line": 1
+  },
+  {
+    "id": "DATA-10",
+    "severity": "Medium",
+    "channel": "Data integrity",
+    "title": "API cache mixed distinct query results and lost stale headers",
+    "status": "code fixed",
+    "file": "server/utils/renderCache.ts",
+    "line": 173,
+    "evidence": "Default cache key ignored query. New key includes query and private UID/Vary. Real Express test proves symbols and identities separate; stale evidence retained on hits/304.",
+    "next_action": "Deploy; verify real symbol/limit switching and stale-source response headers."
   }
 ]

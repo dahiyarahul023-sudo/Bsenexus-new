@@ -1,8 +1,11 @@
+import { randomUUID } from 'node:crypto';
+import { operateDurableAiQuota, requiresDurableAiQuota } from '../database/aiQuotaDao.js';
 import { readLocalJson, writeLocalJson } from '../database/localStore.js';
 import { getUserProfile } from '../database/usersDao.js';
 import { createKeyedSerial } from '../utils/keyedSerial.js';
 
 const serializeQuota = createKeyedSerial();
+const localReservations = new Map<string, { uid: string; usageKey: string }>();
 
 const AI_USAGE_FILE = 'ai_usage.json';
 
@@ -17,7 +20,7 @@ function getTodayKeyIST(): string {
 export async function checkServerAiQuota(
   uid: string,
   isAdminUser: boolean
-): Promise<{ allowed: boolean; remaining: number; dailyLimit: number; error?: string; isPro?: boolean }> {
+): Promise<{ allowed: boolean; remaining: number; dailyLimit: number; error?: string; isPro?: boolean; reservationId?: string }> {
   // 1. Admin/Owner always has full unlimited AI generation
   if (isAdminUser) {
     return { allowed: true, remaining: Infinity, dailyLimit: Infinity, isPro: true };
@@ -36,7 +39,7 @@ export async function checkServerAiQuota(
   }
 
   // 3. Authenticated User: Verify active 1-Week Pro Trial
-  const profile = await getUserProfile(uid);
+  const profile = await getUserProfile(uid, { durable: requiresDurableAiQuota() });
   const now = Date.now();
   const proExpiresAt = profile?.proExpiresAt;
   const isProActive = Boolean(proExpiresAt && proExpiresAt > now);
@@ -56,7 +59,9 @@ export async function checkServerAiQuota(
   const todayKey = getTodayKeyIST();
   const usageKey = `${uid}_${todayKey}`;
   const usageMap = readLocalJson<Record<string, number>>(AI_USAGE_FILE, {});
-  const used = usageMap[usageKey] || 0;
+  const used = requiresDurableAiQuota()
+    ? (await operateDurableAiQuota(uid, 'status')).used
+    : usageMap[usageKey] || 0;
 
   const dailyLimit = 100; // Fair-use daily limit for 1-week Pro trial
   const remaining = Math.max(0, dailyLimit - used);
@@ -80,9 +85,13 @@ export async function checkServerAiQuota(
 }
 
 export async function resetServerAiQuota(uid: string): Promise<boolean> {
+  if (requiresDurableAiQuota()) { await operateDurableAiQuota(uid, 'reset'); return true; }
   const todayKey = getTodayKeyIST();
   const usageKey = `${uid}_${todayKey}`;
   const usageMap = readLocalJson<Record<string, number>>(AI_USAGE_FILE, {});
+  for (const [id, reservation] of localReservations) {
+    if (reservation.uid === uid && reservation.usageKey === usageKey) localReservations.delete(id);
+  }
   delete usageMap[usageKey];
   writeLocalJson(AI_USAGE_FILE, usageMap);
   return true;
@@ -92,59 +101,33 @@ export async function consumeServerAiQuota(
   uid: string,
   isAdminUser: boolean
 ): Promise<{ remaining: number; dailyLimit: number; isPro: boolean }> {
-  // 1. Admin / Owner has unlimited
-  if (isAdminUser) {
-    return { remaining: Infinity, dailyLimit: Infinity, isPro: true };
-  }
-
-  // 2. Guests have 0 quota
-  if (!uid || uid === 'guest' || uid.startsWith('guest_') || uid.startsWith('trader_')) {
-    return { remaining: 0, dailyLimit: 0, isPro: false };
-  }
-
-  // 3. Authenticated user: Check 1-week (7-day) Pro trial
-  const profile = await getUserProfile(uid);
-  const now = Date.now();
-  const proExpiresAt = profile?.proExpiresAt;
-  const isProActive = Boolean(proExpiresAt && proExpiresAt > now);
-
-  if (!isProActive && profile?.tier !== 'admin') {
-    return { remaining: 0, dailyLimit: 0, isPro: false };
-  }
-
-  const todayKey = getTodayKeyIST();
-  const usageKey = `${uid}_${todayKey}`;
-  const usageMap = readLocalJson<Record<string, number>>(AI_USAGE_FILE, {});
-  const used = usageMap[usageKey] || 0;
-
-  const dailyLimit = 100;
-  const newUsed = used + 1;
-  usageMap[usageKey] = newUsed;
-  writeLocalJson(AI_USAGE_FILE, usageMap);
-
-  return {
-    remaining: Math.max(0, dailyLimit - newUsed),
-    dailyLimit,
-    isPro: true
-  };
+  const result = await checkAndConsumeServerAiQuota(uid, isAdminUser);
+  return { remaining: result.remaining, dailyLimit: result.dailyLimit, isPro: result.isPro === true };
 }
 
 export async function checkAndConsumeServerAiQuota(
   uid: string,
   isAdminUser: boolean
-): Promise<{ allowed: boolean; remaining: number; dailyLimit: number; error?: string; isPro?: boolean }> {
+): Promise<{ allowed: boolean; remaining: number; dailyLimit: number; error?: string; isPro?: boolean; reservationId?: string }> {
   // No request in this process can pass the same user's check before this
   // reservation commits. Cloud Run instances still need a durable SQL quota.
   return serializeQuota(uid, async () => {
     const check = await checkServerAiQuota(uid, isAdminUser);
     if (!check.allowed || !Number.isFinite(check.dailyLimit)) return check;
-    // Do not await a second profile read between the check and local write.
+    const reservationId = randomUUID();
+    if (requiresDurableAiQuota()) {
+      const result = await operateDurableAiQuota(uid, 'reserve', reservationId);
+      return { ...check, allowed: result.allowed, remaining: result.remaining, reservationId,
+        ...(result.allowed ? {} : { error: 'Daily Pro quota reached (100 AI summaries/day). Resets at 00:00 IST.' }) };
+    }
+    // Development-only local reservation; cloud/production never falls back here.
     const usageKey = `${uid}_${getTodayKeyIST()}`;
     const usageMap = readLocalJson<Record<string, number>>(AI_USAGE_FILE, {});
     const used = usageMap[usageKey] || 0;
     usageMap[usageKey] = used + 1;
     writeLocalJson(AI_USAGE_FILE, usageMap);
-    return { ...check, remaining: Math.max(0, check.dailyLimit - used - 1) };
+    localReservations.set(reservationId, { uid, usageKey });
+    return { ...check, remaining: Math.max(0, check.dailyLimit - used - 1), reservationId };
   });
 }
 
@@ -164,25 +147,27 @@ export async function checkAndConsumeServerAiQuota(
  */
 export async function refundServerAiQuota(
   uid: string,
-  isAdminUser: boolean
+  isAdminUser: boolean,
+  reservationId?: string
 ): Promise<void> {
   // Admin/owner: unlimited, no refund needed
   if (isAdminUser) return;
   // Guest: no quota to refund
   if (!uid || uid === 'guest' || uid.startsWith('guest_') || uid.startsWith('trader_')) return;
 
-  try {
-    const todayKey = getTodayKeyIST();
-    const usageKey = `${uid}_${todayKey}`;
-    const usageMap = readLocalJson<Record<string, number>>(AI_USAGE_FILE, {});
-    const used = usageMap[usageKey] || 0;
-    if (used > 0) {
-      usageMap[usageKey] = used - 1;
-      writeLocalJson(AI_USAGE_FILE, usageMap);
-    }
-  } catch {
-    // Best-effort refund — don't throw on failure (could mask the original error)
+  if (!reservationId) return; // Never refund an unrelated or already-refunded request.
+  if (requiresDurableAiQuota()) {
+    await operateDurableAiQuota(uid, 'refund', reservationId);
+    return;
   }
+  await serializeQuota(uid, async () => {
+    const reservation = localReservations.get(reservationId);
+    if (!reservation || reservation.uid !== uid) return;
+    const usageMap = readLocalJson<Record<string, number>>(AI_USAGE_FILE, {});
+    usageMap[reservation.usageKey] = Math.max(0, (usageMap[reservation.usageKey] || 0) - 1);
+    writeLocalJson(AI_USAGE_FILE, usageMap);
+    localReservations.delete(reservationId);
+  });
 }
 
 export async function getServerAiQuotaStatus(
@@ -212,7 +197,7 @@ export async function getServerAiQuotaStatus(
   }
 
   // Authenticated user: Check 1-week (7-day) Pro trial
-  const profile = await getUserProfile(uid);
+  const profile = await getUserProfile(uid, { durable: requiresDurableAiQuota() });
   const now = Date.now();
   const proExpiresAt = profile?.proExpiresAt;
   const isProActive = Boolean(proExpiresAt && proExpiresAt > now);
@@ -234,7 +219,9 @@ export async function getServerAiQuotaStatus(
   const todayKey = getTodayKeyIST();
   const usageKey = `${uid}_${todayKey}`;
   const usageMap = readLocalJson<Record<string, number>>(AI_USAGE_FILE, {});
-  const used = usageMap[usageKey] || 0;
+  const used = requiresDurableAiQuota()
+    ? (await operateDurableAiQuota(uid, 'status')).used
+    : usageMap[usageKey] || 0;
 
   const dailyLimit = 100;
   const remaining = Math.max(0, dailyLimit - used);
@@ -247,4 +234,8 @@ export async function getServerAiQuotaStatus(
     canGenerate: remaining > 0,
     proDaysLeft
   };
+}
+
+export function completeServerAiQuotaReservation(reservationId?: string): void {
+  if (reservationId) localReservations.delete(reservationId);
 }

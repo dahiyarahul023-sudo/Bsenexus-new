@@ -342,7 +342,7 @@ export async function processAnnouncements() {
 
         if (shouldAddInAppNotif) {
           const notifType = materialEvt ? (materialEvt.eventType as any) : (priority.category === 'RESULTS' ? 'RESULT' : 'GENERAL');
-          addNotification({
+          await addNotification({
             id: `notif_${newsId}_sys`,
             userId: 'system',
             title: materialEvt ? materialEvt.title : `${companyName}: ${subject}`,
@@ -500,7 +500,7 @@ export async function processAnnouncements() {
             if (matchesUser) {
               if (!userNotifMuted && (uWatchlistMatch || userRuleEval.shouldSendInApp)) {
                 const notifType = materialEvt ? (materialEvt.eventType as any) : (priority.category === 'RESULTS' ? 'RESULT' : (userRuleEval.shouldSendInApp ? 'RULE_MATCH' : 'GENERAL'));
-                addNotification({
+                await addNotification({
                   id: `notif_${newsId}_${u.uid}`,
                   userId: u.uid,
                   title: materialEvt ? materialEvt.title : `${companyName}: ${subject}`,

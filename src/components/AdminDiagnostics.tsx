@@ -816,7 +816,7 @@ export function AdminDiagnostics() {
                     <span>Approve & Mute</span>
                   </button>
 
-                  <button className="px-3 py-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 rounded-lg flex items-center gap-1">
+                  <button type="button" onClick={(event) => { event.stopPropagation(); setSelectedError(err); }} className="px-3 py-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 rounded-lg flex items-center gap-1">
                     <span>Inspect</span>
                     <ChevronRight className="w-3 h-3" />
                   </button>

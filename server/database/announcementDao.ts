@@ -3,7 +3,7 @@ import { determinePriority, parseBseDate, isSymbolMatch } from '../utils/helpers
 import { addLog } from './logDao.js';
 import { readLocalJson, writeLocalJson, isOfflineOrNetworkError } from './localStore.js';
 import { BloomFilter } from '../utils/bloomFilter.js';
-import { pageRenderCache } from '../utils/renderCache.js';
+import { pageRenderCache, apiResponseCache } from '../utils/renderCache.js';
 import { notifySearchEnginesOfNewPages } from '../services/indexNow.js';
 import { resolveStockDetailsSync } from '../utils/stockResolver.js';
 
@@ -408,6 +408,7 @@ export async function deleteAnnouncementsFromStorageAndCloud(idsToDelete: string
   if (!idsToDelete || idsToDelete.length === 0) return;
 
   const idSet = new Set(idsToDelete);
+  apiResponseCache.invalidate('/api/announcements');
 
   // 1. Remove from in-memory cache & local sets
   announcementsMemoryCache = announcementsMemoryCache.filter(a => !idSet.has(a.id) && !idSet.has(a.newsId));
@@ -584,6 +585,8 @@ export async function saveAnnouncementsBatch(items: AnnouncementInput[]): Promis
     if (announcementsMemoryCache.length > 10000) {
       announcementsMemoryCache.length = 10000;
     }
+    // New/changed filings must not wait for an older API feed cache to expire.
+    apiResponseCache.invalidate('/api/announcements');
     scheduleLocalDiskSave();
     queueAnnouncementsBatchWrite(tasksToQueue);
 
