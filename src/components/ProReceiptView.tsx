@@ -414,15 +414,7 @@ export function ProReceiptView() {
           {/* Success / torn messaging + action pills */}
           {!torn ? (
             <div className={tearing ? 'fade-quick flex flex-col items-center' : 'flex flex-col items-center'}>
-              <div className="rise d-heading flex flex-col items-center mt-6">
-                <h2 className="text-[22px] font-black tracking-tight text-white text-center">
-                  Your Pro receipt
-                </h2>
-                <p className="mt-1 text-[13px] font-medium text-white/55 text-center">
-                  Print, copy or email your receipt below.
-                </p>
-              </div>
-              <div className="flex flex-wrap justify-center gap-2.5 mt-5">
+              <div className="receipt-actions flex flex-wrap justify-center gap-2.5 mt-5">
                 <button onClick={doReprint} className={`rise d-pill-1 ${pillBtn}`}>
                   <Printer size={15} />
                   Re-print receipt
@@ -447,7 +439,7 @@ export function ProReceiptView() {
                   Ready to print a fresh copy anytime.
                 </p>
               </div>
-              <div className="flex flex-wrap justify-center gap-2.5 mt-5">
+              <div className="receipt-actions flex flex-wrap justify-center gap-2.5 mt-5">
                 <button onClick={doReprint} className={`rise d-torn ${pillBtn}`}>
                   <Printer size={15} />
                   Print receipt
