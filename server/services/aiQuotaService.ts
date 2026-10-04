@@ -236,6 +236,9 @@ export async function getServerAiQuotaStatus(
   };
 }
 
+// The cloud reservation is the charge/refund receipt, not an active lock. A
+// successful request keeps refunded=false and its day's used count. Do not
+// "complete" it by refunding. Durable completion metadata/retention is pending.
 export function completeServerAiQuotaReservation(reservationId?: string): void {
   if (reservationId) localReservations.delete(reservationId);
 }

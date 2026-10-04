@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { UserProfile } from '../types';
 import { customFetch } from '../api';
-import { getLowestPlanPrice } from './cashfree';
 
 export interface AiQuotaStatus {
   tier: 'guest' | 'free' | 'pro' | 'admin';
@@ -11,8 +10,9 @@ export interface AiQuotaStatus {
   canGenerate: boolean;
   allowed: boolean;
   message?: string;
+  source: 'checking' | 'server' | 'unavailable' | 'guest';
+  checkedAt?: number;
 }
-
 export interface QuotaConsumeResult {
   allowed: boolean;
   tier: 'guest' | 'free' | 'pro' | 'admin';
@@ -20,208 +20,89 @@ export interface QuotaConsumeResult {
   remaining: number;
 }
 
-const getTodayKey = (): string => {
-  // Indian Standard Time (IST) date key
-  const istDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-  const yyyy = istDate.getFullYear();
-  const mm = String(istDate.getMonth() + 1).padStart(2, '0');
-  const dd = String(istDate.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
-};
+/** Responses trigger a fresh authenticated read, never a shared browser quota cache. */
+export function updateServerAiQuota(data: {remainingQuota?: number; remaining?: number; dailyLimit?: number; isPro?: boolean}) {
+  if (data && (typeof data.remainingQuota === 'number' || typeof data.remaining === 'number')) {
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('bse_ai_quota_changed'));
+  }
+}
+export function syncQuotaFromResponse(data: any) { if (data) updateServerAiQuota(data); }
 
-export function updateServerAiQuota(
-  data: { remainingQuota?: number; remaining?: number; dailyLimit?: number; isPro?: boolean }
-) {
-  if (!data) return;
-  const remaining = typeof data.remainingQuota === 'number' ? data.remainingQuota : (typeof data.remaining === 'number' ? data.remaining : undefined);
-  if (remaining === undefined) return;
-
-  const todayStr = getTodayKey();
+/** Reject malformed responses instead of displaying invented zero/full usage. */
+export function parseServerAiQuota(data: any): AiQuotaStatus | null {
+  if (!data || !['guest','free','pro','admin'].includes(data.tier) || typeof data.canGenerate !== 'boolean' || !Number.isInteger(data.usedToday) || data.usedToday < 0) return null;
+  if (data.tier === 'admin') {
+    // JSON serializes the backend's Infinity as null.
+    if ((data.dailyLimit !== null && data.dailyLimit !== Infinity) || (data.remaining !== null && data.remaining !== Infinity) || !data.canGenerate) return null;
+    return {tier:'admin',dailyLimit:Infinity,usedToday:data.usedToday,remaining:Infinity,canGenerate:true,allowed:true,source:'server',message:'No daily cap (admin)'};
+  }
+  const expectedLimit = data.tier === 'pro' ? 100 : data.tier === 'free' ? 1 : 0;
+  if (data.dailyLimit !== expectedLimit || data.usedToday > expectedLimit || !Number.isInteger(data.remaining) || data.remaining !== expectedLimit-data.usedToday || data.canGenerate !== (data.remaining > 0)) return null;
+  return {tier:data.tier,dailyLimit:data.dailyLimit,usedToday:data.usedToday,remaining:data.remaining,canGenerate:data.canGenerate,allowed:data.canGenerate,source:'server',message:data.tier === 'pro' ? `${data.remaining}/${data.dailyLimit} AI summaries remaining today. Resets at 00:00 IST.` : data.tier === 'free' ? `${data.remaining} of 1 one-time AI summary demo remaining.` : 'Sign in to use AI summaries.'};
+}
+export async function fetchServerAiQuota(signal?: AbortSignal): Promise<AiQuotaStatus | null> {
+  const timeout = new AbortController();
+  const abort = () => timeout.abort();
+  if (signal?.aborted) return null;
+  signal?.addEventListener('abort',abort,{once:true});
+  const timer = setTimeout(abort,12000);
   try {
-    const key = `bse_ai_server_remaining_${todayStr}`;
-    localStorage.setItem(key, remaining.toString());
-    if (typeof data.dailyLimit === 'number') {
-      localStorage.setItem(`bse_ai_server_limit_${todayStr}`, data.dailyLimit.toString());
-    }
-    window.dispatchEvent(new CustomEvent('bse_ai_quota_changed', { detail: { remaining, dailyLimit: data.dailyLimit } }));
-  } catch (e) {}
+    const res = await customFetch('/api/billing/quota',{signal:timeout.signal});
+    if (!res.ok) return null;
+    const parsed = parseServerAiQuota(await res.json());
+    return parsed ? {...parsed,checkedAt:Date.now()} : null;
+  } catch {return null;}
+  finally {clearTimeout(timer);signal?.removeEventListener('abort',abort);}
 }
 
-/**
- * Helper to parse and sync server response with quota information
- */
-export function syncQuotaFromResponse(data: any) {
-  if (!data) return;
-  if (typeof data.remainingQuota === 'number' || typeof data.remaining === 'number') {
-    updateServerAiQuota(data);
-  }
+/** Pending UI eligibility is never presented as a verified quota count. */
+export function getAiQuotaStatus(user?: any | null, profile?: UserProfile | null, isPro?: boolean, isAdmin?: boolean): AiQuotaStatus {
+  const guest = !user || user.isAnonymous || profile?.tier === 'guest';
+  const tier = guest ? 'guest' : isAdmin || profile?.tier === 'admin' ? 'admin' : isPro ? 'pro' : 'free';
+  return {tier,dailyLimit:tier === 'admin' ? Infinity : tier === 'pro' ? 100 : tier === 'free' ? 1 : 0,usedToday:0,remaining:0,canGenerate:false,allowed:false,source:guest ? 'guest' : 'checking',message:guest ? 'Sign in to see your AI usage.' : 'Checking AI usage...'};
+}
+/** Legacy preflight wrapper: the server reserves/refunds; the browser never debits quota. */
+export function consumeAiQuota(user?: any | null, profile?: UserProfile | null, isPro?: boolean, isAdmin?: boolean): QuotaConsumeResult {
+  const q=getAiQuotaStatus(user,profile,isPro,isAdmin);
+  return {allowed:q.canGenerate,tier:q.tier,dailyLimit:q.dailyLimit,remaining:q.remaining};
 }
 
-/**
- * Asynchronously fetch live quota status from server
- */
-export async function fetchServerAiQuota(): Promise<AiQuotaStatus | null> {
-  try {
-    const res = await customFetch('/api/billing/quota');
-    if (res.ok) {
-      const data = await res.json();
-      if (typeof data.remaining === 'number') {
-        updateServerAiQuota({ remainingQuota: data.remaining, dailyLimit: data.dailyLimit, isPro: data.tier === 'pro' || data.tier === 'admin' });
-      }
-      return {
-        tier: data.tier || 'guest',
-        dailyLimit: data.dailyLimit ?? 0,
-        usedToday: data.usedToday ?? 0,
-        remaining: data.remaining ?? 0,
-        canGenerate: data.canGenerate ?? false,
-        allowed: data.canGenerate ?? false,
-        message: data.tier === 'admin'
-          ? 'Unlimited AI Summaries (Admin Active)'
-          : data.tier === 'pro'
-          ? `${data.remaining ?? 100}/${data.dailyLimit ?? 100} AI summaries remaining today (1-Week Pro Trial)`
-          : 'Google Sign-In Required for 1-Week Free Pro AI Access'
-      };
-    }
-  } catch (e) {}
-  return null;
-}
-
-export function getAiQuotaStatus(
-  user?: any | null,
-  profile?: UserProfile | null,
-  isPro?: boolean,
-  isAdmin?: boolean
-): AiQuotaStatus {
-  // 1. Admin has unlimited
-  if (isAdmin || profile?.tier === 'admin') {
-    return {
-      tier: 'admin',
-      dailyLimit: Infinity,
-      usedToday: 0,
-      remaining: Infinity,
-      canGenerate: true,
-      allowed: true,
-      message: 'Unlimited AI Summaries (Admin Active)'
-    };
-  }
-
-  // 2. Unauthenticated Guests / Anonymous Users: STRICTLY 0 QUOTA
-  const isGuest = !user || user.isAnonymous || profile?.tier === 'guest';
-  if (isGuest) {
-    return {
-      tier: 'guest',
-      dailyLimit: 0,
-      usedToday: 0,
-      remaining: 0,
-      canGenerate: false,
-      allowed: false,
-      message: 'Google Sign-In Required: Sign in with Google to get 1 week (7 days) of Free Pro AI summaries!'
-    };
-  }
-
-  // 3. User with active Pro Trial
-  if (isPro) {
-    const todayStr = getTodayKey();
-    const defaultDailyLimit = 100;
-    let remaining = defaultDailyLimit;
-    let dailyLimit = defaultDailyLimit;
-
-    try {
-      const savedLimit = localStorage.getItem(`bse_ai_server_limit_${todayStr}`);
-      if (savedLimit) {
-        dailyLimit = parseInt(savedLimit, 10) || defaultDailyLimit;
-      }
-      const savedRemaining = localStorage.getItem(`bse_ai_server_remaining_${todayStr}`);
-      if (savedRemaining !== null) {
-        remaining = parseInt(savedRemaining, 10);
-        if (isNaN(remaining)) remaining = defaultDailyLimit;
-      }
-    } catch (e) {
-      remaining = defaultDailyLimit;
-    }
-
-    remaining = Math.max(0, remaining);
-    const usedToday = Math.max(0, dailyLimit - remaining);
-    const canGenerate = remaining > 0;
-
-    return {
-      tier: 'pro',
-      dailyLimit,
-      usedToday,
-      remaining,
-      canGenerate,
-      allowed: canGenerate,
-      message: canGenerate
-        ? `${remaining}/${dailyLimit} AI summaries remaining today (1-Week Pro Trial)`
-        : 'Daily Pro trial limit reached (100/100 used). Resets at 00:00 IST.'
-    };
-  }
-
-  // 4. Authenticated user whose 1-week trial has expired — FREE PLAN:
-  // exactly ONE AI summary demo (one disclosure, one time ever), tracked server-side.
-  const demoUsed = (profile as any)?.freeSummaryUsed === true;
-  return {
-    tier: 'free',
-    dailyLimit: 1,
-    usedToday: demoUsed ? 1 : 0,
-    remaining: demoUsed ? 0 : 1,
-    canGenerate: !demoUsed,
-    allowed: !demoUsed,
-    message: demoUsed
-      ? `You've used your one free AI summary demo. Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) for 100 AI summaries/day.`
-      : `Free plan: 1 AI summary demo (one-time only). Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) for 100/day.`
-  };
-}
-
-/**
- * Legacy wrapper: does NOT decrement local quota before request.
- * Server is the single source of truth and only consumes quota upon successful generation.
- */
-export function consumeAiQuota(
-  user?: any | null,
-  profile?: UserProfile | null,
-  isPro?: boolean,
-  isAdmin?: boolean
-): QuotaConsumeResult {
-  const currentStatus = getAiQuotaStatus(user, profile, isPro, isAdmin);
-  return {
-    allowed: currentStatus.canGenerate,
-    tier: currentStatus.tier,
-    dailyLimit: currentStatus.dailyLimit,
-    remaining: currentStatus.remaining
-  };
-}
-
-/**
- * React hook to reactively subscribe to AI quota changes
- */
-export function useAiQuota(
-  user?: any | null,
-  profile?: UserProfile | null,
-  isPro?: boolean,
-  isAdmin?: boolean
-): AiQuotaStatus {
-  const [quota, setQuota] = useState<AiQuotaStatus>(() => getAiQuotaStatus(user, profile, isPro, isAdmin));
-
+/** Account-bound state. Refresh on generation, focus, explicit retry, and the IST day boundary. */
+export function useAiQuota(user?: any | null, profile?: UserProfile | null, isPro?: boolean, isAdmin?: boolean): AiQuotaStatus {
+  const identity = `${user?.uid || 'guest'}:${Boolean(user?.isAnonymous)}:${Boolean(isPro)}:${Boolean(isAdmin)}:${profile?.tier || ''}`;
+  const [snapshot,setSnapshot]=useState(() => ({identity,quota:getAiQuotaStatus(user,profile,isPro,isAdmin)}));
   useEffect(() => {
-    const handleUpdate = () => {
-      setQuota(getAiQuotaStatus(user, profile, isPro, isAdmin));
+    const initial=getAiQuotaStatus(user,profile,isPro,isAdmin);
+    if (initial.source === 'guest') {setSnapshot({identity,quota:initial});return;}
+    let active=true, sequence=0;
+    let controller: AbortController | undefined;
+    let midnightTimer: ReturnType<typeof setTimeout>;
+    const refresh = async () => {
+      const request=++sequence;
+      controller?.abort();controller=new AbortController();
+      setSnapshot({identity,quota:initial});
+      const result=await fetchServerAiQuota(controller.signal);
+      if (!active || request !== sequence) return;
+      setSnapshot({identity,quota:result || {...initial,source:'unavailable',message:'AI usage is unavailable. Please retry.'}});
     };
-
-    handleUpdate();
-    window.addEventListener('bse_ai_quota_changed', handleUpdate);
-
-    // Sync live quota from server
-    fetchServerAiQuota().then(serverStatus => {
-      if (serverStatus) {
-        setQuota(getAiQuotaStatus(user, profile, isPro, isAdmin));
-      }
-    }).catch(() => {});
-
+    const atMidnight = () => {
+      const now=Date.now(), day=86400000, offset=19800000;
+      const next=Math.floor((now+offset)/day)*day+day-offset;
+      midnightTimer=setTimeout(() => {void refresh();atMidnight();},next-now+20);
+    };
+    const onVisible = () => {if (document.visibilityState === 'visible') void refresh();};
+    void refresh();atMidnight();
+    window.addEventListener('bse_ai_quota_changed',refresh);
+    window.addEventListener('bse_ai_quota_refresh',refresh);
+    window.addEventListener('focus',onVisible);
+    document.addEventListener('visibilitychange',onVisible);
     return () => {
-      window.removeEventListener('bse_ai_quota_changed', handleUpdate);
+      active=false;sequence++;controller?.abort();clearTimeout(midnightTimer);
+      window.removeEventListener('bse_ai_quota_changed',refresh);
+      window.removeEventListener('bse_ai_quota_refresh',refresh);
+      window.removeEventListener('focus',onVisible);
+      document.removeEventListener('visibilitychange',onVisible);
     };
-  }, [user, profile, isPro, isAdmin]);
-
-  return quota;
+  },[identity]);
+  return snapshot.identity === identity ? snapshot.quota : getAiQuotaStatus(user,profile,isPro,isAdmin);
 }

@@ -19,6 +19,7 @@ import { SecurityAuditModal } from './SecurityAuditModal';
 import { AlertRulesModal } from './AlertRulesModal';
 import { HelpModal } from './HelpModal';
 import { SubscriptionCard } from './SubscriptionCard';
+import { AiUsageCard } from './AiUsageCard';
 import { useAuth } from '../context/AuthContext';
 import { customFetch } from '../api';
 import { useDeveloperMode } from '../utils/developerMode';
@@ -57,7 +58,7 @@ const SETTINGS_REGISTRY = [
   { id: 'filter', title: 'High impact filter', description: 'Highlight material price-sensitive disclosures (SEBI LODR 30)', category: 'Preferences', keywords: ['filter', 'materiality', 'high impact', 'sebi', 'lodr', 'price-sensitive'] },
   { id: 'profile', title: 'Profile & Display name', description: 'Investor identity, name, and public @username handle', category: 'Account & Identity', keywords: ['profile', 'display name', 'username', 'handle', 'account', 'identity'] },
   { id: 'telegram', title: 'Telegram Alert Delivery', description: 'Instant push notifications for watchlist disclosures', category: 'Account & Identity', keywords: ['telegram', 'chat id', 'push', 'notifications', 'phone', 'bot', 'mobile'] },
-  { id: 'subscription', title: 'Subscription & Billing', description: 'Pro plan status, renewal and payment (auto-renew coming soon)', category: 'Account & Identity', keywords: ['subscription', 'billing', 'pro', 'payment', 'renew', 'plan', 'cashfree', 'auto-renew'] },
+  { id: 'subscription', title: 'Subscription & Billing', description: 'Pro plan status, payments and verified AI usage', category: 'Account & Identity', keywords: ['subscription', 'billing', 'pro', 'payment', 'renew', 'plan', 'cashfree', 'auto-renew', 'ai', 'quota', 'usage', 'remaining', 'summaries'] },
   { id: 'saved-notes', title: 'Saved Notes', description: 'Personal notes linked to stocks, news and results', category: 'Account & Identity', keywords: ['notes', 'saved notes', 'notebook', 'memo', 'personal notes', 'diary'] },
   { id: 'export-csv', title: 'Export to CSV', description: 'Download tracked tickers and priorities in spreadsheet format', category: 'Watchlist & Data', keywords: ['export', 'csv', 'excel', 'spreadsheet', 'download', 'watchlist'] },
   { id: 'export-json', title: 'Export backup (JSON)', description: 'Full structured backup for porting or syncing', category: 'Watchlist & Data', keywords: ['export', 'json', 'backup', 'data', 'port', 'sync'] },
@@ -1792,6 +1793,7 @@ export function SettingsTab({
               Subscription &amp; Billing
             </h3>
           </div>
+          <AiUsageCard />
           <SubscriptionCard />
         </div>
       )}

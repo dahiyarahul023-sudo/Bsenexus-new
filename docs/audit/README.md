@@ -1,3 +1,5 @@
+> Latest review: [PR #2 live results, quota UI, and four code questions](PR2_LIVE_REVIEW_2026-10-04.md). This quota-display batch needs no new migration. Older source inventories below are audit snapshots.
+
 > Latest: [Muse report review and live-control fixes](LIVE_REPORT_REVIEW_2026-10-04.md). [Next console steps](MUSE_NEXT_CONSOLE_STEPS.md). Migration 005 must precede rollout; inventories below describe the earlier audit snapshot.
 
 > Latest follow-up: [FOLLOWUP_2026-10-04.md](FOLLOWUP_2026-10-04.md), [Muse console-only instructions](MUSE_CONSOLE_ONLY.md). Register now has 45 findings; original audit counts/evidence below are historical. Follow-up is staged on a migration-dependent PR.
