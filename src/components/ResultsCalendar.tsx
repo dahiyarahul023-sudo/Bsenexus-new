@@ -2723,9 +2723,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                             ? "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300"
                             : "bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300"
                         )}>
-                          {isProOrAdmin 
-                            ? "Pro Unlimited" 
-                            : `${aiQuota.remaining}/${aiQuota.dailyLimit} free today`}
+                          {aiQuota.source !== 'server' ? (aiQuota.source === 'unavailable' ? 'AI usage unavailable' : aiQuota.source === 'guest' ? 'Sign in for AI' : 'Checking AI usage...') : aiQuota.tier === 'admin' ? 'No daily cap (admin)' : aiQuota.tier === 'pro' ? `${aiQuota.remaining}/${aiQuota.dailyLimit} remaining today` : `${aiQuota.remaining}/1 one-time demo remaining`}
                         </span>
                       </div>
 
