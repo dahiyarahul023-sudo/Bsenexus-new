@@ -1,5 +1,5 @@
 import { useRef, useState, type ReactNode, type MouseEvent } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 
 /**
  * MagneticButton — the button leans toward the cursor inside a generous
@@ -19,8 +19,10 @@ export default function MagneticButton({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState({ x: 0, y: 0 });
+  const reduced = useReducedMotion();
 
   const onMove = (e: MouseEvent) => {
+    if (reduced || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
     const el = ref.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
@@ -43,7 +45,7 @@ export default function MagneticButton({
       ref={ref}
       onMouseMove={onMove}
       onMouseLeave={() => setPos({ x: 0, y: 0 })}
-      animate={{ x: pos.x, y: pos.y }}
+      animate={reduced ? { x: 0, y: 0 } : { x: pos.x, y: pos.y }}
       transition={{ type: 'spring', stiffness: 320, damping: 18, mass: 0.6 }}
       className={`inline-block p-4 -m-4 ${className}`}
     >

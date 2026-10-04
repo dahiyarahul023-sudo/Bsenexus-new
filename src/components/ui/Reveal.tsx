@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 
 /**
  * Reveal — scroll-triggered entrance: fades in while scaling up
@@ -19,13 +19,14 @@ export default function Reveal({
   y?: number;
   scale?: number;
 }) {
+  const reduced = useReducedMotion();
   return (
     <motion.div
       className={className}
-      initial={{ opacity: 0, y, scale }}
+      initial={reduced ? false : { opacity: 0, y, scale }}
       whileInView={{ opacity: 1, y: 0, scale: 1 }}
       viewport={{ once: true, margin: '-70px' }}
-      transition={{ duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: reduced ? 0 : 0.7, delay: reduced ? 0 : delay, ease: [0.22, 1, 0.36, 1] }}
     >
       {children}
     </motion.div>
