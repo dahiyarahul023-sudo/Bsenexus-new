@@ -294,7 +294,9 @@ Details: ${combinedDetails}`;
       contents.push(pdfData);
     }
 
-    const modelsToTry = ["gemini-3.8-flash", "gemini-flash-latest", "gemini-3.1-flash-lite"];
+    // Lite-first: from 9 Oct 2026 Flash/Pro leave the Gemini free tier, so
+    // Flash-Lite is the primary free model; others remain as fallbacks only.
+    const modelsToTry = ["gemini-3.1-flash-lite", "gemini-flash-latest", "gemini-3.8-flash"];
     let response: any = null;
     let lastError: any = null;
     let successfulModel = "";
@@ -505,6 +507,52 @@ async function buildWatchlistAiContext(uid: string | undefined, question: string
     (ambiguous ? `\nNOTE: Multiple watchlist companies matched — ask the user which one they mean before giving specifics.` : '');
 }
 
+/**
+ * Groq (Meta Llama 3.3 70B) — the Pro-tier AI brain.
+ * /help/ask-ai is already Pro/Admin-gated server-side, so every caller here
+ * is a paying user: they get the bigger, better model at zero API cost
+ * (Groq free tier, no card). OpenAI-compatible endpoint over plain fetch —
+ * no new dependency. Any failure (key missing, rate limit, timeout) throws
+ * and the caller falls through to the Gemini chain, so the Guide never breaks.
+ */
+async function askGroqLlama(
+  systemInstruction: string,
+  history: Array<{ role: 'user' | 'model'; text: string }>,
+  userQuestion: string
+): Promise<string> {
+  const key = process.env.GROQ_API_KEY;
+  if (!key) throw new Error('GROQ_API_KEY not set');
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 25000);
+  try {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      signal: controller.signal,
+      headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          { role: 'system', content: systemInstruction },
+          ...history.slice(-6).map(m => ({
+            role: m.role === 'user' ? 'user' : 'assistant',
+            content: m.text,
+          })),
+          { role: 'user', content: userQuestion },
+        ],
+        temperature: 0.5,
+        max_tokens: 500,
+      }),
+    });
+    if (!res.ok) throw new Error(`Groq HTTP ${res.status}`);
+    const data: any = await res.json();
+    const text = data?.choices?.[0]?.message?.content?.trim();
+    if (!text) throw new Error('Groq returned empty content');
+    return text;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function askAppHelpAI(
   userQuestion: string, 
   history: Array<{ role: 'user' | 'model'; text: string }> = [],
@@ -579,6 +627,18 @@ When the user asks how to do something in the app, give direct, actionable steps
       role: 'user',
       parts: [{ text: userQuestion }]
     });
+
+    // Pro tier first: Meta's Llama 3.3 70B via Groq (free tier, no card) —
+    // bigger and better answers for paying users. Any failure (no key yet,
+    // rate limit, timeout) falls through to the Gemini lite-first chain,
+    // so the Guide keeps working no matter what.
+    try {
+      const groqAnswer = await askGroqLlama(systemInstruction, history, userQuestion);
+      addLog('SUCCESS', 'GEMINI', `Help AI answered via Groq Llama 3.3 70B (${groqAnswer.length} chars)`);
+      return groqAnswer;
+    } catch (gErr: any) {
+      addLog('WARNING', 'GEMINI', `Groq unavailable (${gErr?.message || gErr}) — falling back to Gemini chain.`);
+    }
 
     // Lite-first: the smallest/cheapest model answers user Q&A so API quota
     // and cost stay at minimum. Bigger models are fallbacks only.
