@@ -74,6 +74,7 @@ import { classifyMaterialEvent } from "../services/timelineClassifier.js";
 import { searchCompany } from "./search.js";
 import { fetchLiveMarketIndices, getMarketSessionStatus } from "../services/marketIndicesService.js";
 import { getLiveStoryFeed } from "../services/storyFeedService.js";
+import { sendOneSignalPush, isOneSignalConfigured } from "../services/oneSignal.js";
 import { 
   recordTelemetry, 
   getDiagnosticsSummary, 
@@ -881,6 +882,35 @@ apiRouter.post("/test-telegram", requireAdmin, telegramRateLimiter, async (req, 
     await addLog('ERROR', 'TELEGRAM', `Admin test message failed: ${result.error}`);
     res.status(500).json({ success: false, error: result.error });
   }
+});
+
+// Admin Push Notification Broadcast (OneSignal)
+apiRouter.post("/admin/push/broadcast", requireAdmin, async (req, res) => {
+  try {
+    const { title, message, url } = req.body || {};
+    if (!title || !message) {
+      return res.status(400).json({ success: false, error: "Title and message are required." });
+    }
+    const result = await sendOneSignalPush({
+      title: String(title).trim(),
+      message: String(message).trim(),
+      url: url ? String(url).trim() : 'https://bsenexus.in'
+    });
+    if (result.ok) {
+      await addLog('SUCCESS', 'ONESIGNAL', `Admin broadcast push dispatched: "${title}" (recipients: ${result.recipients || 0})`);
+      return res.json({ success: true, id: result.id, recipients: result.recipients });
+    }
+    return res.status(500).json({ success: false, error: result.error });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message || 'Failed to dispatch broadcast push' });
+  }
+});
+
+apiRouter.get("/push/status", async (_req, res) => {
+  res.json({
+    configured: isOneSignalConfigured(),
+    appId: "f6cc3d33-a1bc-4c2a-992c-f36d0eccff6f"
+  });
 });
 
 // Dedicated Personal Telegram Alert Test for Registered/Pro users (Does NOT touch global admin settings)

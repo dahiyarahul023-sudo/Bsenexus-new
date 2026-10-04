@@ -11,6 +11,7 @@ import { addNotification, initNotificationsFromCloud } from '../database/notific
 import { evaluateAlertRulesForUser } from '../database/alertRulesDao.js';
 import { classifyMaterialEvent } from './timelineClassifier.js';
 import { doesAnnouncementMatchUserPrefs, isTelegramEligible } from '../utils/alertDecision.js';
+import { sendOneSignalPush } from './oneSignal.js';
 
 export { pruneAndCheckStorageCapacity };
 
@@ -419,6 +420,25 @@ export async function processAnnouncements() {
               }
             } catch (err: any) {
               addLog('ERROR', 'TELEGRAM', `Exception sending alert for ${companyName}: ${err.message}`);
+            }
+          })());
+        }
+
+        // 1b. Dispatch Web Push via OneSignal to all browser/mobile subscribers (Free + Pro)
+        if (priority.level === 'HIGH' || priority.category === 'RESULTS' || priority.category === 'CONFERENCE_CALL') {
+          dispatchPromises.push((async () => {
+            try {
+              const cleanSub = subject.length > 95 ? subject.substring(0, 92) + '...' : subject;
+              await sendOneSignalPush({
+                title: `🚨 ${companyName} (${scrip_cd || 'BSE'})`,
+                message: cleanSub,
+                newsId,
+                scripCode: scrip_cd,
+                category: priority.category,
+                url: `https://bsenexus.in/?id=${newsId}`
+              });
+            } catch (pushErr: any) {
+              console.warn('[OneSignal] Push dispatch notice:', pushErr?.message || pushErr);
             }
           })());
         }

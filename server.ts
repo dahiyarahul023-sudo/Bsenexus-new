@@ -1,4 +1,7 @@
 import 'dotenv/config';
+import { initServerSentry, Sentry } from "./server/sentry.js";
+initServerSentry();
+
 import express from "express";
 import path from "path";
 import fs from "fs";
@@ -34,9 +37,11 @@ import { getBackupStalenessMetrics, getBseBlockBackoffLevel, isBseSourceBlocked 
 // Global error handlers to prevent background quota/network exceptions from crashing the process
 process.on('unhandledRejection', (reason: any) => {
   console.error('Unhandled Rejection caught:', reason?.message || reason);
+  try { Sentry.captureException(reason); } catch {}
 });
 process.on('uncaughtException', (err: any) => {
   console.error('Uncaught Exception caught:', err?.message || err);
+  try { Sentry.captureException(err); } catch {}
 });
 
 const app = express();
@@ -108,6 +113,13 @@ self.addEventListener('activate', (event) => {
   } else {
     res.sendFile(path.join(process.cwd(), 'public', 'sw.js'));
   }
+});
+
+// Explicit OneSignal Service Worker handler
+app.get('/OneSignalSDKWorker.js', (_req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  res.sendFile(path.join(process.cwd(), 'public', 'OneSignalSDKWorker.js'));
 });
 
 // HTML escaping utilities for SSR pages & SEO injection

@@ -6,16 +6,17 @@
   "scripts": {
     "dev": "tsx server.ts",
     "prebuild": "node scripts/bump-version.mjs",
-    "build": "tsc --noEmit && vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
+    "build": "tsc --noEmit && vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs && rm -rf build && cp -r dist build",
     "start": "node dist/server.cjs",
-    "clean": "rm -rf dist server.cjs",
+    "clean": "rm -rf dist build server.cjs",
     "lint": "tsc --noEmit",
     "test": "node --test --import tsx server/tests/*.test.ts",
     "postinstall": "node scripts/patch-firebase-auth.cjs"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
-    "@sentry/react": "^10.0.0",
+    "@sentry/node": "^11.4.0",
+    "@sentry/react": "^11.4.0",
     "@supabase/supabase-js": "^2.117.2",
     "@tailwindcss/vite": "^4.1.14",
     "@vitejs/plugin-react": "^5.0.4",

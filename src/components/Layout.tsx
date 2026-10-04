@@ -48,6 +48,7 @@ import { AlertRulesModal } from './AlertRulesModal';
 import { CompanyIntelligenceModal } from './CompanyIntelligenceModal';
 import { NoteEditorHost } from './notes/NoteEditor';
 import { TodayMarketStoryModal } from './TodayMarketStoryModal';
+import { PushNotificationBanner } from './PushNotificationPrompt';
 import { getStorySessionStorageKey, getISTMarketSession } from './story/storyData';
 
 function cn(...inputs: ClassValue[]) {
@@ -804,6 +805,9 @@ export function Layout({
 
       {/* Live Market Ticker Tape - Responsive for Mobile and Desktop */}
       <MarketTickerTape bseLatency={bseHealth?.latency || 0} />
+
+      {/* OneSignal Instant Web Push Banner */}
+      <PushNotificationBanner />
 
       {/* Main Content Area with Smooth Layout Transition and Keyboard Focus Target */}
       <main id="main-content" tabIndex={-1} className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-3 pb-24 md:pb-6 transition-all duration-200 focus:outline-none">

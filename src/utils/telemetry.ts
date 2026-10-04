@@ -123,14 +123,18 @@ export function initClientTelemetry() {
   window.addEventListener('error', (event) => {
     try {
       const errMsg = String(event.message || '');
-      // Filter out benign Vite HMR, WebSocket reconnects, database sleep, and browser layout notices
+      // Filter out benign Vite HMR, WebSocket reconnects, database sleep, browser layout notices, and third-party content scripts
       if (
         /websocket/i.test(errMsg) ||
         /closed without opened/i.test(errMsg) ||
         /Failed to fetch dynamically imported module/i.test(errMsg) ||
         /ResizeObserver/i.test(errMsg) ||
         /Database is closing/i.test(errMsg) ||
-        /AbortError/i.test(errMsg)
+        /AbortError/i.test(errMsg) ||
+        /standardSelectors/i.test(errMsg) ||
+        /brave/i.test(errMsg) ||
+        /chrome-extension/i.test(event.filename || '') ||
+        /moz-extension/i.test(event.filename || '')
       ) {
         return;
       }
@@ -161,7 +165,9 @@ export function initClientTelemetry() {
         /AbortError/i.test(errMsg) ||
         /Failed to fetch dynamically imported module/i.test(errMsg) ||
         /Database is closing/i.test(errMsg) ||
-        /ResizeObserver/i.test(errMsg)
+        /ResizeObserver/i.test(errMsg) ||
+        /standardSelectors/i.test(errMsg) ||
+        /brave/i.test(errMsg)
       ) {
         return;
       }
