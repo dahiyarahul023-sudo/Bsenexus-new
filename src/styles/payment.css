@@ -109,3 +109,32 @@
 }
 @keyframes payment-sheet-rise{from{transform:translateY(20px);opacity:.6}to{transform:translateY(0);opacity:1}}
 @media(prefers-reduced-motion:reduce){.payment-sheet-compact{animation:none!important}}
+
+/* Branded review sheet: selected duration + the next longer pack. */
+.payment-review-overlay{align-items:flex-end;background:rgba(11,11,20,.32);backdrop-filter:blur(6px);padding:12px 12px max(12px,env(safe-area-inset-bottom))}
+.payment-sheet-compact{max-width:480px;border-radius:30px;box-shadow:0 10px 45px #00000018;animation:payment-sheet-rise .32s cubic-bezier(.2,.8,.2,1)}
+.payment-sheet-handle{width:44px;height:5px;border-radius:9px;background:var(--pay-border);margin:12px auto 0;flex-shrink:0}
+.payment-sheet-compact .payment-header{gap:12px;padding-top:16px}
+.payment-sheet-compact .payment-header>div{flex:1;min-width:0}
+.payment-sheet-compact .payment-header h2{font-size:22px}
+.payment-brand{display:flex;flex-shrink:0}
+.payment-review-label{font-size:13px;color:var(--pay-muted);margin:4px 0 10px}
+.payment-review-options{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:5px;background:var(--pay-soft);border-radius:20px}
+.payment-review-options.single{grid-template-columns:1fr}
+.payment-review-option{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;text-align:left;min-width:0;padding:14px 12px;border:1px solid transparent;border-radius:16px;cursor:pointer;transition:background .2s,box-shadow .2s,transform .15s}
+.payment-review-option.selected{background:var(--pay-bg);border-color:var(--pay-border);box-shadow:0 3px 10px #0000000d}
+.payment-review-option:active{transform:scale(.98)}
+.payment-review-option strong{display:block;font-size:14px;font-weight:500}
+.payment-review-option small{display:block;font-size:11px;color:var(--pay-muted);margin-top:4px}
+.payment-option-price{font-size:19px;letter-spacing:-.4px;color:var(--pay-accent);white-space:nowrap}
+.payment-review-account{font-size:12px;padding:14px 2px 10px}
+.payment-review-account .payment-muted{font-size:12px}
+.payment-order-total{padding:14px 16px;border:1px solid var(--pay-border);border-radius:18px}
+.payment-order-total>div{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:15px}
+.payment-order-total .payment-discount{margin-top:8px;font-size:12px;color:var(--pay-muted)}
+.payment-discount>span:last-child{text-align:right;overflow-wrap:anywhere}
+.payment-sheet-compact .payment-footer{border-top:0;padding-top:4px}
+.payment-sheet-compact .payment-primary{border-radius:16px;min-height:50px;box-shadow:inset 0 -3px 0 #00000012}
+.payment-later{width:100%;min-height:44px;background:var(--pay-soft);color:var(--pay-ink);border-radius:16px;margin-top:8px;font-size:14px;cursor:pointer}
+@media(max-width:360px){.payment-review-option{padding:12px 8px}.payment-review-option strong{font-size:13px}.payment-option-price{font-size:17px}.payment-sheet-compact .payment-header h2{font-size:20px}}
+@media(prefers-reduced-motion:reduce){.payment-sheet-compact{animation:none!important}.payment-review-option{transition:none}}
