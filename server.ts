@@ -31,6 +31,7 @@ import { resumeFirestoreNetwork, startStorageRecoveryProbe } from "./server/data
 import { isFirestoreQuotaExceeded, getManualStorageMode, resetAdminPermissionDenied } from "./server/database/localStore.js";
 import { pageRenderCache, staticGuideCache, apiResponseCache } from "./server/utils/renderCache.js";
 import { INDEXNOW_KEY, indexNowQueue } from "./server/services/indexNow.js";
+import { autoIndexNewGuides } from "./server/services/guideIndexNow.js";
 import { verifyRecaptchaToken } from "./server/security/recaptchaService.js";
 import { getBackupStalenessMetrics, getBseBlockBackoffLevel, isBseSourceBlocked } from "./server/services/bse.js";
 
@@ -4458,6 +4459,25 @@ function renderGuidePage(guide: MarketGuide): string {
     "url": canonicalUrl
   }, null, 2);
 
+  // Optional FAQPage structured data — answer-first guides get cited by AI answers
+  let faqJsonLd = '';
+  if (Array.isArray(guide.faq) && guide.faq.length > 0) {
+    const mainEntity = guide.faq
+      .filter((f) => f && f.question && f.answer)
+      .map((f) => ({
+        "@type": "Question",
+        "name": String(f.question),
+        "acceptedAnswer": { "@type": "Answer", "text": String(f.answer) }
+      }));
+    if (mainEntity.length > 0) {
+      faqJsonLd = JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": mainEntity
+      });
+    }
+  }
+
   // Sections HTML
   const sectionsHtml = (guide.content?.sections || []).map((sec, idx) => {
     const heading = sec.heading || sec.title || '';
@@ -4570,6 +4590,7 @@ ${AI_STUDIO_REDIRECT_SCRIPT}
   <script type="application/ld+json">
 ${jsonLd}
   </script>
+${faqJsonLd ? `  <script type="application/ld+json">\n${faqJsonLd}\n  </script>` : ''}
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -6575,6 +6596,8 @@ async function startServer() {
   // fallback without waiting for a manual switch or Pacific midnight.
   startStorageRecoveryProbe();
   void addLog('INFO', 'SYSTEM', 'Bsenexus Server Started').catch(error => console.error('DB connect err:', error));
+  // "Apne aap index": auto-submit any newly published guide URLs to IndexNow (deduped, create-only).
+  try { autoIndexNewGuides(); } catch (e: any) { console.error('Guide auto-index err:', e?.message || e); }
   // PERF-006 (1 Oct 2026 audit): Graceful shutdown handler.
   // Cloud Run sends SIGTERM ~10s before killing the instance. Without this:
   // - In-flight HTTP requests are aborted mid-response

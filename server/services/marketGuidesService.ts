@@ -33,9 +33,78 @@ export interface ServerMarketGuide {
     checklist?: string[];
     conclusion: string;
   };
+  faq?: Array<{
+    question: string;
+    answer: string;
+  }>;
 }
 
 export const FALLBACK_MARKET_GUIDES: ServerMarketGuide[] = [
+  {
+    id: 'ipo-listings-october-5-6-2026',
+    slug: 'ipo-listings-october-5-6-2026',
+    title: 'IPOs Listing on October 5\u20136, 2026: Dates, Price Bands & Subscription',
+    category: 'IPO',
+    readTime: '4 min read',
+    summary: 'Six mainboard IPOs list on the NSE and BSE on October 5\u20136, 2026 \u2014 Runwal Enterprises, Orient Cables, German Green Steel & Power, AceVector (Snapdeal\u2019s parent), SRIT India and Shah Investor\u2019s Home. Dates, price bands and subscription levels, answered directly.',
+    excerpt: 'Which IPOs list on October 5\u20136, 2026, at what price bands, and how strongly were they subscribed? Direct answers for all six mainboard listings.',
+    date: '2026-10-05',
+    publishedAt: '2026-10-05T03:30:00+05:30',
+    author: {
+      name: 'Bsenexus Intelligence Team',
+      role: 'IPO & Primary Markets'
+    },
+    content: {
+      introduction: 'Six mainboard IPOs list on the NSE and BSE on October 5\u20136, 2026. On Monday, October 5: Runwal Enterprises, Orient Cables (India), German Green Steel & Power, and AceVector \u2014 the parent company of Snapdeal. On Tuesday, October 6: SRIT India and Shah Investor\u2019s Home. Each listing\u2019s date, IPO size, price band and subscription level, answered directly below.',
+      sections: [
+        {
+          heading: 'Runwal Enterprises \u2014 lists Monday, October 5, 2026',
+          title: 'Runwal Enterprises \u2014 lists Monday, October 5, 2026',
+          content: 'Runwal Enterprises lists on the NSE and BSE on Monday, October 5, 2026. The Rs 500-crore IPO \u2014 a fully fresh issue \u2014 was priced at Rs 290\u2013305 per share and subscribed 2.5 times overall; the retail portion was subscribed 1.12 times.'
+        },
+        {
+          heading: 'Orient Cables (India) \u2014 lists Monday, October 5, 2026',
+          title: 'Orient Cables (India) \u2014 lists Monday, October 5, 2026',
+          content: 'Orient Cables (India) lists on the NSE and BSE on Monday, October 5, 2026. The Rs 552-crore IPO was priced at Rs 258\u2013272 per share and subscribed about 92.3 times overall \u2014 the strongest demand of this week\u2019s listings, with QIB demand at 182.8 times.'
+        },
+        {
+          heading: 'German Green Steel & Power \u2014 lists Monday, October 5, 2026',
+          title: 'German Green Steel & Power \u2014 lists Monday, October 5, 2026',
+          content: 'German Green Steel & Power lists on the NSE and BSE on Monday, October 5, 2026. The Rs 303.9-crore IPO was priced at Rs 132\u2013139 per share and subscribed about 29 times.'
+        },
+        {
+          heading: 'AceVector (Snapdeal\u2019s parent) \u2014 lists Monday, October 5, 2026',
+          title: 'AceVector (Snapdeal\u2019s parent) \u2014 lists Monday, October 5, 2026',
+          content: 'AceVector \u2014 the parent company of Snapdeal \u2014 lists on the NSE and BSE on Monday, October 5, 2026. The Rs 420-crore IPO was priced at Rs 30\u201332 per share and subscribed 4.93 times.'
+        },
+        {
+          heading: 'SRIT India \u2014 lists Tuesday, October 6, 2026',
+          title: 'SRIT India \u2014 lists Tuesday, October 6, 2026',
+          content: 'SRIT India lists on the NSE and BSE on Tuesday, October 6, 2026. The Rs 218.4-crore IPO was priced at Rs 123\u2013130 per share and subscribed 125.16 times overall, with NII demand at 313 times \u2014 the highest NII demand in this batch.'
+        },
+        {
+          heading: 'Shah Investor\u2019s Home \u2014 lists Tuesday, October 6, 2026',
+          title: 'Shah Investor\u2019s Home \u2014 lists Tuesday, October 6, 2026',
+          content: 'Shah Investor\u2019s Home lists on the NSE and BSE on Tuesday, October 6, 2026. The Rs 90.17-crore IPO was priced at Rs 159\u2013167 per share and subscribed 38.12 times.'
+        }
+      ],
+      conclusion: 'Listing (opening) prices are discovered on listing day based on pre-open demand \u2014 they cannot be known in advance. All six companies will announce their Q2 FY27 results in October\u2013November 2026; track their filings, board meetings and results on Bsenexus as the earnings season unfolds.'
+    },
+    faq: [
+      {
+        question: 'Which IPOs are listing on October 5, 2026?',
+        answer: 'Four mainboard IPOs list on the NSE and BSE on Monday, October 5, 2026: Runwal Enterprises (Rs 500 crore), Orient Cables (India) (Rs 552 crore), German Green Steel & Power (Rs 303.9 crore), and AceVector, the parent company of Snapdeal (Rs 420 crore). SRIT India and Shah Investor\u2019s Home follow on Tuesday, October 6.'
+      },
+      {
+        question: 'Which October 5 IPO saw the highest subscription?',
+        answer: 'Orient Cables (India), subscribed about 92.3 times overall with QIB demand at 182.8 times. German Green Steel & Power was next at about 29 times, followed by AceVector at 4.93 times and Runwal Enterprises at 2.5 times.'
+      },
+      {
+        question: 'At what price will these IPOs list?',
+        answer: 'The listing (opening) price is discovered on listing day based on pre-open demand. The IPO price bands were: Runwal Enterprises Rs 290\u2013305, Orient Cables Rs 258\u2013272, German Green Steel & Power Rs 132\u2013139, and AceVector Rs 30\u201332.'
+      }
+    ]
+  },
   {
     id: 'sebi-lodr-regulation-30',
     slug: 'sebi-lodr-regulation-30',
