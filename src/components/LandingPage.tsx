@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion, AnimatePresence, MotionConfig, useReducedMotion } from 'framer-motion';
 import { 
   Zap, Sparkles, Activity, Bell, Send, Shield, List, Calendar,
   ArrowRight, ArrowUpRight, CheckCircle2, ChevronRight, FileText,
@@ -36,6 +36,7 @@ import MagneticButton from './ui/MagneticButton';
 import Reveal from './ui/Reveal';
 import { CreativeHero } from './landing/CreativeHero';
 import { FeatureTabs } from './landing/FeatureTabs';
+import { FilingJourney } from './landing/FilingJourney';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -270,7 +271,7 @@ export function LandingPage({
   
   // Interactive States
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
-  const [activeHeroIndex, setActiveHeroIndex] = useState(0);
+  const reduced = useReducedMotion();
   const [activeAiDemoTab, setActiveAiDemoTab] = useState<'earnings' | 'acquisition' | 'dividend' | 'reg30'>('earnings');
   const [selectedCompanyKey, setSelectedCompanyKey] = useState<'TATASTEEL' | 'RELIANCE' | 'LT' | 'INFY'>('TATASTEEL');
   const [activeCompanyHubTab, setActiveCompanyHubTab] = useState<'hub' | 'timeline' | 'results' | 'filings' | 'research'>('hub');
@@ -279,24 +280,17 @@ export function LandingPage({
   // Lock body scroll when mobile navigation drawer is open
   useBodyScrollLock(isMobileNavOpen);
 
-  // Auto cycle hero items
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveHeroIndex((prev) => (prev + 1) % SAMPLE_HERO_ANNOUNCEMENTS.length);
-    }, 4500);
-    return () => clearInterval(timer);
-  }, []);
-
   const scrollToSection = (id: string) => {
     setIsMobileNavOpen(false);
     // Wait for the mobile menu to close and the body scroll lock to release
     // before smooth-scrolling. Scrolling while the lock is still applied does
     // nothing (overflow:hidden), and the lock's position-restore on release
     // would cancel the scroll — the menu tap then appears to "go nowhere".
-    window.setTimeout(() => scrollToElementWithOffset(id, 88, 'smooth'), 120);
+    window.setTimeout(() => scrollToElementWithOffset(id, 88, reduced ? 'auto' : 'smooth'), 120);
   };
 
   return (
+    <MotionConfig reducedMotion="user" transition={reduced ? { duration: 0, delay: 0 } : undefined}>
     <div className="landing-ambient min-h-screen bg-[#F8FAFC] dark:bg-[#12131C] text-slate-900 dark:text-slate-100 font-sans transition-colors duration-200 selection:bg-emerald-500 selection:text-white">
       {/* Full-page ambient ribbon animation (fixed canvas behind everything) */}
       <ParticleRibbons />
@@ -587,6 +581,7 @@ export function LandingPage({
       {/* 3. CREATIVE HERO (Finexa-style) + FEATURE TABS */}
       <CreativeHero onEnterTerminal={onEnterTerminal} />
       <FeatureTabs onEnterTerminal={onEnterTerminal} />
+      <FilingJourney />
 
       {/* 3.5 WHAT'S NEW IN BSENEXUS 2.0 SECTION */}
       <section id="whats-new" className="py-16 sm:py-24 bg-gradient-to-b from-slate-50 to-white dark:from-[#0B0F17] dark:to-[#0F172A] border-b border-slate-200/80 dark:border-slate-800/80">
@@ -1666,7 +1661,7 @@ export function LandingPage({
                     <span className="text-sm font-extrabold text-slate-900 dark:text-white">Active Watchlist: Core Largecaps & Midcaps</span>
                   </div>
                   <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
-                    6 Stocks
+                    5 Stocks
                   </span>
                 </div>
 
@@ -2472,5 +2467,6 @@ export function LandingPage({
       )}
 
     </div>
+    </MotionConfig>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion';
+import { scrollToElementWithOffset } from '../../utils/scrollState';
 import {
   ArrowUpRight, Sparkles, Bell, Home, Newspaper, Star, User,
   Signal, Wifi, BatteryFull, Check,
@@ -34,6 +35,7 @@ const GRAIN_BG =
   "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E\")";
 
 function WatchlistCard() {
+  const reduced = useReducedMotion();
   return (
     <div className="w-[224px] rounded-[20px] bg-white/95 border border-white/70 shadow-[0_30px_60px_-18px_rgba(2,32,71,0.45)] p-4 text-left">
       <div className="flex items-center justify-between mb-2.5">
@@ -49,7 +51,7 @@ function WatchlistCard() {
           <div className="h-[7px] rounded-full bg-slate-200/80 overflow-hidden">
             <motion.i
               className="block h-full rounded-full bg-gradient-to-r from-sky-400 to-sky-600"
-              initial={{ width: 0 }}
+              initial={reduced ? false : { width: 0 }}
               animate={{ width: r.width }}
               transition={{ delay: 0.9 + i * 0.2, duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
             />
@@ -85,8 +87,9 @@ function TelegramCard() {
 }
 
 function PhoneMockup() {
+  const reduced = useReducedMotion();
   return (
-    <div className="w-[300px] rounded-[54px] bg-[#101828] p-3 relative shadow-[0_60px_100px_-30px_rgba(2,32,71,0.55),0_0_0_2px_#3b4a63,inset_0_0_0_2px_#000]">
+    <div className="w-full max-w-[300px] rounded-[54px] bg-[#101828] p-3 relative shadow-[0_60px_100px_-30px_rgba(2,32,71,0.55),0_0_0_2px_#3b4a63,inset_0_0_0_2px_#000]">
       <div className="rounded-[44px] overflow-hidden h-[648px] relative bg-gradient-to-b from-sky-100 via-sky-50 to-white">
         <div className="absolute top-[14px] left-1/2 -translate-x-1/2 w-[100px] h-[28px] bg-black rounded-full z-[6]" />
         <div className="flex justify-between px-[30px] pt-4 text-xs font-bold text-slate-900 relative z-[5]">
@@ -124,7 +127,7 @@ function PhoneMockup() {
         {PHONE_FILINGS.map((f, i) => (
           <motion.div
             key={f.symbol}
-            initial={{ opacity: 0, y: 18, scale: 0.97 }}
+            initial={reduced ? false : { opacity: 0, y: 18, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ delay: 0.9 + i * 0.18, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
             className="mx-[14px] mt-2.5 rounded-[18px] bg-white border border-slate-100 shadow-[0_14px_30px_-12px_rgba(2,32,71,0.3)] p-3 relative z-[5] flex gap-2.5"
@@ -165,8 +168,13 @@ function PhoneMockup() {
  */
 export function CreativeHero({ onEnterTerminal }: CreativeHeroProps) {
   const heroRef = useRef<HTMLElement>(null);
+  const reduced = useReducedMotion();
+  const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
+  const phoneY = useTransform(scrollYProgress, [0, 1], [0, -36]);
+  const phoneScale = useTransform(scrollYProgress, [0, 1], [1, 0.96]);
 
   const onMouseMove = (e: React.MouseEvent) => {
+    if (reduced || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
     const el = heroRef.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
@@ -212,8 +220,8 @@ export function CreativeHero({ onEnterTerminal }: CreativeHeroProps) {
               background: 'radial-gradient(ellipse at center, rgba(255,255,255,.95), rgba(255,255,255,0) 72%)',
               filter: 'blur(14px)',
             }}
-            animate={{ x: [0, 46, 0], y: [0, -10, 0] }}
-            transition={{ duration: 30, repeat: Infinity, ease: 'easeInOut', delay: c.d }}
+            initial={false}
+            aria-hidden="true"
           />
         ))}
         <div
@@ -223,25 +231,25 @@ export function CreativeHero({ onEnterTerminal }: CreativeHeroProps) {
 
         <div className="relative z-[5] text-center px-5 pt-[52px]">
           <motion.span
-            initial={{ opacity: 0, y: 26 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            initial={reduced ? false : { opacity: 0, y: 26 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
             className="inline-flex items-center gap-2 bg-white/95 rounded-full px-[18px] py-2 text-xs font-bold text-[#1e3a5f] shadow-[0_10px_26px_rgba(2,32,71,0.25)]"
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-500" /> Live BSE Intelligence Platform
           </motion.span>
           <motion.h1
-            initial={{ opacity: 0, y: 26 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+            initial={reduced ? false : { opacity: 0, y: 26 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
             className="font-serif mx-auto mt-6 max-w-[840px] font-semibold text-white leading-[1.08] tracking-[-1.5px] text-[clamp(40px,7.2vw,82px)] [text-shadow:0_3px_26px_rgba(2,32,71,0.35)]"
           >
             Every BSE filing,<br /><em className="font-medium">decoded</em> in seconds.
           </motion.h1>
           <motion.p
-            initial={{ opacity: 0, y: 26 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            initial={reduced ? false : { opacity: 0, y: 26 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
             className="mx-auto mt-[18px] max-w-[600px] text-[clamp(13px,2.2vw,17px)] text-white/95 leading-[1.65] font-medium [text-shadow:0_1px_10px_rgba(2,32,71,0.3)]"
           >
             AI summaries, YoY metric breakdowns, results calendar, watchlists and Telegram alerts — straight from official BSE India disclosures.
           </motion.p>
           <motion.div
-            initial={{ opacity: 0, y: 26 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            initial={reduced ? false : { opacity: 0, y: 26 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
             className="mt-7 flex gap-3 justify-center flex-wrap"
           >
             <ActionButton
@@ -251,7 +259,11 @@ export function CreativeHero({ onEnterTerminal }: CreativeHeroProps) {
               Enter Live Terminal <ArrowUpRight className="w-4 h-4" />
             </ActionButton>
             <ActionButton
-              onAction={() => onEnterTerminal('dashboard')}
+              onAction={() => {
+                scrollToElementWithOffset('core-features', 96, reduced ? 'auto' : 'smooth');
+                document.getElementById('core-features')?.focus({ preventScroll: true });
+              }}
+              processingMs={0}
               className="px-[30px] py-[15px] min-h-[52px] rounded-full text-sm font-bold bg-white/95 text-slate-900 shadow-[0_12px_28px_rgba(2,32,71,0.22)] transition-transform duration-150 hover:scale-[1.06] hover:-translate-y-0.5 active:scale-95"
             >
               Explore Features
@@ -260,26 +272,26 @@ export function CreativeHero({ onEnterTerminal }: CreativeHeroProps) {
 
           <div className="relative flex justify-center mt-[50px] pb-16">
             <motion.div data-depth="26" className="absolute z-[8] top-[110px] hidden lg:block" style={{ left: 'calc(50% - 336px)' }}
-              animate={{ y: [0, -12, 0] }} transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}>
+              initial={reduced ? false : { opacity: 0, x: -24 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.7 }}>
               <WatchlistCard />
             </motion.div>
 
-            <motion.div data-depth="8" animate={{ y: [0, -14, 0] }} transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}>
+            <motion.div className="w-full max-w-[300px]" style={reduced ? undefined : { y: phoneY, scale: phoneScale }}>
               <PhoneMockup />
             </motion.div>
 
             <motion.div data-depth="34" className="absolute z-[8] top-[200px] hidden lg:block" style={{ right: 'calc(50% - 336px)' }}
-              animate={{ y: [0, -12, 0] }} transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 1.6 }}>
+              initial={reduced ? false : { opacity: 0, x: 24 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.7 }}>
               <TelegramCard />
             </motion.div>
           </div>
 
           {/* Mobile / tablet: side cards stack under the phone instead of hiding */}
           <div className="lg:hidden relative z-[6] grid grid-cols-1 sm:grid-cols-2 gap-3.5 max-w-[560px] mx-auto px-5 pb-[46px] -mt-[30px]">
-            <motion.div animate={{ y: [0, -10, 0] }} transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }} className="mx-auto">
+            <motion.div initial={reduced ? false : { opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mx-auto">
               <WatchlistCard />
             </motion.div>
-            <motion.div animate={{ y: [0, -10, 0] }} transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 1.6 }} className="mx-auto">
+            <motion.div initial={reduced ? false : { opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mx-auto">
               <TelegramCard />
             </motion.div>
           </div>

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useReducedMotion } from 'framer-motion';
 
 /**
  * ParticleRibbons — full-page ambient animation behind the landing page.
@@ -18,6 +19,7 @@ import { useEffect, useRef } from 'react';
  */
 export default function ParticleRibbons() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -29,7 +31,7 @@ export default function ParticleRibbons() {
     let w = 0;
     let h = 0;
     let dpr = 1;
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reducedMotion = prefersReducedMotion;
     const isDark = () => document.documentElement.classList.contains('dark');
     const mouse = { x: -9999, y: -9999, sx: -9999, sy: -9999 };
 
@@ -270,7 +272,7 @@ export default function ParticleRibbons() {
       window.removeEventListener('mousemove', onMouse);
       document.removeEventListener('visibilitychange', onVis);
     };
-  }, []);
+  }, [prefersReducedMotion]);
 
   return (
     <canvas

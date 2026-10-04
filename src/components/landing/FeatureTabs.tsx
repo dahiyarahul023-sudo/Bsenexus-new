@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion, useInView } from 'framer-motion';
 import {
   ArrowUpRight, Check, Clock,
 } from 'lucide-react';
@@ -26,6 +26,12 @@ const TABS: Array<{
 ];
 
 const AUTO_MS = 6000;
+const METRICS: Record<TabId, { value: string; label: string; path: string }> = {
+  filings: { value: '4 filings', label: 'Company disclosures', path: 'M2,28 L16,28 L16,22 L44,22 L44,16 L72,16 L72,8 L88,8' },
+  results: { value: '5 dates', label: 'Upcoming events', path: 'M2,28 L16,12 L30,28 L44,8 L58,28 L72,16 L88,28' },
+  ai: { value: '+7.8%', label: 'INFY revenue YoY', path: 'M2,28 L16,24 L30,26 L44,16 L58,18 L72,8 L88,10' },
+  telegram: { value: '3 alerts', label: 'Watchlist updates', path: 'M2,28 L16,28 L30,18 L44,18 L58,10 L72,10 L88,4' },
+};
 
 /* ---------------- sample panel data (labeled SAMPLE — never real market data) ---------------- */
 
@@ -44,7 +50,7 @@ const AI_POINTS = [
   'Watch: rising receivables vs cash flow…',
 ];
 
-const AI_CHIPS = ['Rev +12.4% YoY', 'PAT +24.8% YoY', 'EBITDA 18.2%'];
+const AI_CHIPS = ['Rev +7.8% YoY', 'PAT +9.4% YoY', 'Margin +140 bps'];
 
 const TG_NOTIFS: Array<{ symbol: CompanySymbol; title: string; body: string; time: string }> = [
   { symbol: 'INFY', title: 'INFY', body: 'Q1 results filed — AI digest ready (sample)', time: 'now' },
@@ -55,6 +61,7 @@ const TG_NOTIFS: Array<{ symbol: CompanySymbol; title: string; body: string; tim
 /* ---------------- panels ---------------- */
 
 function FilingsPanel() {
+  const reduced = useReducedMotion();
   return (
     <div>
       <div className="flex justify-between items-center mb-3.5">
@@ -64,7 +71,7 @@ function FilingsPanel() {
       {FEED_ROWS.map((r, i) => (
         <motion.div
           key={r.symbol}
-          initial={{ opacity: 0, y: 14 }}
+          initial={reduced ? false : { opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: i * 0.08, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
           className="flex items-center gap-3 p-[13px] rounded-2xl bg-slate-50 dark:bg-white/[0.04] border border-slate-100 dark:border-white/10 mb-2.5"
@@ -85,6 +92,7 @@ function FilingsPanel() {
 }
 
 function ResultsPanel() {
+  const reduced = useReducedMotion();
   return (
     <div>
       <div className="flex items-baseline gap-2">
@@ -95,13 +103,15 @@ function ResultsPanel() {
         {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => (
           <div key={i} className="text-[11px] font-extrabold text-slate-500">{d}</div>
         ))}
+        {/* October 1, 2026 is Thursday in this Monday-first sample grid. */}
+        {Array.from({ length: 3 }, (_, i) => <div key={`empty-${i}`} aria-hidden="true" />)}
         {Array.from({ length: 31 }, (_, i) => {
           const day = i + 1;
           const ev = EVENT_DAYS.includes(day);
           return (
             <motion.div
               key={day}
-              initial={ev ? { scale: 0.6, opacity: 0 } : false}
+              initial={!reduced && ev ? { scale: 0.6, opacity: 0 } : false}
               animate={ev ? { scale: 1, opacity: 1 } : {}}
               transition={{ delay: 0.15 + i * 0.015, type: 'spring', bounce: 0.4 }}
               className={`aspect-square rounded-[10px] flex items-center justify-center text-[11px] font-semibold relative ${
@@ -122,6 +132,7 @@ function ResultsPanel() {
 }
 
 function AiPanel() {
+  const reduced = useReducedMotion();
   return (
     <div>
       <div className="flex items-center gap-2.5 mb-4">
@@ -137,7 +148,7 @@ function AiPanel() {
       {AI_POINTS.map((t, i) => (
         <motion.div
           key={t}
-          initial={{ opacity: 0, y: -16, scale: 0.97 }}
+          initial={reduced ? false : { opacity: 0, y: -16, scale: 0.97 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ delay: i * 0.12, type: 'spring', bounce: 0.35 }}
           className="rounded-2xl bg-white dark:bg-white/[0.05] border border-slate-200 dark:border-white/10 p-3.5 mb-3 shadow-[0_14px_30px_-12px_rgba(2,32,71,0.25)]"
@@ -151,7 +162,7 @@ function AiPanel() {
         {AI_CHIPS.map((c, i) => (
           <motion.span
             key={c}
-            initial={{ opacity: 0, scale: 0.8 }}
+            initial={reduced ? false : { opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.4 + i * 0.1, type: 'spring', bounce: 0.5 }}
             className="text-[10px] font-extrabold px-3 py-1.5 rounded-full bg-[#eefbce] dark:bg-lime-400/10 text-[#3f6212] dark:text-lime-300 border border-[#d4f565] dark:border-lime-400/30"
@@ -165,6 +176,7 @@ function AiPanel() {
 }
 
 function TelegramPanel() {
+  const reduced = useReducedMotion();
   return (
     <div>
       <div className="flex items-center gap-2.5 mb-4">
@@ -175,7 +187,7 @@ function TelegramPanel() {
       {TG_NOTIFS.map((n, i) => (
         <motion.div
           key={n.title + n.time}
-          initial={{ opacity: 0, y: -16, scale: 0.97 }}
+          initial={reduced ? false : { opacity: 0, y: -16, scale: 0.97 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ delay: i * 0.15, type: 'spring', bounce: 0.35 }}
           className="rounded-2xl bg-white dark:bg-white/[0.05] border border-slate-200 dark:border-white/10 p-3.5 mb-3 shadow-[0_14px_30px_-12px_rgba(2,32,71,0.25)]"
@@ -206,36 +218,26 @@ function TelegramPanel() {
 export function FeatureTabs({ onEnterTerminal }: FeatureTabsProps) {
   const [active, setActive] = useState<TabId>('filings');
   const [paused, setPaused] = useState(false);
-  const timer = useRef<number | null>(null);
-
-  const advance = () => {
-    const ids = TABS.map((t) => t.id);
-    setActive((cur) => ids[(ids.indexOf(cur) + 1) % ids.length]);
-  };
-
-  const restart = () => {
-    if (timer.current !== null) window.clearInterval(timer.current);
-    timer.current = window.setInterval(advance, AUTO_MS);
-  };
-
+  const [playing, setPlaying] = useState(false);
+  const reduced = useReducedMotion();
+  const sectionRef = useRef<HTMLElement>(null);
+  const inView = useInView(sectionRef, { amount: 0.2 });
   useEffect(() => {
-    restart();
-    return () => { if (timer.current !== null) window.clearInterval(timer.current); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (paused) { if (timer.current !== null) window.clearInterval(timer.current); }
-    else restart();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paused]);
-
-  const select = (id: TabId) => { setActive(id); restart(); };
+    if (!playing || paused || reduced || !inView) return;
+    const timer = window.setInterval(() => {
+      if (document.hidden) return;
+      const ids = TABS.map(t => t.id);
+      setActive(cur => ids[(ids.indexOf(cur) + 1) % ids.length]);
+    }, AUTO_MS);
+    return () => window.clearInterval(timer);
+  }, [playing, paused, reduced, inView, active]);
+  const select = (id: TabId) => { setActive(id); setPlaying(false); };
   const activeTab = TABS.find((t) => t.id === active)!;
+  const metric = METRICS[active];
 
   return (
     <>
-      <section className="bg-white dark:bg-[#12131C] transition-colors">
+      <section ref={sectionRef} id="core-features" tabIndex={-1} className="bg-white dark:bg-[#12131C] transition-colors scroll-mt-24 focus:outline-none">
         <div className="max-w-[1180px] mx-auto px-6 py-20">
           <div className="flex justify-between text-[11px] font-semibold tracking-[2px] text-slate-400 uppercase">
             <span>/ Core Features /</span>
@@ -248,8 +250,10 @@ export function FeatureTabs({ onEnterTerminal }: FeatureTabsProps) {
             className="grid grid-cols-1 lg:grid-cols-[5fr_7fr] gap-10 mt-11 items-start"
             onMouseEnter={() => setPaused(true)}
             onMouseLeave={() => setPaused(false)}
+            onFocusCapture={() => setPaused(true)}
+            onBlurCapture={e => { if (!e.currentTarget.contains(e.relatedTarget)) setPaused(false); }}
           >
-            <div>
+            <div className="min-w-0">
               {TABS.map((t) => {
                 const Icon = t.icon;
                 const on = t.id === active;
@@ -268,7 +272,7 @@ export function FeatureTabs({ onEnterTerminal }: FeatureTabsProps) {
                       {t.title}
                     </span>
                     <span className="block text-[13px] text-slate-500 dark:text-slate-400 mt-2 leading-relaxed max-w-[420px]">{t.desc}</span>
-                    {on && (
+                    {on && playing && !reduced && (
                       <span
                         key={`bar-${t.id}-${paused ? 'p' : 'r'}`}
                         className="absolute left-0 -bottom-px h-[2px] w-full bg-slate-900 dark:bg-[#d4f565] origin-left animate-[tabfill_6s_linear_forwards]"
@@ -284,9 +288,10 @@ export function FeatureTabs({ onEnterTerminal }: FeatureTabsProps) {
               >
                 {activeTab.cta} <ArrowUpRight className="w-4 h-4" />
               </ActionButton>
+              {!reduced && <button type="button" onClick={() => setPlaying(p => !p)} aria-pressed={playing} className="block mt-3 min-h-11 text-xs font-semibold underline underline-offset-4">{playing ? 'Pause preview' : 'Play feature tour'}</button>}
             </div>
 
-            <div className="relative">
+            <div className="relative min-w-0">
               <div className="rounded-[22px] overflow-hidden bg-white dark:bg-[#101B2E] border-[3px] border-[#bfe3fa] dark:border-white/10 shadow-[0_40px_80px_-30px_rgba(2,32,71,0.4)]">
                 <div className="flex items-center gap-2.5 px-[18px] py-3.5 bg-[#eaf6fe] dark:bg-white/[0.04] border-b border-[#d3ebfb] dark:border-white/10">
                   <span className="flex gap-[7px]">
@@ -298,11 +303,11 @@ export function FeatureTabs({ onEnterTerminal }: FeatureTabsProps) {
                     bsenexus.in — sample preview
                   </span>
                 </div>
-                <div className="p-[22px] min-h-[380px]">
+                <div className="p-3 sm:p-[22px] min-h-[380px]" aria-label={`${activeTab.title} sample preview`}>
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={active}
-                      initial={{ opacity: 0, y: 26, scale: 0.985 }}
+                      initial={reduced ? false : { opacity: 0, y: 26, scale: 0.985 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -14, scale: 0.99 }}
                       transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
@@ -317,15 +322,16 @@ export function FeatureTabs({ onEnterTerminal }: FeatureTabsProps) {
               </div>
 
               <motion.div
-                className="absolute z-[5] -left-3 sm:-left-[34px] bottom-[60px]"
-                animate={{ y: [0, -12, 0] }}
-                transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+                key={`metric-${active}`}
+                className="relative mt-4 lg:absolute z-[5] lg:-left-6 lg:bottom-[-36px] w-fit mx-auto"
+                initial={reduced ? false : { opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.45 }}
               >
                 <div className="bg-[#eefbce] dark:bg-lime-400/10 border-2 border-[#d4f565] rounded-[18px] px-[18px] py-3.5 shadow-[0_24px_50px_-16px_rgba(101,163,13,0.5)] text-center">
-                  <div className="font-serif text-[26px] font-bold text-[#3f6212] dark:text-lime-300">+12.4%</div>
-                  <div className="text-[10px] font-bold text-[#65a30d] dark:text-lime-400">YoY revenue</div>
+                  <div className="font-serif text-[26px] font-bold text-[#3f6212] dark:text-lime-300">{metric.value}</div>
+                  <div className="text-[10px] font-bold text-[#65a30d] dark:text-lime-400">{metric.label}</div>
                   <svg className="w-[90px] h-[34px] mt-1.5 mx-auto" viewBox="0 0 90 34" aria-hidden="true">
-                    <path d="M2,28 L16,24 L30,26 L44,16 L58,18 L72,8 L88,10" fill="none" stroke="#65a30d" strokeWidth="2.5" strokeLinecap="round" />
+                    <motion.path d={metric.path} initial={reduced ? false : { pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: reduced ? 0 : 0.9 }} fill="none" stroke="#65a30d" strokeWidth="2.5" strokeLinecap="round" />
                   </svg>
                   <div className="text-[10px] font-bold text-[#65a30d] dark:text-lime-400">Best insights (sample)</div>
                 </div>

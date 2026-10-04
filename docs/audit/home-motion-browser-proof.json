@@ -1,0 +1,175 @@
+{
+  "sourceCommit": "fe09833c3ca3d4246de9b7355a57bbb74a5f58f4",
+  "engine": "Chromium 153",
+  "mockApi": true,
+  "realDevices": false,
+  "viewportScenes": [
+    {
+      "width": 320,
+      "height": 780,
+      "reduced": false,
+      "passed": true,
+      "pageErrors": [],
+      "documentOverflow": 0
+    },
+    {
+      "width": 320,
+      "height": 780,
+      "reduced": true,
+      "passed": true,
+      "pageErrors": [],
+      "documentOverflow": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "reduced": false,
+      "passed": true,
+      "pageErrors": [],
+      "documentOverflow": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "reduced": true,
+      "passed": true,
+      "pageErrors": [],
+      "documentOverflow": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "reduced": false,
+      "passed": true,
+      "pageErrors": [],
+      "documentOverflow": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "reduced": true,
+      "passed": true,
+      "pageErrors": [],
+      "documentOverflow": 0
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "reduced": false,
+      "passed": true,
+      "pageErrors": [],
+      "documentOverflow": 0
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "reduced": true,
+      "passed": true,
+      "pageErrors": [],
+      "documentOverflow": 0
+    },
+    {
+      "width": 820,
+      "height": 1180,
+      "reduced": false,
+      "passed": true,
+      "pageErrors": [],
+      "documentOverflow": 0
+    },
+    {
+      "width": 820,
+      "height": 1180,
+      "reduced": true,
+      "passed": true,
+      "pageErrors": [],
+      "documentOverflow": 0
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "reduced": false,
+      "passed": true,
+      "pageErrors": [],
+      "documentOverflow": 0
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "reduced": true,
+      "passed": true,
+      "pageErrors": [],
+      "documentOverflow": 0
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "reduced": false,
+      "passed": true,
+      "pageErrors": [],
+      "documentOverflow": 0
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "reduced": true,
+      "passed": true,
+      "pageErrors": [],
+      "documentOverflow": 0
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "reduced": false,
+      "passed": true,
+      "pageErrors": [],
+      "documentOverflow": 0
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "reduced": true,
+      "passed": true,
+      "pageErrors": [],
+      "documentOverflow": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "reduced": false,
+      "passed": true,
+      "pageErrors": [],
+      "documentOverflow": 0
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "reduced": true,
+      "passed": true,
+      "pageErrors": [],
+      "documentOverflow": 0
+    }
+  ],
+  "keyboardScrollScenes": [
+    {
+      "width": 1440,
+      "height": 900,
+      "reduced": false,
+      "passed": true,
+      "pageErrors": [],
+      "documentOverflow": 0
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "reduced": true,
+      "passed": true,
+      "pageErrors": [],
+      "documentOverflow": 0
+    }
+  ],
+  "limits": [
+    "No physical device or Safari/Firefox validation",
+    "Screenshot capture timed out at 820px; viewport behavior checks completed in runs without screenshot capture",
+    "No measured frame rate or production verification"
+  ]
+}
