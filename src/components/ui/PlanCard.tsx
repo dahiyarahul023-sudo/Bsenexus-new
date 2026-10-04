@@ -196,6 +196,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
             )}
           </span>
         </span>
+        {subtitle && <span className="text-[13px] text-[#7B7B7B] dark:text-zinc-400">{subtitle}</span>}
         <span>
           <span className="flex items-end gap-1.5">
             <span className="text-[15px] text-[#7B7B7B] dark:text-zinc-400 font-medium mb-1.5">
@@ -228,3 +229,4 @@ export const PlanCard: React.FC<PlanCardProps> = ({
     </div>
   );
 };
+

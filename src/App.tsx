@@ -190,15 +190,15 @@ function CashfreeReturnHandler() {
   if (needsLogin) {
     return (
       <div
-        className="fixed inset-0 z-[96] bg-[#0B0B14]/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150"
+        className="payment-ui payment-overlay" style={{ zIndex: 96 }}
         role="dialog"
         aria-modal="true"
         aria-label="Sign in to confirm payment"
       >
-        <div className="w-full max-w-[360px] rounded-[28px] bg-white shadow-2xl p-8 flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
+        <div className="payment-restore-sheet text-center">
           <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mb-4 text-2xl" aria-hidden="true">🔐</div>
-          <h2 className="text-lg font-semibold text-slate-900 mb-2">Sign in to confirm your payment</h2>
-          <p className="text-sm text-slate-600 mb-6">Your payment was processed. Sign in to the same account that placed the order to view your receipt and activate Pro.</p>
+          <h2 className="text-lg font-semibold text-inherit mb-2">Sign in to confirm your payment</h2>
+          <p className="text-sm payment-muted mb-6">Sign in to the same account that placed the order so we can confirm its status and retrieve your receipt.</p>
           <button
             onClick={() => setIsAuthModalOpen(true)}
             className="w-full px-5 py-3 rounded-full bg-slate-950 text-white font-medium hover:bg-slate-800 transition-colors"
@@ -213,15 +213,15 @@ function CashfreeReturnHandler() {
   if (!verifying) return null;
   return (
     <div
-      className="fixed inset-0 z-[96] bg-[#0B0B14]/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150"
+      className="payment-ui payment-overlay" style={{ zIndex: 96 }}
       role="status"
       aria-live="polite"
       aria-label="Confirming payment"
     >
-      <div className="w-full max-w-[320px] rounded-[28px] bg-white shadow-2xl p-8 flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
+      <div className="payment-restore-sheet flex flex-col items-center text-center">
         <span className="w-12 h-12 rounded-full border-4 border-slate-200 border-t-slate-950 animate-spin" aria-hidden="true" />
-        <h2 className="mt-5 text-[16px] font-black text-slate-900">Confirming your payment…</h2>
-        <p className="mt-2 text-[12px] font-medium text-slate-500 leading-relaxed">
+        <h2 className="mt-5 text-[16px] font-black text-inherit">Confirming your payment…</h2>
+        <p className="mt-2 text-[12px] font-medium payment-muted leading-relaxed">
           We're verifying it with Cashfree and preparing your invoice. One moment.
         </p>
       </div>
@@ -1127,3 +1127,4 @@ export default function App() {
     </AuthProvider>
   );
 }
+

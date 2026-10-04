@@ -139,11 +139,11 @@ export function PaymentHistory() {
                     <span className="font-medium text-slate-400"> · {p.validityDays} days</span>
                   ) : null}
                 </p>
-                <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500 mt-0.5">
+                <p className="payment-history-meta font-medium text-slate-500 dark:text-slate-400 mt-1">
                   {fmtDate(p.paidAt)}
                   {p.validUntil ? ` → valid till ${formatReceiptDate(new Date(p.validUntil).toISOString())}` : ''}
                 </p>
-                <p className="text-[10px] font-mono text-slate-400 dark:text-slate-500 truncate mt-0.5" title={p.orderId}>
+                <p className="payment-history-id text-xs font-mono text-slate-500 dark:text-slate-400 mt-1" title={p.orderId}>
                   {p.orderId}
                 </p>
               </div>
@@ -154,14 +154,14 @@ export function PaymentHistory() {
                 <button
                   onClick={() => openSlip(p)}
                   disabled={openingOrderId === p.orderId}
-                  className="mt-1 inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-950 active:scale-95 transition-all cursor-pointer disabled:opacity-60"
+                  className="mt-1 inline-flex items-center gap-1 px-3 py-2 text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-950 active:scale-95 transition-all cursor-pointer disabled:opacity-60"
                 >
                   {openingOrderId === p.orderId ? (
                     <span className="w-3 h-3 border-2 border-emerald-300 border-t-emerald-700 rounded-full animate-spin" />
                   ) : (
                     <Download className="w-3 h-3" />
                   )}
-                  {openingOrderId === p.orderId ? 'Opening…' : 'Slip'}
+                  {openingOrderId === p.orderId ? 'Opening…' : 'View receipt'}
                 </button>
               </div>
             </div>
@@ -174,3 +174,4 @@ export function PaymentHistory() {
     </div>
   );
 }
+

@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   X, Check, Sparkles, ArrowRight
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
+import { usePaymentDialog } from '../hooks/usePaymentDialog';
+import '../styles/payment.css';
 import { PlanCard } from './ui/PlanCard';
 import { hasUsedTrial, getPlanDisplay, getLowestPlanPrice } from '../utils/cashfree';
 
@@ -19,21 +20,9 @@ export function ProUpgradeModal() {
     upgradeToPro 
   } = useAuth();
 
-  useBodyScrollLock(isProModalOpen);
-
-  useEffect(() => {
-    if (!isProModalOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setIsProModalOpen(false);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isProModalOpen, setIsProModalOpen]);
-
   const [isActivating, setIsActivating] = useState(false);
   const [activatedSuccess, setActivatedSuccess] = useState(false);
+  const dialog = usePaymentDialog(isProModalOpen, () => { if (!isActivating) setIsProModalOpen(false); });
   // Pricing comes from the single source of truth (src/config/plans.ts) —
   // never hardcode plan prices in this component.
   const monthlyPlan = getPlanDisplay('pro_monthly');
@@ -72,8 +61,9 @@ export function ProUpgradeModal() {
 
   return (
     <div 
-      className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-150 overscroll-contain"
-      onClick={() => setIsProModalOpen(false)}
+      ref={dialog}
+      className="payment-ui payment-overlay payment-upgrade"
+      onClick={() => { if (!isActivating) setIsProModalOpen(false); }}
       role="dialog"
       aria-modal="true"
       aria-label="Pro upgrade"
@@ -83,7 +73,7 @@ export function ProUpgradeModal() {
         onClick={(e) => e.stopPropagation()}
       >
         <button
-          onClick={() => setIsProModalOpen(false)}
+          onClick={() => { if (!isActivating) setIsProModalOpen(false); }}
           aria-label="Close upgrade modal"
           className="absolute -top-3 -right-3 z-10 p-2 rounded-full bg-[#121212] dark:bg-white text-white dark:text-black shadow-lg hover:opacity-85 transition-opacity"
         >
@@ -104,11 +94,11 @@ export function ProUpgradeModal() {
           </div>
         ) : (
           <PlanCard
-            title={showPayMode ? 'Continue with Pro Intelligence' : '1-Week Free Pro Intelligence'}
+            title={showPayMode ? 'Continue with Pro Intelligence' : 'Try Pro for 7 days'}
             subtitle={
               showPayMode
                 ? 'Your free trial has ended. Keep unlimited watchlists, Gemini AI summaries, Telegram alerts and custom filtering.'
-                : 'Sign in with your genuine Google account to activate 1 week (7 days) of Free Pro access: Gemini AI summaries, Telegram alerts, and custom filtering.'
+                : 'Explore AI summaries, personal Telegram alerts and unlimited watchlists. No card required.'
             }
             tag={showPayMode ? 'Launch Offer' : '1-Week Free Trial'}
             wasPrice={showPayMode && monthlyPlan.wasPrice ? String(monthlyPlan.wasPrice) : undefined}
@@ -130,7 +120,7 @@ export function ProUpgradeModal() {
               },
               {
                 title: 'Gemini AI YoY Financial Breakdowns',
-                desc: 'Instant 1-click generation of revenue, net profit, margin & bullet point summaries.',
+                desc: 'Up to 100 summaries per day, with revenue, profit, margins and key takeaways.',
               },
             ]}
             ctaLabel={
@@ -142,8 +132,8 @@ export function ProUpgradeModal() {
                 <span className="inline-flex items-center gap-2">
                   <Sparkles size={16} />
                   {(!user || user.isAnonymous)
-                    ? 'Sign In with Google for 1-Week Free Pro'
-                    : 'Activate 1-Week Free Pro (₹0)'}
+                    ? 'Sign in to start free trial'
+                    : 'Start free trial — ₹0'}
                   <ArrowRight size={15} />
                 </span>
               )
@@ -154,7 +144,7 @@ export function ProUpgradeModal() {
             footnote={
               <>
                 Free trial: No card required upfront · After the free week, Pro continues with
-                one-time plans from ₹{getLowestPlanPrice()} (launch offer) · Cancel anytime in Settings.
+                one-time plans from ₹{getLowestPlanPrice()} · No automatic renewal.
               </>
             }
             className="w-full"
@@ -164,3 +154,4 @@ export function ProUpgradeModal() {
     </div>
   );
 }
+

@@ -8,6 +8,9 @@ import { Crown, CreditCard, BadgeCheck, Info } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { customFetch } from '../api';
 import { verifyProPayment, claimProPayment, getLowestPlanPrice } from '../utils/cashfree';
+import { SubscriptionProgress } from './SubscriptionProgress';
+import { usePaymentDialog } from '../hooks/usePaymentDialog';
+import '../styles/payment.css';
 import { PaymentHistory } from './PaymentHistory';
 
 interface SubStatus {
@@ -51,6 +54,7 @@ export function SubscriptionCard() {
   const [claimOpen, setClaimOpen] = useState(false);
   const [claimOrderId, setClaimOrderId] = useState('');
   const [claiming, setClaiming] = useState(false);
+  const claimDialog = usePaymentDialog(claimOpen, () => { if (!claiming) setClaimOpen(false); });
   const [claimMsg, setClaimMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   const loadStatus = async (isCancelled?: () => boolean) => {
@@ -158,7 +162,7 @@ export function SubscriptionCard() {
           ? 'This payment is already linked to Pro. Nothing more to do.'
           : 'Payment found — Pro activated! 🎉',
       });
-      if (r.receipt) setReceipt(r.receipt);
+      if (r.receipt) { setClaimOpen(false); setReceipt(r.receipt); }
       // Refresh both the card and the app-wide Pro badge.
       try {
         const res = await customFetch('/api/payments/status');
@@ -172,7 +176,7 @@ export function SubscriptionCard() {
   };
 
   return (
-  <>
+  <div className="payment-ui payment-billing">
     <div className="bg-white dark:bg-[#181626] border border-slate-200/90 dark:border-[#2D283E] rounded-2xl p-4 sm:p-5 shadow-2xs">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
@@ -209,23 +213,27 @@ export function SubscriptionCard() {
         </div>
       )}
 
+      {!loading && !showUnavailable && status?.isPro && (
+        <SubscriptionProgress expiry={status.proExpiresAt} days={status.lastPaymentAt ? status.plan.validityDays : 7} paidAt={status.lastPaymentAt} />
+      )}
+
       {!loading && !showUnavailable && status && (
         <div className="space-y-2.5 text-xs mb-4">
-          <div className="flex items-center justify-between">
+          <div className="payment-billing-row">
             <span className="text-slate-500 dark:text-slate-400">Plan</span>
             <span className="font-semibold text-slate-900 dark:text-white">
               {status.lastPaymentAt
                 ? `${status.plan.label} — ${fmtINR(status.plan.amountPaise)} · ${status.plan.validityDays} days (one-time)`
-                : 'Pro Trial — 7-day free trial'}
+                : status.isPro ? 'Pro Trial — 7-day free trial' : 'Free plan'}
             </span>
           </div>
-          <div className="flex items-center justify-between">
+          <div className="payment-billing-row">
             <span className="text-slate-500 dark:text-slate-400">Valid until</span>
             <span className="font-semibold text-slate-900 dark:text-white">
               {status.isPro ? fmtDate(status.proExpiresAt) : '—'}
             </span>
           </div>
-          <div className="flex items-center justify-between">
+          <div className="payment-billing-row">
             <span className="text-slate-500 dark:text-slate-400">Last payment</span>
             <span className="font-semibold text-slate-900 dark:text-white">
               {fmtDate(status.lastPaymentAt)}{' '}
@@ -293,14 +301,16 @@ export function SubscriptionCard() {
 
       {claimOpen && (
         <div
-          className="fixed inset-0 z-[97] bg-[#0B0B14]/85 backdrop-blur-md flex items-center justify-center p-4"
+          ref={claimDialog}
+          className="payment-overlay"
+          style={{ zIndex: 97 }}
           role="dialog"
           aria-modal="true"
           aria-label="Restore Pro with order ID"
           onClick={() => { if (!claiming) setClaimOpen(false); }}
         >
           <div
-            className="w-full max-w-sm bg-white dark:bg-[#181626] border border-slate-200 dark:border-[#2D283E] rounded-2xl p-5 shadow-2xl"
+            className="payment-restore-sheet"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-sm font-black text-slate-900 dark:text-white mb-1">Restore Pro</h3>
@@ -316,6 +326,7 @@ export function SubscriptionCard() {
             <input
               value={claimOrderId}
               onChange={(e) => setClaimOrderId(e.target.value)}
+              aria-label="Payment Order ID"
               placeholder="BN_M_xxxxxxxxxx_..."
               disabled={claiming}
               autoCapitalize="none"
@@ -361,6 +372,7 @@ export function SubscriptionCard() {
     </div>
     {/* Completed payments + downloadable slips (27 Sep 2026) */}
     <PaymentHistory />
-  </>
+  </div>
   );
 }
+

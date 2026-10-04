@@ -1,3 +1,6 @@
+import { usePaymentDialog } from '../hooks/usePaymentDialog';
+import { paymentFeedback } from '../utils/paymentFeedback';
+import '../styles/payment.css';
 /**
  * ProReceiptView — payment success + invoice screen, "Advance Receipt Print"
  * style (reference: Instagram reel Dcptq4cI68U).
@@ -212,6 +215,7 @@ export function ProReceiptView() {
   const [copied, setCopied] = useState(false);
   const tearTimer = useRef<number | null>(null);
 
+  const dialog = usePaymentDialog(Boolean(receipt), () => setReceipt(null));
   const orderId = receipt?.orderId;
 
   useEffect(() => {
@@ -227,6 +231,7 @@ export function ProReceiptView() {
         tearTimer.current = null;
       }
       setPrintKey((k) => k + 1);
+      paymentFeedback(true);
     }
   }, [orderId]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -235,15 +240,6 @@ export function ProReceiptView() {
       if (tearTimer.current) window.clearTimeout(tearTimer.current);
     };
   }, []);
-
-  useEffect(() => {
-    if (!receipt) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setReceipt(null);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [receipt, setReceipt]);
 
   if (!receipt) return null;
 
@@ -263,7 +259,7 @@ export function ProReceiptView() {
         return;
       }
       if (result.fallbackToMailto) {
-        setEmailError('Direct delivery is not configured on server (RESEND_API_KEY missing in Secrets).');
+        setEmailError('Email delivery is temporarily unavailable. You can open the receipt in your email app below.');
         return;
       }
       setEmailError(result.error || 'Could not send the email. Please try again.');
@@ -273,6 +269,7 @@ export function ProReceiptView() {
   };
 
   const doReprint = () => {
+    paymentFeedback();
     if (tearTimer.current) {
       window.clearTimeout(tearTimer.current);
       tearTimer.current = null;
@@ -284,6 +281,7 @@ export function ProReceiptView() {
   };
 
   const doTear = () => {
+    paymentFeedback();
     if (torn || tearing) return;
     setTearing(true);
     tearTimer.current = window.setTimeout(() => {
@@ -305,11 +303,12 @@ export function ProReceiptView() {
       document.body.appendChild(ta);
       ta.select();
       try {
-        document.execCommand('copy');
+        if (!document.execCommand('copy')) return;
       } catch {
-        /* clipboard unavailable — still show feedback */
+        return; // Do not claim success when the browser refuses clipboard access.
+      } finally {
+        document.body.removeChild(ta);
       }
-      document.body.removeChild(ta);
     }
     setCopied(true);
     window.setTimeout(() => setCopied(false), 2000);
@@ -320,7 +319,8 @@ export function ProReceiptView() {
 
   return (
     <div
-      className="fixed inset-0 z-[95] bg-[#0B0B14]/88 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150 overflow-y-auto"
+      ref={dialog}
+      className="payment-ui payment-overlay payment-receipt"
       role="dialog"
       aria-modal="true"
       aria-label="Payment invoice"
@@ -376,17 +376,18 @@ export function ProReceiptView() {
         .fade-quick { animation: fade-quick 0.25s ease-in both; }
       `}</style>
 
-      <div className="w-full max-w-[420px] my-auto">
+      <div className="payment-receipt-wrap">
         <div className="flex justify-end mb-2 px-1">
           <button
             onClick={() => setReceipt(null)}
             aria-label="Close invoice"
-            className="p-1.5 rounded-full text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+            className="receipt-close p-1.5 rounded-full text-white/60 hover:text-white hover:bg-white/10 transition-colors"
           >
             <X size={18} />
           </button>
         </div>
 
+        <div className="payment-success-banner" role="status"><h2>Payment successful</h2><p>{receipt.planLabel || 'Pro'} · ₹{Number(receipt.amount).toLocaleString('en-IN')} paid</p><p>Your receipt is ready. Keep a copy for your records.</p></div>
         {/* Animated scene — key change replays the whole print sequence */}
         <div key={printKey} className="flex flex-col items-center">
           {/* Printer bar */}
@@ -415,10 +416,10 @@ export function ProReceiptView() {
             <div className={tearing ? 'fade-quick flex flex-col items-center' : 'flex flex-col items-center'}>
               <div className="rise d-heading flex flex-col items-center mt-6">
                 <h2 className="text-[22px] font-black tracking-tight text-white text-center">
-                  Payment Successful
+                  Your Pro receipt
                 </h2>
                 <p className="mt-1 text-[13px] font-medium text-white/55 text-center">
-                  You&apos;re all set — now let the receipt roll!
+                  Print, copy or email your receipt below.
                 </p>
               </div>
               <div className="flex flex-wrap justify-center gap-2.5 mt-5">
@@ -461,12 +462,14 @@ export function ProReceiptView() {
         </div>
 
         {/* Send invoice to email (one-tap via server; mailto fallback) */}
-        <div className="mt-5 bg-white rounded-2xl p-3 flex items-center gap-2">
+        <div className="receipt-email mt-5 bg-white rounded-2xl p-3 flex items-center gap-2">
           <Mail size={16} className="text-slate-400 shrink-0 ml-1" />
           <input
             type="email"
             value={email}
             onChange={(e) => { setEmail(e.target.value); setSentOk(false); }}
+            aria-label="Email for invoice"
+            autoComplete="email"
             placeholder="Email for invoice"
             className="flex-1 min-w-0 bg-transparent text-[13px] font-medium text-slate-900 placeholder:text-slate-400 outline-none"
           />
@@ -509,3 +512,4 @@ export function ProReceiptView() {
     </div>
   );
 }
+
