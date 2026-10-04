@@ -69,6 +69,32 @@ export function NotificationInbox({
   // response must NOT overwrite the newer toggle — this was the "mute only
   // shows after close/reopen" bug.
   const muteSeqRef = useRef(0);
+  const loadSeqRef = useRef(0);
+  const [confirmClear, setConfirmClear] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
+  const [actionFeedback, setActionFeedback] = useState<{error:boolean;message:string} | null>(null);
+  const clearConfirmRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      event.stopPropagation();
+      if (isClearing) return;
+      if (confirmClear) setConfirmClear(false);
+      else onClose();
+    };
+    document.addEventListener('keydown',onKeyDown);
+    return () => document.removeEventListener('keydown',onKeyDown);
+  },[isOpen,onClose,confirmClear,isClearing]);
+  useEffect(() => { if(confirmClear) clearConfirmRef.current?.focus(); },[confirmClear]);
+  useEffect(() => {
+    setConfirmClear(false);
+    setActionFeedback(null);
+    setNotifications([]);
+    return () => {loadSeqRef.current++;};
+  },[isOpen,user?.uid,profile?.uid]);
 
   useEffect(() => {
     if (isOpen) {
@@ -129,6 +155,7 @@ export function NotificationInbox({
       return;
     }
     const loadSeq = muteSeqRef.current;
+    const requestSeq = ++loadSeqRef.current;
     setLoading(true);
     try {
       let url = '/api/notifications?limit=100';
@@ -147,16 +174,19 @@ export function NotificationInbox({
       const res = await customFetch(url);
       if (res.ok) {
         const data = await res.json();
+        if (requestSeq !== loadSeqRef.current) return;
         setNotifications(data.notifications || []);
         if (typeof data.muteInAppNotifications === 'boolean' && muteSeqRef.current === loadSeq) {
           setIsMuted(data.muteInAppNotifications);
         }
         onRefreshCount();
+      } else if (requestSeq === loadSeqRef.current) {
+        setActionFeedback({error:true,message:'Notifications could not be loaded. Please reopen the inbox to retry.'});
       }
     } catch (e) {
-      console.error("Failed to load notifications", e);
+      if (requestSeq === loadSeqRef.current) setActionFeedback({error:true,message:'Notifications could not be loaded. Please reopen the inbox to retry.'});
     } finally {
-      setLoading(false);
+      if (requestSeq === loadSeqRef.current) setLoading(false);
     }
   };
 
@@ -200,22 +230,25 @@ export function NotificationInbox({
   };
 
   const handleClearAll = async () => {
-    if (!confirm('Are you sure you want to clear in-app notifications?')) return;
-    const prevNotifications = notifications;
-    // Optimistic UI update: clear notifications immediately
-    setNotifications([]);
-    onRefreshCount();
-
+    if (isClearing) return;
+    setIsClearing(true);
+    setActionFeedback(null);
+    // Ignore older loads that could otherwise resurrect the pre-clear snapshot.
+    const clearSeq = ++loadSeqRef.current;
+    setLoading(false);
     try {
       const res = await customFetch('/api/notifications', { method: 'DELETE' });
-      if (!res.ok) {
-        setNotifications(prevNotifications); // Rollback on error
-        onRefreshCount();
-      }
-    } catch (err) {
-      console.error(err);
-      setNotifications(prevNotifications); // Rollback on network failure
+      const data = await res.json().catch(() => null);
+      if (!res.ok || data?.success !== true) throw new Error(data?.error || 'Could not clear your inbox. Please retry.');
+      if (clearSeq !== loadSeqRef.current) return;
+      setNotifications([]);
+      setConfirmClear(false);
+      setActionFeedback({error:false,message:'Your inbox is cleared. New notifications will still appear.'});
       onRefreshCount();
+    } catch (err) {
+      if (clearSeq === loadSeqRef.current) setActionFeedback({error:true,message:err instanceof Error ? err.message : 'Could not clear your inbox. Please retry.'});
+    } finally {
+      setIsClearing(false);
     }
   };
 
@@ -237,7 +270,7 @@ export function NotificationInbox({
   return (
     <div 
       className="fixed inset-0 z-50 flex items-end sm:items-start justify-center sm:justify-end p-0 sm:p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150 overscroll-contain" 
-      onClick={onClose}
+      onClick={() => {if (!isClearing) onClose();}}
       role="dialog"
       aria-modal="true"
       aria-labelledby="notification-inbox-title"
@@ -305,6 +338,7 @@ export function NotificationInbox({
             </button>
             <button
               onClick={onClose}
+              disabled={isClearing}
               aria-label="Close notification inbox"
               className="p-1.5 text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
               title="Close Inbox"
@@ -344,6 +378,7 @@ export function NotificationInbox({
                 key={f.id}
                 type="button"
                 whileTap={buttonTap}
+                disabled={isClearing}
                 onClick={() => setActiveFilter(f.id)}
                 className={cn(
                   "relative px-2.5 py-1 text-[11px] font-bold rounded-md transition-colors cursor-pointer whitespace-nowrap z-10 select-none",
@@ -368,6 +403,7 @@ export function NotificationInbox({
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllRead}
+                disabled={isClearing}
                 className="text-[11px] font-bold text-emerald-600 hover:underline flex items-center gap-1 cursor-pointer"
               >
                 <Check size={12} />
@@ -376,7 +412,9 @@ export function NotificationInbox({
             )}
             {notifications.length > 0 && (
               <button
-                onClick={handleClearAll}
+                onClick={() => {setActionFeedback(null);setConfirmClear(true);}}
+                disabled={isClearing}
+                aria-label="Clear All Notifications"
                 className="text-[11px] font-bold text-slate-400 hover:text-rose-500 flex items-center gap-0.5 cursor-pointer ml-1 p-1"
                 title="Clear All Notifications"
               >
@@ -386,6 +424,16 @@ export function NotificationInbox({
           </div>
         </div>
 
+        {actionFeedback && <p role={actionFeedback.error ? 'alert' : 'status'} className={cn('px-4 py-2 text-xs',actionFeedback.error ? 'text-rose-600' : 'text-emerald-600')}>{actionFeedback.message}</p>}
+        {confirmClear && (
+          <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 space-y-2">
+            <p className="text-xs text-slate-700 dark:text-slate-200">Clear all existing notifications from your inbox? This affects only your account. New notifications will still appear.</p>
+            <div className="flex gap-2 justify-end">
+              <button type="button" disabled={isClearing} onClick={() => setConfirmClear(false)} className="px-3 py-2 min-h-[44px] text-xs rounded-lg">Cancel</button>
+              <button ref={clearConfirmRef} type="button" disabled={isClearing} onClick={handleClearAll} className="px-3 py-2 min-h-[44px] text-xs rounded-lg bg-rose-600 text-white disabled:opacity-50">{isClearing ? 'Clearing...' : 'Clear my inbox'}</button>
+            </div>
+          </div>
+        )}
         {/* Notification Stream List */}
         <div className="p-2.5 sm:p-3 overflow-y-auto flex-1 space-y-2 pb-16 sm:pb-3">
           {loading ? (

@@ -24,6 +24,8 @@ const NOTIFICATIONS_FILE = 'notifications.json';
 let notificationsCache = readLocalJson<AppNotification[]>(NOTIFICATIONS_FILE, []);
 const RECEIPTS_FILE = 'notification_receipts.json';
 let localReceipts = readLocalJson<Record<string, string[]>>(RECEIPTS_FILE, {});
+const INBOX_STATE_FILE = 'notification_inbox_state.json';
+const localClearedBefore = readLocalJson<Record<string, number>>(INBOX_STATE_FILE, {});
 function needsCloud(): boolean { return isSupabaseConfigured() || process.env.NODE_ENV === 'production'; }
 async function cloud<T>(operation: string, run: () => Promise<T>): Promise<T> {
   if (!isSupabaseConfigured()) throw new PaymentStoreUnavailableError(operation);
@@ -137,7 +139,11 @@ async function readInbox(userId: string): Promise<AppNotification[]> {
   let readIds: Set<string>;
   if (needsCloud()) {
     const snapshot = await cloud('read notification inbox', async () => {
-      const {data,error}=await getSupabase().from(NOTIFICATIONS_TABLE).select('*').in('user_id',[userId,'system','all']).order('timestamp',{ascending:false}).limit(MAX_CACHED);
+      const state = await getSupabase().from('user_notification_inbox_state').select('cleared_before').eq('user_id',userId).maybeSingle();
+      if (state.error) throw state.error;
+      const cutoff = Number(state.data?.cleared_before ?? 0);
+      if (!Number.isSafeInteger(cutoff) || cutoff < 0) throw new Error('Invalid inbox clear state');
+      const {data,error}=await getSupabase().from(NOTIFICATIONS_TABLE).select('*').in('user_id',[userId,'system','all']).gt('timestamp',cutoff).order('timestamp',{ascending:false}).limit(MAX_CACHED);
       if(error)throw error;
       if(!data?.length)return {items:[],readIds:[]};
       const receipts=await getSupabase().from('user_notification_receipts').select('notification_id').eq('user_id',userId).in('notification_id',data.map(row=>row.id));
@@ -147,7 +153,7 @@ async function readInbox(userId: string): Promise<AppNotification[]> {
     visible = snapshot.items;
     readIds = new Set(snapshot.readIds);
   } else {
-    visible = notificationsCache.filter(n=>!n.userId || ['system','all',userId].includes(n.userId));
+    visible = notificationsCache.filter(n=>(!n.userId || ['system','all',userId].includes(n.userId)) && n.timestamp > (localClearedBefore[userId] || 0));
     readIds = new Set(localReceipts[userId] || []);
   }
   // Legacy shared isRead was global; it must never decide another user's receipt.
@@ -241,27 +247,16 @@ export async function markAllNotificationsRead(userId='guest'): Promise<void> {
   await markNotificationsReadBatch((await readInbox(userId)).map(n=>n.id),userId);
 }
 
+/** Hide the caller's existing inbox, including broadcasts, without deleting shared rows. */
 export async function clearAllNotifications(userId: string = 'guest'): Promise<void> {
   if (needsCloud()) {
-    await cloud('clear personal notifications', async () => {
-      const {error}=await getSupabase().from(NOTIFICATIONS_TABLE).delete().eq('user_id',userId);
+    await cloud('clear user notification inbox', async () => {
+      const {data,error}=await getSupabase().rpc('clear_user_notification_inbox',{p_uid:userId});
       if(error)throw error;
+      if(data === null || data === '' || !Number.isSafeInteger(Number(data)) || Number(data)<0) throw new Error('Invalid inbox clear response');
     });
+    return;
   }
-  const prevCount = notificationsCache.length;
-  notificationsCache = notificationsCache.filter(n => {
-    // Only delete notifications that strictly belong to the calling user
-    if (n.userId === userId) {
-      return false;
-    }
-    if (userId === 'guest' && (!n.userId || n.userId === 'guest')) {
-      return false;
-    }
-    // Keep system-wide, broadcast, and other users' notifications
-    return true;
-  });
-  if (notificationsCache.length !== prevCount) {
-    scheduleSave();
-
-  }
+  localClearedBefore[userId] = Math.max(localClearedBefore[userId] || 0,Date.now());
+  writeLocalJson(INBOX_STATE_FILE,localClearedBefore);
 }

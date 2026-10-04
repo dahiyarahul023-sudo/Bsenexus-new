@@ -35,7 +35,7 @@ test('production cannot reserve quota without durable storage or silently fall b
 });
 
 test('watchlist mutations report missing/foreign records and mutate only the owner record', async () => {
-  const {addWatchlist,renameWatchlist,toggleWatchlist,getAllWatchlists} = await import('../database/watchlistDao.js');
+  const {addWatchlist,renameWatchlist,toggleWatchlist,deleteWatchlist,getAllWatchlists} = await import('../database/watchlistDao.js');
   const id = await addWatchlist('Before','list-owner');
   const list = { id };
   assert.equal(await renameWatchlist(list.id,'Attack','other-owner'),false);
@@ -44,6 +44,9 @@ test('watchlist mutations report missing/foreign records and mutate only the own
   assert.equal(await toggleWatchlist(list.id,false,'list-owner'),true);
   const saved = (await getAllWatchlists('list-owner')).find(x=>x.id===list.id);
   assert.equal(saved.name,'After');assert.equal(saved.is_active,0);
+  assert.equal(await deleteWatchlist(id,'other-owner'),false);
+  assert.equal(await deleteWatchlist(id,'list-owner'),true);
+  assert.equal(await deleteWatchlist(id,'list-owner'),false);
 });
 
 test('heuristic financial extraction identifies provider and limited evidence explicitly', async () => {
@@ -131,4 +134,67 @@ test('a successful API response cannot relabel old quotes fresh when providers f
   assert.equal(result.lastRefreshed,Date.parse(quote.lastUpdated));assert.notEqual(result.lastRefreshed,result.fetchAttemptedAt);
   const empty=buildMarketFreshnessSnapshot([{...quote,source:'UNAVAILABLE'}],new Set(),Date.now());
   assert.deepEqual(empty.indices,[]);assert.equal(empty.lastRefreshed,0);
+});
+
+
+test('clear inbox hides shared and own old notifications only for the caller, and permits new ones', async () => {
+  const n = await import('../database/notificationDao.js');
+  const item = {message:'Synthetic',type:'GENERAL' as const,priority:'LOW' as const,symbol:'CLEAR',scripCode:'0',isWatchlist:true};
+  const before = Date.now()-10000;
+  await n.addNotification({...item,id:'clear-shared',userId:'system',title:'Shared old',timestamp:before});
+  await n.addNotification({...item,id:'clear-own',userId:'clear-a',title:'Personal old',timestamp:before});
+  await n.clearAllNotifications('clear-a');
+  assert.equal((await n.getAllNotifications('clear-a')).length,0);
+  assert.ok((await n.getAllNotifications('clear-b')).some(x=>x.id==='clear-shared'));
+  assert.equal((await n.getAllNotifications('clear-b')).some(x=>x.id==='clear-own'),false);
+  const state = JSON.parse(fs.readFileSync('data/notification_inbox_state.json','utf8'));
+  assert.ok(state['clear-a']>=before);
+  await n.addNotification({...item,id:'clear-new',userId:'system',title:'Shared new',timestamp:state['clear-a']+1});
+  assert.deepEqual((await n.getAllNotifications('clear-a')).map(x=>x.id),['clear-new']);
+});
+
+test('production clear inbox cannot succeed without durable storage', async () => {
+  const n = await import('../database/notificationDao.js');
+  process.env.NODE_ENV='production';
+  try { await assert.rejects(n.clearAllNotifications('clear-a'),(e:any)=>e.code==='PAYMENT_STORE_UNAVAILABLE'); }
+  finally {process.env.NODE_ENV='test';}
+});
+
+test('cloud inbox clear uses the account-bound RPC and propagates missing migration failures', async t => {
+  const storage = await import('../database/supabase.js');
+  const n = await import('../database/notificationDao.js');
+  process.env.SUPABASE_URL='https://audit-fixture.supabase.co';
+  process.env.SUPABASE_SERVICE_ROLE_KEY='synthetic-test-key';
+  storage.resetSupabaseClient();
+  let fail=false;
+  const mock=t.mock.method(storage.getSupabase(),'rpc',async (name:string,args:any)=>{
+    assert.equal(name,'clear_user_notification_inbox');assert.deepEqual(args,{p_uid:'clear-cloud-user'});
+    return fail ? {data:null,error:new Error('missing migration')} : {data:Date.now(),error:null};
+  });
+  try {
+    await n.clearAllNotifications('clear-cloud-user');
+    assert.equal(mock.mock.callCount(),1);
+    fail=true;
+    await assert.rejects(n.clearAllNotifications('clear-cloud-user'),(e:any)=>e.code==='PAYMENT_STORE_UNAVAILABLE');
+  } finally {delete process.env.SUPABASE_URL;delete process.env.SUPABASE_SERVICE_ROLE_KEY;storage.resetSupabaseClient();}
+});
+
+
+test('durable watchlist deletion fails honestly and leaves the cached owned list on cloud write failure', async t => {
+  const w = await import('../database/watchlistDao.js');
+  const storage = await import('../database/supabase.js');
+  const id=await w.addWatchlist('Deletion failure fixture','delete-failure-owner');
+  const before=await w.getAllWatchlists('delete-failure-owner');
+  process.env.SUPABASE_URL='https://audit-fixture.supabase.co';
+  process.env.SUPABASE_SERVICE_ROLE_KEY='synthetic-test-key';storage.resetSupabaseClient();
+  t.mock.method(storage.getSupabase(),'from',(table:string)=>{
+    assert.equal(table,'user_watchlists');
+    return {select:()=>({eq:(_column:string,uid:string)=>({maybeSingle:async()=>{assert.equal(uid,'delete-failure-owner');return {data:{lists:before},error:null};}})}),upsert:async()=>({error:new Error('synthetic write failure')})} as any;
+  });
+  try {await assert.rejects(w.deleteWatchlist(id,'delete-failure-owner'),(e:any)=>e.code==='PAYMENT_STORE_UNAVAILABLE');}
+  finally {delete process.env.SUPABASE_URL;delete process.env.SUPABASE_SERVICE_ROLE_KEY;storage.resetSupabaseClient();}
+  assert.ok((await w.getAllWatchlists('delete-failure-owner')).some(x=>x.id===id));
+  process.env.NODE_ENV='production';
+  try {await assert.rejects(w.deleteWatchlist(id,'delete-failure-owner'),(e:any)=>e.code==='PAYMENT_STORE_UNAVAILABLE');}
+  finally {process.env.NODE_ENV='test';}
 });

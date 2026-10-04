@@ -1,4 +1,5 @@
 import { getSupabase, isSupabaseConfigured } from './supabase.js';
+import { runPaymentStore, PaymentStoreUnavailableError } from './paymentStore.js';
 import { readLocalJson, writeLocalJson, isOfflineOrNetworkError } from './localStore.js';
 import { resolveStockDetailsSync } from '../utils/stockResolver.js';
 import { withRetry } from '../utils/retry.js';
@@ -461,12 +462,29 @@ export async function addWatchlist(name: string, userId?: string): Promise<strin
   });
 }
 
-export async function deleteWatchlist(id: string, userId?: string): Promise<void> {
+export async function deleteWatchlist(id: string, userId?: string): Promise<boolean> {
   const uid = sanitizeUserId(userId);
   return withUidLock(uid, async () => {
-    let current = await getAllWatchlists(uid);
-    current = current.filter(l => String(l.id) !== String(id));
-    await persistUserWatchlists(uid, current);
+    const durable = isSupabaseConfigured() || process.env.NODE_ENV === 'production';
+    if (durable && !isSupabaseConfigured()) throw new PaymentStoreUnavailableError('delete watchlist');
+    // Destructive updates must read current cloud state, not a stale local fallback.
+    const current = durable
+      ? (await runPaymentStore('read watchlist for deletion',readWatchlistsRow(uid)) || [])
+      : await getAllWatchlists(uid);
+    if (!current.some(l => String(l.id) === String(id))) return false;
+    const next = current.filter(l => String(l.id) !== String(id));
+    if (durable) {
+      await runPaymentStore('persist watchlist deletion',Promise.resolve().then(async () => {
+        const {error}=await getSupabase().from(WATCHLISTS_TABLE).upsert({uid,lists:next,updated_at:new Date().toISOString()},{onConflict:'uid'});
+        if(error)throw error;
+      }));
+      userWatchlistsCache[uid]={lists:next,fetchedAt:Date.now()};
+      userWatchlistsDirty[uid]=false;
+      writeLocalJson(getWatchlistFilename(uid),next);
+    } else {
+      await persistUserWatchlists(uid,next);
+    }
+    return true;
   });
 }
 

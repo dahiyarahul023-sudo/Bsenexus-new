@@ -1,0 +1,48 @@
+{
+  "mockedApi": true,
+  "realDevices": false,
+  "results": [
+    {
+      "width": 390,
+      "deleteCancel": true,
+      "delete404Feedback": true,
+      "deleteSuccess": true,
+      "clearCancel": true,
+      "clear503Feedback": true,
+      "clearSuccess": true,
+      "clearPersistsAcrossReopen": true,
+      "escapeCloses": true,
+      "escapeCancelsConfirmation": true,
+      "watchlistEscapeCancels": true,
+      "errors": []
+    },
+    {
+      "width": 820,
+      "deleteCancel": true,
+      "delete404Feedback": true,
+      "deleteSuccess": true,
+      "clearCancel": true,
+      "clear503Feedback": true,
+      "clearSuccess": true,
+      "clearPersistsAcrossReopen": true,
+      "escapeCloses": true,
+      "escapeCancelsConfirmation": true,
+      "watchlistEscapeCancels": true,
+      "errors": []
+    },
+    {
+      "width": 1920,
+      "deleteCancel": true,
+      "delete404Feedback": true,
+      "deleteSuccess": true,
+      "clearCancel": true,
+      "clear503Feedback": true,
+      "clearSuccess": true,
+      "clearPersistsAcrossReopen": true,
+      "escapeCloses": true,
+      "escapeCancelsConfirmation": true,
+      "watchlistEscapeCancels": true,
+      "errors": []
+    }
+  ]
+}
