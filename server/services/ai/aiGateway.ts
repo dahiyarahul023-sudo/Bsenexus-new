@@ -86,6 +86,14 @@ export function refreshVerifyCache(): void {
   loadVerifyState();
 }
 
+/** addLog kabhi failover loop nahi todega — fire-and-forget with catch. */
+function safeLog(level: string, module: string, message: string): void {
+  try {
+    const p = addLog(level as any, module, message);
+    if (p && typeof (p as any).catch === 'function') (p as any).catch(() => {});
+  } catch { /* logging must never break AI calls */ }
+}
+
 /** Verify script ne is alias ko live confirm kiya hai? */
 export function isModelVerified(alias: string): boolean {
   const entry = getModelEntry(alias);
@@ -103,7 +111,7 @@ function markUnverified(alias: string, reason: string): void {
     state[alias] = { verifiedOk: false, verifiedAt: new Date().toISOString() };
     writeLocalJson(VERIFY_FILE, state);
     verifyCache = state;
-    addLog('WARNING', 'AI_GATEWAY', `Model ${alias} marked UNVERIFIED: ${reason}`);
+    safeLog('WARNING', 'AI_GATEWAY', `Model ${alias} marked UNVERIFIED: ${reason}`);
   } catch { /* best-effort */ }
 }
 
@@ -128,21 +136,27 @@ export async function aiComplete(task: AiTask, opts: AiCompleteOptions): Promise
   // PDF sirf Gemini le sakta hai — chain ko usi tak seemit karo
   const pdfOnly = Boolean(opts.pdfInline);
   const candidates: ModelEntry[] = [];
+  const skipped: string[] = [];
   for (const alias of chain) {
     const entry = getModelEntry(alias);
-    if (!entry) continue;
-    if (pdfOnly && entry.provider !== 'gemini') continue;
-    if (!providerKeyPresent(entry.provider)) continue;
+    if (!entry) { skipped.push(`${alias}: unknown alias`); continue; }
+    if (pdfOnly && entry.provider !== 'gemini') { skipped.push(`${alias}: pdf-only`); continue; }
+    if (!providerKeyPresent(entry.provider)) { skipped.push(`${alias}: no ${PROVIDER_ENV_KEY[entry.provider]}`); continue; }
     if (!isModelVerified(alias)) {
-      addLog('INFO', 'AI_GATEWAY', `${label} skipping ${alias} (unverified model id)`);
+      skipped.push(`${alias}: unverified model id`);
       continue;
     }
-    if (isExhausted(entry.provider, entry.modelId)) continue;
+    if (isExhausted(entry.provider, entry.modelId)) { skipped.push(`${alias}: exhausted(cooldown)`); continue; }
     if (!rpmAllows(entry.provider, entry.modelId, entry.limits.rpm)) {
-      addLog('INFO', 'AI_GATEWAY', `${label} skipping ${alias} (RPM guard)`);
+      skipped.push(`${alias}: rpm-guard`);
       continue;
     }
     candidates.push(entry);
+  }
+  // Diagnosis ke liye: kaunse candidates kyun skip hue — agli baar turant pata chalega
+  // (jaise: keys server env me nahi hain to yahan "no GROQ_API_KEY" dikhega).
+  if (skipped.length > 0) {
+    safeLog('INFO', 'AI_GATEWAY', `${label} chain [${chain.join(',')}] — tried ${candidates.length}, skipped: ${skipped.join('; ')}`);
   }
 
   if (candidates.length === 0) {
@@ -187,7 +201,7 @@ export async function aiComplete(task: AiTask, opts: AiCompleteOptions): Promise
       }
 
       recordSuccess(entry.provider, entry.modelId, res.usage);
-      addLog(
+      safeLog(
         'SUCCESS', 'AI_GATEWAY',
         `${label} answered via ${tag} (${res.usage.totalTokens} tokens, ${res.text.length} chars)`
       );
@@ -203,25 +217,25 @@ export async function aiComplete(task: AiTask, opts: AiCompleteOptions): Promise
       if (e instanceof RateLimitError) {
         sawQuotaError = true;
         recordRateLimit(entry.provider, entry.modelId, e.retryAfterMs);
-        addLog('WARNING', 'AI_GATEWAY', `${label} 429 on ${tag} — cooling down, trying next.`);
-        failures.push(`${tag}: 429`);
+        safeLog('WARNING', 'AI_GATEWAY', `${label} rate-limited/overloaded on ${tag} — cooling down, trying next.`);
+        failures.push(`${tag}: rate-limited`);
         continue; // agle model par — same par dobara NAHI
       }
       if (e instanceof ModelNotFoundError) {
         recordOtherError(entry.provider, entry.modelId, msg);
         markUnverified(entry.alias, msg.slice(0, 120));
-        addLog('ERROR', 'AI_GATEWAY', `${label} model gone on ${tag} — marked unverified, trying next.`);
+        safeLog('ERROR', 'AI_GATEWAY', `${label} model gone on ${tag} — marked unverified, trying next.`);
         failures.push(`${tag}: model-not-found`);
         continue;
       }
       if (e instanceof AuthError) {
         recordOtherError(entry.provider, entry.modelId, msg);
-        addLog('ERROR', 'AI_GATEWAY', `${label} auth failed on ${tag} — check ${PROVIDER_ENV_KEY[entry.provider]}.`);
+        safeLog('ERROR', 'AI_GATEWAY', `${label} auth failed on ${tag} — check ${PROVIDER_ENV_KEY[entry.provider]}.`);
         failures.push(`${tag}: auth`);
         continue; // same provider ka dusra model bhi fail hoga, par chain me rehne do
       }
       recordOtherError(entry.provider, entry.modelId, msg);
-      addLog('WARNING', 'AI_GATEWAY', `${label} error on ${tag}: ${msg.slice(0, 120)} — trying next.`);
+      safeLog('WARNING', 'AI_GATEWAY', `${label} error on ${tag}: ${msg.slice(0, 120)} — trying next.`);
       failures.push(`${tag}: ${msg.slice(0, 80)}`);
     }
   }

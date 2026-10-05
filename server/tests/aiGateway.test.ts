@@ -121,6 +121,31 @@ describe('AI Gateway', () => {
     assert.strictEqual(rpmAllows('groq', 'm', 5), true, 'khali window me allow');
   });
 
+  test('failover: Groq 503 overloaded -> cooldown + NVIDIA par switch', async () => {
+    process.env.GROQ_API_KEY = 'gsk_test';
+    process.env.NVIDIA_API_KEY = 'nvapi_test';
+    (globalThis as any).fetch = async (url: string, init: any) => {
+      if (url.includes('api.groq.com')) {
+        return new Response(JSON.stringify({ error: { message: 'high demand', code: 503 } }), { status: 503 });
+      }
+      return new Response(JSON.stringify({
+        choices: [{ message: { content: 'NVIDIA 503-failover ok' } }],
+        usage: { prompt_tokens: 50, completion_tokens: 10, total_tokens: 60 },
+      }), { status: 200 });
+    };
+    const { writeLocalJson } = await import('../database/localStore.js');
+    writeLocalJson('ai_models_verified.json', {
+      NVIDIA_KIMI_K2: { verifiedOk: true, verifiedAt: new Date().toISOString() },
+    });
+    const { refreshVerifyCache, aiComplete } = await import('../services/ai/aiGateway.js');
+    refreshVerifyCache();
+    const res = await aiComplete('FAQ', { prompt: 'x', taskLabel: '[TEST503]' });
+    assert.strictEqual(res.provider, 'nvidia');
+    const { isExhausted } = await import('../services/ai/providerQuotaLedger.js');
+    assert.ok(isExhausted('groq', 'openai/gpt-oss-20b'), '503 par Groq ko cooldown milna chahiye tha');
+    try { fs.unlinkSync(path.join(process.cwd(), 'data', 'ai_models_verified.json')); } catch {}
+  });
+
   test('koi key nahi -> AllProvidersFailedError (quotaExhausted=true)', async () => {
     const { aiComplete, AllProvidersFailedError } = await import('../services/ai/aiGateway.js');
     await assert.rejects(

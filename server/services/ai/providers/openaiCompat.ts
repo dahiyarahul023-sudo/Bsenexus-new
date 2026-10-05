@@ -94,6 +94,14 @@ export async function openaiCompatComplete(opts: OpenAICompatOptions): Promise<A
         parseRetryAfterMs(res)
       );
     }
+    // 503 overloaded = transient — cooldown do, agle model/provider par jao
+    if (res.status === 503) {
+      const errText = await res.text().catch(() => '');
+      throw new RateLimitError(
+        `${opts.providerLabel || 'provider'} overloaded (HTTP 503) on ${opts.modelId}: ${errText.slice(0, 120)}`,
+        parseRetryAfterMs(res)
+      );
+    }
     if (res.status === 401 || res.status === 403) {
       throw new AuthError(`${opts.providerLabel || 'provider'} auth failed (HTTP ${res.status}) on ${opts.modelId}`);
     }

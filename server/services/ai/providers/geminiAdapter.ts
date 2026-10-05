@@ -34,6 +34,10 @@ function classifyGeminiError(err: any): Error {
   if (/429|RESOURCE_EXHAUSTED|quota|Quota exceeded/i.test(msg)) {
     return new RateLimitError(`Gemini rate limit/quota: ${msg.slice(0, 160)}`);
   }
+  // 503 "high demand"/overloaded = transient — cooldown do, agle provider par jao
+  if (/503|high demand|overloaded|UNAVAILABLE|try again later/i.test(msg)) {
+    return new RateLimitError(`Gemini overloaded (503): ${msg.slice(0, 160)}`);
+  }
   if (/API key|API_KEY_INVALID|401|403/i.test(msg)) {
     return new AuthError(`Gemini auth failed: ${msg.slice(0, 160)}`);
   }
