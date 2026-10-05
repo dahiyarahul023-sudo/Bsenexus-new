@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useScreenTransition } from '../hooks/useScreenTransition';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getLowestPlanPrice } from '../utils/cashfree';
 import { 
@@ -158,6 +159,8 @@ export function SettingsTab({
   const [activeSheet, setActiveSheet] = useState<string | null>(null);
   // Drill-down navigation: null = section index, otherwise the open section id
   const [activeSection, setActiveSection] = useState<string | null>(null);
+  const sectionMotion = useScreenTransition(activeSection, 'section');
+  const visibleSection = sectionMotion.displayedKey;
   const [alertRulesOpen, setAlertRulesOpen] = useState(false);
   const [helpGuideOpen, setHelpGuideOpen] = useState(false);
   const [legalModalOpen, setLegalModalOpen] = useState(false);
@@ -1065,7 +1068,7 @@ export function SettingsTab({
     },
   ];
 
-  const activeDef = sectionDefs.find(d => d.id === activeSection);
+  const activeDef = sectionDefs.find(d => d.id === visibleSection);
 
   const isSectionVisible = (def: SectionDef) => {
     if (def.adminOnly && !isSuperAdmin) return false;
@@ -1119,30 +1122,32 @@ export function SettingsTab({
   ];
 
   return (
-    <div className="max-w-2xl mx-auto space-y-5 animate-in fade-in duration-200 pb-28">
+    <div className="max-w-2xl mx-auto space-y-5 pb-28">
       
       {/* 1. PAGE HEADER & SEARCH BAR */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0">
-            {activeSection && (
+            {visibleSection && (
               <button
                 type="button"
                 onClick={() => setActiveSection(null)}
                 aria-label="Back to settings"
-                className="p-2 -ml-2 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#201E2E] transition-colors cursor-pointer shrink-0"
+                className="min-w-[44px] min-h-[44px] grid place-items-center p-2 -ml-2 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#201E2E] transition-colors cursor-pointer shrink-0"
               >
                 <ArrowLeft size={18} />
               </button>
             )}
-            <div className="min-w-0">
+            <motion.div key={visibleSection ?? 'settings-index'} className="min-w-0"
+              initial={sectionMotion.reducedMotion ? false : { opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}>
               <h2 className="text-xl font-bold text-slate-900 dark:text-white font-display truncate">
                 {activeDef ? activeDef.title : 'Settings'}
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
                 {activeDef ? activeDef.subtitle : 'Personalize research defaults, push delivery, and system tools'}
               </p>
-            </div>
+            </motion.div>
           </div>
           {profile?.username && (
             <span className="hidden sm:inline-block font-mono text-[11px] text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-[#1f1c2d] px-2.5 py-1 rounded-lg border border-slate-200/80 dark:border-[#2b273d] shrink-0">
@@ -1204,9 +1209,10 @@ export function SettingsTab({
         </div>
       )}
 
+      <div ref={sectionMotion.ref} tabIndex={-1} className="space-y-4 outline-none" aria-label={activeDef ? activeDef.title : 'Settings sections'}>
       {/* DRILL-DOWN INDEX: grouped section rows (iOS Settings style) */}
-      {activeSection === null && (
-        <div className="space-y-4 select-none animate-in fade-in duration-200">
+      {visibleSection === null && (
+        <div className="space-y-4 select-none">
           {indexGroups.map((group) => {
             const defs = group.ids
               .map(id => sectionDefs.find(d => d.id === id)!)
@@ -1262,8 +1268,8 @@ export function SettingsTab({
       )}
 
       {/* SECTION 1: PREFERENCES (Appearance, Audio, Density, Materiality) */}
-      {activeSection === 'notes' && isMatch('saved-notes') && (
-        <div className="space-y-2 select-none animate-in fade-in duration-200">
+      {visibleSection === 'notes' && isMatch('saved-notes') && (
+        <div className="space-y-2 select-none">
           <div className="flex items-center justify-between px-1">
             <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Saved Notes
@@ -1274,7 +1280,7 @@ export function SettingsTab({
         </div>
       )}
 
-      {activeSection === 'preferences' && (isMatch('appearance') || isMatch('density') || isMatch('sound') || isMatch('filter')) && (
+      {visibleSection === 'preferences' && (isMatch('appearance') || isMatch('density') || isMatch('sound') || isMatch('filter')) && (
         <div className="space-y-2 select-none">
           <div className="flex items-center justify-between px-1">
             <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
@@ -1692,7 +1698,7 @@ export function SettingsTab({
       )}
 
       {/* SECTION 2: ACCOUNT & IDENTITY (Display Name, Username, Telegram ID) */}
-      {activeSection === 'account' && (isMatch('profile') || isMatch('telegram')) && (
+      {visibleSection === 'account' && (isMatch('profile') || isMatch('telegram')) && (
         <div className="space-y-2 select-none">
           <div className="flex items-center justify-between px-1">
             <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
@@ -1786,7 +1792,7 @@ export function SettingsTab({
       )}
 
       {/* SUBSCRIPTION & BILLING (Cashfree one-time Pro payments; auto-renew = Coming soon) */}
-      {activeSection === 'subscription' && isMatch('subscription') && (
+      {visibleSection === 'subscription' && isMatch('subscription') && (
         <div className="space-y-2 select-none">
           <div className="px-1">
             <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
@@ -1799,7 +1805,7 @@ export function SettingsTab({
       )}
 
       {/* SECTION 3: WATCHLIST & EXPORTS */}
-      {activeSection === 'watchlist' && (isMatch('export-csv') || isMatch('export-json')) && (
+      {visibleSection === 'watchlist' && (isMatch('export-csv') || isMatch('export-json')) && (
         <div className="space-y-2 select-none">
           <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider px-1">
             Watchlist &amp; Data
@@ -1852,7 +1858,7 @@ export function SettingsTab({
       )}
 
       {/* SECTION 4: ADVANCED & DEVELOPER ENGINE (Strictly Admin & Operator Only) */}
-      {activeSection === 'admin' && isSuperAdmin && (isMatch('security-audit') || isMatch('diagnostics') || isMatch('logs') || isMatch('storage') || isMatch('server-keys') || isMatch('seo-suite')) && (
+      {visibleSection === 'admin' && isSuperAdmin && (isMatch('security-audit') || isMatch('diagnostics') || isMatch('logs') || isMatch('storage') || isMatch('server-keys') || isMatch('seo-suite')) && (
         <div className="space-y-2">
           <div className="flex items-center justify-between px-1">
             <div className="flex items-center gap-2">
@@ -2013,7 +2019,7 @@ export function SettingsTab({
       )}
 
       {/* SECTION 5: HELP & SUPPORT */}
-      {activeSection === 'help' && (isMatch('help') || isMatch('guides')) && (
+      {visibleSection === 'help' && (isMatch('help') || isMatch('guides')) && (
         <div className="space-y-2 select-none">
           <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider px-1">
             Help &amp; Support
@@ -2066,7 +2072,7 @@ export function SettingsTab({
       )}
 
       {/* SECTION 6: ABOUT & LEGAL */}
-      {activeSection === 'about' && (isMatch('legal') || isMatch('sebi')) && (
+      {visibleSection === 'about' && (isMatch('legal') || isMatch('sebi')) && (
         <div className="space-y-2 select-none">
           <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider px-1">
             About &amp; Legal
@@ -2136,7 +2142,7 @@ export function SettingsTab({
       )}
 
       {/* SECTION 7: DANGER ZONE (Quarantine the Destructive: Red Border, Bottom of the Page) */}
-      {activeSection === 'danger' && (isMatch('clear-cache') || isMatch('delete-account') || isMatch('sign-out')) && (
+      {visibleSection === 'danger' && (isMatch('clear-cache') || isMatch('delete-account') || isMatch('sign-out')) && (
         <div className="space-y-2 pt-2 select-none">
           <div className="flex items-center gap-1.5 px-1">
             <AlertTriangle size={13} className="text-rose-500" />
@@ -2216,6 +2222,8 @@ export function SettingsTab({
           </div>
         </div>
       )}
+
+      </div>
 
       {/* QUIET FOOTER - Balanced Left & Right Anchored */}
       <div className="pt-4 pb-2 border-t border-slate-200/60 dark:border-slate-800/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-[11px] text-slate-400 dark:text-slate-500">

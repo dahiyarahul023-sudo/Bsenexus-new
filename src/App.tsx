@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
+import { useScreenTransition } from './hooks/useScreenTransition';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { IntelModalProvider } from './context/IntelModalContext';
 import { NoteEditorProvider } from './context/NoteEditorContext';
@@ -345,9 +346,11 @@ function AppContent() {
     prevAuthModalOpenRef.current = isAuthModalOpen;
   }, [isAuthModalOpen, user]);
 
+  const tabMotion = useScreenTransition(activeTab);
+
   // Apple-Grade Scroll State & Restoration System ("Scroll is state")
   const { restoredInfo, scrollToTop } = useScrollRestoration({
-    activeKey: activeTab,
+    activeKey: tabMotion.displayedKey,
     enabled: true
   });
 
@@ -370,7 +373,7 @@ function AppContent() {
       return;
     }
     // Save previous tab scroll position immediately before switching
-    saveScrollPosition(activeTab);
+    saveScrollPosition(tabMotion.displayedKey);
     setActiveTab(newTab);
 
     if (typeof window !== 'undefined') {
@@ -998,13 +1001,14 @@ function AppContent() {
         isRunning={settings.isRunning}
         onToggleEngine={handleToggle}
       >
+        <div ref={tabMotion.ref} tabIndex={-1} className="outline-none" aria-label="Page content">
         {visitedTabs.has('home') && (
-          <div className={activeTab === 'home' ? '' : 'hidden'}>
+          <div data-screen-page="home" hidden={tabMotion.displayedKey !== 'home'}>
             <HomeForYou onNavigate={(tab) => handleTabChange(tab)} />
           </div>
         )}
         {visitedTabs.has('dashboard') && (
-          <div className={activeTab === 'dashboard' ? '' : 'hidden'}>
+          <div data-screen-page="dashboard" hidden={tabMotion.displayedKey !== 'dashboard'}>
             <Dashboard 
               bseHealth={health.bse} 
               telegramHealth={health.telegram} 
@@ -1014,7 +1018,7 @@ function AppContent() {
           </div>
         )}
         {visitedTabs.has('watchlists') && (
-          <div className={activeTab === 'watchlists' ? '' : 'hidden'}>
+          <div data-screen-page="watchlists" hidden={tabMotion.displayedKey !== 'watchlists'}>
             <TabErrorBoundary label="watchlists">
             <Suspense fallback={<TabFallback />}>
               <WatchlistManager />
@@ -1023,7 +1027,7 @@ function AppContent() {
           </div>
         )}
         {visitedTabs.has('results-calendar') && (
-          <div className={activeTab === 'results-calendar' ? '' : 'hidden'}>
+          <div data-screen-page="results-calendar" hidden={tabMotion.displayedKey !== 'results-calendar'}>
             <TabErrorBoundary label="results-calendar">
             <Suspense fallback={<TabFallback />}>
               <ResultsCalendar />
@@ -1032,7 +1036,7 @@ function AppContent() {
           </div>
         )}
         {visitedTabs.has('news') && (
-          <div className={activeTab === 'news' ? '' : 'hidden'}>
+          <div data-screen-page="news" hidden={tabMotion.displayedKey !== 'news'}>
             <TabErrorBoundary label="news">
             <Suspense fallback={<TabFallback />}>
               <NewsPortal
@@ -1046,7 +1050,7 @@ function AppContent() {
           </div>
         )}
         {isAdmin && visitedTabs.has('seo-suite') && (
-          <div className={activeTab === 'seo-suite' ? '' : 'hidden'}>
+          <div data-screen-page="seo-suite" hidden={tabMotion.displayedKey !== 'seo-suite'}>
             <TabErrorBoundary label="seo-suite">
             <Suspense fallback={<TabFallback />}>
               <SeoStudio />
@@ -1055,7 +1059,7 @@ function AppContent() {
           </div>
         )}
         {isAdmin && visitedTabs.has('storage') && (
-          <div className={activeTab === 'storage' ? '' : 'hidden'}>
+          <div data-screen-page="storage" hidden={tabMotion.displayedKey !== 'storage'}>
             <TabErrorBoundary label="storage">
             <Suspense fallback={<TabFallback />}>
               <StorageManager />
@@ -1064,7 +1068,7 @@ function AppContent() {
           </div>
         )}
         {isAdmin && visitedTabs.has('diagnostics') && (
-          <div className={activeTab === 'diagnostics' ? '' : 'hidden'}>
+          <div data-screen-page="diagnostics" hidden={tabMotion.displayedKey !== 'diagnostics'}>
             <TabErrorBoundary label="diagnostics">
             <Suspense fallback={<TabFallback />}>
               <AdminDiagnostics />
@@ -1073,7 +1077,7 @@ function AppContent() {
           </div>
         )}
         {isAdmin && visitedTabs.has('logs') && (
-          <div className={activeTab === 'logs' ? '' : 'hidden'}>
+          <div data-screen-page="logs" hidden={tabMotion.displayedKey !== 'logs'}>
             <TabErrorBoundary label="logs">
             <Suspense fallback={<TabFallback />}>
               <LogsTab logs={logs} onRefreshLogs={fetchLogs} />
@@ -1082,7 +1086,7 @@ function AppContent() {
           </div>
         )}
         {visitedTabs.has('settings') && (
-          <div className={activeTab === 'settings' ? '' : 'hidden'}>
+          <div data-screen-page="settings" hidden={tabMotion.displayedKey !== 'settings'}>
             <TabErrorBoundary label="settings" onBack={() => handleTabChange('home')}>
             <Suspense fallback={<TabFallback />}>
               <SettingsTab
@@ -1100,6 +1104,7 @@ function AppContent() {
             </TabErrorBoundary>
           </div>
         )}
+        </div>
       </Layout>
 
       {/* Floating Reassurance Indicator when restoring scroll position */}
@@ -1127,4 +1132,3 @@ export default function App() {
     </AuthProvider>
   );
 }
-
