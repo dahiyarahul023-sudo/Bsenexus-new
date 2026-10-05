@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { getPlanDisplay } from '../config/plans';
-import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { usePaymentDialog } from '../hooks/usePaymentDialog';
+import '../styles/referral.css';
 import {
   X,
   Copy,
@@ -78,12 +79,14 @@ export function ReferralDashboardModal({
   onClose: () => void;
 }) {
   const { user } = useAuth();
-  useBodyScrollLock(isOpen);
+  const dialog = usePaymentDialog(isOpen, onClose);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const [data, setData] = useState<ReferralDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState('');
   const [customCodeInput, setCustomCodeInput] = useState('');
   const [customCodeLoading, setCustomCodeLoading] = useState(false);
   const [customCodeMsg, setCustomCodeMsg] = useState<{ text: string; ok: boolean } | null>(null);
@@ -97,17 +100,12 @@ export function ReferralDashboardModal({
   const [payoutSaving, setPayoutSaving] = useState(false);
   const [payoutMsg, setPayoutMsg] = useState<string | null>(null);
 
-  // Close on Escape key
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  const selectTab = (tab: 'friends' | 'creator' | 'audit') => {
+    setActiveTab(tab);
+    contentRef.current?.scrollTo({ top: 0, behavior: 'instant' });
+  };
 
-  const fetchReferralData = async () => {
+  const fetchReferralData = async (initial = false) => {
     if (!user || user.isAnonymous) return;
     setLoading(true);
     setError(null);
@@ -119,7 +117,7 @@ export function ReferralDashboardModal({
         setCustomCodeInput(json.code);
         setUpiInput(json.payoutUpiId || '');
         setBankInfoInput(json.payoutBankInfo || '');
-        if (json.type === 'creator') {
+        if (initial && json.type === 'creator') {
           setActiveTab('creator');
         }
       } else {
@@ -134,7 +132,7 @@ export function ReferralDashboardModal({
 
   useEffect(() => {
     if (isOpen && user && !user.isAnonymous) {
-      fetchReferralData();
+      fetchReferralData(true);
     }
   }, [isOpen, user]);
 
@@ -144,10 +142,15 @@ export function ReferralDashboardModal({
   const cleanCode = data?.code || '';
   const canonicalLink = `https://bsenexus.in/?ref=${encodeURIComponent(cleanCode)}`;
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(canonicalLink);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(canonicalLink);
+      setCopyError('');
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopyError('Could not copy. Select the link above and copy it manually.');
+    }
   };
 
   const handleCustomCodeSubmit = async (e: React.FormEvent) => {
@@ -217,101 +220,93 @@ export function ReferralDashboardModal({
     }
   };
 
-  const monthlyPlan = getPlanDisplay('pro_monthly');
-  const shareText = `Get Flat ₹${monthlyPlan.referralDiscount} OFF on BSE Nexus Pro Monthly (Pay only ₹${monthlyPlan.referralPrice} instead of ₹${monthlyPlan.price}) with my referral link: ${canonicalLink}`;
+  const referralDiscount = data?.benefits?.monthlyDiscount ?? 0;
+  const shareText = `Get Flat ₹${referralDiscount} OFF on BSE Nexus Pro Monthly with my referral link: ${canonicalLink}`;
   const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
-  const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(canonicalLink)}&text=${encodeURIComponent(`Get Flat ₹${monthlyPlan.referralDiscount} OFF on BSE Nexus Pro Monthly (Pay ₹${monthlyPlan.referralPrice} instead of ₹${monthlyPlan.price})!`)}`;
+  const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(canonicalLink)}&text=${encodeURIComponent(`Get Flat ₹${referralDiscount} OFF on BSE Nexus Pro Monthly!`)}`;
   const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
 
   const totalConversions = data?.stats.totalConversions || 0;
   const freeDaysEarned = data?.totalFreeDaysEarned ?? totalConversions * 14;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm p-3 sm:p-4 flex items-center justify-center overscroll-none"
+      ref={dialog}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="referral-title"
+      className="referral-overlay" 
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-3xl max-h-[90vh] flex flex-col bg-white dark:bg-[#14131B] text-slate-900 dark:text-slate-100 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden my-auto"
+        className="referral-sheet bg-white dark:bg-[#14131B] text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-800 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
+        <div className="referral-handle" aria-hidden="true" />
         {/* Header */}
-        <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-slate-100 dark:border-slate-800/80">
-          <div className="flex items-center gap-3">
+        <div className="referral-header flex items-center justify-between gap-3 px-4 sm:px-6 py-3 border-b border-slate-100 dark:border-slate-800/80">
+          <div className="flex items-center gap-3 min-w-0">
             <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
               <Sparkles size={20} />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-base sm:text-lg font-bold">Refer &amp; Earn Rewards</h2>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <h2 id="referral-title" className="text-base sm:text-lg font-bold">Refer &amp; Earn Rewards</h2>
                 <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
                   {data?.type === 'creator' ? 'Creator Partner' : 'Community Member'}
                 </span>
               </div>
               <p className="text-xs text-slate-500">
-                Give your friends Flat ₹100 OFF · Earn Free Pro days or volume-based cash commission
+                Share Pro with friends · Track your rewards and creator payouts
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors"
+            aria-label="Close referral dashboard"
+            className="w-11 h-11 shrink-0 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors"
           >
             <X size={18} />
           </button>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="flex px-4 sm:px-6 border-b border-slate-100 dark:border-slate-800 text-xs font-semibold text-slate-500 overflow-x-auto">
-          <button
-            className={`py-3 px-3 border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
-              activeTab === 'friends'
-                ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400 font-bold'
-                : 'border-transparent hover:text-slate-800 dark:hover:text-slate-200'
-            }`}
-            onClick={() => setActiveTab('friends')}
-          >
-            <Gift size={14} />
-            Invite Friends &amp; Free Pro
-          </button>
-
-          <button
-            className={`py-3 px-3 border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
-              activeTab === 'creator'
-                ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400 font-bold'
-                : 'border-transparent hover:text-slate-800 dark:hover:text-slate-200'
-            }`}
-            onClick={() => setActiveTab('creator')}
-          >
-            <BadgePercent size={14} />
-            Creator Affiliate &amp; Payouts
-          </button>
-
-          <button
-            className={`py-3 px-3 border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
-              activeTab === 'audit'
-                ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400 font-bold'
-                : 'border-transparent hover:text-slate-800 dark:hover:text-slate-200'
-            }`}
-            onClick={() => setActiveTab('audit')}
-          >
-            <ShieldCheck size={14} />
-            Verified Audit Ledger
-            {data && data.stats.totalConversions > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-500 text-white font-bold">
-                {data.stats.totalConversions}
-              </span>
-            )}
-          </button>
+        <div className="referral-tabs" role="tablist" aria-label="Referral rewards">
+          {([
+            { id: 'friends', title: 'Invite Friends', subtitle: 'Free Pro', Icon: Gift },
+            { id: 'creator', title: 'Creator', subtitle: 'Affiliate & payouts', Icon: BadgePercent },
+            { id: 'audit', title: 'Verified', subtitle: 'Referral ledger', Icon: ShieldCheck },
+          ] as const).map(({ id, title, subtitle, Icon }, index) => (
+            <button key={id} type="button" role="tab" id={`referral-tab-${id}`}
+              aria-selected={activeTab === id} aria-controls="referral-panel"
+              tabIndex={activeTab === id ? 0 : -1}
+              className="referral-tab"
+              onClick={() => selectTab(id)}
+              onKeyDown={event => {
+                const ids = ['friends', 'creator', 'audit'] as const;
+                const next = event.key === 'ArrowRight' ? (index + 1) % 3
+                  : event.key === 'ArrowLeft' ? (index + 2) % 3
+                  : event.key === 'Home' ? 0 : event.key === 'End' ? 2 : -1;
+                if (next < 0) return;
+                event.preventDefault();
+                selectTab(ids[next]);
+                document.getElementById(`referral-tab-${ids[next]}`)?.focus();
+              }}>
+              <span className="referral-tab-title"><Icon size={16} /><span>{title}</span></span>
+              <span className="referral-tab-subtitle">{subtitle}</span>
+            </button>
+          ))}
         </div>
 
         {/* Content Body with isolated vertical scroll */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 overscroll-contain">
+        <div ref={contentRef} id="referral-panel" role="tabpanel" tabIndex={0}
+          aria-labelledby={`referral-tab-${activeTab}`}
+          className="referral-content p-4 sm:p-6 space-y-6">
           {loading ? (
             <div className="py-16 text-center text-slate-400">Loading your referral details…</div>
           ) : error ? (
             <div className="p-4 rounded-xl bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300 text-sm">
-              {error}
+              <p role="alert">{error}</p>
+              <button type="button" onClick={() => fetchReferralData()} className="mt-3 px-4 py-2 rounded-xl border border-current font-semibold">Try again</button>
             </div>
           ) : data ? (
             <>
@@ -322,7 +317,7 @@ export function ReferralDashboardModal({
                     Your Official Referral Link
                   </p>
                   <span className="text-[11px] text-slate-400">
-                    Gives ₹100 Flat Discount on Pro Monthly
+                    Gives ₹{referralDiscount} Flat Discount on Pro Monthly
                   </span>
                 </div>
 
@@ -330,8 +325,9 @@ export function ReferralDashboardModal({
                   <input
                     type="text"
                     readOnly
+                    aria-label="Your referral link"
                     value={canonicalLink}
-                    className="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs sm:text-sm font-mono select-all focus:outline-none"
+                    className="min-w-0 flex-1 px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs sm:text-sm font-mono select-all focus:outline-none"
                   />
                   <button
                     onClick={handleCopy}
@@ -342,6 +338,7 @@ export function ReferralDashboardModal({
                   </button>
                 </div>
 
+                {copyError && <p role="status" className="text-xs text-rose-600 mt-2">{copyError}</p>}
                 {/* Quick Social Shares */}
                 <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-emerald-500/10">
                   <span className="text-xs text-slate-500 font-medium">Quick share:</span>
@@ -409,10 +406,10 @@ export function ReferralDashboardModal({
                         <BadgePercent size={16} className="text-indigo-500" />
                       </div>
                       <div className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
-                        Flat ₹{monthlyPlan.referralDiscount}
+                        Flat ₹{referralDiscount}
                       </div>
                       <div className="text-[11px] text-slate-400 mt-0.5">
-                        Pay ₹{monthlyPlan.referralPrice} instead of ₹{monthlyPlan.price}
+                        On Pro Monthly with your link
                       </div>
                     </div>
                   </div>
@@ -429,8 +426,8 @@ export function ReferralDashboardModal({
                         <p className="text-slate-500">Share your clean link or code with your investor friends.</p>
                       </div>
                       <div className="p-3 rounded-xl bg-white dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 text-xs space-y-1">
-                        <div className="font-bold text-emerald-600">2. Friend Saves ₹{monthlyPlan.referralDiscount}</div>
-                        <p className="text-slate-500">They get Flat ₹{monthlyPlan.referralDiscount} OFF on Monthly (Pay ₹{monthlyPlan.referralPrice} instead of ₹{monthlyPlan.price}).</p>
+                        <div className="font-bold text-emerald-600">2. Friend Saves ₹{referralDiscount}</div>
+                        <p className="text-slate-500">They get Flat ₹{referralDiscount} OFF on Pro Monthly with your link.</p>
                       </div>
                       <div className="p-3 rounded-xl bg-white dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 text-xs space-y-1">
                         <div className="font-bold text-emerald-600">3. You Get +14 Days Pro</div>
@@ -448,7 +445,7 @@ export function ReferralDashboardModal({
                       </p>
                     </div>
                     <button
-                      onClick={() => setActiveTab('creator')}
+                      onClick={() => selectTab('creator')}
                       className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shrink-0 cursor-pointer transition-colors"
                     >
                       View Creator Tier
@@ -500,7 +497,7 @@ export function ReferralDashboardModal({
                   </div>
 
                   {/* Creator Financial Stats */}
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 min-[420px]:grid-cols-2 sm:grid-cols-3 gap-3">
                     <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
                       <div className="text-slate-500 text-xs font-medium">Total Earned</div>
                       <div className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-1">
@@ -566,20 +563,20 @@ export function ReferralDashboardModal({
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-[11px] text-slate-500 mb-1">UPI ID (e.g. yourname@okaxis)</label>
+                        <label htmlFor="referral-upi" className="block text-[11px] text-slate-500 mb-1">UPI ID (e.g. yourname@okaxis)</label>
                         <input
                           type="text"
-                          placeholder="username@upi"
+                          id="referral-upi" placeholder="username@upi"
                           value={upiInput}
                           onChange={(e) => setUpiInput(e.target.value)}
                           className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-[11px] text-slate-500 mb-1">Bank Account &amp; IFSC (Optional)</label>
+                        <label htmlFor="referral-bank" className="block text-[11px] text-slate-500 mb-1">Bank Account &amp; IFSC (Optional)</label>
                         <input
                           type="text"
-                          placeholder="A/C No, IFSC, Beneficiary Name"
+                          id="referral-bank" placeholder="A/C No, IFSC, Beneficiary Name"
                           value={bankInfoInput}
                           onChange={(e) => setBankInfoInput(e.target.value)}
                           className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500"
@@ -625,7 +622,7 @@ export function ReferralDashboardModal({
                     </div>
                   ) : (
                     <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800">
-                      <table className="w-full text-left text-xs">
+                      <table className="w-full min-w-[640px] text-left text-xs">
                         <thead className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 text-slate-500">
                           <tr>
                             <th className="px-4 py-3 font-semibold">User</th>
@@ -678,9 +675,9 @@ export function ReferralDashboardModal({
                     type="text"
                     value={customCodeInput}
                     onChange={(e) => setCustomCodeInput(e.target.value.toUpperCase())}
-                    placeholder="Enter custom alias"
+                    aria-label="Custom referral code" placeholder="Enter custom alias"
                     maxLength={16}
-                    className="flex-1 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono uppercase focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    className="min-w-0 flex-1 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono uppercase focus:outline-none focus:ring-1 focus:ring-emerald-500"
                   />
                   <button
                     type="submit"
@@ -701,7 +698,9 @@ export function ReferralDashboardModal({
           ) : null}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 export default ReferralDashboardModal;
+
