@@ -47,9 +47,9 @@ export const MODEL_REGISTRY: ModelEntry[] = [
     modelId: 'gemini-3.1-flash-lite',
     verifiedOk: true,
     verifiedAt: '2026-10-05',
-    verifyNote: 'Production me chal raha hai (Oct 2026).',
-    limits: { rpm: 30, rpd: 1500, tpm: INF, tpd: INF },
-    role: 'Primary: filing summaries, FAQ, SEO — sabse sasta/tezz Gemini free model',
+    verifyNote: 'Production me chal raha hai. AI Studio dashboard (2026-10-05): free tier 15 RPM / 250K TPM / 500 RPD.',
+    limits: { rpm: 15, rpd: 500, tpm: 250000, tpd: INF },
+    role: 'Primary: filing summaries, FAQ, SEO — free tier me sabse zyada quota wala Gemini model',
   },
   {
     alias: 'GEMINI_FLASH_LATEST',
@@ -57,9 +57,9 @@ export const MODEL_REGISTRY: ModelEntry[] = [
     modelId: 'gemini-flash-latest',
     verifiedOk: true,
     verifiedAt: '2026-10-05',
-    verifyNote: 'Production me chal raha hai (Oct 2026).',
-    limits: { rpm: 30, rpd: 1500, tpm: INF, tpd: INF },
-    role: 'Fallback: Gemini chain ka dusra model',
+    verifyNote: 'Alias hai (latest stable flash = 3.8-class). AI Studio dashboard: 3.8 Flash free tier 5 RPM / 250K TPM / 20 RPD — bahut thin, isliye chain me peeche.',
+    limits: { rpm: 5, rpd: 20, tpm: 250000, tpd: INF },
+    role: 'Last-resort Gemini fallback (sirf 20 req/day free)',
   },
 
   // ---------------- GROQ (https://api.groq.com/openai/v1) ----------------
@@ -142,10 +142,12 @@ export const MODEL_REGISTRY: ModelEntry[] = [
  * record ho sakta hai — isliye CHAT (user ke sawal) me NVIDIA sabse last hai.
  */
 export const TASK_CHAINS: Record<AiTask, string[]> = {
-  SUMMARY: ['GEMINI_FLASH_LITE', 'GEMINI_FLASH_LATEST', 'GROQ_GPT_OSS_120B', 'NVIDIA_NEMOTRON_70B', 'NVIDIA_KIMI_K2'],
-  FAQ: ['GROQ_GPT_OSS_20B', 'GEMINI_FLASH_LITE', 'NVIDIA_KIMI_K2'],
-  CHAT: ['GROQ_GPT_OSS_120B', 'GEMINI_FLASH_LITE', 'GEMINI_FLASH_LATEST', 'NVIDIA_KIMI_K2', 'NVIDIA_MISTRAL_LARGE_2'],
-  SEO: ['GEMINI_FLASH_LITE', 'GROQ_GPT_OSS_120B', 'NVIDIA_NEMOTRON_70B'],
+  // NOTE: GEMINI_FLASH_LATEST (3.8-class) ke paas sirf 20 req/day free hain —
+  // isliye wo har chain me sabse peeche hai, taaki din bhar ka quota ek jhatke me na ude.
+  SUMMARY: ['GEMINI_FLASH_LITE', 'GROQ_GPT_OSS_120B', 'NVIDIA_NEMOTRON_70B', 'NVIDIA_KIMI_K2', 'GEMINI_FLASH_LATEST'],
+  FAQ: ['GROQ_GPT_OSS_20B', 'GEMINI_FLASH_LITE', 'NVIDIA_KIMI_K2', 'GEMINI_FLASH_LATEST'],
+  CHAT: ['GROQ_GPT_OSS_120B', 'GEMINI_FLASH_LITE', 'NVIDIA_KIMI_K2', 'NVIDIA_MISTRAL_LARGE_2', 'GEMINI_FLASH_LATEST'],
+  SEO: ['GEMINI_FLASH_LITE', 'GROQ_GPT_OSS_120B', 'NVIDIA_NEMOTRON_70B', 'GEMINI_FLASH_LATEST'],
 };
 
 export const PROVIDER_BASE_URL: Record<'groq' | 'nvidia', string> = {
