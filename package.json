@@ -11,7 +11,8 @@
     "clean": "rm -rf dist build server.cjs",
     "lint": "tsc --noEmit",
     "test": "node --test --import tsx server/tests/*.test.ts",
-    "postinstall": "node scripts/patch-firebase-auth.cjs"
+    "postinstall": "node scripts/patch-firebase-auth.cjs",
+    "verify:ai": "tsx scripts/verify-ai-models.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

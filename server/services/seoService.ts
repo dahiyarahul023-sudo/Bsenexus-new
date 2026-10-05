@@ -1,14 +1,28 @@
-import { GoogleGenAI } from "@google/genai";
 import { fetchPublicPage } from '../utils/publicPage.js';
 import { addLog } from "../database/logDao.js";
+import { aiComplete } from "./ai/aiGateway.js";
+import { hasAnyAiProvider } from "./ai/modelRegistry.js";
 
-let aiClient: GoogleGenAI | null = null;
+/**
+ * SEO tools ke liye AI call — gateway ke SEO chain se (Gemini -> Groq -> NVIDIA).
+ * Model IDs registry me hain; yahan koi hardcoded model string nahi.
+ */
+async function aiSeoJson(prompt: string): Promise<string> {
+  const gw = await aiComplete('SEO', {
+    prompt,
+    temperature: 0.2,
+    jsonMode: true,
+    maxTokens: 6000,
+    timeoutMs: 45000,
+    taskLabel: '[SEO]',
+  });
+  return gw.text || "{}";
+}
 
-function getAI(): GoogleGenAI | null {
-  if (!aiClient && process.env.GEMINI_API_KEY) {
-    aiClient = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+function requireAiKey(): void {
+  if (!hasAnyAiProvider()) {
+    throw new Error("AI provider key (GEMINI_API_KEY, GROQ_API_KEY or NVIDIA_API_KEY) is required.");
   }
-  return aiClient;
 }
 
 // Anti-AI Slop system instructions
@@ -67,10 +81,7 @@ export async function runPageAudit(params: {
   keyword?: string;
   competitors?: string;
 }): Promise<any> {
-  const ai = getAI();
-  if (!ai) {
-    throw new Error("GEMINI_API_KEY environment variable is not configured on the server.");
-  }
+  requireAiKey();
 
   let textToAnalyze = params.content || "";
   let pageTitle = "";
@@ -198,16 +209,7 @@ Deliver the response strictly in this structured JSON format so it can be render
 Respond with raw JSON only. Do not wrap in backticks or markdown if possible, or output clean JSON.
 `;
 
-  const response = await ai.models.generateContent({
-    model: "gemini-3.8-flash",
-    contents: prompt,
-    config: {
-      temperature: 0.2,
-      responseMimeType: "application/json"
-    }
-  });
-
-  const rawText = response.text || "{}";
+  const rawText = (await aiSeoJson(prompt)) || "{}";
   try {
     return JSON.parse(rawText);
   } catch (err) {
@@ -224,8 +226,7 @@ export async function runEeatAudit(params: {
   author?: string;
   domain?: string;
 }): Promise<any> {
-  const ai = getAI();
-  if (!ai) throw new Error("GEMINI_API_KEY is required.");
+  requireAiKey();
 
   let textToAnalyze = params.content || "";
   if (params.url && (!textToAnalyze || textToAnalyze.length < 50)) {
@@ -294,16 +295,7 @@ Output raw JSON strictly in this format:
 }
 `;
 
-  const response = await ai.models.generateContent({
-    model: "gemini-3.8-flash",
-    contents: prompt,
-    config: {
-      temperature: 0.2,
-      responseMimeType: "application/json"
-    }
-  });
-
-  const rawText = response.text || "{}";
+  const rawText = (await aiSeoJson(prompt)) || "{}";
   const cleaned = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
   return JSON.parse(cleaned);
 }
@@ -315,8 +307,7 @@ export async function runSemanticGapAnalysis(params: {
   url?: string;
   competitors?: string;
 }): Promise<any> {
-  const ai = getAI();
-  if (!ai) throw new Error("GEMINI_API_KEY is required.");
+  requireAiKey();
 
   let textToAnalyze = params.content || "";
   if (params.url && (!textToAnalyze || textToAnalyze.length < 50)) {
@@ -377,16 +368,7 @@ Output raw JSON strictly in this structure:
 }
 `;
 
-  const response = await ai.models.generateContent({
-    model: "gemini-3.8-flash",
-    contents: prompt,
-    config: {
-      temperature: 0.2,
-      responseMimeType: "application/json"
-    }
-  });
-
-  const rawText = response.text || "{}";
+  const rawText = (await aiSeoJson(prompt)) || "{}";
   const cleaned = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
   return JSON.parse(cleaned);
 }
@@ -396,8 +378,7 @@ export async function runKeywordDeepDive(params: {
   keyword: string;
   country?: string;
 }): Promise<any> {
-  const ai = getAI();
-  if (!ai) throw new Error("GEMINI_API_KEY is required.");
+  requireAiKey();
 
   const prompt = `
 Execute a deep-dive SERP & Intent Analysis for the keyword: "${params.keyword}".
@@ -438,16 +419,7 @@ Output raw JSON strictly in this structure:
 }
 `;
 
-  const response = await ai.models.generateContent({
-    model: "gemini-3.8-flash",
-    contents: prompt,
-    config: {
-      temperature: 0.2,
-      responseMimeType: "application/json"
-    }
-  });
-
-  const rawText = response.text || "{}";
+  const rawText = (await aiSeoJson(prompt)) || "{}";
   const cleaned = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
   return JSON.parse(cleaned);
 }
@@ -459,8 +431,7 @@ export async function runContentBrief(params: {
   tone?: string;
   wordCount?: number;
 }): Promise<any> {
-  const ai = getAI();
-  if (!ai) throw new Error("GEMINI_API_KEY is required.");
+  requireAiKey();
 
   const prompt = `
 Create an editorial-grade, production-ready SEO Content Brief for the keyword: "${params.keyword}".
@@ -517,16 +488,7 @@ Output raw JSON strictly in this structure:
 }
 `;
 
-  const response = await ai.models.generateContent({
-    model: "gemini-3.8-flash",
-    contents: prompt,
-    config: {
-      temperature: 0.2,
-      responseMimeType: "application/json"
-    }
-  });
-
-  const rawText = response.text || "{}";
+  const rawText = (await aiSeoJson(prompt)) || "{}";
   const cleaned = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
   return JSON.parse(cleaned);
 }
@@ -536,8 +498,7 @@ export async function runTopicClusterPlanning(params: {
   topic: string;
   domain?: string;
 }): Promise<any> {
-  const ai = getAI();
-  if (!ai) throw new Error("GEMINI_API_KEY is required.");
+  requireAiKey();
 
   const prompt = `
 Architect a Topic Cluster & Topical Authority Roadmap for the pillar theme: "${params.topic}".
@@ -609,16 +570,7 @@ Output raw JSON strictly in this structure:
 }
 `;
 
-  const response = await ai.models.generateContent({
-    model: "gemini-3.8-flash",
-    contents: prompt,
-    config: {
-      temperature: 0.2,
-      responseMimeType: "application/json"
-    }
-  });
-
-  const rawText = response.text || "{}";
+  const rawText = (await aiSeoJson(prompt)) || "{}";
   const cleaned = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
   return JSON.parse(cleaned);
 }
@@ -630,8 +582,7 @@ export async function runWriteContent(params: {
   outline?: string;
   wordCount?: number;
 }): Promise<any> {
-  const ai = getAI();
-  if (!ai) throw new Error("GEMINI_API_KEY is required.");
+  requireAiKey();
 
   const prompt = `
 Write a complete, highly authoritative, human-crafted SEO article on: "${params.topic}".
@@ -657,16 +608,7 @@ Output raw JSON strictly in this structure:
 }
 `;
 
-  const response = await ai.models.generateContent({
-    model: "gemini-3.8-flash",
-    contents: prompt,
-    config: {
-      temperature: 0.2,
-      responseMimeType: "application/json"
-    }
-  });
-
-  const rawText = response.text || "{}";
+  const rawText = (await aiSeoJson(prompt)) || "{}";
   const cleaned = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
   return JSON.parse(cleaned);
 }
@@ -678,8 +620,7 @@ export async function runImproveContent(params: {
   keyword?: string;
   previousRank?: string;
 }): Promise<any> {
-  const ai = getAI();
-  if (!ai) throw new Error("GEMINI_API_KEY is required.");
+  requireAiKey();
 
   const prompt = `
 Diagnose content decay and execute a full refresh plan for this article.
@@ -710,16 +651,7 @@ Output raw JSON strictly in this structure:
 }
 `;
 
-  const response = await ai.models.generateContent({
-    model: "gemini-3.8-flash",
-    contents: prompt,
-    config: {
-      temperature: 0.2,
-      responseMimeType: "application/json"
-    }
-  });
-
-  const rawText = response.text || "{}";
+  const rawText = (await aiSeoJson(prompt)) || "{}";
   const cleaned = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
   return JSON.parse(cleaned);
 }
@@ -730,8 +662,7 @@ export async function runFeaturedSnippetOptimizer(params: {
   existingText?: string;
   snippetType?: 'paragraph' | 'table' | 'list';
 }): Promise<any> {
-  const ai = getAI();
-  if (!ai) throw new Error("GEMINI_API_KEY is required.");
+  requireAiKey();
 
   const prompt = `
 Re-engineer content to capture Google Position 0 (Featured Snippet) for query: "${params.keyword}".
@@ -769,16 +700,7 @@ Output raw JSON strictly in this structure:
 }
 `;
 
-  const response = await ai.models.generateContent({
-    model: "gemini-3.8-flash",
-    contents: prompt,
-    config: {
-      temperature: 0.2,
-      responseMimeType: "application/json"
-    }
-  });
-
-  const rawText = response.text || "{}";
+  const rawText = (await aiSeoJson(prompt)) || "{}";
   const cleaned = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
   return JSON.parse(cleaned);
 }
@@ -790,8 +712,7 @@ export async function runLinkbuilding(params: {
   niche?: string;
   competitors?: string;
 }): Promise<any> {
-  const ai = getAI();
-  if (!ai) throw new Error("GEMINI_API_KEY is required.");
+  requireAiKey();
 
   const prompt = `
 Create a link-acquisition strategy for: "${params.topic}".
@@ -829,16 +750,7 @@ Output raw JSON strictly in this structure:
 }
 `;
 
-  const response = await ai.models.generateContent({
-    model: "gemini-3.8-flash",
-    contents: prompt,
-    config: {
-      temperature: 0.2,
-      responseMimeType: "application/json"
-    }
-  });
-
-  const rawText = response.text || "{}";
+  const rawText = (await aiSeoJson(prompt)) || "{}";
   const cleaned = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
   return JSON.parse(cleaned);
 }
@@ -849,8 +761,7 @@ export async function runExpertInterview(params: {
   expertRole?: string;
   intendedAngle?: string;
 }): Promise<any> {
-  const ai = getAI();
-  if (!ai) throw new Error("GEMINI_API_KEY is required.");
+  requireAiKey();
 
   const prompt = `
 Formulate an Expert Interview Questionnaire to extract first-party, non-Googleable insights on: "${params.topic}".
@@ -901,16 +812,7 @@ Output raw JSON strictly in this structure:
 }
 `;
 
-  const response = await ai.models.generateContent({
-    model: "gemini-3.8-flash",
-    contents: prompt,
-    config: {
-      temperature: 0.2,
-      responseMimeType: "application/json"
-    }
-  });
-
-  const rawText = response.text || "{}";
+  const rawText = (await aiSeoJson(prompt)) || "{}";
   const cleaned = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
   return JSON.parse(cleaned);
 }

@@ -1,24 +1,17 @@
-import { GoogleGenAI } from "@google/genai";
 import { fetchBseDocument, readBoundedDocument } from '../utils/bseDocument.js';
 import { sendReplyToTelegram } from "./telegram.js";
 import { addLog } from "../database/logDao.js";
 import { updateAnnouncementSummary, getAnnouncementById, getRecentAnnouncements } from "../database/announcementDao.js";
 import { geminiCircuitBreaker } from "../utils/circuitBreaker.js";
+import { aiComplete, AllProvidersFailedError } from "./ai/aiGateway.js";
+import { hasAnyAiProvider } from "./ai/modelRegistry.js";
 import { getAllWatchlists, extractSymbol, extractPriority } from "../database/watchlistDao.js";
 import { getResultsCalendarData } from "./resultsCalendarService.js";
 // pdf-parse loaded dynamically when needed
 
-let aiClient: GoogleGenAI | null = null;
 let lastGeminiQuotaExhaustedTime = 0;
 const GEMINI_QUOTA_COOLDOWN_MS = 30000; // 30s circuit breaker on hard quota exhaustion
 const activeSummaryRequests = new Map<string, Promise<string>>();
-
-function getAI() {
-  if (!aiClient && process.env.GEMINI_API_KEY) {
-    aiClient = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  }
-  return aiClient;
-}
 
 export function escapeHTML(str: string): string {
   if (!str) return "";
@@ -134,9 +127,8 @@ async function generateLocalizedSummary(company: string, subject: string, detail
   }
 
   const executionPromise = (async () => {
-    const ai = getAI();
-    if (!ai) {
-      addLog('INFO', 'GEMINI', `[${company}] Gemini API key missing. Generating instant heuristic extraction summary.`);
+    if (!hasAnyAiProvider()) {
+      addLog('INFO', 'GEMINI', `[${company}] No AI provider key configured. Generating instant heuristic extraction summary.`);
       return generateInstantHeuristicSummary(company, subject, details, category);
     }
 
@@ -289,58 +281,36 @@ Subject: ${subject}
 Details: ${combinedDetails}`;
     }
     
-    const contents: any[] = [{ text: prompt }];
-    if (pdfData) {
-      contents.push(pdfData);
-    }
-
-    // Lite-first: from 9 Oct 2026 Flash/Pro leave the Gemini free tier, so
-    // Flash-Lite is the primary free model; others remain as fallbacks only.
-    const modelsToTry = ["gemini-3.1-flash-lite", "gemini-flash-latest", "gemini-3.8-flash"];
-    let response: any = null;
-    let lastError: any = null;
+    // AI Gateway: SUMMARY task chain (Gemini -> Groq -> NVIDIA) with automatic
+    // failover. Model IDs registry me hain — yahan koi hardcoded model string nahi.
+    // PDF attached hai to gateway khud sirf Gemini chain use karega.
+    let gwText = "";
     let successfulModel = "";
+    let lastError: any = null;
 
     try {
-      response = await geminiCircuitBreaker.execute(async () => {
-        for (const modelName of modelsToTry) {
-          for (let attempt = 1; attempt <= 2; attempt++) {
-            try {
-              const res = await ai.models.generateContent({
-                model: modelName,
-                contents: contents
-              });
-              if (res && res.text) {
-                successfulModel = modelName;
-                return res;
-              }
-            } catch (err: any) {
-              lastError = err;
-              const errStr = err?.message || String(err);
-              const is429 = errStr.includes("429") || errStr.includes("RESOURCE_EXHAUSTED") || errStr.includes("Quota exceeded") || errStr.includes("quota");
-              
-              if (is429) {
-                addLog('WARNING', 'GEMINI', `[${company}] Free tier rate limit on ${modelName} (Attempt ${attempt}). Trying fallback...`);
-                await new Promise(r => setTimeout(r, 1500));
-              } else {
-                addLog('WARNING', 'GEMINI', `[${company}] Model ${modelName} returned error: ${errStr.substring(0, 100)}`);
-                break; // Try next model in list
-              }
-            }
-          }
-        }
-        throw (lastError || new Error("All Gemini models returned empty output"));
-      }, undefined, 18000);
+      const gw = await geminiCircuitBreaker.execute(async () => {
+        return await aiComplete('SUMMARY', {
+          prompt,
+          pdfInline: pdfData ? { data: pdfData.inlineData.data, mimeType: pdfData.inlineData.mimeType } : undefined,
+          temperature: 0.3,
+          taskLabel: `[${company}]`,
+          timeoutMs: 25000,
+        });
+      }, undefined, 60000);
+      gwText = gw.text || "";
+      successfulModel = `${gw.provider}/${gw.modelId}`;
     } catch (cbErr: any) {
       lastError = cbErr;
     }
 
-    if (!response || !response.text) {
+    if (!gwText) {
       const msg = lastError?.message || "No response text generated";
-      const is429 = msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED") || msg.includes("Quota exceeded") || msg.includes("quota");
+      const is429 = msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED") || msg.includes("Quota exceeded") || msg.includes("quota") ||
+        (lastError instanceof AllProvidersFailedError && lastError.quotaExhausted);
       if (is429) {
         lastGeminiQuotaExhaustedTime = Date.now();
-        addLog('WARNING', 'GEMINI', `[${company}] Gemini API quota / rate limit exhausted on all models. Falling back to instant text extraction summary.`);
+        addLog('WARNING', 'GEMINI', `[${company}] AI quota / rate limit exhausted on all providers. Falling back to instant text extraction summary.`);
       } else {
         const shortMsg = msg.length > 150 ? msg.substring(0, 150) + "..." : msg;
         addLog('WARNING', 'GEMINI', `[${company}] AI summary generation failed (${shortMsg}). Falling back to instant text extraction.`);
@@ -355,7 +325,7 @@ Details: ${combinedDetails}`;
       return fallbackSummary;
     }
     
-    let summaryText = response.text || "";
+    let summaryText = gwText || "";
     if (summaryText) {
       summaryText = summaryText
         .replace(/<br\s*\/?>/gi, '\n')
@@ -507,60 +477,13 @@ async function buildWatchlistAiContext(uid: string | undefined, question: string
     (ambiguous ? `\nNOTE: Multiple watchlist companies matched — ask the user which one they mean before giving specifics.` : '');
 }
 
-/**
- * Groq (Meta Llama 3.3 70B) — the Pro-tier AI brain.
- * /help/ask-ai is already Pro/Admin-gated server-side, so every caller here
- * is a paying user: they get the bigger, better model at zero API cost
- * (Groq free tier, no card). OpenAI-compatible endpoint over plain fetch —
- * no new dependency. Any failure (key missing, rate limit, timeout) throws
- * and the caller falls through to the Gemini chain, so the Guide never breaks.
- */
-async function askGroqLlama(
-  systemInstruction: string,
-  history: Array<{ role: 'user' | 'model'; text: string }>,
-  userQuestion: string
-): Promise<string> {
-  const key = process.env.GROQ_API_KEY;
-  if (!key) throw new Error('GROQ_API_KEY not set');
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 25000);
-  try {
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      signal: controller.signal,
-      headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages: [
-          { role: 'system', content: systemInstruction },
-          ...history.slice(-6).map(m => ({
-            role: m.role === 'user' ? 'user' : 'assistant',
-            content: m.text,
-          })),
-          { role: 'user', content: userQuestion },
-        ],
-        temperature: 0.5,
-        max_tokens: 500,
-      }),
-    });
-    if (!res.ok) throw new Error(`Groq HTTP ${res.status}`);
-    const data: any = await res.json();
-    const text = data?.choices?.[0]?.message?.content?.trim();
-    if (!text) throw new Error('Groq returned empty content');
-    return text;
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
 export async function askAppHelpAI(
   userQuestion: string, 
   history: Array<{ role: 'user' | 'model'; text: string }> = [],
   opts: { uid?: string } = {}
 ): Promise<string> {
-  const ai = getAI();
-  if (!ai) {
-    return "Gemini AI is not configured yet. Please ensure the GEMINI_API_KEY environment secret is active in settings.";
+  if (!hasAnyAiProvider()) {
+    return "AI is not configured yet. Please ensure an AI provider key (GEMINI_API_KEY, GROQ_API_KEY or NVIDIA_API_KEY) is active in settings.";
   }
 
   // Watchlist grounding: real app facts for company questions (bounded, cheap).
@@ -611,77 +534,26 @@ When the user asks how to do something in the app, give direct, actionable steps
   }
 
   try {
-    const formattedContents: any[] = [];
-    
-    // Add recent history for context
+    // AI Gateway: CHAT chain (Groq gpt-oss-120b -> Gemini -> NVIDIA) with
+    // automatic failover. Model IDs registry me hain - yahan koi hardcoded
+    // model string nahi. (Purana askGroqLlama 'llama-3.3-70b-versatile' use
+    // karta tha jo Aug 2026 me retired ho gaya tha - isliye hata diya.)
+    const messages: Array<{ role: 'user' | 'assistant'; content: string }> = [];
     if (history && history.length > 0) {
       for (const msg of history.slice(-6)) {
-        formattedContents.push({
-          role: msg.role === 'user' ? 'user' : 'model',
-          parts: [{ text: msg.text }]
-        });
+        messages.push({ role: msg.role === 'user' ? 'user' : 'assistant', content: msg.text });
       }
     }
+    messages.push({ role: 'user', content: userQuestion });
 
-    formattedContents.push({
-      role: 'user',
-      parts: [{ text: userQuestion }]
+    const gw = await aiComplete('CHAT', {
+      systemPrompt: systemInstruction,
+      messages,
+      temperature: 0.4,
+      maxTokens: 500,
+      timeoutMs: 25000,
     });
-
-    // Pro tier first: Meta's Llama 3.3 70B via Groq (free tier, no card) —
-    // bigger and better answers for paying users. Any failure (no key yet,
-    // rate limit, timeout) falls through to the Gemini lite-first chain,
-    // so the Guide keeps working no matter what.
-    try {
-      const groqAnswer = await askGroqLlama(systemInstruction, history, userQuestion);
-      addLog('SUCCESS', 'GEMINI', `Help AI answered via Groq Llama 3.3 70B (${groqAnswer.length} chars)`);
-      return groqAnswer;
-    } catch (gErr: any) {
-      addLog('WARNING', 'GEMINI', `Groq unavailable (${gErr?.message || gErr}) — falling back to Gemini chain.`);
-    }
-
-    // Lite-first: the smallest/cheapest model answers user Q&A so API quota
-    // and cost stay at minimum. Bigger models are fallbacks only.
-    const helpModels = ['gemini-3.1-flash-lite', 'gemini-flash-latest', 'gemini-3.7-flash'];
-    let response: any = null;
-    let lastErr: any = null;
-
-    // 503/429/UNAVAILABLE = transient upstream overload — worth one short
-    // retry before falling through to the next model.
-    const isRetryableUpstream = (e: any) => {
-      const s = String(e?.message || e);
-      return /503|429|UNAVAILABLE|RESOURCE_EXHAUSTED|high demand|overloaded|try again later/i.test(s);
-    };
-
-    for (const mName of helpModels) {
-      for (let attempt = 1; attempt <= 2; attempt++) {
-        try {
-          response = await ai.models.generateContent({
-            model: mName,
-            contents: formattedContents,
-            config: {
-              systemInstruction,
-              temperature: 0.4,
-            }
-          });
-          if (response && response.text) break;
-        } catch (e: any) {
-          lastErr = e;
-          if (attempt === 1 && isRetryableUpstream(e)) {
-            await new Promise(r => setTimeout(r, 2000));
-            continue;
-          }
-          break;
-        }
-      }
-      if (response && response.text) break;
-    }
-
-    if (!response || !response.text) {
-      throw lastErr || new Error("Failed to generate response");
-    }
-
-    return response.text.trim() || "I am sorry, I could not generate an answer right now. Please try again.";
+    return gw.text.trim() || "I am sorry, I could not generate an answer right now. Please try again.";
   } catch (err: any) {
     // Never show raw API JSON to the user — it leaks internals and confuses.
     // The raw error is already logged server-side above.
@@ -700,9 +572,8 @@ When the user asks how to do something in the app, give direct, actionable steps
  * visitor's daily quota.
  */
 export async function askPublicFaq(userQuestion: string): Promise<string> {
-  const ai = getAI();
-  if (!ai) {
-    throw new Error('Gemini AI is not configured');
+  if (!hasAnyAiProvider()) {
+    throw new Error('AI is not configured');
   }
   if (geminiCircuitBreaker.getState() === 'OPEN') {
     throw new Error('AI service is temporarily overloaded');
@@ -727,23 +598,23 @@ Facts:
 - Company pages: search any BSE scrip or open /company/SYMBOL for filings history, board meetings, price data, peers.
 - Bsenexus is NOT affiliated with BSE India Ltd, SEBI, or Nexus Select Trust.`;
 
-  const publicFaqModels = ['gemini-3.1-flash-lite', 'gemini-flash-latest'];
-  let lastErr: any = null;
-  for (const mName of publicFaqModels) {
-    try {
-      const response = await ai.models.generateContent({
-        model: mName,
-        contents: [{ role: 'user', parts: [{ text: userQuestion }] }],
-        config: { systemInstruction, temperature: 0.4 },
-      });
-      const text = (response as any)?.text?.trim();
-      if (text) return text;
-    } catch (e: any) {
-      lastErr = e;
-    }
+  // AI Gateway: FAQ chain (Groq gpt-oss-20b -> Gemini -> NVIDIA) with failover.
+  // Throws on failure taaki caller 503 de sake bina visitor quota kharch kiye.
+  try {
+    const gw = await aiComplete('FAQ', {
+      systemPrompt: systemInstruction,
+      prompt: userQuestion,
+      temperature: 0.4,
+      maxTokens: 400,
+      timeoutMs: 20000,
+    });
+    const text = gw.text?.trim();
+    if (text) return text;
+    throw new Error('Failed to generate answer');
+  } catch (e: any) {
+    addLog('ERROR', 'GEMINI', `Public FAQ AI error: ${e?.message || e}`);
+    throw e;
   }
-  addLog('ERROR', 'GEMINI', `Public FAQ AI error: ${lastErr?.message || lastErr}`);
-  throw lastErr || new Error('Failed to generate answer');
 }
 
 export async function generateAndSendSummary(

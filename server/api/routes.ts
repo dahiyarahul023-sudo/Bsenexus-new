@@ -70,6 +70,10 @@ import {
 } from "../database/usersDao.js";
 import { getAllAlertRules, saveAlertRule, toggleAlertRule, deleteAlertRule } from "../database/alertRulesDao.js";
 import { checkServerAiQuota, consumeServerAiQuota, checkAndConsumeServerAiQuota, refundServerAiQuota, completeServerAiQuotaReservation, getServerAiQuotaStatus, resetServerAiQuota } from "../services/aiQuotaService.js";
+import { getTodayUsage, quotaConsumedPct } from "../services/ai/providerQuotaLedger.js";
+import { MODEL_REGISTRY, TASK_CHAINS, providerKeyPresent } from "../services/ai/modelRegistry.js";
+import { verifyAllModels } from "../services/ai/verifyModels.js";
+import { readLocalJson } from "../database/localStore.js";
 import { classifyMaterialEvent } from "../services/timelineClassifier.js";
 import { searchCompany } from "./search.js";
 import { fetchLiveMarketIndices, getMarketSessionStatus } from "../services/marketIndicesService.js";
@@ -348,6 +352,81 @@ apiRouter.delete("/logs", requireAdmin, async (req, res) => {
   res.json({ success: true, logs: await getLogs(100) });
 });
 
+// ---- AI Gateway: provider/model usage dashboard (Strictly Admin Only) ----
+// Dikhata hai: har provider+model ne aaj kitne requests/tokens kharch kiye,
+// 429 kitni baar aaya, quota kitna % bhara, kaunsa model exhausted hai,
+// aur aaj sabse zyada AI use karne wale top users.
+apiRouter.get("/admin/ai-usage", requireAdmin, async (req, res) => {
+  try {
+    const usage = getTodayUsage();
+    const models = MODEL_REGISTRY.map((m) => {
+      const today = usage.find((u) => u.provider === m.provider && u.modelId === m.modelId) || null;
+      return {
+        alias: m.alias,
+        provider: m.provider,
+        modelId: m.modelId,
+        verified: m.verifiedOk,
+        keyPresent: providerKeyPresent(m.provider),
+        role: m.role,
+        limits: m.limits,
+        today: today
+          ? {
+              requests: today.requests,
+              promptTokens: today.promptTokens,
+              completionTokens: today.completionTokens,
+              totalTokens: today.totalTokens,
+              errors429: today.errors429,
+              errorsOther: today.errorsOther,
+              quotaPct: Math.round(quotaConsumedPct(today, m.limits) * 10) / 10,
+              exhausted: today.exhausted,
+              exhaustedUntil: today.exhaustedUntil,
+              lastError: today.lastError,
+              lastSuccessAt: today.lastSuccessAt,
+            }
+          : null,
+      };
+    });
+
+    // Top AI consumers (per-user, IST day) — existing ai_usage.json se
+    const ist = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+    const todayIST = `${ist.getFullYear()}-${String(ist.getMonth() + 1).padStart(2, '0')}-${String(ist.getDate()).padStart(2, '0')}`;
+    const userUsage = readLocalJson<Record<string, number>>('ai_usage.json', {});
+    const perUser: Record<string, number> = {};
+    for (const [k, v] of Object.entries(userUsage)) {
+      if (k.endsWith(`_${todayIST}`)) {
+        const uid = k.slice(0, -(todayIST.length + 1));
+        perUser[uid] = (perUser[uid] || 0) + (v as number);
+      }
+    }
+    const topUsers = Object.entries(perUser)
+      .map(([uid, count]) => ({ uid, aiCalls: count }))
+      .sort((a, b) => b.aiCalls - a.aiCalls)
+      .slice(0, 10);
+
+    res.json({
+      success: true,
+      dayUTC: new Date().toISOString().slice(0, 10),
+      dayIST: todayIST,
+      chains: TASK_CHAINS,
+      models,
+      topUsers,
+    });
+  } catch (e: any) {
+    res.status(500).json({ success: false, error: e?.message || String(e) });
+  }
+});
+
+// ---- AI Gateway: model registry ko live catalogs se verify karo (Admin Only) ----
+apiRouter.post("/admin/ai-verify", requireAdmin, async (req, res) => {
+  try {
+    await addLog('INFO', 'AI_VERIFY', 'Manual model verification triggered by admin');
+    const report = await verifyAllModels();
+    res.json({ success: true, report });
+  } catch (e: any) {
+    res.status(500).json({ success: false, error: e?.message || String(e) });
+  }
+});
+
 // Client Error & Sync Failure Logger (Receives frontend Firestore errors for Admin Diagnostics)
 apiRouter.post("/client-log", requireAuth, async (req, res) => {
   try {
@@ -427,7 +506,7 @@ apiRouter.post("/test-gemini", requireAdmin, aiRateLimiter, async (req, res) => 
     } else {
       return res.status(500).json({ 
         success: false, 
-        error: "Gemini did not return an output. Please check the Engine Activity Logs tab for rate limit or quota errors." 
+        error: "AI did not return an output. Please check the Engine Activity Logs tab for rate limit or quota errors." 
       });
     }
   } catch (err: any) {
@@ -539,7 +618,7 @@ apiRouter.post("/announcements/:id/generate-summary", requireAuth, aiRateLimiter
       return res.status(401).json({
         success: false,
         authRequired: true,
-        error: "Google Sign-In Required: Sign in with Google to get 1 week (7 days) of Free Pro Gemini AI summaries."
+        error: "Google Sign-In Required: Sign in with Google to get 1 week (7 days) of Free Pro AI summaries."
       });
     }
 
@@ -1568,7 +1647,7 @@ apiRouter.post("/news/summarize", requireAuth, aiRateLimiter, async (req, res) =
       return res.status(401).json({
         success: false,
         authRequired: true,
-        error: "Google Sign-In Required: Sign in with Google to get 1 week (7 days) of Free Pro Gemini AI summaries."
+        error: "Google Sign-In Required: Sign in with Google to get 1 week (7 days) of Free Pro AI summaries."
       });
     }
 
