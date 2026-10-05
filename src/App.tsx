@@ -313,7 +313,31 @@ function AppContent() {
     isAuthModalOpen, isProModalOpen, isAdminPinModalOpen,
     isPaidProActive, updateNotificationPreferences, openCheckout
   } = useAuth();
+  const { showToast } = useToast();
   const [serverAuth, setServerAuth] = useState<{ isAuthenticated: boolean; hasPin: boolean } | null>(null);
+
+  // Capture ?ref=CODE referral links across all entry points
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const ref = params.get('ref');
+      if (ref) {
+        const clean = ref.trim().toUpperCase();
+        localStorage.setItem('bse_referral_code', clean);
+        fetch('/api/referrals/track-visit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: clean }),
+        }).catch(() => {});
+        showToast({
+          title: `Referral Applied: ${clean}`,
+          message: 'Flat ₹100 OFF on Monthly (Pay ₹199 instead of ₹299)!',
+          type: 'success',
+        });
+      }
+    } catch {}
+  }, [showToast]);
 
   // Terminal-entry intent: when a logged-out visitor taps "Launch Terminal" (or any
   // terminal entry) on the landing page, we open the auth modal instead of entering

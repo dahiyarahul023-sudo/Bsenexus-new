@@ -23,20 +23,30 @@ describe('Pricing single source of truth', () => {
   });
 
   test('display price / days / label match the charged values', () => {
-    const server = PRO_PLANS as Record<string, { amountPaise: number; validityDays: number; label: string }>;
+    const server = PRO_PLANS as Record<
+      string,
+      { amountPaise: number; validityDays: number; label: string; referralAmountPaise?: number }
+    >;
     for (const p of PRO_PLAN_LIST) {
       const s = server[p.id];
       assert.ok(s, `server plan missing for display plan ${p.id}`);
       assert.strictEqual(p.price, s.amountPaise / 100, `${p.id}: display ₹${p.price} != charged ₹${s.amountPaise / 100}`);
       assert.strictEqual(p.days, s.validityDays, `${p.id}: display ${p.days}d != charged ${s.validityDays}d`);
       assert.strictEqual(p.label, s.label, `${p.id}: label drift`);
+      if (s.referralAmountPaise) {
+        assert.strictEqual(
+          p.referralPrice,
+          s.referralAmountPaise / 100,
+          `${p.id}: display referral ₹${p.referralPrice} != charged referral ₹${s.referralAmountPaise / 100}`
+        );
+      }
     }
   });
 
   test('no hardcoded plan prices in components (must read from the catalogue)', () => {
     // ₹ amounts that are plan prices. Components must use getPlanDisplay() /
     // getLowestPlanPrice() / PRO_PLAN_LIST instead of literals.
-    const priceRe = /₹(59|199|499|999|1799)\b/;
+    const priceRe = /₹(59|89|199|299|499|999|1499|1799|2699)\b/;
     const allowedOnLine = /getLowestPlanPrice|monthlyPlan|plan\.price|[^a-zA-Z]p\.price/;
     const roots = [path.join(process.cwd(), 'src', 'components'), path.join(process.cwd(), 'src', 'utils')];
     const offenders: string[] = [];

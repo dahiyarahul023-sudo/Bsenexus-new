@@ -11,7 +11,7 @@ import { addNotification, initNotificationsFromCloud } from '../database/notific
 import { evaluateAlertRulesForUser } from '../database/alertRulesDao.js';
 import { classifyMaterialEvent } from './timelineClassifier.js';
 import { doesAnnouncementMatchUserPrefs, isTelegramEligible } from '../utils/alertDecision.js';
-import { sendOneSignalPush } from './oneSignal.js';
+import { sendOneSignalPush, isOneSignalConfigured } from './oneSignal.js';
 
 export { pruneAndCheckStorageCapacity };
 
@@ -428,7 +428,7 @@ export async function processAnnouncements() {
         }
 
         // 1b. Dispatch Web Push via OneSignal to all browser/mobile subscribers (Free + Pro)
-        if (priority.level === 'HIGH' || priority.category === 'RESULTS' || priority.category === 'CONFERENCE_CALL') {
+        if (isOneSignalConfigured() && (priority.level === 'HIGH' || priority.category === 'RESULTS' || priority.category === 'CONFERENCE_CALL')) {
           dispatchPromises.push((async () => {
             try {
               const cleanSub = subject.length > 95 ? subject.substring(0, 92) + '...' : subject;
@@ -441,7 +441,7 @@ export async function processAnnouncements() {
                 url: `https://bsenexus.in/?id=${newsId}`
               });
             } catch (pushErr: any) {
-              console.warn('[OneSignal] Push dispatch notice:', pushErr?.message || pushErr);
+              console.info('[OneSignal] Push dispatch notice:', pushErr?.message || pushErr);
             }
           })());
         }

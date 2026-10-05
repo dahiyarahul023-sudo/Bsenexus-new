@@ -78,7 +78,7 @@ import { classifyMaterialEvent } from "../services/timelineClassifier.js";
 import { searchCompany } from "./search.js";
 import { fetchLiveMarketIndices, getMarketSessionStatus } from "../services/marketIndicesService.js";
 import { getLiveStoryFeed } from "../services/storyFeedService.js";
-import { sendOneSignalPush, isOneSignalConfigured } from "../services/oneSignal.js";
+import { sendOneSignalPush, isOneSignalConfigured, ONESIGNAL_APP_ID } from "../services/oneSignal.js";
 import { 
   recordTelemetry, 
   getDiagnosticsSummary, 
@@ -92,6 +92,7 @@ import { seoRouter } from "./seoRoutes.js";
 import { reconcilePaymentEntitlement } from "../database/paymentEntitlementsDao.js";
 import { isPaymentStoreUnavailable } from "../database/paymentStore.js";
 import { paymentsRouter } from "./payments.js";
+import { referralsRouter } from "./referrals.js";
 import { faqRouter } from "./faq.js";
 import { notesRouter } from "./notes.js";
 import { pageRenderCache, staticGuideCache, apiResponseCache } from "../utils/renderCache.js";
@@ -104,6 +105,9 @@ apiRouter.use("/seo", requireAdmin, aiRateLimiter, seoRouter);
 
 // Cashfree one-time Pro payments (create-order / verify / webhook / status)
 apiRouter.use("/payments", paymentsRouter);
+
+// Referral partner & creator affiliate program
+apiRouter.use("/referrals", referralsRouter);
 
 // Public AI FAQ section (bank-first, AI fallback behind server-side quotas)
 apiRouter.use("/faq", faqRouter);
@@ -996,6 +1000,12 @@ apiRouter.post("/admin/push/broadcast", requireAdmin, async (req, res) => {
     if (!title || !message) {
       return res.status(400).json({ success: false, error: "Title and message are required." });
     }
+    if (!isOneSignalConfigured()) {
+      return res.status(400).json({
+        success: false,
+        error: "OneSignal is not configured with a valid REST API key. Configure ONESIGNAL_REST_API_KEY in the server environment."
+      });
+    }
     const result = await sendOneSignalPush({
       title: String(title).trim(),
       message: String(message).trim(),
@@ -1014,7 +1024,7 @@ apiRouter.post("/admin/push/broadcast", requireAdmin, async (req, res) => {
 apiRouter.get("/push/status", async (_req, res) => {
   res.json({
     configured: isOneSignalConfigured(),
-    appId: "f6cc3d33-a1bc-4c2a-992c-f36d0eccff6f"
+    appId: ONESIGNAL_APP_ID
   });
 });
 

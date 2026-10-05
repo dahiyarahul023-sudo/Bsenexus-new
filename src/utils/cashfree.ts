@@ -40,6 +40,7 @@ export {
   PRO_PLAN_LIST,
   getPlanDisplay,
   getLowestPlanPrice,
+  getEffectivePlanPrice,
   isValidPlanId,
   getPlanDisplayFromOrderId,
   type ProPlanDisplay,
@@ -50,12 +51,16 @@ export {
  * On completion Cashfree redirects back to /?cf_order_id=... where the
  * app verifies the payment with our server (source of truth).
  */
-export async function startProPayment(planId: string = 'pro_monthly'): Promise<StartPaymentResult> {
+export async function startProPayment(
+  planId: string = 'pro_monthly',
+  referralCode?: string
+): Promise<StartPaymentResult> {
   try {
+    const code = referralCode || (typeof window !== 'undefined' ? localStorage.getItem('bse_referral_code') || undefined : undefined);
     const res = await customFetch('/api/payments/create-order', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ planId }),
+      body: JSON.stringify({ planId, referralCode: code }),
     });
     const data = await res.json().catch(() => null);
     if (!res.ok || !data?.success || !data?.paymentSessionId) {

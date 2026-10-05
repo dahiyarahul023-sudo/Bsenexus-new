@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useScreenTransition } from '../hooks/useScreenTransition';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getLowestPlanPrice } from '../utils/cashfree';
+import { getLowestPlanPrice, getPlanDisplay } from '../utils/cashfree';
 import { 
   User, Send, Sparkles, Sliders, 
   Sun, Moon, KeyRound, AlertTriangle, 
@@ -60,6 +60,7 @@ const SETTINGS_REGISTRY = [
   { id: 'profile', title: 'Profile & Display name', description: 'Investor identity, name, and public @username handle', category: 'Account & Identity', keywords: ['profile', 'display name', 'username', 'handle', 'account', 'identity'] },
   { id: 'telegram', title: 'Telegram Alert Delivery', description: 'Instant push notifications for watchlist disclosures', category: 'Account & Identity', keywords: ['telegram', 'chat id', 'push', 'notifications', 'phone', 'bot', 'mobile'] },
   { id: 'subscription', title: 'Subscription & Billing', description: 'Pro plan status, payments and verified AI usage', category: 'Account & Identity', keywords: ['subscription', 'billing', 'pro', 'payment', 'renew', 'plan', 'cashfree', 'auto-renew', 'ai', 'quota', 'usage', 'remaining', 'summaries'] },
+  { id: 'referrals', title: 'Refer & Earn (Creator Program)', description: 'Referral links, flat ₹100 discount, earnings and verified audit ledger', category: 'Account & Identity', keywords: ['refer', 'referral', 'earn', 'commission', 'affiliate', 'creator', 'discount', '100', '199', '299'] },
   { id: 'saved-notes', title: 'Saved Notes', description: 'Personal notes linked to stocks, news and results', category: 'Account & Identity', keywords: ['notes', 'saved notes', 'notebook', 'memo', 'personal notes', 'diary'] },
   { id: 'export-csv', title: 'Export to CSV', description: 'Download tracked tickers and priorities in spreadsheet format', category: 'Watchlist & Data', keywords: ['export', 'csv', 'excel', 'spreadsheet', 'download', 'watchlist'] },
   { id: 'export-json', title: 'Export backup (JSON)', description: 'Full structured backup for porting or syncing', category: 'Watchlist & Data', keywords: ['export', 'json', 'backup', 'data', 'port', 'sync'] },
@@ -1792,13 +1793,48 @@ export function SettingsTab({
       )}
 
       {/* SUBSCRIPTION & BILLING (Cashfree one-time Pro payments; auto-renew = Coming soon) */}
-      {visibleSection === 'subscription' && isMatch('subscription') && (
-        <div className="space-y-2 select-none">
+      {visibleSection === 'subscription' && (isMatch('subscription') || isMatch('referrals')) && (
+        <div className="space-y-3 select-none">
           <div className="px-1">
             <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              Subscription &amp; Billing
+              Subscription &amp; Partner Program
             </h3>
           </div>
+
+          {/* Refer & Earn / Creator Affiliate Card */}
+          {(() => {
+            const monthlyPlan = getPlanDisplay('pro_monthly');
+            return (
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-transparent border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs">
+                <div className="flex items-start sm:items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                    <Sparkles size={20} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-sm font-bold text-slate-900 dark:text-white">Refer &amp; Earn Partner Program</h4>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500 text-white">Flat ₹{monthlyPlan.referralDiscount} OFF</span>
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      Give friends &amp; followers ₹{monthlyPlan.referralDiscount} off Pro Monthly (₹{monthlyPlan.referralPrice} instead of ₹{monthlyPlan.price}). Earn 25% commission with a 100% verified audit ledger.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (typeof window !== 'undefined') {
+                      window.dispatchEvent(new CustomEvent('open-referral-modal'));
+                    }
+                  }}
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shrink-0 cursor-pointer shadow-sm transition-colors text-center"
+                >
+                  Open Partner Dashboard
+                </button>
+              </div>
+            );
+          })()}
+
           <AiUsageCard />
           <SubscriptionCard />
         </div>

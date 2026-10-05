@@ -49,6 +49,7 @@ import { CompanyIntelligenceModal } from './CompanyIntelligenceModal';
 import { NoteEditorHost } from './notes/NoteEditor';
 import { TodayMarketStoryModal } from './TodayMarketStoryModal';
 import { PushNotificationBanner } from './PushNotificationPrompt';
+import { ReferralDashboardModal } from './ReferralDashboardModal';
 import { getStorySessionStorageKey, getISTMarketSession } from './story/storyData';
 
 function cn(...inputs: ClassValue[]) {
@@ -85,6 +86,13 @@ export function Layout({
   const [termsModalOpen, setTermsModalOpen] = useState(false);
   const [termsModalTab, setTermsModalTab] = useState<LegalTabType>('terms');
   const [securityAuditModalOpen, setSecurityAuditModalOpen] = useState(false);
+  const [referralModalOpen, setReferralModalOpen] = useState(false);
+
+  useEffect(() => {
+    const handleOpenReferral = () => setReferralModalOpen(true);
+    window.addEventListener('open-referral-modal', handleOpenReferral);
+    return () => window.removeEventListener('open-referral-modal', handleOpenReferral);
+  }, []);
 
   const handleOpenTermsModal = (tab: LegalTabType = 'terms') => {
     setTermsModalTab(tab);
@@ -550,6 +558,23 @@ export function Layout({
                 )}
               </motion.button>
 
+              {/* Refer & Earn Header Pill */}
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={buttonTap}
+                transition={springSnappy}
+                onClick={() => setReferralModalOpen(true)}
+                aria-label="Refer and Earn partner dashboard"
+                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-300 dark:border-emerald-700/80 text-emerald-700 dark:text-emerald-300 cursor-pointer select-none shadow-xs shrink-0 min-h-[32px]"
+                title="Refer & Earn — Flat ₹100 OFF for friends & 25% commission"
+              >
+                <Sparkles size={13} className="text-emerald-500 shrink-0" />
+                <span className="text-xs font-semibold">Refer &amp; Earn</span>
+                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-600 text-white leading-none">
+                  ₹100 Off
+                </span>
+              </motion.button>
+
               {/* Item 9: Quick Sun/Moon Dark Mode Toggle - Hidden on Settings tab to prevent duplicate appearance controls */}
               {activeTab !== 'settings' && (
                 <motion.button
@@ -919,6 +944,12 @@ export function Layout({
         <SecurityAuditModal
           isOpen={securityAuditModalOpen}
           onClose={() => setSecurityAuditModalOpen(false)}
+        />
+      )}
+      {referralModalOpen && (
+        <ReferralDashboardModal
+          isOpen={referralModalOpen}
+          onClose={() => setReferralModalOpen(false)}
         />
       )}
       <CookieConsentBanner 

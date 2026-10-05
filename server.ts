@@ -1845,15 +1845,15 @@ ${jsonLd}
 }
 
 export function renderPricingPage(): string {
-  const pageTitle = "Pricing — Pro Plans from ₹59 | Bsenexus";
+  const pageTitle = "Pricing — Pro Plans from ₹89 | Bsenexus";
   const canonicalUrl = "https://bsenexus.in/pricing";
-  const description = "Bsenexus Pro plans: Weekly ₹59, Monthly ₹199, 6-Month ₹999, Yearly ₹1,799. One-time payments via Cashfree — no auto-renewal. 1st week free, no card required. Free vs Pro comparison.";
+  const description = "Bsenexus Pro plans: Weekly ₹89, Monthly ₹299 (Flat ₹100 OFF with referral = ₹199), 6-Month ₹1,499, Yearly ₹2,699. One-time payments via Cashfree — no auto-renewal. 1st week free, no card required. Free vs Pro comparison.";
 
   const proOffers = [
-    { name: "Pro Weekly", price: "59", desc: "7 days of Pro via one-time Cashfree payment." },
-    { name: "Pro Monthly", price: "199", desc: "30 days of Pro via one-time Cashfree payment. Launch offer (was ₹499)." },
-    { name: "Pro 6-Month", price: "999", desc: "180 days of Pro via one-time Cashfree payment. Save ₹195 vs monthly." },
-    { name: "Pro Yearly", price: "1799", desc: "365 days of Pro via one-time Cashfree payment. Save ₹589 vs monthly." },
+    { name: "Pro Weekly", price: "89", desc: "7 days of Pro via one-time Cashfree payment (₹59 with referral code)." },
+    { name: "Pro Monthly", price: "299", desc: "30 days of Pro. Flat ₹100 discount with referral code (Pay ₹199)." },
+    { name: "Pro 6-Month", price: "1499", desc: "180 days of Pro (₹999 with referral code)." },
+    { name: "Pro Yearly", price: "2699", desc: "365 days of Pro (₹1,799 with referral code)." },
   ];
 
   const jsonLd = JSON.stringify({
@@ -2274,8 +2274,8 @@ ${jsonLd}
             <p class="plan-desc">Try Pro for a week</p>
           </div>
           <div class="price-row">
-            <span class="price-val">₹59</span>
-            <span class="price-period">/ 7 days</span>
+            <span class="price-val">₹89</span>
+            <span class="price-period">/ 7 days &middot; ₹59 with referral</span>
           </div>
           <ul class="feature-list">
             <li class="feature-item"><span class="check-icon">&#10003;</span><span>Everything in Pro, for 7 days</span></li>
@@ -2295,12 +2295,12 @@ ${jsonLd}
           </div>
           <div class="price-row">
             <span class="price-strike"><del aria-label="Regular price ₹499">₹499</del></span>
-            <span class="price-val highlight">₹199</span>
-            <span class="price-period">/ 30 days &middot; 60% launch offer</span>
+            <span class="price-val highlight">₹299</span>
+            <span class="price-period">/ 30 days &middot; Flat ₹100 OFF with referral (₹199)</span>
           </div>
           <ul class="feature-list">
             <li class="feature-item"><span class="check-icon">&#10003;</span><span>Everything in Pro, for 30 days</span></li>
-            <li class="feature-item"><span class="check-icon">&#10003;</span><span>One-time payment via Cashfree</span></li>
+            <li class="feature-item"><span class="check-icon">&#10003;</span><span>Flat ₹100 discount with creator referral</span></li>
           </ul>
         </div>
         <a href="https://bsenexus.in/?action=checkout&amp;plan=pro_monthly" class="card-btn btn-pri">Choose Monthly</a>
@@ -2314,12 +2314,12 @@ ${jsonLd}
             <p class="plan-desc">For serious market watchers</p>
           </div>
           <div class="price-row">
-            <span class="price-val">₹999</span>
-            <span class="price-period">/ 180 days &middot; save ₹195 vs monthly</span>
+            <span class="price-val">₹1,499</span>
+            <span class="price-period">/ 180 days &middot; ₹999 with referral</span>
           </div>
           <ul class="feature-list">
             <li class="feature-item"><span class="check-icon">&#10003;</span><span>Everything in Pro, for 180 days</span></li>
-            <li class="feature-item"><span class="check-icon">&#10003;</span><span>Set and forget for half a year</span></li>
+            <li class="feature-item"><span class="check-icon">&#10003;</span><span>Save ₹295 vs monthly</span></li>
           </ul>
         </div>
         <a href="https://bsenexus.in/?action=checkout&amp;plan=pro_halfyearly" class="card-btn btn-sec">Choose 6-Month</a>
@@ -2333,8 +2333,8 @@ ${jsonLd}
             <p class="plan-desc">Best value for research desks</p>
           </div>
           <div class="price-row">
-            <span class="price-val">₹1,799</span>
-            <span class="price-period">/ 365 days &middot; save ₹589 vs monthly</span>
+            <span class="price-val">₹2,699</span>
+            <span class="price-period">/ 365 days &middot; ₹1,799 with referral</span>
           </div>
           <ul class="feature-list">
             <li class="feature-item"><span class="check-icon">&#10003;</span><span>Everything in Pro, for 365 days</span></li>

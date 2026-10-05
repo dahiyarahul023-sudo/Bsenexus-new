@@ -36,6 +36,37 @@ import {
   sendReceiptEmail,
   buildReceiptEmail,
 } from '../services/resendMailer.js';
+import { readLocalJson, writeLocalJson } from '../database/localStore.js';
+import {
+  getReferralByCode,
+  recordReferralConversion,
+  sanitizeReferralCode,
+} from '../database/referralsDao.js';
+
+interface OrderReferralMeta {
+  orderId: string;
+  referralCode: string;
+  discountPaise: number;
+}
+const ORDER_REFERRALS_FILE = 'order_referrals.json';
+let orderReferralsCache: Map<string, OrderReferralMeta> | null = null;
+
+function getOrderReferral(orderId: string): OrderReferralMeta | null {
+  if (!orderReferralsCache) {
+    const list = readLocalJson<OrderReferralMeta[]>(ORDER_REFERRALS_FILE, []);
+    orderReferralsCache = new Map(list.map((r) => [r.orderId, r]));
+  }
+  return orderReferralsCache.get(orderId) || null;
+}
+
+function saveOrderReferral(orderId: string, meta: OrderReferralMeta): void {
+  if (!orderReferralsCache) {
+    const list = readLocalJson<OrderReferralMeta[]>(ORDER_REFERRALS_FILE, []);
+    orderReferralsCache = new Map(list.map((r) => [r.orderId, r]));
+  }
+  orderReferralsCache.set(orderId, meta);
+  writeLocalJson(ORDER_REFERRALS_FILE, Array.from(orderReferralsCache.values()));
+}
 
 /** Extract the verified uid from the authenticated request (local copy — avoids a routes.ts import cycle). */
 function getReqUserId(req: express.Request): string {
@@ -362,6 +393,21 @@ paymentsRouter.post('/create-order', requireAuth, async (req, res) => {
       return res.status(200).json({ success: false, error: 'Unknown plan selected.' });
     }
 
+    // Check optional referral code
+    const rawRefCode = sanitizeReferralCode(String(req.body?.referralCode || ''));
+    let activeReferralRecord = null;
+    if (rawRefCode) {
+      activeReferralRecord = await getReferralByCode(rawRefCode);
+    }
+    // Prevent self-referral
+    const isSelfReferral = Boolean(activeReferralRecord && activeReferralRecord.referrerUid === uid);
+    const hasValidReferral = Boolean(activeReferralRecord && !isSelfReferral);
+
+    const chargedAmountPaise = hasValidReferral
+      ? (plan as any).referralAmountPaise || plan.amountPaise
+      : plan.amountPaise;
+    const discountPaise = plan.amountPaise - chargedAmountPaise;
+
     // Checkout only starts when the durable profile/payment path is
     // readable. If storage is unavailable, create no Cashfree order at all.
     const profile = await getUserProfile(uid, { durable: true });
@@ -382,6 +428,15 @@ paymentsRouter.post('/create-order', requireAuth, async (req, res) => {
     const orderId = `BN_${PLAN_CODES[plan.id as PlanId]}_${cleanCustomerId.slice(0, 10)}_${Date.now()}`;
     const base = siteUrl(req);
 
+    // Save order referral metadata so verify and webhook can credit the referrer
+    if (hasValidReferral && activeReferralRecord) {
+      saveOrderReferral(orderId, {
+        orderId,
+        referralCode: activeReferralRecord.code,
+        discountPaise,
+      });
+    }
+
     // Payment isolation: the durable Firestore reconciliation record must
     // exist BEFORE Cashfree checkout starts. If it cannot be confirmed,
     // do not take the user to payment — otherwise a paid gateway order
@@ -392,7 +447,7 @@ paymentsRouter.post('/create-order', requireAuth, async (req, res) => {
         uid,
         email,
         planId: plan.id,
-        amountPaise: plan.amountPaise,
+        amountPaise: chargedAmountPaise,
         currency: plan.currency,
       });
     } catch (ledgerErr: any) {
@@ -407,7 +462,7 @@ paymentsRouter.post('/create-order', requireAuth, async (req, res) => {
       method: 'POST',
       body: JSON.stringify({
         order_id: orderId,
-        order_amount: plan.amountPaise / 100,
+        order_amount: chargedAmountPaise / 100,
         order_currency: plan.currency,
         customer_details: {
           customer_id: cleanCustomerId,
@@ -418,7 +473,9 @@ paymentsRouter.post('/create-order', requireAuth, async (req, res) => {
           return_url: `${base}/?cf_order_id=${orderId}`,
           notify_url: `${base}/api/payments/webhook`,
         },
-        order_note: `${plan.label} — BSE Nexus`,
+        order_note: hasValidReferral
+          ? `${plan.label} (Code: ${activeReferralRecord!.code}) — BSE Nexus`
+          : `${plan.label} — BSE Nexus`,
       }),
     });
 
@@ -455,7 +512,11 @@ paymentsRouter.post('/create-order', requireAuth, async (req, res) => {
       orderId,
       paymentSessionId: data.payment_session_id,
       mode: cfg.mode,
-      amount: plan.amountPaise / 100,
+      amount: chargedAmountPaise / 100,
+      standardAmount: plan.amountPaise / 100,
+      discount: discountPaise / 100,
+      referralApplied: hasValidReferral,
+      referralCode: hasValidReferral ? activeReferralRecord!.code : null,
       currency: plan.currency,
     });
   } catch (err: any) {
@@ -495,22 +556,47 @@ paymentsRouter.get('/verify', requireAuth, async (req, res) => {
 
     if (order.order_status === 'PAID') {
       // The plan comes from the order id WE generated (never the client).
-      // The paid amount + currency must match that plan exactly, else fail closed.
+      // The paid amount + currency must match either standard or referral price.
       const planId = planIdFromOrderId(orderId);
       const plan = PRO_PLANS[planId];
       const paidAmount = Number(order.order_amount);
       const paidCurrency = String(order.order_currency || '');
-      if (paidAmount !== plan.amountPaise / 100 || paidCurrency !== plan.currency) {
-        console.warn('[Payments] verify amount mismatch:', orderId, paidAmount, paidCurrency, 'expected', plan.id);
+      const standardAmount = plan.amountPaise / 100;
+      const referralAmount = ((plan as any).referralAmountPaise || plan.amountPaise) / 100;
+      const isAmountValid = paidAmount === standardAmount || paidAmount === referralAmount;
+
+      if (!isAmountValid || paidCurrency !== plan.currency) {
+        console.warn('[Payments] verify amount mismatch:', orderId, paidAmount, paidCurrency, 'expected', standardAmount, 'or', referralAmount);
         return res.status(200).json({ success: false, paid: false, error: 'Payment amount does not match the selected plan.' });
       }
       const paidAtMs = await fetchSuccessfulPaymentTime(orderId, order);
       const { proExpiresAt, alreadyGranted } = await grantWithLedger(uid, orderId, planId, 'verify', {
         email: String(order?.customer_details?.customer_email || ''),
-        amountPaise: plan.amountPaise,
+        amountPaise: Math.round(paidAmount * 100),
         currency: paidCurrency,
         paidAt: paidAtMs,
       });
+
+      // Durably record referral conversion for creator / referrer
+      const orderRef = getOrderReferral(orderId);
+      if (orderRef && orderRef.referralCode) {
+        try {
+          await recordReferralConversion({
+            referralCode: orderRef.referralCode,
+            orderId,
+            referredUid: uid,
+            referredEmail: String(order?.customer_details?.customer_email || ''),
+            planId: plan.id,
+            planLabel: plan.label,
+            baseAmountPaise: plan.amountPaise,
+            discountAmountPaise: plan.amountPaise - Math.round(paidAmount * 100),
+            finalAmountPaidPaise: Math.round(paidAmount * 100),
+          });
+        } catch (convErr: any) {
+          console.warn('[Payments] Failed to record referral conversion in verify:', convErr?.message || convErr);
+        }
+      }
+
       const paymentMethod = await describeSuccessfulPayment(orderId);
       const receipt = buildReceipt(order, orderId, plan, proExpiresAt, paymentMethod, paidAtMs);
       return res.json({ success: true, paid: true, alreadyGranted, proExpiresAt, orderId, receipt });
@@ -1002,17 +1088,42 @@ paymentsRouter.post('/webhook', async (req, res) => {
       const rawUid: string = order?.customer_details?.customer_id || '';
       const planId = planIdFromOrderId(orderId);
       const plan = PRO_PLANS[planId];
-      const amountOk = Number(order?.order_amount) === plan.amountPaise / 100;
+      const paidAmount = Number(order?.order_amount);
+      const standardAmount = plan.amountPaise / 100;
+      const referralAmount = ((plan as any).referralAmountPaise || plan.amountPaise) / 100;
+      const amountOk = paidAmount === standardAmount || paidAmount === referralAmount;
       const currencyOk = String(order?.order_currency || '') === plan.currency;
+
       if (order?.order_status === 'PAID' && rawUid && amountOk && currencyOk) {
         const uid = sanitizeUserId(rawUid);
+        const paidAtMs = await fetchSuccessfulPaymentTime(orderId, order);
         const { alreadyGranted } = await grantWithLedger(uid, orderId, planId, 'webhook', {
           email: String(order?.customer_details?.customer_email || ''),
-          amountPaise: plan.amountPaise,
+          amountPaise: Math.round(paidAmount * 100),
           currency: String(order?.order_currency || plan.currency),
-          paidAt: await fetchSuccessfulPaymentTime(orderId, order),
+          paidAt: paidAtMs,
         });
         console.log(`[Payments] webhook granted Pro: uid=${uid} order=${orderId} plan=${planId} already=${alreadyGranted}`);
+
+        // Durably record referral conversion for creator / referrer
+        const orderRef = getOrderReferral(orderId);
+        if (orderRef && orderRef.referralCode) {
+          try {
+            await recordReferralConversion({
+              referralCode: orderRef.referralCode,
+              orderId,
+              referredUid: uid,
+              referredEmail: String(order?.customer_details?.customer_email || ''),
+              planId: plan.id,
+              planLabel: plan.label,
+              baseAmountPaise: plan.amountPaise,
+              discountAmountPaise: plan.amountPaise - Math.round(paidAmount * 100),
+              finalAmountPaidPaise: Math.round(paidAmount * 100),
+            });
+          } catch (convErr: any) {
+            console.warn('[Payments] Failed to record referral conversion in webhook:', convErr?.message || convErr);
+          }
+        }
       } else {
         console.warn('[Payments] webhook skipped: order not PAID / amount mismatch / no customer_id', orderId);
         return res.status(200).json({ ok: false, reason: 'order-not-grantable' });

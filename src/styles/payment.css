@@ -138,3 +138,14 @@
 .payment-later{width:100%;min-height:44px;background:var(--pay-soft);color:var(--pay-ink);border-radius:16px;margin-top:8px;font-size:14px;cursor:pointer}
 @media(max-width:360px){.payment-review-option{padding:12px 8px}.payment-review-option strong{font-size:13px}.payment-option-price{font-size:17px}.payment-sheet-compact .payment-header h2{font-size:20px}}
 @media(prefers-reduced-motion:reduce){.payment-sheet-compact{animation:none!important}.payment-review-option{transition:none}}
+
+/* Referral code banner and input in checkout */
+.payment-referral-box{margin:12px 0 16px;padding:12px 14px;border:1px dashed var(--pay-border);border-radius:16px;background:var(--pay-soft)}
+.payment-referral-active{border-style:solid;border-color:var(--pay-accent);background:color-mix(in srgb,var(--pay-accent) 8%,var(--pay-bg))}
+.payment-referral-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.payment-referral-input-group{display:flex;gap:6px;margin-top:8px}
+.payment-referral-input-group input{flex:1;min-height:38px;padding:6px 12px;border:1px solid var(--pay-border);border-radius:12px;background:var(--pay-bg);color:var(--pay-ink);font-size:13px;text-transform:uppercase}
+.payment-referral-input-group button{padding:6px 14px;border-radius:12px;background:var(--pay-ink);color:var(--pay-bg);font-size:12px;font-weight:500;cursor:pointer}
+.payment-referral-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--pay-accent)}
+.payment-referral-remove{background:none;border:none;color:var(--pay-muted);font-size:11px;cursor:pointer;text-decoration:underline}
+.payment-referral-discount-pill{display:inline-block;padding:2px 8px;border-radius:10px;background:var(--pay-accent);color:var(--pay-bg);font-size:11px;font-weight:600;margin-left:6px}
