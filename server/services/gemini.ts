@@ -116,7 +116,12 @@ async function generateLocalizedSummary(company: string, subject: string, detail
       const existing = await getAnnouncementById(newsId);
       const cached = (existing as any)?.[cacheField];
       if (cached && typeof cached === 'string' && cached.trim().length > 0) {
-        return cached;
+        // Purane poisoned cache entries (heuristic fallback jo pehle cache ho gaya tha)
+        // ko miss mano taaki "Regenerate" asli AI summary banaye.
+        if (!cached.includes('Fast Filing Summary (Direct Extraction)')) {
+          return cached;
+        }
+        addLog('INFO', 'GEMINI', `[${company}] Stale heuristic fallback found in cache — regenerating via AI.`);
       }
     } catch {}
 
@@ -136,11 +141,9 @@ async function generateLocalizedSummary(company: string, subject: string, detail
     if (geminiCircuitBreaker.getState() === 'OPEN') {
       const remainingCooldown = Math.round(geminiCircuitBreaker.getStatus().resetTimeoutMs / 1000);
       addLog('INFO', 'GEMINI', `[${company}] Gemini circuit breaker is OPEN (${remainingCooldown}s cooldown). Providing instant extraction summary.`);
-      const fallbackSummary = generateInstantHeuristicSummary(company, subject, details, category);
-      if (newsId) {
-        try { await updateAnnouncementSummary(newsId, fallbackSummary, cacheVariant); } catch {}
-      }
-      return fallbackSummary;
+      // NOTE: fallback ko CACHE nahi karte — warna "Regenerate" hamesha purana
+      // fallback dega aur AI dobara try hi nahi hogi (cache poisoning).
+      return generateInstantHeuristicSummary(company, subject, details, category);
     }
 
     const startTime = Date.now();
@@ -316,13 +319,10 @@ Details: ${combinedDetails}`;
         addLog('WARNING', 'GEMINI', `[${company}] AI summary generation failed (${shortMsg}). Falling back to instant text extraction.`);
       }
 
-      const fallbackSummary = generateInstantHeuristicSummary(company, subject, details, category);
-      if (newsId) {
-        try {
-          await updateAnnouncementSummary(newsId, fallbackSummary, cacheVariant);
-        } catch {}
-      }
-      return fallbackSummary;
+      // NOTE: fallback ko CACHE nahi karte — cache me asli AI summary hi jaati hai.
+      // Warna "Regenerate" purana heuristic fallback deta rahega aur AI dobara
+      // try hi nahi hogi (cache poisoning — Oct 2026 live test me pakda gaya).
+      return generateInstantHeuristicSummary(company, subject, details, category);
     }
     
     let summaryText = gwText || "";
