@@ -206,6 +206,7 @@ export async function processAnnouncements() {
         const details = item.HEADLINE || "";
         
         let shouldSendAdminTelegram = true;
+        let isRealTimeFiling = true;
 
         // 0. Strict Live Real-Time Age Check & Ingestion Delay Telemetry
         const bseTimeStr = item.News_submission_dt || item.DT_TM || item.NEWS_DT || "";
@@ -226,9 +227,11 @@ export async function processAnnouncements() {
           // If older than 2 hours or in the future by > 5 min, do not send to Telegram
           if (ageHours > 2 || ageHours < -0.1) {
             shouldSendAdminTelegram = false;
+            isRealTimeFiling = false;
           }
         } else {
           shouldSendAdminTelegram = false;
+          isRealTimeFiling = false;
         }
 
         // 1. Exclude Keywords Check (Spam Filter) - ONLY if filter is enabled in settings
@@ -538,8 +541,12 @@ export async function processAnnouncements() {
               }
 
               // Deduplicate Telegram dispatch: skip if the match is not
-              // telegram-eligible, user disabled Telegram, no chat ID, or already sent
-              if (telegramEligible && isUserTelegramActive && rawUserChatId && !sentTelegramChatIds.has(rawUserChatId)) {
+              // telegram-eligible, user disabled Telegram, no chat ID, filing is not real-time, or already sent
+              if (rawUserChatId && adminChatIdNorm && rawUserChatId === adminChatIdNorm) {
+                // Personal alert should not duplicate into the shared admin channel (which already receives admin alerts)
+                continue;
+              }
+              if (telegramEligible && isUserTelegramActive && rawUserChatId && isRealTimeFiling && !sentTelegramChatIds.has(rawUserChatId)) {
                 // STRICT DELETE RULE — final fresh check before firing. The
                 // match above was computed from a ≤60s snapshot; re-read the
                 // user's watchlist straight from the DAO (its own cache is

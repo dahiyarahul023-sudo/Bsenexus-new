@@ -6159,6 +6159,15 @@ trackInterval(setInterval(async () => {
   }
 }, 10 * 60 * 1000));
 
+// Self-KeepAlive Heartbeat: Periodically pings local HTTP listener to keep Node.js event loop active
+trackInterval(setInterval(() => {
+  try {
+    const port = resolveServerPort();
+    fetch(`http://127.0.0.1:${port}/api/health`, { signal: AbortSignal.timeout(3000) })
+      .catch(() => {});
+  } catch {}
+}, 2.5 * 60 * 1000));
+
 // Tab-specific SEO metadata mapping matching sitemap.xml and search engine requirements
 interface TabSeoMeta {
   title: string;

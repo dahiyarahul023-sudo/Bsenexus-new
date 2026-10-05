@@ -29,6 +29,7 @@ export interface ResultCalendarItem {
   daysLeft: number;
   status: 'TODAY' | 'UPCOMING' | 'RECENT' | 'PAST';
   updatedAt: string;
+  isNotified?: boolean;
   isDeclared?: boolean;
   resultDeclarationTime?: string;
   declarationAnnouncementId?: string;
@@ -56,7 +57,7 @@ function ensureDataDir() {
 }
 
 // Load notified meeting ids
-function loadNotifiedMeetings() {
+async function loadNotifiedMeetings() {
   try {
     ensureDataDir();
     if (fs.existsSync(NOTIFIED_MEETINGS_FILE)) {
@@ -69,6 +70,24 @@ function loadNotifiedMeetings() {
   } catch (e: any) {
     console.error('Error loading notified meetings cache:', e.message);
   }
+
+  // Hydrate from Supabase so notified status survives container rebuilds/republishes
+  if (isSupabaseConfigured()) {
+    try {
+      const { data, error } = await getSupabase()
+        .from('results_calendar')
+        .select('id, data');
+      if (!error && Array.isArray(data)) {
+        for (const row of data) {
+          if (row.data?.isNotified) {
+            notifiedMeetingIds.add(row.id);
+          }
+        }
+      }
+    } catch (sbErr: any) {
+      console.warn('[ResultsCalendar] Supabase notified hydration notice:', sbErr?.message || sbErr);
+    }
+  }
 }
 
 function saveNotifiedMeetings() {
@@ -80,7 +99,7 @@ function saveNotifiedMeetings() {
   }
 }
 
-loadNotifiedMeetings();
+loadNotifiedMeetings().catch(() => {});
 
 // Load cached data from disk on startup
 function loadLocalCache() {
@@ -508,27 +527,45 @@ export async function fetchAndSyncResultsCalendar(
     try {
       const settings = await getSettings();
       if (settings.autoTelegramCalendar !== false) {
-        const newlyFoundUpcoming = cachedCalendar.filter(item => 
-          (item.daysLeft >= 0) && !notifiedMeetingIds.has(item.id)
-        );
-
-        if (newlyFoundUpcoming.length > 0) {
-          for (const item of newlyFoundUpcoming) {
-                    const daysText = item.daysLeft === 0 ? '🔥 <b>TODAY (आज)</b>' : `⏳ <b>${item.daysLeft} days remaining</b>`;
-            const telegramMsg = 
-              `📅 <b>UPCOMING BOARD MEETING SCHEDULED</b>\n\n` +
-              `🏢 <b>${item.companyName} (${item.symbol})</b>\n` +
-              `📌 BSE Scrip Code: <code>${item.scripCode}</code>\n` +
-              `🗓️ Meeting Date: <b>${item.meetingDate}</b>\n` +
-              `🎯 Purpose: <i>${item.purpose}</i>\n` +
-              `⏰ Schedule: ${daysText}\n\n` +
-              `🔗 <a href="https://www.bseindia.com/corporates/Comp_Resultsnew.aspx?scrip_cd=${item.scripCode}">View BSE Filings & Outcomes</a>\n` +
-              `⚡ <i>Auto-synced from Watchlist Results Calendar</i>`;
-
-            await sendToTelegram(telegramMsg).catch(e => console.error('Telegram calendar send err:', e));
+        // Cold boot protection: if notified cache is completely empty, seed existing items
+        // to prevent blasting 15+ meetings to Telegram whenever container restarts or republishes
+        if (notifiedMeetingIds.size === 0 && cachedCalendar.length > 0) {
+          for (const item of cachedCalendar) {
+            if (item.id) {
+              notifiedMeetingIds.add(item.id);
+              item.isNotified = true;
+            }
           }
           saveNotifiedMeetings();
-          await addLog('INFO', 'TELEGRAM', `Auto-dispatched ${newlyFoundUpcoming.length} upcoming board meeting alert(s) to Telegram channel`);
+          console.info(`[ResultsCalendar] Initialized notified cache with ${notifiedMeetingIds.size} existing items (cold boot blast suppressed).`);
+        } else {
+          const newlyFoundUpcoming = cachedCalendar.filter(item => 
+            (item.daysLeft >= 0) && !notifiedMeetingIds.has(item.id)
+          ).slice(0, 3); // Capped at 3 to prevent burst spam
+
+          if (newlyFoundUpcoming.length > 0) {
+            for (const item of newlyFoundUpcoming) {
+              const daysText = item.daysLeft === 0 ? '🔥 <b>TODAY (आज)</b>' : `⏳ <b>${item.daysLeft} days remaining</b>`;
+              const telegramMsg = 
+                `📅 <b>UPCOMING BOARD MEETING SCHEDULED</b>\n\n` +
+                `🏢 <b>${item.companyName} (${item.symbol})</b>\n` +
+                `📌 BSE Scrip Code: <code>${item.scripCode}</code>\n` +
+                `🗓️ Meeting Date: <b>${item.meetingDate}</b>\n` +
+                `🎯 Purpose: <i>${item.purpose}</i>\n` +
+                `⏰ Schedule: ${daysText}\n\n` +
+                `🔗 <a href="https://www.bseindia.com/corporates/Comp_Resultsnew.aspx?scrip_cd=${item.scripCode}">View BSE Filings & Outcomes</a>\n` +
+                `⚡ <i>Auto-synced from Watchlist Results Calendar</i>`;
+
+              await sendToTelegram(telegramMsg).catch(e => console.error('Telegram calendar send err:', e));
+              notifiedMeetingIds.add(item.id);
+              item.isNotified = true;
+
+              // Gentle 1s spacing between messages so Telegram doesn't hit rate limits or trip circuit breaker
+              await new Promise(r => setTimeout(r, 1000));
+            }
+            saveNotifiedMeetings();
+            await addLog('INFO', 'TELEGRAM', `Auto-dispatched ${newlyFoundUpcoming.length} upcoming board meeting alert(s) to Telegram channel`);
+          }
         }
       }
     } catch (tgErr: any) {

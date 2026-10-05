@@ -1,6 +1,5 @@
-/* Lightweight dimensional note tiles with consistent lighting and solid fallbacks. */
-
-.ng-root > .ng-disc (white circle, like the reel)
+/* Lightweight dimensional note tiles with consistent lighting and solid fallbacks.
+ * Structure: .ng-root > .ng-disc (white circle, like the reel)
  *   > .ng-glass (the tinted glass tile) > svg.ng-glyph (white glyph).
  */
 

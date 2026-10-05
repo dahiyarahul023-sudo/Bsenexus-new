@@ -5,7 +5,7 @@ import { getLogs, addLog, clearLogs } from "../database/logDao.js";
 import { saveFeedback, getAllFeedback, markFeedbackRead } from "../database/feedbackDao.js";
 import { getRecentAnnouncements, markAnnouncementSent, getAnnouncementById, processedBloomFilter, sentBloomFilter, isAnnouncementProcessed, isAnnouncementSent, getBloomFilterDiagnostics } from "../database/announcementDao.js";
 import { generateDirectSummary, generateAndSendSummary, askAppHelpAI } from "../services/gemini.js";
-import { escapeHTML } from "../utils/helpers.js";
+import { escapeHTML, isMarketHoursIST } from "../utils/helpers.js";
 import { resolvePersonalTelegramTarget } from '../utils/telegramTarget.js';
 import { resumeFirestoreNetwork, pauseFirestoreNetwork, persistStorageMode } from "../database/firebase.js";
 import { requireAuth, requireAdmin, requireProOrAdmin, aiRateLimiter, telegramRateLimiter, apiRateLimiter } from "../security/auth.js";
@@ -31,7 +31,7 @@ import {
 } from "../database/watchlistDao.js";
 import { getBseHealth, testBSEConnection, syncWatchlistHistoricalData, syncSingleStockHistoricalData, backfillRecentAnnouncements, getBackupStalenessMetrics, isBseSourceBlocked, getBseFeedStaleness } from "../services/bse.js";
 import { getAllStockEntries } from "../utils/stockResolver.js";
-import { invalidateMonitorConfigCache } from "../services/monitor.js";
+import { invalidateMonitorConfigCache, processAnnouncements } from "../services/monitor.js";
 import { wantsTelegramEnable } from "../utils/alertDecision.js";
 import { getTelegramHealth, sendToTelegram, getBotUsername } from "../services/telegram.js";
 import { 
@@ -149,6 +149,32 @@ apiRouter.get("/health", (_req, res) => {
       guides: staticGuideCache.getStats()
     }
   });
+});
+
+// External Cron Poller & Keep-Alive Endpoint
+// Allows external pingers (cron-job.org, UptimeRobot, Cloud Scheduler) to keep the container awake 24/7
+// and trigger an immediate announcement check.
+apiRouter.get("/cron/poll", async (_req, res) => {
+  try {
+    const isMarket = isMarketHoursIST();
+    // Trigger announcement check asynchronously
+    processAnnouncements().catch(err => {
+      console.warn('[CronPoller] Announcement process notice:', err?.message || err);
+    });
+    res.json({
+      success: true,
+      message: "Poller triggered successfully",
+      isMarketHours: isMarket,
+      serverTime: new Date().toISOString(),
+      uptimeSec: Math.round(process.uptime()),
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err?.message || "Internal error triggering poller" });
+  }
+});
+
+apiRouter.get("/ping", (_req, res) => {
+  res.type('text/plain').send('pong');
 });
 
 // Cache Telemetry & Diagnostics API

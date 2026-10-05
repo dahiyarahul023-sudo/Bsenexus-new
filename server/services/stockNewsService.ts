@@ -76,7 +76,7 @@ const SENT_NEWS_ALERTS_FILE = 'sent_news_alerts.json';
 let sentNewsAlertsMemory = new Map<string, number>(); // key: `${targetChatId}_${newsId}`, value: timestamp
 
 // Initialize sent alerts cache
-(function initSentNewsCache() {
+(async function initSentNewsCache() {
   const diskData = readLocalJson<Record<string, number>>(SENT_NEWS_ALERTS_FILE, {});
   const now = Date.now();
   const maxAgeMs = 7 * 24 * 60 * 60 * 1000; // 7 days retention
@@ -85,6 +85,27 @@ let sentNewsAlertsMemory = new Map<string, number>(); // key: `${targetChatId}_$
     if (now - ts < maxAgeMs) {
       sentNewsAlertsMemory.set(key, ts);
     }
+  }
+
+  // Hydrate from Supabase so sent alerts persist across redeployments/republishes
+  if (isSupabaseConfigured()) {
+    try {
+      const { data, error } = await getSupabase()
+        .from('sent_news_alerts')
+        .select('data')
+        .limit(1000);
+      if (!error && Array.isArray(data)) {
+        for (const row of data) {
+          const item = row.data;
+          if (item?.targetId && item?.newsId && item?.sentAt) {
+            const k = `${item.targetId}_${item.newsId}`;
+            if (now - item.sentAt < maxAgeMs) {
+              sentNewsAlertsMemory.set(k, item.sentAt);
+            }
+          }
+        }
+      }
+    } catch {}
   }
 })();
 

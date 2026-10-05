@@ -21,7 +21,7 @@ import { useIntelModal } from '../context/IntelModalContext';
 import { formatFilingRelativeTime, formatCleanTime, formatDateOnly } from '../utils/timeFormat';
 import { cleanBseSubject } from '../utils/cleanBseSubject';
 import { getSafePdfUrl } from '../utils/pdfHelper';
-import { parseMeetingDateTile } from './ResultsCalendar';
+import { parseMeetingDateTile } from '../utils/calendarDateTile';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { useFeedDensity } from '../hooks/useFeedDensity';
 import { HeliosPill, heliosCard } from './ui/helios';

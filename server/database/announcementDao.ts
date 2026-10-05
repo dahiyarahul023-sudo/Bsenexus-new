@@ -143,8 +143,14 @@ export async function initAnnouncementCache() {
     announcementsMemoryCache = loaded.slice(0, 10000);
 
     for (const item of announcementsMemoryCache) {
-      if (item.id) processedCache.add(item.id);
-      if (item.is_sent === 1) sentCache.add(item.id);
+      if (item.id) {
+        processedCache.add(item.id);
+        processedBloomFilter.add(item.id);
+      }
+      if (item.is_sent === 1) {
+        sentCache.add(item.id);
+        sentBloomFilter.add(item.id);
+      }
     }
 
     writeLocalJson(ANNOUNCEMENTS_FILE, announcementsMemoryCache);
