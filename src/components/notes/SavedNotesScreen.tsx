@@ -8,6 +8,7 @@ import { fetchNotes, deleteNoteApi } from '../../api/notesApi';
 import { useNoteEditor } from '../../context/NoteEditorContext';
 import { useIntelModal } from '../../context/IntelModalContext';
 import { useAuth } from '../../context/AuthContext';
+import { NotesSkeleton } from '../ui/PageSkeleton';
 import { NotesIllustration } from './NoteCharacter';
 import './notes.css';
 import { noteIconAt } from './noteIcons';
@@ -255,20 +256,8 @@ export function SavedNotesScreen({ onNavigate }: { onNavigate?: (tab: string) =>
         </div>
       )}
 
-      {loading ? (
-        <div className="space-y-3">
-          {[0, 1, 2].map(i => (
-            <div key={i} className="bg-white dark:bg-[#181626] border border-slate-200/90 dark:border-[#2D283E] rounded-2xl p-3.5 animate-pulse">
-              <div className="flex gap-3">
-                <div className="w-11 h-11 rounded-[14px] bg-slate-200 dark:bg-white/10" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-3.5 rounded bg-slate-200 dark:bg-white/10 w-11/12" />
-                  <div className="h-3.5 rounded bg-slate-200 dark:bg-white/10 w-2/3" />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+      {loading && notes.length === 0 ? (
+        <NotesSkeleton />
       ) : error && notes.length === 0 ? null : filtered.length === 0 ? (
         <div className="notes-empty">
           {q ? <Search size={38} className="text-slate-400" aria-hidden="true" /> : <NotesIllustration onCreate={() => openNoteEditor()} />}

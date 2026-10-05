@@ -1,3 +1,4 @@
+import { HomeSkeleton } from './ui/PageSkeleton';
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -64,6 +65,7 @@ export function HomeForYou({ onNavigate }: HomeForYouProps) {
   const [allAnnouncements, setAllAnnouncements] = useState<any[]>([]);
   const [topNews, setTopNews] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
   const [modalSearch, setModalSearch] = useState<string>('');
   const [addingStock, setAddingStock] = useState<string | null>(null);
@@ -126,6 +128,7 @@ export function HomeForYou({ onNavigate }: HomeForYouProps) {
       console.warn("Error loading Home For You data:", e);
     } finally {
       setLoading(false);
+      setHasLoaded(true);
     }
   };
 
@@ -226,6 +229,7 @@ export function HomeForYou({ onNavigate }: HomeForYouProps) {
       </div>
 
       {/* 2. Focused Sections or Calm Summary */}
+      {loading && !hasLoaded ? <HomeSkeleton /> : (
       <div className="space-y-6">
 
         {/* Watchlist Section */}
@@ -449,6 +453,7 @@ export function HomeForYou({ onNavigate }: HomeForYouProps) {
         </section>
 
       </div>
+      )}
 
       {/* Add Companies Modal */}
       <AnimatePresence>

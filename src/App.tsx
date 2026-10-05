@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
+import { PageSkeleton } from './components/ui/PageSkeleton';
 import { useScreenTransition } from './hooks/useScreenTransition';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { IntelModalProvider } from './context/IntelModalContext';
@@ -1002,12 +1003,12 @@ function AppContent() {
         onToggleEngine={handleToggle}
       >
         <div ref={tabMotion.ref} tabIndex={-1} className="outline-none" aria-label="Page content">
-        {visitedTabs.has('home') && (
+        {(visitedTabs.has('home') || activeTab === 'home') && (
           <div data-screen-page="home" hidden={tabMotion.displayedKey !== 'home'}>
             <HomeForYou onNavigate={(tab) => handleTabChange(tab)} />
           </div>
         )}
-        {visitedTabs.has('dashboard') && (
+        {(visitedTabs.has('dashboard') || activeTab === 'dashboard') && (
           <div data-screen-page="dashboard" hidden={tabMotion.displayedKey !== 'dashboard'}>
             <Dashboard 
               bseHealth={health.bse} 
@@ -1017,28 +1018,28 @@ function AppContent() {
             />
           </div>
         )}
-        {visitedTabs.has('watchlists') && (
+        {(visitedTabs.has('watchlists') || activeTab === 'watchlists') && (
           <div data-screen-page="watchlists" hidden={tabMotion.displayedKey !== 'watchlists'}>
             <TabErrorBoundary label="watchlists">
-            <Suspense fallback={<TabFallback />}>
+            <Suspense fallback={<PageSkeleton page="watchlists" />}>
               <WatchlistManager />
             </Suspense>
             </TabErrorBoundary>
           </div>
         )}
-        {visitedTabs.has('results-calendar') && (
+        {(visitedTabs.has('results-calendar') || activeTab === 'results-calendar') && (
           <div data-screen-page="results-calendar" hidden={tabMotion.displayedKey !== 'results-calendar'}>
             <TabErrorBoundary label="results-calendar">
-            <Suspense fallback={<TabFallback />}>
+            <Suspense fallback={<PageSkeleton page="results-calendar" />}>
               <ResultsCalendar />
             </Suspense>
             </TabErrorBoundary>
           </div>
         )}
-        {visitedTabs.has('news') && (
+        {(visitedTabs.has('news') || activeTab === 'news') && (
           <div data-screen-page="news" hidden={tabMotion.displayedKey !== 'news'}>
             <TabErrorBoundary label="news">
-            <Suspense fallback={<TabFallback />}>
+            <Suspense fallback={<PageSkeleton page="news" />}>
               <NewsPortal
                 watchlists={watchlists}
                 user={user}
@@ -1049,46 +1050,46 @@ function AppContent() {
             </TabErrorBoundary>
           </div>
         )}
-        {isAdmin && visitedTabs.has('seo-suite') && (
+        {isAdmin && (visitedTabs.has('seo-suite') || activeTab === 'seo-suite') && (
           <div data-screen-page="seo-suite" hidden={tabMotion.displayedKey !== 'seo-suite'}>
             <TabErrorBoundary label="seo-suite">
-            <Suspense fallback={<TabFallback />}>
+            <Suspense fallback={<PageSkeleton page="seo-suite" />}>
               <SeoStudio />
             </Suspense>
             </TabErrorBoundary>
           </div>
         )}
-        {isAdmin && visitedTabs.has('storage') && (
+        {isAdmin && (visitedTabs.has('storage') || activeTab === 'storage') && (
           <div data-screen-page="storage" hidden={tabMotion.displayedKey !== 'storage'}>
             <TabErrorBoundary label="storage">
-            <Suspense fallback={<TabFallback />}>
+            <Suspense fallback={<PageSkeleton page="storage" />}>
               <StorageManager />
             </Suspense>
             </TabErrorBoundary>
           </div>
         )}
-        {isAdmin && visitedTabs.has('diagnostics') && (
+        {isAdmin && (visitedTabs.has('diagnostics') || activeTab === 'diagnostics') && (
           <div data-screen-page="diagnostics" hidden={tabMotion.displayedKey !== 'diagnostics'}>
             <TabErrorBoundary label="diagnostics">
-            <Suspense fallback={<TabFallback />}>
+            <Suspense fallback={<PageSkeleton page="diagnostics" />}>
               <AdminDiagnostics />
             </Suspense>
             </TabErrorBoundary>
           </div>
         )}
-        {isAdmin && visitedTabs.has('logs') && (
+        {isAdmin && (visitedTabs.has('logs') || activeTab === 'logs') && (
           <div data-screen-page="logs" hidden={tabMotion.displayedKey !== 'logs'}>
             <TabErrorBoundary label="logs">
-            <Suspense fallback={<TabFallback />}>
+            <Suspense fallback={<PageSkeleton page="logs" />}>
               <LogsTab logs={logs} onRefreshLogs={fetchLogs} />
             </Suspense>
             </TabErrorBoundary>
           </div>
         )}
-        {visitedTabs.has('settings') && (
+        {(visitedTabs.has('settings') || activeTab === 'settings') && (
           <div data-screen-page="settings" hidden={tabMotion.displayedKey !== 'settings'}>
             <TabErrorBoundary label="settings" onBack={() => handleTabChange('home')}>
-            <Suspense fallback={<TabFallback />}>
+            <Suspense fallback={<PageSkeleton page="settings" />}>
               <SettingsTab
                 settings={settings}
                 setSettings={setSettings}
