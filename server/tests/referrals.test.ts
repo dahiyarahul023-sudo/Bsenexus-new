@@ -1,6 +1,11 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert';
-import { sanitizeReferralCode } from '../database/referralsDao.js';
+import {
+  sanitizeReferralCode,
+  generateCleanUserReferralCode,
+  getTierCommissionPercent,
+  getTierInfo,
+} from '../database/referralsDao.js';
 import { PRO_PLANS } from '../config/plans.js';
 import { PRO_PLAN_LIST, getEffectivePlanPrice } from '../../src/config/plans.js';
 
@@ -9,6 +14,35 @@ describe('Referral System & Pricing Integration', () => {
     assert.strictEqual(sanitizeReferralCode('  akshat100  '), 'AKSHAT100');
     assert.strictEqual(sanitizeReferralCode('nexus@#$123'), 'NEXUS123');
     assert.strictEqual(sanitizeReferralCode('PARTNER-2026'), 'PARTNER-2026');
+  });
+
+  test('generates clean, readable referral codes from user names and emails', () => {
+    assert.strictEqual(generateCleanUserReferralCode('Rahul Dahiya', 'dahiyarahul023@gmail.com'), 'RAHULDAH');
+    assert.strictEqual(generateCleanUserReferralCode('Akshat', 'akshat@gmail.com'), 'AKSHAT');
+    assert.strictEqual(generateCleanUserReferralCode('', 'john.doe@fintech.in'), 'JOHNDOE');
+  });
+
+  test('tiered volume-based commission scales with referral performance', () => {
+    // 1-4 referrals: Bronze Starter 15%
+    assert.strictEqual(getTierCommissionPercent(1), 15);
+    assert.strictEqual(getTierCommissionPercent(4), 15);
+
+    // 5-19 referrals: Silver Creator 20%
+    assert.strictEqual(getTierCommissionPercent(5), 20);
+    assert.strictEqual(getTierCommissionPercent(19), 20);
+
+    // 20-49 referrals: Gold Partner 25%
+    assert.strictEqual(getTierCommissionPercent(20), 25);
+    assert.strictEqual(getTierCommissionPercent(49), 25);
+
+    // 50+ referrals: Platinum Elite 30%
+    assert.strictEqual(getTierCommissionPercent(50), 30);
+    assert.strictEqual(getTierCommissionPercent(100), 30);
+
+    const info = getTierInfo(8);
+    assert.strictEqual(info.commissionPercent, 20);
+    assert.strictEqual(info.nextTierName, 'Gold Partner (25%)');
+    assert.strictEqual(info.conversionsToNext, 12);
   });
 
   test('monthly plan offers flat ₹100 discount (₹299 -> ₹199)', () => {

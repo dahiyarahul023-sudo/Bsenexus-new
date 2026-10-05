@@ -1812,11 +1812,11 @@ export function SettingsTab({
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h4 className="text-sm font-bold text-slate-900 dark:text-white">Refer &amp; Earn Partner Program</h4>
+                      <h4 className="text-sm font-bold text-slate-900 dark:text-white">Refer &amp; Earn Rewards</h4>
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500 text-white">Flat ₹{monthlyPlan.referralDiscount} OFF</span>
                     </div>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                      Give friends &amp; followers ₹{monthlyPlan.referralDiscount} off Pro Monthly (₹{monthlyPlan.referralPrice} instead of ₹{monthlyPlan.price}). Earn 25% commission with a 100% verified audit ledger.
+                      Give friends ₹{monthlyPlan.referralDiscount} off Pro Monthly (₹{monthlyPlan.referralPrice} instead of ₹{monthlyPlan.price}). Earn +14 Days Free Pro or creator commission with a 100% verified ledger.
                     </p>
                   </div>
                 </div>
