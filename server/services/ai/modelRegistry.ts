@@ -99,34 +99,37 @@ export const MODEL_REGISTRY: ModelEntry[] = [
   // ---------------- NVIDIA (https://integrate.api.nvidia.com/v1) ----------------
   // Free tier: ~40 RPM / 10,000 RPD (vendor published). Rate limit PER-MODEL hai
   // (per-key nahi) — isliye 429 par model switch karna hi sahi strategy hai.
-  // IDs bina notice rename hote hain — sab verifiedOk:false se start, sirf
-  // verify script ke confirm karne par live honge.
+  // IDs bina notice rename hote hain — neeche wale 2026-10-05 ko LIVE catalog
+  // (81 models) se verify kiye gaye hain. verifyModels.ts har deploy par re-check karega.
   {
-    alias: 'NVIDIA_LLAMA_MAVERICK',
+    alias: 'NVIDIA_NEMOTRON_70B',
     provider: 'nvidia',
-    modelId: 'meta/llama-4-maverick-17b-128e-instruct',
-    verifiedOk: false,
-    verifyNote: 'Sep 2026 me free endpoint tha; roster rotate hota hai — verify ke baad hi use.',
+    modelId: 'nvidia/llama-3.1-nemotron-70b-instruct',
+    verifiedOk: true,
+    verifiedAt: '2026-10-05',
+    verifyNote: 'Live catalog me confirm (2026-10-05).',
     limits: { rpm: 35, rpd: 10000, tpm: INF, tpd: INF },
-    role: 'Deep bench: SUMMARY/SEO fallback (bada context, instruct model)',
+    role: 'Deep bench: SUMMARY/SEO fallback (70B instruct model)',
   },
   {
     alias: 'NVIDIA_KIMI_K2',
     provider: 'nvidia',
     modelId: 'moonshotai/kimi-k2.6',
-    verifiedOk: false,
-    verifyNote: 'Sep 2026 me free endpoint tha; verify ke baad hi use.',
+    verifiedOk: true,
+    verifiedAt: '2026-10-05',
+    verifyNote: 'Live catalog me confirm (2026-10-05).',
     limits: { rpm: 35, rpd: 10000, tpm: INF, tpd: INF },
     role: 'Deep bench: CHAT/FAQ fallback',
   },
   {
-    alias: 'NVIDIA_MISTRAL_LARGE',
+    alias: 'NVIDIA_MISTRAL_LARGE_2',
     provider: 'nvidia',
-    modelId: 'mistralai/mistral-large-3-675b-instruct-2512',
-    verifiedOk: false,
-    verifyNote: 'Sep 2026 me free endpoint tha; verify ke baad hi use.',
+    modelId: 'mistralai/mistral-large-2-instruct',
+    verifiedOk: true,
+    verifiedAt: '2026-10-05',
+    verifyNote: 'Live catalog me confirm (2026-10-05).',
     limits: { rpm: 35, rpd: 10000, tpm: INF, tpd: INF },
-    role: 'Deep bench: aakhri fallback (bada model, slow ho sakta hai)',
+    role: 'Deep bench: aakhri fallback',
   },
 ];
 
@@ -139,10 +142,10 @@ export const MODEL_REGISTRY: ModelEntry[] = [
  * record ho sakta hai — isliye CHAT (user ke sawal) me NVIDIA sabse last hai.
  */
 export const TASK_CHAINS: Record<AiTask, string[]> = {
-  SUMMARY: ['GEMINI_FLASH_LITE', 'GEMINI_FLASH_LATEST', 'GROQ_GPT_OSS_120B', 'NVIDIA_LLAMA_MAVERICK', 'NVIDIA_KIMI_K2'],
+  SUMMARY: ['GEMINI_FLASH_LITE', 'GEMINI_FLASH_LATEST', 'GROQ_GPT_OSS_120B', 'NVIDIA_NEMOTRON_70B', 'NVIDIA_KIMI_K2'],
   FAQ: ['GROQ_GPT_OSS_20B', 'GEMINI_FLASH_LITE', 'NVIDIA_KIMI_K2'],
-  CHAT: ['GROQ_GPT_OSS_120B', 'GEMINI_FLASH_LITE', 'GEMINI_FLASH_LATEST', 'NVIDIA_KIMI_K2', 'NVIDIA_MISTRAL_LARGE'],
-  SEO: ['GEMINI_FLASH_LITE', 'GROQ_GPT_OSS_120B', 'NVIDIA_LLAMA_MAVERICK'],
+  CHAT: ['GROQ_GPT_OSS_120B', 'GEMINI_FLASH_LITE', 'GEMINI_FLASH_LATEST', 'NVIDIA_KIMI_K2', 'NVIDIA_MISTRAL_LARGE_2'],
+  SEO: ['GEMINI_FLASH_LITE', 'GROQ_GPT_OSS_120B', 'NVIDIA_NEMOTRON_70B'],
 };
 
 export const PROVIDER_BASE_URL: Record<'groq' | 'nvidia', string> = {
