@@ -1,10 +1,6 @@
-/**
- * Liquid-glass note icons — real optical glass per Apple's Liquid Glass
- * material model (backdrop blur + saturation refracts what's behind,
- * color tint is a separate layer, specular highlights on the edges,
- * glyph fused on top as a plain fill).
- *
- * Structure per icon: .ng-root > .ng-disc (white circle, like the reel)
+/* Lightweight dimensional note tiles with consistent lighting and solid fallbacks. */
+
+.ng-root > .ng-disc (white circle, like the reel)
  *   > .ng-glass (the tinted glass tile) > svg.ng-glyph (white glyph).
  */
 
@@ -96,3 +92,11 @@
   height: 62%;
   filter: drop-shadow(0 1px 1.5px rgba(20, 30, 60, 0.28));
 }
+
+
+/* Solid dimensional tiles keep their depth even with backdrop filters disabled. */
+.ng-disc { background:transparent; box-shadow:none; perspective:240px; }
+.dark .ng-disc { background:transparent; box-shadow:none; }
+.ng-glass { width:82%; backdrop-filter:none; -webkit-backdrop-filter:none; transform:rotateX(9deg) rotateY(-9deg); box-shadow:inset 2px 2px 3px #ffffffb3,inset -2px -3px 4px #0000000f,2px 4px 0 color-mix(in srgb,var(--tint) 70%,#66575e),4px 8px 10px #281c291a; }
+.ng-glyph { filter:drop-shadow(1px 2px 1px #48365044); }
+@media(prefers-reduced-motion:reduce) { .ng-glass { transform:none; } }

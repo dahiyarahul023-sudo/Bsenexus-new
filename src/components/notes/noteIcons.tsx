@@ -1,18 +1,7 @@
 import type { CSSProperties, JSX } from 'react';
 import './noteIcons.css';
 
-/**
- * Reel-style note icons — 12 ORIGINAL icons as real liquid glass.
- *
- * Visual model follows Apple's Liquid Glass material (developer.apple.com
- * "Adopting Liquid Glass" / HIG Materials): the tile is a genuine optical
- * surface — backdrop blur + saturation refracts what's behind it, the
- * pastel tint is a separate layer, specular highlights ride the edges,
- * and the glyph sits ON the glass as a plain white fill fused to the
- * material (never glass-on-glass). Every glyph path is drawn fresh for
- * Bsenexus — not copies of the reel's artwork files (never published).
- */
-
+/** Stable icon positions preserve the appearance of existing saved notes. */
 export interface NoteIconDef {
   label: string;
   Icon: (props: { className?: string }) => JSX.Element;
@@ -216,8 +205,10 @@ export const NOTE_ICONS: NoteIconDef[] = [
       </Tile>
     ),
   },
+
 ];
 
 export function noteIconAt(i: number): NoteIconDef {
   return NOTE_ICONS[i] ?? NOTE_ICONS[0];
 }
+

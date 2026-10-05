@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
-  Search, Plus, Pencil, Trash2, ChevronRight, StickyNote, RefreshCw,
+  Search, Plus, Pencil, Trash2, ChevronRight, RefreshCw,
   TrendingUp, Newspaper, CalendarDays, FileText, Loader2,
 } from 'lucide-react';
 import { fetchNotes, deleteNoteApi } from '../../api/notesApi';
 import { useNoteEditor } from '../../context/NoteEditorContext';
 import { useIntelModal } from '../../context/IntelModalContext';
 import { useAuth } from '../../context/AuthContext';
+import { NotesIllustration } from './NoteCharacter';
+import './notes.css';
 import { noteIconAt } from './noteIcons';
 import type { UserNote, NoteLinkType } from '../../types';
 import { navigateToFiling } from '../../utils/shareUrls';
@@ -43,18 +45,19 @@ function NoteRow({
   confirmDelete: boolean;
   setConfirmDelete: (v: boolean) => void;
 }) {
+  const reduceMotion = useReducedMotion();
   const icon = noteIconAt(note.icon);
   const linkMeta = note.link ? LINK_META[note.link.type] : null;
   const LinkIcon = linkMeta?.icon;
 
   return (
     <motion.div
-      layout
-      initial={{ opacity: 0, y: 12 }}
+      layout={!reduceMotion}
+      initial={reduceMotion ? false : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.96 }}
       transition={{ type: 'spring', stiffness: 400, damping: 32 }}
-      className="bg-white dark:bg-[#181626] border border-slate-200/90 dark:border-[#2D283E] rounded-2xl p-3.5 shadow-2xs"
+      className="note-row bg-white dark:bg-[#181626] border border-slate-200/90 dark:border-[#2D283E] rounded-2xl p-3.5 shadow-2xs"
     >
       <div className="flex items-start gap-3">
         <button
@@ -64,25 +67,25 @@ function NoteRow({
           <icon.Icon className="w-full h-full" />
         </button>
         <button type="button" onClick={onJump} className="flex-1 min-w-0 text-left cursor-pointer">
-          <p className="text-[13px] leading-snug text-slate-800 dark:text-slate-100 font-medium line-clamp-2">
+          <p className="text-[15px] leading-relaxed break-words text-slate-800 dark:text-slate-100 font-medium line-clamp-3">
             {note.text}
           </p>
           <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
             {note.link && LinkIcon && (
-              <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold', linkMeta!.tint)}>
+              <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[12px] font-bold', linkMeta!.tint)}>
                 <LinkIcon size={11} />
                 <span className="max-w-[120px] truncate">{note.link.label}</span>
               </span>
             )}
             {note.tags.slice(0, 3).map(t => (
-              <span key={t} className="text-[10px] font-semibold text-orange-600 dark:text-orange-400">#{t}</span>
+              <span key={t} className="text-[12px] font-semibold text-orange-600 dark:text-orange-400">#{t}</span>
             ))}
-            <span className="text-[10px] text-slate-400 ml-auto shrink-0">{timeAgo(note.updatedAt)}</span>
+            <span className="text-[12px] text-slate-400 ml-auto shrink-0">{timeAgo(note.updatedAt)}</span>
           </div>
         </button>
         <ChevronRight size={15} className="text-slate-300 dark:text-slate-600 shrink-0 mt-1" />
       </div>
-      <div className="flex items-center justify-end gap-1 mt-2 pt-2 border-t border-slate-100 dark:border-[#252236]">
+      <div className="flex flex-wrap items-center justify-end gap-1 mt-2 pt-2 border-t border-slate-100 dark:border-[#252236]">
         {confirmDelete ? (
           <>
             <span className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 mr-1">Delete this note?</span>
@@ -205,14 +208,14 @@ export function SavedNotesScreen({ onNavigate }: { onNavigate?: (tab: string) =>
   const filtered = q
     ? notes.filter(n =>
         n.text.toLowerCase().includes(q) ||
-        n.tags.some(t => t.includes(q)) ||
+        n.tags.some(t => t.toLowerCase().includes(q)) ||
         (n.link?.label.toLowerCase().includes(q) ?? false))
     : notes;
 
   if (isGuest) {
     return (
-      <div className="text-center py-14 px-6">
-        <div className="w-14 h-14 mx-auto rounded-2xl bg-orange-500/15 grid place-items-center text-2xl mb-3">📝</div>
+      <div className="notes-workspace"><div className="notes-empty text-slate-900 dark:text-white">
+        <NotesIllustration onCreate={() => setIsAuthModalOpen(true)} />
         <h3 className="text-base font-bold text-slate-900 dark:text-white font-display">Sign in to use Saved Notes</h3>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 max-w-xs mx-auto leading-relaxed">
           Notes save permanently to your account and sync across devices.
@@ -223,24 +226,28 @@ export function SavedNotesScreen({ onNavigate }: { onNavigate?: (tab: string) =>
         >
           Sign in
         </button>
-      </div>
+      </div></div>
     );
   }
 
   return (
-    <div className="space-y-3 pb-24">
+    <div className="notes-workspace space-y-4 text-slate-900 dark:text-white">
+      <div className="notes-toolbar">
+        <div><p className="notes-eyebrow">Your research, remembered</p><h2 className="notes-title">Saved notes</h2></div>
+        <button type="button" className="notes-primary" onClick={() => openNoteEditor()}><Plus size={18} /> New note</button>
+      </div>
       {/* Search */}
       <div className="relative">
         <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
         <input
-          type="text" value={query} onChange={e => setQuery(e.target.value)}
+          aria-label="Search notes, tags or stocks" type="search" value={query} onChange={e => setQuery(e.target.value)}
           placeholder="Search notes, tags, stocks..."
-          className="w-full pl-9 pr-4 py-2.5 bg-white dark:bg-[#181626] border border-slate-200/90 dark:border-[#2D283E] rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-orange-500/40 shadow-2xs"
+          className="notes-search w-full pl-9 pr-4 py-2.5 bg-white dark:bg-[#181626] border border-slate-200/90 dark:border-[#2D283E] rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-orange-500/40 shadow-2xs"
         />
       </div>
 
       {error && (
-        <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-700 dark:text-rose-300 text-xs font-medium flex items-center justify-between gap-2">
+        <div role="alert" className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-700 dark:text-rose-300 text-xs font-medium flex items-center justify-between gap-2">
           <span>{error}</span>
           <button type="button" onClick={load} className="inline-flex items-center gap-1 font-bold hover:underline cursor-pointer shrink-0">
             <RefreshCw size={12} /> Retry
@@ -262,21 +269,19 @@ export function SavedNotesScreen({ onNavigate }: { onNavigate?: (tab: string) =>
             </div>
           ))}
         </div>
-      ) : filtered.length === 0 ? (
-        <div className="text-center py-12 px-6">
-          <StickyNote size={36} className="mx-auto text-slate-300 dark:text-slate-600" />
-          <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200 mt-3">
-            {q ? 'No notes match your search' : 'No saved notes yet'}
-          </h3>
-          <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto leading-relaxed">
-            {q
-              ? 'Try a different keyword, tag or stock name.'
-              : 'Tap + to write one — or save a note from any stock, news article or result.'}
-          </p>
+      ) : error && notes.length === 0 ? null : filtered.length === 0 ? (
+        <div className="notes-empty">
+          {q ? <Search size={38} className="text-slate-400" aria-hidden="true" /> : <NotesIllustration onCreate={() => openNoteEditor()} />}
+          <h3>{q ? 'No matching notes' : 'Big ideas start with a little note.'}</h3>
+          <p>{q ? 'Try another keyword, tag or stock name.' : 'Keep a thought, track a stock, or save the detail you’ll want to come back to.'}</p>
+          <button type="button" className="notes-primary" onClick={() => q ? setQuery('') : openNoteEditor()}>
+            {!q && <Plus size={18} />}{q ? 'Clear search' : 'Create your first note'}
+          </button>
+          {!q && <span className="notes-empty-hint">Your notes stay together, across devices.</span>}
         </div>
       ) : (
         <AnimatePresence initial={false}>
-          <div className="space-y-3">
+          <div className="notes-grid">
             {filtered.map(n => (
               <NoteRow
                 key={n.id}
@@ -293,16 +298,8 @@ export function SavedNotesScreen({ onNavigate }: { onNavigate?: (tab: string) =>
         </AnimatePresence>
       )}
 
-      {/* FAB — the reel's black circular + button */}
-      <motion.button
-        type="button"
-        onClick={() => openNoteEditor()}
-        whileTap={{ scale: 0.9 }}
-        aria-label="New note"
-        className="fixed bottom-24 right-5 z-40 w-14 h-14 rounded-full bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 grid place-items-center shadow-[0_10px_30px_rgba(0,0,0,0.35)] cursor-pointer"
-      >
-        <Plus size={24} strokeWidth={2.5} />
-      </motion.button>
+
     </div>
   );
 }
+

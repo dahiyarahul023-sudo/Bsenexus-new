@@ -9,6 +9,9 @@ import { useAuth } from '../../context/AuthContext';
 import { createNoteApi, updateNoteApi } from '../../api/notesApi';
 import { NOTE_ICONS, noteIconAt } from './noteIcons';
 import type { UserNote, NoteLink, NoteLinkType } from '../../types';
+import { useNoteDialog } from './useNoteDialog';
+import { NoteCharacter } from './NoteCharacter';
+import './notes.css';
 import { cn } from '../../lib/utils';
 
 const LINK_META: Record<NoteLinkType, { icon: any; tint: string }> = {
@@ -17,43 +20,6 @@ const LINK_META: Record<NoteLinkType, { icon: any; tint: string }> = {
   result: { icon: CalendarDays, tint: 'bg-violet-500/10 text-violet-600 dark:text-violet-400' },
   filing: { icon: FileText, tint: 'bg-amber-500/10 text-amber-600 dark:text-amber-400' },
 };
-
-/** Black circular button with the reel's orange progress ring. */
-function RingButton({
-  onClick, disabled, saving, progress, ariaLabel,
-}: {
-  onClick: () => void; disabled?: boolean; saving?: boolean; progress: number; ariaLabel: string;
-}) {
-  const R = 27;
-  const C = 2 * Math.PI * R;
-  return (
-    <motion.button
-      type="button"
-      onClick={onClick}
-      disabled={disabled || saving}
-      whileTap={disabled || saving ? undefined : { scale: 0.9 }}
-      aria-label={ariaLabel}
-      className={cn(
-        'relative w-[68px] h-[68px] rounded-full shrink-0 grid place-items-center transition-opacity',
-        'bg-neutral-950 text-white dark:bg-white dark:text-neutral-950',
-        'shadow-[0_10px_30px_rgba(0,0,0,0.35)]',
-        (disabled || saving) && 'opacity-60'
-      )}
-    >
-      <svg viewBox="0 0 68 68" className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none">
-        <circle cx="34" cy="34" r={R} fill="none" stroke="currentColor" strokeOpacity="0.15" strokeWidth="3.5" />
-        <circle
-          cx="34" cy="34" r={R} fill="none" stroke="#f97316" strokeWidth="3.5" strokeLinecap="round"
-          strokeDasharray={C} strokeDashoffset={C * (1 - Math.min(1, Math.max(0, progress)))}
-          style={{ transition: 'stroke-dashoffset 0.25s ease' }}
-        />
-      </svg>
-      {saving
-        ? <Loader2 size={26} className="animate-spin" />
-        : <ArrowRight size={26} strokeWidth={2.5} />}
-    </motion.button>
-  );
-}
 
 function LinkChip({ link, onRemove }: { link: NoteLink; onRemove: () => void }) {
   const meta = LINK_META[link.type];
@@ -109,6 +75,7 @@ function NoteEditorSheet({
   const [saving, setSaving] = useState(false);
   const [folding, setFolding] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const dialogRef = useNoteDialog(() => { if (!saving && !folding) onClose(); });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Reset whenever the editor is opened fresh.
@@ -139,8 +106,6 @@ function NoteEditorSheet({
   };
 
   const canSave = text.trim().length > 0 && !saving && !folding;
-  // Orange ring fills as the note takes shape — full when ready to save.
-  const ringProgress = saving || folding ? 1 : Math.min(1, text.trim().length / 24);
 
   const handleSave = async () => {
     if (!canSave) return;
@@ -176,26 +141,26 @@ function NoteEditorSheet({
 
   return (
     <motion.div
-      className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center"
+      ref={dialogRef} className="note-editor fixed inset-x-0 z-[90] flex items-end sm:items-center justify-center"
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       role="dialog" aria-modal="true" aria-label={isEdit ? 'Edit note' : 'New note'}
     >
       <div className="absolute inset-0 bg-black/55 backdrop-blur-[2px]" onClick={() => !saving && !folding && onClose()} />
       {/* The folding card — rotateX fold-away on save, like the reel. */}
       <motion.div
-        initial={{ y: 60, opacity: 0, scale: 0.98 }}
+        initial={reduceMotion ? false : { y: 60, opacity: 0, scale: 0.98 }}
         animate={folding
           ? { rotateX: -72, opacity: 0, y: 90, scale: 0.94 }
           : { y: 0, opacity: 1, scale: 1, rotateX: 0 }}
-        exit={{ y: 60, opacity: 0, scale: 0.98 }}
+        exit={reduceMotion ? { opacity: 0 } : { y: 60, opacity: 0, scale: 0.98 }}
         transition={folding
           ? { duration: 0.45, ease: [0.5, 0, 0.75, 0] }
           : { type: 'spring', stiffness: 380, damping: 34 }}
         style={{ transformPerspective: 900, transformOrigin: '50% 0%' }}
         className={cn(
-          'relative w-full sm:max-w-md bg-white dark:bg-[#171522]',
+          'note-editor-panel relative w-full bg-white dark:bg-[#171522]',
           'rounded-t-[28px] sm:rounded-[28px] border border-slate-200/80 dark:border-[#2D283E]',
-          'shadow-[0_-12px_60px_rgba(0,0,0,0.35)] max-h-[92dvh] flex flex-col overflow-hidden'
+          'shadow-[0_-12px_60px_rgba(0,0,0,0.35)] flex flex-col overflow-hidden'
         )}
       >
         {/* Header */}
@@ -214,14 +179,14 @@ function NoteEditorSheet({
                 {isEdit ? 'Edit note' : `Step ${step + 1} of 2`}
               </p>
               <h3 className="text-base font-bold text-slate-900 dark:text-white font-display">
-                {step === 0 ? 'Pick an icon' : (isEdit ? 'Update your note' : 'Write your note')}
+                {step === 0 ? 'Make it yours' : (isEdit ? 'Update your note' : 'Write your note')}
               </h3>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <StepDots step={step} />
             <button
-              type="button" onClick={onClose} aria-label="Close"
+              type="button" onClick={onClose} disabled={saving || folding} aria-label="Close"
               className="p-2 rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
             >
               <X size={18} />
@@ -229,11 +194,12 @@ function NoteEditorSheet({
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 pb-5">
+        <div className="note-editor-body flex-1 overflow-y-auto px-5 pb-5">
           {step === 0 ? (
             /* ---------- STEP 1: icon grid (reel's pastel grid) ---------- */
             <div className="pt-1 pb-2">
-              <div className="grid grid-cols-4 gap-3">
+              <div className="note-picker-preview" aria-hidden="true"><NoteCharacter variant={iconIdx % 4} /><div><icon.Icon /></div></div>
+              <div className="note-icon-grid">
                 {NOTE_ICONS.map((ic, i) => {
                   const selected = i === iconIdx;
                   return (
@@ -241,24 +207,18 @@ function NoteEditorSheet({
                       key={ic.label}
                       type="button"
                       onClick={() => { setIconIdx(i); }}
-                      onDoubleClick={() => setStep(1)}
-                      whileTap={{ scale: 0.88 }}
+                      whileTap={reduceMotion ? undefined : { scale: 0.96 }}
                       aria-label={ic.label}
                       aria-pressed={selected}
-                      className={cn(
-                        'aspect-square rounded-[22px] grid place-items-center transition-all cursor-pointer overflow-hidden',
-                        selected
-                          ? 'ring-[3px] ring-[#0a84ff] ring-offset-2 ring-offset-white dark:ring-offset-[#171522] scale-[1.04]'
-                          : 'hover:scale-105 ring-1 ring-black/5 dark:ring-white/10'
-                      )}
+                      className="note-icon-choice"
                     >
-                      <ic.Icon className="w-full h-full" />
+                      <ic.Icon className="w-full h-full" /><span>{ic.label}</span>
                     </motion.button>
                   );
                 })}
               </div>
               <p className="text-center text-xs text-slate-400 mt-4">
-                Tap an icon to select it{!isEdit ? ', then continue' : ''} · double-tap to skip ahead
+                Choose an icon. Your little companion changes with it.
               </p>
             </div>
           ) : (
@@ -282,6 +242,7 @@ function NoteEditorSheet({
 
               <textarea
                 ref={textareaRef}
+                aria-label="Note text"
                 value={text}
                 onChange={e => setText(e.target.value)}
                 placeholder="Write your note..."
@@ -311,6 +272,7 @@ function NoteEditorSheet({
                 <div className="flex items-center gap-2 bg-slate-50 dark:bg-[#201E2E] border border-slate-200 dark:border-[#2D283E] rounded-xl px-3 py-2">
                   <Tag size={14} className="text-slate-400 shrink-0" />
                   <input
+                    aria-label="Add a tag"
                     value={tagInput}
                     onChange={e => setTagInput(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); commitTag(); } }}
@@ -331,7 +293,7 @@ function NoteEditorSheet({
               </div>
 
               {error && (
-                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-700 dark:text-rose-300 text-xs font-medium animate-in fade-in">
+                <div role="alert" className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-700 dark:text-rose-300 text-xs font-medium animate-in fade-in">
                   {error}
                 </div>
               )}
@@ -339,19 +301,17 @@ function NoteEditorSheet({
           )}
         </div>
 
-        {/* Footer: the reel's black circular button with orange ring */}
-        <div className="flex items-center justify-between px-5 pb-6 pt-1 shrink-0">
+        {/* Keep the primary action outside the scrolling editor body. */}
+        <div className="note-editor-footer flex items-center justify-between px-5 pb-6 pt-4 shrink-0">
           <p className="text-[11px] text-slate-400 max-w-[60%]">
             {step === 0
               ? 'Your icon leads every note in the list.'
               : (link ? 'Tap the × on the link chip to make this a personal note.' : 'Saved notes sync to your account.')}
           </p>
-          <RingButton
-            onClick={() => (step === 0 ? setStep(1) : handleSave())}
-            saving={saving}
-            progress={step === 0 ? 1 : ringProgress}
-            ariaLabel={step === 0 ? 'Continue to writing' : (isEdit ? 'Save changes' : 'Save note')}
-          />
+          <button type="button" className="notes-primary shrink-0 disabled:opacity-50" disabled={saving || folding || (step === 1 && !canSave)} onClick={() => step === 0 ? setStep(1) : handleSave()}>
+            {saving ? <Loader2 size={18} className="animate-spin" /> : step === 0 ? <ArrowRight size={18} /> : <Check size={18} />}
+            {saving ? 'Saving…' : step === 0 ? 'Continue' : 'Save note'}
+          </button>
         </div>
       </motion.div>
     </motion.div>
@@ -360,9 +320,10 @@ function NoteEditorSheet({
 
 function LoginPromptSheet({ onClose }: { onClose: () => void }) {
   const { setIsAuthModalOpen } = useAuth();
+  const dialogRef = useNoteDialog(onClose);
   return (
     <motion.div
-      className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center"
+      ref={dialogRef} className="note-editor fixed inset-x-0 z-[90] flex items-end sm:items-center justify-center"
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       role="dialog" aria-modal="true" aria-label="Sign in required"
     >
@@ -372,7 +333,7 @@ function LoginPromptSheet({ onClose }: { onClose: () => void }) {
         transition={{ type: 'spring', stiffness: 380, damping: 34 }}
         className="relative w-full sm:max-w-sm bg-white dark:bg-[#171522] rounded-t-[28px] sm:rounded-[28px] border border-slate-200/80 dark:border-[#2D283E] p-6 text-center shadow-xl"
       >
-        <div className="w-14 h-14 mx-auto rounded-2xl bg-orange-500/15 grid place-items-center text-2xl mb-3">📝</div>
+        <div className="w-24 h-24 mx-auto mb-3"><NoteCharacter /></div>
         <h3 className="text-base font-bold text-slate-900 dark:text-white font-display">Sign in to save notes</h3>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
           Notes are saved permanently to your account and sync across devices — even after app updates.
@@ -417,3 +378,4 @@ export function NoteEditorHost() {
     </AnimatePresence>
   );
 }
+
