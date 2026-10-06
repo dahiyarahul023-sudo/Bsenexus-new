@@ -78,17 +78,17 @@ export const FALLBACK_MARKET_GUIDES: ServerMarketGuide[] = [
           content: 'AceVector \u2014 the parent company of Snapdeal \u2014 listed on the NSE and BSE on Monday, October 5, 2026. The Rs 420-crore IPO was priced at Rs 30\u201332 per share and subscribed 4.93 times. It debuted at a discount: Rs 28.32 on the NSE (Rs 28.30 on the BSE) \u2014 11.5% below the Rs 32 issue price, a loss of nearly Rs 1,730 per allotted lot.'
         },
         {
-          heading: 'SRIT India \u2014 lists Tuesday, October 6, 2026',
-          title: 'SRIT India \u2014 lists Tuesday, October 6, 2026',
-          content: 'SRIT India lists on the NSE and BSE on Tuesday, October 6, 2026. The Rs 218.4-crore IPO was priced at Rs 123\u2013130 per share and subscribed 125.16 times overall, with NII demand at 313 times \u2014 the highest NII demand in this batch.'
+          heading: 'SRIT India \u2014 listed Tuesday, October 6, 2026',
+          title: 'SRIT India \u2014 listed Tuesday, October 6, 2026',
+          content: 'SRIT India listed on the NSE and BSE on Tuesday, October 6, 2026. The Rs 218.4-crore IPO was priced at Rs 123\u2013130 per share and subscribed 125.16 times overall, with NII demand at 313 times \u2014 the highest NII demand in this batch. It debuted at Rs 148 on the NSE \u2014 a 13.85% premium over the Rs 130 issue price \u2014 and at Rs 139.80 on the BSE (+7.54%).'
         },
         {
-          heading: 'Shah Investor\u2019s Home \u2014 lists Tuesday, October 6, 2026',
-          title: 'Shah Investor\u2019s Home \u2014 lists Tuesday, October 6, 2026',
-          content: 'Shah Investor\u2019s Home lists on the NSE and BSE on Tuesday, October 6, 2026. The Rs 90.17-crore IPO was priced at Rs 159\u2013167 per share and subscribed 38.12 times.'
+          heading: 'Shah Investor\u2019s Home \u2014 listed Tuesday, October 6, 2026',
+          title: 'Shah Investor\u2019s Home \u2014 listed Tuesday, October 6, 2026',
+          content: 'Shah Investor\u2019s Home listed on the NSE and BSE on Tuesday, October 6, 2026. The Rs 90.17-crore IPO was priced at Rs 159\u2013167 per share and subscribed 38.12 times. It debuted modestly higher at Rs 171 \u2014 a 2.4% premium over the Rs 167 issue price.'
         }
       ],
-      conclusion: 'Monday\u2019s four listings are done: Orient Cables delivered the day\u2019s standout debut (+65.44% to Rs 450), German Green Steel & Power listed modestly higher (+2.16% to Rs 142), Runwal Enterprises debuted flat at Rs 305, and AceVector slipped 11.5% to Rs 28.32. SRIT India and Shah Investor\u2019s Home list on Tuesday, October 6 \u2014 this guide updates again then. All six companies will announce their Q2 FY27 results in October\u2013November 2026; track their filings, board meetings and results on Bsenexus as the earnings season unfolds.'
+      conclusion: 'Tuesday\u2019s two listings are done: SRIT India listed at Rs 148 on the NSE (+13.85% over Rs 130) and Rs 139.80 on the BSE (+7.54%), while Shah Investor\u2019s Home debuted at Rs 171 \u2014 a modest 2.4% premium over its Rs 167 issue price. Monday\u2019s four are in the books: Orient Cables delivered the week\u2019s standout debut (+65.44% to Rs 450), German Green Steel & Power listed modestly higher (+2.16% to Rs 142), Runwal Enterprises debuted flat at Rs 305, and AceVector slipped 11.5% to Rs 28.32. All six companies will announce their Q2 FY27 results in October\u2013November 2026; track their filings, board meetings and results on Bsenexus as the earnings season unfolds.'
     },
     faq: [
       {
@@ -102,6 +102,10 @@ export const FALLBACK_MARKET_GUIDES: ServerMarketGuide[] = [
       {
         question: 'At what price did these IPOs list on October 5?',
         answer: 'Runwal Enterprises listed at Rs 305 (flat vs its Rs 305 issue price), Orient Cables (India) at Rs 450 (+65.44% over Rs 272), German Green Steel & Power at Rs 142 on the NSE (+2.16% over Rs 139), and AceVector at Rs 28.32 on the NSE (11.5% below its Rs 32 issue price).'
+      },
+      {
+        question: 'At what price did these IPOs list on October 6?',
+        answer: 'SRIT India listed at Rs 148 on the NSE (+13.85% over its Rs 130 issue price) and Rs 139.80 on the BSE (+7.54%). Shah Investor\u2019s Home debuted at Rs 171 \u2014 2.4% above its Rs 167 issue price.'
       }
     ]
   },
