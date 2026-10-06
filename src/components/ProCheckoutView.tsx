@@ -23,6 +23,7 @@ export function ProCheckoutView() {
   const [referralMessage, setReferralMessage] = useState<string | null>(null);
   const [validatingRef, setValidatingRef] = useState<boolean>(false);
   const [showReferralInput, setShowReferralInput] = useState<boolean>(false);
+  const referralField = useRef<HTMLInputElement>(null);
 
   const close = () => {
     if (!payingRef.current) setIsCheckoutOpen(false);
@@ -65,6 +66,15 @@ export function ProCheckoutView() {
   useEffect(() => {
     if (isCheckoutOpen) heading.current?.focus({ preventScroll: true });
   }, [step, isCheckoutOpen]);
+
+  useEffect(() => {
+    if (!isCheckoutOpen || !showReferralInput || isReferralApplied) return;
+    const frame = requestAnimationFrame(() => {
+      referralField.current?.focus({ preventScroll: true });
+      referralField.current?.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [showReferralInput, isCheckoutOpen, step, isReferralApplied]);
 
   if (!isCheckoutOpen) return null;
 
@@ -200,23 +210,26 @@ export function ProCheckoutView() {
                     <>
                       <span className="payment-referral-badge">
                         <Sparkles size={14} />
-                        Referral <strong>{referralCode}</strong> applied
+                        <span>Referral <strong>{referralCode}</strong> applied</span>
                         <span className="payment-referral-discount-pill">
                           {planId === 'pro_monthly' ? '₹100 OFF' : `₹${plan.referralDiscount} OFF`}
                         </span>
                       </span>
-                      <button type="button" className="payment-referral-remove" onClick={handleRemoveReferral}>
+                      <button type="button" className="payment-referral-remove" disabled={paying || validatingRef} onClick={handleRemoveReferral}>
                         Remove
                       </button>
                     </>
                   ) : (
                     <>
-                      <span className="text-xs text-slate-600 dark:text-slate-300 flex items-center gap-1.5 font-medium">
-                        <Tag size={13} /> Have a creator referral code?
+                      <span className="payment-referral-prompt">
+                        <Tag size={13} /> Have a referral code?
                       </span>
                       <button
                         type="button"
-                        className="text-xs underline text-emerald-600 dark:text-emerald-400 font-semibold"
+                        className="payment-referral-toggle"
+                        aria-expanded={showReferralInput}
+                        aria-controls="checkout-referral-form"
+                        disabled={paying || validatingRef}
                         onClick={() => setShowReferralInput(!showReferralInput)}
                       >
                         {showReferralInput ? 'Cancel' : 'Enter code'}
@@ -227,6 +240,8 @@ export function ProCheckoutView() {
 
                 {!isReferralApplied && showReferralInput && (
                   <form
+                    id="checkout-referral-form"
+                    aria-busy={validatingRef}
                     className="payment-referral-input-group"
                     onSubmit={(e) => {
                       e.preventDefault();
@@ -234,19 +249,26 @@ export function ProCheckoutView() {
                     }}
                   >
                     <input
+                      ref={referralField}
+                      aria-label="Referral code"
+                      autoComplete="off"
+                      autoCapitalize="characters"
+                      spellCheck={false}
+                      enterKeyHint="done"
+                      disabled={paying || validatingRef}
                       type="text"
-                      placeholder="e.g. CREATOR100"
+                      placeholder="Enter referral code"
                       value={referralInput}
                       onChange={(e) => setReferralInput(e.target.value.toUpperCase())}
                       maxLength={20}
                     />
-                    <button type="submit" disabled={validatingRef || !referralInput.trim()}>
+                    <button type="submit" disabled={paying || validatingRef || !referralInput.trim()}>
                       {validatingRef ? 'Verifying…' : 'Apply'}
                     </button>
                   </form>
                 )}
                 {referralMessage && isReferralApplied && (
-                  <p className="text-[11px] text-emerald-700 dark:text-emerald-300 mt-1 font-medium">{referralMessage}</p>
+                  <p role="status" className="payment-referral-message">{referralMessage}</p>
                 )}
               </div>
 
@@ -357,20 +379,23 @@ export function ProCheckoutView() {
                     <>
                       <span className="payment-referral-badge">
                         <Sparkles size={14} />
-                        Referral <strong>{referralCode}</strong> applied
+                        <span>Referral <strong>{referralCode}</strong> applied</span>
                       </span>
-                      <button type="button" className="payment-referral-remove" onClick={handleRemoveReferral}>
+                      <button type="button" className="payment-referral-remove" disabled={paying || validatingRef} onClick={handleRemoveReferral}>
                         Remove
                       </button>
                     </>
                   ) : (
                     <>
-                      <span className="text-xs text-slate-600 dark:text-slate-300 flex items-center gap-1.5 font-medium">
+                      <span className="payment-referral-prompt">
                         <Tag size={13} /> Have a referral code?
                       </span>
                       <button
                         type="button"
-                        className="text-xs underline text-emerald-600 dark:text-emerald-400 font-semibold"
+                        className="payment-referral-toggle"
+                        aria-expanded={showReferralInput}
+                        aria-controls="checkout-referral-form"
+                        disabled={paying || validatingRef}
                         onClick={() => setShowReferralInput(!showReferralInput)}
                       >
                         {showReferralInput ? 'Cancel' : 'Enter code'}
@@ -381,6 +406,8 @@ export function ProCheckoutView() {
 
                 {!isReferralApplied && showReferralInput && (
                   <form
+                    id="checkout-referral-form"
+                    aria-busy={validatingRef}
                     className="payment-referral-input-group"
                     onSubmit={(e) => {
                       e.preventDefault();
@@ -388,13 +415,20 @@ export function ProCheckoutView() {
                     }}
                   >
                     <input
+                      ref={referralField}
+                      aria-label="Referral code"
+                      autoComplete="off"
+                      autoCapitalize="characters"
+                      spellCheck={false}
+                      enterKeyHint="done"
+                      disabled={paying || validatingRef}
                       type="text"
-                      placeholder="e.g. CREATOR100"
+                      placeholder="Enter referral code"
                       value={referralInput}
                       onChange={(e) => setReferralInput(e.target.value.toUpperCase())}
                       maxLength={20}
                     />
-                    <button type="submit" disabled={validatingRef || !referralInput.trim()}>
+                    <button type="submit" disabled={paying || validatingRef || !referralInput.trim()}>
                       {validatingRef ? 'Verifying…' : 'Apply'}
                     </button>
                   </form>
@@ -463,7 +497,7 @@ export function ProCheckoutView() {
           )}
           <button
             className="payment-primary"
-            disabled={paying}
+            disabled={paying || validatingRef}
             onClick={step === 'plan' ? () => move('pay') : handlePay}
           >
             {paying ? 'Opening secure checkout…' : step === 'plan' ? `Continue — ₹${currentPrice}` : `Pay ₹${currentPrice}`}

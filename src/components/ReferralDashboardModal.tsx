@@ -526,7 +526,7 @@ export function ReferralDashboardModal({
                   {/* Volume Tiers Breakdown */}
                   <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-2.5">
                     <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                      Tiered Commission Milestones (जितने ज्यादा रेफरल, उतना ज्यादा कमीशन)
+                      Commission milestones — earn more as referrals grow
                     </h4>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                       <div className={`p-3 rounded-xl border ${totalConversions < 5 ? 'border-emerald-500/40 bg-emerald-500/10' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950'}`}>
