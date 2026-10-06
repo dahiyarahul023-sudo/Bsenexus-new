@@ -13,35 +13,69 @@
 export interface ProPlanDisplay {
   id: string;
   label: string;
-  price: number; // ₹ (display only — server decides the charged amount)
+  price: number; // ₹ (standard display price — server decides the charged amount)
+  referralPrice: number; // ₹ (price when referral code/link is active)
+  referralDiscount: number; // ₹ (flat or derived savings)
   days: number;
   tag?: string; // small highlight under the price, e.g. "Most Popular"
-  sub: string; // honest sub-line (real savings vs monthly, or trial note)
+  sub: string; // honest sub-line
   wasPrice?: number; // honest struck-through anchor, e.g. monthly's ₹499 launch anchor
 }
 
 export const PRO_PLAN_LIST: ProPlanDisplay[] = [
-  { id: 'pro_weekly', label: 'Pro Weekly', price: 59, days: 7, sub: '7 days · try Pro out' },
+  {
+    id: 'pro_weekly',
+    label: 'Pro Weekly',
+    price: 89,
+    referralPrice: 59,
+    referralDiscount: 30,
+    days: 7,
+    sub: '7 days · ₹59 with referral',
+  },
   {
     id: 'pro_monthly',
     label: 'Pro Monthly',
-    price: 199,
+    price: 299,
+    referralPrice: 199,
+    referralDiscount: 100, // Flat ₹100 OFF
     days: 30,
     tag: 'Most Popular',
     wasPrice: 499,
-    sub: 'Was ₹499 · 60% launch offer',
+    sub: 'Flat ₹100 OFF with referral (Pay ₹199)',
   },
-  { id: 'pro_halfyearly', label: 'Pro 6-Month', price: 999, days: 180, sub: 'Save ₹195 vs monthly' },
-  { id: 'pro_yearly', label: 'Pro Yearly', price: 1799, days: 365, sub: 'Save ₹589 vs monthly' },
+  {
+    id: 'pro_halfyearly',
+    label: 'Pro 6-Month',
+    price: 1499,
+    referralPrice: 999,
+    referralDiscount: 500,
+    days: 180,
+    sub: 'Save ₹295 vs monthly · ₹999 with referral',
+  },
+  {
+    id: 'pro_yearly',
+    label: 'Pro Yearly',
+    price: 2699,
+    referralPrice: 1799,
+    referralDiscount: 900,
+    days: 365,
+    sub: 'Save ₹889 vs monthly · ₹1,799 with referral',
+  },
 ];
 
 export function getPlanDisplay(planId?: string | null): ProPlanDisplay {
   return PRO_PLAN_LIST.find((p) => p.id === planId) || PRO_PLAN_LIST[1];
 }
 
+/** Get the effective price considering referral status */
+export function getEffectivePlanPrice(planId?: string | null, hasReferral: boolean = false): number {
+  const plan = getPlanDisplay(planId);
+  return hasReferral ? plan.referralPrice : plan.price;
+}
+
 /** Cheapest plan price — the single source for "from ₹X" marketing lines. */
-export function getLowestPlanPrice(): number {
-  return Math.min(...PRO_PLAN_LIST.map((p) => p.price));
+export function getLowestPlanPrice(hasReferral: boolean = false): number {
+  return Math.min(...PRO_PLAN_LIST.map((p) => (hasReferral ? p.referralPrice : p.price)));
 }
 
 export function isValidPlanId(planId?: string | null): boolean {

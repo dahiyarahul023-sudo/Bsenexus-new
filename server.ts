@@ -1845,7 +1845,7 @@ ${jsonLd}
 }
 
 export function renderPricingPage(): string {
-  const pageTitle = "Pricing — Pro Plans from ₹89 | Bsenexus";
+  const pageTitle = "Pricing — Pro Plans from ₹59 | Bsenexus";
   const canonicalUrl = "https://bsenexus.in/pricing";
   const description = "Bsenexus Pro plans: Weekly ₹89, Monthly ₹299 (Flat ₹100 OFF with referral = ₹199), 6-Month ₹1,499, Yearly ₹2,699. One-time payments via Cashfree — no auto-renewal. 1st week free, no card required. Free vs Pro comparison.";
 
