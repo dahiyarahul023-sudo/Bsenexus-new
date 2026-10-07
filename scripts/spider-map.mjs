@@ -106,11 +106,12 @@ export function impact(map, changed) {
   const affected = new Set(changed), queue = [...changed];
   const reverse = new Map(map.files.map(f => [f.path, f.importedBy]));
   while (queue.length) for (const p of reverse.get(queue.shift()) || []) if (!affected.has(p)) { affected.add(p); queue.push(p); }
-  // Do NOT recursively propagate shared domain membership: that would make almost every change touch everything.
-  const domains = map.domains.filter(d => [...d.files,...d.tests].some(p => changed.includes(p)));
+  // A helper can reach a business contract through any transitive import consumer.
+  // Expand semantic membership once from this import closure, never from semantic peers.
+  const domains = map.domains.filter(d => [...d.files,...d.tests].some(p => affected.has(p)));
   const related = sorted(domains.flatMap(d => d.files));
   const review = new Set([...affected,...related]);
-  return { changed, importConsumers: sorted(affected).filter(p => !changed.includes(p)), directDependencies: map.edges.filter(e => changed.includes(e.source)), semanticDomains: domains.map(d => ({id:d.id,reason:d.reason})), relatedFiles: related, candidateTests: sorted([...affected].filter(p => /(?:\.test\.|\.spec\.)/.test(p)).concat(domains.flatMap(d => d.tests))), routes: map.routes.filter(r => review.has(r.file)), stores: map.stores.filter(s => review.has(s.file)), network: map.network.filter(n => review.has(n.file)), environment: map.environment.filter(e => review.has(e.file)), limitations: map.limitations };
+  return { changed, importConsumers: sorted(affected).filter(p => !changed.includes(p)), directDependencies: map.edges.filter(e => changed.includes(e.source)), semanticDomains: domains.map(d => ({id:d.id,reason:d.reason,viaFiles:sorted([...d.files,...d.tests].filter(p => affected.has(p)))})), relatedFiles: related, candidateTests: sorted([...affected].filter(p => /(?:\.test\.|\.spec\.)/.test(p)).concat(domains.flatMap(d => d.tests))), routes: map.routes.filter(r => review.has(r.file)), stores: map.stores.filter(s => review.has(s.file)), network: map.network.filter(n => review.has(n.file)), environment: map.environment.filter(e => review.has(e.file)), limitations: map.limitations };
 }
 
 export function artifacts(map, root = defaultRoot) {
@@ -154,3 +155,4 @@ if (process.argv[1] && path.resolve(process.argv[1]) === scriptPath) {
     else throw new Error('Unknown option: ' + args[0]);
   } catch (error) { console.error(error.message); process.exitCode = 1; }
 }
+
