@@ -1,10 +1,11 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "aeea902f9f9a23a05fcc9922a4ba8e0885095319b9abd470b85a6fb23c28eefe",
+  "sourceDigest": "151c9dcc7978e826cb82747c9ae3e2dfd06d42b1e27fc39911886c970a6ba54d",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
-    "Candidate tests are not proof of sufficient coverage."
+    "Candidate tests are not proof of sufficient coverage.",
+    "Browser-event links match literal names on window/document only, one hop; computed names, aliases, bubbling, CSS selectors, React context semantics and live state need manual review."
   ],
   "files": [
     {
@@ -144,19 +145,19 @@
     },
     {
       "path": "scripts/spider-map.mjs",
-      "sha256": "94a1f2bcc9702696a139308076aad8b48c561224bebb3f9d21563f8580d6a237",
+      "sha256": "5f3fc4e12db646af48835ed53a644c930af02f62455eaa45940ee81858fb8090",
       "importedBy": [
         "scripts/spider-map.test.mjs"
       ]
     },
     {
       "path": "scripts/spider-map.test.mjs",
-      "sha256": "630ac51b383ec702af46c6a6567fa465b102a3e7dc83e872176782501003ddf0",
+      "sha256": "d11dff282a5244e009d27bf950695161951d6a8d653408c6cd41f0074b7dd587",
       "importedBy": []
     },
     {
       "path": "scripts/spider-view.html",
-      "sha256": "f89487e7ca93fba3227c5ea27c0888b37dee832b2cc6bd4aa0e2c5e11bf22120",
+      "sha256": "0ce2b4b657614081fd090e22c64507dfb3d318ac334f16c6a16dd41169e64a11",
       "importedBy": []
     },
     {
@@ -7837,6 +7838,216 @@
         "server/tests/recaptchaSecurity.test.ts"
       ],
       "reason": "Startup and settings influence background jobs, provider calls, abuse limits and logs. A live HTTP listener does not establish that durable stores or external providers are ready."
+    },
+    {
+      "id": "frontend-navigation",
+      "label": "Frontend: routes, tabs and scroll",
+      "files": [
+        "src/main.tsx",
+        "src/App.tsx",
+        "src/components/Layout.tsx",
+        "src/components/filing/FilingPage.tsx",
+        "src/components/results/ResultsPage.tsx",
+        "src/components/NotFoundPage.tsx",
+        "src/utils/shareUrls.ts",
+        "src/utils/scrollState.ts",
+        "src/hooks/useScrollRestoration.ts",
+        "src/hooks/useScreenTransition.ts",
+        "src/components/ui/PageSkeleton.tsx",
+        "src/components/ui/TabErrorBoundary.tsx"
+      ],
+      "tests": [
+        "server/tests/routeResolution.test.ts"
+      ],
+      "reason": "URL and active tab must agree across direct links, refresh, browser Back/Forward and share pages. Loading, focus and scroll restoration are part of navigation; route tests do not prove browser behavior."
+    },
+    {
+      "id": "frontend-session",
+      "label": "Frontend: identity and saved preferences",
+      "files": [
+        "src/context/AuthContext.tsx",
+        "src/context/ToastContext.tsx",
+        "src/components/AuthModal.tsx",
+        "src/components/Login.tsx",
+        "src/components/SettingsTab.tsx",
+        "src/components/UserProfileModal.tsx",
+        "src/components/ui/SyncStatusBadge.tsx",
+        "src/utils/preferenceSaveQueue.ts",
+        "src/api.ts",
+        "src/firebase.ts"
+      ],
+      "tests": [
+        "server/tests/preferenceSaveQueue.test.ts",
+        "server/tests/recaptchaUiState.test.ts",
+        "server/tests/apiCancellation.test.ts"
+      ],
+      "reason": "Guest, restoring, signed-in and expired states must stay distinct. Late requests and saved preferences must not overwrite newer edits or leak between accounts. A success message requires the appropriate confirmed result."
+    },
+    {
+      "id": "frontend-design",
+      "label": "Frontend: shared styling, motion and overlays",
+      "files": [
+        "src/index.css",
+        "src/types.ts",
+        "src/App.tsx",
+        "src/components/Layout.tsx",
+        "src/styles/payment.css",
+        "src/styles/referral.css",
+        "src/components/notes/notes.css",
+        "src/components/ui/pageSkeleton.css",
+        "src/components/ui/ActionButton.tsx",
+        "src/components/landing/ActionButton.tsx",
+        "src/components/ui/ConfirmModal.tsx",
+        "src/components/ui/CustomDropdown.tsx",
+        "src/components/ui/PageSkeleton.tsx",
+        "src/hooks/useBodyScrollLock.ts",
+        "src/hooks/usePaymentDialog.ts",
+        "src/components/notes/useNoteDialog.ts",
+        "src/utils/motionTokens.ts"
+      ],
+      "tests": [],
+      "reason": "Global CSS, inherited theme tokens, shared controls, focus, z-index and scroll locks connect screens without direct imports. Review all changed selector/token consumers; this seed list is not every affected screen. No browser accessibility or screenshot test suite is established by this domain."
+    },
+    {
+      "id": "frontend-feed",
+      "label": "Frontend: feed, watchlists, results and detail",
+      "files": [
+        "src/components/HomeForYou.tsx",
+        "src/components/Announcements.tsx",
+        "src/components/WatchlistManager.tsx",
+        "src/components/ResultsCalendar.tsx",
+        "src/components/QuarterlyResultsLedger.tsx",
+        "src/components/NewsPortal.tsx",
+        "src/components/NotificationInbox.tsx",
+        "src/components/CompanyIntelligenceModal.tsx",
+        "src/context/IntelModalContext.tsx",
+        "src/utils/announcementFeed.ts",
+        "src/utils/clusterAnnouncements.ts",
+        "src/utils/timeFormat.ts",
+        "src/hooks/useFeedDensity.ts",
+        "src/hooks/useVisibilityInterval.ts",
+        "src/hooks/useMarketIndices.ts",
+        "src/api.ts"
+      ],
+      "tests": [
+        "server/tests/core.test.ts",
+        "server/tests/auditData.test.ts",
+        "server/tests/apiCancellation.test.ts"
+      ],
+      "reason": "List/detail identity, filters, watchlist membership, badge counts and timestamps must agree. Background refresh preserves content, density, selection and scroll. Rapid filter changes must not render older responses."
+    },
+    {
+      "id": "frontend-notes",
+      "label": "Frontend: note editor, saved list and counts",
+      "files": [
+        "src/context/NoteEditorContext.tsx",
+        "src/components/notes/NoteEditor.tsx",
+        "src/components/notes/SavedNotesScreen.tsx",
+        "src/components/notes/SaveNoteButton.tsx",
+        "src/components/notes/useNoteDialog.ts",
+        "src/components/notes/notes.css",
+        "src/components/SettingsTab.tsx",
+        "src/api/notesApi.ts",
+        "src/components/ui/AutosaveIndicator.tsx"
+      ],
+      "tests": [
+        "server/tests/notes.test.ts"
+      ],
+      "reason": "Editor writes dispatch notes-changed; saved-list and Settings listeners refresh independently. Preserve draft, list and count consistency across save, edit, delete, retry, account change and overlay close. API tests do not establish DOM focus or draft behavior."
+    },
+    {
+      "id": "frontend-commerce",
+      "label": "Frontend: pricing, checkout, receipt and referral",
+      "files": [
+        "src/components/PricingPage.tsx",
+        "src/components/ProUpgradeModal.tsx",
+        "src/components/ProCheckoutView.tsx",
+        "src/components/ProReceiptView.tsx",
+        "src/components/PaymentHistory.tsx",
+        "src/components/SubscriptionCard.tsx",
+        "src/components/SubscriptionProgress.tsx",
+        "src/components/ReferralDashboardModal.tsx",
+        "src/config/plans.ts",
+        "src/utils/cashfree.ts",
+        "src/utils/paymentFeedback.ts",
+        "src/utils/subscriptionProgress.ts",
+        "src/utils/referralStream.ts",
+        "src/hooks/usePaymentDialog.ts",
+        "src/styles/payment.css",
+        "src/styles/referral.css"
+      ],
+      "tests": [
+        "server/tests/pricingSync.test.ts",
+        "server/tests/subscriptionProgress.test.ts",
+        "server/tests/referralContract.test.ts"
+      ],
+      "reason": "Displayed amount, checkout attribution, return verification, receipt/history and subscription display share one contract. Pending referral, confirmed reward and stale stream are different UI states. Never turn a redirect or unconfirmed write into success."
+    },
+    {
+      "id": "frontend-ai",
+      "label": "Frontend: AI request, quota and saved output",
+      "files": [
+        "src/components/AiSummaryViewer.tsx",
+        "src/components/AiUsageCard.tsx",
+        "src/components/CompanyIntelligenceModal.tsx",
+        "src/components/ProUpgradeModal.tsx",
+        "src/utils/aiQuota.ts",
+        "src/components/ui/ThinkingPill.tsx",
+        "src/components/ui/TimeoutRetryState.tsx",
+        "src/components/notes/SaveNoteButton.tsx",
+        "src/api.ts"
+      ],
+      "tests": [
+        "server/tests/aiQuotaFrontend.test.ts",
+        "server/tests/apiCancellation.test.ts"
+      ],
+      "reason": "AI request lifecycle connects quota meters, upgrade entry points, cancellation and saving generated content. Failed/aborted requests, late responses, quota events and account changes must keep all consumers consistent."
+    },
+    {
+      "id": "frontend-offline-privacy",
+      "label": "Frontend: connectivity, offline cache and consent",
+      "files": [
+        "public/sw.js",
+        "src/api.ts",
+        "src/components/Layout.tsx",
+        "src/components/CookieConsentBanner.tsx",
+        "src/utils/cookieConsent.ts",
+        "src/utils/cache.ts",
+        "src/utils/retry.ts",
+        "src/utils/telemetry.ts",
+        "src/utils/oneSignal.ts",
+        "src/components/PushNotificationPrompt.tsx",
+        "src/components/ui/SyncStatusBadge.tsx"
+      ],
+      "tests": [
+        "server/tests/pwaOfflineSync.test.ts",
+        "server/tests/apiCancellation.test.ts"
+      ],
+      "reason": "Network events affect banners and retry state; service-worker cache differs from request success. Consent and push permission have separate lifecycles. Review cached user data on logout/account switch and avoid duplicate listeners or delivery."
+    },
+    {
+      "id": "frontend-public",
+      "label": "Frontend: landing and public content",
+      "files": [
+        "src/components/LandingPage.tsx",
+        "src/components/landing/CreativeHero.tsx",
+        "src/components/landing/FeatureTabs.tsx",
+        "src/components/landing/FilingJourney.tsx",
+        "src/components/CompaniesPage.tsx",
+        "src/components/GuidesPage.tsx",
+        "src/components/TrustPages.tsx",
+        "src/components/MarketGuidesSection.tsx",
+        "src/components/HelpModal.tsx",
+        "src/components/TermsModal.tsx",
+        "index.html",
+        "public/llms.txt",
+        "public/llms-full.txt"
+      ],
+      "tests": [
+        "server/tests/searchEngineDiscovery.test.ts",
+        "server/tests/routeResolution.test.ts"
+      ],
+      "reason": "Public links, pricing claims, server-rendered content and client views must agree. Lazy navigation, responsive composition, keyboard operation and motion require browser evidence beyond server discovery tests."
     }
   ],
   "routes": [
@@ -14086,6 +14297,1248 @@
       "file": "vite.config.ts",
       "line": 39,
       "name": "DISABLE_HMR"
+    }
+  ],
+  "browserEvents": [
+    {
+      "file": "src/App.tsx",
+      "line": 494,
+      "target": "window",
+      "kind": "dispatch",
+      "name": "bse-share-target",
+      "expression": "window.dispatchEvent(new CustomEvent('bse-share-target', { detail: { title: sharedTitle, text: sharedText, url: sharedUrl, query: combinedShared } }))"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 503,
+      "target": "window",
+      "kind": "listen",
+      "name": "popstate",
+      "expression": "window.addEventListener('popstate', handlePopState)"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 504,
+      "target": "window",
+      "kind": "remove",
+      "name": "popstate",
+      "expression": "window.removeEventListener('popstate', handlePopState)"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 609,
+      "target": "window",
+      "kind": "listen",
+      "name": "popstate",
+      "expression": "window.addEventListener('popstate', handlePopState)"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 611,
+      "target": "window",
+      "kind": "remove",
+      "name": "popstate",
+      "expression": "window.removeEventListener('popstate', handlePopState)"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 742,
+      "target": "window",
+      "kind": "listen",
+      "name": "auth-expired",
+      "expression": "window.addEventListener('auth-expired', handleAuthExpired)"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 743,
+      "target": "window",
+      "kind": "remove",
+      "name": "auth-expired",
+      "expression": "window.removeEventListener('auth-expired', handleAuthExpired)"
+    },
+    {
+      "file": "src/api.ts",
+      "line": 61,
+      "target": "window",
+      "kind": "dispatch",
+      "name": "auth-expired",
+      "expression": "window.dispatchEvent(new Event('auth-expired'))"
+    },
+    {
+      "file": "src/api.ts",
+      "line": 66,
+      "target": "window",
+      "kind": "dispatch",
+      "name": "network-status",
+      "expression": "window.dispatchEvent(new CustomEvent('network-status', { detail: { isOnline: true } }))"
+    },
+    {
+      "file": "src/api.ts",
+      "line": 84,
+      "target": "window",
+      "kind": "dispatch",
+      "name": "network-status",
+      "expression": "window.dispatchEvent(new CustomEvent('network-status', { detail: { isOnline: false, error: error.message || 'Connection lost' } }))"
+    },
+    {
+      "file": "src/components/AiUsageCard.tsx",
+      "line": 14,
+      "target": "window",
+      "kind": "dispatch",
+      "name": "bse_ai_quota_refresh",
+      "expression": "window.dispatchEvent(new Event('bse_ai_quota_refresh'))"
+    },
+    {
+      "file": "src/components/Announcements.tsx",
+      "line": 133,
+      "target": "window",
+      "kind": "listen",
+      "name": "bse-share-target",
+      "expression": "window.addEventListener('bse-share-target', handleShareTarget)"
+    },
+    {
+      "file": "src/components/Announcements.tsx",
+      "line": 134,
+      "target": "window",
+      "kind": "remove",
+      "name": "bse-share-target",
+      "expression": "window.removeEventListener('bse-share-target', handleShareTarget)"
+    },
+    {
+      "file": "src/components/Announcements.tsx",
+      "line": 385,
+      "target": "window",
+      "kind": "listen",
+      "name": "auth-state-changed",
+      "expression": "window.addEventListener('auth-state-changed', handleAuthChanged)"
+    },
+    {
+      "file": "src/components/Announcements.tsx",
+      "line": 386,
+      "target": "window",
+      "kind": "remove",
+      "name": "auth-state-changed",
+      "expression": "window.removeEventListener('auth-state-changed', handleAuthChanged)"
+    },
+    {
+      "file": "src/components/AuthModal.tsx",
+      "line": 21,
+      "target": "window",
+      "kind": "listen",
+      "name": "keydown",
+      "expression": "window.addEventListener('keydown', handleKeyDown)"
+    },
+    {
+      "file": "src/components/AuthModal.tsx",
+      "line": 22,
+      "target": "window",
+      "kind": "remove",
+      "name": "keydown",
+      "expression": "window.removeEventListener('keydown', handleKeyDown)"
+    },
+    {
+      "file": "src/components/CookieConsentBanner.tsx",
+      "line": 36,
+      "target": "window",
+      "kind": "listen",
+      "name": "open-cookie-settings",
+      "expression": "window.addEventListener('open-cookie-settings', handleOpenSettings)"
+    },
+    {
+      "file": "src/components/CookieConsentBanner.tsx",
+      "line": 37,
+      "target": "window",
+      "kind": "remove",
+      "name": "open-cookie-settings",
+      "expression": "window.removeEventListener('open-cookie-settings', handleOpenSettings)"
+    },
+    {
+      "file": "src/components/Layout.tsx",
+      "line": 93,
+      "target": "window",
+      "kind": "listen",
+      "name": "open-referral-modal",
+      "expression": "window.addEventListener('open-referral-modal', handleOpenReferral)"
+    },
+    {
+      "file": "src/components/Layout.tsx",
+      "line": 94,
+      "target": "window",
+      "kind": "remove",
+      "name": "open-referral-modal",
+      "expression": "window.removeEventListener('open-referral-modal', handleOpenReferral)"
+    },
+    {
+      "file": "src/components/Layout.tsx",
+      "line": 165,
+      "target": "window",
+      "kind": "listen",
+      "name": "network-status",
+      "expression": "window.addEventListener('network-status', handleNetworkStatus)"
+    },
+    {
+      "file": "src/components/Layout.tsx",
+      "line": 168,
+      "target": "window",
+      "kind": "listen",
+      "name": "online",
+      "expression": "window.addEventListener('online', handleOnline)"
+    },
+    {
+      "file": "src/components/Layout.tsx",
+      "line": 169,
+      "target": "window",
+      "kind": "listen",
+      "name": "offline",
+      "expression": "window.addEventListener('offline', handleOffline)"
+    },
+    {
+      "file": "src/components/Layout.tsx",
+      "line": 171,
+      "target": "window",
+      "kind": "remove",
+      "name": "network-status",
+      "expression": "window.removeEventListener('network-status', handleNetworkStatus)"
+    },
+    {
+      "file": "src/components/Layout.tsx",
+      "line": 172,
+      "target": "window",
+      "kind": "remove",
+      "name": "online",
+      "expression": "window.removeEventListener('online', handleOnline)"
+    },
+    {
+      "file": "src/components/Layout.tsx",
+      "line": 173,
+      "target": "window",
+      "kind": "remove",
+      "name": "offline",
+      "expression": "window.removeEventListener('offline', handleOffline)"
+    },
+    {
+      "file": "src/components/NotificationInbox.tsx",
+      "line": 88,
+      "target": "document",
+      "kind": "listen",
+      "name": "keydown",
+      "expression": "document.addEventListener('keydown',onKeyDown)"
+    },
+    {
+      "file": "src/components/NotificationInbox.tsx",
+      "line": 89,
+      "target": "document",
+      "kind": "remove",
+      "name": "keydown",
+      "expression": "document.removeEventListener('keydown',onKeyDown)"
+    },
+    {
+      "file": "src/components/ReferralDashboardModal.tsx",
+      "line": 160,
+      "target": "document",
+      "kind": "listen",
+      "name": "visibilitychange",
+      "expression": "document.addEventListener('visibilitychange',visibility)"
+    },
+    {
+      "file": "src/components/ReferralDashboardModal.tsx",
+      "line": 161,
+      "target": "document",
+      "kind": "remove",
+      "name": "visibilitychange",
+      "expression": "document.removeEventListener('visibilitychange',visibility)"
+    },
+    {
+      "file": "src/components/SettingsTab.tsx",
+      "line": 146,
+      "target": "window",
+      "kind": "listen",
+      "name": "notes-changed",
+      "expression": "window.addEventListener('notes-changed', h)"
+    },
+    {
+      "file": "src/components/SettingsTab.tsx",
+      "line": 147,
+      "target": "window",
+      "kind": "remove",
+      "name": "notes-changed",
+      "expression": "window.removeEventListener('notes-changed', h)"
+    },
+    {
+      "file": "src/components/SettingsTab.tsx",
+      "line": 307,
+      "target": "window",
+      "kind": "listen",
+      "name": "keydown",
+      "expression": "window.addEventListener('keydown', handleKeyDown)"
+    },
+    {
+      "file": "src/components/SettingsTab.tsx",
+      "line": 308,
+      "target": "window",
+      "kind": "remove",
+      "name": "keydown",
+      "expression": "window.removeEventListener('keydown', handleKeyDown)"
+    },
+    {
+      "file": "src/components/SettingsTab.tsx",
+      "line": 1827,
+      "target": "window",
+      "kind": "dispatch",
+      "name": "open-referral-modal",
+      "expression": "window.dispatchEvent(new CustomEvent('open-referral-modal'))"
+    },
+    {
+      "file": "src/components/SubscriptionProgress.tsx",
+      "line": 8,
+      "target": "document",
+      "kind": "listen",
+      "name": "visibilitychange",
+      "expression": "document.addEventListener('visibilitychange', tick)"
+    },
+    {
+      "file": "src/components/SubscriptionProgress.tsx",
+      "line": 9,
+      "target": "window",
+      "kind": "listen",
+      "name": "focus",
+      "expression": "window.addEventListener('focus', tick)"
+    },
+    {
+      "file": "src/components/SubscriptionProgress.tsx",
+      "line": 10,
+      "target": "document",
+      "kind": "remove",
+      "name": "visibilitychange",
+      "expression": "document.removeEventListener('visibilitychange', tick)"
+    },
+    {
+      "file": "src/components/SubscriptionProgress.tsx",
+      "line": 10,
+      "target": "window",
+      "kind": "remove",
+      "name": "focus",
+      "expression": "window.removeEventListener('focus', tick)"
+    },
+    {
+      "file": "src/components/TermsModal.tsx",
+      "line": 39,
+      "target": "window",
+      "kind": "listen",
+      "name": "keydown",
+      "expression": "window.addEventListener('keydown', handleKeyDown)"
+    },
+    {
+      "file": "src/components/TermsModal.tsx",
+      "line": 40,
+      "target": "window",
+      "kind": "remove",
+      "name": "keydown",
+      "expression": "window.removeEventListener('keydown', handleKeyDown)"
+    },
+    {
+      "file": "src/components/TermsModal.tsx",
+      "line": 396,
+      "target": "window",
+      "kind": "dispatch",
+      "name": "open-cookie-settings",
+      "expression": "window.dispatchEvent(new CustomEvent('open-cookie-settings'))"
+    },
+    {
+      "file": "src/components/TodayMarketStoryModal.tsx",
+      "line": 162,
+      "target": "window",
+      "kind": "dispatch",
+      "name": "open-company-intel",
+      "expression": "window.dispatchEvent(new CustomEvent('open-company-intel', { detail: { scripCode, symbol, companyName } }))"
+    },
+    {
+      "file": "src/components/TodayMarketStoryModal.tsx",
+      "line": 259,
+      "target": "window",
+      "kind": "listen",
+      "name": "keydown",
+      "expression": "window.addEventListener('keydown', handleKeyDown)"
+    },
+    {
+      "file": "src/components/TodayMarketStoryModal.tsx",
+      "line": 260,
+      "target": "window",
+      "kind": "remove",
+      "name": "keydown",
+      "expression": "window.removeEventListener('keydown', handleKeyDown)"
+    },
+    {
+      "file": "src/components/WatchlistManager.tsx",
+      "line": 571,
+      "target": "document",
+      "kind": "listen",
+      "name": "pointerdown",
+      "expression": "document.addEventListener('pointerdown', onPointerDown)"
+    },
+    {
+      "file": "src/components/WatchlistManager.tsx",
+      "line": 572,
+      "target": "document",
+      "kind": "listen",
+      "name": "keydown",
+      "expression": "document.addEventListener('keydown', onKeyDown)"
+    },
+    {
+      "file": "src/components/WatchlistManager.tsx",
+      "line": 574,
+      "target": "document",
+      "kind": "remove",
+      "name": "pointerdown",
+      "expression": "document.removeEventListener('pointerdown', onPointerDown)"
+    },
+    {
+      "file": "src/components/WatchlistManager.tsx",
+      "line": 575,
+      "target": "document",
+      "kind": "remove",
+      "name": "keydown",
+      "expression": "document.removeEventListener('keydown', onKeyDown)"
+    },
+    {
+      "file": "src/components/WatchlistManager.tsx",
+      "line": 597,
+      "target": "document",
+      "kind": "listen",
+      "name": "keydown",
+      "expression": "document.addEventListener('keydown',onKeyDown)"
+    },
+    {
+      "file": "src/components/WatchlistManager.tsx",
+      "line": 598,
+      "target": "document",
+      "kind": "remove",
+      "name": "keydown",
+      "expression": "document.removeEventListener('keydown',onKeyDown)"
+    },
+    {
+      "file": "src/components/WatchlistManager.tsx",
+      "line": 935,
+      "target": "window",
+      "kind": "listen",
+      "name": "auth-state-changed",
+      "expression": "window.addEventListener('auth-state-changed', handleAuthChanged)"
+    },
+    {
+      "file": "src/components/WatchlistManager.tsx",
+      "line": 936,
+      "target": "window",
+      "kind": "remove",
+      "name": "auth-state-changed",
+      "expression": "window.removeEventListener('auth-state-changed', handleAuthChanged)"
+    },
+    {
+      "file": "src/components/filing/FilingPage.tsx",
+      "line": 220,
+      "target": "window",
+      "kind": "dispatch",
+      "name": "popstate",
+      "expression": "window.dispatchEvent(new PopStateEvent('popstate'))"
+    },
+    {
+      "file": "src/components/notes/NoteEditor.tsx",
+      "line": 127,
+      "target": "window",
+      "kind": "dispatch",
+      "name": "notes-changed",
+      "expression": "window.dispatchEvent(new CustomEvent('notes-changed', { detail: { note: res.note } }))"
+    },
+    {
+      "file": "src/components/notes/SavedNotesScreen.tsx",
+      "line": 162,
+      "target": "window",
+      "kind": "listen",
+      "name": "notes-changed",
+      "expression": "window.addEventListener('notes-changed', h)"
+    },
+    {
+      "file": "src/components/notes/SavedNotesScreen.tsx",
+      "line": 163,
+      "target": "window",
+      "kind": "remove",
+      "name": "notes-changed",
+      "expression": "window.removeEventListener('notes-changed', h)"
+    },
+    {
+      "file": "src/components/notes/useNoteDialog.ts",
+      "line": 33,
+      "target": "window",
+      "kind": "listen",
+      "name": "resize",
+      "expression": "window.addEventListener('resize', resize)"
+    },
+    {
+      "file": "src/components/notes/useNoteDialog.ts",
+      "line": 38,
+      "target": "window",
+      "kind": "remove",
+      "name": "resize",
+      "expression": "window.removeEventListener('resize', resize)"
+    },
+    {
+      "file": "src/components/ui/AutosaveIndicator.tsx",
+      "line": 29,
+      "target": "window",
+      "kind": "listen",
+      "name": "bse-autosave",
+      "expression": "window.addEventListener('bse-autosave', handleAutosave)"
+    },
+    {
+      "file": "src/components/ui/AutosaveIndicator.tsx",
+      "line": 30,
+      "target": "window",
+      "kind": "remove",
+      "name": "bse-autosave",
+      "expression": "window.removeEventListener('bse-autosave', handleAutosave)"
+    },
+    {
+      "file": "src/components/ui/BackToTop.tsx",
+      "line": 28,
+      "target": "window",
+      "kind": "listen",
+      "name": "scroll",
+      "expression": "window.addEventListener('scroll', handleScroll, { passive: true })"
+    },
+    {
+      "file": "src/components/ui/BackToTop.tsx",
+      "line": 30,
+      "target": "window",
+      "kind": "remove",
+      "name": "scroll",
+      "expression": "window.removeEventListener('scroll', handleScroll)"
+    },
+    {
+      "file": "src/components/ui/CommandPalette.tsx",
+      "line": 153,
+      "target": "window",
+      "kind": "listen",
+      "name": "keydown",
+      "expression": "window.addEventListener('keydown', handleKeyDown)"
+    },
+    {
+      "file": "src/components/ui/CommandPalette.tsx",
+      "line": 154,
+      "target": "window",
+      "kind": "remove",
+      "name": "keydown",
+      "expression": "window.removeEventListener('keydown', handleKeyDown)"
+    },
+    {
+      "file": "src/components/ui/CommandPalette.tsx",
+      "line": 248,
+      "target": "window",
+      "kind": "dispatch",
+      "name": "bse-filter-topic",
+      "expression": "window.dispatchEvent(new CustomEvent('bse-filter-topic', { detail: { topic: 'Financial Result' } }))"
+    },
+    {
+      "file": "src/components/ui/CommandPalette.tsx",
+      "line": 261,
+      "target": "window",
+      "kind": "dispatch",
+      "name": "bse-filter-topic",
+      "expression": "window.dispatchEvent(new CustomEvent('bse-filter-topic', { detail: { topic: 'Dividend' } }))"
+    },
+    {
+      "file": "src/components/ui/ConfirmModal.tsx",
+      "line": 43,
+      "target": "window",
+      "kind": "listen",
+      "name": "keydown",
+      "expression": "window.addEventListener('keydown', handleKeyDown)"
+    },
+    {
+      "file": "src/components/ui/ConfirmModal.tsx",
+      "line": 44,
+      "target": "window",
+      "kind": "remove",
+      "name": "keydown",
+      "expression": "window.removeEventListener('keydown', handleKeyDown)"
+    },
+    {
+      "file": "src/components/ui/CustomDropdown.tsx",
+      "line": 104,
+      "target": "document",
+      "kind": "listen",
+      "name": "mousedown",
+      "expression": "document.addEventListener('mousedown', handleClickOutside)"
+    },
+    {
+      "file": "src/components/ui/CustomDropdown.tsx",
+      "line": 105,
+      "target": "document",
+      "kind": "listen",
+      "name": "keydown",
+      "expression": "document.addEventListener('keydown', handleKeyDown)"
+    },
+    {
+      "file": "src/components/ui/CustomDropdown.tsx",
+      "line": 115,
+      "target": "document",
+      "kind": "remove",
+      "name": "mousedown",
+      "expression": "document.removeEventListener('mousedown', handleClickOutside)"
+    },
+    {
+      "file": "src/components/ui/CustomDropdown.tsx",
+      "line": 116,
+      "target": "document",
+      "kind": "remove",
+      "name": "keydown",
+      "expression": "document.removeEventListener('keydown', handleKeyDown)"
+    },
+    {
+      "file": "src/components/ui/MarketClock.tsx",
+      "line": 57,
+      "target": "document",
+      "kind": "listen",
+      "name": "mousedown",
+      "expression": "document.addEventListener('mousedown', handleClickOutside)"
+    },
+    {
+      "file": "src/components/ui/MarketClock.tsx",
+      "line": 59,
+      "target": "document",
+      "kind": "remove",
+      "name": "mousedown",
+      "expression": "document.removeEventListener('mousedown', handleClickOutside)"
+    },
+    {
+      "file": "src/components/ui/MarketClock.tsx",
+      "line": 70,
+      "target": "window",
+      "kind": "listen",
+      "name": "keydown",
+      "expression": "window.addEventListener('keydown', handleKeyDown)"
+    },
+    {
+      "file": "src/components/ui/MarketClock.tsx",
+      "line": 71,
+      "target": "window",
+      "kind": "remove",
+      "name": "keydown",
+      "expression": "window.removeEventListener('keydown', handleKeyDown)"
+    },
+    {
+      "file": "src/components/ui/ParticleRibbons.tsx",
+      "line": 98,
+      "target": "window",
+      "kind": "listen",
+      "name": "resize",
+      "expression": "window.addEventListener('resize', resize)"
+    },
+    {
+      "file": "src/components/ui/ParticleRibbons.tsx",
+      "line": 101,
+      "target": "window",
+      "kind": "listen",
+      "name": "mousemove",
+      "expression": "window.addEventListener('mousemove', onMouse, { passive: true })"
+    },
+    {
+      "file": "src/components/ui/ParticleRibbons.tsx",
+      "line": 104,
+      "target": "document",
+      "kind": "listen",
+      "name": "visibilitychange",
+      "expression": "document.addEventListener('visibilitychange', onVis)"
+    },
+    {
+      "file": "src/components/ui/ParticleRibbons.tsx",
+      "line": 258,
+      "target": "window",
+      "kind": "remove",
+      "name": "resize",
+      "expression": "window.removeEventListener('resize', resize)"
+    },
+    {
+      "file": "src/components/ui/ParticleRibbons.tsx",
+      "line": 259,
+      "target": "window",
+      "kind": "remove",
+      "name": "mousemove",
+      "expression": "window.removeEventListener('mousemove', onMouse)"
+    },
+    {
+      "file": "src/components/ui/ParticleRibbons.tsx",
+      "line": 260,
+      "target": "document",
+      "kind": "remove",
+      "name": "visibilitychange",
+      "expression": "document.removeEventListener('visibilitychange', onVis)"
+    },
+    {
+      "file": "src/components/ui/ParticleRibbons.tsx",
+      "line": 271,
+      "target": "window",
+      "kind": "remove",
+      "name": "resize",
+      "expression": "window.removeEventListener('resize', resize)"
+    },
+    {
+      "file": "src/components/ui/ParticleRibbons.tsx",
+      "line": 272,
+      "target": "window",
+      "kind": "remove",
+      "name": "mousemove",
+      "expression": "window.removeEventListener('mousemove', onMouse)"
+    },
+    {
+      "file": "src/components/ui/ParticleRibbons.tsx",
+      "line": 273,
+      "target": "document",
+      "kind": "remove",
+      "name": "visibilitychange",
+      "expression": "document.removeEventListener('visibilitychange', onVis)"
+    },
+    {
+      "file": "src/components/ui/ScrollProgressBar.tsx",
+      "line": 22,
+      "target": "window",
+      "kind": "listen",
+      "name": "scroll",
+      "expression": "window.addEventListener('scroll', handleScroll, { passive: true })"
+    },
+    {
+      "file": "src/components/ui/ScrollProgressBar.tsx",
+      "line": 24,
+      "target": "window",
+      "kind": "remove",
+      "name": "scroll",
+      "expression": "window.removeEventListener('scroll', handleScroll)"
+    },
+    {
+      "file": "src/components/ui/motion/ShareActionMenu.tsx",
+      "line": 134,
+      "target": "window",
+      "kind": "listen",
+      "name": "resize",
+      "expression": "window.addEventListener('resize', checkMobile)"
+    },
+    {
+      "file": "src/components/ui/motion/ShareActionMenu.tsx",
+      "line": 135,
+      "target": "window",
+      "kind": "remove",
+      "name": "resize",
+      "expression": "window.removeEventListener('resize', checkMobile)"
+    },
+    {
+      "file": "src/components/ui/motion/ShareActionMenu.tsx",
+      "line": 164,
+      "target": "window",
+      "kind": "listen",
+      "name": "scroll",
+      "expression": "window.addEventListener('scroll', handleScrollOrResize, true)"
+    },
+    {
+      "file": "src/components/ui/motion/ShareActionMenu.tsx",
+      "line": 165,
+      "target": "window",
+      "kind": "listen",
+      "name": "resize",
+      "expression": "window.addEventListener('resize', handleScrollOrResize)"
+    },
+    {
+      "file": "src/components/ui/motion/ShareActionMenu.tsx",
+      "line": 170,
+      "target": "window",
+      "kind": "listen",
+      "name": "keydown",
+      "expression": "window.addEventListener('keydown', handleKeyDown)"
+    },
+    {
+      "file": "src/components/ui/motion/ShareActionMenu.tsx",
+      "line": 173,
+      "target": "window",
+      "kind": "remove",
+      "name": "scroll",
+      "expression": "window.removeEventListener('scroll', handleScrollOrResize, true)"
+    },
+    {
+      "file": "src/components/ui/motion/ShareActionMenu.tsx",
+      "line": 174,
+      "target": "window",
+      "kind": "remove",
+      "name": "resize",
+      "expression": "window.removeEventListener('resize', handleScrollOrResize)"
+    },
+    {
+      "file": "src/components/ui/motion/ShareActionMenu.tsx",
+      "line": 175,
+      "target": "window",
+      "kind": "remove",
+      "name": "keydown",
+      "expression": "window.removeEventListener('keydown', handleKeyDown)"
+    },
+    {
+      "file": "src/context/AuthContext.tsx",
+      "line": 154,
+      "target": "window",
+      "kind": "dispatch",
+      "name": "auth-state-changed",
+      "expression": "window.dispatchEvent(new CustomEvent('auth-state-changed', { detail: { uid, user, profile } }))"
+    },
+    {
+      "file": "src/context/IntelModalContext.tsx",
+      "line": 42,
+      "target": "window",
+      "kind": "listen",
+      "name": "open-company-intel",
+      "expression": "window.addEventListener('open-company-intel', handleWindowEvent)"
+    },
+    {
+      "file": "src/context/IntelModalContext.tsx",
+      "line": 43,
+      "target": "window",
+      "kind": "remove",
+      "name": "open-company-intel",
+      "expression": "window.removeEventListener('open-company-intel', handleWindowEvent)"
+    },
+    {
+      "file": "src/context/ToastContext.tsx",
+      "line": 85,
+      "target": "window",
+      "kind": "listen",
+      "name": "app-toast",
+      "expression": "window.addEventListener('app-toast', handleGlobalToast)"
+    },
+    {
+      "file": "src/context/ToastContext.tsx",
+      "line": 86,
+      "target": "window",
+      "kind": "remove",
+      "name": "app-toast",
+      "expression": "window.removeEventListener('app-toast', handleGlobalToast)"
+    },
+    {
+      "file": "src/context/ToastContext.tsx",
+      "line": 237,
+      "target": "window",
+      "kind": "dispatch",
+      "name": "app-toast",
+      "expression": "window.dispatchEvent(new CustomEvent('app-toast', { detail: t }))"
+    },
+    {
+      "file": "src/context/ToastContext.tsx",
+      "line": 243,
+      "target": "window",
+      "kind": "dispatch",
+      "name": "app-toast",
+      "expression": "window.dispatchEvent(new CustomEvent('app-toast', { detail: { message, type: 'success', ...options } }))"
+    },
+    {
+      "file": "src/context/ToastContext.tsx",
+      "line": 249,
+      "target": "window",
+      "kind": "dispatch",
+      "name": "app-toast",
+      "expression": "window.dispatchEvent(new CustomEvent('app-toast', { detail: { message, type: 'error', ...options } }))"
+    },
+    {
+      "file": "src/context/ToastContext.tsx",
+      "line": 255,
+      "target": "window",
+      "kind": "dispatch",
+      "name": "app-toast",
+      "expression": "window.dispatchEvent(new CustomEvent('app-toast', { detail: { message, type: 'info', ...options } }))"
+    },
+    {
+      "file": "src/context/ToastContext.tsx",
+      "line": 261,
+      "target": "window",
+      "kind": "dispatch",
+      "name": "app-toast",
+      "expression": "window.dispatchEvent(new CustomEvent('app-toast', { detail: { message, type: 'warning', ...options } }))"
+    },
+    {
+      "file": "src/firebase.ts",
+      "line": 60,
+      "target": "window",
+      "kind": "listen",
+      "name": "error",
+      "expression": "window.addEventListener('error', (event) => { if (isPendingPromiseAssertion(event.error) || isPendingPromiseAssertion(event.message)) { event.preventDefault(); event.stopImmediatePropagation(); return true; } }, true)"
+    },
+    {
+      "file": "src/firebase.ts",
+      "line": 68,
+      "target": "window",
+      "kind": "listen",
+      "name": "unhandledrejection",
+      "expression": "window.addEventListener('unhandledrejection', (event) => { if (isPendingPromiseAssertion(event.reason)) { event.preventDefault(); event.stopImmediatePropagation(); } }, true)"
+    },
+    {
+      "file": "src/hooks/useFeedDensity.ts",
+      "line": 53,
+      "target": "window",
+      "kind": "listen",
+      "name": null,
+      "expression": "window.addEventListener(DENSITY_EVENT, onChange)"
+    },
+    {
+      "file": "src/hooks/useFeedDensity.ts",
+      "line": 54,
+      "target": "window",
+      "kind": "listen",
+      "name": "storage",
+      "expression": "window.addEventListener('storage', onChange)"
+    },
+    {
+      "file": "src/hooks/useFeedDensity.ts",
+      "line": 56,
+      "target": "window",
+      "kind": "remove",
+      "name": null,
+      "expression": "window.removeEventListener(DENSITY_EVENT, onChange)"
+    },
+    {
+      "file": "src/hooks/useFeedDensity.ts",
+      "line": 57,
+      "target": "window",
+      "kind": "remove",
+      "name": "storage",
+      "expression": "window.removeEventListener('storage', onChange)"
+    },
+    {
+      "file": "src/hooks/useFeedDensity.ts",
+      "line": 67,
+      "target": "window",
+      "kind": "dispatch",
+      "name": null,
+      "expression": "window.dispatchEvent(new CustomEvent<FeedDensity>(DENSITY_EVENT, { detail: d }))"
+    },
+    {
+      "file": "src/hooks/usePaymentDialog.ts",
+      "line": 38,
+      "target": "document",
+      "kind": "listen",
+      "name": "keydown",
+      "expression": "document.addEventListener('keydown', key, true)"
+    },
+    {
+      "file": "src/hooks/usePaymentDialog.ts",
+      "line": 41,
+      "target": "document",
+      "kind": "remove",
+      "name": "keydown",
+      "expression": "document.removeEventListener('keydown', key, true)"
+    },
+    {
+      "file": "src/hooks/usePullToRefresh.ts",
+      "line": 242,
+      "target": "window",
+      "kind": "listen",
+      "name": "pointermove",
+      "expression": "window.addEventListener('pointermove', handlePointerMove, { passive: true })"
+    },
+    {
+      "file": "src/hooks/usePullToRefresh.ts",
+      "line": 243,
+      "target": "window",
+      "kind": "listen",
+      "name": "pointerup",
+      "expression": "window.addEventListener('pointerup', handlePointerUp, { passive: true })"
+    },
+    {
+      "file": "src/hooks/usePullToRefresh.ts",
+      "line": 244,
+      "target": "window",
+      "kind": "listen",
+      "name": "pointercancel",
+      "expression": "window.addEventListener('pointercancel', handleTouchCancel, { passive: true })"
+    },
+    {
+      "file": "src/hooks/usePullToRefresh.ts",
+      "line": 245,
+      "target": "window",
+      "kind": "listen",
+      "name": "blur",
+      "expression": "window.addEventListener('blur', handleTouchCancel)"
+    },
+    {
+      "file": "src/hooks/usePullToRefresh.ts",
+      "line": 253,
+      "target": "window",
+      "kind": "remove",
+      "name": "pointermove",
+      "expression": "window.removeEventListener('pointermove', handlePointerMove)"
+    },
+    {
+      "file": "src/hooks/usePullToRefresh.ts",
+      "line": 254,
+      "target": "window",
+      "kind": "remove",
+      "name": "pointerup",
+      "expression": "window.removeEventListener('pointerup', handlePointerUp)"
+    },
+    {
+      "file": "src/hooks/usePullToRefresh.ts",
+      "line": 255,
+      "target": "window",
+      "kind": "remove",
+      "name": "pointercancel",
+      "expression": "window.removeEventListener('pointercancel', handleTouchCancel)"
+    },
+    {
+      "file": "src/hooks/usePullToRefresh.ts",
+      "line": 256,
+      "target": "window",
+      "kind": "remove",
+      "name": "blur",
+      "expression": "window.removeEventListener('blur', handleTouchCancel)"
+    },
+    {
+      "file": "src/hooks/useScrollRestoration.ts",
+      "line": 42,
+      "target": "window",
+      "kind": "listen",
+      "name": "scroll",
+      "expression": "window.addEventListener('scroll', handleScroll, { passive: true })"
+    },
+    {
+      "file": "src/hooks/useScrollRestoration.ts",
+      "line": 44,
+      "target": "window",
+      "kind": "remove",
+      "name": "scroll",
+      "expression": "window.removeEventListener('scroll', handleScroll)"
+    },
+    {
+      "file": "src/hooks/useScrollRestoration.ts",
+      "line": 99,
+      "target": "window",
+      "kind": "listen",
+      "name": "popstate",
+      "expression": "window.addEventListener('popstate', handlePopState)"
+    },
+    {
+      "file": "src/hooks/useScrollRestoration.ts",
+      "line": 100,
+      "target": "window",
+      "kind": "remove",
+      "name": "popstate",
+      "expression": "window.removeEventListener('popstate', handlePopState)"
+    },
+    {
+      "file": "src/hooks/useVisibilityInterval.ts",
+      "line": 50,
+      "target": "document",
+      "kind": "listen",
+      "name": "visibilitychange",
+      "expression": "document.addEventListener('visibilitychange', handleVisibilityChange)"
+    },
+    {
+      "file": "src/hooks/useVisibilityInterval.ts",
+      "line": 55,
+      "target": "document",
+      "kind": "remove",
+      "name": "visibilitychange",
+      "expression": "document.removeEventListener('visibilitychange', handleVisibilityChange)"
+    },
+    {
+      "file": "src/utils/aiQuota.ts",
+      "line": 26,
+      "target": "window",
+      "kind": "dispatch",
+      "name": "bse_ai_quota_changed",
+      "expression": "window.dispatchEvent(new Event('bse_ai_quota_changed'))"
+    },
+    {
+      "file": "src/utils/aiQuota.ts",
+      "line": 95,
+      "target": "window",
+      "kind": "listen",
+      "name": "bse_ai_quota_changed",
+      "expression": "window.addEventListener('bse_ai_quota_changed',refresh)"
+    },
+    {
+      "file": "src/utils/aiQuota.ts",
+      "line": 96,
+      "target": "window",
+      "kind": "listen",
+      "name": "bse_ai_quota_refresh",
+      "expression": "window.addEventListener('bse_ai_quota_refresh',refresh)"
+    },
+    {
+      "file": "src/utils/aiQuota.ts",
+      "line": 97,
+      "target": "window",
+      "kind": "listen",
+      "name": "focus",
+      "expression": "window.addEventListener('focus',onVisible)"
+    },
+    {
+      "file": "src/utils/aiQuota.ts",
+      "line": 98,
+      "target": "document",
+      "kind": "listen",
+      "name": "visibilitychange",
+      "expression": "document.addEventListener('visibilitychange',onVisible)"
+    },
+    {
+      "file": "src/utils/aiQuota.ts",
+      "line": 101,
+      "target": "window",
+      "kind": "remove",
+      "name": "bse_ai_quota_changed",
+      "expression": "window.removeEventListener('bse_ai_quota_changed',refresh)"
+    },
+    {
+      "file": "src/utils/aiQuota.ts",
+      "line": 102,
+      "target": "window",
+      "kind": "remove",
+      "name": "bse_ai_quota_refresh",
+      "expression": "window.removeEventListener('bse_ai_quota_refresh',refresh)"
+    },
+    {
+      "file": "src/utils/aiQuota.ts",
+      "line": 103,
+      "target": "window",
+      "kind": "remove",
+      "name": "focus",
+      "expression": "window.removeEventListener('focus',onVisible)"
+    },
+    {
+      "file": "src/utils/aiQuota.ts",
+      "line": 104,
+      "target": "document",
+      "kind": "remove",
+      "name": "visibilitychange",
+      "expression": "document.removeEventListener('visibilitychange',onVisible)"
+    },
+    {
+      "file": "src/utils/cookieConsent.ts",
+      "line": 31,
+      "target": "window",
+      "kind": "dispatch",
+      "name": "cookie-consent-updated",
+      "expression": "window.dispatchEvent(new CustomEvent('cookie-consent-updated', { detail: fullPrefs }))"
+    },
+    {
+      "file": "src/utils/cookieConsent.ts",
+      "line": 41,
+      "target": "window",
+      "kind": "dispatch",
+      "name": "cookie-consent-reset",
+      "expression": "window.dispatchEvent(new CustomEvent('cookie-consent-reset'))"
+    },
+    {
+      "file": "src/utils/developerMode.ts",
+      "line": 18,
+      "target": "window",
+      "kind": "dispatch",
+      "name": null,
+      "expression": "window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: { enabled } }))"
+    },
+    {
+      "file": "src/utils/developerMode.ts",
+      "line": 41,
+      "target": "window",
+      "kind": "listen",
+      "name": "storage",
+      "expression": "window.addEventListener('storage', handleStorage)"
+    },
+    {
+      "file": "src/utils/developerMode.ts",
+      "line": 42,
+      "target": "window",
+      "kind": "listen",
+      "name": null,
+      "expression": "window.addEventListener(EVENT_NAME, handleCustom)"
+    },
+    {
+      "file": "src/utils/developerMode.ts",
+      "line": 45,
+      "target": "window",
+      "kind": "remove",
+      "name": "storage",
+      "expression": "window.removeEventListener('storage', handleStorage)"
+    },
+    {
+      "file": "src/utils/developerMode.ts",
+      "line": 46,
+      "target": "window",
+      "kind": "remove",
+      "name": null,
+      "expression": "window.removeEventListener(EVENT_NAME, handleCustom)"
+    },
+    {
+      "file": "src/utils/retry.ts",
+      "line": 29,
+      "target": "window",
+      "kind": "dispatch",
+      "name": null,
+      "expression": "window.dispatchEvent(new CustomEvent(SYNC_EVENT_NAME, { detail }))"
+    },
+    {
+      "file": "src/utils/retry.ts",
+      "line": 58,
+      "target": "window",
+      "kind": "listen",
+      "name": null,
+      "expression": "window.addEventListener(SYNC_EVENT_NAME, handler)"
+    },
+    {
+      "file": "src/utils/retry.ts",
+      "line": 60,
+      "target": "window",
+      "kind": "remove",
+      "name": null,
+      "expression": "window.removeEventListener(SYNC_EVENT_NAME, handler)"
+    },
+    {
+      "file": "src/utils/shareUrls.ts",
+      "line": 67,
+      "target": "window",
+      "kind": "dispatch",
+      "name": "popstate",
+      "expression": "window.dispatchEvent(new PopStateEvent('popstate'))"
+    },
+    {
+      "file": "src/utils/shareUrls.ts",
+      "line": 76,
+      "target": "window",
+      "kind": "dispatch",
+      "name": "popstate",
+      "expression": "window.dispatchEvent(new PopStateEvent('popstate'))"
+    },
+    {
+      "file": "src/utils/telemetry.ts",
+      "line": 110,
+      "target": "document",
+      "kind": "listen",
+      "name": "click",
+      "expression": "document.addEventListener('click', (e) => { try { const target = e.target as HTMLElement; if (!target) return; const btn = target.closest('button') || target.closest('a') || target.closest('[role=\"button\"]'); if (btn) { const text = (btn.in"
+    },
+    {
+      "file": "src/utils/telemetry.ts",
+      "line": 123,
+      "target": "window",
+      "kind": "listen",
+      "name": "error",
+      "expression": "window.addEventListener('error', (event) => { try { const errMsg = String(event.message || ''); // Filter out benign Vite HMR, WebSocket reconnects, database sleep, browser layout notices, and third-party content scripts if ( /websocket/i.t"
+    },
+    {
+      "file": "src/utils/telemetry.ts",
+      "line": 158,
+      "target": "window",
+      "kind": "listen",
+      "name": "unhandledrejection",
+      "expression": "window.addEventListener('unhandledrejection', (event) => { try { const reason = event.reason; const errMsg = typeof reason === 'string' ? reason : String(reason?.message || 'Unhandled Promise Rejection'); if ( /websocket/i.test(errMsg) || /"
+    },
+    {
+      "file": "src/utils/telemetry.ts",
+      "line": 229,
+      "target": "window",
+      "kind": "listen",
+      "name": "load",
+      "expression": "window.addEventListener('load', reportPerformance, { once: true })"
     }
   ],
   "unresolved": [],

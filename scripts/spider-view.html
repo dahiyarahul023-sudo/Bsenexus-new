@@ -5,9 +5,10 @@
 </style></head><body>
 <header><small>BSENEXUS / ENGINEERING MAP</small><h1>Understand the change before making it.</h1><p>Source imports + reviewed business relationships. Select a file to trace its wiring.</p><small id="stats"></small></header>
 <main><aside><label for="search">Find a file</label><input id="search" type="search" placeholder="auth, payments, quota…"><label for="domain">Filter by domain</label><select id="domain"><option value="">All domains</option></select><nav class="files" id="files" aria-label="Source files"></nav></aside>
-<article><h2 id="selected"></h2><p class="note">Arrows mean “imports.” Purple connections mean “review together,” not direct calls. This is a generated snapshot, not production telemetry. Run <code>npm run map:watch</code> while editing, then refresh this page.</p><div class="legend"><span style="color:#70e3c5">● Dependencies</span><span style="color:#77b7fc">● Direct consumers</span><span style="color:#c6a0ff">● Semantic peers</span></div><svg id="graph" role="img" aria-label="Selected file and its immediate connections"></svg><p id="graphnote"></p><div class="cards" id="cards"></div><details><summary>Routes, HTTP, stores, RPCs and environment names in the review set</summary><pre id="contracts"></pre></details><details><summary>Coverage limits</summary><pre id="limits"></pre></details></article></main>
+<article><h2 id="selected"></h2><p class="note">Arrows mean “imports.” Purple connections mean “review together,” not direct calls. This is a generated snapshot, not production telemetry. Run <code>npm run map:watch</code> while editing, then refresh this page.</p><div class="legend"><span style="color:#70e3c5">● Dependencies</span><span style="color:#77b7fc">● Direct consumers</span><span style="color:#c6a0ff">● Semantic peers</span></div><svg id="graph" role="img" aria-label="Selected file and its immediate connections"></svg><p id="graphnote"></p><div class="cards" id="cards"></div><details><summary>Browser events, routes, HTTP, stores, RPCs and environment names in the review set</summary><pre id="contracts"></pre></details><details><summary>Coverage limits</summary><pre id="limits"></pre></details></article></main>
 <script>
 const map=/*__MAP_DATA__*/null;
+/*__EVENT_PEERS__*/
 const $=id=>document.getElementById(id),byPath=new Map(map.files.map(f=>[f.path,f]));
 let selected=byPath.has('server.ts')?'server.ts':map.files[0]?.path;
 $('stats').textContent=map.files.length+' files · '+map.edges.length+' import edges · '+map.domains.length+' business domains · fingerprint '+map.sourceDigest.slice(0,12);
@@ -20,10 +21,11 @@ function render(){
 $('selected').textContent=selected;
 const deps=[...new Set(map.edges.filter(e=>e.source===selected).map(e=>e.target))].sort();const direct=byPath.get(selected).importedBy;
 const seen=new Set([selected]),q=[selected];while(q.length)for(const p of byPath.get(q.shift())?.importedBy||[])if(!seen.has(p)){seen.add(p);q.push(p)}
-const domains=map.domains.filter(d=>[...d.files,...d.tests].includes(selected));const peers=[...new Set(domains.flatMap(d=>d.files))].filter(p=>p!==selected).sort();const tests=[...new Set([...seen].filter(p=>p.includes('.test.')).concat(domains.flatMap(d=>d.tests)))].sort();
-$('cards').replaceChildren();card('Direct dependencies',deps);card('Transitive import consumers',[...seen].filter(p=>p!==selected).sort());card('Related domain files',peers);card('Candidate tests — inspect coverage',tests);
-const c=document.createElement('section');c.className='card';const h=document.createElement('h3');h.textContent='Why these features connect';c.append(h);for(const d of domains){const p=document.createElement('p');p.textContent=d.label+': '+d.reason;c.append(p)}if(!domains.length){const p=document.createElement('p');p.textContent='No reviewed domain membership yet. Inspect consumers and add a domain when warranted.';c.append(p)}$('cards').append(c);
-const review=new Set([...seen,...peers]);$('contracts').textContent=JSON.stringify({routes:map.routes.filter(x=>review.has(x.file)),network:map.network.filter(x=>review.has(x.file)),stores:map.stores.filter(x=>review.has(x.file)),environment:map.environment.filter(x=>review.has(x.file))},null,2);
+const eventPeers=browserEventPeers(map,seen),contractSeeds=new Set([...seen,...eventPeers]);
+const domains=map.domains.filter(d=>[...d.files,...d.tests].some(p=>contractSeeds.has(p)));const peers=[...new Set(domains.flatMap(d=>d.files))].filter(p=>p!==selected).sort();const tests=[...new Set([...seen].filter(p=>p.includes('.test.')).concat(domains.flatMap(d=>d.tests)))].sort();
+$('cards').replaceChildren();card('Direct dependencies',deps);card('Transitive import consumers',[...seen].filter(p=>p!==selected).sort());card('Browser-event peers — review listeners and senders',eventPeers);card('Related domain files',peers);card('Candidate tests — inspect coverage',tests);
+const c=document.createElement('section');c.className='card';const h=document.createElement('h3');h.textContent='Why these features connect';c.append(h);for(const d of domains){const p=document.createElement('p');p.textContent=d.label+': '+d.reason+' Reached through: '+[...new Set([...d.files,...d.tests].filter(f=>contractSeeds.has(f)))].sort().join(', ');c.append(p)}if(!domains.length){const p=document.createElement('p');p.textContent='No reviewed domain membership yet. Inspect consumers and add a domain when warranted.';c.append(p)}$('cards').append(c);
+const review=new Set([...seen,...eventPeers,...peers]);$('contracts').textContent=JSON.stringify({browserEvents:(map.browserEvents||[]).filter(x=>review.has(x.file)),routes:map.routes.filter(x=>review.has(x.file)),network:map.network.filter(x=>review.has(x.file)),stores:map.stores.filter(x=>review.has(x.file)),environment:map.environment.filter(x=>review.has(x.file))},null,2);
 $('limits').textContent=map.limitations.join('\n')+'\nComputed imports: '+JSON.stringify(map.dynamic,null,2);
 draw(deps,direct,peers);
 }
@@ -34,3 +36,4 @@ node(selected,330,20,'#ffffff');for(const group of groups)group.paths.slice(0,ma
 }
 $('search').oninput=list;$('domain').onchange=list;list();if(selected)render();
 </script></body></html>
+

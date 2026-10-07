@@ -19,7 +19,7 @@
         "server/tests/accountProtection.test.ts",
         "server/tests/recaptchaSecurity.test.ts"
       ],
-      "reason": "Verified token \u2192 server session \u2192 current durable profile \u2192 route authorization. Browser roles are display state; never authority."
+      "reason": "Verified token → server session → current durable profile → route authorization. Browser roles are display state; never authority."
     },
     {
       "id": "payments",
@@ -96,7 +96,7 @@
         "server/tests/aiGateway.test.ts",
         "server/tests/auditSecurity.test.ts"
       ],
-      "reason": "Authenticated request \u2192 quota \u2192 allowlisted document fetch \u2192 provider budget/fallback \u2192 response/cache. Retrieved documents are untrusted content, not instructions."
+      "reason": "Authenticated request → quota → allowlisted document fetch → provider budget/fallback → response/cache. Retrieved documents are untrusted content, not instructions."
     },
     {
       "id": "feed-alerts",
@@ -120,7 +120,7 @@
         "server/tests/oneSignal.test.ts",
         "server/tests/batchOperations.test.ts"
       ],
-      "reason": "Poll \u2192 normalize/dedupe \u2192 persistence \u2192 feed and alert decisions \u2192 recipient-specific delivery/inbox. Global and personal recipients must remain distinct."
+      "reason": "Poll → normalize/dedupe → persistence → feed and alert decisions → recipient-specific delivery/inbox. Global and personal recipients must remain distinct."
     },
     {
       "id": "user-data",
@@ -299,6 +299,216 @@
         "server/tests/recaptchaSecurity.test.ts"
       ],
       "reason": "Startup and settings influence background jobs, provider calls, abuse limits and logs. A live HTTP listener does not establish that durable stores or external providers are ready."
+    },
+    {
+      "id": "frontend-navigation",
+      "label": "Frontend: routes, tabs and scroll",
+      "files": [
+        "src/main.tsx",
+        "src/App.tsx",
+        "src/components/Layout.tsx",
+        "src/components/filing/FilingPage.tsx",
+        "src/components/results/ResultsPage.tsx",
+        "src/components/NotFoundPage.tsx",
+        "src/utils/shareUrls.ts",
+        "src/utils/scrollState.ts",
+        "src/hooks/useScrollRestoration.ts",
+        "src/hooks/useScreenTransition.ts",
+        "src/components/ui/PageSkeleton.tsx",
+        "src/components/ui/TabErrorBoundary.tsx"
+      ],
+      "tests": [
+        "server/tests/routeResolution.test.ts"
+      ],
+      "reason": "URL and active tab must agree across direct links, refresh, browser Back/Forward and share pages. Loading, focus and scroll restoration are part of navigation; route tests do not prove browser behavior."
+    },
+    {
+      "id": "frontend-session",
+      "label": "Frontend: identity and saved preferences",
+      "files": [
+        "src/context/AuthContext.tsx",
+        "src/context/ToastContext.tsx",
+        "src/components/AuthModal.tsx",
+        "src/components/Login.tsx",
+        "src/components/SettingsTab.tsx",
+        "src/components/UserProfileModal.tsx",
+        "src/components/ui/SyncStatusBadge.tsx",
+        "src/utils/preferenceSaveQueue.ts",
+        "src/api.ts",
+        "src/firebase.ts"
+      ],
+      "tests": [
+        "server/tests/preferenceSaveQueue.test.ts",
+        "server/tests/recaptchaUiState.test.ts",
+        "server/tests/apiCancellation.test.ts"
+      ],
+      "reason": "Guest, restoring, signed-in and expired states must stay distinct. Late requests and saved preferences must not overwrite newer edits or leak between accounts. A success message requires the appropriate confirmed result."
+    },
+    {
+      "id": "frontend-design",
+      "label": "Frontend: shared styling, motion and overlays",
+      "files": [
+        "src/index.css",
+        "src/types.ts",
+        "src/App.tsx",
+        "src/components/Layout.tsx",
+        "src/styles/payment.css",
+        "src/styles/referral.css",
+        "src/components/notes/notes.css",
+        "src/components/ui/pageSkeleton.css",
+        "src/components/ui/ActionButton.tsx",
+        "src/components/landing/ActionButton.tsx",
+        "src/components/ui/ConfirmModal.tsx",
+        "src/components/ui/CustomDropdown.tsx",
+        "src/components/ui/PageSkeleton.tsx",
+        "src/hooks/useBodyScrollLock.ts",
+        "src/hooks/usePaymentDialog.ts",
+        "src/components/notes/useNoteDialog.ts",
+        "src/utils/motionTokens.ts"
+      ],
+      "tests": [],
+      "reason": "Global CSS, inherited theme tokens, shared controls, focus, z-index and scroll locks connect screens without direct imports. Review all changed selector/token consumers; this seed list is not every affected screen. No browser accessibility or screenshot test suite is established by this domain."
+    },
+    {
+      "id": "frontend-feed",
+      "label": "Frontend: feed, watchlists, results and detail",
+      "files": [
+        "src/components/HomeForYou.tsx",
+        "src/components/Announcements.tsx",
+        "src/components/WatchlistManager.tsx",
+        "src/components/ResultsCalendar.tsx",
+        "src/components/QuarterlyResultsLedger.tsx",
+        "src/components/NewsPortal.tsx",
+        "src/components/NotificationInbox.tsx",
+        "src/components/CompanyIntelligenceModal.tsx",
+        "src/context/IntelModalContext.tsx",
+        "src/utils/announcementFeed.ts",
+        "src/utils/clusterAnnouncements.ts",
+        "src/utils/timeFormat.ts",
+        "src/hooks/useFeedDensity.ts",
+        "src/hooks/useVisibilityInterval.ts",
+        "src/hooks/useMarketIndices.ts",
+        "src/api.ts"
+      ],
+      "tests": [
+        "server/tests/core.test.ts",
+        "server/tests/auditData.test.ts",
+        "server/tests/apiCancellation.test.ts"
+      ],
+      "reason": "List/detail identity, filters, watchlist membership, badge counts and timestamps must agree. Background refresh preserves content, density, selection and scroll. Rapid filter changes must not render older responses."
+    },
+    {
+      "id": "frontend-notes",
+      "label": "Frontend: note editor, saved list and counts",
+      "files": [
+        "src/context/NoteEditorContext.tsx",
+        "src/components/notes/NoteEditor.tsx",
+        "src/components/notes/SavedNotesScreen.tsx",
+        "src/components/notes/SaveNoteButton.tsx",
+        "src/components/notes/useNoteDialog.ts",
+        "src/components/notes/notes.css",
+        "src/components/SettingsTab.tsx",
+        "src/api/notesApi.ts",
+        "src/components/ui/AutosaveIndicator.tsx"
+      ],
+      "tests": [
+        "server/tests/notes.test.ts"
+      ],
+      "reason": "Editor writes dispatch notes-changed; saved-list and Settings listeners refresh independently. Preserve draft, list and count consistency across save, edit, delete, retry, account change and overlay close. API tests do not establish DOM focus or draft behavior."
+    },
+    {
+      "id": "frontend-commerce",
+      "label": "Frontend: pricing, checkout, receipt and referral",
+      "files": [
+        "src/components/PricingPage.tsx",
+        "src/components/ProUpgradeModal.tsx",
+        "src/components/ProCheckoutView.tsx",
+        "src/components/ProReceiptView.tsx",
+        "src/components/PaymentHistory.tsx",
+        "src/components/SubscriptionCard.tsx",
+        "src/components/SubscriptionProgress.tsx",
+        "src/components/ReferralDashboardModal.tsx",
+        "src/config/plans.ts",
+        "src/utils/cashfree.ts",
+        "src/utils/paymentFeedback.ts",
+        "src/utils/subscriptionProgress.ts",
+        "src/utils/referralStream.ts",
+        "src/hooks/usePaymentDialog.ts",
+        "src/styles/payment.css",
+        "src/styles/referral.css"
+      ],
+      "tests": [
+        "server/tests/pricingSync.test.ts",
+        "server/tests/subscriptionProgress.test.ts",
+        "server/tests/referralContract.test.ts"
+      ],
+      "reason": "Displayed amount, checkout attribution, return verification, receipt/history and subscription display share one contract. Pending referral, confirmed reward and stale stream are different UI states. Never turn a redirect or unconfirmed write into success."
+    },
+    {
+      "id": "frontend-ai",
+      "label": "Frontend: AI request, quota and saved output",
+      "files": [
+        "src/components/AiSummaryViewer.tsx",
+        "src/components/AiUsageCard.tsx",
+        "src/components/CompanyIntelligenceModal.tsx",
+        "src/components/ProUpgradeModal.tsx",
+        "src/utils/aiQuota.ts",
+        "src/components/ui/ThinkingPill.tsx",
+        "src/components/ui/TimeoutRetryState.tsx",
+        "src/components/notes/SaveNoteButton.tsx",
+        "src/api.ts"
+      ],
+      "tests": [
+        "server/tests/aiQuotaFrontend.test.ts",
+        "server/tests/apiCancellation.test.ts"
+      ],
+      "reason": "AI request lifecycle connects quota meters, upgrade entry points, cancellation and saving generated content. Failed/aborted requests, late responses, quota events and account changes must keep all consumers consistent."
+    },
+    {
+      "id": "frontend-offline-privacy",
+      "label": "Frontend: connectivity, offline cache and consent",
+      "files": [
+        "public/sw.js",
+        "src/api.ts",
+        "src/components/Layout.tsx",
+        "src/components/CookieConsentBanner.tsx",
+        "src/utils/cookieConsent.ts",
+        "src/utils/cache.ts",
+        "src/utils/retry.ts",
+        "src/utils/telemetry.ts",
+        "src/utils/oneSignal.ts",
+        "src/components/PushNotificationPrompt.tsx",
+        "src/components/ui/SyncStatusBadge.tsx"
+      ],
+      "tests": [
+        "server/tests/pwaOfflineSync.test.ts",
+        "server/tests/apiCancellation.test.ts"
+      ],
+      "reason": "Network events affect banners and retry state; service-worker cache differs from request success. Consent and push permission have separate lifecycles. Review cached user data on logout/account switch and avoid duplicate listeners or delivery."
+    },
+    {
+      "id": "frontend-public",
+      "label": "Frontend: landing and public content",
+      "files": [
+        "src/components/LandingPage.tsx",
+        "src/components/landing/CreativeHero.tsx",
+        "src/components/landing/FeatureTabs.tsx",
+        "src/components/landing/FilingJourney.tsx",
+        "src/components/CompaniesPage.tsx",
+        "src/components/GuidesPage.tsx",
+        "src/components/TrustPages.tsx",
+        "src/components/MarketGuidesSection.tsx",
+        "src/components/HelpModal.tsx",
+        "src/components/TermsModal.tsx",
+        "index.html",
+        "public/llms.txt",
+        "public/llms-full.txt"
+      ],
+      "tests": [
+        "server/tests/searchEngineDiscovery.test.ts",
+        "server/tests/routeResolution.test.ts"
+      ],
+      "reason": "Public links, pricing claims, server-rendered content and client views must agree. Lazy navigation, responsive composition, keyboard operation and motion require browser evidence beyond server discovery tests."
     }
   ]
 }
