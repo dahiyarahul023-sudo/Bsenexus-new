@@ -1522,8 +1522,9 @@ apiRouter.get("/results-calendar", async (req, res) => {
     res.setHeader('Cache-Control', 'private, max-age=10, stale-while-revalidate=30');
     const filter = (req.query.filter as string || "all") as 'all' | 'today' | 'upcoming' | 'recent';
     const watchlistId = req.query.watchlistId as string;
+    const scope = (req.query.scope as string) === 'market' ? 'market' : 'watchlist';
     const uid = getReqUserId(req);
-    const data = await getResultsCalendarData(filter, watchlistId, uid);
+    const data = await getResultsCalendarData(filter, watchlistId, uid, scope);
     res.json(data);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -1535,13 +1536,14 @@ apiRouter.post("/results-calendar/refresh", requireAuth, aiRateLimiter, async (r
     const mode = (req.query.mode as string) || req.body?.mode;
     const filter = (req.query.filter as string || "all") as 'all' | 'today' | 'upcoming' | 'recent';
     const watchlistId = req.query.watchlistId as string;
+    const scope = (req.query.scope as string) === 'market' ? 'market' : 'watchlist';
     const uid = getReqUserId(req);
 
     if (mode === 'full') {
       if (!(req as any).user?.isAdmin) return res.status(403).json({ success: false, error: 'Full system sync requires administrator access' });
       // Run full 200+ stock library scan in background non-blocking
       fetchAndSyncResultsCalendar(true).catch(console.error);
-      const data = await getResultsCalendarData(filter, watchlistId, uid);
+      const data = await getResultsCalendarData(filter, watchlistId, uid, scope);
       return res.json({ 
         success: true, 
         background: true, 
@@ -1552,7 +1554,7 @@ apiRouter.post("/results-calendar/refresh", requireAuth, aiRateLimiter, async (r
 
     // Quick / Standard refresh: updates cache and declaration matching quickly (<1s)
     await fetchAndSyncResultsCalendar(false);
-    const data = await getResultsCalendarData(filter, watchlistId, uid);
+    const data = await getResultsCalendarData(filter, watchlistId, uid, scope);
     res.json({ success: true, ...data });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });

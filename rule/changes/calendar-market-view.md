@@ -1,0 +1,53 @@
+# Change: results calendar market-wide view
+
+- Starting commit: ebab3ae (content(guides): listing-day outcomes for Oct 7 SME IPOs)
+- User objective and acceptance cases:
+  - User clicked "Let's do it" on Idea "Before Oct 15, I can fix your calendar's missing companies".
+  - Calendar gets a market-wide view next to the existing watchlist view (two scopes, per the Oct 4 product direction).
+  - Wipro and Tech Mahindra appear in the calendar's default universe with their Oct 15 results entries.
+  - Market view shows companies not on any watchlist; watchlist view behaves exactly as before.
+  - Change pushed to Bsenexus-new main; user runs their own manual deploy to bsenexus.in before Oct 15. No agent deploy.
+- Verified facts (file + symbol):
+  - `server/services/resultsCalendarService.ts:365` `fetchAndSyncResultsCalendar` syncs BSE BoardMeeting API only for `getActiveWatchlistSymbols()` (server/database/watchlistDao.ts) — this is why Wipro/TechM never appear.
+  - `server/services/resultsCalendarService.ts:596` `getResultsCalendarData(filter, watchlistId, userId)` enforces watchlist-only visibility server-side; `src/components/ResultsCalendar.tsx` `filteredAndSortedItems` useMemo also filters client-side when not searching.
+  - `server/utils/helpers.ts:32` `getScripCodeForSymbolOrName` resolves WIPRO->507685, TECHM->532755 (verified via tsx, Oct 7).
+  - BSE BoardMeeting API (api.bseindia.com) returns HTTP 403 "Access Denied" from this VM (geo/bot block); production server is the working path. Dates therefore must come only from BSE data at runtime — no hardcoded dates.
+  - Wipro + Tech Mahindra results Oct 15, 2026 verified Oct 4 via NDTV Profit (memory/2026-10-04.md#L19); HDFC Bank/Axis/ICICI Oct 17, Infosys+Coforge Oct 23 (memory).
+- Assumptions/unknowns and how they will be resolved:
+  - BSE API board-meeting rows for WIPRO/TECHM Oct 15 exist in production (announced). Cannot verify from this VM; resolved at runtime by the service's purpose-keyword filter. If BSE has not published them yet, entries appear when published — no invented dates.
+  - Market universe is a curated static symbol list (large/mid-cap result-season names). Symbols that fail `getScripCodeForSymbolOrName` are skipped by the existing loop.
+- Changed source of truth:
+  - `server/services/resultsCalendarService.ts`: `MARKET_CALENDAR_UNIVERSE` export; union sync; `marketUniverse?: boolean` on items; `scope` param on `getResultsCalendarData`.
+  - `server/api/routes.ts`: `scope` query param on GET/POST results-calendar endpoints.
+  - `src/components/ResultsCalendar.tsx`: Market/Watchlist scope toggle; scope sent to API; client watchlist filter skipped in market scope.
+- Impact command and affected semantic domains:
+  - `npm run map:impact -- src/components/ResultsCalendar.tsx server/services/resultsCalendarService.ts`
+  - Semantic domain: `market-data` (Market data, results, news and stories).
+- Related consumers: API (`/api/results-calendar`, `/api/results-calendar/refresh`), UI (`ResultsCalendar.tsx`, `QuarterlyResultsLedger.tsx` via item shape), storage (results_calendar disk cache + Supabase upsert carry the new optional field), jobs (periodic `fetchAndSyncResultsCalendar` in server.ts now syncs ~50 extra scrips), manual copy (none), cache keys (`results_calendar_items` client cache — shape-compatible).
+- Expected user-visible effect:
+  - New "Market | Watchlist" toggle on the results calendar. Market view lists upcoming results for companies beyond watchlists (incl. Wipro/TechM Oct 15 once BSE data flows). Watchlist view unchanged.
+- Failure/security/concurrency cases relevant to this change:
+  - R01: no invented dates; universe is symbols only; unresolvable symbols skipped.
+  - R10: `marketUniverse` flag is per-item, non-personalized; scope filtering is per-request from the caller's own watchlists — no cross-user leak (market scope excludes the requester's own watchlisted symbols).
+  - R11: sync batching unchanged (8/batch); ~50 extra scrips within existing full-scan budget.
+  - R13: new toggle handles loading/empty states via existing states; default scope 'watchlist' preserves current UX.
+  - R17: map regenerated + checked in same commit; no file deletions.
+- Implementation and coordinated updates:
+  - Service: universe list, union sync with flag, scope param, route param.
+  - Client: toggle UI, scope-aware fetch + filter.
+  - Change record (this file) + `npm run map:generate` in the same commit.
+- Commands actually run and results:
+  - `npm run map:impact -- src/components/ResultsCalendar.tsx server/services/resultsCalendarService.ts` — ok, consumers reviewed (routes, App, tests).
+  - tsx script: all 44 MARKET_CALENDAR_UNIVERSE symbols resolve via getScripCodeForSymbolOrName (WIPRO->507685, TECHM->532755 verified).
+  - BSE BoardMeeting API probe from this VM: HTTP 403 "Access Denied" (geo/bot block) — live date verification deferred to production runtime.
+  - `node --test --import tsx server/tests/calendarScope.test.ts` — 5/5 pass.
+  - `npx tsc --noEmit` — clean except pre-existing unrelated error in server/tests/referralDurability.test.ts (missing @electric-sql/pglite types; untouched by this change).
+  - `node --test --import tsx server/tests/auditSecurity.test.ts server/tests/core.test.ts` — 11/11 pass.
+  - `npm run map:generate` + `npm run map:check` + `npm run test:map` — all pass (305 files, 829 edges, 12 domains).
+- Required checks unavailable (reason; do not mark passed):
+  - Live BSE API verification of Wipro/TechM Oct 15 rows: BSE blocks this VM (403). Verified structurally + via unit test of scope logic with synthetic items.
+- Deployment/migration requirements and rollback:
+  - No migration. Rollback: revert the single commit. User deploys manually via AI Studio before Oct 15.
+- Remaining risks and next bounded step:
+  - If BSE has not yet published Wipro/TechM Oct 15 board meetings, market view shows them only after publication. Next: user deploys; agent verifies live after Oct 15 or on user ping.
+- Graph/domain/documentation refreshed: yes — `npm run map:generate` regenerated spider-map in the same commit; change record updated; no domain membership changes needed (market-data domain already covers resultsCalendarService.ts).

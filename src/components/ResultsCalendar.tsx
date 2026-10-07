@@ -79,6 +79,8 @@ export interface ResultCalendarItem {
   declarationSubject?: string;
   aiSummary?: string;
   quarterKey?: string;
+  /** True when synced via the market-wide calendar universe (server). */
+  marketUniverse?: boolean;
   declaredDetails?: {
     pdfUrl?: string;
     [key: string]: any;
@@ -113,6 +115,9 @@ export function ResultsCalendar() {
   const [searchQuery, setSearchQuery] = useState('');
   const [watchlists, setWatchlists] = useState<any[]>([]);
   const [selectedWatchlistId, setSelectedWatchlistId] = useState<string>('');
+  // Calendar scope: 'watchlist' (default, existing behavior) vs 'market'
+  // (market-wide view: companies beyond any watchlist, incl. Wipro/TechM).
+  const [calendarScope, setCalendarScope] = useState<'watchlist' | 'market'>('watchlist');
   const [sortBy, setSortBy] = useState<'date_asc' | 'date_desc' | 'status' | 'alpha'>('date_asc');
   
   // View Mode: 'grid' (default on PC/tablet) vs 'list' (default on mobile)
@@ -397,7 +402,8 @@ export function ResultsCalendar() {
     try {
       const endpoint = force ? '/api/results-calendar/refresh' : '/api/results-calendar';
       const method = force ? 'POST' : 'GET';
-      const url = `${endpoint}?filter=all${selectedWatchlistId ? `&watchlistId=${selectedWatchlistId}` : ''}${force && mode === 'full' ? '&mode=full' : ''}`;
+      const wlParam = (selectedWatchlistId && calendarScope === 'watchlist') ? `&watchlistId=${selectedWatchlistId}` : '';
+      const url = `${endpoint}?filter=all&scope=${calendarScope}${wlParam}${force && mode === 'full' ? '&mode=full' : ''}`;
 
       const res = await customFetch(url, { method });
       if (res.ok) {
@@ -485,9 +491,9 @@ export function ResultsCalendar() {
   }, []);
 
   useEffect(() => {
-    // Fetch on initial mount or when selected watchlist changes
+    // Fetch on initial mount or when selected watchlist / calendar scope changes
     fetchCalendar(false);
-  }, [selectedWatchlistId]);
+  }, [selectedWatchlistId, calendarScope]);
 
   // Native Pull to Refresh Hook for Earnings Calendar
   const { 
@@ -830,8 +836,9 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
       });
     });
 
-    // If NOT searching, filter by active watchlist stocks
-    if (!isSearching) {
+    // If NOT searching and in watchlist scope, filter by active watchlist stocks.
+    // In market scope the server already returns the market-wide set.
+    if (!isSearching && calendarScope === 'watchlist') {
       if (watchlists.length > 0 && activeWatchlistSymbols.size === 0 && selectedWatchlistId) {
         return [];
       }
@@ -906,12 +913,12 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
     }
 
     return result;
-  }, [items, statusFilter, declarationFilter, searchQuery, sortBy]);
+  }, [items, statusFilter, declarationFilter, searchQuery, sortBy, calendarScope]);
 
   // Reset page when filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [statusFilter, declarationFilter, searchQuery, selectedWatchlistId, sortBy]);
+  }, [statusFilter, declarationFilter, searchQuery, selectedWatchlistId, sortBy, calendarScope]);
 
   // Dynamic live horizon counts for upcoming tab
   const upcomingItems = useMemo(() => items.filter(i => i.status === 'UPCOMING' || i.daysLeft > 0), [items]);
@@ -1123,6 +1130,40 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
 
           {/* Right: Filter & View Controls */}
           <div className="flex items-center gap-1.5 shrink-0">
+            {/* Calendar Scope Switcher: Market-wide vs Watchlist */}
+            <div className="flex items-center gap-0.5 bg-slate-100 dark:bg-[#201E2E] p-0.5 rounded-lg border border-slate-200 dark:border-[#2D283E]" role="tablist" aria-label="Calendar scope">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={calendarScope === 'market'}
+                onClick={() => setCalendarScope('market')}
+                className={cn(
+                  "px-2.5 py-1.5 rounded-md text-xs transition-all cursor-pointer select-none",
+                  calendarScope === 'market'
+                    ? "bg-white dark:bg-[#2E2A42] text-slate-900 dark:text-white font-bold shadow-2xs"
+                    : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                )}
+                title="Market-wide results: companies beyond any watchlist"
+              >
+                Market
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={calendarScope === 'watchlist'}
+                onClick={() => setCalendarScope('watchlist')}
+                className={cn(
+                  "px-2.5 py-1.5 rounded-md text-xs transition-all cursor-pointer select-none",
+                  calendarScope === 'watchlist'
+                    ? "bg-white dark:bg-[#2E2A42] text-slate-900 dark:text-white font-bold shadow-2xs"
+                    : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                )}
+                title="Your watchlist results"
+              >
+                Watchlist
+              </button>
+            </div>
+
             {/* Desktop View Switcher */}
             <div className="hidden md:flex items-center gap-0.5 bg-slate-100 dark:bg-[#201E2E] p-0.5 rounded-lg border border-slate-200 dark:border-[#2D283E]">
               <button
@@ -1357,8 +1398,8 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                 </div>
               )}
 
-              {/* Section 2: Watchlist Filter */}
-              {watchlists.length > 0 && (
+              {/* Section 2: Watchlist Filter (watchlist scope only) */}
+              {calendarScope === 'watchlist' && watchlists.length > 0 && (
                 <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-[#2D283E]">
                   <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
                     Filter by Watchlist
@@ -1845,7 +1886,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
           </div>
         ) : (
           <motion.div 
-            key={`${currentPage}-${statusFilter}-${declarationFilter}-${selectedWatchlistId}-${viewMode}`}
+            key={`${currentPage}-${statusFilter}-${declarationFilter}-${selectedWatchlistId}-${viewMode}-${calendarScope}`}
             variants={containerStaggerVariants}
             initial="hidden"
             animate="visible"

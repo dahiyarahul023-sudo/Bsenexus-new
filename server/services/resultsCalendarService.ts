@@ -36,6 +36,47 @@ export interface ResultCalendarItem {
   declarationPdfLink?: string;
   declarationSubject?: string;
   aiSummary?: string;
+  /** True when this item's scrip was synced via the market-wide calendar universe
+   *  (not only via watchlists). Used by the market scope filter. */
+  marketUniverse?: boolean;
+}
+
+/**
+ * Market-wide calendar universe: major result-season companies whose board
+ * meetings are synced even when they are on nobody's watchlist. This powers
+ * the "Market" scope of the results calendar. Symbols only — all dates come
+ * from the live BSE BoardMeeting API at sync time; nothing is hardcoded.
+ * Every symbol must resolve via getScripCodeForSymbolOrName (verified Oct 7, 2026).
+ */
+export const MARKET_CALENDAR_UNIVERSE: string[] = [
+  'TCS','INFY','WIPRO','TECHM','HCLTECH',
+  'RELIANCE','HDFCBANK','ICICIBANK','AXISBANK','KOTAKBANK','SBIN','INDUSINDBK',
+  'ITC','LT','TITAN','ASIANPAINT','MARUTI','TATAMOTORS','TATASTEEL','HINDALCO',
+  'ONGC','NTPC','POWERGRID','ULTRACEMCO','COALINDIA','BPCL','GRASIM',
+  'SUNPHARMA','DRREDDY','CIPLA','DIVISLAB','APOLLOHOSP',
+  'BAJFINANCE','BAJAJFINSV','M&M','EICHERMOT','BHARTIARTL',
+  'ADANIENT','ADANIPORTS','NESTLEIND','PIDILITIND',
+  'LTTS','MPHASIS','COFORGE',
+];
+
+/**
+ * Pure scope filter for the results calendar (unit-tested).
+ * - 'watchlist' returns items unchanged (existing behavior).
+ * - 'market' returns only market-universe items whose symbol/scrip is NOT
+ *   in the requesting user's watchlist sets.
+ */
+export function applyCalendarScope(
+  items: ResultCalendarItem[],
+  scope: 'watchlist' | 'market',
+  userSymbols: Set<string>,
+  userScripCodes: Set<string>
+): ResultCalendarItem[] {
+  if (scope !== 'market') return items;
+  return items.filter(item =>
+    item.marketUniverse === true &&
+    !userSymbols.has((item.symbol || '').toUpperCase().trim()) &&
+    !(item.scripCode && userScripCodes.has(String(item.scripCode).trim()))
+  );
 }
 
 let cachedCalendar: ResultCalendarItem[] = [];
@@ -379,6 +420,25 @@ export async function fetchAndSyncResultsCalendar(
       targetSymbols = options.symbols;
     } else {
       targetSymbols = await getActiveWatchlistSymbols();
+      // Market-wide universe: also sync major result-season companies so the
+      // market calendar scope can show companies beyond any watchlist.
+      const seen = new Set(targetSymbols.map(s => s.trim().toUpperCase()));
+      for (const sym of MARKET_CALENDAR_UNIVERSE) {
+        const clean = sym.trim().toUpperCase();
+        if (clean && !seen.has(clean)) {
+          seen.add(clean);
+          targetSymbols.push(clean);
+        }
+      }
+    }
+
+    // Scrip codes belonging to the market universe (for scope tagging below)
+    const marketScripSet = new Set<string>();
+    if (!options?.symbols || options.symbols.length === 0) {
+      for (const sym of MARKET_CALENDAR_UNIVERSE) {
+        const sc = getScripCodeForSymbolOrName(sym.trim().toUpperCase());
+        if (sc) marketScripSet.add(sc);
+      }
     }
 
     if (!targetSymbols || targetSymbols.length === 0) {
@@ -448,7 +508,8 @@ export async function fetchAndSyncResultsCalendar(
                   meetingTimestamp: meetingTs,
                   daysLeft,
                   status,
-                  updatedAt: new Date().toISOString()
+                  updatedAt: new Date().toISOString(),
+                  marketUniverse: marketScripSet.has(scripCode)
                 });
               }
             }
@@ -596,7 +657,8 @@ export function invalidateEnrichedCalendarCache() {
 export async function getResultsCalendarData(
   filterStatus: 'all' | 'today' | 'upcoming' | 'recent' = 'all', 
   watchlistId?: string,
-  userId?: string
+  userId?: string,
+  scope: 'watchlist' | 'market' = 'watchlist'
 ) {
   const now = Date.now();
   if (cachedCalendar.length === 0 || now - lastCalendarFetchTime > 12 * 60 * 60 * 1000) {
@@ -755,8 +817,11 @@ export async function getResultsCalendarData(
     }
   }
 
-  // Filter by specific watchlist if requested, otherwise filter across all active watchlists
-  if (watchlistId) {
+  // Market scope: market-universe companies that are NOT on the requesting
+  // user's watchlists. Watchlist scope (default): existing behavior unchanged.
+  if (scope === 'market') {
+    items = applyCalendarScope(items, 'market', userSymbols, userScripCodes);
+  } else if (watchlistId) {
     const selectedList = userWatchlists.find(w => String(w.id) === String(watchlistId));
     if (selectedList && selectedList.items) {
       const listSymbols = new Set(selectedList.items.map(s => extractSymbol(s).toUpperCase().trim()));
