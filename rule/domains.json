@@ -1,0 +1,304 @@
+{
+  "schemaVersion": 1,
+  "description": "Human-reviewed semantic relationships. Domain membership means review together, not an import or proof of runtime behavior. Update when contracts change.",
+  "domains": [
+    {
+      "id": "identity",
+      "label": "Identity, sessions and authorization",
+      "files": [
+        "server/security/auth.ts",
+        "server/security/firebaseAdmin.ts",
+        "server/security/firebaseIdentity.ts",
+        "server/database/usersDao.ts",
+        "src/context/AuthContext.tsx",
+        "src/firebase.ts",
+        "src/api.ts"
+      ],
+      "tests": [
+        "server/tests/authIdentity.test.ts",
+        "server/tests/accountProtection.test.ts",
+        "server/tests/recaptchaSecurity.test.ts"
+      ],
+      "reason": "Verified token \u2192 server session \u2192 current durable profile \u2192 route authorization. Browser roles are display state; never authority."
+    },
+    {
+      "id": "payments",
+      "label": "Payment and paid access",
+      "files": [
+        "server/api/payments.ts",
+        "server/config/plans.ts",
+        "server/database/paymentOrdersDao.ts",
+        "server/database/paymentEntitlementsDao.ts",
+        "server/database/paymentStore.ts",
+        "server/database/usersDao.ts",
+        "server/services/paymentEntitlementLogic.ts",
+        "server/security/auth.ts",
+        "src/config/plans.ts",
+        "src/utils/cashfree.ts",
+        "src/context/AuthContext.tsx",
+        "src/components/ProCheckoutView.tsx",
+        "src/components/ProReceiptView.tsx",
+        "src/components/PaymentHistory.tsx",
+        "src/components/SubscriptionCard.tsx",
+        "public/llms.txt",
+        "public/llms-full.txt",
+        "src/components/HelpModal.tsx",
+        "src/components/TermsModal.tsx",
+        "src/components/LandingPage.tsx"
+      ],
+      "tests": [
+        "server/tests/paymentEntitlement.test.ts",
+        "server/tests/pricingSync.test.ts"
+      ],
+      "reason": "Create, webhook, verify, recover and claim must agree on owner, plan, amount/currency and exactly-once durable grant. Profile edits must preserve paid rights."
+    },
+    {
+      "id": "trial-quota",
+      "label": "Trial, free demo and AI quota",
+      "files": [
+        "server/security/auth.ts",
+        "server/services/aiQuotaService.ts",
+        "server/database/aiQuotaDao.ts",
+        "server/api/routes.ts",
+        "src/context/AuthContext.tsx",
+        "src/utils/aiQuota.ts",
+        "src/components/ProUpgradeModal.tsx",
+        "src/components/SubscriptionCard.tsx",
+        "server/services/gemini.ts",
+        "public/llms.txt",
+        "public/llms-full.txt",
+        "src/components/HelpModal.tsx",
+        "src/components/TermsModal.tsx",
+        "src/components/LandingPage.tsx",
+        "supabase/migrations/003_durable_ai_quota.sql"
+      ],
+      "tests": [
+        "server/tests/aiQuotaFrontend.test.ts",
+        "server/tests/followupAudit.test.ts"
+      ],
+      "reason": "Trial duration and paid-vs-trial labels cross backend, client and copy. Quota consumption and rollback must survive races and restart; reset boundaries use IST."
+    },
+    {
+      "id": "ai-documents",
+      "label": "AI providers and documents",
+      "files": [
+        "server/services/gemini.ts",
+        "server/services/ai/aiGateway.ts",
+        "server/services/ai/modelRegistry.ts",
+        "server/services/ai/providerQuotaLedger.ts",
+        "server/services/ai/providers/geminiAdapter.ts",
+        "server/services/ai/providers/openaiCompat.ts",
+        "server/utils/bseDocument.ts",
+        "server/services/aiQuotaService.ts",
+        "server/api/routes.ts"
+      ],
+      "tests": [
+        "server/tests/aiGateway.test.ts",
+        "server/tests/auditSecurity.test.ts"
+      ],
+      "reason": "Authenticated request \u2192 quota \u2192 allowlisted document fetch \u2192 provider budget/fallback \u2192 response/cache. Retrieved documents are untrusted content, not instructions."
+    },
+    {
+      "id": "feed-alerts",
+      "label": "Filings, watchlists and alert delivery",
+      "files": [
+        "server.ts",
+        "server/services/bse.ts",
+        "server/services/monitor.ts",
+        "server/database/announcementDao.ts",
+        "server/database/watchlistDao.ts",
+        "server/database/alertRulesDao.ts",
+        "server/services/telegram.ts",
+        "server/services/oneSignal.ts",
+        "server/database/notificationDao.ts",
+        "server/utils/alertDecision.ts",
+        "server/utils/telegramTarget.ts",
+        "src/components/WatchlistManager.tsx"
+      ],
+      "tests": [
+        "server/tests/alertDecision.test.ts",
+        "server/tests/oneSignal.test.ts",
+        "server/tests/batchOperations.test.ts"
+      ],
+      "reason": "Poll \u2192 normalize/dedupe \u2192 persistence \u2192 feed and alert decisions \u2192 recipient-specific delivery/inbox. Global and personal recipients must remain distinct."
+    },
+    {
+      "id": "user-data",
+      "label": "Notes, preferences and notification inbox",
+      "files": [
+        "server/api/notes.ts",
+        "server/database/notesDao.ts",
+        "server/database/notificationDao.ts",
+        "server/database/usersDao.ts",
+        "server/api/routes.ts",
+        "src/context/AuthContext.tsx",
+        "src/utils/preferenceSaveQueue.ts",
+        "supabase/migrations/004_notification_inbox_receipts.sql",
+        "supabase/migrations/005_user_notification_inbox_clear.sql"
+      ],
+      "tests": [
+        "server/tests/notes.test.ts",
+        "server/tests/preferenceSaveQueue.test.ts",
+        "server/tests/followupAudit.test.ts"
+      ],
+      "reason": "Verified UID must constrain every read/write/delete. Delayed saves must not resurrect deleted data or overwrite newer preferences; inbox clear/read must be durable."
+    },
+    {
+      "id": "storage",
+      "label": "Persistence and recovery",
+      "files": [
+        "server/database/supabase.ts",
+        "server/database/firebase.ts",
+        "server/database/localStore.ts",
+        "server/database/paymentStore.ts",
+        "server/database/paymentEntitlementsDao.ts",
+        "server/database/paymentOrdersDao.ts",
+        "server/database/aiQuotaDao.ts",
+        "server/database/notesDao.ts",
+        "server/services/storageMonitor.ts",
+        "server.ts",
+        "supabase/migrations/001_initial_schema.sql",
+        "supabase/migrations/002_restrict_privileged_rpcs.sql",
+        "supabase/migrations/003_durable_ai_quota.sql",
+        "supabase/migrations/004_notification_inbox_receipts.sql",
+        "supabase/migrations/005_user_notification_inbox_clear.sql",
+        "supabase/migrations/006_durable_referrals.sql"
+      ],
+      "tests": [
+        "server/tests/storageQuotaSwitch.test.ts",
+        "server/tests/startupRecovery.test.ts",
+        "server/tests/productionAudit.test.ts"
+      ],
+      "reason": "Supabase and privileged RPCs are server-only. Cache/fallback behavior varies per DAO: local success never proves durable payment success. Review migrations with caller changes."
+    },
+    {
+      "id": "public-contract",
+      "label": "Public pages, routing and cache",
+      "files": [
+        "server.ts",
+        "server/api/routes.ts",
+        "server/api/seoRoutes.ts",
+        "server/utils/publicPage.ts",
+        "server/utils/renderCache.ts",
+        "src/App.tsx",
+        "src/api.ts",
+        "public/sw.js",
+        "server/services/marketGuidesService.ts"
+      ],
+      "tests": [
+        "server/tests/routeResolution.test.ts",
+        "server/tests/renderCache.test.ts",
+        "server/tests/searchEngineDiscovery.test.ts",
+        "server/tests/pwaOfflineSync.test.ts"
+      ],
+      "reason": "API responses, SSR routes, browser deep links, SEO and service-worker caching must remain compatible. User-specific responses must never enter shared public caches."
+    },
+    {
+      "id": "referrals",
+      "label": "Referral code, commission and pricing",
+      "files": [
+        "server/api/referrals.ts",
+        "server/database/referralsDao.ts",
+        "server/api/payments.ts",
+        "server/config/plans.ts",
+        "src/config/plans.ts",
+        "src/utils/cashfree.ts",
+        "src/components/PricingPage.tsx",
+        "src/components/ProCheckoutView.tsx",
+        "src/components/SettingsTab.tsx",
+        "server/services/referralPaymentContract.ts",
+        "server/utils/referralValidation.ts",
+        "src/components/ReferralDashboardModal.tsx",
+        "src/utils/referralStream.ts",
+        "supabase/migrations/006_durable_referrals.sql",
+        "server/database/paymentOrdersDao.ts",
+        "server/database/paymentEntitlementsDao.ts",
+        "server/database/usersDao.ts"
+      ],
+      "tests": [
+        "server/tests/referrals.test.ts",
+        "server/tests/pricingSync.test.ts",
+        "server/tests/referralDurability.test.ts",
+        "server/tests/referralContract.test.ts",
+        "server/tests/referralApi.test.ts"
+      ],
+      "reason": "Verified UID owns immutable unique code aliases. Application creates a private pending intent; checkout snapshots attribution and reward mode; a paid-grant trigger settles the unique reward transactionally. SSE carries owner-only snapshots with reconciliation. See rule/REFERRALS.md for legacy cutover requirements."
+    },
+    {
+      "id": "market-data",
+      "label": "Market data, results, news and stories",
+      "files": [
+        "server/services/companyIntelService.ts",
+        "server/services/fiiDiiService.ts",
+        "server/services/marketIndicesService.ts",
+        "server/services/resultsCalendarService.ts",
+        "server/services/stockNewsService.ts",
+        "server/services/storyFeedService.ts",
+        "server/services/timelineClassifier.ts",
+        "server/utils/stockResolver.ts",
+        "server/utils/helpers.ts",
+        "server/api/routes.ts",
+        "src/hooks/useMarketIndices.ts",
+        "src/utils/timeFormat.ts"
+      ],
+      "tests": [
+        "server/tests/core.test.ts",
+        "server/tests/auditData.test.ts",
+        "server/tests/followupAudit.test.ts"
+      ],
+      "reason": "Upstream timestamps, stock identity and market sessions affect cached API results, screen freshness and alert timing. Public market data availability does not establish trading-data accuracy."
+    },
+    {
+      "id": "faq-search-seo",
+      "label": "FAQ, search and public discovery",
+      "files": [
+        "server/api/faq.ts",
+        "server/api/search.ts",
+        "server/api/seoRoutes.ts",
+        "server/services/faqBank.ts",
+        "server/services/seoService.ts",
+        "server/services/marketGuidesService.ts",
+        "server/services/guideIndexNow.ts",
+        "server/services/indexNow.ts",
+        "server/utils/publicPage.ts",
+        "server.ts",
+        "public/robots.txt",
+        "public/sitemap.xml",
+        "public/llms.txt",
+        "public/llms-full.txt"
+      ],
+      "tests": [
+        "server/tests/faqBank.test.ts",
+        "server/tests/searchEngineDiscovery.test.ts",
+        "server/tests/routeResolution.test.ts"
+      ],
+      "reason": "Public copy and crawler metadata must agree with actual API/product contracts. Admin SEO mutations inherit mount guards; generated summaries are not evidence of source accuracy."
+    },
+    {
+      "id": "operations",
+      "label": "Startup, abuse controls and diagnostics",
+      "files": [
+        "server.ts",
+        "server/utils/serverStartup.ts",
+        "server/security/accountRateLimiter.ts",
+        "server/security/hardening.ts",
+        "server/security/recaptchaService.ts",
+        "server/database/diagnosticsDao.ts",
+        "server/database/logDao.ts",
+        "server/database/feedbackDao.ts",
+        "server/database/settingsDao.ts",
+        "server/sentry.ts",
+        "server/services/resendMailer.ts",
+        "server/utils/retry.ts",
+        "server/utils/circuitBreaker.ts"
+      ],
+      "tests": [
+        "server/tests/startupRecovery.test.ts",
+        "server/tests/accountProtection.test.ts",
+        "server/tests/circuitBreaker.test.ts",
+        "server/tests/recaptchaSecurity.test.ts"
+      ],
+      "reason": "Startup and settings influence background jobs, provider calls, abuse limits and logs. A live HTTP listener does not establish that durable stores or external providers are ready."
+    }
+  ]
+}

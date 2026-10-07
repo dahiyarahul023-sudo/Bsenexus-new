@@ -1,7 +1,49 @@
-import { readLocalJson, writeLocalJson } from './localStore.js';
-import { getSupabase, isSupabaseConfigured } from './supabase.js';
-import { getUserProfile, saveUserProfile } from './usersDao.js';
+import { randomBytes } from 'node:crypto';
+import { getSupabase } from './supabase.js';
+import { invalidateUserProfileCache } from './usersDao.js';
 
+/** Durable-only: no instance-local cache can authorize ownership or confirm rewards. */
+export class ReferralError extends Error {
+  constructor(public status: number, public code: string, message: string) { super(message); }
+}
+const failures: Record<string, [number,string]> = {
+  REFERRAL_CODE_TAKEN: [409, 'This code already belongs to another account. Please choose another.'],
+  REFERRAL_INVALID_CODE: [400, 'Use 3–20 letters, numbers, hyphens or underscores.'],
+  REFERRAL_SELF: [400, 'You cannot use your own referral code.'],
+  REFERRAL_ACCOUNT_MISSING: [404, 'Referral account not found. Open your referral dashboard first.'],
+  REFERRAL_ORDER_MISMATCH: [409, 'Referral attribution does not match this payment order.'],
+  REFERRAL_INVALID_PAYOUT: [400, 'Enter a valid payout amount, reference and details.'],
+  REFERRAL_PAYOUT_CONFLICT: [409, 'This transaction reference has already been used.'],
+  REFERRAL_PAYOUT_EXCEEDS_BALANCE: [409, 'Payout amount exceeds the pending balance.'],
+};
+async function rpc<T>(name: string, args: Record<string, unknown>): Promise<T> {
+  try {
+    const { data, error } = await getSupabase().rpc(name,args).abortSignal(AbortSignal.timeout(10_000));
+    if (error) {
+      for (const [code,[status,message]] of Object.entries(failures)) if (error.message.includes(code)) throw new ReferralError(status,code,message);
+      throw error;
+    }
+    return data as T;
+  } catch (error) {
+    if (error instanceof ReferralError) throw error;
+    throw new ReferralError(503,'REFERRAL_UNAVAILABLE','Referral storage is temporarily unavailable. Your request was not confirmed; retry safely.');
+  }
+}
+function command<T=any>(action: string, uid: string, data: Record<string,unknown> = {}): Promise<T> {
+  return rpc<T>('referral_command',{p_action:action,p_uid:uid,p_data:data});
+}
+export function validateReferralCode(raw: string): string {
+  const code = String(raw || '').trim().toUpperCase();
+  if (!/^[A-Z0-9_-]{3,20}$/.test(code)) throw new ReferralError(400,'REFERRAL_INVALID_CODE',failures.REFERRAL_INVALID_CODE[1]);
+  return code;
+}
+function toRecord(a: any): ReferralCodeRecord {
+  return { code:a.current_code,referrerUid:a.uid,referrerEmail:a.email,referrerName:a.display_name,type:a.reward_type,
+    commissionPercent:getTierCommissionPercent(Number(a.conversions)),totalClicks:Number(a.clicks),totalSignups:0,
+    totalConversions:Number(a.conversions),totalEarningsPaise:Number(a.earnings_paise),pendingPayoutPaise:Number(a.pending_paise),
+    paidPayoutPaise:Number(a.paid_paise),payoutUpiId:a.upi,payoutBankInfo:a.bank_info,
+    createdAt:Date.parse(a.created_at),updatedAt:Date.parse(a.updated_at),isActive:a.active };
+}
 export interface ReferralCodeRecord {
   code: string; // Uppercase, alphanumeric, e.g. "RAHUL", "AKSHAT", "NEXUS100"
   referrerUid: string;
@@ -41,43 +83,6 @@ export interface ReferralConversionRecord {
   freeProDaysGranted?: number;
   status: 'confirmed' | 'paid_out' | 'refunded';
   convertedAt: number;
-}
-
-const REFERRALS_FILE = 'referrals.json';
-const CONVERSIONS_FILE = 'referral_conversions.json';
-
-// In-memory cache for speed
-let referralsCache: Map<string, ReferralCodeRecord> | null = null;
-let userToCodeCache: Map<string, string> | null = null;
-let conversionsCache: ReferralConversionRecord[] | null = null;
-
-function initReferralsCache(): void {
-  if (referralsCache !== null && conversionsCache !== null) return;
-  const list = readLocalJson<ReferralCodeRecord[]>(REFERRALS_FILE, []);
-  referralsCache = new Map();
-  userToCodeCache = new Map();
-  for (const item of list) {
-    if (item && item.code) {
-      const normCode = item.code.toUpperCase().trim();
-      referralsCache.set(normCode, item);
-      if (item.referrerUid) {
-        userToCodeCache.set(item.referrerUid, normCode);
-      }
-    }
-  }
-
-  conversionsCache = readLocalJson<ReferralConversionRecord[]>(CONVERSIONS_FILE, []);
-}
-
-function flushReferrals(): void {
-  if (!referralsCache) return;
-  const list = Array.from(referralsCache.values());
-  writeLocalJson(REFERRALS_FILE, list);
-}
-
-function flushConversions(): void {
-  if (!conversionsCache) return;
-  writeLocalJson(CONVERSIONS_FILE, conversionsCache);
 }
 
 /** Sanitize a referral code to uppercase alphanumeric and hyphen/underscore only. */
@@ -160,561 +165,67 @@ export function getTierInfo(conversionsCount: number): {
   };
 }
 
-/** Get referral record by code. */
+
 export async function getReferralByCode(rawCode: string): Promise<ReferralCodeRecord | null> {
-  initReferralsCache();
-  const code = sanitizeReferralCode(rawCode);
-  if (!code) return null;
-  const rec = referralsCache!.get(code);
-  if (rec && rec.isActive) return rec;
-
-  // Check Supabase if configured
-  if (isSupabaseConfigured()) {
-    try {
-      const supabase = getSupabase();
-      const { data } = await supabase
-        .from('referral_codes')
-        .select('*')
-        .eq('code', code)
-        .eq('is_active', true)
-        .maybeSingle();
-
-      if (data) {
-        const item: ReferralCodeRecord = {
-          code: data.code,
-          referrerUid: data.referrer_uid,
-          referrerEmail: data.referrer_email || '',
-          referrerName: data.referrer_name || '',
-          type: data.type || 'user',
-          commissionPercent: Number(data.commission_percent || 25),
-          totalClicks: Number(data.total_clicks || 0),
-          totalSignups: Number(data.total_signups || 0),
-          totalConversions: Number(data.total_conversions || 0),
-          totalEarningsPaise: Number(data.total_earnings_paise || 0),
-          pendingPayoutPaise: Number(data.pending_payout_paise || 0),
-          paidPayoutPaise: Number(data.paid_payout_paise || 0),
-          payoutUpiId: data.payout_upi_id || '',
-          payoutBankInfo: data.payout_bank_info || '',
-          createdAt: Number(data.created_at || Date.now()),
-          updatedAt: Number(data.updated_at || Date.now()),
-          isActive: Boolean(data.is_active),
-        };
-        referralsCache!.set(code, item);
-        userToCodeCache!.set(item.referrerUid, code);
-        flushReferrals();
-        return item;
-      }
-    } catch (e: any) {
-      console.warn('[Referrals] Supabase lookup error:', e?.message || e);
-    }
-  }
-
-  return null;
+  const a = await command('lookup','',{code:validateReferralCode(rawCode)});
+  return a ? toRecord(a) : null;
 }
-
-/** Get or create a referral code for a registered user. */
-export async function getOrCreateUserReferralCode(
-  uid: string,
-  email: string = '',
-  displayName: string = ''
-): Promise<ReferralCodeRecord> {
-  initReferralsCache();
-  if (!uid) throw new Error('Missing uid');
-
-  // Check if user already has a code
-  const existingCode = userToCodeCache!.get(uid);
-  if (existingCode && referralsCache!.has(existingCode)) {
-    const existing = referralsCache!.get(existingCode)!;
-    // Update name/email if missing
-    if (!existing.referrerEmail && email) {
-      existing.referrerEmail = email;
-      existing.updatedAt = Date.now();
-      flushReferrals();
-    }
-    return existing;
+export async function getOrCreateUserReferralCode(uid: string,email='',displayName=''): Promise<ReferralCodeRecord> {
+  if (!uid) throw new ReferralError(401,'AUTH_REQUIRED','Sign in first.');
+  const base = generateCleanUserReferralCode(displayName,email);
+  for (let attempt=0;attempt<8;attempt++) {
+    const code=attempt===0 ? base : base.slice(0,10)+'_'+randomBytes(4).toString('hex').toUpperCase();
+    try { return toRecord(await command('ensure',uid,{code,email,displayName})); }
+    catch(error) { if (!(error instanceof ReferralError) || error.code!=='REFERRAL_CODE_TAKEN') throw error; }
   }
-
-  // Generate clean, readable code based on user's name
-  let candidate = generateCleanUserReferralCode(displayName, email);
-  if (referralsCache!.has(candidate)) {
-    candidate = `${candidate}100`;
-    if (referralsCache!.has(candidate)) {
-      candidate = `${candidate.slice(0, 6)}${Math.floor(10 + Math.random() * 89)}`;
-    }
-  }
-
-  const now = Date.now();
-  const newRecord: ReferralCodeRecord = {
-    code: candidate,
-    referrerUid: uid,
-    referrerEmail: email,
-    referrerName: displayName || email.split('@')[0] || 'Member',
-    type: 'user', // Default is regular user ('user') which earns Free Pro Days
-    commissionPercent: 15,
-    totalClicks: 0,
-    totalSignups: 0,
-    totalConversions: 0,
-    totalEarningsPaise: 0,
-    pendingPayoutPaise: 0,
-    paidPayoutPaise: 0,
-    createdAt: now,
-    updatedAt: now,
-    isActive: true,
-  };
-
-  referralsCache!.set(candidate, newRecord);
-  userToCodeCache!.set(uid, candidate);
-  flushReferrals();
-
-  // Async sync to Supabase
-  if (isSupabaseConfigured()) {
-    try {
-      const supabase = getSupabase();
-      await supabase.from('referral_codes').upsert({
-        code: candidate,
-        referrer_uid: uid,
-        referrer_email: email,
-        referrer_name: newRecord.referrerName,
-        type: newRecord.type,
-        commission_percent: newRecord.commissionPercent,
-        total_clicks: 0,
-        total_signups: 0,
-        total_conversions: 0,
-        total_earnings_paise: 0,
-        pending_payout_paise: 0,
-        paid_payout_paise: 0,
-        created_at: now,
-        updated_at: now,
-        is_active: true,
-      });
-    } catch (err: any) {
-      console.warn('[Referrals] Supabase referral code create error:', err?.message || err);
-    }
-  }
-
-  return newRecord;
+  throw new ReferralError(503,'REFERRAL_UNAVAILABLE','Could not reserve a unique code. Please retry.');
 }
-
-/** User can customize their referral code (e.g. "RAHUL", "FINTECH-PRO"). */
-export async function setCustomReferralCode(
-  uid: string,
-  rawRequestedCode: string,
-  isCreator: boolean = false
-): Promise<{ success: boolean; code?: string; error?: string }> {
-  initReferralsCache();
-  const newCode = sanitizeReferralCode(rawRequestedCode);
-  if (!newCode || newCode.length < 3) {
-    return { success: false, error: 'Referral code must be at least 3 alphanumeric characters' };
-  }
-
-  const existingWithCode = referralsCache!.get(newCode);
-  if (existingWithCode && existingWithCode.referrerUid !== uid) {
-    return { success: false, error: `Code "${newCode}" is already taken. Try another name.` };
-  }
-
-  const currentCode = userToCodeCache!.get(uid);
-  let record: ReferralCodeRecord;
-
-  if (currentCode && referralsCache!.has(currentCode)) {
-    record = referralsCache!.get(currentCode)!;
-    if (currentCode !== newCode) {
-      referralsCache!.delete(currentCode);
-    }
-  } else {
-    const now = Date.now();
-    record = {
-      code: newCode,
-      referrerUid: uid,
-      referrerEmail: '',
-      referrerName: '',
-      type: isCreator ? 'creator' : 'user',
-      commissionPercent: isCreator ? 20 : 15,
-      totalClicks: 0,
-      totalSignups: 0,
-      totalConversions: 0,
-      totalEarningsPaise: 0,
-      pendingPayoutPaise: 0,
-      paidPayoutPaise: 0,
-      createdAt: now,
-      updatedAt: now,
-      isActive: true,
-    };
-  }
-
-  record.code = newCode;
-  if (isCreator) record.type = 'creator';
-  record.updatedAt = Date.now();
-
-  referralsCache!.set(newCode, record);
-  userToCodeCache!.set(uid, newCode);
-  flushReferrals();
-
-  if (isSupabaseConfigured()) {
-    try {
-      const supabase = getSupabase();
-      await supabase.from('referral_codes').upsert({
-        code: newCode,
-        referrer_uid: uid,
-        referrer_email: record.referrerEmail,
-        referrer_name: record.referrerName,
-        type: record.type,
-        commission_percent: record.commissionPercent,
-        total_clicks: record.totalClicks,
-        total_signups: record.totalSignups,
-        total_conversions: record.totalConversions,
-        total_earnings_paise: record.totalEarningsPaise,
-        pending_payout_paise: record.pendingPayoutPaise,
-        paid_payout_paise: record.paidPayoutPaise,
-        created_at: record.createdAt,
-        updated_at: record.updatedAt,
-        is_active: record.isActive,
-      });
-    } catch (err: any) {
-      console.warn('[Referrals] Supabase custom code error:', err?.message || err);
-    }
-  }
-
-  return { success: true, code: newCode };
+export async function setCustomReferralCode(uid:string,rawCode:string,_isCreator=false): Promise<{success:boolean;code?:string;error?:string}> {
+  return command('rename',uid,{code:validateReferralCode(rawCode)});
 }
-
-/** Update payout details for creator */
-export async function updateReferralPayoutInfo(
-  uid: string,
-  payoutUpiId: string,
-  payoutBankInfo: string = ''
-): Promise<{ success: boolean; error?: string }> {
-  initReferralsCache();
-  const currentCode = userToCodeCache!.get(uid);
-  if (!currentCode || !referralsCache!.has(currentCode)) {
-    return { success: false, error: 'Referral account not found' };
-  }
-
-  const record = referralsCache!.get(currentCode)!;
-  record.payoutUpiId = payoutUpiId.trim();
-  record.payoutBankInfo = payoutBankInfo.trim();
-  record.updatedAt = Date.now();
-  flushReferrals();
-
-  return { success: true };
+export async function updateReferralPayoutInfo(uid:string,upi:string,bank='') {
+  if ((!upi.trim()&&!bank.trim()) || upi.length>120 || bank.length>500) throw new ReferralError(400,'REFERRAL_INVALID_PAYOUT',failures.REFERRAL_INVALID_PAYOUT[1]);
+  return command('payout-info',uid,{upi:upi.trim(),bank:bank.trim()});
 }
-
-/** Toggle or switch between Community User and Creator Partner tier */
-export async function setReferralType(
-  uid: string,
-  type: 'creator' | 'user'
-): Promise<{ success: boolean; type: string; error?: string }> {
-  initReferralsCache();
-  const currentCode = userToCodeCache!.get(uid);
-  if (!currentCode || !referralsCache!.has(currentCode)) {
-    return { success: false, type, error: 'Referral account not found' };
-  }
-
-  const record = referralsCache!.get(currentCode)!;
-  record.type = type;
-  record.updatedAt = Date.now();
-  flushReferrals();
-
-  return { success: true, type: record.type };
+export async function setReferralType(uid:string,type:'creator'|'user') { return command('type',uid,{type}); }
+export async function recordReferralClick(rawCode:string):Promise<boolean> { return (await command('click','',{code:validateReferralCode(rawCode)})).success; }
+export async function applyReferralCode(uid:string,rawCode:string) { return command('apply',uid,{code:validateReferralCode(rawCode)}); }
+export async function clearReferralApplication(uid:string) { return command('unapply',uid); }
+/** Legacy signup callers must supply verified UID; anonymous clicks cannot count as signups. */
+export async function recordReferralSignup(rawCode:string,uid?:string):Promise<boolean> { if(!uid)return false;return (await applyReferralCode(uid,rawCode)).success; }
+export async function bindReferralOrder(uid:string,input:{orderId:string;code:string;planId:string;basePaise:number;paidPaise:number;currency:string}) {
+  return command('bind',uid,{...input,code:validateReferralCode(input.code)});
 }
-
-/** Track a click or page visit using this referral code. */
-export async function recordReferralClick(rawCode: string): Promise<boolean> {
-  initReferralsCache();
-  const code = sanitizeReferralCode(rawCode);
-  if (!code) return false;
-  const record = referralsCache!.get(code);
-  if (!record || !record.isActive) return false;
-
-  record.totalClicks = (record.totalClicks || 0) + 1;
-  record.updatedAt = Date.now();
-  flushReferrals();
-  return true;
+export async function settleReferralOrder(orderId:string) {
+  const result=await rpc<any>('referral_settle_order',{p_order_id:orderId});
+  if(result?.referrer_uid) invalidateUserProfileCache(result.referrer_uid);
+  return result;
 }
-
-/** Track a new user account registration using this referral code. */
-export async function recordReferralSignup(rawCode: string): Promise<boolean> {
-  initReferralsCache();
-  const code = sanitizeReferralCode(rawCode);
-  if (!code) return false;
-  const record = referralsCache!.get(code);
-  if (!record || !record.isActive) return false;
-
-  record.totalSignups = (record.totalSignups || 0) + 1;
-  record.updatedAt = Date.now();
-  flushReferrals();
-  return true;
+/** Compatibility entry point: financial values and owner come from durable order attribution. */
+export async function recordReferralConversion(params:{orderId:string;[key:string]:unknown}) {
+  const r=await settleReferralOrder(params.orderId);
+  return {success:true,commissionEarnedPaise:Number(r.commission_paise||0),freeProDaysGranted:Number(r.free_days||0)};
 }
-
-/**
- * Record a verified Pro purchase conversion.
- *
- * Provides a durable audit trail for creators and community members:
- * - Regular Users: Earn +14 Days of Free Pro access automatically credited.
- * - Creators: Earn tiered cash commission (15% to 30%) with verified ledger tracking.
- */
-export async function recordReferralConversion(params: {
-  referralCode: string;
-  orderId: string;
-  referredUid: string;
-  referredEmail: string;
-  referredName?: string;
-  planId: string;
-  planLabel: string;
-  baseAmountPaise: number;
-  discountAmountPaise: number;
-  finalAmountPaidPaise: number;
-}): Promise<{
-  success: boolean;
-  commissionEarnedPaise: number;
-  freeProDaysGranted?: number;
-  error?: string;
-}> {
-  initReferralsCache();
-  const code = sanitizeReferralCode(params.referralCode);
-  if (!code) {
-    return { success: false, commissionEarnedPaise: 0, error: 'Invalid referral code' };
-  }
-
-  const record = referralsCache!.get(code);
-  if (!record) {
-    return { success: false, commissionEarnedPaise: 0, error: 'Referral code not found' };
-  }
-
-  // Prevent self-referral
-  if (record.referrerUid === params.referredUid) {
-    console.warn(`[Referrals] Blocked self-referral: uid=${params.referredUid} code=${code}`);
-    return { success: false, commissionEarnedPaise: 0, error: 'Self-referral is not permitted' };
-  }
-
-  // Idempotency check: orderId must not be counted twice
-  const existingConv = conversionsCache!.find((c) => c.orderId === params.orderId);
-  if (existingConv) {
-    console.log(`[Referrals] Conversion already logged for orderId=${params.orderId}`);
-    return {
-      success: true,
-      commissionEarnedPaise: existingConv.commissionEarnedPaise,
-      freeProDaysGranted: existingConv.freeProDaysGranted,
-    };
-  }
-
-  const isCreator = record.type === 'creator';
-  const nextConversionCount = (record.totalConversions || 0) + 1;
-
-  // Calculate tiered commission rate based on volume
-  const commissionPercent = getTierCommissionPercent(nextConversionCount, isCreator ? undefined : 0);
-  const commissionEarnedPaise = isCreator
-    ? Math.round((params.finalAmountPaidPaise * commissionPercent) / 100)
-    : 0;
-
-  const freeProDays = isCreator ? 0 : 14; // Regular users get 14 free Pro days
-  const conversionId = `ref_conv_${params.orderId}`;
-  const now = Date.now();
-
-  const convRecord: ReferralConversionRecord = {
-    id: conversionId,
-    referralCode: code,
-    referrerUid: record.referrerUid,
-    referrerEmail: record.referrerEmail,
-    referredUid: params.referredUid,
-    referredEmail: params.referredEmail || 'Customer',
-    referredName: params.referredName || params.referredEmail?.split('@')[0] || 'Pro Subscriber',
-    orderId: params.orderId,
-    planId: params.planId,
-    planLabel: params.planLabel,
-    baseAmountPaise: params.baseAmountPaise,
-    discountAmountPaise: params.discountAmountPaise,
-    finalAmountPaidPaise: params.finalAmountPaidPaise,
-    commissionEarnedPaise,
-    rewardType: isCreator ? 'cash_commission' : 'free_pro_days',
-    freeProDaysGranted: freeProDays,
-    status: 'confirmed',
-    convertedAt: now,
-  };
-
-  conversionsCache!.unshift(convRecord);
-  flushConversions();
-
-  // Atomically update referrer's balances & conversion counts
-  record.totalConversions = nextConversionCount;
-  if (isCreator) {
-    record.totalEarningsPaise = (record.totalEarningsPaise || 0) + commissionEarnedPaise;
-    record.pendingPayoutPaise = (record.pendingPayoutPaise || 0) + commissionEarnedPaise;
-    record.commissionPercent = commissionPercent;
-  }
-  record.updatedAt = now;
-  flushReferrals();
-
-  // Automatically credit Free Pro days to the standard referrer's profile
-  if (!isCreator && freeProDays > 0) {
-    try {
-      const referrerProf = await getUserProfile(record.referrerUid);
-      if (referrerProf) {
-        const currentExpiry =
-          referrerProf.proExpiresAt && referrerProf.proExpiresAt > Date.now()
-            ? referrerProf.proExpiresAt
-            : Date.now();
-        const newExpiry = currentExpiry + freeProDays * 24 * 60 * 60 * 1000;
-        referrerProf.proExpiresAt = newExpiry;
-        referrerProf.tier = 'pro';
-        await saveUserProfile(record.referrerUid, { proExpiresAt: newExpiry, tier: 'pro' }, true);
-        console.log(
-          `[Referrals] Credited +${freeProDays} free Pro days to referrer ${record.referrerUid}`
-        );
-      }
-    } catch (err: any) {
-      console.warn('[Referrals] Notice crediting Pro days to referrer:', err?.message || err);
-    }
-  }
-
-  // Async sync to Supabase
-  if (isSupabaseConfigured()) {
-    try {
-      const supabase = getSupabase();
-      await supabase.from('referral_conversions').insert({
-        id: conversionId,
-        referral_code: code,
-        referrer_uid: record.referrerUid,
-        referrer_email: record.referrerEmail,
-        referred_uid: params.referredUid,
-        referred_email: params.referredEmail,
-        order_id: params.orderId,
-        plan_id: params.planId,
-        plan_label: params.planLabel,
-        base_amount_paise: params.baseAmountPaise,
-        discount_amount_paise: params.discountAmountPaise,
-        final_amount_paid_paise: params.finalAmountPaidPaise,
-        commission_earned_paise: commissionEarnedPaise,
-        status: 'confirmed',
-        converted_at: now,
-      });
-
-      await supabase
-        .from('referral_codes')
-        .update({
-          total_conversions: record.totalConversions,
-          total_earnings_paise: record.totalEarningsPaise,
-          pending_payout_paise: record.pendingPayoutPaise,
-          updated_at: now,
-        })
-        .eq('code', code);
-    } catch (err: any) {
-      console.warn('[Referrals] Supabase conversion write error:', err?.message || err);
-    }
-  }
-
-  return { success: true, commissionEarnedPaise, freeProDaysGranted: freeProDays };
-}
-
-/** Get full referral statistics and audit trail for a creator / user. */
-export async function getReferralStats(uid: string): Promise<{
-  code: string;
-  type: 'creator' | 'user';
-  commissionPercent: number;
-  tierInfo: {
-    tierName: string;
-    commissionPercent: number;
-    nextTierName?: string;
-    conversionsToNext?: number;
-  };
-  totalClicks: number;
-  totalSignups: number;
-  totalConversions: number;
-  totalEarningsPaise: number;
-  pendingPayoutPaise: number;
-  paidPayoutPaise: number;
-  payoutUpiId?: string;
-  payoutBankInfo?: string;
-  conversions: Array<{
-    id: string;
-    orderId: string;
-    planLabel: string;
-    convertedAt: number;
-    referredEmailMasked: string;
-    finalAmount: number;
-    discountAmount: number;
-    commission: number;
-    rewardType: 'free_pro_days' | 'cash_commission';
-    freeProDaysGranted?: number;
-    status: string;
-  }>;
-} | null> {
-  initReferralsCache();
-  const code = userToCodeCache!.get(uid);
-  if (!code) return null;
-  const record = referralsCache!.get(code);
-  if (!record) return null;
-
-  const tierInfo = getTierInfo(record.totalConversions || 0);
-
-  // Filter conversions for this referrer
-  const userConversions = conversionsCache!
-    .filter((c) => c.referrerUid === uid || c.referralCode === code)
-    .map((c) => {
-      const email = c.referredEmail || '';
-      const parts = email.split('@');
-      let maskedEmail = email;
-      if (parts.length === 2 && parts[0].length > 2) {
-        maskedEmail = `${parts[0].slice(0, 1)}***${parts[0].slice(-1)}@${parts[1]}`;
-      }
-      return {
-        id: c.id,
-        orderId: c.orderId,
-        planLabel: c.planLabel,
-        convertedAt: c.convertedAt,
-        referredEmailMasked: maskedEmail,
-        finalAmount: c.finalAmountPaidPaise / 100,
-        discountAmount: c.discountAmountPaise / 100,
-        commission: c.commissionEarnedPaise / 100,
-        rewardType: c.rewardType || (record.type === 'creator' ? 'cash_commission' : 'free_pro_days'),
-        freeProDaysGranted: c.freeProDaysGranted || 14,
-        status: c.status,
-      };
-    });
-
-  return {
-    code: record.code,
-    type: record.type,
-    commissionPercent: tierInfo.commissionPercent,
-    tierInfo,
-    totalClicks: record.totalClicks,
-    totalSignups: record.totalSignups,
-    totalConversions: record.totalConversions,
-    totalEarningsPaise: record.totalEarningsPaise,
-    pendingPayoutPaise: record.pendingPayoutPaise,
-    paidPayoutPaise: record.paidPayoutPaise,
-    payoutUpiId: record.payoutUpiId,
-    payoutBankInfo: record.payoutBankInfo,
-    conversions: userConversions,
+export async function getReferralStats(uid:string) {
+  const snapshot=await rpc<any>('referral_snapshot',{p_uid:uid});
+  if(!snapshot?.account)return null;
+  const a=snapshot.account,record=toRecord(a);
+  return {...record,tierInfo:getTierInfo(record.totalConversions),totalPending:Number(snapshot.pending||0),totalFreeDaysEarned:Number(a.free_days),
+    conversions:(snapshot.rewards||[]).map((r:any)=>({id:'ref_conv_'+r.order_id,orderId:r.order_id,
+      planLabel:r.plan_id,convertedAt:Date.parse(r.created_at),referredEmailMasked:'Verified member',
+      finalAmount:Number(r.paid_paise)/100,discountAmount:(Number(r.base_paise)-Number(r.paid_paise))/100,
+      commission:Number(r.commission_paise)/100,rewardType:r.reward_type==='creator'?'cash_commission':'free_pro_days',
+      freeProDaysGranted:Number(r.free_days),status:r.status})),
+    historyLimit:100,
   };
 }
-
-/** Admin: get all creator & referral partnerships. */
-export async function getAllReferralsAdmin(): Promise<ReferralCodeRecord[]> {
-  initReferralsCache();
-  return Array.from(referralsCache!.values()).sort(
-    (a, b) => (b.totalConversions || 0) - (a.totalConversions || 0)
-  );
+export async function getAllReferralsAdmin():Promise<ReferralCodeRecord[]> {
+  const snapshot=await rpc<any[]>('referral_admin_accounts',{});
+  return snapshot.map(toRecord);
 }
-
-/** Admin: mark payout to a creator. */
-export async function markReferralPayout(
-  code: string,
-  amountPaise: number,
-  txReference: string
-): Promise<{ success: boolean; error?: string }> {
-  initReferralsCache();
-  const normCode = sanitizeReferralCode(code);
-  const record = referralsCache!.get(normCode);
-  if (!record) return { success: false, error: 'Referral code not found' };
-
-  if (amountPaise > record.pendingPayoutPaise) {
-    return { success: false, error: 'Payout amount exceeds pending balance' };
-  }
-
-  record.pendingPayoutPaise = Math.max(0, record.pendingPayoutPaise - amountPaise);
-  record.paidPayoutPaise = (record.paidPayoutPaise || 0) + amountPaise;
-  record.updatedAt = Date.now();
-  flushReferrals();
-
-  return { success: true };
+export async function markReferralPayout(code:string,amountPaise:number,txReference:string) {
+  if (!Number.isSafeInteger(amountPaise)||amountPaise<=0||txReference.trim().length<3||txReference.length>120) throw new ReferralError(400,'REFERRAL_INVALID_PAYOUT',failures.REFERRAL_INVALID_PAYOUT[1]);
+  const account=await getReferralByCode(code);
+  if(!account)throw new ReferralError(404,'REFERRAL_ACCOUNT_MISSING','Referral account not found.');
+  return command('payout',account.referrerUid,{amountPaise,reference:txReference.trim()});
 }

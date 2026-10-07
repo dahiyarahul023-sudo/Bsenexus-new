@@ -1,280 +1,113 @@
 import express from 'express';
 import rateLimit from 'express-rate-limit';
-import { requireAuth } from '../security/auth.js';
-import { sanitizeUserId } from '../database/watchlistDao.js';
+import { randomUUID } from 'node:crypto';
+import { requireAuth, requireAdmin } from '../security/auth.js';
 import { getUserProfile } from '../database/usersDao.js';
+import { getSupabase } from '../database/supabase.js';
+import { parsePayoutPaise } from '../utils/referralValidation.js';
+import { PRO_PLANS } from '../config/plans.js';
 import {
-  getOrCreateUserReferralCode,
-  getReferralByCode,
-  getReferralStats,
-  setCustomReferralCode,
-  recordReferralClick,
-  getAllReferralsAdmin,
-  markReferralPayout,
-  sanitizeReferralCode,
-  updateReferralPayoutInfo,
-  setReferralType,
-  getTierInfo,
+  getOrCreateUserReferralCode,getReferralByCode,getReferralStats,setCustomReferralCode,
+  recordReferralClick,getAllReferralsAdmin,markReferralPayout,updateReferralPayoutInfo,
+  setReferralType,ReferralError,applyReferralCode,clearReferralApplication,
 } from '../database/referralsDao.js';
 
-export const referralsRouter = express.Router();
-
-function getReqUserId(req: express.Request): string {
-  const raw =
-    (req as any).user?.uid ||
-    (req as any).user?.id ||
-    (req as any).userId ||
-    (req as any).uid ||
-    req.headers['x-user-id'] ||
-    '';
-  return sanitizeUserId(String(raw));
+export const referralsRouter=express.Router();
+const uid=(req:express.Request):string => (req as any).user?.uid || '';
+const limit=rateLimit({windowMs:60_000,max:60,standardHeaders:true,legacyHeaders:false});
+const mutationLimit=rateLimit({windowMs:60_000,max:20,standardHeaders:true,legacyHeaders:false});
+referralsRouter.use((_req,res,next)=>{res.setHeader('Cache-Control','private, no-store');next();});
+function failure(res:express.Response,error:unknown) {
+  if(error instanceof ReferralError)return res.status(error.status).json({success:false,error:error.message,code:error.code});
+  return res.status(503).json({success:false,error:'Referral service is temporarily unavailable. Please retry.',code:'REFERRAL_UNAVAILABLE'});
 }
+const discounts=Object.fromEntries(Object.values(PRO_PLANS).map(p=>[p.id,(p.amountPaise-p.referralAmountPaise)/100]));
+async function ensure(req:express.Request) {
+  const profile=await getUserProfile(uid(req),{durable:true});
+  return getOrCreateUserReferralCode(uid(req),(req as any).user?.email||profile?.email||'',profile?.displayName||'');
+}
+async function dashboard(userId:string) {
+  const s=await getReferralStats(userId);
+  if(!s)throw new ReferralError(404,'REFERRAL_ACCOUNT_MISSING','Referral account not found.');
+  return {success:true,code:s.code,referralLink:`https://bsenexus.in/?ref=${encodeURIComponent(s.code)}`,
+    type:s.type,tierInfo:s.tierInfo,commissionPercent:s.tierInfo.commissionPercent,
+    freeProDaysPerReferral:14,totalFreeDaysEarned:s.totalFreeDaysEarned,
+    payoutUpiId:s.payoutUpiId||'',payoutBankInfo:s.payoutBankInfo||'',
+    stats:{totalClicks:s.totalClicks,totalSignups:s.totalSignups,totalPending:s.totalPending,totalConversions:s.totalConversions,
+      totalEarningsRupees:s.totalEarningsPaise/100,pendingPayoutRupees:s.pendingPayoutPaise/100,paidPayoutRupees:s.paidPayoutPaise/100},
+    conversions:s.conversions,historyLimit:s.historyLimit,
+    benefits:{monthlyDiscount:discounts.pro_monthly,weeklyDiscount:discounts.pro_weekly,
+      halfyearlyDiscount:discounts.pro_halfyearly,yearlyDiscount:discounts.pro_yearly,
+      freeProReward:'+14 Days Free Pro after verified payment',commissionRate:'Tiered cash commission after verified payment'}};
+}
+referralsRouter.get('/my-code',requireAuth,async(req,res)=>{try{await ensure(req);res.json(await dashboard(uid(req)));}catch(e){failure(res,e);}});
 
-// Rate limiting for public referral endpoints to prevent abuse
-const referralRateLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 60,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { success: false, error: 'Too many requests. Please slow down.' },
+/** Private server-side stream. Firebase auth stays on our server; no browser service-role key. */
+referralsRouter.get('/events',requireAuth,limit,async(req,res)=>{
+  try{await ensure(req);}catch(e){failure(res,e);return;}
+  res.status(200).set({'Content-Type':'text/event-stream','Cache-Control':'private, no-store','X-Accel-Buffering':'no'});
+  res.flushHeaders();
+  let closed=false,busy=false,previous='';
+  let channel:ReturnType<ReturnType<typeof getSupabase>['channel']>|undefined;
+  const close=()=>{
+    if(closed)return;closed=true;clearInterval(timer);clearTimeout(expiry);
+    if(channel)void getSupabase().removeChannel(channel).catch(()=>{});
+    res.end();
+  };
+  const refresh=async()=>{
+    if(closed||busy)return;busy=true;
+    try{
+      const payload=JSON.stringify(await dashboard(uid(req)));
+      if(closed)return;
+      if(payload!==previous){previous=payload;if(!res.write(`event: snapshot\ndata: ${payload}\n\n`))close();}
+      else if(!res.write(': heartbeat\n\n'))close();
+    }catch{
+      if(!closed)res.write('event: unavailable\ndata: {}\n\n');close();
+    }finally{busy=false;}
+  };
+  // Polling reconciles lost realtime events, subscription outages and changes on other instances.
+  const timer=setInterval(()=>void refresh(),3000);
+  // Reconnect periodically through requireAuth; an open stream is not a permanent session.
+  const expiry=setTimeout(close,55_000);
+  res.on('close',close);
+  try{
+    channel=getSupabase().channel(`referral-${randomUUID()}`).on('postgres_changes',{
+      event:'UPDATE',schema:'public',table:'referral_accounts_v2',filter:`uid=eq.${uid(req)}`,
+    },()=>void refresh()).subscribe();
+  }catch{/* Timed reconciliation continues if Realtime is unavailable. */}
+  void refresh();
 });
 
-/**
- * Canonical domain: ALWAYS use https://bsenexus.in for public sharing
- */
-const CANONICAL_DOMAIN = 'https://bsenexus.in';
-
-/**
- * GET /api/referrals/my-code — Authenticated user gets their referral link, code,
- * tier milestone details, live stats and audit log of converted accounts.
- */
-referralsRouter.get('/my-code', requireAuth, async (req, res) => {
-  try {
-    const uid = getReqUserId(req);
-    const profile = await getUserProfile(uid).catch(() => null);
-    const email = (req as any).user?.email || profile?.email || '';
-    const displayName = (req as any).user?.displayName || profile?.displayName || '';
-
-    // Ensure user has a clean, customized referral code
-    const refRecord = await getOrCreateUserReferralCode(uid, email, displayName);
-    const stats = await getReferralStats(uid);
-
-    // Canonical link is always https://bsenexus.in/?ref=CODE
-    const referralLink = `${CANONICAL_DOMAIN}/?ref=${encodeURIComponent(refRecord.code)}`;
-
-    const tierInfo = getTierInfo(stats?.totalConversions || 0);
-
-    res.json({
-      success: true,
-      code: refRecord.code,
-      referralLink,
-      type: refRecord.type,
-      tierInfo,
-      commissionPercent: tierInfo.commissionPercent,
-      freeProDaysPerReferral: 14,
-      totalFreeDaysEarned: (stats?.totalConversions || 0) * 14,
-      payoutUpiId: refRecord.payoutUpiId || '',
-      payoutBankInfo: refRecord.payoutBankInfo || '',
-      stats: {
-        totalClicks: stats?.totalClicks || 0,
-        totalSignups: stats?.totalSignups || 0,
-        totalConversions: stats?.totalConversions || 0,
-        totalEarningsRupees: (stats?.totalEarningsPaise || 0) / 100,
-        pendingPayoutRupees: (stats?.pendingPayoutPaise || 0) / 100,
-        paidPayoutRupees: (stats?.paidPayoutPaise || 0) / 100,
-      },
-      conversions: stats?.conversions || [],
-      benefits: {
-        monthlyDiscount: 100, // Flat ₹100 OFF on Monthly (₹199 instead of ₹299)
-        weeklyDiscount: 30, // ₹30 OFF on Weekly (₹59 instead of ₹89)
-        halfyearlyDiscount: 500, // ₹500 OFF on 6-Month (₹999 instead of ₹1,499)
-        yearlyDiscount: 900, // ₹900 OFF on Yearly (₹1,799 instead of ₹2,699)
-        freeProReward: '+14 Days Free Pro access for every referred friend who upgrades',
-        commissionRate: `Up to 30% tiered cash commission for verified creators`,
-      },
-    });
-  } catch (err: any) {
-    console.error('[Referrals] my-code error:', err?.message || err);
-    res.status(500).json({ success: false, error: 'Could not fetch referral details' });
-  }
+referralsRouter.post('/apply',requireAuth,mutationLimit,async(req,res)=>{try{res.json(await applyReferralCode(uid(req),req.body?.code));}catch(e){failure(res,e);}});
+referralsRouter.delete('/apply',requireAuth,mutationLimit,async(req,res)=>{try{res.json(await clearReferralApplication(uid(req)));}catch(e){failure(res,e);}});
+referralsRouter.post('/custom-code',requireAuth,mutationLimit,async(req,res)=>{
+  try{await ensure(req);const r=await setCustomReferralCode(uid(req),req.body?.code);res.json({...r,referralLink:`https://bsenexus.in/?ref=${encodeURIComponent(r.code!)}`});}catch(e){failure(res,e);}
 });
-
-/**
- * POST /api/referrals/custom-code — User or Creator sets custom vanity code (e.g. "RAHUL", "FINTECH").
- */
-referralsRouter.post('/custom-code', requireAuth, async (req, res) => {
-  try {
-    const uid = getReqUserId(req);
-    const rawCode = String(req.body?.code || '').trim();
-    if (!rawCode) {
-      return res.status(400).json({ success: false, error: 'Please enter a valid code.' });
-    }
-
-    const isAdmin = Boolean((req as any).user?.isAdmin || (req as any).user?.isOwner);
-    const result = await setCustomReferralCode(uid, rawCode, isAdmin);
-
-    if (!result.success) {
-      return res.status(400).json({ success: false, error: result.error });
-    }
-
-    const referralLink = `${CANONICAL_DOMAIN}/?ref=${encodeURIComponent(result.code!)}`;
-
-    res.json({
-      success: true,
-      code: result.code,
-      referralLink,
-      message: 'Referral code updated successfully!',
-    });
-  } catch (err: any) {
-    console.error('[Referrals] custom-code error:', err?.message || err);
-    res.status(500).json({ success: false, error: 'Could not update referral code' });
-  }
+referralsRouter.post('/payout-info',requireAuth,mutationLimit,async(req,res)=>{
+  try{res.json(await updateReferralPayoutInfo(uid(req),String(req.body?.upiId||''),String(req.body?.bankInfo||'')));}catch(e){failure(res,e);}
 });
-
-/**
- * POST /api/referrals/payout-info — Creator saves UPI / Bank account details for payouts.
- */
-referralsRouter.post('/payout-info', requireAuth, async (req, res) => {
-  try {
-    const uid = getReqUserId(req);
-    const upiId = String(req.body?.upiId || '').trim();
-    const bankInfo = String(req.body?.bankInfo || '').trim();
-
-    if (!upiId && !bankInfo) {
-      return res.status(400).json({ success: false, error: 'Please enter a valid UPI ID or Bank details.' });
-    }
-
-    const result = await updateReferralPayoutInfo(uid, upiId, bankInfo);
-    if (!result.success) {
-      return res.status(400).json({ success: false, error: result.error });
-    }
-
-    res.json({ success: true, message: 'Payout details saved successfully.' });
-  } catch (err: any) {
-    console.error('[Referrals] payout-info error:', err?.message || err);
-    res.status(500).json({ success: false, error: 'Failed to update payout details' });
-  }
+referralsRouter.post('/set-tier',requireAuth,mutationLimit,async(req,res)=>{
+  try{
+    if(!['creator','user'].includes(req.body?.type))return res.status(400).json({success:false,error:'Choose a valid reward type.'});
+    res.json(await setReferralType(uid(req),req.body.type));
+  }catch(e){failure(res,e);}
 });
-
-/**
- * POST /api/referrals/set-tier — Switch or apply between Community Member and Creator Partner tier.
- */
-referralsRouter.post('/set-tier', requireAuth, async (req, res) => {
-  try {
-    const uid = getReqUserId(req);
-    const type = req.body?.type === 'creator' ? 'creator' : 'user';
-
-    const result = await setReferralType(uid, type);
-    if (!result.success) {
-      return res.status(400).json({ success: false, error: result.error });
-    }
-
-    res.json({ success: true, type: result.type, message: `Switched to ${type === 'creator' ? 'Creator Partner' : 'Community Member'} tier.` });
-  } catch (err: any) {
-    console.error('[Referrals] set-tier error:', err?.message || err);
-    res.status(500).json({ success: false, error: 'Failed to switch referral tier' });
-  }
+referralsRouter.get('/validate',limit,async(req,res)=>{
+  try{
+    const r=await getReferralByCode(String(req.query.code||''));
+    if(!r)return res.status(400).json({success:false,valid:false,error:'Invalid or inactive referral code.'});
+    if(uid(req)&&r.referrerUid===uid(req))return res.status(400).json({success:false,valid:false,error:'You cannot use your own referral code.'});
+    res.json({success:true,valid:true,code:r.code,type:r.type,discounts,
+      discountMessage:`Save ₹${discounts.pro_monthly} on Monthly. Rewards are confirmed after payment.`});
+  }catch(e){failure(res,e);}
 });
-
-/**
- * GET /api/referrals/validate?code=XYZ — Public validation of referral code.
- */
-referralsRouter.get('/validate', referralRateLimiter, async (req, res) => {
-  try {
-    const rawCode = String(req.query.code || '').trim();
-    const code = sanitizeReferralCode(rawCode);
-    if (!code) {
-      return res.json({ success: false, valid: false, error: 'No referral code provided' });
-    }
-
-    const rec = await getReferralByCode(code);
-    if (!rec || !rec.isActive) {
-      return res.json({ success: false, valid: false, error: 'Invalid or inactive referral code' });
-    }
-
-    res.json({
-      success: true,
-      valid: true,
-      code: rec.code,
-      type: rec.type,
-      referrerName: rec.referrerName || 'Nexus Partner',
-      discountMessage: 'Flat ₹100 OFF on Monthly (Pay ₹199 instead of ₹299)',
-      discounts: {
-        pro_weekly: 30,
-        pro_monthly: 100, // Flat ₹100 OFF
-        pro_halfyearly: 500,
-        pro_yearly: 900,
-      },
-    });
-  } catch (err: any) {
-    console.error('[Referrals] validate error:', err?.message || err);
-    res.status(500).json({ success: false, valid: false, error: 'Failed to validate code' });
-  }
+referralsRouter.post('/track-visit',limit,async(req,res)=>{try{res.json({success:await recordReferralClick(req.body?.code)});}catch(e){failure(res,e);}});
+referralsRouter.get('/admin/creators',requireAuth,requireAdmin,async(_req,res)=>{try{res.json({success:true,referrers:await getAllReferralsAdmin(),limit:1000});}catch(e){failure(res,e);}});
+referralsRouter.post('/admin/payout',requireAuth,requireAdmin,mutationLimit,async(req,res)=>{
+  try{
+    const paise=parsePayoutPaise(req.body?.amountRupees);
+    if(paise===null)return res.status(400).json({success:false,error:'Enter a positive amount with at most two decimal places.'});
+    res.json(await markReferralPayout(req.body?.code,paise,String(req.body?.txReference||'')));
+  }catch(e){failure(res,e);}
 });
-
-/**
- * POST /api/referrals/track-visit — Public endpoint called when someone lands with ?ref=CODE.
- */
-referralsRouter.post('/track-visit', referralRateLimiter, async (req, res) => {
-  try {
-    const rawCode = String(req.body?.code || '').trim();
-    const code = sanitizeReferralCode(rawCode);
-    if (!code) {
-      return res.json({ success: false });
-    }
-
-    const tracked = await recordReferralClick(code);
-    res.json({ success: tracked });
-  } catch {
-    res.json({ success: false });
-  }
-});
-
-/**
- * GET /api/referrals/admin/creators — Admin view of all creators and referrers.
- */
-referralsRouter.get('/admin/creators', requireAuth, async (req, res) => {
-  try {
-    const isAdmin = Boolean((req as any).user?.isAdmin || (req as any).user?.isOwner);
-    if (!isAdmin) {
-      return res.status(403).json({ success: false, error: 'Admin access required' });
-    }
-
-    const all = await getAllReferralsAdmin();
-    res.json({ success: true, referrers: all });
-  } catch (err: any) {
-    console.error('[Referrals] admin error:', err?.message || err);
-    res.status(500).json({ success: false, error: 'Failed to list creators' });
-  }
-});
-
-/**
- * POST /api/referrals/admin/payout — Admin records payout to a creator.
- */
-referralsRouter.post('/admin/payout', requireAuth, async (req, res) => {
-  try {
-    const isAdmin = Boolean((req as any).user?.isAdmin || (req as any).user?.isOwner);
-    if (!isAdmin) {
-      return res.status(403).json({ success: false, error: 'Admin access required' });
-    }
-
-    const { code, amountRupees, txReference } = req.body || {};
-    if (!code || !amountRupees || amountRupees <= 0) {
-      return res.status(400).json({ success: false, error: 'Invalid payout amount or code' });
-    }
-
-    const amountPaise = Math.round(Number(amountRupees) * 100);
-    const result = await markReferralPayout(code, amountPaise, txReference || '');
-
-    if (!result.success) {
-      return res.status(400).json({ success: false, error: result.error });
-    }
-
-    res.json({ success: true, message: `Payout of ₹${amountRupees} recorded for ${code}` });
-  } catch (err: any) {
-    console.error('[Referrals] payout error:', err?.message || err);
-    res.status(500).json({ success: false, error: 'Failed to record payout' });
-  }
-});
-
 export default referralsRouter;

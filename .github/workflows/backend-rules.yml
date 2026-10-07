@@ -1,0 +1,46 @@
+name: Backend rules and application checks
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  rules-map:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm run test:map
+      - run: npm run map:check
+  application:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: node scripts/patch-firebase-auth.cjs
+      - name: Application type check
+        run: npm run lint
+      - name: Existing backend tests
+        if: ${{ !cancelled() }}
+        env:
+          NODE_ENV: test
+          JWT_SECRET: ci-only-not-a-production-secret-do-not-deploy
+        run: npm test
+      - name: Application build
+        if: ${{ !cancelled() }}
+        run: npm run build

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, ShieldCheck, Check, Tag, Sparkles } from 'lucide-react';
 import { BseNexusLogo } from './ui/BseNexusLogo';
+import { customFetch } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { startProPayment, formatReceiptDate, PRO_PLAN_LIST, getPlanDisplay } from '../utils/cashfree';
 import { usePaymentDialog } from '../hooks/usePaymentDialog';
@@ -24,6 +25,7 @@ export function ProCheckoutView() {
   const [validatingRef, setValidatingRef] = useState<boolean>(false);
   const [showReferralInput, setShowReferralInput] = useState<boolean>(false);
   const referralField = useRef<HTMLInputElement>(null);
+  const referralRequest=useRef(0);
 
   const close = () => {
     if (!payingRef.current) setIsCheckoutOpen(false);
@@ -31,18 +33,15 @@ export function ProCheckoutView() {
   const dialog = usePaymentDialog(isCheckoutOpen, close);
   const heading = useRef<HTMLHeadingElement>(null);
 
-  // Initialize referral from localStorage if present
+  // Revalidate link/storage candidates against the server whenever checkout opens.
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('bse_referral_code') || '';
-      if (stored) {
-        setReferralCode(stored.toUpperCase());
-        setReferralInput(stored.toUpperCase());
-        setIsReferralApplied(true);
-        setReferralMessage(`Referral code ${stored.toUpperCase()} active: Flat ₹100 OFF on Monthly!`);
-      }
-    }
-  }, []);
+    if(!isCheckoutOpen||!user||user.isAnonymous)return;
+    const controller=new AbortController();
+    const stored=localStorage.getItem('bse_referral_code')||'';
+    setIsReferralApplied(false);
+    if(stored){setReferralInput(stored);void handleApplyReferral(stored,controller.signal);}
+    return()=>controller.abort();
+  },[isCheckoutOpen,user?.uid,user?.isAnonymous]);
 
   useEffect(() => {
     if (isCheckoutOpen) {
@@ -87,15 +86,17 @@ export function ProCheckoutView() {
   const currentPrice = isReferralApplied ? plan.referralPrice : plan.price;
   const referralDiscount = isReferralApplied ? plan.referralDiscount : 0;
 
-  const handleApplyReferral = async (codeToTry: string) => {
+  const handleApplyReferral = async (codeToTry: string, signal?:AbortSignal) => {
+    const request=++referralRequest.current;
     const clean = codeToTry.trim().toUpperCase();
     if (!clean) return;
     setValidatingRef(true);
     setError(null);
     try {
-      const res = await fetch(`/api/referrals/validate?code=${encodeURIComponent(clean)}`);
+      const res = await customFetch('/api/referrals/apply', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:clean}),signal});
       const data = await res.json();
-      if (data && data.valid) {
+      if(signal?.aborted||request!==referralRequest.current)return;
+      if (res.ok && data?.success) {
         setReferralCode(clean);
         setIsReferralApplied(true);
         setReferralMessage(data.discountMessage || `Referral code ${clean} applied! Flat ₹100 OFF on Monthly.`);
@@ -107,13 +108,18 @@ export function ProCheckoutView() {
         setError(data?.error || 'Invalid or inactive referral code.');
       }
     } catch {
-      setError('Could not validate referral code.');
+      if(!signal?.aborted&&request===referralRequest.current)setError('Could not validate referral code.');
     } finally {
-      setValidatingRef(false);
+      if(request===referralRequest.current)setValidatingRef(false);
     }
   };
 
-  const handleRemoveReferral = () => {
+  const handleRemoveReferral = async () => {
+    referralRequest.current++;
+    try {
+      const response=await customFetch('/api/referrals/apply',{method:'DELETE'});
+      if(!response.ok){setError('Could not remove the applied code. Please retry.');return;}
+    } catch {setError('Could not remove the applied code. Please retry.');return;}
     setIsReferralApplied(false);
     setReferralCode('');
     setReferralInput('');

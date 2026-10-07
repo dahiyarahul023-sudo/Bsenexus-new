@@ -2,8 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { PRO_PLAN_LIST, getLowestPlanPrice, getPlanDisplay } from '../config/plans';
 import { PlanCard } from './ui/PlanCard';
 import { Sparkles, Tag } from 'lucide-react';
+import { customFetch } from '../api';
+import { useAuth } from '../context/AuthContext';
 
 export function PricingPage({ onChoosePlan }: { onChoosePlan: (planId: string) => void }) {
+  const {user}=useAuth();
   const monthlyPlan = getPlanDisplay('pro_monthly');
   const [referralCode, setReferralCode] = useState('');
   const [isReferralActive, setIsReferralActive] = useState(false);
@@ -18,8 +21,9 @@ export function PricingPage({ onChoosePlan }: { onChoosePlan: (planId: string) =
       if (ref) {
         setReferralCode(ref.toUpperCase());
         setInputCode(ref.toUpperCase());
-        setIsReferralActive(true);
-        setMessage(`Referral ${ref.toUpperCase()} active: Flat ₹${monthlyPlan.referralDiscount} OFF on Monthly (Pay ₹${monthlyPlan.referralPrice} instead of ₹${monthlyPlan.price})!`);
+        setIsReferralActive(false);
+        setMessage('Saved code found. Apply it to verify the discount.');
+        setShowInput(true);
       }
     }
   }, [monthlyPlan]);
@@ -28,9 +32,10 @@ export function PricingPage({ onChoosePlan }: { onChoosePlan: (planId: string) =
     const clean = codeToTry.trim().toUpperCase();
     if (!clean) return;
     try {
-      const res = await fetch(`/api/referrals/validate?code=${encodeURIComponent(clean)}`);
+      const signedIn=Boolean(user&&!user.isAnonymous);
+      const res = signedIn ? await customFetch('/api/referrals/apply',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:clean})}) : await customFetch(`/api/referrals/validate?code=${encodeURIComponent(clean)}`);
       const data = await res.json();
-      if (data && data.valid) {
+      if (res.ok && data?.success) {
         setReferralCode(clean);
         setIsReferralActive(true);
         setMessage(`Referral code ${clean} applied! Flat ₹${monthlyPlan.referralDiscount} OFF on Monthly (₹${monthlyPlan.referralPrice} instead of ₹${monthlyPlan.price}).`);
@@ -44,7 +49,8 @@ export function PricingPage({ onChoosePlan }: { onChoosePlan: (planId: string) =
     }
   };
 
-  const handleRemove = () => {
+  const handleRemove = async () => {
+    if(user&&!user.isAnonymous){try{const res=await customFetch('/api/referrals/apply',{method:'DELETE'});if(!res.ok)throw new Error();}catch{setMessage('Could not remove the applied code. Please retry.');return;}}
     setIsReferralActive(false);
     setReferralCode('');
     setMessage(null);
