@@ -279,3 +279,7 @@ padh sakti, isliye har checklist me inka naam hai:
 1. ...
 2. ...
 ```
+
+
+## Referral ownership and reward flow — 2026-10-07
+Read `rule/REFERRALS.md` and the `referrals` domain in `rule/domains.json`. Ownership is database-backed, aliases are never reassigned, and confirmed rewards are unique per verified paid order. Pending application is distinct from paid conversion. Changes must cover checkout attribution, every payment grant path, the SQL trigger/bonus floor, private SSE snapshots and input-preserving UI updates. Migration 006 requires reviewed legacy-data cutover before production deployment.

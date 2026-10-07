@@ -21,6 +21,7 @@ import {
   Send,
 } from 'lucide-react';
 import { customFetch } from '../api';
+import { consumeReferralEvents } from '../utils/referralStream';
 import { useAuth } from '../context/AuthContext';
 
 interface ReferralConversionItem {
@@ -55,6 +56,7 @@ interface ReferralDashboardData {
   stats: {
     totalClicks: number;
     totalSignups: number;
+    totalPending: number;
     totalConversions: number;
     totalEarningsRupees: number;
     pendingPayoutRupees: number;
@@ -86,6 +88,9 @@ export function ReferralDashboardModal({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [liveStatus,setLiveStatus]=useState('Connecting to live updates…');
+  const sessionRef=useRef(0);
+  const requestRef=useRef(0);
   const [copyError, setCopyError] = useState('');
   const [customCodeInput, setCustomCodeInput] = useState('');
   const [customCodeLoading, setCustomCodeLoading] = useState(false);
@@ -105,36 +110,56 @@ export function ReferralDashboardModal({
     contentRef.current?.scrollTo({ top: 0, behavior: 'instant' });
   };
 
-  const fetchReferralData = async (initial = false) => {
+  const fetchReferralData = async (initial = false,signal?:AbortSignal) => {
     if (!user || user.isAnonymous) return;
-    setLoading(true);
-    setError(null);
+    const session=sessionRef.current,request=++requestRef.current;
+    if(initial)setLoading(true);
     try {
-      const res = await customFetch('/api/referrals/my-code');
+      const res = await customFetch('/api/referrals/my-code',{signal,cache:'no-store'});
       const json = await res.json();
-      if (res.ok && json.success) {
-        setData(json);
-        setCustomCodeInput(json.code);
-        setUpiInput(json.payoutUpiId || '');
-        setBankInfoInput(json.payoutBankInfo || '');
-        if (initial && json.type === 'creator') {
-          setActiveTab('creator');
-        }
-      } else {
-        setError(json?.error || 'Could not load referral dashboard');
-      }
-    } catch {
-      setError('Network connection error while loading referral stats');
-    } finally {
-      setLoading(false);
-    }
+      if(signal?.aborted||session!==sessionRef.current||request!==requestRef.current)return;
+      if (!res.ok || !json.success) throw new Error(json?.error || 'Could not load referral dashboard');
+      setData(json);setError(null);
+      // Live updates must not overwrite an unfinished custom-code or payout edit.
+      if(initial){setCustomCodeInput(json.code);setUpiInput(json.payoutUpiId||'');setBankInfoInput(json.payoutBankInfo||'');setActiveTab(json.type==='creator'?'creator':'friends');}
+    } catch (e:any) {
+      if(!signal?.aborted&&session===sessionRef.current&&request===requestRef.current)setError(e.message||'Referral updates unavailable');
+    } finally { if(session===sessionRef.current&&request===requestRef.current)setLoading(false); }
   };
 
   useEffect(() => {
-    if (isOpen && user && !user.isAnonymous) {
-      fetchReferralData(true);
-    }
-  }, [isOpen, user]);
+    sessionRef.current++;
+    setData(null);setError(null);
+    if(!isOpen||!user||user.isAnonymous){setLoading(false);return;}
+    const session=sessionRef.current;
+    let stopped=false,controller:AbortController|undefined,timer:ReturnType<typeof setTimeout>|undefined;
+    const connect=async()=>{
+      if(stopped||document.hidden)return;
+      controller?.abort();clearTimeout(timer);
+      controller=new AbortController();const signal=controller.signal;
+      setLiveStatus('Connecting to live updates…');
+      try{
+        const res=await customFetch('/api/referrals/events',{signal,cache:'no-store',headers:{Accept:'text/event-stream'}});
+        await consumeReferralEvents(res,(json)=>{
+          if(stopped||signal.aborted||session!==sessionRef.current)return;
+          requestRef.current++;setData(json);setError(null);setLoading(false);setLiveStatus('Live · server-confirmed updates');
+        },signal);
+      }catch{
+        if(!stopped&&!signal.aborted)setLiveStatus('Updates delayed · reconnecting');
+      }finally{
+        if(!stopped&&!signal.aborted&&!document.hidden)timer=setTimeout(connect,2000);
+      }
+    };
+    const initial=new AbortController();
+    void fetchReferralData(true,initial.signal).then(()=>{if(!stopped)void connect();});
+    const visibility=()=>{
+      clearTimeout(timer);controller?.abort();
+      if(document.hidden)setLiveStatus('Updates paused while hidden');
+      else if(!stopped)timer=setTimeout(connect,0);
+    };
+    document.addEventListener('visibilitychange',visibility);
+    return()=>{stopped=true;sessionRef.current++;initial.abort();controller?.abort();clearTimeout(timer);document.removeEventListener('visibilitychange',visibility);};
+  }, [isOpen, user?.uid, user?.isAnonymous]);
 
   if (!isOpen) return null;
 
@@ -168,6 +193,7 @@ export function ReferralDashboardModal({
       const json = await res.json();
       if (res.ok && json.success) {
         setCustomCodeMsg({ text: 'Referral code updated successfully!', ok: true });
+        setCustomCodeInput(json.code);
         fetchReferralData();
       } else {
         setCustomCodeMsg({ text: json?.error || 'Could not update code', ok: false });
@@ -214,9 +240,9 @@ export function ReferralDashboardModal({
       if (res.ok && json.success) {
         fetchReferralData();
         setActiveTab('creator');
-      }
+      } else { setError(json.error || 'Could not switch reward type.'); }
     } catch {
-      // ignore
+      setError('Could not switch reward type. Please retry.');
     }
   };
 
@@ -301,9 +327,12 @@ export function ReferralDashboardModal({
         <div ref={contentRef} id="referral-panel" role="tabpanel" tabIndex={0}
           aria-labelledby={`referral-tab-${activeTab}`}
           className="referral-content p-4 sm:p-6 space-y-6">
+          <p className="text-xs text-slate-500" role="status">{liveStatus}</p>
+          {data && <p className="text-sm">{data.stats.totalPending || 0} pending code application(s). Rewards are confirmed only after verified payment. Confirmed history shows the latest 100 purchases.</p>}
+          {error && data && <p className="text-sm text-amber-600" role="alert">{error}. Showing the last confirmed snapshot.</p>}
           {loading ? (
             <div className="py-16 text-center text-slate-400">Loading your referral details…</div>
-          ) : error ? (
+          ) : error && !data ? (
             <div className="p-4 rounded-xl bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300 text-sm">
               <p role="alert">{error}</p>
               <button type="button" onClick={() => fetchReferralData()} className="mt-3 px-4 py-2 rounded-xl border border-current font-semibold">Try again</button>
@@ -608,7 +637,7 @@ export function ReferralDashboardModal({
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="text-sm font-bold text-slate-900 dark:text-white">Audit-Proof Referral Ledger</h4>
+                      <h4 className="text-sm font-bold text-slate-900 dark:text-white">Verified Referral Ledger</h4>
                       <p className="text-xs text-slate-500">Every upgraded user with order reference &amp; credited reward.</p>
                     </div>
                     <span className="text-xs px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
@@ -675,7 +704,7 @@ export function ReferralDashboardModal({
                     type="text"
                     value={customCodeInput}
                     onChange={(e) => setCustomCodeInput(e.target.value.toUpperCase())}
-                    aria-label="Custom referral code" placeholder="Enter custom alias"
+                    aria-label="Custom referral code" placeholder="3–20 letters, numbers, _ or -"
                     maxLength={16}
                     className="min-w-0 flex-1 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono uppercase focus:outline-none focus:ring-1 focus:ring-emerald-500"
                   />

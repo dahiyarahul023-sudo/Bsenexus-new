@@ -13,6 +13,7 @@
 import express from 'express';
 import crypto from 'crypto';
 import rateLimit from 'express-rate-limit';
+import { matchesReferralPayment } from '../services/referralPaymentContract.js';
 import { requireAuth } from '../security/auth.js';
 import { getUserProfile, invalidateUserProfileCache } from '../database/usersDao.js';
 import { sanitizeUserId } from '../database/watchlistDao.js';
@@ -36,37 +37,13 @@ import {
   sendReceiptEmail,
   buildReceiptEmail,
 } from '../services/resendMailer.js';
-import { readLocalJson, writeLocalJson } from '../database/localStore.js';
 import {
   getReferralByCode,
-  recordReferralConversion,
-  sanitizeReferralCode,
+  bindReferralOrder,
+  settleReferralOrder,
+  validateReferralCode,
+  ReferralError,
 } from '../database/referralsDao.js';
-
-interface OrderReferralMeta {
-  orderId: string;
-  referralCode: string;
-  discountPaise: number;
-}
-const ORDER_REFERRALS_FILE = 'order_referrals.json';
-let orderReferralsCache: Map<string, OrderReferralMeta> | null = null;
-
-function getOrderReferral(orderId: string): OrderReferralMeta | null {
-  if (!orderReferralsCache) {
-    const list = readLocalJson<OrderReferralMeta[]>(ORDER_REFERRALS_FILE, []);
-    orderReferralsCache = new Map(list.map((r) => [r.orderId, r]));
-  }
-  return orderReferralsCache.get(orderId) || null;
-}
-
-function saveOrderReferral(orderId: string, meta: OrderReferralMeta): void {
-  if (!orderReferralsCache) {
-    const list = readLocalJson<OrderReferralMeta[]>(ORDER_REFERRALS_FILE, []);
-    orderReferralsCache = new Map(list.map((r) => [r.orderId, r]));
-  }
-  orderReferralsCache.set(orderId, meta);
-  writeLocalJson(ORDER_REFERRALS_FILE, Array.from(orderReferralsCache.values()));
-}
 
 /** Extract the verified uid from the authenticated request (local copy — avoids a routes.ts import cycle). */
 function getReqUserId(req: express.Request): string {
@@ -299,11 +276,17 @@ async function fetchSuccessfulPaymentTime(orderId: string, order: any): Promise<
  *
  * Every grant path — webhook, return-URL verify, login recovery, manual
  * claim — funnels through grantPaymentAtomically(), which commits the
- * ledger order, payment_entitlements/<uid>, and the users/<uid> mirror in
- * ONE Firestore transaction. There is no local-JSON payment fallback: if
- * Firestore cannot confirm the grant, this throws and the caller returns
+ * ledger order, payment entitlement, and user mirror through the
+ * grant_payment_atomic database RPC. There is no local-JSON payment fallback: if
+ * the database cannot confirm the grant, this throws and the caller returns
  * a retriable unavailable state instead of a false "granted" response.
  */
+async function matchesRecordedPayment(orderId: string, uid: string, planId: string, amount: number, currency: string): Promise<boolean> {
+  const recorded = await getPaymentOrder(orderId);
+  if (!recorded) return false; // Legacy orders require audited recovery, not guessed prices/ownership.
+  return matchesReferralPayment(recorded, {uid,planId,amount,currency});
+}
+
 async function grantWithLedger(
   uid: string,
   orderId: string,
@@ -323,6 +306,9 @@ async function grantWithLedger(
     paidAt: orderMeta?.paidAt,
     grantSource: source,
   });
+  // The migration's payment trigger settles in the paid-grant transaction. This
+  // idempotent call also retries already-granted orders after a transient failure.
+  await settleReferralOrder(orderId);
   invalidateUserProfileCache(uid);
   console.log(
     `[Payments] payment grant ${r.alreadyGranted ? 'already-granted' : 'granted'}: uid=${uid} order=${orderId} plan=${planId} source=${source} proExpiresAt=${r.proExpiresAt}`,
@@ -394,7 +380,7 @@ paymentsRouter.post('/create-order', requireAuth, async (req, res) => {
     }
 
     // Check optional referral code
-    const rawRefCode = sanitizeReferralCode(String(req.body?.referralCode || ''));
+    const rawRefCode = req.body?.referralCode ? validateReferralCode(String(req.body.referralCode)) : '';
     let activeReferralRecord = null;
     if (rawRefCode) {
       activeReferralRecord = await getReferralByCode(rawRefCode);
@@ -402,6 +388,7 @@ paymentsRouter.post('/create-order', requireAuth, async (req, res) => {
     // Prevent self-referral
     const isSelfReferral = Boolean(activeReferralRecord && activeReferralRecord.referrerUid === uid);
     const hasValidReferral = Boolean(activeReferralRecord && !isSelfReferral);
+    if (rawRefCode && !hasValidReferral) return res.status(400).json({success:false,error:isSelfReferral?'You cannot use your own referral code.':'This referral code is no longer active. Please select another code.'});
 
     const chargedAmountPaise = hasValidReferral
       ? (plan as any).referralAmountPaise || plan.amountPaise
@@ -425,17 +412,8 @@ paymentsRouter.post('/create-order', requireAuth, async (req, res) => {
 
     // Unique, traceable order id — the plan code lets verify/webhook
     // grant the right validity without trusting the client.
-    const orderId = `BN_${PLAN_CODES[plan.id as PlanId]}_${cleanCustomerId.slice(0, 10)}_${Date.now()}`;
+    const orderId = `BN_${PLAN_CODES[plan.id as PlanId]}_${cleanCustomerId.slice(0, 10)}_${crypto.randomUUID().replace(/-/g, '')}`;
     const base = siteUrl(req);
-
-    // Save order referral metadata so verify and webhook can credit the referrer
-    if (hasValidReferral && activeReferralRecord) {
-      saveOrderReferral(orderId, {
-        orderId,
-        referralCode: activeReferralRecord.code,
-        discountPaise,
-      });
-    }
 
     // Payment isolation: the durable Firestore reconciliation record must
     // exist BEFORE Cashfree checkout starts. If it cannot be confirmed,
@@ -450,6 +428,10 @@ paymentsRouter.post('/create-order', requireAuth, async (req, res) => {
         amountPaise: chargedAmountPaise,
         currency: plan.currency,
       });
+      if (hasValidReferral && activeReferralRecord) {
+        await bindReferralOrder(uid, { orderId, code: activeReferralRecord.code, planId: plan.id,
+          basePaise: plan.amountPaise, paidPaise: chargedAmountPaise, currency: plan.currency });
+      }
     } catch (ledgerErr: any) {
       console.error('[Payments] durable pending-order write failed; checkout blocked:', ledgerErr?.message || ledgerErr);
       return paymentUnavailable(
@@ -521,7 +503,7 @@ paymentsRouter.post('/create-order', requireAuth, async (req, res) => {
     });
   } catch (err: any) {
     console.error('[Payments] create-order error:', err?.message || err);
-    if (isPaymentStoreUnavailable(err)) {
+    if (isPaymentStoreUnavailable(err) || err instanceof ReferralError) {
       return paymentUnavailable(
         res,
         'Payments are temporarily unavailable. Please retry in a moment; no payment was started.',
@@ -561,13 +543,8 @@ paymentsRouter.get('/verify', requireAuth, async (req, res) => {
       const plan = PRO_PLANS[planId];
       const paidAmount = Number(order.order_amount);
       const paidCurrency = String(order.order_currency || '');
-      const standardAmount = plan.amountPaise / 100;
-      const referralAmount = ((plan as any).referralAmountPaise || plan.amountPaise) / 100;
-      const isAmountValid = paidAmount === standardAmount || paidAmount === referralAmount;
-
-      if (!isAmountValid || paidCurrency !== plan.currency) {
-        console.warn('[Payments] verify amount mismatch:', orderId, paidAmount, paidCurrency, 'expected', standardAmount, 'or', referralAmount);
-        return res.status(200).json({ success: false, paid: false, error: 'Payment amount does not match the selected plan.' });
+      if (!await matchesRecordedPayment(orderId, uid, planId, paidAmount, paidCurrency)) {
+        return res.status(400).json({ success: false, paid: false, error: 'Payment does not match the recorded checkout.' });
       }
       const paidAtMs = await fetchSuccessfulPaymentTime(orderId, order);
       const { proExpiresAt, alreadyGranted } = await grantWithLedger(uid, orderId, planId, 'verify', {
@@ -577,26 +554,6 @@ paymentsRouter.get('/verify', requireAuth, async (req, res) => {
         paidAt: paidAtMs,
       });
 
-      // Durably record referral conversion for creator / referrer
-      const orderRef = getOrderReferral(orderId);
-      if (orderRef && orderRef.referralCode) {
-        try {
-          await recordReferralConversion({
-            referralCode: orderRef.referralCode,
-            orderId,
-            referredUid: uid,
-            referredEmail: String(order?.customer_details?.customer_email || ''),
-            planId: plan.id,
-            planLabel: plan.label,
-            baseAmountPaise: plan.amountPaise,
-            discountAmountPaise: plan.amountPaise - Math.round(paidAmount * 100),
-            finalAmountPaidPaise: Math.round(paidAmount * 100),
-          });
-        } catch (convErr: any) {
-          console.warn('[Payments] Failed to record referral conversion in verify:', convErr?.message || convErr);
-        }
-      }
-
       const paymentMethod = await describeSuccessfulPayment(orderId);
       const receipt = buildReceipt(order, orderId, plan, proExpiresAt, paymentMethod, paidAtMs);
       return res.json({ success: true, paid: true, alreadyGranted, proExpiresAt, orderId, receipt });
@@ -605,7 +562,7 @@ paymentsRouter.get('/verify', requireAuth, async (req, res) => {
     return res.json({ success: true, paid: false, orderStatus: order.order_status, orderId });
   } catch (err: any) {
     console.error('[Payments] verify error:', err?.message || err);
-    if (isPaymentStoreUnavailable(err)) {
+    if (isPaymentStoreUnavailable(err) || err instanceof ReferralError) {
       return res.status(503).json({
         success: false,
         paid: true,
@@ -684,7 +641,7 @@ paymentsRouter.get('/status', requireAuth, async (req, res) => {
     });
   } catch (err: any) {
     console.error('[Payments] status error:', err?.message || err);
-    if (isPaymentStoreUnavailable(err)) {
+    if (isPaymentStoreUnavailable(err) || err instanceof ReferralError) {
       return paymentUnavailable(
         res,
         'Subscription status is temporarily unavailable. Your payment record is not lost; please retry in a moment.',
@@ -778,7 +735,7 @@ paymentsRouter.post('/recover', requireAuth, paymentRecoveryLimiter, async (req,
           }
           const planId = planIdFromOrderId(candidate.orderId);
           const plan = PRO_PLANS[planId];
-          if (Number(order.order_amount) !== plan.amountPaise / 100 || String(order.order_currency || '') !== plan.currency) {
+          if (!await matchesRecordedPayment(candidate.orderId, uid, planId, Number(order.order_amount), String(order.order_currency || ''))) {
             if (candidate.orderId !== legacyOrderId) {
               await markOrderFailed(candidate.orderId, 'recover: amount/currency mismatch').catch((e: any) => console.warn('[Payments] markOrderFailed failed:', candidate.orderId, e?.message || e));
             }
@@ -786,7 +743,7 @@ paymentsRouter.post('/recover', requireAuth, paymentRecoveryLimiter, async (req,
           }
           const r = await grantWithLedger(uid, candidate.orderId, planId, 'recover', {
             email: String(order?.customer_details?.customer_email || candidate.email || ''),
-            amountPaise: plan.amountPaise,
+            amountPaise: Math.round(Number(order.order_amount) * 100),
             currency: String(order.order_currency || plan.currency),
             paidAt: await fetchSuccessfulPaymentTime(candidate.orderId, order),
           });
@@ -800,7 +757,7 @@ paymentsRouter.post('/recover', requireAuth, paymentRecoveryLimiter, async (req,
         }
         // ACTIVE = user may still be paying; leave it pending.
       } catch (oneErr: any) {
-        if (isPaymentStoreUnavailable(oneErr)) throw oneErr;
+        if (isPaymentStoreUnavailable(oneErr) || oneErr instanceof ReferralError) throw oneErr;
         console.warn('[Payments] recover: order check failed:', candidate.orderId, oneErr?.message || oneErr);
       }
     }
@@ -813,7 +770,7 @@ paymentsRouter.post('/recover', requireAuth, paymentRecoveryLimiter, async (req,
     });
   } catch (err: any) {
     console.error('[Payments] recover error:', err?.message || err);
-    if (isPaymentStoreUnavailable(err)) {
+    if (isPaymentStoreUnavailable(err) || err instanceof ReferralError) {
       return paymentUnavailable(
         res,
         'Payment recovery is temporarily unavailable. Do not pay again; your payment will be checked automatically.',
@@ -871,7 +828,7 @@ paymentsRouter.post('/claim', requireAuth, paymentRecoveryLimiter, async (req, r
 
     const planId = planIdFromOrderId(orderId);
     const plan = PRO_PLANS[planId];
-    if (Number(order.order_amount) !== plan.amountPaise / 100 || String(order.order_currency || '') !== plan.currency) {
+    if (!await matchesRecordedPayment(orderId, uid, planId, Number(order.order_amount), String(order.order_currency || ''))) {
       console.warn('[Payments] claim amount mismatch:', orderId);
       return res.status(200).json({ success: false, error: 'The payment amount does not match the selected plan.' });
     }
@@ -879,7 +836,7 @@ paymentsRouter.post('/claim', requireAuth, paymentRecoveryLimiter, async (req, r
     const paidAtMs = await fetchSuccessfulPaymentTime(orderId, order);
     const { proExpiresAt, alreadyGranted } = await grantWithLedger(uid, orderId, planId, 'claim', {
       email: String(order?.customer_details?.customer_email || ''),
-      amountPaise: plan.amountPaise,
+      amountPaise: Math.round(Number(order.order_amount) * 100),
       currency: String(order.order_currency || plan.currency),
       paidAt: paidAtMs,
     });
@@ -889,7 +846,7 @@ paymentsRouter.post('/claim', requireAuth, paymentRecoveryLimiter, async (req, r
     return res.json({ success: true, alreadyGranted, proExpiresAt, orderId, receipt });
   } catch (err: any) {
     console.error('[Payments] claim error:', err?.message || err);
-    if (isPaymentStoreUnavailable(err)) {
+    if (isPaymentStoreUnavailable(err) || err instanceof ReferralError) {
       return paymentUnavailable(
         res,
         'Your payment was confirmed, but Pro activation is temporarily delayed. Do not pay again; it will be checked automatically.',
@@ -934,7 +891,7 @@ paymentsRouter.get('/history', requireAuth, async (req, res) => {
     return res.json({ success: true, payments });
   } catch (err: any) {
     console.error('[Payments] history error:', err?.message || err);
-    if (isPaymentStoreUnavailable(err)) {
+    if (isPaymentStoreUnavailable(err) || err instanceof ReferralError) {
       return paymentUnavailable(
         res,
         'Payment history is temporarily unavailable. Your receipts are not lost; please retry in a moment.',
@@ -982,7 +939,7 @@ paymentsRouter.post('/send-receipt', requireAuth, sendReceiptLimiter, async (req
     try {
       order = await getPaymentOrder(orderId);
     } catch (err: any) {
-      if (isPaymentStoreUnavailable(err)) {
+      if (isPaymentStoreUnavailable(err) || err instanceof ReferralError) {
         return paymentUnavailable(res, 'Receipt email is temporarily unavailable. Please retry in a moment.');
       }
     }
@@ -999,7 +956,7 @@ paymentsRouter.post('/send-receipt', requireAuth, sendReceiptLimiter, async (req
       orderId: order.orderId,
       planLabel: plan ? plan.label : 'Pro',
       validityDays: plan ? plan.validityDays : undefined,
-      amount: (plan ? plan.amountPaise : order.amountPaise) / 100,
+      amount: order.amountPaise / 100,
       currency: order.currency || 'INR',
       paidAtIso: order.paidAt
         ? new Date(order.paidAt).toISOString()
@@ -1089,9 +1046,7 @@ paymentsRouter.post('/webhook', async (req, res) => {
       const planId = planIdFromOrderId(orderId);
       const plan = PRO_PLANS[planId];
       const paidAmount = Number(order?.order_amount);
-      const standardAmount = plan.amountPaise / 100;
-      const referralAmount = ((plan as any).referralAmountPaise || plan.amountPaise) / 100;
-      const amountOk = paidAmount === standardAmount || paidAmount === referralAmount;
+      const amountOk = await matchesRecordedPayment(orderId, sanitizeUserId(rawUid), planId, paidAmount, String(order?.order_currency || ''));
       const currencyOk = String(order?.order_currency || '') === plan.currency;
 
       if (order?.order_status === 'PAID' && rawUid && amountOk && currencyOk) {
@@ -1105,25 +1060,6 @@ paymentsRouter.post('/webhook', async (req, res) => {
         });
         console.log(`[Payments] webhook granted Pro: uid=${uid} order=${orderId} plan=${planId} already=${alreadyGranted}`);
 
-        // Durably record referral conversion for creator / referrer
-        const orderRef = getOrderReferral(orderId);
-        if (orderRef && orderRef.referralCode) {
-          try {
-            await recordReferralConversion({
-              referralCode: orderRef.referralCode,
-              orderId,
-              referredUid: uid,
-              referredEmail: String(order?.customer_details?.customer_email || ''),
-              planId: plan.id,
-              planLabel: plan.label,
-              baseAmountPaise: plan.amountPaise,
-              discountAmountPaise: plan.amountPaise - Math.round(paidAmount * 100),
-              finalAmountPaidPaise: Math.round(paidAmount * 100),
-            });
-          } catch (convErr: any) {
-            console.warn('[Payments] Failed to record referral conversion in webhook:', convErr?.message || convErr);
-          }
-        }
       } else {
         console.warn('[Payments] webhook skipped: order not PAID / amount mismatch / no customer_id', orderId);
         return res.status(200).json({ ok: false, reason: 'order-not-grantable' });
@@ -1133,7 +1069,7 @@ paymentsRouter.post('/webhook', async (req, res) => {
     return res.status(200).json({ ok: true });
   } catch (err: any) {
     console.error('[Payments] webhook error:', err?.message || err);
-    if (isPaymentStoreUnavailable(err)) {
+    if (isPaymentStoreUnavailable(err) || err instanceof ReferralError) {
       // Non-2xx asks Cashfree to retry after the durable payment store is
       // back. The atomic grant is idempotent, so a retry cannot double-grant.
       return res.status(503).json({ ok: false, reason: 'payment-store-unavailable' });
