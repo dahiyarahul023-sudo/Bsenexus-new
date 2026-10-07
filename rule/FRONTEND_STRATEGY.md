@@ -38,3 +38,9 @@ Start with the highest-priority reproducible failure in the baseline. Do not rew
 - No production UI, browser/device support matrix or accessibility conformance has been certified in this rules change. Package build warnings are not performance measurements.
 - The payment database/referral cutover requirements remain in backend documents. They are relevant dependencies for those frontend journeys, not the purpose or completion condition of this frontend-rule deliverable.
 - Future implementation updates must mark this strategy with actual evidence and remaining gaps. Do not leave resolved problems described as open decisions or promote untested requirements to “passed.”
+
+## 4. Complete the user's full frontend requirement
+
+Read [FRONTEND_COMPLETION_GUIDE.md](FRONTEND_COMPLETION_GUIDE.md) before planning or implementing frontend consistency work. It specifies screen/action inventory, shared command and state ownership, every action's required effects, a design/token adoption contract, action-level interactive mapping, automatic refresh, enforcement and evidence gates.
+
+Current status (2026-10-07): these missing requirements are now specified; their runtime implementation and browser verification remain open. The previous foundation establishes rules and file-level mapping only. Execute phases A–G in the guide in bounded feature changes; update this status with concrete evidence after each change. Never treat the written strategy as proof that all buttons, screens, styles or transitions comply.

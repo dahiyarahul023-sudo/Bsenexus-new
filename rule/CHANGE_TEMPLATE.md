@@ -21,3 +21,18 @@
 - Graph/domain/documentation refreshed:
 
 - Delivery status: commit / merge / CI / deployment, reported separately:
+
+## Frontend action and consistency record (when applicable)
+
+- Stable action IDs and all entry points (buttons/forms/menus/shortcuts):
+- Authoritative fact, client synchronization owner and separate draft state:
+- Required/conditional/optional effects and their order:
+- Every affected reader: screen/list/count/badge/detail; changed / compatible / blocked with evidence:
+- Failure, retry, duplicate input, late response, remount and account-switch outcomes:
+- Shared primitive, variant, token/motion dependencies and justified exceptions:
+- Action inventory/map coverage and unresolved dynamic relationships:
+- Evidence status per action: specified / source-traced / implemented / automated-tested / browser-verified:
+- Exact observed browser/device/state results and remaining mandatory cases:
+- Completion-guide phase, completed gate and next bounded step:
+
+Follow `rule/FRONTEND_COMPLETION_GUIDE.md`; document requirements separately from observed results.

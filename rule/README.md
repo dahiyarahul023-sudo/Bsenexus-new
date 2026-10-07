@@ -39,3 +39,7 @@ The root `AGENTS.md` directs future assistants here. This cannot force every AI 
 Nine `frontend-*` domains cover navigation, sessions, shared design, feed/detail, notes, commerce, AI, offline/privacy and public content. Use `npm run map:impact -- src/components/notes/NoteEditor.tsx` to inspect a frontend change. In addition to import consumers, `eventRelatedFiles` finds one-hop senders/listeners for literal global browser events. Domain `viaFiles` includes those event peers. The HTML viewer shows them in a separate card and the contract table; event peers are NOT drawn as import arrows.
 
 `npm run map:watch` regenerates on saved source/domain changes; refresh the local viewer. This is a maintained source map, not live user telemetry. Computed event names (including named constants), target aliases, bubbling, global CSS, context value meaning and state transitions still require the manual frontend map. Existing CI checks structure and freshness, not actual usability. Follow the browser evidence matrix in `FRONTEND_RULES.md` before claiming a screen works.
+
+## Detailed frontend completion specification
+
+Read [FRONTEND_COMPLETION_GUIDE.md](FRONTEND_COMPLETION_GUIDE.md) for the user's complete requirement and its remaining implementation gates. It explains action ownership and every connected effect, shared design/motion adoption, the planned action-level map, automatic refresh, coverage and truthful AI handoff. Use it with the existing rules and journey map; it does not certify runtime completion.
