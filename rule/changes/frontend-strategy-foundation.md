@@ -26,3 +26,7 @@
 - `NODE_ENV=test JWT_SECRET=<disposable-test-value> npm test`: isolated final run passed 257 tests, 0 failed/skipped. An earlier parallel run exited without a complete summary; it was not used as evidence of full coverage.
 - Host-only `compile_applet` / `lint_applet`: unavailable, not claimed as passed. The browser matrix is a requirement for future runtime UI changes; no application visual/browser pass is claimed for this rules change.
 - Deployment: none. Backend database/referral cutover evidence remains in its existing documents and is not the completion criterion for the requested frontend strategy.
+
+## Full-checkout CI correction
+
+The first GitHub map freshness check failed. Comparing tracked file hashes exposed newer `public/sitemap.xml` and `server/services/marketGuidesService.ts` content in the repository than in the reused local snapshot. Both local copies were refreshed from the PR commit without changing their repository contents, and the map was regenerated against that current source. This preserves the newer guide work. The initial local freshness result covered the incomplete baseline only; the final GitHub result is the full-checkout gate.

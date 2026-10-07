@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "518542364a3f79b8870f42bbb542fc9c50262c96eb081fdff81333341d11a7ad",
+  "sourceDigest": "fa2f0b6194e56f5168ecc22fe56a37cf34bdb7133d52e3091e770d1af4f0f80b",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -100,7 +100,7 @@
     },
     {
       "path": "public/sitemap.xml",
-      "sha256": "c15859becae0ef92b9be0fe3e55e7fa398aa4634854f7fb16ae41c928c3afe65",
+      "sha256": "b03b2674837e67f5c7f56ac99fb93a9ad88cb9f963942920f29c269ba6329eb1",
       "importedBy": []
     },
     {
@@ -675,7 +675,7 @@
     },
     {
       "path": "server/services/marketGuidesService.ts",
-      "sha256": "d0854d393c2588987617a9087f90c03bd4f9dd174c9c344aa446f0b083d890bc",
+      "sha256": "56848350e9edadb068929b0cb208ef1d91772a0bf26318bf913a35ddea19d1a4",
       "importedBy": [
         "server.ts",
         "server/api/routes.ts",
