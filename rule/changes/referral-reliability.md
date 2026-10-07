@@ -68,3 +68,11 @@ end $test$;
 select 'PASS: real payment RPC, code collision, pending, reward, replay, stale profile under service_role; all test data rolled back' as result;
 rollback;
 ```
+
+## Additional compatibility and concurrency checks — 2026-10-07
+
+Read production column definitions/defaults and the exact ensure_user_skeleton, record_pending_order_atomic and grant_payment_atomic definitions without reading customer rows. Reconstructed the three tables locally with their primary keys and service_role BYPASSRLS, then ran migration 006 and the smoke query above against those production function bodies in PGlite. Passed code collision, pending visibility, reward settlement, replay and stale-profile protection. This verifies that basic flow with the production function bodies; it does not clone all production constraints, policies or simultaneous transactions. No production function was replaced.
+
+Submitted two payment-grant transactions concurrently through separate staging database sessions (backend PIDs 292146 and 292143), holding each transaction for three seconds after grant. Both completed successfully and returned free_days=14 and reward count=1 for the same attributed order. Removed only the explicitly created referral-concurrency-20261007 test rows, then verified staging users/orders/referral accounts/rewards were all zero. This is one duplicate-order race test, not a load test or a cross-referral lock-cycle proof.
+
+Repository deployment notes identify AI Studio/Cloud Run, but do not establish the current project/service ID or provide deployment access. No matching Cloud Run connector was found in the available plugin search. Still required before live cutover: running-service access and local referral export/reconciliation, current revision/source verification, sandbox end-to-end browser/payment checks and coordinated production migration/deployment. PR remains draft. Production data and schema remain unchanged.
