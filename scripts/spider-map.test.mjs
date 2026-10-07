@@ -55,3 +55,20 @@ test('a shared helper exposes business peers and tests through its transitive co
  assert.ok(result.candidateTests.includes('server/plan.test.ts'));
  assert.deepEqual(result.semanticDomains[0].viaFiles,['server/plan.test.ts','server/plan.ts']);
 });
+test('frontend browser events expose disconnected listeners and their domain tests',t=>{
+ const {root,write}=fixture(t);
+ write('src/editor.ts',`window.dispatchEvent(new CustomEvent('notes-changed')); window.dispatchEvent(new Event(variable));`);
+ write('src/inbox.ts',`window.addEventListener('notes-changed', refresh); window.removeEventListener('notes-changed', refresh);`);
+ write('src/unrelated.ts',`document.addEventListener('notes-changed', refresh);`);
+ write('src/inbox.test.ts','export {};');
+ const domains=JSON.parse(fs.readFileSync(path.join(root,'rule/domains.json'),'utf8'));
+ domains.domains.push({id:'frontend-notes',reason:'Editor updates saved list',files:['src/inbox.ts'],tests:['src/inbox.test.ts']});
+ write('rule/domains.json',JSON.stringify(domains));
+ const map=buildMap(root),result=impact(map,['src/editor.ts']);
+ assert.deepEqual(result.eventRelatedFiles,['src/inbox.ts']);
+ assert.ok(result.candidateTests.includes('src/inbox.test.ts'));
+ assert.ok(!result.importConsumers.includes('src/inbox.ts'));
+ assert.ok(map.browserEvents.some(e=>e.kind==='dispatch' && e.name===null));
+ assert.equal(map.browserEvents.filter(e=>e.name==='notes-changed').length,4);
+ assert.deepEqual(impact(map,['src/inbox.ts']).eventRelatedFiles,['src/editor.ts']);
+});

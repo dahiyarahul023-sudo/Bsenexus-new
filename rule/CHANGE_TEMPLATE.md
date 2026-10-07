@@ -8,7 +8,9 @@
 - Impact command and affected semantic domains:
 - Related consumers: API, UI, storage/RPC, jobs, caches, manual copy:
 - For each relevant consumer: changed / reviewed-and-compatible / blocked, with evidence:
-- Backend scope: necessary client contract updates, if any; no unrelated frontend changes:
+- Assignment scope: frontend / backend / shared contract; requested visual or behavior change:
+- Frontend: routes, state owner, events, styles/tokens, focus/scroll and related screens:
+- UI state/device matrix: actual browser checks, screenshots and untested cases:
 - Expected user-visible effect:
 - Failure/security/concurrency cases relevant to this change:
 - Implementation and coordinated updates:
