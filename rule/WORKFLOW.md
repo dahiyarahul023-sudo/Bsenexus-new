@@ -1,16 +1,16 @@
-# Backend work: inspect, explain, implement, verify
+# Shared workflow: inspect, explain, implement, verify
 
-This is the operating procedure for the user's backend assignment. Start with `README.md`, `BACKEND_RULES.md`, the relevant `domains.json` entries and current source. Do not replace existing rules with a generic checklist.
+This is the shared operating procedure. The current assignment is frontend strategy; use `FRONTEND_RULES.md`, `FRONTEND_MAP.md` and `FRONTEND_STRATEGY.md` for its concrete requirements. Start with `README.md`, the rules for the actual assignment, the relevant `domains.json` entries and current source. Do not replace existing rules with a generic checklist.
 
 ## Scope
 
-Backend work includes server APIs, identity and authorization, business rules, persistence, background jobs, integrations, validation, failure handling and operational evidence. Read frontend consumers to understand the API contract. Preserve the product's layout, styling, navigation and animations. If a backend contract requires a client compatibility change, identify the specific caller and explain the necessity before implementing it; do not expand that into a redesign.
+Frontend work includes screens, components, shared controls, React state/context, routes, browser events, API consumers, storage/cache behavior, themes, responsive layout, accessibility and motion. Backend work includes APIs, authorization, business rules, persistence and jobs. Follow the user's actual requested scope. Trace across the boundary when a contract changes; preserve unrelated work and existing backend protections.
 
 ## Before code: create an evidence record
 
 Use `CHANGE_TEMPLATE.md` in `rule/changes/`. Record the actual starting commit and requested observable outcome. Split statements into verified facts, hypotheses and unknowns. Every verified statement needs a source path plus symbol, test output or dated runtime observation. A comment, historical audit or green test with mocked storage is not proof of production database behavior.
 
-Run `npm run map:impact -- <changed-source-path>`. The map traces reverse imports to their transitive consumers, then selects the semantic domains containing those files. `viaFiles` explains each selected domain. Related domains are review candidates, not instructions to edit everything. Do not recursively expand from semantic peers: shared files would otherwise drag almost the whole repository into every change.
+Run `npm run map:impact -- <changed-source-path>`. The map traces reverse imports to their transitive consumers, then includes literal browser-event peers and selects semantic domains containing the resulting review seeds. `viaFiles` explains each selected domain. Related domains are review candidates, not instructions to edit everything. Do not recursively expand from semantic peers: shared files would otherwise drag almost the whole repository into every change.
 
 Search independently for exported symbols, endpoint strings, storage/RPC names, trigger effects, job schedules, cache keys, feature flags and public copy. Computed imports and external systems need manual inspection. For renames/deletions inspect the base map as well. Documentation paths are not source-map nodes: trace the source files whose behavior they describe.
 
@@ -25,7 +25,7 @@ Search independently for exported symbols, endpoint strings, storage/RPC names, 
 | Cache and background work | How do other instances and delayed jobs observe the change? | Key, invalidation, reconciliation, deduplication and restart checks |
 | Delivery | What must be installed or migrated before runtime changes? | Deployment order, rehearsal evidence and rollback plan |
 
-For every relevant consumer, write one disposition: **changed**, **reviewed-and-compatible**, or **blocked**. Give a brief reason with evidence. No need to edit a compatible consumer; no permission to ignore it silently. If a shared helper reaches many domains, explicitly assess which ones use the changed behavior and explain exclusions.
+For every relevant consumer, write one disposition: **changed**, **reviewed-and-compatible**, or **blocked**. Give a brief reason with evidence. No need to edit a compatible consumer; no permission to ignore it silently. For frontend edits also trace CSS selectors/tokens, context consumers, browser events, focus/scroll ownership, device sizes and all async states. Use the frontend state/browser matrix; unit tests do not prove rendered behavior. If a shared helper reaches many domains, explicitly assess which ones use the changed behavior and explain exclusions.
 
 Example: changing a referral validator can reach the referral API and payment checkout. Review code ownership, pending intent, immutable order attribution, paid settlement and owner dashboard reconciliation. A successful code application alone cannot prove a paid reward. Read `REFERRALS.md` before changing any part of that flow.
 

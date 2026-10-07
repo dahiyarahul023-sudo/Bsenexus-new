@@ -10,3 +10,5 @@ Primary research checked on 2026-10-06; primary-source abstracts and metadata re
 
 The spider graph is an engineering aid motivated by the cross-file failure mode. Its freshness test detects stale artifacts, not semantic correctness. Security, database concurrency and product behavior need separate tests and review.
 
+
+Frontend-specific GUI/accessibility research and React/W3C guidance are in `FRONTEND_RESEARCH.md`. Use those with the frontend rules; the original backend research is retained for security and shared contracts.
