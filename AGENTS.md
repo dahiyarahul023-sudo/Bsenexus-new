@@ -7,3 +7,9 @@
 
 ## Before every change
 Read `rule/README.md`, `rule/BACKEND_RULES.md` and the relevant `rule/domains.json` entries. Run `npm run map:impact -- <path>` before editing; inspect API/UI/storage/cache/job/copy consumers beyond imports. Update the change record and regenerate/check the map in the same commit. For referrals, also read `rule/REFERRALS.md`: ownership, pending applications, verified rewards and legacy cutover are separate contracts. Never claim a local test or commit is a deployed migration. If required host checks are unavailable, explicitly record that fact.
+
+
+## Backend scope and truthful handoff
+The current assignment is backend engineering. Read client code to trace API consumers, but do not redesign screens, styling, navigation or animations. A necessary client contract change must be explained as part of the backend change; preserve unrelated frontend work.
+
+Read `rule/WORKFLOW.md` for the impact/evidence protocol. Inspect both transitive import consumers and their semantic domains. Explain each relevant consumer as changed, reviewed-and-compatible, or blocked with evidence; an unexplained omission is not a completed impact review. Keep rules, map and change record current in the same commit. Report committed, merged, checks passed and deployed as separate statuses.

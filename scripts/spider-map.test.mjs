@@ -44,3 +44,14 @@ test('inline map cannot close script tag with hostile source text',t=>{
  const {root,write}=fixture(t);write('server/plan.ts',"fetch('</script><img src=x onerror=alert(1)>');");
  const html=artifacts(buildMap(root),root)['spider-map.html'];assert.equal((html.match(/<\/script>/g)||[]).length,1);assert.ok(html.includes('\\u003c/script>'));
 });
+test('a shared helper exposes business peers and tests through its transitive consumers',t=>{
+ const {root,write}=fixture(t);
+ write('server/money.ts','export const units=100;');
+ write('server/plan.ts',"import {units} from './money.js'; export const amount=units;");
+ const result=impact(buildMap(root),['server/money.ts']);
+ assert.ok(result.importConsumers.includes('server/plan.ts'));
+ assert.deepEqual(result.semanticDomains.map(d=>d.id),['payments']);
+ assert.ok(result.relatedFiles.includes('src/display.ts'));
+ assert.ok(result.candidateTests.includes('server/plan.test.ts'));
+ assert.deepEqual(result.semanticDomains[0].viaFiles,['server/plan.test.ts','server/plan.ts']);
+});

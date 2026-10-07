@@ -13,21 +13,22 @@ This change establishes the engineering foundation. It does not certify or deplo
 - Clean-install lock repair adds missing platform package records while preserving every existing package version and record.
 - Historical auth/durability explanations corrected where checked against current source.
 
-## Phase 2 — pricing contract (historical baseline; updated 2026-10-07)
+## Phase 2 — pricing and referral contract (current repository baseline)
 
-Main `4ec85cc` now defines higher regular prices and referral discounts consistently in both catalogues. The referral reliability change preserves those values and fixes payment-path parity; the observations below describe the earlier `3f35f3b` baseline, not a current request to choose prices. See `REFERRALS.md` for the current contract and deployment blockers.
+Rechecked at main `b4e66b36d9fd8f82b86d80b722bdef2d654569ef` on 2026-10-07. The earlier pricing conflict is historical; do not ask the user to resolve it again or silently revert prices.
 
-Observed facts:
+| Plan | Standard INR | Referral INR | Days |
+|---|---:|---:|---:|
+| Weekly | 89 | 59 | 7 |
+| Monthly | 299 | 199 | 30 |
+| Half-yearly | 1499 | 999 | 180 |
+| Yearly | 2699 | 1799 | 365 |
 
-- `server/config/plans.ts` charges 5900 / 19900 / 99900 / 179900 paise. `src/config/plans.ts` agrees on ordinary display prices.
-- `server/tests/referrals.test.ts` instead expects ordinary prices 89 / 299 / 1499 / 2699 rupees and referral prices 59 / 199 / 999 / 1799. The test imports `getEffectivePlanPrice`, which the current display catalogue does not export.
-- `PricingPage`, `ProCheckoutView`, `SettingsTab` and `src/utils/cashfree.ts` reference missing referral display fields/functions; `getLowestPlanPrice` is called with an unsupported argument.
-- Type checking/build fail on these references. The configured backend suite also fails its referral module and SSR pricing-title assertion.
-- `server/api/payments.ts` create/verify/webhook consider a possible referral amount; recover/claim currently compare against standard amount. Introducing a real discounted amount requires all paths to be coordinated. Existing standard-only values mask that future divergence.
+Evidence: `server/config/plans.ts::PRO_PLANS` defines charged amounts in paise; `src/config/plans.ts` defines display values. `server/services/referralPaymentContract.ts` validates the order contract used by payment grant paths. Relevant checks are `pricingSync.test.ts`, `referralContract.test.ts` and `referralApi.test.ts`; their presence is not a claim they passed in a given deployment.
 
-Unresolved product choice: whether current base prices stay 59/199/999/1799 for everyone, or the higher base prices with referral discounts are intended. Conflicting tests alone are not authority to raise customer prices.
+Referral ownership, pending applications, order attribution, settlement and stream reconciliation are implemented in repository source. Follow `REFERRALS.md` for the exact behavior and required database/legacy cutover. Repository implementation does not establish that migration 006 is installed or that live rewards and streams work.
 
-Next bounded implementation: confirm that choice; create a typed charge/display/referral contract, update all checkout/grant/recovery/history/receipt/SSR/copy consumers, then use independent expected-price and parity tests. Do not fix this by weakening tests, adding `any`, or silently changing money values.
+Next bounded work: reconcile the payment schema below and rehearse the referral cutover on an isolated database with legacy records accounted for. Preserve current prices and reward policy.
 
 ## Phase 3 — make the database reproducible (release blocker)
 
@@ -46,3 +47,8 @@ A deployed database may contain additional manual schema. Its actual state has N
 | Operations | Deployment config, readiness, logs, rollback and alert handling | Operators can detect degraded dependencies and recover without hidden loss |
 
 Repeat the rule workflow for each bounded change. Update this strategy with evidence, not optimistic status labels. No synthetic performance targets, guessed traffic levels or unspecified infrastructure choices have been imposed.
+
+
+## Phase 5 — keep the strategy trustworthy
+
+For each change, follow `WORKFLOW.md` and update this strategy when a blocker is resolved or evidence changes. Never leave a resolved product choice written as an open decision. The 2026-10-07 wiring update extends semantic review to transitive import consumers, so a shared helper can expose related contracts and tests. The regression test reproduces a helper-to-plan-to-display dependency; it does not certify production behavior.

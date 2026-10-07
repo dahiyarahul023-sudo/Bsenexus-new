@@ -20,9 +20,9 @@ function render(){
 $('selected').textContent=selected;
 const deps=[...new Set(map.edges.filter(e=>e.source===selected).map(e=>e.target))].sort();const direct=byPath.get(selected).importedBy;
 const seen=new Set([selected]),q=[selected];while(q.length)for(const p of byPath.get(q.shift())?.importedBy||[])if(!seen.has(p)){seen.add(p);q.push(p)}
-const domains=map.domains.filter(d=>[...d.files,...d.tests].includes(selected));const peers=[...new Set(domains.flatMap(d=>d.files))].filter(p=>p!==selected).sort();const tests=[...new Set([...seen].filter(p=>p.includes('.test.')).concat(domains.flatMap(d=>d.tests)))].sort();
+const domains=map.domains.filter(d=>[...d.files,...d.tests].some(p=>seen.has(p)));const peers=[...new Set(domains.flatMap(d=>d.files))].filter(p=>p!==selected).sort();const tests=[...new Set([...seen].filter(p=>p.includes('.test.')).concat(domains.flatMap(d=>d.tests)))].sort();
 $('cards').replaceChildren();card('Direct dependencies',deps);card('Transitive import consumers',[...seen].filter(p=>p!==selected).sort());card('Related domain files',peers);card('Candidate tests — inspect coverage',tests);
-const c=document.createElement('section');c.className='card';const h=document.createElement('h3');h.textContent='Why these features connect';c.append(h);for(const d of domains){const p=document.createElement('p');p.textContent=d.label+': '+d.reason;c.append(p)}if(!domains.length){const p=document.createElement('p');p.textContent='No reviewed domain membership yet. Inspect consumers and add a domain when warranted.';c.append(p)}$('cards').append(c);
+const c=document.createElement('section');c.className='card';const h=document.createElement('h3');h.textContent='Why these features connect';c.append(h);for(const d of domains){const p=document.createElement('p');p.textContent=d.label+': '+d.reason+' Reached through: '+[...new Set([...d.files,...d.tests].filter(f=>seen.has(f)))].sort().join(', ');c.append(p)}if(!domains.length){const p=document.createElement('p');p.textContent='No reviewed domain membership yet. Inspect consumers and add a domain when warranted.';c.append(p)}$('cards').append(c);
 const review=new Set([...seen,...peers]);$('contracts').textContent=JSON.stringify({routes:map.routes.filter(x=>review.has(x.file)),network:map.network.filter(x=>review.has(x.file)),stores:map.stores.filter(x=>review.has(x.file)),environment:map.environment.filter(x=>review.has(x.file))},null,2);
 $('limits').textContent=map.limitations.join('\n')+'\nComputed imports: '+JSON.stringify(map.dynamic,null,2);
 draw(deps,direct,peers);
@@ -34,3 +34,4 @@ node(selected,330,20,'#ffffff');for(const group of groups)group.paths.slice(0,ma
 }
 $('search').oninput=list;$('domain').onchange=list;list();if(selected)render();
 </script></body></html>
+

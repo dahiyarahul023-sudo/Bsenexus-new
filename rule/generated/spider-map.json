@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "27cca27faa87c0e85364ba853e3bcc21cce149dd69e950192cf3f1677db6467b",
+  "sourceDigest": "f3f706a8612e20b0cfe157f93f0eff048a73833dc8f57e763b51e600a8565e56",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -144,19 +144,19 @@
     },
     {
       "path": "scripts/spider-map.mjs",
-      "sha256": "94a1f2bcc9702696a139308076aad8b48c561224bebb3f9d21563f8580d6a237",
+      "sha256": "fcb97c566ea5e3dfb657c7413ff23f638fd11f15c95b0acb7fe7fba2e775f48b",
       "importedBy": [
         "scripts/spider-map.test.mjs"
       ]
     },
     {
       "path": "scripts/spider-map.test.mjs",
-      "sha256": "630ac51b383ec702af46c6a6567fa465b102a3e7dc83e872176782501003ddf0",
+      "sha256": "13a82b3c69867f5f7046318b5f228f80d3095614135995a73a13b35531ba154a",
       "importedBy": []
     },
     {
       "path": "scripts/spider-view.html",
-      "sha256": "f89487e7ca93fba3227c5ea27c0888b37dee832b2cc6bd4aa0e2c5e11bf22120",
+      "sha256": "2ba9c3ec81fa8078a8396a9819648a812fa18ec84bee9d2007b4a3eebc4861ff",
       "importedBy": []
     },
     {
