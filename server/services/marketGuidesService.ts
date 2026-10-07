@@ -43,10 +43,10 @@ export const FALLBACK_MARKET_GUIDES: ServerMarketGuide[] = [
   {
     id: 'ipo-listings-october-5-6-2026',
     slug: 'ipo-listings-october-5-6-2026',
-    title: 'IPOs Listing on October 5\u20136, 2026: Listing Prices, Dates & Subscription',
+    title: 'IPOs Listing on October 5\u20137, 2026: Listing Prices, Dates & Subscription',
     category: 'IPO',
-    readTime: '4 min read',
-    summary: 'Six mainboard IPOs list on the NSE and BSE on October 5\u20136, 2026 \u2014 Runwal Enterprises, Orient Cables, German Green Steel & Power, AceVector (Snapdeal\u2019s parent), SRIT India and Shah Investor\u2019s Home. Dates, price bands and subscription levels, answered directly.',
+    readTime: '5 min read',
+    summary: 'Ten IPOs list on the NSE and BSE on October 5\u20137, 2026 \u2014 six mainboard names plus four SME listings on October 7: Vans Electroengineerings, Black Opal Consultants, Papadmalji Agro Foods and Green Asia Impex. Dates, price bands, listing prices and subscription levels, answered directly.',
     excerpt: 'Which IPOs list on October 5\u20136, 2026, at what price bands, and how strongly were they subscribed? Direct answers for all six mainboard listings.',
     date: '2026-10-05',
     publishedAt: '2026-10-05T03:30:00+05:30',
@@ -55,7 +55,7 @@ export const FALLBACK_MARKET_GUIDES: ServerMarketGuide[] = [
       role: 'IPO & Primary Markets'
     },
     content: {
-      introduction: 'Six mainboard IPOs list on the NSE and BSE on October 5\u20136, 2026. On Monday, October 5: Runwal Enterprises, Orient Cables (India), German Green Steel & Power, and AceVector \u2014 the parent company of Snapdeal. On Tuesday, October 6: SRIT India and Shah Investor\u2019s Home. Each listing\u2019s date, IPO size, price band and subscription level, answered directly below.',
+      introduction: 'Ten IPOs list on the NSE and BSE on October 5\u20137, 2026. On Monday, October 5: Runwal Enterprises, Orient Cables (India), German Green Steel & Power, and AceVector \u2014 the parent company of Snapdeal. On Tuesday, October 6: SRIT India and Shah Investor\u2019s Home. On Wednesday, October 7, four SME IPOs debut: Vans Electroengineerings and Black Opal Consultants on the BSE SME platform, and Papadmalji Agro Foods and Green Asia Impex on NSE Emerge. Each listing\u2019s date, IPO size, price band and subscription level, answered directly below.',
       sections: [
         {
           heading: 'Runwal Enterprises \u2014 listed Monday, October 5, 2026',
@@ -86,9 +86,29 @@ export const FALLBACK_MARKET_GUIDES: ServerMarketGuide[] = [
           heading: 'Shah Investor\u2019s Home \u2014 listed Tuesday, October 6, 2026',
           title: 'Shah Investor\u2019s Home \u2014 listed Tuesday, October 6, 2026',
           content: 'Shah Investor\u2019s Home listed on the NSE and BSE on Tuesday, October 6, 2026. The Rs 90.17-crore IPO was priced at Rs 159\u2013167 per share and subscribed 38.12 times. It debuted modestly higher at Rs 171 \u2014 a 2.4% premium over the Rs 167 issue price.'
+        },
+        {
+          heading: 'Vans Electroengineerings \u2014 listed Wednesday, October 7, 2026',
+          title: 'Vans Electroengineerings \u2014 listed Wednesday, October 7, 2026',
+          content: 'Vans Electroengineerings listed on the BSE SME platform on Wednesday, October 7, 2026. The Rs 33.98-crore IPO \u2014 a fully fresh issue priced at Rs 112\u2013118 per share \u2014 was subscribed 628.73 times, the strongest demand of this week\u2019s listings. It debuted at Rs 224.20 \u2014 90% above the Rs 118 issue price. The Salem-based company manufactures vacuum circuit breakers and vacuum interrupters for railway electrification and is an RDSO-approved vendor to Indian Railways.'
+        },
+        {
+          heading: 'Black Opal Consultants \u2014 listed Wednesday, October 7, 2026',
+          title: 'Black Opal Consultants \u2014 listed Wednesday, October 7, 2026',
+          content: 'Black Opal Consultants listed on the BSE SME platform on Wednesday, October 7, 2026. The Rs 55.08-crore IPO was priced at Rs 185\u2013197 per share and subscribed 73.80 times. It debuted at Rs 200 \u2014 1.52% above the Rs 197 issue price. The Delhi-based company provides real-estate advisory services and is investing part of the proceeds in its group entity\u2019s Ayodhya project.'
+        },
+        {
+          heading: 'Papadmalji Agro Foods \u2014 listed Wednesday, October 7, 2026',
+          title: 'Papadmalji Agro Foods \u2014 listed Wednesday, October 7, 2026',
+          content: 'Papadmalji Agro Foods listed on NSE Emerge on Wednesday, October 7, 2026. The Rs 20.18-crore IPO \u2014 a fresh issue plus an offer for sale \u2014 was priced at Rs 69\u201372 per share and subscribed 2.54 times. It debuted at Rs 72.30 \u2014 a marginal 0.42% above the Rs 72 issue price. The Bikaner-based company manufactures papads and ready-to-fry snacks under the Zhakaas, Vishal, Rozana, Diamond and Papadmalji brands.'
+        },
+        {
+          heading: 'Green Asia Impex \u2014 listed Wednesday, October 7, 2026',
+          title: 'Green Asia Impex \u2014 listed Wednesday, October 7, 2026',
+          content: 'Green Asia Impex listed on NSE Emerge on Wednesday, October 7, 2026. The Rs 60-crore IPO was priced at Rs 84\u201389 per share and subscribed 1.04 times \u2014 the thinnest demand of this week\u2019s four SME listings. It debuted flat at Rs 89 \u2014 essentially unchanged from the issue price. The Eluru-based company exports shrimp and is building a new seafood processing facility with the issue proceeds.'
         }
       ],
-      conclusion: 'Tuesday\u2019s two listings are done: SRIT India listed at Rs 148 on the NSE (+13.85% over Rs 130) and Rs 139.80 on the BSE (+7.54%), while Shah Investor\u2019s Home debuted at Rs 171 \u2014 a modest 2.4% premium over its Rs 167 issue price. Monday\u2019s four are in the books: Orient Cables delivered the week\u2019s standout debut (+65.44% to Rs 450), German Green Steel & Power listed modestly higher (+2.16% to Rs 142), Runwal Enterprises debuted flat at Rs 305, and AceVector slipped 11.5% to Rs 28.32. All six companies will announce their Q2 FY27 results in October\u2013November 2026; track their filings, board meetings and results on Bsenexus as the earnings season unfolds.'
+      conclusion: 'Wednesday\u2019s four SME listings are done: Vans Electroengineerings debuted at Rs 224.20 on BSE SME \u2014 90% above its Rs 118 issue price on 628.73x demand \u2014 Black Opal Consultants listed at Rs 200 (+1.52% over Rs 197), Papadmalji Agro Foods at Rs 72.30 (+0.42% over Rs 72), and Green Asia Impex flat at Rs 89. Tuesday\u2019s two listings are done: SRIT India listed at Rs 148 on the NSE (+13.85% over Rs 130) and Rs 139.80 on the BSE (+7.54%), while Shah Investor\u2019s Home debuted at Rs 171 \u2014 a modest 2.4% premium over its Rs 167 issue price. Monday\u2019s four are in the books: Orient Cables delivered the week\u2019s standout debut (+65.44% to Rs 450), German Green Steel & Power listed modestly higher (+2.16% to Rs 142), Runwal Enterprises debuted flat at Rs 305, and AceVector slipped 11.5% to Rs 28.32. All ten companies will announce their Q2 FY27 results in October\u2013November 2026; track their filings, board meetings and results on Bsenexus as the earnings season unfolds.'
     },
     faq: [
       {
@@ -106,6 +126,14 @@ export const FALLBACK_MARKET_GUIDES: ServerMarketGuide[] = [
       {
         question: 'At what price did these IPOs list on October 6?',
         answer: 'SRIT India listed at Rs 148 on the NSE (+13.85% over its Rs 130 issue price) and Rs 139.80 on the BSE (+7.54%). Shah Investor\u2019s Home debuted at Rs 171 \u2014 2.4% above its Rs 167 issue price.'
+      },
+      {
+        question: 'Which SME IPOs listed on October 7, 2026?',
+        answer: 'Four SME IPOs listed on October 7, 2026. Vans Electroengineerings debuted on BSE SME at Rs 224.20 (90% above its Rs 118 issue price), Black Opal Consultants on BSE SME at Rs 200 (1.52% above Rs 197), Papadmalji Agro Foods on NSE Emerge at Rs 72.30 (0.42% above Rs 72), and Green Asia Impex on NSE Emerge at Rs 89, essentially flat to the issue price.'
+      },
+      {
+        question: 'Which October 7 SME IPO saw the strongest subscription demand?',
+        answer: 'Vans Electroengineerings, subscribed 628.73 times \u2014 the highest subscription of this week\u2019s listings. Black Opal Consultants was next at 73.80 times, followed by Papadmalji Agro Foods at 2.54 times and Green Asia Impex at 1.04 times.'
       }
     ]
   },
