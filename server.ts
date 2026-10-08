@@ -1856,6 +1856,18 @@ export function renderPricingPage(): string {
     { name: "Pro Yearly", price: "2699", desc: "365 days of Pro (₹1,799 with referral code)." },
   ];
 
+  // Merchant return policy (mirrors the visible 7-day guarantee card on this page):
+  // 7-day no-questions-asked money-back on all paid Pro packs.
+  const merchantReturnPolicy = {
+    "@type": "MerchantReturnPolicy",
+    "applicableCountry": "IN",
+    "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+    "merchantReturnDays": 7,
+    "returnFees": "https://schema.org/FreeReturn",
+    "refundType": "https://schema.org/FullRefund",
+    "description": "7-day no-questions-asked money-back guarantee on all Pro packs. Email admin@bsenexus.in within 7 days of purchase for a full refund, processed within 5-7 business days."
+  };
+
   const jsonLd = JSON.stringify({
     "@context": "https://schema.org",
     "@graph": [
@@ -1886,9 +1898,11 @@ export function renderPricingPage(): string {
             "price": o.price,
             "priceCurrency": "INR",
             "priceValidUntil": "2027-12-31",
+            "validFrom": "2026-09-25",
             "availability": "https://schema.org/InStock",
             "url": canonicalUrl,
             "description": o.desc,
+            "hasMerchantReturnPolicy": merchantReturnPolicy,
           })),
         ]
       },
@@ -2384,6 +2398,10 @@ ${jsonLd}
       <div class="guarantee-card">
         <h3>Secured by Cashfree</h3>
         <p>Payments are processed over Cashfree's PCI-DSS compliant gateway. We never see or store your card or bank details.</p>
+      </div>
+      <div class="guarantee-card">
+        <h3>7-Day Money-Back Guarantee</h3>
+        <p>Every Pro pack comes with a 7-day, no-questions-asked money-back guarantee. Email admin@bsenexus.in within 7 days of purchase for a full refund — processed within 5-7 business days.</p>
       </div>
     </div>
 
