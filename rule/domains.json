@@ -119,6 +119,7 @@
         "server/api/routes.ts"
       ],
       "tests": [
+        "server/tests/bseBackfill.test.ts",
         "server/tests/alertDecision.test.ts",
         "server/tests/oneSignal.test.ts",
         "server/tests/batchOperations.test.ts",

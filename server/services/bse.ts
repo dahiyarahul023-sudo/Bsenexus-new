@@ -309,7 +309,7 @@ export async function fetchBSEAnnouncements() {
   let source = 'BSE_PRIMARY';
 
   const isBootCycle = !bootBackfillDone;
-  const maxDeepPages = isBootCycle ? 10 : 3;
+  const maxDeepPages = 3; // Bound restart bursts to the same window as normal polling.
   
   // Primary live endpoint: AnnSubCategoryGetData page 1 returns ~50 latest filings
   let table = await fetchSingleBsePage(1, '', 'AnnSubCategoryGetData', 5000, todayDate);
@@ -369,6 +369,8 @@ export async function fetchBSEAnnouncements() {
     let page = 1;
     while (prevPageAllNew && page < maxDeepPages) {
       page++;
+      // Pace only deeper pages; page 1 stays immediate in boot and normal cycles.
+      await new Promise(r => setTimeout(r, 2500));
       const next = await fetchSingleBsePage(page, '', 'AnnSubCategoryGetData', 4500, todayDate) || [];
       if (next.length === 0) break;
       table = [...table, ...next];

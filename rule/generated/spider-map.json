@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "938413d7f6e7fc87cd35d8a271561e21b3333af55bf23baf28bc9eb558ae4ed5",
+  "sourceDigest": "f433590044e589ec87cbbbef125d6af68dc990a1d7caaf0ca59b940080eb103d",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -30,7 +30,7 @@
     },
     {
       "path": "index.html",
-      "sha256": "e35fd3d734334baecb3fce6d40964f548f7ac7575f5a5d6446b5d6d2cb161eed",
+      "sha256": "cc1c7d652dc8ae14b85c36f58fe321b3ca3a5b3b27fd731d5bde8056313a9407",
       "importedBy": []
     },
     {
@@ -613,7 +613,7 @@
     },
     {
       "path": "server/services/bse.ts",
-      "sha256": "e1eebf9ce385d5fbaed6301076c3fdceea34d007ba4a48505319b9bf62f5f552",
+      "sha256": "6450d99ba6cf4899bb6cffed9e00986bda5a71ea50167d870eb3b3ff66ff7858",
       "importedBy": [
         "server.ts",
         "server/api/routes.ts",
@@ -735,7 +735,7 @@
     },
     {
       "path": "server/services/resultsCalendarService.ts",
-      "sha256": "0cb2b02ebff2086f7724747256a9461ebc1e98c62e69ba776a4d501e8d98ed44",
+      "sha256": "231308c769295f9b01c521aadbb22ae3c7c68722019bc35e5f7d012ccbbbaccf",
       "importedBy": [
         "server.ts",
         "server/api/routes.ts",
@@ -856,8 +856,13 @@
       "importedBy": []
     },
     {
+      "path": "server/tests/bseBackfill.test.ts",
+      "sha256": "62e32a32943cd8186463ff40a5e5daffeb8908b98420ece1f13a90ebb4c808d5",
+      "importedBy": []
+    },
+    {
       "path": "server/tests/calendarScope.test.ts",
-      "sha256": "fcd203ba6881e1b484e0281f3dd7043936d7582edada67facc7137e8568e9578",
+      "sha256": "bf4152ea637094410d3862d2a4e8801cea19d86c6ed0dc1f2bcf8e6fdea7705d",
       "importedBy": []
     },
     {
@@ -1276,7 +1281,7 @@
     },
     {
       "path": "src/components/HomeForYou.tsx",
-      "sha256": "0e377f43fc1ffc0705fc8b1af3ebfea7809e64d5eb62a871f6512ff6eb1a2f37",
+      "sha256": "4fefe3d01f96c133f8de9f47fd16d611052cff6224d8dd1d33e08f4f5752256a",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -1290,7 +1295,7 @@
     },
     {
       "path": "src/components/Layout.tsx",
-      "sha256": "9fa9779934a0c1b0fb480853a777d9ee8a7308b6f88918f4ea8abbac50a61a20",
+      "sha256": "11f5fee81c1c250f04b03044e5e5e07ed698c036fc6c0b5bedb823cc43b07eff",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -1396,7 +1401,7 @@
     },
     {
       "path": "src/components/ResultsCalendar.tsx",
-      "sha256": "6995f3c240d36c28638fd7002f91d5f1d3858da3af1d62f5a6208c0ec7fc061d",
+      "sha256": "fa150cf4f8c4eedf89a494511db133b70c6c07f7a7ed88151cb99562e1182625",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -1602,7 +1607,7 @@
     },
     {
       "path": "src/components/results/ResultsPage.tsx",
-      "sha256": "7f0a28ffbabb21ed67d6df1e6552758f74a5cfb6dba9e057c73231ad4b502413",
+      "sha256": "fcc82c0dd76b8f569fc68c1b158afb93b716f9f3eda4c76276df1eeb2c16919b",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -7779,6 +7784,7 @@
         "server/api/routes.ts"
       ],
       "tests": [
+        "server/tests/bseBackfill.test.ts",
         "server/tests/alertDecision.test.ts",
         "server/tests/oneSignal.test.ts",
         "server/tests/batchOperations.test.ts",
@@ -12428,7 +12434,7 @@
     },
     {
       "file": "server/services/bse.ts",
-      "line": 410,
+      "line": 412,
       "function": "Array.from",
       "key": "uniqueMap.values()"
     },
@@ -12539,6 +12545,18 @@
       "line": 93,
       "function": "Array.from",
       "key": "{ length: 110 }"
+    },
+    {
+      "file": "server/tests/bseBackfill.test.ts",
+      "line": 52,
+      "function": "Array.from",
+      "key": "{ length: count }"
+    },
+    {
+      "file": "server/tests/bseBackfill.test.ts",
+      "line": 56,
+      "function": "Array.from",
+      "key": "{ length: 10 }"
     },
     {
       "file": "server/utils/bloomFilter.ts",
