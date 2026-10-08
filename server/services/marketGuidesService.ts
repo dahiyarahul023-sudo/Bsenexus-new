@@ -43,19 +43,19 @@ export const FALLBACK_MARKET_GUIDES: ServerMarketGuide[] = [
   {
     id: 'ipo-listings-october-5-6-2026',
     slug: 'ipo-listings-october-5-6-2026',
-    title: 'IPOs Listing on October 5\u20137, 2026: Listing Prices, Dates & Subscription',
+    title: 'IPOs Listing on October 5\u20138, 2026: Listing Prices, Dates & Subscription',
     category: 'IPO',
-    readTime: '5 min read',
-    summary: 'Ten IPOs list on the NSE and BSE on October 5\u20137, 2026 \u2014 six mainboard names plus four SME listings on October 7: Vans Electroengineerings, Black Opal Consultants, Papadmalji Agro Foods and Green Asia Impex. Dates, price bands, listing prices and subscription levels, answered directly.',
-    excerpt: 'Which IPOs list on October 5\u20136, 2026, at what price bands, and how strongly were they subscribed? Direct answers for all six mainboard listings.',
-    date: '2026-10-05',
+    readTime: '7 min read',
+    summary: 'Nineteen IPOs listed on the NSE and BSE from October 5\u20138, 2026 \u2014 six mainboard and four SME listings on October 5\u20137, plus seven SME and two mainboard debuts on October 8 led by Sollfege Smart Electronics\u2019 89.82% listing premium. Dates, price bands, listing prices and subscription levels, answered directly.',
+    excerpt: 'Which IPOs listed from October 5\u20138, 2026, at what listing prices versus issue price, and how strongly were they subscribed? Direct answers for all nineteen listings.',
+    date: '2026-10-08',
     publishedAt: '2026-10-05T03:30:00+05:30',
     author: {
       name: 'Bsenexus Intelligence Team',
       role: 'IPO & Primary Markets'
     },
     content: {
-      introduction: 'Ten IPOs list on the NSE and BSE on October 5\u20137, 2026. On Monday, October 5: Runwal Enterprises, Orient Cables (India), German Green Steel & Power, and AceVector \u2014 the parent company of Snapdeal. On Tuesday, October 6: SRIT India and Shah Investor\u2019s Home. On Wednesday, October 7, four SME IPOs debut: Vans Electroengineerings and Black Opal Consultants on the BSE SME platform, and Papadmalji Agro Foods and Green Asia Impex on NSE Emerge. Each listing\u2019s date, IPO size, price band and subscription level, answered directly below.',
+      introduction: 'Nineteen IPOs listed on the NSE and BSE from October 5\u20138, 2026. On Monday, October 5: Runwal Enterprises, Orient Cables (India), German Green Steel & Power, and AceVector \u2014 the parent company of Snapdeal. On Tuesday, October 6: SRIT India and Shah Investor\u2019s Home. On Wednesday, October 7, four SME IPOs debut: Vans Electroengineerings and Black Opal Consultants on the BSE SME platform, and Papadmalji Agro Foods and Green Asia Impex on NSE Emerge. Each listing\u2019s date, IPO size, price band and subscription level, answered directly below. On Thursday, October 8, nine more IPOs debuted: seven on the SME platforms \u2014 Omara Ventures India, Eventions, Dove Soft, SJP Ultrasonics, Sollfege Smart Electronics, Shree TNB Polymers and EverestIMS Technologies \u2014 and two on the mainboards: Vishal Nirmiti and Nityas Gems & Jewellery.',
       sections: [
         {
           heading: 'Runwal Enterprises \u2014 listed Monday, October 5, 2026',
@@ -106,9 +106,54 @@ export const FALLBACK_MARKET_GUIDES: ServerMarketGuide[] = [
           heading: 'Green Asia Impex \u2014 listed Wednesday, October 7, 2026',
           title: 'Green Asia Impex \u2014 listed Wednesday, October 7, 2026',
           content: 'Green Asia Impex listed on NSE Emerge on Wednesday, October 7, 2026. The Rs 60-crore IPO was priced at Rs 84\u201389 per share and subscribed 1.04 times \u2014 the thinnest demand of this week\u2019s four SME listings. It debuted flat at Rs 89 \u2014 essentially unchanged from the issue price. The Eluru-based company exports shrimp and is building a new seafood processing facility with the issue proceeds.'
+        },
+        {
+          heading: 'Omara Ventures India \u2014 listed Thursday, October 8, 2026',
+          title: 'Omara Ventures India \u2014 listed Thursday, October 8, 2026',
+          content: 'Omara Ventures India listed on the BSE SME platform on Thursday, October 8, 2026. The Rs 41.99-crore jewellery IPO was priced at Rs 296\u2013311 per share, with the final issue price set at Rs 311. It debuted at Rs 319 \u2014 a 2.57% premium \u2014 and traded higher through the morning, touching Rs 333.95 (+7.38%) within hours of listing.'
+        },
+        {
+          heading: 'Eventions \u2014 listed Thursday, October 8, 2026',
+          title: 'Eventions \u2014 listed Thursday, October 8, 2026',
+          content: 'Eventions listed on NSE Emerge on Thursday, October 8, 2026. The roughly Rs 38-crore event-management IPO was priced at Rs 112\u2013118 per share, with the final issue price at Rs 118. It debuted at Rs 111 \u2014 a 5.93% discount \u2014 and slid further in early trade to Rs 105.45 (\u201310.64%), the weakest debut of the day.'
+        },
+        {
+          heading: 'Dove Soft \u2014 listed Thursday, October 8, 2026',
+          title: 'Dove Soft \u2014 listed Thursday, October 8, 2026',
+          content: 'Dove Soft listed on the BSE SME platform on Thursday, October 8, 2026. The Rs 73.26-crore IPO was priced at Rs 104\u2013111 per share and subscribed 1.36 times. It debuted at Rs 110.30 \u2014 a marginal 0.63% below the Rs 111 issue price \u2014 a flat-to-soft start in line with its modest subscription demand.'
+        },
+        {
+          heading: 'SJP Ultrasonics \u2014 listed Thursday, October 8, 2026',
+          title: 'SJP Ultrasonics \u2014 listed Thursday, October 8, 2026',
+          content: 'SJP Ultrasonics listed on the BSE SME platform on Thursday, October 8, 2026. The Rs 23.45-crore IPO carried a fixed issue price of Rs 67 per share. It debuted at Rs 74.20 \u2014 a 10.75% premium \u2014 a solid green debut and one of the stronger listings among the October 8 SME names.'
+        },
+        {
+          heading: 'Sollfege Smart Electronics \u2014 listed Thursday, October 8, 2026',
+          title: 'Sollfege Smart Electronics \u2014 listed Thursday, October 8, 2026',
+          content: 'Sollfege Smart Electronics listed on the BSE SME platform on Thursday, October 8, 2026 at a fixed issue price of Rs 55 per share. It debuted at Rs 104.40 \u2014 an 89.82% premium \u2014 the blockbuster debut of the day, nearly doubling allotted investors\u2019 money at the opening bell.'
+        },
+        {
+          heading: 'Shree TNB Polymers \u2014 listed Thursday, October 8, 2026',
+          title: 'Shree TNB Polymers \u2014 listed Thursday, October 8, 2026',
+          content: 'Shree TNB Polymers listed on the BSE SME platform on Thursday, October 8, 2026. The IPO was priced at Rs 50\u201353 per share with the final issue price at Rs 53. It debuted at Rs 60 \u2014 a 13.21% premium. Please note: the Rs 60 opening figure comes from a single source (5paisa\u2019s live quote) at the time of writing; confirmed numbers from other trackers were not yet available.'
+        },
+        {
+          heading: 'EverestIMS Technologies \u2014 listed Thursday, October 8, 2026',
+          title: 'EverestIMS Technologies \u2014 listed Thursday, October 8, 2026',
+          content: 'EverestIMS Technologies listed on the BSE SME platform on Thursday, October 8, 2026. The IPO was priced at Rs 80\u201385 per share and subscribed about 294 times \u2014 the hottest demand among the October 8 debutants. It listed at Rs 126 \u2014 a 48.24% premium over the Rs 85 issue price \u2014 close to what the grey market had predicted.'
+        },
+        {
+          heading: 'Vishal Nirmiti \u2014 listed Thursday, October 8, 2026',
+          title: 'Vishal Nirmiti \u2014 listed Thursday, October 8, 2026',
+          content: 'Vishal Nirmiti listed on the BSE and NSE mainboards on Thursday, October 8, 2026. The IPO was priced at Rs 208\u2013220 per share. It debuted at Rs 215 on both exchanges \u2014 a 2.27% discount to the Rs 220 issue price \u2014 a soft mainboard debut that started the session below water.'
+        },
+        {
+          heading: 'Nityas Gems & Jewellery \u2014 listed Thursday, October 8, 2026',
+          title: 'Nityas Gems & Jewellery \u2014 listed Thursday, October 8, 2026',
+          content: 'Nityas Gems & Jewellery listed on the BSE and NSE mainboards on Thursday, October 8, 2026. The IPO was priced at Rs 70\u201375 per share. It debuted at Rs 82 on the BSE \u2014 a 9.33% premium over the Rs 75 issue price \u2014 and at Rs 80 on the NSE (+6.7%), making it the strongest mainboard debut of the day.'
         }
       ],
-      conclusion: 'Wednesday\u2019s four SME listings are done: Vans Electroengineerings debuted at Rs 224.20 on BSE SME \u2014 90% above its Rs 118 issue price on 628.73x demand \u2014 Black Opal Consultants listed at Rs 200 (+1.52% over Rs 197), Papadmalji Agro Foods at Rs 72.30 (+0.42% over Rs 72), and Green Asia Impex flat at Rs 89. Tuesday\u2019s two listings are done: SRIT India listed at Rs 148 on the NSE (+13.85% over Rs 130) and Rs 139.80 on the BSE (+7.54%), while Shah Investor\u2019s Home debuted at Rs 171 \u2014 a modest 2.4% premium over its Rs 167 issue price. Monday\u2019s four are in the books: Orient Cables delivered the week\u2019s standout debut (+65.44% to Rs 450), German Green Steel & Power listed modestly higher (+2.16% to Rs 142), Runwal Enterprises debuted flat at Rs 305, and AceVector slipped 11.5% to Rs 28.32. All ten companies will announce their Q2 FY27 results in October\u2013November 2026; track their filings, board meetings and results on Bsenexus as the earnings season unfolds.'
+      conclusion: 'Thursday\u2019s nine listings are done: Sollfege Smart Electronics led the day, debuting at Rs 104.40 on BSE SME \u2014 89.82% above its Rs 55 issue price \u2014 followed by EverestIMS Technologies at Rs 126 (+48.24% over Rs 85) on 294x demand, SJP Ultrasonics at Rs 74.20 (+10.75% over Rs 67), Shree TNB Polymers at Rs 60 (+13.21% over Rs 53; opening figure from a single live quote at the time of writing), Omara Ventures India at Rs 319 (+2.57% over Rs 311), and Nityas Gems & Jewellery at Rs 82 on the BSE (+9.33% over Rs 75) and Rs 80 on the NSE (+6.7%). The day\u2019s weak debuts: Eventions slipped to Rs 111 (5.93% below its Rs 118 issue price), Dove Soft to Rs 110.30 (0.63% below Rs 111), and mainboard Vishal Nirmiti to Rs 215 (2.27% below Rs 220). Wednesday\u2019s four SME listings are done: Vans Electroengineerings debuted at Rs 224.20 on BSE SME \u2014 90% above its Rs 118 issue price on 628.73x demand \u2014 Black Opal Consultants listed at Rs 200 (+1.52% over Rs 197), Papadmalji Agro Foods at Rs 72.30 (+0.42% over Rs 72), and Green Asia Impex flat at Rs 89. Tuesday\u2019s two listings are done: SRIT India listed at Rs 148 on the NSE (+13.85% over Rs 130) and Rs 139.80 on the BSE (+7.54%), while Shah Investor\u2019s Home debuted at Rs 171 \u2014 a modest 2.4% premium over its Rs 167 issue price. Monday\u2019s four are in the books: Orient Cables delivered the week\u2019s standout debut (+65.44% to Rs 450), German Green Steel & Power listed modestly higher (+2.16% to Rs 142), Runwal Enterprises debuted flat at Rs 305, and AceVector slipped 11.5% to Rs 28.32. All ten companies will announce their Q2 FY27 results in October\u2013November 2026; track their filings, board meetings and results on Bsenexus as the earnings season unfolds.'
     },
     faq: [
       {
@@ -134,6 +179,14 @@ export const FALLBACK_MARKET_GUIDES: ServerMarketGuide[] = [
       {
         question: 'Which October 7 SME IPO saw the strongest subscription demand?',
         answer: 'Vans Electroengineerings, subscribed 628.73 times \u2014 the highest subscription of this week\u2019s listings. Black Opal Consultants was next at 73.80 times, followed by Papadmalji Agro Foods at 2.54 times and Green Asia Impex at 1.04 times.'
+      },
+      {
+        question: 'Which IPOs listed on October 8, 2026, and at what prices?',
+        answer: 'Nine IPOs listed on Thursday, October 8, 2026. Sollfege Smart Electronics debuted at Rs 104.40 (+89.82% over Rs 55), EverestIMS Technologies at Rs 126 (+48.24% over Rs 85), SJP Ultrasonics at Rs 74.20 (+10.75% over Rs 67), Shree TNB Polymers at Rs 60 (+13.21% over Rs 53), Omara Ventures India at Rs 319 (+2.57% over Rs 311), Nityas Gems & Jewellery at Rs 82 on the BSE (+9.33%) and Rs 80 on the NSE (+6.7%) over Rs 75. Weak debuts: Eventions at Rs 111 (5.93% below Rs 118), Dove Soft at Rs 110.30 (0.63% below Rs 111), and Vishal Nirmiti at Rs 215 (2.27% below Rs 220).'
+      },
+      {
+        question: 'Which October 8 IPO listed at the biggest premium?',
+        answer: 'Sollfege Smart Electronics, debuting at Rs 104.40 \u2014 an 89.82% premium over its Rs 55 issue price on BSE SME. EverestIMS Technologies was next at Rs 126, a 48.24% premium over its Rs 85 issue price on 294x subscription demand. All listing prices above are observed opening prices from listing day, not forecasts of future performance.'
       }
     ]
   },
