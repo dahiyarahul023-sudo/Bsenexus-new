@@ -36,6 +36,7 @@ export interface ResultCalendarItem {
   declarationPdfLink?: string;
   declarationSubject?: string;
   aiSummary?: string;
+  bseTimestamp?: number;
   /** True when this item's scrip was synced via the market-wide calendar universe
    *  (not only via watchlists). Used by the market scope filter. */
   marketUniverse?: boolean;
@@ -159,6 +160,11 @@ function loadLocalCache() {
           if (item.symbol === 'CONCOR' && item.scripCode === '531349') return false;
           if (item.symbol === 'JBMMA' && item.scripCode === '520066') return false;
           return true;
+        }).map((item: any) => {
+          if (item.scripCode === '500034' || item.symbol === 'BAJFINANCE' || item.companyName === 'BAJAJ AUTO F') {
+            return { ...item, companyName: 'Bajaj Finance Ltd' };
+          }
+          return item;
         });
         lastCalendarFetchTime = parsed.lastUpdated || 0;
       }
@@ -338,7 +344,10 @@ export async function syncSingleStockResultsCalendar(
           else if (daysLeft >= -30) status = 'RECENT';
           else status = 'PAST';
 
-          const companyName = (row.LONG_NAME || row.Short_name || resolvedSym).trim();
+          let companyName = (row.LONG_NAME || row.Short_name || resolvedSym).trim();
+          if (scripCode === '500034' || resolvedSym === 'BAJFINANCE' || companyName.toUpperCase() === 'BAJAJ AUTO F') {
+            companyName = 'Bajaj Finance Ltd';
+          }
           const itemId = `${scripCode}_${meetingTs}_${purpose.replace(/[^a-zA-Z0-9]/g, '')}`;
 
           stockItems.push({
@@ -495,7 +504,10 @@ export async function fetchAndSyncResultsCalendar(
                 else status = 'PAST';
 
                 const primarySymbol = symbols[0];
-                const companyName = (row.LONG_NAME || row.Short_name || primarySymbol).trim();
+                let companyName = (row.LONG_NAME || row.Short_name || primarySymbol).trim();
+                if (scripCode === '500034' || primarySymbol === 'BAJFINANCE' || companyName.toUpperCase() === 'BAJAJ AUTO F') {
+                  companyName = 'Bajaj Finance Ltd';
+                }
                 const itemId = `${scripCode}_${meetingTs}_${purpose.replace(/[^a-zA-Z0-9]/g, '')}`;
 
                 items.push({
@@ -764,6 +776,7 @@ export async function getResultsCalendarData(
       let declarationPdfLink: string | undefined = undefined;
       let declarationSubject: string | undefined = undefined;
       let aiSummary: string | undefined = undefined;
+      let bseTimestamp: number | undefined = undefined;
 
       if (matched) {
         isDeclared = true;
@@ -772,15 +785,27 @@ export async function getResultsCalendarData(
         declarationPdfLink = matched.pdfLink;
         declarationSubject = matched.subject;
         aiSummary = matched.aiSummary;
+        bseTimestamp = matched.bseTimestamp || (matched.bseTime ? parseBseDate(matched.bseTime) : undefined) || (matched.fetched_at ? new Date(matched.fetched_at).getTime() : undefined);
       } else if (daysLeft < 0) {
         // Past meeting with no specific filing in store - mark declared with clean meeting date
         isDeclared = true;
         resultDeclarationTime = item.meetingDate;
       }
 
+      let companyName = item.companyName;
+      if (item.scripCode === '500034' || item.symbol === 'BAJFINANCE' || companyName === 'BAJAJ AUTO F') {
+        companyName = 'Bajaj Finance Ltd';
+      }
+
+      const derivedBseTs = bseTimestamp || item.bseTimestamp || item.meetingTimestamp || meetingStartTs;
+      const derivedMeetingDate = item.meetingDate || (meetingStartTs ? new Date(meetingStartTs).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' }) : '');
+
       return { 
         ...item, 
+        companyName,
+        meetingDate: derivedMeetingDate,
         meetingTimestamp: meetingStartTs,
+        bseTimestamp: derivedBseTs,
         daysLeft, 
         status, 
         isDeclared, 

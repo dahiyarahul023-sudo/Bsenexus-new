@@ -346,14 +346,16 @@ export function HomeForYou({ onNavigate }: HomeForYouProps) {
 
             <div className={cn("grid grid-cols-1 sm:grid-cols-2", homeGridGap)}>
               {upcomingResults.map((item, idx) => {
-                const tile = parseMeetingDateTile(item.meetingDate);
+                const meetingDateStr = item.meetingDate || (item.bseTimestamp ? formatDateOnly(item.bseTimestamp) : (item.meetingTimestamp ? formatDateOnly(item.meetingTimestamp) : ''));
+                const tile = parseMeetingDateTile(meetingDateStr || undefined);
                 const isToday = item.daysLeft === 0;
                 const daysLabel = isToday ? 'Today' : item.daysLeft === 1 ? 'Tomorrow' : `In ${item.daysLeft} days`;
+                const companyName = (item.scripCode === '500034' || item.symbol === 'BAJFINANCE' || item.companyName === 'BAJAJ AUTO F') ? 'Bajaj Finance Ltd' : item.companyName;
 
                 return (
                   <div
                     key={item.id || idx}
-                    onClick={() => setSelectedResult(item)}
+                    onClick={() => setSelectedResult({ ...item, companyName, meetingDate: meetingDateStr || item.meetingDate })}
                     className={cn(heliosCard, homeCardPad, "transition-all cursor-pointer flex items-center justify-between gap-3 hover:shadow-[0_12px_28px_rgba(15,23,42,0.09)] dark:hover:shadow-[0_12px_28px_rgba(0,0,0,0.5)]")}
                   >
                     <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -371,7 +373,7 @@ export function HomeForYou({ onNavigate }: HomeForYouProps) {
                       <div className="space-y-0.5 min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">
-                            {item.companyName}
+                            {companyName}
                           </span>
                           {item.symbol && (
                             <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">

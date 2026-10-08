@@ -79,12 +79,62 @@ export interface ResultCalendarItem {
   declarationSubject?: string;
   aiSummary?: string;
   quarterKey?: string;
+  bseTimestamp?: number;
+  filing?: any;
   /** True when synced via the market-wide calendar universe (server). */
   marketUniverse?: boolean;
   declaredDetails?: {
     pdfUrl?: string;
     [key: string]: any;
   };
+}
+
+/**
+ * Resolves company name with strict scrip-to-name mapping.
+ * Scrip 500034 is Bajaj Finance Ltd (Bajaj Auto is 532977).
+ */
+export function getCorrectCompanyName(item?: { scripCode?: string; symbol?: string; companyName?: string } | null): string {
+  if (!item) return '';
+  const scrip = String(item.scripCode || '').trim();
+  const sym = String(item.symbol || '').toUpperCase().trim();
+  const name = String(item.companyName || '').trim();
+
+  if (scrip === '500034' || sym === 'BAJFINANCE') {
+    return 'Bajaj Finance Ltd';
+  }
+  if (scrip === '532977' || sym === 'BAJAJ-AUTO' || sym === 'BAJAJAUTO') {
+    return 'Bajaj Auto Ltd';
+  }
+  if (name.toUpperCase() === 'BAJAJ AUTO F' && scrip !== '532977') {
+    return 'Bajaj Finance Ltd';
+  }
+  return name || sym || 'BSE Stock';
+}
+
+/**
+ * Derives and formats meeting date, falling back to bseTimestamp / filing timestamp / meetingTimestamp
+ * so date line is never blank on any render.
+ */
+export function getResolvedMeetingDate(item?: any): string {
+  if (!item) return '';
+  if (item.meetingDate && String(item.meetingDate).trim()) {
+    return String(item.meetingDate).trim();
+  }
+
+  const rawTs = item.bseTimestamp 
+    ?? item.filing?.bseTimestamp 
+    ?? item.filing?.timestamp
+    ?? item.meetingTimestamp 
+    ?? item.resultDeclarationTime;
+
+  if (rawTs) {
+    const formatted = formatDateOnly(rawTs);
+    if (formatted && formatted !== 'N/A') {
+      return formatted;
+    }
+  }
+
+  return '';
 }
 
 export function ResultsCalendar() {
@@ -102,7 +152,12 @@ export function ResultsCalendar() {
   // SWR: Initialize calendar items immediately from client cache for 0ms transition
   // (12h TTL — survives app restarts via localStorage; fresh data loads in background)
   const [items, setItems] = useState<ResultCalendarItem[]>(() => {
-    return getCacheItem<ResultCalendarItem[]>('results_calendar_items', 12 * 60 * 60 * 1000) || [];
+    const cached = getCacheItem<ResultCalendarItem[]>('results_calendar_items', 12 * 60 * 60 * 1000) || [];
+    return cached.map((it: any) => ({
+      ...it,
+      companyName: getCorrectCompanyName(it),
+      meetingDate: getResolvedMeetingDate(it) || it.meetingDate
+    }));
   });
   const [loading, setLoading] = useState(() => {
     const cached = getCacheItem<ResultCalendarItem[]>('results_calendar_items', 12 * 60 * 60 * 1000);
@@ -408,7 +463,12 @@ export function ResultsCalendar() {
       const res = await customFetch(url, { method });
       if (res.ok) {
         const data = await res.json();
-        const fetchedItems = data.items || [];
+        const rawFetched = data.items || [];
+        const fetchedItems = rawFetched.map((it: any) => ({
+          ...it,
+          companyName: getCorrectCompanyName(it),
+          meetingDate: getResolvedMeetingDate(it) || it.meetingDate
+        }));
         setItems(fetchedItems);
         setCacheItem('results_calendar_items', fetchedItems);
         setLastUpdated(data.lastUpdated || Date.now());
@@ -1772,7 +1832,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                   ? `No board meetings matching "${searchQuery}".`
                   : statusFilter === 'today'
                   ? upcomingItems.length > 0
-                    ? `No meetings today. The next upcoming result is ${upcomingItems[0]?.companyName} on ${upcomingItems[0]?.meetingDate} (${upcomingItems[0]?.daysLeft} days away).`
+                    ? `No meetings today. The next upcoming result is ${getCorrectCompanyName(upcomingItems[0])} on ${getResolvedMeetingDate(upcomingItems[0])} (${upcomingItems[0]?.daysLeft} days away).`
                     : "No corporate meetings or financial results scheduled for today."
                   : statusFilter === 'upcoming'
                   ? "No upcoming board meetings scheduled in the immediate pipeline."
@@ -1788,8 +1848,8 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                   <span className="font-mono text-emerald-600 dark:text-emerald-400">{upcomingItems[0]?.daysLeft}d left</span>
                 </div>
                 <div className="font-bold text-slate-900 dark:text-white flex items-center justify-between">
-                  <span>{upcomingItems[0]?.companyName}</span>
-                  <span className="font-mono text-slate-500 text-[11px]">{upcomingItems[0]?.meetingDate}</span>
+                  <span>{getCorrectCompanyName(upcomingItems[0])}</span>
+                  <span className="font-mono text-slate-500 text-[11px]">{getResolvedMeetingDate(upcomingItems[0])}</span>
                 </div>
                 <button
                   type="button"
@@ -1952,7 +2012,8 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
 
                       {/* Clean Calendar Date Desk-Tile */}
                       {(() => {
-                        const tileDate = parseMeetingDateTile(item.meetingDate);
+                        const meetingDateStr = getResolvedMeetingDate(item);
+                        const tileDate = parseMeetingDateTile(meetingDateStr || undefined);
                         return (
                           <div className={cn(
                             "w-8 h-9 rounded-md flex flex-col overflow-hidden shrink-0 border transition-all duration-200 shadow-2xs group-hover:scale-105",
@@ -1988,7 +2049,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                         )}
 
                         <span 
-                          onClick={(e) => handleOpenIntel(item.scripCode, item.symbol, item.companyName, e)}
+                          onClick={(e) => handleOpenIntel(item.scripCode, item.symbol, getCorrectCompanyName(item), e)}
                           className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors cursor-pointer truncate"
                           title="Open 360° Stock Intelligence"
                         >
@@ -1998,7 +2059,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                         {/* 360° Company Intel Icon with informative tooltip */}
                         <button
                           type="button"
-                          onClick={(e) => handleOpenIntel(item.scripCode, item.symbol, item.companyName, e)}
+                          onClick={(e) => handleOpenIntel(item.scripCode, item.symbol, getCorrectCompanyName(item), e)}
                           className="p-1 rounded text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-[#252233] transition-colors cursor-pointer shrink-0"
                           title="360° Company Intelligence: Historical results, financial ratios & peer metrics"
                           aria-label="360° Company Intelligence"
@@ -2032,7 +2093,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
 
                   <div className="space-y-0.5 flex-1 min-w-0">
                     <div className="text-xs font-semibold text-slate-800 dark:text-slate-200 line-clamp-1">
-                      {item.companyName}
+                      {getCorrectCompanyName(item)}
                     </div>
 
                     <div className="text-[10px] text-slate-600 dark:text-slate-400 flex items-center gap-1 flex-wrap">
@@ -2055,32 +2116,41 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                   "flex items-center justify-between gap-1.5 shrink-0 border-t border-slate-100 dark:border-[#2D283E] pt-2",
                   viewMode === 'grid' ? "w-full" : "md:flex-col md:items-end md:justify-center md:border-t-0 md:pt-0"
                 )}>
-                  <div className={cn("space-y-0.2", viewMode === 'grid' ? "text-left" : "text-left md:text-right")}>
-                    <div className={cn("text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1", viewMode !== 'grid' && "md:justify-end")}>
-                      <Clock size={11} className="text-slate-400" />
-                      <span>{item.meetingDate}</span>
-                    </div>
-                    
-                    {viewMode !== 'grid' && (
-                      <>
-                        {isDeclared && item.resultDeclarationTime ? (
-                          <div className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 md:justify-end">
-                            <CheckCircle2 size={10} className="text-emerald-500" />
-                            <span>Declared {formatShortDateTime(item.resultDeclarationTime)}</span>
-                          </div>
-                        ) : isToday ? (
-                          <div className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1 md:justify-end">
-                            <Clock size={10} className="text-amber-500" />
-                            <span>Outcome Pending</span>
-                          </div>
-                        ) : (
-                          <div className="text-[10px] font-mono text-slate-400 flex items-center gap-0.5 md:justify-end">
-                            {isUpcoming ? (item.daysLeft === 1 ? 'Tomorrow' : `In ${item.daysLeft}d`) : 'Past'}
-                          </div>
+                  {(() => {
+                    const meetingDateStr = getResolvedMeetingDate(item);
+                    return (
+                      <div className={cn("space-y-0.2", viewMode === 'grid' ? "text-left" : "text-left md:text-right")}>
+                        <div className={cn("text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1 min-h-[18px]", viewMode !== 'grid' && "md:justify-end")}>
+                          <Clock size={11} className="text-slate-400 shrink-0" />
+                          {meetingDateStr ? (
+                            <span>{meetingDateStr}</span>
+                          ) : (
+                            <span className="inline-block w-20 h-3.5 bg-slate-200 dark:bg-slate-700/60 rounded animate-pulse" aria-label="Loading meeting date" />
+                          )}
+                        </div>
+                        
+                        {viewMode !== 'grid' && (
+                          <>
+                            {isDeclared && item.resultDeclarationTime ? (
+                              <div className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 md:justify-end">
+                                <CheckCircle2 size={10} className="text-emerald-500 shrink-0" />
+                                <span>Declared {formatShortDateTime(item.resultDeclarationTime)}</span>
+                              </div>
+                            ) : isToday ? (
+                              <div className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1 md:justify-end">
+                                <Clock size={10} className="text-amber-500 shrink-0" />
+                                <span>Outcome Pending</span>
+                              </div>
+                            ) : (
+                              <div className="text-[10px] font-mono text-slate-400 flex items-center gap-0.5 md:justify-end">
+                                {isUpcoming ? (item.daysLeft === 1 ? 'Tomorrow' : `In ${item.daysLeft}d`) : 'Past'}
+                              </div>
+                            )}
+                          </>
                         )}
-                      </>
-                    )}
-                  </div>
+                      </div>
+                    );
+                  })()}
 
                   <div className="relative flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                     {isDeclared ? (
@@ -2358,14 +2428,14 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="text-base font-extrabold text-slate-900 dark:text-white truncate">
-                      {selectedModalItem.companyName} ({selectedModalItem.symbol})
+                      {getCorrectCompanyName(selectedModalItem)} ({selectedModalItem.symbol})
                     </h3>
                     <span className="text-[10px] font-mono px-1.5 py-0.5 bg-slate-200/80 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded font-bold shrink-0">
                       BSE: {selectedModalItem.scripCode}
                     </span>
                     <button
                       type="button"
-                      onClick={(e) => handleOpenIntel(selectedModalItem.scripCode, selectedModalItem.symbol, selectedModalItem.companyName, e)}
+                      onClick={(e) => handleOpenIntel(selectedModalItem.scripCode, selectedModalItem.symbol, getCorrectCompanyName(selectedModalItem), e)}
                       className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-lg text-xs font-bold flex items-center gap-1 shrink-0 transition-colors cursor-pointer shadow-2xs"
                       title="Open Full 360° Stock Overview, Financials & Timeline"
                     >
@@ -2388,9 +2458,9 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                       </button>
                     )}
                     <ShareActionMenu
-                      title={`${selectedModalItem.companyName} (${selectedModalItem.symbol || selectedModalItem.scripCode || 'BSE'})`}
-                      headline={`Board Meeting scheduled on ${selectedModalItem.meetingDate}. Purpose: ${selectedModalItem.purpose || 'Financial Results'}`}
-                      companyName={selectedModalItem.companyName}
+                      title={`${getCorrectCompanyName(selectedModalItem)} (${selectedModalItem.symbol || selectedModalItem.scripCode || 'BSE'})`}
+                      headline={`Board Meeting scheduled on ${getResolvedMeetingDate(selectedModalItem)}. Purpose: ${selectedModalItem.purpose || 'Financial Results'}`}
+                      companyName={getCorrectCompanyName(selectedModalItem)}
                       scripCode={selectedModalItem.scripCode}
                       symbol={selectedModalItem.symbol}
                       pdfUrl={selectedModalItem.declarationPdfLink}
@@ -2399,7 +2469,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                     />
                   </div>
                   <div className="text-xs text-slate-500 font-mono mt-0.5">
-                    Scheduled Board Meeting: <strong className="text-slate-800 dark:text-slate-200">{selectedModalItem.meetingDate}</strong>
+                    Scheduled Board Meeting: <strong className="text-slate-800 dark:text-slate-200">{getResolvedMeetingDate(selectedModalItem)}</strong>
                   </div>
                 </div>
 

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "151c9dcc7978e826cb82747c9ae3e2dfd06d42b1e27fc39911886c970a6ba54d",
+  "sourceDigest": "cff993bb5f862146afee08b3910fa58ff5eb04b67780c3eba83e18fb03a7fa1d",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -40,7 +40,7 @@
     },
     {
       "path": "package-lock.json",
-      "sha256": "224738c852db0b158493f2bdff6c05b6fdf5c58b5a6d62ff89a9a7a6dea061ef",
+      "sha256": "b8fd8494eecf47396789c690629b7626ae1b5216af84874d0e93ee0478409ca8",
       "importedBy": []
     },
     {
@@ -733,7 +733,7 @@
     },
     {
       "path": "server/services/resultsCalendarService.ts",
-      "sha256": "197ca70d6d388c12f4bd281ada5c314236c4458c1dc1eda2b99e844e7dd6c108",
+      "sha256": "231308c769295f9b01c521aadbb22ae3c7c68722019bc35e5f7d012ccbbbaccf",
       "importedBy": [
         "server.ts",
         "server/api/routes.ts",
@@ -845,7 +845,7 @@
     },
     {
       "path": "server/tests/calendarScope.test.ts",
-      "sha256": "db1e86f944fb925f5625ca1ced9b69e2be9b797fc766db4c9de50fdb9419851a",
+      "sha256": "bf4152ea637094410d3862d2a4e8801cea19d86c6ed0dc1f2bcf8e6fdea7705d",
       "importedBy": []
     },
     {
@@ -1264,7 +1264,7 @@
     },
     {
       "path": "src/components/HomeForYou.tsx",
-      "sha256": "65ccc84d5b826d68a17b7132fbbcb62eb2c509c575c5d236564521bd8262df0a",
+      "sha256": "4fefe3d01f96c133f8de9f47fd16d611052cff6224d8dd1d33e08f4f5752256a",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -1384,7 +1384,7 @@
     },
     {
       "path": "src/components/ResultsCalendar.tsx",
-      "sha256": "415a1335db9d1bf73669034eddd1fab33c83185e1c5c3ada0152931ce6b93104",
+      "sha256": "bcecd5e9fa4a53d283d969cad698f8cd4b6def3a7536019823b4f61310950150",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -1590,7 +1590,7 @@
     },
     {
       "path": "src/components/results/ResultsPage.tsx",
-      "sha256": "c01775d133ed2908eaeb015d668bb7eb4e506b6b32c63a34f51295d5653a383e",
+      "sha256": "fcc82c0dd76b8f569fc68c1b158afb93b716f9f3eda4c76276df1eeb2c16919b",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -2512,12 +2512,13 @@
         "src/components/HomeForYou.tsx",
         "src/components/NotificationInbox.tsx",
         "src/components/ResultsCalendar.tsx",
-        "src/components/WatchlistManager.tsx"
+        "src/components/WatchlistManager.tsx",
+        "src/components/results/ResultsPage.tsx"
       ]
     },
     {
       "path": "src/version.ts",
-      "sha256": "ffc367fbb68cff67626175af85e596d499325b91bee874f605fc59dfbb2c3b68",
+      "sha256": "cb76d623658f0d97c2cdffee8439699c70881027cc309467e4efc5c3c25e09d3",
       "importedBy": [
         "src/components/SettingsTab.tsx",
         "src/lib/sentry.ts"
@@ -7037,27 +7038,33 @@
     },
     {
       "source": "src/components/results/ResultsPage.tsx",
-      "target": "src/utils/shareUrls.ts",
+      "target": "src/utils/timeFormat.ts",
       "kind": "import",
       "line": 6
     },
     {
       "source": "src/components/results/ResultsPage.tsx",
-      "target": "src/components/ui/motion/ShareActionMenu.tsx",
+      "target": "src/utils/shareUrls.ts",
       "kind": "import",
       "line": 7
     },
     {
       "source": "src/components/results/ResultsPage.tsx",
-      "target": "src/components/notes/SaveNoteButton.tsx",
+      "target": "src/components/ui/motion/ShareActionMenu.tsx",
       "kind": "import",
       "line": 8
     },
     {
       "source": "src/components/results/ResultsPage.tsx",
-      "target": "src/lib/utils.ts",
+      "target": "src/components/notes/SaveNoteButton.tsx",
       "kind": "import",
       "line": 9
+    },
+    {
+      "source": "src/components/results/ResultsPage.tsx",
+      "target": "src/lib/utils.ts",
+      "kind": "import",
+      "line": 10
     },
     {
       "source": "src/components/seo/PageAuditView.tsx",
@@ -10639,43 +10646,43 @@
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 202,
+      "line": 208,
       "function": "fetch",
       "target": "url"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 219,
+      "line": 225,
       "function": "fetch",
       "target": "url"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 313,
+      "line": 319,
       "function": "fetch",
       "target": "url"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 472,
+      "line": 481,
       "function": "fetch",
       "target": "url"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 1440,
+      "line": 1465,
       "function": "fetch",
       "target": "bmUrl"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 1489,
+      "line": 1514,
       "function": "fetch",
       "target": "url"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 1505,
+      "line": 1530,
       "function": "fetch",
       "target": "fbUrl"
     },
@@ -11305,79 +11312,79 @@
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 217,
+      "line": 272,
       "function": "customFetch",
       "target": "`/api/stocks/${encodeURIComponent(scripCode)}/fetch-deep-history`"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 226,
+      "line": 281,
       "function": "customFetch",
       "target": "`/api/stock-results-history?symbol=${encodeURIComponent(symbol)}&scripCode=${encodeURIComponent(scripCode)}`"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 253,
+      "line": 308,
       "function": "customFetch",
       "target": "`/api/stocks/${encodeURIComponent(scripCode)}/boost-runup-priority`"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 266,
+      "line": 321,
       "function": "customFetch",
       "target": "`/api/stock-results-history?symbol=${encodeURIComponent(symbol)}&scripCode=${encodeURIComponent(scripCode)}`"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 296,
+      "line": 351,
       "function": "customFetch",
       "target": "`/api/stocks/${encodeURIComponent(scripCode)}/runup-announcements?symbol=${encodeURIComponent(symbol)}&resultDate=${encodeURIComponent(resultDateStr)}&windowDays=${daysToUse}`"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 316,
+      "line": 371,
       "function": "customFetch",
       "target": "'/api/watchlist/fetch-deep-history'"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 340,
+      "line": 395,
       "function": "customFetch",
       "target": "`/api/stock-results-history?symbol=${encodeURIComponent(selectedModalItem.symbol)}&scripCode=${encodeURIComponent(selectedModalItem.scripCode || '')}&companyName=${encodeURIComponent(selectedModalItem.companyName || '')}`"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 408,
+      "line": 463,
       "function": "customFetch",
       "target": "url"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 467,
+      "line": 527,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 537,
+      "line": 597,
       "function": "customFetch",
       "target": "`/api/announcements/${announcementId}/generate-summary`"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 619,
+      "line": 679,
       "function": "customFetch",
       "target": "'/api/send-to-telegram-manual'"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 750,
+      "line": 810,
       "function": "customFetch",
       "target": "'/api/send-to-telegram-manual'"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 796,
+      "line": 856,
       "function": "customFetch",
       "target": "'/api/results-calendar/telegram-broadcast'"
     },
@@ -11653,7 +11660,7 @@
     },
     {
       "file": "src/components/results/ResultsPage.tsx",
-      "line": 36,
+      "line": 37,
       "function": "customFetch",
       "target": "`/api/stock-results-history?symbol=${encodeURIComponent(symbol)}`"
     },
@@ -12309,49 +12316,49 @@
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 118,
+      "line": 119,
       "function": "getSupabase()\n        .from",
       "key": "'results_calendar'"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 137,
+      "line": 138,
       "function": "Array.from",
       "key": "notifiedMeetingIds"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 372,
+      "line": 381,
       "function": "Array.from",
       "key": "uniqueStockItems.values()"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 463,
+      "line": 472,
       "function": "Array.from",
       "key": "scripMap.entries()"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 545,
+      "line": 557,
       "function": "Array.from",
       "key": "uniqueMap.values()"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 576,
+      "line": 588,
       "function": "getSupabase()\n              .from",
       "key": "'results_calendar'"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 1411,
+      "line": 1436,
       "function": "Array.from",
       "key": "quarterOutcomesMap.values()"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 1481,
+      "line": 1506,
       "function": "Array.from",
       "key": "{ length: Math.min(batchSize, maxPages - startPage + 1) }"
     },
@@ -12681,25 +12688,25 @@
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 126,
+      "line": 181,
       "function": "localStorage.getItem",
       "key": "'nexus_calendar_view_mode'"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 137,
+      "line": 192,
       "function": "localStorage.setItem",
       "key": "'nexus_calendar_view_mode'"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 1033,
+      "line": 1093,
       "function": "Array.from",
       "key": "map.values()"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 1071,
+      "line": 1131,
       "function": "Array.from",
       "key": "map.values()"
     },

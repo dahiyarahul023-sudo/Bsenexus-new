@@ -57,4 +57,14 @@ describe('Results calendar market scope', () => {
     const out = applyCalendarScope(items, 'watchlist', new Set(['WIPRO']), new Set());
     assert.equal(out.length, 2);
   });
+
+  test('BAJFINANCE is in default market universe with scrip 500034', () => {
+    assert.ok(MARKET_CALENDAR_UNIVERSE.includes('BAJFINANCE'), 'BAJFINANCE missing from universe');
+  });
+
+  test('scrip 500034 is identified as Bajaj Finance Ltd not Bajaj Auto', () => {
+    const it = item('BAJFINANCE', '500034', true);
+    assert.equal(it.scripCode, '500034');
+    assert.notEqual(it.scripCode, '532977'); // 532977 is Bajaj Auto
+  });
 });

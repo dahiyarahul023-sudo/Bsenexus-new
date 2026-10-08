@@ -246,6 +246,15 @@ export function Layout({
   };
 
   const handleTabClick = (tabId: string) => {
+    if (tabId === activeTab) {
+      if (typeof window !== 'undefined' && window.scrollY > 20) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('bse_nav_tab_refresh', { detail: { tab: tabId } }));
+      }
+      onTabChange(tabId);
+      return;
+    }
     onTabChange(tabId);
   };
 
@@ -848,23 +857,23 @@ export function Layout({
             return (
               <motion.button
                 key={item.id}
-                whileTap={{ scale: 0.88 }}
+                whileTap={isActive ? undefined : { scale: 0.88 }}
                 transition={springBouncy}
                 onClick={() => handleTabClick(item.id)}
                 aria-label={item.label}
                 aria-current={isActive ? 'page' : undefined}
                 className={cn(
-                  "relative flex flex-col items-center justify-center flex-1 min-h-[48px] py-1 px-0.5 rounded-xl cursor-pointer select-none touch-manipulation",
+                  "relative flex flex-col items-center justify-center flex-1 min-h-[48px] py-1 px-0.5 rounded-xl select-none touch-manipulation",
                   isActive
-                    ? "text-slate-900 dark:text-white font-bold"
-                    : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium"
+                    ? "text-slate-900 dark:text-white font-bold cursor-default"
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium cursor-pointer"
                 )}
               >
                 <motion.div 
                   animate={isActive ? { scale: 1.05 } : { scale: 1 }}
                   transition={springSmoothPill}
                   className={cn(
-                    "p-1.5 rounded-xl transition-all relative flex items-center justify-center min-w-[34px] min-h-[34px]",
+                    "p-1.5 rounded-xl transition-all relative flex items-center justify-center min-w-[34px] min-h-[34px] pointer-events-none",
                     isActive && "bg-slate-100 dark:bg-[#282438] text-slate-900 dark:text-white ring-1 ring-slate-200 dark:ring-[#3D3754]"
                   )}
                 >
@@ -878,14 +887,14 @@ export function Layout({
                     </span>
                   )}
                 </motion.div>
-                <span className="text-[11px] font-medium tracking-tight mt-0.5 whitespace-nowrap">
+                <span className="text-[11px] font-medium tracking-tight mt-0.5 whitespace-nowrap pointer-events-none">
                   {item.shortLabel || item.label}
                 </span>
                 {isActive && (
                   <motion.span 
                     layoutId="mobileNavActivePill"
                     transition={springSmoothPill}
-                    className="w-5 h-1 rounded-full mt-0.5 bg-slate-900 dark:bg-amber-400 shadow-[0_1px_4px_rgba(251,191,36,0.3)]" 
+                    className="w-5 h-1 rounded-full mt-0.5 bg-slate-900 dark:bg-amber-400 shadow-[0_1px_4px_rgba(251,191,36,0.3)] pointer-events-none" 
                   />
                 )}
               </motion.button>

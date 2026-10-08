@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, FileText, ExternalLink, Loader2, AlertTriangle, CalendarDays } from 'lucide-react';
 import { customFetch } from '../../api';
 import { getSafePdfUrl } from '../../utils/pdfHelper';
+import { formatDateOnly } from '../../utils/timeFormat';
 import { resultsUrl, normalizeQuarterKey, parseShareablePath } from '../../utils/shareUrls';
 import { ShareActionMenu } from '../ui/motion/ShareActionMenu';
 import { SaveNoteButton } from '../notes/SaveNoteButton';
@@ -50,11 +51,14 @@ export function ResultsPage({ onBack }: { onBack: () => void }) {
   useEffect(() => { load(); }, [load]);
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
-  const companyName = item?.companyName || item?.companyShortName || symbol || 'Company';
-  const meetingDate = item?.meetingDate || item?.boardMeetingDate || item?.declarationDate || '';
+  const scripCode = item?.scripCode || '';
+  const rawDate = item?.meetingDate || item?.boardMeetingDate || item?.declarationDate || item?.bseTimestamp || item?.timestamp || '';
+  const meetingDate = rawDate ? (typeof rawDate === 'number' ? formatDateOnly(rawDate) : String(rawDate)) : '';
+  const companyName = (scripCode === '500034' || symbol === 'BAJFINANCE' || item?.companyName === 'BAJAJ AUTO F')
+    ? 'Bajaj Finance Ltd'
+    : (item?.companyName || item?.companyShortName || symbol || 'Company');
   const aiSummary = item?.aiSummary || item?.aiSummaryEn || '';
   const pdfLink = item?.pdfLink || item?.declaredDetails?.pdfUrl || '';
-  const scripCode = item?.scripCode || '';
   const metrics = item?.financialMetrics || {};
   const pageUrl = symbol && targetKey ? resultsUrl(symbol, targetKey) : '';
   const isDeclared = item?.isOutcome || item?.status === 'DECLARED';
@@ -127,12 +131,14 @@ export function ResultsPage({ onBack }: { onBack: () => void }) {
                   {symbol}
                 </span>
               )}
-              {meetingDate && (
-                <span className="ml-auto inline-flex items-center gap-1.5 text-xs text-slate-400">
-                  <CalendarDays size={13} />
-                  {meetingDate}
-                </span>
-              )}
+              <span className="ml-auto inline-flex items-center gap-1.5 text-xs text-slate-400">
+                <CalendarDays size={13} className="shrink-0" />
+                {meetingDate ? (
+                  <span>{meetingDate}</span>
+                ) : (
+                  <span className="inline-block w-20 h-3.5 bg-slate-200 dark:bg-white/10 rounded animate-pulse" aria-label="Loading date" />
+                )}
+              </span>
             </div>
 
             <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-snug mb-2">

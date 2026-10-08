@@ -377,6 +377,10 @@
          "Essential Only". Async; cannot block or break existing scripts. -->
     <script type="text/javascript">
     (function () {
+      var hostname = window.location.hostname;
+      if (hostname !== 'bsenexus.in' && hostname !== 'www.bsenexus.in') {
+        return;
+      }
       var PROJECT_ID = 'ypaa43zsr7';
       var CONSENT_KEY = 'bse_nexus_cookie_consent_v1';
       var loaded = false;
