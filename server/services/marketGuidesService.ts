@@ -594,83 +594,88 @@ export const FALLBACK_MARKET_GUIDES: ServerMarketGuide[] = [
   {
     id: 'tcs-q2-fy27-results-preview',
     slug: 'tcs-q2-fy27-results-preview',
-    title: 'TCS Q2 FY27 Results on October 8, 2026: Date, Preview & Analyst Expectations',
+    title: 'TCS Q2 FY27 Results Declared: Revenue Rs 73,188 Cr, PAT Rs 13,884 Cr, Rs 12 Dividend',
     category: 'Earnings',
-    readTime: '4 min read',
+    readTime: '5 min read',
     summary:
-      'Tata Consultancy Services reports Q2 FY27 results on Thursday, October 8, 2026, after market close. Analysts expect a modest quarter: PAT around Rs 13,700-13,785 crore (up ~3% QoQ), revenue near Rs 73,000 crore, and margins improving ~40 bps as the wage-hike cycle concludes. The board will also consider a second interim dividend.',
+      'TCS declared Q2 FY27 results on October 8, 2026, after market close: revenue Rs 73,188 crore (up 11.2% YoY), PAT Rs 13,884 crore (up ~15% YoY), EBIT margin 24%, and a second interim dividend of Rs 12 per share with record date October 14. Revenue and PAT beat consensus; margins came in a shade below estimates.',
     excerpt:
-      'When does TCS declare Q2 FY27 results, what are analysts expecting on revenue, profit and margins, and is there a dividend? Direct answers for the October 8 results.',
-    date: '2026-10-06',
-    publishedAt: '2026-10-06T09:30:00+05:30',
+      'TCS Q2 FY27 results declared on October 8: reported revenue, PAT, margins, the Rs 12 dividend and record date, plus how the numbers stack up against analyst forecasts.',
+    date: '2026-10-08',
+    publishedAt: '2026-10-08T19:45:00+05:30',
     author: {
       name: 'Bsenexus Intelligence Team',
       role: 'Earnings & Results'
     },
     content: {
       introduction:
-        'TCS kicks off the Q2 FY27 earnings season on Thursday, October 8, 2026, with results expected after market close. Brokerages expect a soft but stable quarter: roughly 0.5-0.6% sequential constant-currency revenue growth, a PAT of about Rs 13,700-13,785 crore (up ~3% QoQ), and margins ticking up as the wage-hike cycle concludes. Deal wins of $8-10 billion and commentary on demand recovery are the numbers to watch.',
+        'TCS declared its Q2 FY27 results on Thursday, October 8, 2026, after market close - and beat the Street on both revenue and profit. Revenue came in at Rs 73,188 crore (up 11.2% year-on-year), ahead of the Rs 73,007 crore consensus, while PAT of Rs 13,884 crore (up ~15% YoY) edged past the Rs 13,785 crore estimate. The board also declared a second interim dividend of Rs 12 per share, with record date Wednesday, October 14, 2026. One caveat on the profit number: a couple of outlets report PAT at Rs 13,934 crore instead - the Rs 13,884 crore figure is carried by most financial newsrooms (ET Now, Economic Times, NDTV Profit) and is the headline this page uses.',
       sections: [
         {
-          heading: 'When does TCS announce Q2 FY27 results?',
-          title: 'When does TCS announce Q2 FY27 results?',
+          heading: 'TCS Q2 FY27: the headline numbers',
+          title: 'TCS Q2 FY27: the headline numbers',
           content:
-            'TCS will announce its Q2 FY27 (quarter ended September 30, 2026) results on Thursday, October 8, 2026, after market hours. The board of directors meets the same day to consider the financial results and a proposal for a second interim dividend. If declared, the dividend will be paid to shareholders whose names appear in the register or depository records as on Wednesday, October 14, 2026, the record date fixed by the company.'
+            'Revenue: Rs 73,188 crore, up 11.2% YoY (from Rs 65,799 crore in Q2 FY26) and up 1.3% QoQ (from Rs 72,275 crore in Q1) - a beat vs the Rs 73,007 crore consensus. PAT: Rs 13,884 crore, up about 15% YoY and 4% QoQ - a beat vs the Rs 13,785 crore consensus. Note: Business Today and businessline report PAT at Rs 13,934 crore; most outlets carry Rs 13,884 crore, which this page uses as the headline figure. EBIT: Rs 17,553 crore, up 1.4% QoQ - slightly below the Rs 17,805 crore estimate. EBIT margin: 24%, a touch below the 24.4% consensus and roughly flat versus Q1.'
         },
         {
-          heading: 'What are analysts expecting from TCS Q2?',
-          title: 'What are analysts expecting from TCS Q2?',
+          heading: 'Dividend: Rs 12 per share, record date October 14',
+          title: 'Dividend: Rs 12 per share, record date October 14',
           content:
-            'Consensus estimates point to a modest quarter. PAT is seen at about Rs 13,785 crore, up 3.27% QoQ from Rs 13,349 crore in Q1; JM Financial expects Rs 13,702.5 crore. Revenue in rupee terms is seen at Rs 73,007 crore, up 1.01% QoQ from Rs 72,275 crore, while dollar revenue is expected up 0.5% QoQ to $7,662 million. On a constant-currency basis, brokerages expect 0.5-0.6% sequential growth - JM Financial and Nuvama are in that range. EBIT margin is expected to improve about 43 basis points to 24.39%, from 23.96% in Q1, helped by the conclusion of the wage-hike cycle.'
+            'The board declared a second interim dividend of Rs 12 per equity share of face value Rs 1 for FY27. The record date is Wednesday, October 14, 2026 - shareholders on the register or depository records as of that date receive the payout, scheduled for Friday, October 30, 2026.'
         },
         {
-          heading: 'Key things to watch on October 8',
-          title: 'Key things to watch on October 8',
+          heading: 'What drove the quarter: deals, AI revenue and headcount',
+          title: 'What drove the quarter: deals, AI revenue and headcount',
           content:
-            'First, deal wins: JM Financial expects total contract value of $8-10 billion - strong bookings matter more than ever because Kotak warns AI-driven pricing pressure means big deals may not translate into immediate revenue. Second, margins and the wage-hike reversal. Third, management commentary on demand in banking and developed markets, where Nuvama notes September demand weakened amid geopolitical uncertainty. Fourth, the BSNL phase-2 ramp-down and the update on large deals (MHP, Metro). And fifth, any comment on the H-1B visa fee hike and its cost impact.'
+            'Constant-currency revenue grew 0.5% QoQ, with dollar revenue at $7,642 million (up 0.2% QoQ). Deal wins were strong at $9.6 billion in total contract value for the quarter. Annualised AI revenue reached $3.1 billion - over 10% of total revenue - and the quarter saw a 5-year Porsche AG partnership and the proposed MHP acquisition alongside the Best Buy India GCC transition into an AI Capability Center. Headcount stood at 5,98,056 with trailing-twelve-month attrition at 13.3%. Net margin was 19%, and net cash from operations of Rs 14,190 crore was 102.2% of net income.'
         },
         {
           heading: 'The Best Buy India GCC deal and the AI angle',
           title: 'The Best Buy India GCC deal and the AI angle',
           content:
-            'TCS acquired Best Buy\u2019s India global capability centre in a multi-year deal and will convert it into an AI-native hub, redesigning workflows and building AI-driven retail applications. Morgan Stanley kept an equal-weight rating with a Rs 2,160 price target, calling the small deal strategically positive - better revenue visibility should outweigh margin dilution. The broader industry backdrop is cautious: JM Financial says large Indian IT is entering a fourth consecutive year of subdued growth, with AI-led productivity pressure and no meaningful revival in client budgets.',
+            'Ahead of results, TCS had acquired Best Buy\u2019s India global capability centre in a multi-year deal and is converting it into an AI-native hub, redesigning workflows and building AI-driven retail applications. Morgan Stanley kept an equal-weight rating with a Rs 2,160 price target, calling the small deal strategically positive - better revenue visibility should outweigh margin dilution. The broader industry backdrop stays cautious: JM Financial says large Indian IT is entering a fourth consecutive year of subdued growth, with AI-led productivity pressure and no meaningful revival in client budgets.',
           callout: {
             type: 'info',
-            text: 'This page is a preview built on analyst forecasts, not on reported numbers. Bsenexus will decode the actual Q2 filing the same day it hits the exchanges - revenue, PAT, margins and dividend, in plain language - under the standing no-asking results-day playbook.'
+            text: 'This page began as a preview of analyst forecasts and was updated the evening of October 8 with the reported numbers. Forecasts (PAT ~Rs 13,785 crore, revenue ~Rs 73,007 crore, margin ~24.4%) are kept here only for comparison - they were estimates, not facts.'
           }
         }
       ],
       conclusion:
-        'Expectations for TCS Q2 are modest - around 0.5% sequential growth and a small margin uptick - so the market reaction will hinge on commentary, not just numbers: deal conversions, demand visibility for the next two quarters, and how the company frames AI-led pricing pressure. Actual results land on October 8 after market close; this guide will be updated with the reported numbers the same evening. None of the above is investment advice - analyst forecasts are routinely revised, and the only numbers that matter are the ones TCS files.'
+        'TCS beat the Street on the top and bottom line in Q2 FY27 - revenue Rs 73,188 crore and PAT Rs 13,884 crore both came in above consensus, while the 24% EBIT margin was a shade below estimates and roughly flat quarter-on-quarter. The Rs 12 second interim dividend (record date October 14) sweetens the outcome for shareholders. With $9.6 billion in deal wins and AI revenue crossing $3.1 billion annualised, the question for the stock is the same as on preview day: whether management\u2019s commentary on demand and AI-led pricing pressure gives the market reason to look past the margin miss. Nothing here is investment advice.'
     },
     faq: [
       {
-        question: 'When will TCS declare Q2 FY27 results?',
+        question: 'When did TCS declare Q2 FY27 results?',
         answer:
-          'TCS will declare its Q2 FY27 results (quarter ended September 30, 2026) on Thursday, October 8, 2026, after market hours. The board meets the same day.'
+          'TCS declared its Q2 FY27 results (quarter ended September 30, 2026) on Thursday, October 8, 2026, after market hours. Reported: revenue Rs 73,188 crore, PAT Rs 13,884 crore, EBIT margin 24%.'
       },
       {
-        question: 'What is the expected TCS Q2 FY27 profit (PAT)?',
+        question: 'What was TCS Q2 FY27 profit (PAT)?',
         answer:
-          'Analyst consensus puts TCS Q2 FY27 PAT at about Rs 13,785 crore, up roughly 3.3% quarter-on-quarter from Rs 13,349 crore in Q1. JM Financial expects Rs 13,702.5 crore.'
+          'TCS reported Q2 FY27 PAT of Rs 13,884 crore, up about 15% year-on-year and ~4% quarter-on-quarter, beating the ~Rs 13,785 crore consensus. Note: Business Today and businessline report the figure as Rs 13,934 crore; most outlets carry Rs 13,884 crore, which is the headline figure on this page.'
       },
       {
-        question: 'Is TCS declaring a dividend with Q2 results?',
+        question: 'Did TCS declare a dividend with Q2 results?',
         answer:
-          'The TCS board will consider a proposal for a second interim dividend on October 8, 2026. If declared, the record date is Wednesday, October 14, 2026. The amount, if any, will be known only after the board meeting.'
+          'Yes. The board declared a second interim dividend of Rs 12 per equity share (face value Rs 1) for FY27. The record date is Wednesday, October 14, 2026, and the payout is scheduled for Friday, October 30, 2026.'
+      },
+      {
+        question: 'What was TCS Q2 FY27 revenue?',
+        answer:
+          'TCS reported Q2 FY27 revenue of Rs 73,188 crore, up 11.2% YoY and 1.3% QoQ, beating the Rs 73,007 crore consensus. In dollar terms, revenue was $7,642 million with 0.5% constant-currency sequential growth.'
+      },
+      {
+        question: 'What was TCS Q2 FY27 EBIT margin?',
+        answer:
+          'EBIT margin for Q2 FY27 was 24%, roughly flat versus Q1 and slightly below the ~24.4% consensus estimate. EBIT was Rs 17,553 crore, up 1.4% QoQ.'
       },
       {
         question: 'What is TCS\u2019s Best Buy GCC deal?',
         answer:
           'TCS acquired Best Buy\u2019s India global capability centre in a multi-year deal and plans to convert it into an AI-native hub for redesigned workflows and AI-driven retail applications. Morgan Stanley rates TCS equal-weight with a Rs 2,160 target, calling the deal strategically positive.'
-      },
-      {
-        question: 'What is the revenue growth expectation for TCS Q2 FY27?',
-        answer:
-          'Brokerages expect about 0.5-0.6% sequential constant-currency revenue growth - JM Financial expects ~0.5% and Nuvama ~0.6%. In rupee terms, revenue is seen near Rs 73,007 crore, up about 1% quarter-on-quarter.'
       }
     ]
-  }
+  },
 ];
 
 export const MARKET_GUIDES: ServerMarketGuide[] = FALLBACK_MARKET_GUIDES;
