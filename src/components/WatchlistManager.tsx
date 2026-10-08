@@ -496,7 +496,7 @@ export function WatchlistManager() {
   const wlCardPad = density === 'comfortable' ? 'p-6' : density === 'dense' ? 'p-4' : 'p-5';
   const wlCardGap = density === 'comfortable' ? 'gap-4' : density === 'dense' ? 'gap-2.5' : 'gap-3.5';
   const wlGridGap = density === 'comfortable' ? 'gap-5' : density === 'dense' ? 'gap-2.5' : 'gap-4';
-  const { user, profile, isPro, isAdmin, adminUnlocked, setIsAuthModalOpen, setIsProModalOpen } = useAuth();
+  const { user, profile, isPro, isAdmin, adminUnlocked, refreshProfile, setIsAuthModalOpen, setIsProModalOpen } = useAuth();
   // AI summary language (Settings → Telegram Alerts & AI Summaries); English variant lives in aiSummaryEn
   const summaryLang: 'hinglish' | 'english' = profile?.notificationPreferences?.aiSummaryLang === 'hinglish' ? 'hinglish' : 'english';
   const displaySummary = (item: any): string | undefined =>
@@ -657,6 +657,8 @@ export function WatchlistManager() {
   const [editingListId, setEditingListId] = useState<string | null>(null);
   const [editListName, setEditListName] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [companySearchError, setCompanySearchError] = useState(false);
+  const [companyAddError, setCompanyAddError] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSendingTelegram, setIsSendingTelegram] = useState(false);
@@ -733,7 +735,7 @@ export function WatchlistManager() {
     }
   });
 
-  const isProOrAdmin = Boolean(isAdmin || (isPro && !user?.isAnonymous) || profile?.tier === 'admin');
+  const isProOrAdmin = Boolean(isAdmin || (isPro && !user?.isAnonymous));
   const aiQuota = useAiQuota(user, profile, isPro, isAdmin);
 
   const handleManualSendTelegram = async (item: any) => {
@@ -959,28 +961,30 @@ export function WatchlistManager() {
   }, [fetchAnnouncements]);
 
   useEffect(() => {
-    if (newSymbol.length < 2 || newSymbol.includes(',')) {
-      setSearchResults([]);
-      setShowSuggestions(false);
-      return;
-    }
-
+    let cancelled = false;
+    const query = newSymbol.trim();
+    setCompanySearchError(false);
+    setSearchResults([]);
+    setShowSuggestions(false);
+    setIsSearching(false);
+    if (query.length < 2 || query.includes(',')) return;
     const timer = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const res = await customFetch(`/api/search-company?q=${encodeURIComponent(newSymbol)}`);
-        if (res.ok) {
-          const data = await res.json();
-          setSearchResults(data);
+        const res = await customFetch(`/api/search-company?q=${encodeURIComponent(query)}`);
+        if (!res.ok) throw new Error("Company search unavailable");
+        const data = await res.json();
+        if (!cancelled) {
+          setSearchResults(Array.isArray(data) ? data : []);
           setShowSuggestions(true);
         }
-      } catch (e) {
-        setSearchResults([]);
+      } catch {
+        if (!cancelled) { setSearchResults([]); setShowSuggestions(true); setCompanySearchError(true); }
+      } finally {
+        if (!cancelled) setIsSearching(false);
       }
-      setIsSearching(false);
     }, 300);
-
-    return () => clearTimeout(timer);
+    return () => { cancelled = true; clearTimeout(timer); };
   }, [newSymbol]);
 
   const handleAddList = async (e: React.FormEvent) => {
@@ -1127,7 +1131,9 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
     customCategory?: string,
     targetListIdOverride?: string
   ) => {
+    if (!isProOrAdmin) { setIsProModalOpen(true); return; }
     if (isAddingSymbolRef.current) return;
+    setCompanyAddError(null);
     const sym = (rawSymbol || '').trim().toUpperCase();
     if (!sym) return;
 
@@ -1138,7 +1144,9 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
     }
 
     if (!targetList) {
-      alert("Please create a watchlist first before adding stocks.");
+      setWatchlistSubTab('edit');
+      setIsCreatingList(true);
+      alert("Create your first watchlist, then choose a company to add.");
       return;
     }
 
@@ -1208,7 +1216,11 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
         })
       });
 
-      if (res.status === 402) {
+      if (res.status === 402 || res.status === 403) {
+        setCompanyAddError("Your access could not be confirmed. Refreshing subscription status…");
+        void refreshProfile();
+        setLastAddedInfo(null);
+        setHighlightedSymbol(null);
         setWatchlists(prevWatchlists); // Rollback on quota limit
         const data = await res.json().catch(() => ({}));
         if (data.upgradeRequired) {
@@ -1236,10 +1248,16 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
         }).catch(() => {});
       } else {
         setWatchlists(prevWatchlists); // Rollback
+        setLastAddedInfo(null);
+        setHighlightedSymbol(null);
+        setCompanyAddError("Could not add this company. Please try again.");
       }
     } catch (err: any) {
       console.error("Error adding symbol directly:", err);
       setWatchlists(prevWatchlists); // Rollback
+      setLastAddedInfo(null);
+      setHighlightedSymbol(null);
+      setCompanyAddError("Could not add this company. Please try again.");
     } finally {
       isAddingSymbolRef.current = false;
     }
@@ -1861,9 +1879,9 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
       <div className="sticky top-14 md:top-[89px] z-30 bg-white/95 dark:bg-[#1A1926]/95 backdrop-blur-md border border-slate-200/90 dark:border-[#2D283E] rounded-xl p-2 sm:p-2.5 shadow-xs space-y-2">
         {/* Row 1: Primary Controls */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5">
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+          <div className="watchlist-tab-wrap min-w-0 py-0.5">
             {/* View Switcher Tabs: My companies | Updates | Edit watchlist */}
-            <div className="flex items-center p-0.5 bg-slate-100 dark:bg-[#15141F] rounded-lg border border-slate-200/80 dark:border-[#2D283E] shrink-0 select-none">
+            <div className="watchlist-tabs flex items-center p-0.5 bg-slate-100 dark:bg-[#15141F] rounded-lg border border-slate-200/80 dark:border-[#2D283E] shrink-0 select-none">
               {/* Tab 1: My companies */}
               <motion.button
                 type="button"
@@ -1957,7 +1975,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
           </div>
 
           {/* Right: Controls tailored specifically to active tab */}
-          <div className="flex items-center gap-2 shrink-0 justify-between md:justify-end flex-wrap select-none">
+          <div className="watchlist-actions flex items-center gap-2 min-w-0 justify-between md:justify-end flex-wrap select-none">
             {watchlistSubTab === 'companies' && (
               <div className="flex items-center gap-2 w-full md:w-auto">
                 {/* Search My Companies */}
@@ -2458,7 +2476,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
                       type="text"
                       value={newSymbol}
                       onChange={e => setNewSymbol(e.target.value)}
-                      placeholder="Search by company name or BSE/NSE ticker (e.g. TCS, Reliance, Infosys)..."
+                      aria-label="Search companies to add" placeholder="Company name or symbol"
                       className="w-full pl-9 pr-8 py-2 bg-slate-50 dark:bg-[#201E2E] border border-slate-200 dark:border-[#2D283E] rounded-lg text-xs font-medium text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-emerald-500 min-h-[40px]"
                       autoFocus
                     />
@@ -2466,15 +2484,21 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
                       <RefreshCw size={13} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-emerald-600" />
                     )}
 
+                    {isSearching && <p role="status" className="text-xs text-slate-500 mt-2">Searching companies…</p>}
+                    {!isSearching && showSuggestions && searchResults.length === 0 && (
+                      <p role="status" className="text-xs text-slate-500 mt-2">
+                        {companySearchError ? 'Search could not load. Please try again.' : 'No matching companies. Try a company name or symbol.'}
+                      </p>
+                    )}
                     {/* Autocomplete Suggestions Dropdown */}
                     {showSuggestions && searchResults.length > 0 && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-[#1A1926] border border-slate-200 dark:border-[#2D283E] rounded-xl shadow-xl z-30 max-h-60 overflow-y-auto divide-y divide-slate-100 dark:divide-[#252233]">
+                      <div role="region" aria-label="Matching companies" className="company-add-results relative mt-2 bg-white dark:bg-[#1A1926] border border-slate-200 dark:border-[#2D283E] rounded-xl max-h-72 overflow-y-auto overscroll-contain divide-y divide-slate-100 dark:divide-[#252233]">
                         {searchResults.map((item: any) => {
                           const isTracked = myCompaniesList.some(c => c.symbol === item.symbol);
                           return (
                             <div
                               key={item.symbol + (item.scripCode || '')}
-                              className="p-2.5 flex items-center justify-between gap-2 hover:bg-slate-50 dark:hover:bg-[#222030] transition-colors"
+                              className="company-add-result p-2.5 flex items-center justify-between gap-2 hover:bg-slate-50 dark:hover:bg-[#222030] transition-colors"
                             >
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
@@ -2496,7 +2520,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
                                   type="button"
                                   onClick={() => {
                                     handleDirectAddSymbol(item.symbol, item.name, 'HIGH');
-                                    setIsAddCompanyOpen(false);
+
                                   }}
                                   className="px-2.5 py-1.5 min-h-[34px] bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900/80 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 rounded-lg text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-colors active:scale-[0.96]"
                                   title="Add with High Priority"
@@ -2507,7 +2531,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
                                   type="button"
                                   onClick={() => {
                                     handleDirectAddSymbol(item.symbol, item.name, 'MEDIUM');
-                                    setIsAddCompanyOpen(false);
+
                                   }}
                                   className="px-2.5 py-1.5 min-h-[34px] bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/60 dark:hover:bg-amber-900/80 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 rounded-lg text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-colors active:scale-[0.96]"
                                   title="Add with Medium Priority"
@@ -2518,7 +2542,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
                                   type="button"
                                   onClick={() => {
                                     handleDirectAddSymbol(item.symbol, item.name, 'LOW');
-                                    setIsAddCompanyOpen(false);
+
                                   }}
                                   className="px-2.5 py-1.5 min-h-[34px] bg-slate-100 hover:bg-slate-200 dark:bg-[#252233] dark:hover:bg-[#2F2B40] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#353046] rounded-lg text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-colors active:scale-[0.96]"
                                   title="Add with Low Priority"
@@ -2537,6 +2561,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
             )}
           </AnimatePresence>
 
+          {companyAddError && <p role="alert" className="p-3 rounded-xl text-sm text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/30">{companyAddError}</p>}
           {/* Companies List / Grid */}
           {filteredMyCompanies.length === 0 ? (
             <div className="my-4 p-6 sm:p-8 text-left text-slate-400 space-y-4 bg-white dark:bg-[#1A1926] border border-slate-200/90 dark:border-[#2D283E] rounded-2xl max-w-lg shadow-xs">

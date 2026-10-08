@@ -1,3 +1,4 @@
+import { useExpiryClock } from '../hooks/useExpiryClock';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { 
   signInWithPopup,
@@ -1279,7 +1280,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const isAdmin = Boolean((adminUnlocked || isOwner) && (isOwner || profile?.tier === 'admin' || user?.isAdmin));
 
-  const now = Date.now();
+  const now = useExpiryClock(profile?.proExpiresAt, user?.uid);
   const proDaysLeft = profile?.proExpiresAt 
     ? Math.max(0, Math.ceil((profile.proExpiresAt - now) / (24 * 60 * 60 * 1000)))
     : 0;
@@ -1308,7 +1309,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // excluded by design. Auto on at grant, auto off at expiry.
   const isPaidProActive = Boolean(
     isAdmin ||
-    (isPaidPro && profile?.proExpiresAt && profile.proExpiresAt > now)
+    (isPro && isPaidPro && profile?.proExpiresAt && profile.proExpiresAt > now)
   );
 
   return (

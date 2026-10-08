@@ -1,3 +1,4 @@
+import '../styles/mobile-repairs.css';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -351,7 +352,7 @@ export function Layout({
   }
 
   // Watchlist is a Pro-only feature: hide the tab entirely for free users.
-  const canUseWatchlist = Boolean(isPro || isAdmin || adminUnlocked || profile?.tier === 'admin');
+  const canUseWatchlist = Boolean(isPro || isAdmin);
   const navItems: NavItem[] = [
     { id: 'home', label: 'For You', shortLabel: 'For You', icon: Home },
     { id: 'dashboard', label: 'Filings', shortLabel: 'Filings', icon: Flame },
@@ -632,7 +633,7 @@ export function Layout({
                 aria-label={user || profile ? `User: ${profile?.displayName || 'Guest User'}` : 'Guest Profile & Sign In'}
                 className={cn(
                   "relative w-8.5 h-8.5 sm:w-8 sm:h-8 rounded-full flex items-center justify-center cursor-pointer select-none shrink-0 transition-all",
-                  "p-[2px] bg-gradient-to-tr from-emerald-500 via-teal-500 to-indigo-500 shadow-xs hover:shadow-md"
+                  isPro ? "p-[2px] bg-gradient-to-tr from-emerald-500 via-teal-500 to-indigo-500 shadow-xs hover:shadow-md" : "p-[2px] bg-slate-200 dark:bg-slate-700"
                 )}
                 title={user || profile ? `${profile?.displayName || 'User'} (${isAdmin ? 'Admin' : isPro ? 'Pro' : 'Guest'})` : 'Guest / Sign In'}
               >
@@ -656,7 +657,7 @@ export function Layout({
                 {/* Story ready indicator status badge */}
                 <span className={cn(
                   "absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-[#1E1B2E]",
-                  isAdmin ? "bg-purple-500" : isPro ? "bg-emerald-500" : "bg-emerald-400"
+                  isAdmin ? "bg-purple-500" : isPro ? "bg-emerald-500" : "hidden"
                 )} />
               </motion.button>
             </div>

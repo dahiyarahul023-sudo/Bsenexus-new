@@ -1089,13 +1089,13 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
       {/* Compact Streamlined Unified Toolbar: Sticky below navbar - Title, Search, Filter & Single Tab Row */}
       <div className="sticky top-14 md:top-[89px] z-30 bg-white/95 dark:bg-[#1A1926]/95 backdrop-blur-md border border-slate-200/90 dark:border-[#2D283E] rounded-xl p-2.5 sm:p-3 shadow-xs flex flex-col gap-2">
         {/* Row 1: Title, Search Box & Filter Bottom Sheet Trigger */}
-        <div className="flex items-center gap-2 justify-between">
+        <div className="results-toolbar flex items-center gap-2 justify-between">
           
           {/* Left: Scope Title, Count & Timestamp */}
           <div className="flex items-center gap-1.5 shrink-0">
             <CalendarDays className="w-4 h-4 text-slate-700 dark:text-slate-300 shrink-0" />
             <h1 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white font-display whitespace-nowrap">
-              BSE Results Calendar
+              Earnings
             </h1>
             <span className="text-xs text-slate-500 font-mono">
               ({filteredAndSortedItems.length})
@@ -1108,7 +1108,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
           </div>
 
           {/* Center: Search Box (44px min height on mobile) */}
-          <div className="relative flex-1 max-w-lg min-h-[44px] sm:min-h-[36px] flex items-center">
+          <div className="results-search relative flex-1 min-w-0 max-w-lg min-h-[44px] sm:min-h-[36px] flex items-center">
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input 
               type="text" 

@@ -276,7 +276,7 @@ export function NotificationInbox({
       aria-labelledby="notification-inbox-title"
     >
       <div 
-        className="bg-white dark:bg-[#0F172A] border-t sm:border border-slate-200 dark:border-slate-800 rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[85vh] sm:max-h-[92vh] flex flex-col shadow-2xl overflow-hidden sm:mt-14 mb-0 animate-in slide-in-from-bottom-4 sm:slide-in-from-right-4 duration-150 overscroll-contain"
+        className="mobile-alert-sheet bg-white dark:bg-[#0F172A] border-t sm:border border-slate-200 dark:border-slate-800 rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[85vh] sm:max-h-[92vh] flex flex-col shadow-2xl overflow-hidden sm:mt-14 mb-0 animate-in slide-in-from-bottom-4 sm:slide-in-from-right-4 duration-150 overscroll-contain"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Mobile Pull Handle */}
@@ -285,7 +285,7 @@ export function NotificationInbox({
         </div>
 
         {/* Top Header */}
-        <div className="p-3.5 sm:p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/60 flex items-center justify-between gap-3">
+        <div className="mobile-alert-header p-3.5 sm:p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/60 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <div className={cn(
               "p-1.5 sm:p-2 rounded-lg text-white shadow-xs",
@@ -296,7 +296,7 @@ export function NotificationInbox({
             <div>
               <div className="flex items-center gap-2">
                 <h2 id="notification-inbox-title" className="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
-                  Watchlist Market Alerts
+                  Watchlist alerts
                 </h2>
                 {unreadCount > 0 && !isMuted && (
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white">
@@ -365,7 +365,7 @@ export function NotificationInbox({
         )}
 
         {/* Filter Tabs & Quick Action Bar */}
-        <div className="px-3 sm:px-4 py-2 border-b border-slate-200 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-900/30 flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
+        <div className="mobile-alert-tabs px-3 sm:px-4 py-2 border-b border-slate-200 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-900/30 flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
           <div className="flex items-center gap-1 shrink-0">
             {[
               { id: 'WATCHLIST' as const, label: '⭐ My Watchlist' },
