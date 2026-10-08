@@ -98,10 +98,10 @@ test('parallel requests cannot consume more than the last local quota unit', asy
 
 test('system alert rules cannot be disabled by any ordinary caller', async () => {
   const { getAllAlertRules, toggleAlertRule } = await import('../database/alertRulesDao.js');
-  const preset = getAllAlertRules('ordinary-user').find(r => r.userId === 'system');
+  const preset = (await getAllAlertRules('system')).find(r => r.userId === 'system');
   assert.ok(preset);
-  assert.equal(toggleAlertRule(preset.id, false, 'ordinary-user'), false);
-  assert.equal(toggleAlertRule(preset.id, false, 'admin'), false);
+  assert.equal(await toggleAlertRule(preset.id, false, 'ordinary-user'), false);
+  assert.equal(await toggleAlertRule(preset.id, false, 'admin'), false);
 });
 
 test('empty durable/local feed returns no manufactured financial filings', async () => {

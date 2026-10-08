@@ -1,28 +1,11 @@
+import { createHash, randomUUID } from 'node:crypto';
 import { getSupabase, isSupabaseConfigured } from './supabase.js';
-import { readLocalJson, writeLocalJson, isOfflineOrNetworkError } from './localStore.js';
-import { withRetry } from '../utils/retry.js';
-
-export interface AlertRule {
-  id: string;
-  name: string;
-  description?: string;
-  enabled: boolean;
-  category: 'ALL' | 'RESULTS' | 'DIVIDEND' | 'BUYBACK' | 'BONUS_SPLIT' | 'ORDER_WIN' | 'BOARD_MEETING' | 'GOVERNANCE';
-  priority: 'ALL' | 'HIGH_ONLY' | 'MEDIUM_HIGH';
-  scope: 'ALL_STOCKS' | 'WATCHLIST_ONLY' | 'SPECIFIC_SYMBOLS';
-  symbols: string[]; // e.g. ["ASHOKLEY", "TCS"]
-  keywords: string[]; // e.g. ["dividend", "acquisition", "bonus"]
-  excludeKeywords: string[];
-  channels: {
-    inApp: boolean;
-    telegram: boolean;
-  };
-  userId: string;
-  createdAt: number;
-}
-
+import { readLocalJson, writeLocalJson } from './localStore.js';
+import { isSymbolMatch } from '../utils/helpers.js';
+import { effectiveAlertRules, presetKeyOf, presetsFromRules, makePresetRules, DEFAULT_ALERT_PRESETS, PRESET_NAMES } from '../../src/shared/alertRules.js';
+import type { AlertRule, AlertPresets, PresetKey } from '../../src/shared/alertRules.js';
+export type { AlertRule } from '../../src/shared/alertRules.js';
 const ALERT_RULES_FILE = 'alert_rules.json';
-
 const DEFAULT_PRESET_RULES: AlertRule[] = [
   {
     id: 'preset_results',
@@ -86,235 +69,124 @@ const DEFAULT_PRESET_RULES: AlertRule[] = [
   }
 ];
 
-let rulesCache: AlertRule[] = readLocalJson<AlertRule[]>(ALERT_RULES_FILE, DEFAULT_PRESET_RULES);
-
-if (rulesCache.length === 0) {
-  rulesCache = [...DEFAULT_PRESET_RULES];
-  writeLocalJson(ALERT_RULES_FILE, rulesCache);
+let rulesCache: AlertRule[] = readLocalJson<AlertRule[]>(ALERT_RULES_FILE, []).filter(r=>r.userId!=='system');
+export class AlertRuleError extends Error {
+  constructor(public status: number, message: string) { super(message); }
 }
-
-const ALERT_RULES_TABLE = 'alert_rules';
-
-// Initial background sync to restore custom rules from Supabase
-export async function initAlertRulesFromCloud(): Promise<void> {
-  if (!isSupabaseConfigured()) return;
-  try {
-    const { data, error } = await getSupabase().from(ALERT_RULES_TABLE).select('rule');
-    if (error) throw error;
-    let added = 0;
-    for (const row of data || []) {
-      const cloudRule = row.rule as AlertRule;
-      if (cloudRule && cloudRule.id) {
-        const idx = rulesCache.findIndex(r => r.id === cloudRule.id);
-        if (idx >= 0) {
-          rulesCache[idx] = { ...rulesCache[idx], ...cloudRule };
-        } else {
-          rulesCache.push(cloudRule);
-          added++;
-        }
-      }
-    }
-    if (added > 0) {
-      writeLocalJson(ALERT_RULES_FILE, rulesCache);
-    }
-  } catch (err: any) {
-    if (!isOfflineOrNetworkError(err)) {
-      console.warn('[AlertRulesDao] Cloud sync notice:', err?.message || err);
-    }
+const durable = () => isSupabaseConfigured() || process.env.NODE_ENV === 'production';
+async function cloud<T>(run:()=>PromiseLike<{data:T;error:any}>): Promise<T> {
+  try { const {data,error}=await run(); if(error) throw error; return data; }
+  catch { throw new AlertRuleError(503,'Alert storage is unavailable. The operation was not confirmed. Retry safely.'); }
+}
+function presetId(uid:string,key:PresetKey) {return `preset_${createHash('sha256').update(uid).digest('hex')}_${key}`;}
+function view(rows:AlertRule[],uid:string) {
+  if(uid==='system') return DEFAULT_PRESET_RULES;
+  const own=effectiveAlertRules(rows,uid);
+  if(!own.some(r=>presetKeyOf(r))) return [...own,...makePresetRules(uid,DEFAULT_ALERT_PRESETS,k=>presetId(uid,k),0)];
+  return own;
+}
+export async function getAllAlertRules(uid='guest'):Promise<AlertRule[]> {
+  if(uid==='guest') return [];
+  if(!durable()) return view(rulesCache,uid);
+  return view(await readCloudRules(uid),uid);
+}
+// Refresh once per poll, before processing/marking any filing. Replace instead of merging:
+// deletions and saves from other instances must take effect too.
+async function readCloudRules(uid?: string): Promise<AlertRule[]> {
+  const all: AlertRule[] = [];
+  for (let offset = 0; ; offset += 1000) {
+    if (!isSupabaseConfigured()) throw new AlertRuleError(503, 'Alert storage is not configured.');
+    let query = getSupabase().from('alert_rules').select('id,user_id,rule').order('id');
+    if (uid) query = query.eq('user_id', uid);
+    const rows = await cloud<any[]>(() => query.range(offset, offset + 999).abortSignal(AbortSignal.timeout(10000)));
+    all.push(...(rows || []).map(r => ({ ...r.rule, id: r.id, userId: r.user_id })));
+    if (!rows || rows.length < 1000) break;
   }
+  return all;
 }
-setTimeout(() => {
-  initAlertRulesFromCloud().catch(() => {});
-}, 3000);
-
-export function getAllAlertRules(userId: string = 'guest'): AlertRule[] {
-  return rulesCache.filter(r => r.userId === 'system' || (userId !== 'guest' && r.userId === userId));
+export async function initAlertRulesFromCloud(): Promise<AlertRule[]> {
+  if (!durable()) return [...rulesCache];
+  rulesCache = await readCloudRules();
+  return [...rulesCache];
 }
-
-async function persistRuleToCloud(rule: AlertRule): Promise<void> {
-  if (rule.userId === 'system' || !isSupabaseConfigured()) return;
-  try {
-    await withRetry(async () => {
-      const { error } = await getSupabase()
-        .from(ALERT_RULES_TABLE)
-        .upsert({ id: rule.id, user_id: rule.userId, rule }, { onConflict: 'id' });
-      if (error) throw error;
-    }, { maxRetries: 1 });
-  } catch { /* fire-and-forget: local cache is the source of truth for reads */ }
+function requireOwner(uid:string) {if(!uid||uid==='guest'||uid==='system')throw new AlertRuleError(401,'Sign in to manage alerts.');}
+function validate(rule:any):void {
+  if(!rule||typeof rule.name!=='string'||!rule.name.trim()||rule.name.length>100)throw new AlertRuleError(400,'Enter a rule name of 1–100 characters.');
+  if(!['ALL','RESULTS','DIVIDEND','BUYBACK','BONUS_SPLIT','ORDER_WIN','BOARD_MEETING','GOVERNANCE'].includes(rule.category)
+    ||!['ALL','HIGH_ONLY','MEDIUM_HIGH'].includes(rule.priority)
+    ||!['ALL_STOCKS','WATCHLIST_ONLY','SPECIFIC_SYMBOLS'].includes(rule.scope)
+    ||typeof rule.enabled!=='boolean')throw new AlertRuleError(400,'Invalid alert category, priority, scope or enabled state.');
+  for(const key of ['symbols','keywords','excludeKeywords'])if(!Array.isArray(rule[key])||rule[key].length>100||rule[key].some((v:any)=>typeof v!=='string'||v.length>100))throw new AlertRuleError(400,'Invalid symbols or keywords.');
+  if(rule.scope==='SPECIFIC_SYMBOLS'&&!rule.symbols.some((s:string)=>s.trim()))throw new AlertRuleError(400,'Enter at least one ticker or BSE scrip code.');
+  if(!rule.channels||typeof rule.channels.inApp!=='boolean'||typeof rule.channels.telegram!=='boolean')throw new AlertRuleError(400,'Select valid delivery channels.');
 }
-
-async function removeRuleFromCloud(ruleId: string): Promise<void> {
-  if (!isSupabaseConfigured()) return;
-  try {
-    await withRetry(async () => {
-      const { error } = await getSupabase().from(ALERT_RULES_TABLE).delete().eq('id', ruleId);
-      if (error) throw error;
-    }, { maxRetries: 1 });
-  } catch { /* fire-and-forget */ }
+export async function saveAlertPresets(values:AlertPresets,uid:string):Promise<AlertRule[]> {
+  requireOwner(uid);
+  if(!values||['results','corporate','material'].some(k=>typeof values[k as PresetKey]!=='boolean')||!['WATCHLIST_ONLY','ALL_STOCKS'].includes(values.scope)||typeof values.channels?.inApp!=='boolean'||typeof values.channels?.telegram!=='boolean')throw new AlertRuleError(400,'Invalid alert preset settings.');
+  const rules=makePresetRules(uid,values,k=>presetId(uid,k));
+  if(durable()) {
+    // One bulk SQL statement: all three presets commit together; stable IDs make retries safe.
+    await cloud(()=>getSupabase().from('alert_rules').upsert(rules.map(rule=>({id:rule.id,user_id:uid,rule})),{onConflict:'id'}).select('id').abortSignal(AbortSignal.timeout(10000)));
+  } else { rulesCache=[...rulesCache.filter(r=>!rules.some(n=>n.id===r.id)),...rules];writeLocalJson(ALERT_RULES_FILE,rulesCache); }
+  return rules;
 }
-
-export function saveAlertRule(rule: Partial<AlertRule> & { name: string }, userId: string = 'guest'): AlertRule {
-  const id = rule.id || `rule_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
-  const existingIdx = rulesCache.findIndex(r => r.id === id);
-
-  // If modifying existing rule, enforce ownership (cannot overwrite other users or system rules)
-  if (existingIdx >= 0) {
-    const existing = rulesCache[existingIdx];
-    if (existing.userId === 'system' || existing.userId !== userId) {
-      throw new Error("Cannot modify system or another user's alert rule");
+export async function saveAlertRule(input:any,uid='guest'):Promise<AlertRule> {
+  requireOwner(uid); validate(input);
+  if(input.presetKey||Object.values(PRESET_NAMES).includes(input.name.trim()))throw new AlertRuleError(400,'Use Save Presets to update presets.');
+  const id=input.id || `rule_${randomUUID()}`;
+  if(typeof id!=='string'||!/^rule_[a-zA-Z0-9_-]{1,100}$/.test(id))throw new AlertRuleError(400,'Invalid rule ID.');
+  const rule:AlertRule={id,userId:uid,name:input.name.trim(),description:String(input.description||'').slice(0,500),enabled:input.enabled,category:input.category,priority:input.priority,scope:input.scope,symbols:input.symbols.map((s:string)=>s.trim().toUpperCase()).filter(Boolean),keywords:input.keywords.map((s:string)=>s.trim().toLowerCase()).filter(Boolean),excludeKeywords:input.excludeKeywords.map((s:string)=>s.trim().toLowerCase()).filter(Boolean),channels:{inApp:input.channels.inApp,telegram:input.channels.telegram},createdAt:Date.now()};
+  if(durable()) {
+    const existing=await cloud<any>(()=>getSupabase().from('alert_rules').select('id,user_id,rule').eq('id',id).abortSignal(AbortSignal.timeout(10000)).maybeSingle());
+    if(existing && (existing.user_id!==uid||presetKeyOf(existing.rule)))throw new AlertRuleError(404,'Alert rule not found.');
+    if(existing) {
+      rule.createdAt=existing.rule.createdAt;
+      const changed=await cloud<any[]>(()=>getSupabase().from('alert_rules').update({rule}).eq('id',id).eq('user_id',uid).select('id').abortSignal(AbortSignal.timeout(10000)));
+      if(!changed?.length)throw new AlertRuleError(404,'Alert rule not found.');
+    } else {
+      await cloud(()=>getSupabase().from('alert_rules').insert({id,user_id:uid,rule}).select('id').abortSignal(AbortSignal.timeout(10000)));
     }
-  }
-
-  const fullRule: AlertRule = {
-    id,
-    name: String(rule.name).slice(0, 100),
-    description: rule.description ? String(rule.description).slice(0, 500) : '',
-    enabled: rule.enabled !== undefined ? Boolean(rule.enabled) : true,
-    category: rule.category || 'ALL',
-    priority: rule.priority || 'HIGH_ONLY',
-    scope: rule.scope || 'WATCHLIST_ONLY',
-    symbols: Array.isArray(rule.symbols) ? rule.symbols.map(s => String(s).toUpperCase().slice(0, 30)) : [],
-    keywords: Array.isArray(rule.keywords) ? rule.keywords.map(k => String(k).slice(0, 50)) : [],
-    excludeKeywords: Array.isArray(rule.excludeKeywords) ? rule.excludeKeywords.map(k => String(k).slice(0, 50)) : [],
-    channels: rule.channels || { inApp: true, telegram: true },
-    userId: userId, // enforce authenticated user ID
-    createdAt: rule.createdAt || Date.now()
-  };
-
-  if (existingIdx >= 0) {
-    rulesCache[existingIdx] = fullRule;
   } else {
-    rulesCache.push(fullRule);
+    const existing=rulesCache.find(r=>r.id===id);
+    if(existing&&existing.userId!==uid)throw new AlertRuleError(404,'Alert rule not found.');
+    rulesCache=[...rulesCache.filter(r=>r.id!==id),rule];writeLocalJson(ALERT_RULES_FILE,rulesCache);
   }
-
-  writeLocalJson(ALERT_RULES_FILE, rulesCache);
-  persistRuleToCloud(fullRule).catch(() => {});
-  return fullRule;
+  return rule;
 }
-
-export function toggleAlertRule(id: string, enabled: boolean, userId: string = 'guest'): boolean {
-  const rule = rulesCache.find(r => r.id === id);
-  if (rule) {
-    // Only owner or admin can toggle
-    if (rule.userId === 'system' || rule.userId !== userId) {
-      return false;
-    }
-    rule.enabled = enabled;
-    writeLocalJson(ALERT_RULES_FILE, rulesCache);
-    persistRuleToCloud(rule).catch(() => {});
-    return true;
+export async function toggleAlertRule(id:string,enabled:boolean,uid='guest'):Promise<boolean> {
+  requireOwner(uid); if(id.startsWith('preset_'))return false;
+  if(typeof enabled!=='boolean')throw new AlertRuleError(400,'Enabled must be true or false.');
+  const rule=(await getAllAlertRules(uid)).find(r=>r.id===id&&!presetKeyOf(r));
+  if(!rule)return false;
+  await saveAlertRule({...rule,enabled},uid); return true;
+}
+export async function deleteAlertRule(id:string,uid='guest'):Promise<boolean> {
+  requireOwner(uid); if(id.startsWith('preset_'))return false;
+  if(durable()) {
+    const data=await cloud<any[]>(()=>getSupabase().from('alert_rules').delete().eq('id',id).eq('user_id',uid).select('id').abortSignal(AbortSignal.timeout(10000)));
+    return !!data?.length;
   }
-  return false;
+  const before=rulesCache.length;rulesCache=rulesCache.filter(r=>!(r.id===id&&r.userId===uid));writeLocalJson(ALERT_RULES_FILE,rulesCache);return before!==rulesCache.length;
 }
-
-export function deleteAlertRule(id: string, userId: string = 'guest'): boolean {
-  const rule = rulesCache.find(r => r.id === id);
-  if (!rule) return false;
-  // System rules cannot be deleted; user can only delete their own rules
-  if (rule.userId === 'system') return false;
-  if (rule.userId !== userId) return false;
-
-  const prevLen = rulesCache.length;
-  rulesCache = rulesCache.filter(r => r.id !== id);
-  if (rulesCache.length !== prevLen) {
-    writeLocalJson(ALERT_RULES_FILE, rulesCache);
-    removeRuleFromCloud(id).catch(() => {});
-    return true;
-  }
-  return false;
-}
-
-export function evaluateAlertRulesForUser(
-  announcement: {
-    companyName?: string;
-    symbol?: string;
-    scripCode?: string;
-    subject?: string;
-    details?: string;
-    category?: string;
-    priority?: string;
-    isWatchlist?: boolean;
-  },
-  userId: string = 'system'
-): { matchedRules: AlertRule[]; shouldSendInApp: boolean; shouldSendTelegram: boolean } {
-  // Only evaluate system preset rules + this specific user's custom alert rules
-  const activeRules = rulesCache.filter(r => r.enabled && (r.userId === 'system' || r.userId === userId));
-  const matchedRules: AlertRule[] = [];
-  let shouldSendInApp = false;
-  let shouldSendTelegram = false;
-
-  const combinedText = `${announcement.subject || ''} ${announcement.details || ''} ${announcement.companyName || ''}`.toLowerCase();
-  const annSym = (announcement.symbol || '').toUpperCase();
-  const annScrip = String(announcement.scripCode || '');
-  const annPrio = (announcement.priority || 'LOW').toUpperCase();
-
-  for (const rule of activeRules) {
-    // 1. Check Scope
-    if (rule.scope === 'WATCHLIST_ONLY' && !announcement.isWatchlist) {
-      continue;
-    }
-    if (rule.scope === 'SPECIFIC_SYMBOLS') {
-      const match = rule.symbols.some(s => s.toUpperCase() === annSym || s === annScrip);
-      if (!match) continue;
-    }
-
-    // 2. Check Category
-    if (rule.category !== 'ALL') {
-      if (rule.category === 'RESULTS' && !/financial result|audited|unaudited|quarterly result|board meeting outcome/i.test(combinedText)) {
-        continue;
-      }
-      if (rule.category === 'DIVIDEND' && !/dividend|bonus|split|sub-division/i.test(combinedText)) {
-        continue;
-      }
-      if (rule.category === 'BUYBACK' && !/buyback|buy-back|open offer/i.test(combinedText)) {
-        continue;
-      }
-      if (rule.category === 'ORDER_WIN' && !/order|contract|agreement|award|pact|bagged/i.test(combinedText)) {
-        continue;
-      }
-      if (rule.category === 'BOARD_MEETING' && !/board meeting|intimation of board/i.test(combinedText)) {
-        continue;
-      }
-    }
-
-    // 3. Check Priority
-    if (rule.priority === 'HIGH_ONLY' && annPrio !== 'HIGH') {
-      continue;
-    }
-    if (rule.priority === 'MEDIUM_HIGH' && annPrio !== 'HIGH' && annPrio !== 'MEDIUM') {
-      continue;
-    }
-
-    // 4. Check Exclude Keywords
-    if (rule.excludeKeywords && rule.excludeKeywords.length > 0) {
-      const hasExcluded = rule.excludeKeywords.some(kw => kw && combinedText.includes(kw.toLowerCase()));
-      if (hasExcluded) continue;
-    }
-
-    // 5. Check Include Keywords (if defined)
-    if (rule.keywords && rule.keywords.length > 0) {
-      const hasKeyword = rule.keywords.some(kw => kw && combinedText.includes(kw.toLowerCase()));
-      if (!hasKeyword) continue;
-    }
-
-    // Match found!
+export interface RuleAnnouncement {companyName?:string;symbol?:string;scripCode?:string;subject?:string;details?:string;category?:string;priority?:string;isWatchlist?:boolean;}
+export function evaluateAlertRulesForUser(announcement:RuleAnnouncement,uid='system',snapshot:AlertRule[]=rulesCache) {
+  const configured=effectiveAlertRules(snapshot,uid).some(r=>!!presetKeyOf(r));
+  const activeRules=view(snapshot,uid).filter(r=>r.enabled);
+  const matchedRules:AlertRule[]=[];
+  const text=`${announcement.subject||''} ${announcement.details||''} ${announcement.companyName||''}`.toLowerCase();
+  const prio=(announcement.priority||'LOW').toUpperCase();
+  const patterns:Record<string,RegExp>={RESULTS:/financial result|audited|unaudited|quarterly result|board meeting outcome/i,DIVIDEND:/dividend|bonus|split|sub.division|rights issue/i,BUYBACK:/buy.?back|open offer/i,BONUS_SPLIT:/bonus|split|sub.division/i,ORDER_WIN:/order|contract|agreement|award|pact|bagged/i,BOARD_MEETING:/board meeting|intimation of board/i,GOVERNANCE:/director|management|governance|resignation|appointment|auditor/i};
+  for(const rule of activeRules) {
+    if(rule.scope==='WATCHLIST_ONLY'&&!announcement.isWatchlist)continue;
+    if(rule.scope==='SPECIFIC_SYMBOLS'&&!rule.symbols.some(s=>isSymbolMatch(announcement.companyName||announcement.symbol||'', '',s,announcement.scripCode)||s.toUpperCase()===announcement.symbol?.toUpperCase()))continue;
+    const pattern=rule.presetKey==='corporate'?/dividend|bonus|split|sub.division|rights issue|buy.?back|open offer/i:patterns[rule.category];
+    if(rule.category!=='ALL' && announcement.category!==rule.category && !pattern?.test(text))continue;
+    if(rule.priority==='HIGH_ONLY'&&prio!=='HIGH')continue;
+    if(rule.priority==='MEDIUM_HIGH'&&!['HIGH','MEDIUM'].includes(prio))continue;
+    if(rule.excludeKeywords.some(k=>k.trim()&&text.includes(k.toLowerCase())))continue;
+    if(rule.keywords.length&&!rule.keywords.some(k=>k.trim()&&text.includes(k.toLowerCase())))continue;
     matchedRules.push(rule);
-    if (rule.channels?.inApp) shouldSendInApp = true;
-    if (rule.channels?.telegram) shouldSendTelegram = true;
   }
-
-  return { matchedRules, shouldSendInApp, shouldSendTelegram };
+  return {matchedRules,hasConfiguredPresets:configured,shouldSendInApp:matchedRules.some(r=>r.channels.inApp),shouldSendTelegram:matchedRules.some(r=>r.channels.telegram)};
 }
-
-export function evaluateAlertRules(announcement: {
-  companyName?: string;
-  symbol?: string;
-  scripCode?: string;
-  subject?: string;
-  details?: string;
-  category?: string;
-  priority?: string;
-  isWatchlist?: boolean;
-}): { matchedRules: AlertRule[]; shouldSendInApp: boolean; shouldSendTelegram: boolean } {
-  return evaluateAlertRulesForUser(announcement, 'system');
-}
+export function evaluateAlertRules(announcement:RuleAnnouncement) {return evaluateAlertRulesForUser(announcement,'system');}

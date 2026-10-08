@@ -8,9 +8,9 @@ import { getAllUserProfiles } from '../database/usersDao.js';
 import { isAnnouncementProcessed, isAnnouncementSent, markAnnouncementSent, saveAnnouncement, pruneAndCheckStorageCapacity, initAnnouncementCache } from '../database/announcementDao.js';
 import { escapeHTML, determinePriority, isSymbolMatch, parseBseDate, isMarketHoursIST } from '../utils/helpers.js';
 import { addNotification, initNotificationsFromCloud } from '../database/notificationDao.js';
-import { evaluateAlertRulesForUser } from '../database/alertRulesDao.js';
+import { evaluateAlertRulesForUser, initAlertRulesFromCloud } from '../database/alertRulesDao.js';
 import { classifyMaterialEvent } from './timelineClassifier.js';
-import { doesAnnouncementMatchUserPrefs, isTelegramEligible } from '../utils/alertDecision.js';
+import { doesAnnouncementMatchUserPrefs, personalAlertChannels } from '../utils/alertDecision.js';
 import { sendOneSignalPush, isOneSignalConfigured } from './oneSignal.js';
 
 export { pruneAndCheckStorageCapacity };
@@ -163,6 +163,7 @@ export async function processAnnouncements() {
 
     // Instant in-memory configuration read (~60s TTL) - Zero DB latency on critical path
     const { settings, activeSymbols, activeSymbolMap, allUsers, userWatchlistCache } = await getCachedMonitorConfig();
+    const alertRulesSnapshot = await initAlertRulesFromCloud();
     
     // Pass 1: Find pending items (all unprocessed items in batch)
     const pendingAnnouncements = [];
@@ -315,18 +316,6 @@ export async function processAnnouncements() {
           console.error("saveAnnouncement error:", e?.message || e);
         }
 
-        // Evaluate Advanced Alert Rules for System & Admin
-        const ruleEval = evaluateAlertRulesForUser({
-          companyName,
-          symbol: companyName,
-          scripCode: scrip_cd,
-          subject,
-          details,
-          category: priority.category,
-          priority: priority.level,
-          isWatchlist: isWatchlistMatch
-        }, 'system');
-
         // Classify Material Event if applicable
         const materialEvt = classifyMaterialEvent({
           id: newsId,
@@ -338,30 +327,8 @@ export async function processAnnouncements() {
           pdfLink
         });
 
-        // Add In-App Notification ONLY if:
-        // 1. In-app notifications are NOT muted in settings
-        // 2. The stock is strictly in user's active Watchlist OR triggered by a custom Alert Rule
-        const isNotifMuted = Boolean(settings.muteInAppNotifications);
-        const shouldAddInAppNotif = !isNotifMuted && (isWatchlistMatch || (ruleEval && ruleEval.shouldSendInApp));
-
-        if (shouldAddInAppNotif) {
-          const notifType = materialEvt ? (materialEvt.eventType as any) : (priority.category === 'RESULTS' ? 'RESULT' : 'GENERAL');
-          await addNotification({
-            id: `notif_${newsId}_sys`,
-            userId: 'system',
-            title: materialEvt ? materialEvt.title : `${companyName}: ${subject}`,
-            message: subject,
-            type: notifType,
-            priority: (priority.level as any) || 'HIGH',
-            symbol: companyName,
-            scripCode: scrip_cd,
-            newsId,
-            pdfLink,
-            timestamp: itemTs || Date.now(),
-            isRead: false,
-            isWatchlist: isWatchlistMatch
-          });
-        }
+        // Filing inbox entries are created per verified recipient below. Broadcasting
+        // the global watchlist as userId=system bypassed every personal preset/channel.
 
         // Build notification message text
         let message = ``;
@@ -500,7 +467,7 @@ export async function processAnnouncements() {
               category: priority.category,
               priority: priority.level,
               isWatchlist: uWatchlistMatch
-            }, u.uid);
+            }, u.uid, alertRulesSnapshot);
 
             const effectiveScope = uPrefs?.telegramAlertScope || uPrefs?.alertScope || 'WATCHLIST_ONLY';
             // Skip alert processing entirely only when nothing could match:
@@ -516,12 +483,13 @@ export async function processAnnouncements() {
             // An in-app-only rule match (e.g. the system buyback preset:
             // ALL_STOCKS scope, telegram off) must never trigger a Telegram
             // message for companies outside the user's watchlist.
-            const telegramEligible = isTelegramEligible(prefsMatch, userRuleEval.shouldSendTelegram);
-            const matchesUser = telegramEligible || userRuleEval.shouldSendInApp;
+            const channels = personalAlertChannels(userRuleEval, prefsMatch, uWatchlistMatch);
+            const telegramEligible = channels.telegram;
+            const matchesUser = telegramEligible || channels.inApp;
             
             const userNotifMuted = Boolean(u.muteInAppNotifications ?? uPrefs?.muteInAppNotifications);
             if (matchesUser) {
-              if (!userNotifMuted && (uWatchlistMatch || userRuleEval.shouldSendInApp)) {
+              if (!userNotifMuted && channels.inApp) {
                 const notifType = materialEvt ? (materialEvt.eventType as any) : (priority.category === 'RESULTS' ? 'RESULT' : (userRuleEval.shouldSendInApp ? 'RULE_MATCH' : 'GENERAL'));
                 await addNotification({
                   id: `notif_${newsId}_${u.uid}`,
@@ -554,12 +522,14 @@ export async function processAnnouncements() {
                 // watchlist match. A stock deleted seconds ago can never
                 // trigger this send. (Custom alert rules with telegram ON are
                 // explicit per-rule opt-ins and are not affected by this.)
-                if (prefsMatch && uWatchlistMatch) {
-                  const freshSymbols = await getActiveWatchlistSymbols(u.uid, { noCreate: true }).catch(() => userSymbols);
+                if (uWatchlistMatch) {
+                  const freshSymbols = await getActiveWatchlistSymbols(u.uid, { noCreate: true });
                   const stillWatched = freshSymbols.some(kw => isSymbolMatch(companyName, subject, kw, scrip_cd));
                   // Opportunistically refresh the snapshot for later items.
                   monitorUserWatchlistCache.set(u.uid, { symbols: freshSymbols, map: userSymbolMap, fetchedAt: Date.now() });
-                  if (!stillWatched) {
+                  const withoutWatchlist = evaluateAlertRulesForUser({companyName, symbol: companyName, scripCode: scrip_cd, subject, details, category: priority.category, priority: priority.level, isWatchlist: false}, u.uid, alertRulesSnapshot);
+                  const prefsWithoutWatchlist = doesAnnouncementMatchUserPrefs(uPrefs, priority, null, subject, details, false);
+                  if (!stillWatched && !personalAlertChannels(withoutWatchlist, prefsWithoutWatchlist, false).telegram) {
                     console.debug(`[TELEGRAM] skip user ${u.uid} for ${companyName}: no longer in watchlist (deleted after snapshot)`);
                     continue;
                   }

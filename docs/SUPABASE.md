@@ -11,7 +11,7 @@ server-side Supabase operations.
 | Profiles, preferences, trial and tier fields | `server/database/usersDao.ts` | Supabase `users`; local JSON cache |
 | Watchlists | `server/database/watchlistDao.ts` | Supabase `user_watchlists`; local JSON fallback |
 | Announcements | `server/database/announcementDao.ts` | Supabase `announcements`; local JSON fallback |
-| Alert rules | `server/database/alertRulesDao.ts` | Supabase `alert_rules`; local JSON fallback |
+| Alert rules | `server/database/alertRulesDao.ts` | Supabase `alert_rules`; confirmed durable reads/writes; local JSON only for unconfigured non-production development |
 | Notifications | `server/database/notificationDao.ts` | Supabase `notifications`; local JSON fallback |
 | User notes | `server/database/notesDao.ts` | Supabase `user_notes`; local JSON fallback |
 | Settings, logs, feedback | Their corresponding DAOs | Supabase `settings`, `logs`, `feedback`; local JSON fallback |
@@ -69,3 +69,9 @@ so it does not need a separate listener on port `24678`. `DISABLE_HMR=true`
 disables HMR. If the HTTP port is occupied, startup closes Vite and exits with
 an actionable error instead of leaving a second worker process running.
 Stop the duplicate preview process or configure a free port, then restart.
+
+## Alert settings — 2026-10-08
+
+The existing `alert_rules(id text primary key, user_id text references users(uid), rule jsonb, created_at timestamptz)` table supports both presets and custom rules. This change requires no new table or DDL. Live schema was checked read-only. Presets use three deterministic IDs derived from verified UID and preset key, written in a single bulk upsert. Existing duplicate generated presets remain archived in the table; effective reads choose the latest per owner/key, with canonical saves taking precedence. New custom-rule IDs remain stable across retries and updates/deletes filter ownership. Do not delete historical rows as a prerequisite for release.
+
+Ship the frontend and server together: the UI now uses `PUT /api/alert-rules/presets`. Reads and writes fail with a visible 503 when configured durable storage is unavailable. The filing monitor reads a fresh paginated rule snapshot before processing new filings; it does not rely on startup-only cache restoration. Global filing inbox broadcasts are replaced by recipient-specific entries. General system notices and admin Telegram remain separate.

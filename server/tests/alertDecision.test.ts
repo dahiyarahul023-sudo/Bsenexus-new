@@ -115,3 +115,15 @@ describe('wantsTelegramEnable (Pro gate)', () => {
     );
   });
 });
+
+// Preset OFF states must not be overridden by the older preferences path.
+import { personalAlertChannels } from '../utils/alertDecision.js';
+test('explicit disabled presets suppress inherited watchlist channels', () => {
+  assert.deepEqual(personalAlertChannels({hasConfiguredPresets:true,shouldSendInApp:false,shouldSendTelegram:false},true,true),{inApp:false,telegram:false});
+});
+test('in-app-only explicit rule cannot trigger Telegram through inherited preferences', () => {
+  assert.deepEqual(personalAlertChannels({hasConfiguredPresets:true,shouldSendInApp:true,shouldSendTelegram:false},true,true),{inApp:true,telegram:false});
+});
+test('users without saved presets retain their legacy preference delivery', () => {
+  assert.deepEqual(personalAlertChannels({hasConfiguredPresets:false,shouldSendInApp:false,shouldSendTelegram:false},true,true),{inApp:true,telegram:true});
+});

@@ -56,3 +56,6 @@ Event constants such as `EVENT_NAME` / `SYNC_EVENT_NAME`, aliases, bubbling, thi
 - Record each relevant consumer as changed, compatible with evidence, or blocked. Global CSS changes require checking all affected screens even if a seed domain lists only representative owners.
 
 The map does not execute the UI, inspect production traffic, prove context correctness or certify accessibility. See `FRONTEND_RULES.md` for behavior/browser evidence requirements.
+
+
+2026-10-08 alert follow-through: SettingsTab and both Layout entry points share AlertRulesModal. Preset drafts → one durable PUT → confirmed rules/switches; custom create/edit/toggle/delete → owner-scoped API → same list/count. Presets are excluded from the custom count. Session/open lifecycle aborts obsolete requests and retains failed-save drafts; explicit channel selections feed recipient-specific monitor decisions. See `changes/alert-reliability.md` for tests and remaining browser/runtime gates.

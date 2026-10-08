@@ -68,7 +68,7 @@ import {
   claimFreeSummaryDemo,
   releaseFreeSummaryDemo
 } from "../database/usersDao.js";
-import { getAllAlertRules, saveAlertRule, toggleAlertRule, deleteAlertRule } from "../database/alertRulesDao.js";
+import { getAllAlertRules, saveAlertRule, saveAlertPresets, toggleAlertRule, deleteAlertRule, AlertRuleError } from "../database/alertRulesDao.js";
 import { checkServerAiQuota, consumeServerAiQuota, checkAndConsumeServerAiQuota, refundServerAiQuota, completeServerAiQuotaReservation, getServerAiQuotaStatus, resetServerAiQuota } from "../services/aiQuotaService.js";
 import { getTodayUsage, quotaConsumedPct } from "../services/ai/providerQuotaLedger.js";
 import { MODEL_REGISTRY, TASK_CHAINS, providerKeyPresent } from "../services/ai/modelRegistry.js";
@@ -2484,23 +2484,24 @@ apiRouter.post("/notifications/toggle-mute", requireAuth, async (req, res) => {
 // FEATURE 3 (CONT.): ADVANCED ALERT RULES
 // ==========================================
 
-apiRouter.get("/alert-rules", async (req, res) => {
+apiRouter.get("/alert-rules", requireAuth, async (req, res) => {
   try {
     const uid = getReqUserId(req);
-    const rules = getAllAlertRules(uid);
+    const rules = await getAllAlertRules(uid);
+    res.setHeader("Cache-Control", "private, no-store");
     res.json({ rules });
   } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(err instanceof AlertRuleError ? err.status : 500).json({ success: false, error: err.message });
   }
 });
 
 apiRouter.post("/alert-rules", requireAuth, async (req, res) => {
   try {
     const uid = getReqUserId(req);
-    const rule = saveAlertRule(req.body, uid);
+    const rule = await saveAlertRule(req.body, uid);
     res.json({ success: true, rule });
   } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(err instanceof AlertRuleError ? err.status : 500).json({ success: false, error: err.message });
   }
 });
 
@@ -2508,21 +2509,26 @@ apiRouter.patch("/alert-rules/:id/toggle", requireAuth, async (req, res) => {
   try {
     const uid = getReqUserId(req);
     const { enabled } = req.body;
-    const ok = toggleAlertRule(req.params.id, Boolean(enabled), uid);
+    const ok = await toggleAlertRule(req.params.id, enabled, uid);
     res.status(ok ? 200 : 404).json({ success: ok });
   } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(err instanceof AlertRuleError ? err.status : 500).json({ success: false, error: err.message });
   }
 });
 
 apiRouter.delete("/alert-rules/:id", requireAuth, async (req, res) => {
   try {
     const uid = getReqUserId(req);
-    const ok = deleteAlertRule(req.params.id, uid);
+    const ok = await deleteAlertRule(req.params.id, uid);
     res.status(ok ? 200 : 404).json({ success: ok });
   } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(err instanceof AlertRuleError ? err.status : 500).json({ success: false, error: err.message });
   }
+});
+
+apiRouter.put("/alert-rules/presets", requireAuth, async (req,res) => {
+  try {const rules=await saveAlertPresets(req.body,getReqUserId(req));res.json({success:true,rules});}
+  catch(err:any){res.status(err instanceof AlertRuleError?err.status:500).json({success:false,error:err instanceof AlertRuleError?err.message:'Unable to save alert presets.'});}
 });
 
 // ==========================================

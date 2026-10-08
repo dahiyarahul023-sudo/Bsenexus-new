@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   X, ShieldAlert, Plus, ToggleLeft, ToggleRight, Trash2, 
   CheckCircle2, Sparkles, Filter, Bell, Send, Edit3, 
@@ -6,6 +6,10 @@ import {
   TrendingUp, Activity, FileText, CheckCheck, SlidersHorizontal
 } from 'lucide-react';
 import { customFetch } from '../api';
+import { useAuth } from '../context/AuthContext';
+import { presetKeyOf, presetsFromRules } from '../shared/alertRules';
+import type { AlertRule } from '../shared/alertRules';
+export type { AlertRule } from '../shared/alertRules';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { ActionButton } from './ui/ActionButton';
 import { clsx, type ClassValue } from 'clsx';
@@ -41,23 +45,6 @@ function AlertRuleSkeleton() {
   );
 }
 
-export interface AlertRule {
-  id: string;
-  name: string;
-  description: string;
-  enabled: boolean;
-  category: 'ALL' | 'RESULTS' | 'DIVIDEND' | 'BUYBACK' | 'ORDER_WIN' | 'BOARD_MEETING';
-  priority: 'HIGH_ONLY' | 'MEDIUM_HIGH' | 'ALL';
-  scope: 'ALL_STOCKS' | 'WATCHLIST_ONLY' | 'SPECIFIC_SYMBOLS';
-  symbols: string[];
-  keywords: string[];
-  excludeKeywords: string[];
-  channels: {
-    inApp: boolean;
-    telegram: boolean;
-  };
-}
-
 interface AlertRulesModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -65,6 +52,17 @@ interface AlertRulesModalProps {
 
 export function AlertRulesModal({ isOpen, onClose }: AlertRulesModalProps) {
   useBodyScrollLock(isOpen);
+  const { user } = useAuth();
+  const uid = user?.uid || '';
+  const identity = useRef(uid); identity.current = uid;
+  const session = useRef(0);
+  const pending = useRef<AbortController | null>(null);
+  const busy = useRef(false);
+  const draftId = useRef<string | null>(null);
+  const [editingId,setEditingId] = useState<string | null>(null);
+  const [error,setError] = useState<string | null>(null);
+  const [loaded,setLoaded] = useState(false);
+
 
   const [activeTab, setActiveTab] = useState<'presets' | 'custom'>('presets');
   const [rules, setRules] = useState<AlertRule[]>([]);
@@ -84,7 +82,7 @@ export function AlertRulesModal({ isOpen, onClose }: AlertRulesModalProps) {
   // New Rule Form State
   const [name, setName] = useState<string>('');
   const [description, setDescription] = useState<string>('');
-  const [category, setCategory] = useState<'ALL' | 'RESULTS' | 'DIVIDEND' | 'BUYBACK' | 'ORDER_WIN' | 'BOARD_MEETING'>('RESULTS');
+  const [category, setCategory] = useState<AlertRule['category']>('RESULTS');
   const [priority, setPriority] = useState<'HIGH_ONLY' | 'MEDIUM_HIGH' | 'ALL'>('HIGH_ONLY');
   const [scope, setScope] = useState<'ALL_STOCKS' | 'WATCHLIST_ONLY' | 'SPECIFIC_SYMBOLS'>('WATCHLIST_ONLY');
   const [symbolsInput, setSymbolsInput] = useState<string>('');
@@ -93,176 +91,83 @@ export function AlertRulesModal({ isOpen, onClose }: AlertRulesModalProps) {
   const [inApp, setInApp] = useState<boolean>(true);
   const [telegram, setTelegram] = useState<boolean>(true);
 
-  useEffect(() => {
-    if (isOpen) {
-      loadRules();
-    }
-  }, [isOpen]);
-
+  const applyRules = (loadedRules: AlertRule[]) => {
+    setRules(loadedRules);
+    const p=presetsFromRules(loadedRules);
+    setPresetResults(p.results); setPresetCorpActions(p.corporate); setPresetMaterial(p.material);
+    setPresetScope(p.scope==='ALL_STOCKS'?'all':'watchlist');
+    setPresetInApp(p.channels.inApp); setPresetTelegram(p.channels.telegram);
+  };
+  const request = async (url:string, options:RequestInit={}) => {
+    const controller = new AbortController(); pending.current=controller;
+    const timer=setTimeout(()=>controller.abort(),15000);
+    try {
+      const response=await customFetch(url,{...options,cache:'no-store',signal:controller.signal});
+      const data=await response.json();
+      if(!response.ok||data.success===false)throw new Error(data.error||'Unable to save alerts. Please retry.');
+      return data;
+    } finally {clearTimeout(timer);if(pending.current===controller)pending.current=null;}
+  };
   const loadRules = async () => {
-    setLoading(true);
+    const version=session.current, owner=uid;
+    setLoading(true);setError(null);
     try {
-      const res = await customFetch('/api/alert-rules');
-      if (res.ok) {
-        const data = await res.json();
-        const loaded = data.rules || [];
-        setRules(loaded);
-
-        // Check if presets already exist in rules
-        const resultsRule = loaded.find((r: AlertRule) => r.category === 'RESULTS');
-        if (resultsRule) setPresetResults(resultsRule.enabled);
-
-        const corpRule = loaded.find((r: AlertRule) => r.category === 'DIVIDEND' || r.category === 'BUYBACK');
-        if (corpRule) setPresetCorpActions(corpRule.enabled);
-
-        const matRule = loaded.find((r: AlertRule) => r.category === 'ALL' || r.category === 'ORDER_WIN');
-        if (matRule) setPresetMaterial(matRule.enabled);
-      }
-    } catch (e) {
-      console.error("Failed to load alert rules", e);
-    } finally {
-      setLoading(false);
-    }
+      if(!owner)throw new Error('Sign in to manage alerts.');
+      const data=await request('/api/alert-rules');
+      if(!Array.isArray(data.rules))throw new Error('Invalid alert response. Please retry.');
+      if(version!==session.current||owner!==identity.current)return;
+      applyRules(data.rules);setLoaded(true);
+    } catch(e:any) {
+      if(version===session.current&&owner===identity.current)setError(e.name==='AbortError'?'Loading timed out. Please retry.':e.message);
+    } finally {if(version===session.current&&owner===identity.current)setLoading(false);}
   };
-
-  const handleToggle = async (id: string, currentEnabled: boolean) => {
+  useEffect(() => {
+    session.current++;busy.current=false;setSaving(false);setLoaded(false);setRules([]);setIsCreating(false);setPresetSavedFeedback(null);resetForm();
+    if(isOpen)void loadRules();
+    return ()=>{session.current++;pending.current?.abort();};
+  },[isOpen,uid]);
+  const mutate = async (run:()=>Promise<any>, onSuccess:(data:any)=>void) => {
+    if(busy.current||!loaded)return;
+    busy.current=true;setSaving(true);setError(null);setPresetSavedFeedback(null);
+    const version=session.current,owner=uid;
     try {
-      const res = await customFetch(`/api/alert-rules/${id}/toggle`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ enabled: !currentEnabled })
-      });
-      if (res.ok) {
-        setRules(prev => prev.map(r => r.id === id ? { ...r, enabled: !currentEnabled } : r));
-      }
-    } catch (e) {
-      console.error(e);
-    }
+      const data=await run();
+      if(version===session.current&&owner===identity.current)onSuccess(data);
+    } catch(e:any) {
+      if(version===session.current&&owner===identity.current)setError(e.name==='AbortError'?'Save timed out; its outcome is unconfirmed. Retry safely or reopen to check.':e.message);
+    } finally {if(version===session.current&&owner===identity.current){busy.current=false;setSaving(false);}}
   };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this alert rule?')) return;
-    try {
-      const res = await customFetch(`/api/alert-rules/${id}`, { method: 'DELETE' });
-      if (res.ok) {
-        setRules(prev => prev.filter(r => r.id !== id));
-      }
-    } catch (e) {
-      console.error(e);
-    }
+  const handleToggle = (id:string,currentEnabled:boolean) => mutate(
+    ()=>request(`/api/alert-rules/${encodeURIComponent(id)}/toggle`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({enabled:!currentEnabled})}),
+    ()=>setRules(prev=>prev.map(r=>r.id===id?{...r,enabled:!currentEnabled}:r)));
+  const handleDelete = (id:string) => {
+    if(!confirm('Are you sure you want to delete this alert rule?'))return;
+    void mutate(()=>request(`/api/alert-rules/${encodeURIComponent(id)}`,{method:'DELETE'}),()=>setRules(prev=>prev.filter(r=>r.id!==id)));
   };
-
-  const handleSavePresets = async () => {
-    setSaving(true);
-    try {
-      // 1. Results Preset Rule
-      await customFetch('/api/alert-rules', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: 'Financial Results Preset',
-          description: 'Quarterly & Annual results with revenue & profit outcomes',
-          enabled: presetResults,
-          category: 'RESULTS',
-          priority: 'ALL',
-          scope: presetScope === 'watchlist' ? 'WATCHLIST_ONLY' : 'ALL_STOCKS',
-          symbols: [],
-          keywords: ['financial result', 'unaudited financial', 'audited financial', 'outcome of board meeting'],
-          excludeKeywords: [],
-          channels: { inApp: presetInApp, telegram: presetTelegram }
-        })
-      });
-
-      // 2. Corporate Actions Preset Rule
-      await customFetch('/api/alert-rules', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: 'Corporate Actions Preset',
-          description: 'Dividends, Bonus issues, Stock splits & Buybacks',
-          enabled: presetCorpActions,
-          category: 'DIVIDEND',
-          priority: 'ALL',
-          scope: presetScope === 'watchlist' ? 'WATCHLIST_ONLY' : 'ALL_STOCKS',
-          symbols: [],
-          keywords: ['dividend', 'interim dividend', 'bonus', 'sub-division', 'split', 'buyback'],
-          excludeKeywords: [],
-          channels: { inApp: presetInApp, telegram: presetTelegram }
-        })
-      });
-
-      // 3. All Material Updates Preset Rule
-      await customFetch('/api/alert-rules', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: 'All Material Updates Preset',
-          description: 'High-priority SEBI LODR Reg 30, Order wins & M&A',
-          enabled: presetMaterial,
-          category: 'ALL',
-          priority: 'HIGH_ONLY',
-          scope: presetScope === 'watchlist' ? 'WATCHLIST_ONLY' : 'ALL_STOCKS',
-          symbols: [],
-          keywords: [],
-          excludeKeywords: ['loss of share', 'duplicate certificate', 'scrutinizer'],
-          channels: { inApp: presetInApp, telegram: presetTelegram }
-        })
-      });
-
-      await loadRules();
-      setPresetSavedFeedback('Alert presets updated successfully!');
-      setTimeout(() => setPresetSavedFeedback(null), 3000);
-    } catch (e: any) {
-      alert('Error saving presets: ' + e.message);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleSaveRule = async (e: React.FormEvent) => {
+  const handleSavePresets = () => mutate(()=>request('/api/alert-rules/presets',{
+    method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({results:presetResults,corporate:presetCorpActions,material:presetMaterial,scope:presetScope==='watchlist'?'WATCHLIST_ONLY':'ALL_STOCKS',channels:{inApp:presetInApp,telegram:presetTelegram}})
+  }),data=>{
+    if(!Array.isArray(data.rules)||data.rules.length!==3)throw new Error('Preset save could not be confirmed. Reopen to check.');
+    applyRules([...rules.filter(r=>!presetKeyOf(r)),...data.rules]);setPresetSavedFeedback('Alert presets saved.');
+  });
+  const handleSaveRule = (e:React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) {
-      alert('Please enter a Rule Name');
-      return;
-    }
-
-    setSaving(true);
-    try {
-      const newRulePayload = {
-        name: name.trim(),
-        description: description.trim() || `${category} alert rule`,
-        enabled: true,
-        category,
-        priority,
-        scope,
-        symbols: symbolsInput.split(',').map(s => s.trim().toUpperCase()).filter(Boolean),
-        keywords: keywordsInput.split(',').map(k => k.trim().toLowerCase()).filter(Boolean),
-        excludeKeywords: excludeKeywordsInput.split(',').map(k => k.trim().toLowerCase()).filter(Boolean),
-        channels: {
-          inApp,
-          telegram
-        }
-      };
-
-      const res = await customFetch('/api/alert-rules', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newRulePayload)
-      });
-
-      if (res.ok) {
-        await loadRules();
-        setIsCreating(false);
-        resetForm();
-      }
-    } catch (err: any) {
-      alert('Failed to save alert rule: ' + err.message);
-    } finally {
-      setSaving(false);
-    }
+    if(!draftId.current)draftId.current=editingId || `rule_${crypto.randomUUID()}`;
+    void mutate(()=>request('/api/alert-rules',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      id:draftId.current,name:name.trim(),description:description.trim(),enabled:editingId?rules.find(r=>r.id===editingId)?.enabled??true:true,category,priority,scope,
+      symbols:symbolsInput.split(',').map(s=>s.trim().toUpperCase()).filter(Boolean),keywords:keywordsInput.split(',').map(k=>k.trim().toLowerCase()).filter(Boolean),excludeKeywords:excludeKeywordsInput.split(',').map(k=>k.trim().toLowerCase()).filter(Boolean),channels:{inApp,telegram}
+    })}),data=>{
+      if(!data.rule?.id)throw new Error('Rule save could not be confirmed. Reopen to check.');
+      setRules(prev=>[...prev.filter(r=>r.id!==data.rule.id),data.rule]);setIsCreating(false);resetForm();
+    });
   };
+  const handleEdit = (rule:AlertRule) => {
+    setEditingId(rule.id);draftId.current=rule.id;setName(rule.name);setDescription(rule.description||'');setCategory(rule.category);setPriority(rule.priority);setScope(rule.scope);setSymbolsInput(rule.symbols.join(', '));setKeywordsInput(rule.keywords.join(', '));setExcludeKeywordsInput(rule.excludeKeywords.join(', '));setInApp(rule.channels.inApp);setTelegram(rule.channels.telegram);setIsCreating(true);
+  };
+  const customRules = rules.filter(r=>!presetKeyOf(r));
 
   const resetForm = () => {
+    draftId.current=null;setEditingId(null);
     setName('');
     setDescription('');
     setCategory('RESULTS');
@@ -347,9 +252,9 @@ export function AlertRulesModal({ isOpen, onClose }: AlertRulesModalProps) {
             )}
           >
             <span>Custom Alerts</span>
-            {rules.length > 0 && (
+            {customRules.length > 0 && (
               <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-slate-200 dark:bg-[#2D283E] text-slate-700 dark:text-slate-300">
-                {rules.length}
+                {customRules.length}
               </span>
             )}
             {activeTab === 'custom' && (
@@ -360,6 +265,9 @@ export function AlertRulesModal({ isOpen, onClose }: AlertRulesModalProps) {
 
         {/* Content Body */}
         <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4 overscroll-contain">
+          {error && <div role="alert" className="text-sm text-rose-600">{error}{!loaded && <button type="button" onClick={()=>void loadRules()} disabled={loading} className="ml-2 underline">Try again</button>}</div>}
+          {loading && <AlertRuleSkeleton />}
+          <fieldset disabled={saving || loading || !loaded} className="min-w-0" onChange={()=>setPresetSavedFeedback(null)} onClick={()=>setPresetSavedFeedback(null)}>
           
           {/* TAB 1: PRESETS FOR NORMAL USERS */}
           {activeTab === 'presets' && (
@@ -393,7 +301,7 @@ export function AlertRulesModal({ isOpen, onClose }: AlertRulesModalProps) {
                     "p-2 rounded-lg transition-colors cursor-pointer shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center",
                     presetResults ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400 hover:text-slate-600"
                   )}
-                  title={presetResults ? "Enabled" : "Disabled"}
+                  role="switch" aria-label="Financial Results" aria-checked={presetResults} title={presetResults ? "Enabled" : "Disabled"}
                 >
                   {presetResults ? <ToggleRight size={28} /> : <ToggleLeft size={28} />}
                 </button>
@@ -424,7 +332,7 @@ export function AlertRulesModal({ isOpen, onClose }: AlertRulesModalProps) {
                     "p-2 rounded-lg transition-colors cursor-pointer shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center",
                     presetCorpActions ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400 hover:text-slate-600"
                   )}
-                  title={presetCorpActions ? "Enabled" : "Disabled"}
+                  role="switch" aria-label="Corporate Actions" aria-checked={presetCorpActions} title={presetCorpActions ? "Enabled" : "Disabled"}
                 >
                   {presetCorpActions ? <ToggleRight size={28} /> : <ToggleLeft size={28} />}
                 </button>
@@ -455,7 +363,7 @@ export function AlertRulesModal({ isOpen, onClose }: AlertRulesModalProps) {
                     "p-2 rounded-lg transition-colors cursor-pointer shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center",
                     presetMaterial ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400 hover:text-slate-600"
                   )}
-                  title={presetMaterial ? "Enabled" : "Disabled"}
+                  role="switch" aria-label="All Material Updates" aria-checked={presetMaterial} title={presetMaterial ? "Enabled" : "Disabled"}
                 >
                   {presetMaterial ? <ToggleRight size={28} /> : <ToggleLeft size={28} />}
                 </button>
@@ -693,12 +601,12 @@ export function AlertRulesModal({ isOpen, onClose }: AlertRulesModalProps) {
                     <ActionButton
                       type="submit"
                       isLoading={saving}
-                      loadingText="Creating..."
+                      loadingText="Saving..."
                       variant="primary"
                       size="md"
                       disabled={!name.trim()}
                     >
-                      Create & Activate Rule
+                      {editingId ? 'Save Rule' : 'Create & Activate Rule'}
                     </ActionButton>
                   </div>
                 </form>
@@ -709,7 +617,7 @@ export function AlertRulesModal({ isOpen, onClose }: AlertRulesModalProps) {
                     <span className="text-xs text-slate-500 font-medium">Custom alert rules evaluate 100% of live BSE filings:</span>
                     <button
                       type="button"
-                      onClick={() => setIsCreating(true)}
+                      onClick={() => {resetForm();setIsCreating(true);}}
                       className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 text-xs font-bold rounded-lg transition-all flex items-center gap-1 cursor-pointer"
                     >
                       <Plus size={13} />
@@ -719,19 +627,19 @@ export function AlertRulesModal({ isOpen, onClose }: AlertRulesModalProps) {
 
                   {loading ? (
                     <AlertRuleSkeleton />
-                  ) : rules.length === 0 ? (
+                  ) : customRules.length === 0 ? (
                     <div className="py-12 text-center text-xs text-slate-400 space-y-2 bg-slate-50 dark:bg-[#15141F] rounded-xl border border-slate-200 dark:border-[#2D283E]">
                       <p>No custom alert rules configured yet.</p>
                       <button
                         type="button"
-                        onClick={() => setIsCreating(true)}
+                        onClick={() => {resetForm();setIsCreating(true);}}
                         className="px-3.5 py-1.5 bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-bold rounded-lg text-xs cursor-pointer"
                       >
                         Add your first custom alert rule
                       </button>
                     </div>
                   ) : (
-                    rules.map((rule) => {
+                    customRules.map((rule) => {
                       const isResult = rule.category === 'RESULTS';
                       const isDiv = rule.category === 'DIVIDEND';
                       const isOrder = rule.category === 'ORDER_WIN';
@@ -787,6 +695,7 @@ export function AlertRulesModal({ isOpen, onClose }: AlertRulesModalProps) {
                           </div>
 
                           <div className="flex items-center gap-1.5 shrink-0">
+                            <button type="button" onClick={()=>handleEdit(rule)} aria-label={`Edit ${rule.name}`} className="p-1.5"><Edit3 size={16} /></button>
                             <button
                               type="button"
                               onClick={() => handleToggle(rule.id, rule.enabled)}
@@ -816,11 +725,12 @@ export function AlertRulesModal({ isOpen, onClose }: AlertRulesModalProps) {
               )}
             </div>
           )}
+          </fieldset>
         </div>
 
         {/* Footer */}
         <div className="p-3.5 border-t border-slate-100 dark:border-[#2D283E] bg-slate-50/80 dark:bg-[#15141F] flex items-center justify-between text-xs text-slate-500">
-          <span>Active alert rules evaluate 100% of live BSE streaming filings</span>
+          <span>Rules apply to newly received filings. Telegram requires a linked account, active Pro access and alerts enabled.</span>
           <button
             type="button"
             onClick={onClose}

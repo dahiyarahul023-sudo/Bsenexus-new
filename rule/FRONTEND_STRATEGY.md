@@ -44,3 +44,6 @@ Start with the highest-priority reproducible failure in the baseline. Do not rew
 Read [FRONTEND_COMPLETION_GUIDE.md](FRONTEND_COMPLETION_GUIDE.md) before planning or implementing frontend consistency work. It specifies screen/action inventory, shared command and state ownership, every action's required effects, a design/token adoption contract, action-level interactive mapping, automatic refresh, enforcement and evidence gates.
 
 Current status (2026-10-07): these missing requirements are now specified; their runtime implementation and browser verification remain open. The previous foundation establishes rules and file-level mapping only. Execute phases A–G in the guide in bounded feature changes; update this status with concrete evidence after each change. Never treat the written strategy as proof that all buttons, screens, styles or transitions comply.
+
+
+2026-10-08 bounded alert implementation: stable preset identity, durable confirmation, separate custom rules with edit controls, owner/session response guards, and periodic server snapshot refresh address phase C for alert settings. Browser and live provider verification remain separate release gates; see `changes/alert-reliability.md`.

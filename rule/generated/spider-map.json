@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "cff993bb5f862146afee08b3910fa58ff5eb04b67780c3eba83e18fb03a7fa1d",
+  "sourceDigest": "938413d7f6e7fc87cd35d8a271561e21b3333af55bf23baf28bc9eb558ae4ed5",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -30,7 +30,7 @@
     },
     {
       "path": "index.html",
-      "sha256": "1b09cd99d00467331a8e140da4bf1e5ca38f121f35239968c7e85fd06109658f",
+      "sha256": "e35fd3d734334baecb3fce6d40964f548f7ac7575f5a5d6446b5d6d2cb161eed",
       "importedBy": []
     },
     {
@@ -40,7 +40,7 @@
     },
     {
       "path": "package-lock.json",
-      "sha256": "b8fd8494eecf47396789c690629b7626ae1b5216af84874d0e93ee0478409ca8",
+      "sha256": "16905abbb28ed6349ccb31dbf9c70463d86bdcb02a22e250802f41c35e49564e",
       "importedBy": []
     },
     {
@@ -167,7 +167,7 @@
     },
     {
       "path": "server.ts",
-      "sha256": "714ca28a5dee1cd8e417e3d2ff12e3550061899e62716ab17bcde82cb84b6c65",
+      "sha256": "5396a45bca5e76add65bedf0b773e714df74847aa15a026d701f2d439bc0cf21",
       "importedBy": [
         "server/tests/routeResolution.test.ts"
       ]
@@ -203,9 +203,10 @@
     },
     {
       "path": "server/api/routes.ts",
-      "sha256": "bb6b3f680e624449915f7628746ef4883f7ea34935968b77f8d7333a214cb368",
+      "sha256": "6d571f7bd585ff96bcca88608a39841b4fa433a761ff1f07463a34e2ab2671c7",
       "importedBy": [
         "server.ts",
+        "server/tests/alertRulesApi.test.ts",
         "server/tests/auditSecurity.test.ts"
       ]
     },
@@ -243,10 +244,11 @@
     },
     {
       "path": "server/database/alertRulesDao.ts",
-      "sha256": "200e8680a230af255c927ee0b6ccbf99b36e06c7afedfbbae7c1bd3af06e4706",
+      "sha256": "8007dcf657edc016053e3123daa03a1ae91380461a41a58e7a5ca8d6ad6b5a60",
       "importedBy": [
         "server/api/routes.ts",
         "server/services/monitor.ts",
+        "server/tests/alertRulesReliability.test.ts",
         "server/tests/auditSecurity.test.ts"
       ]
     },
@@ -675,7 +677,7 @@
     },
     {
       "path": "server/services/marketGuidesService.ts",
-      "sha256": "56848350e9edadb068929b0cb208ef1d91772a0bf26318bf913a35ddea19d1a4",
+      "sha256": "e3b61cea29f87c094ddc1d3b7d24ff787fdeec3cc23e199855e28c8be57d2298",
       "importedBy": [
         "server.ts",
         "server/api/routes.ts",
@@ -693,7 +695,7 @@
     },
     {
       "path": "server/services/monitor.ts",
-      "sha256": "33bb3c94c068035e61efcc0a7016fac0d692ddf16ed3086fa90aad6937cdcf44",
+      "sha256": "f23237be2279595b6080e0efaa189f421b51889d882493d527d0859e5860fc0c",
       "importedBy": [
         "server.ts",
         "server/api/routes.ts"
@@ -733,7 +735,7 @@
     },
     {
       "path": "server/services/resultsCalendarService.ts",
-      "sha256": "231308c769295f9b01c521aadbb22ae3c7c68722019bc35e5f7d012ccbbbaccf",
+      "sha256": "0cb2b02ebff2086f7724747256a9461ebc1e98c62e69ba776a4d501e8d98ed44",
       "importedBy": [
         "server.ts",
         "server/api/routes.ts",
@@ -815,7 +817,17 @@
     },
     {
       "path": "server/tests/alertDecision.test.ts",
-      "sha256": "4090639e0d5ae6094d8961dfa727372d224495531d23e79838945504750e1050",
+      "sha256": "e3eba6ae0909a37869f7f40ac6c8d769ec365e1b293e9249b2343681ca82b3c7",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/alertRulesApi.test.ts",
+      "sha256": "540e7aedd04d5e6ca3e09aa03efb0eb47ff3b8ab619ae212786a551148fbb738",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/alertRulesReliability.test.ts",
+      "sha256": "0ff071de14ae3fb0b54a5a5b3cef139c7cf63b8715b61c4d9de327d10362be5f",
       "importedBy": []
     },
     {
@@ -830,7 +842,7 @@
     },
     {
       "path": "server/tests/auditSecurity.test.ts",
-      "sha256": "6489e526d50543134f22b6de9e73f48d959de545f8a8f7b8062c89339fc51991",
+      "sha256": "077836353f3d46de60c2115c2b65eda0964d8229d8a25cecb9ed3d2439a6e18c",
       "importedBy": []
     },
     {
@@ -845,7 +857,7 @@
     },
     {
       "path": "server/tests/calendarScope.test.ts",
-      "sha256": "bf4152ea637094410d3862d2a4e8801cea19d86c6ed0dc1f2bcf8e6fdea7705d",
+      "sha256": "fcd203ba6881e1b484e0281f3dd7043936d7582edada67facc7137e8568e9578",
       "importedBy": []
     },
     {
@@ -975,7 +987,7 @@
     },
     {
       "path": "server/utils/alertDecision.ts",
-      "sha256": "fc8357b4cb0a880a189cf6c5382bfcdd0f32feaef5b6fafff8ea129940f720bd",
+      "sha256": "f9041206a29f2c8e43118213ac2fc361f2e15e798484bb44df37da9d9c643e19",
       "importedBy": [
         "server/api/routes.ts",
         "server/services/monitor.ts",
@@ -1025,6 +1037,7 @@
       "importedBy": [
         "server.ts",
         "server/api/routes.ts",
+        "server/database/alertRulesDao.ts",
         "server/database/announcementDao.ts",
         "server/services/bse.ts",
         "server/services/companyIntelService.ts",
@@ -1072,7 +1085,6 @@
       "path": "server/utils/retry.ts",
       "sha256": "8995ae3d7c0c232181ad05cd4b882d43bbc9620b8ba7e303ec89effa7843403f",
       "importedBy": [
-        "server/database/alertRulesDao.ts",
         "server/database/notesDao.ts",
         "server/database/usersDao.ts",
         "server/database/watchlistDao.ts"
@@ -1197,7 +1209,7 @@
     },
     {
       "path": "src/components/AlertRulesModal.tsx",
-      "sha256": "6b9b829a323fb556f89dee2a39b9caeda621254a3a2cc05e7ee3e27b71e93375",
+      "sha256": "e39d1dd3ff1d629cd8dc2b812019a8de101230742e200e519cacfc8fa1104ce9",
       "importedBy": [
         "src/components/Layout.tsx",
         "src/components/SettingsTab.tsx"
@@ -1205,7 +1217,7 @@
     },
     {
       "path": "src/components/Announcements.tsx",
-      "sha256": "c5cd1a52c40d6f4410d624226b5485499790fead4ab85052b80eb0888d3a3f88",
+      "sha256": "ad49d49738ee68c7ed871b304ff505993efaa9421a16e6ffde31277d28559e7e",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -1264,7 +1276,7 @@
     },
     {
       "path": "src/components/HomeForYou.tsx",
-      "sha256": "4fefe3d01f96c133f8de9f47fd16d611052cff6224d8dd1d33e08f4f5752256a",
+      "sha256": "0e377f43fc1ffc0705fc8b1af3ebfea7809e64d5eb62a871f6512ff6eb1a2f37",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -1278,7 +1290,7 @@
     },
     {
       "path": "src/components/Layout.tsx",
-      "sha256": "2057a84befd86fe98c9fadb9c1b8e9965d8c1b4dfc15abf1a42185cb62a53941",
+      "sha256": "9fa9779934a0c1b0fb480853a777d9ee8a7308b6f88918f4ea8abbac50a61a20",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -1319,7 +1331,7 @@
     },
     {
       "path": "src/components/NotificationInbox.tsx",
-      "sha256": "6e07df0055c0d1fedfe90f0aae96ea211defb9d5c99a03b5e90bfd8a8d802655",
+      "sha256": "d653449a450c0195f7fa6d848e24c48f9b6204fdae52e79a0a1f5d1e2882be64",
       "importedBy": [
         "src/components/Layout.tsx"
       ]
@@ -1384,7 +1396,7 @@
     },
     {
       "path": "src/components/ResultsCalendar.tsx",
-      "sha256": "bcecd5e9fa4a53d283d969cad698f8cd4b6def3a7536019823b4f61310950150",
+      "sha256": "6995f3c240d36c28638fd7002f91d5f1d3858da3af1d62f5a6208c0ec7fc061d",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -1456,7 +1468,7 @@
     },
     {
       "path": "src/components/WatchlistManager.tsx",
-      "sha256": "3b0c3a57ce0006061e2cea91fa4ea509c55ac7cb32036493b49cbe0f39d22bb3",
+      "sha256": "2a9d15cfff6b65528e01866d3d84b20effc61e7e2c573da987e610fc9f632bfc",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -1590,7 +1602,7 @@
     },
     {
       "path": "src/components/results/ResultsPage.tsx",
-      "sha256": "fcc82c0dd76b8f569fc68c1b158afb93b716f9f3eda4c76276df1eeb2c16919b",
+      "sha256": "7f0a28ffbabb21ed67d6df1e6552758f74a5cfb6dba9e057c73231ad4b502413",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -1984,12 +1996,13 @@
     },
     {
       "path": "src/context/AuthContext.tsx",
-      "sha256": "762ff4bd80574149ce5dd1388eabe44c2ddd330baa3a4cb585160328fde8ff09",
+      "sha256": "b7b1bd791854644ae7d4f191627c25ef48759e8a65c5fcb80776b73690d04956",
       "importedBy": [
         "src/App.tsx",
         "src/components/AdminDiagnostics.tsx",
         "src/components/AdminPinModal.tsx",
         "src/components/AiUsageCard.tsx",
+        "src/components/AlertRulesModal.tsx",
         "src/components/Announcements.tsx",
         "src/components/AuthModal.tsx",
         "src/components/CompanyIntelligenceModal.tsx",
@@ -2085,6 +2098,13 @@
         "src/components/ui/MarketHolidaysModal.tsx",
         "src/components/ui/SupportFloat.tsx",
         "src/hooks/usePaymentDialog.ts"
+      ]
+    },
+    {
+      "path": "src/hooks/useExpiryClock.ts",
+      "sha256": "ca6f85d697009a39763d1e8ec192a9792523eedb3f0c6f2c5b8ad63a934dcfc9",
+      "importedBy": [
+        "src/context/AuthContext.tsx"
       ]
     },
     {
@@ -2203,6 +2223,22 @@
       "path": "src/sentry.ts",
       "sha256": "880a212dc7cb00d9e54e185ddc309f8033b7cba4df1e9166b77bd7f04dd80f66",
       "importedBy": []
+    },
+    {
+      "path": "src/shared/alertRules.ts",
+      "sha256": "ef8a3d7d1f46a8a7373f64506a8fa4756f45fad4d3606c9e5dbc966eb6c151f9",
+      "importedBy": [
+        "server/database/alertRulesDao.ts",
+        "server/tests/alertRulesReliability.test.ts",
+        "src/components/AlertRulesModal.tsx"
+      ]
+    },
+    {
+      "path": "src/styles/mobile-repairs.css",
+      "sha256": "b3eb0f6bc4b5dad05532f063e911f60cda9eb776caaa358c8a72d9d49c188c18",
+      "importedBy": [
+        "src/components/Layout.tsx"
+      ]
     },
     {
       "path": "src/styles/payment.css",
@@ -2518,7 +2554,7 @@
     },
     {
       "path": "src/version.ts",
-      "sha256": "cb76d623658f0d97c2cdffee8439699c70881027cc309467e4efc5c3c25e09d3",
+      "sha256": "ffc367fbb68cff67626175af85e596d499325b91bee874f605fc59dfbb2c3b68",
       "importedBy": [
         "src/components/SettingsTab.tsx",
         "src/lib/sentry.ts"
@@ -3170,19 +3206,37 @@
       "source": "server/database/alertRulesDao.ts",
       "target": "server/database/supabase.ts",
       "kind": "import",
-      "line": 1
+      "line": 2
     },
     {
       "source": "server/database/alertRulesDao.ts",
       "target": "server/database/localStore.ts",
       "kind": "import",
-      "line": 2
+      "line": 3
     },
     {
       "source": "server/database/alertRulesDao.ts",
-      "target": "server/utils/retry.ts",
+      "target": "server/utils/helpers.ts",
       "kind": "import",
-      "line": 3
+      "line": 4
+    },
+    {
+      "source": "server/database/alertRulesDao.ts",
+      "target": "src/shared/alertRules.ts",
+      "kind": "import",
+      "line": 5
+    },
+    {
+      "source": "server/database/alertRulesDao.ts",
+      "target": "src/shared/alertRules.ts",
+      "kind": "import",
+      "line": 6
+    },
+    {
+      "source": "server/database/alertRulesDao.ts",
+      "target": "src/shared/alertRules.ts",
+      "kind": "reexport",
+      "line": 7
     },
     {
       "source": "server/database/announcementDao.ts",
@@ -4223,6 +4277,30 @@
       "line": 3
     },
     {
+      "source": "server/tests/alertDecision.test.ts",
+      "target": "server/utils/alertDecision.ts",
+      "kind": "import",
+      "line": 120
+    },
+    {
+      "source": "server/tests/alertRulesApi.test.ts",
+      "target": "server/api/routes.ts",
+      "kind": "dynamic",
+      "line": 11
+    },
+    {
+      "source": "server/tests/alertRulesReliability.test.ts",
+      "target": "src/shared/alertRules.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "server/tests/alertRulesReliability.test.ts",
+      "target": "server/database/alertRulesDao.ts",
+      "kind": "dynamic",
+      "line": 25
+    },
+    {
       "source": "server/tests/auditData.test.ts",
       "target": "src/utils/shareUrls.ts",
       "kind": "import",
@@ -5004,15 +5082,39 @@
     },
     {
       "source": "src/components/AlertRulesModal.tsx",
-      "target": "src/hooks/useBodyScrollLock.ts",
+      "target": "src/context/AuthContext.tsx",
       "kind": "import",
       "line": 9
     },
     {
       "source": "src/components/AlertRulesModal.tsx",
-      "target": "src/components/ui/ActionButton.tsx",
+      "target": "src/shared/alertRules.ts",
       "kind": "import",
       "line": 10
+    },
+    {
+      "source": "src/components/AlertRulesModal.tsx",
+      "target": "src/shared/alertRules.ts",
+      "kind": "import",
+      "line": 11
+    },
+    {
+      "source": "src/components/AlertRulesModal.tsx",
+      "target": "src/shared/alertRules.ts",
+      "kind": "reexport",
+      "line": 12
+    },
+    {
+      "source": "src/components/AlertRulesModal.tsx",
+      "target": "src/hooks/useBodyScrollLock.ts",
+      "kind": "import",
+      "line": 13
+    },
+    {
+      "source": "src/components/AlertRulesModal.tsx",
+      "target": "src/components/ui/ActionButton.tsx",
+      "kind": "import",
+      "line": 14
     },
     {
       "source": "src/components/Announcements.tsx",
@@ -5628,195 +5730,201 @@
     },
     {
       "source": "src/components/Layout.tsx",
-      "target": "src/components/ui/MarketClock.tsx",
+      "target": "src/styles/mobile-repairs.css",
       "kind": "import",
-      "line": 11
+      "line": 1
     },
     {
       "source": "src/components/Layout.tsx",
-      "target": "src/components/ui/BseNexusLogo.tsx",
+      "target": "src/components/ui/MarketClock.tsx",
       "kind": "import",
       "line": 12
     },
     {
       "source": "src/components/Layout.tsx",
-      "target": "src/components/ui/MarketTickerTape.tsx",
+      "target": "src/components/ui/BseNexusLogo.tsx",
       "kind": "import",
       "line": 13
     },
     {
       "source": "src/components/Layout.tsx",
-      "target": "src/components/ui/SyncStatusBadge.tsx",
+      "target": "src/components/ui/MarketTickerTape.tsx",
       "kind": "import",
       "line": 14
     },
     {
       "source": "src/components/Layout.tsx",
-      "target": "src/components/ui/ComponentSkeleton.tsx",
+      "target": "src/components/ui/SyncStatusBadge.tsx",
       "kind": "import",
       "line": 15
     },
     {
       "source": "src/components/Layout.tsx",
-      "target": "src/components/ui/ScrollProgressBar.tsx",
+      "target": "src/components/ui/ComponentSkeleton.tsx",
       "kind": "import",
       "line": 16
     },
     {
       "source": "src/components/Layout.tsx",
-      "target": "src/components/ui/BackToTop.tsx",
+      "target": "src/components/ui/ScrollProgressBar.tsx",
       "kind": "import",
       "line": 17
     },
     {
       "source": "src/components/Layout.tsx",
-      "target": "src/components/ui/SupportFloat.tsx",
+      "target": "src/components/ui/BackToTop.tsx",
       "kind": "import",
       "line": 18
     },
     {
       "source": "src/components/Layout.tsx",
-      "target": "src/components/ui/AutosaveIndicator.tsx",
+      "target": "src/components/ui/SupportFloat.tsx",
       "kind": "import",
       "line": 19
     },
     {
       "source": "src/components/Layout.tsx",
-      "target": "src/components/ui/CommandPalette.tsx",
+      "target": "src/components/ui/AutosaveIndicator.tsx",
       "kind": "import",
       "line": 20
     },
     {
       "source": "src/components/Layout.tsx",
-      "target": "src/context/AuthContext.tsx",
+      "target": "src/components/ui/CommandPalette.tsx",
       "kind": "import",
       "line": 21
     },
     {
       "source": "src/components/Layout.tsx",
-      "target": "src/context/IntelModalContext.tsx",
+      "target": "src/context/AuthContext.tsx",
       "kind": "import",
       "line": 22
     },
     {
       "source": "src/components/Layout.tsx",
-      "target": "src/api.ts",
+      "target": "src/context/IntelModalContext.tsx",
       "kind": "import",
       "line": 23
     },
     {
       "source": "src/components/Layout.tsx",
-      "target": "src/hooks/useVisibilityInterval.ts",
+      "target": "src/api.ts",
       "kind": "import",
       "line": 24
     },
     {
       "source": "src/components/Layout.tsx",
+      "target": "src/hooks/useVisibilityInterval.ts",
+      "kind": "import",
+      "line": 25
+    },
+    {
+      "source": "src/components/Layout.tsx",
       "target": "src/utils/motionTokens.ts",
       "kind": "import",
-      "line": 27
+      "line": 28
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/UserProfileModal.tsx",
       "kind": "import",
-      "line": 37
+      "line": 38
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/AuthModal.tsx",
       "kind": "import",
-      "line": 38
+      "line": 39
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/ProUpgradeModal.tsx",
       "kind": "import",
-      "line": 39
+      "line": 40
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/ui/SocialLinks.tsx",
       "kind": "import",
-      "line": 40
+      "line": 41
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/AdminPinModal.tsx",
       "kind": "import",
-      "line": 41
+      "line": 42
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/HelpModal.tsx",
       "kind": "import",
-      "line": 42
+      "line": 43
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/TermsModal.tsx",
       "kind": "import",
-      "line": 43
+      "line": 44
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/SecurityAuditModal.tsx",
       "kind": "import",
-      "line": 44
+      "line": 45
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/CookieConsentBanner.tsx",
       "kind": "import",
-      "line": 45
+      "line": 46
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/NotificationInbox.tsx",
       "kind": "import",
-      "line": 46
+      "line": 47
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/AlertRulesModal.tsx",
       "kind": "import",
-      "line": 47
+      "line": 48
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/CompanyIntelligenceModal.tsx",
       "kind": "import",
-      "line": 48
+      "line": 49
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/notes/NoteEditor.tsx",
       "kind": "import",
-      "line": 49
+      "line": 50
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/TodayMarketStoryModal.tsx",
       "kind": "import",
-      "line": 50
+      "line": 51
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/PushNotificationPrompt.tsx",
       "kind": "import",
-      "line": 51
+      "line": 52
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/ReferralDashboardModal.tsx",
       "kind": "import",
-      "line": 52
+      "line": 53
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/story/storyData.ts",
       "kind": "import",
-      "line": 53
+      "line": 54
     },
     {
       "source": "src/components/Login.tsx",
@@ -7392,43 +7500,43 @@
     },
     {
       "source": "src/context/AuthContext.tsx",
-      "target": "src/firebase.ts",
+      "target": "src/hooks/useExpiryClock.ts",
       "kind": "import",
-      "line": 13
+      "line": 1
     },
     {
       "source": "src/context/AuthContext.tsx",
-      "target": "src/types.ts",
+      "target": "src/firebase.ts",
       "kind": "import",
       "line": 14
     },
     {
       "source": "src/context/AuthContext.tsx",
-      "target": "src/api.ts",
+      "target": "src/types.ts",
       "kind": "import",
       "line": 15
     },
     {
       "source": "src/context/AuthContext.tsx",
-      "target": "src/utils/retry.ts",
+      "target": "src/api.ts",
       "kind": "import",
       "line": 16
     },
     {
       "source": "src/context/AuthContext.tsx",
-      "target": "src/utils/preferenceSaveQueue.ts",
+      "target": "src/utils/retry.ts",
       "kind": "import",
       "line": 17
     },
     {
       "source": "src/context/AuthContext.tsx",
-      "target": "src/utils/recaptcha.ts",
+      "target": "src/utils/preferenceSaveQueue.ts",
       "kind": "import",
       "line": 18
     },
     {
       "source": "src/context/AuthContext.tsx",
-      "target": "src/utils/cashfree.ts",
+      "target": "src/utils/recaptcha.ts",
       "kind": "import",
       "line": 19
     },
@@ -7437,6 +7545,12 @@
       "target": "src/utils/cashfree.ts",
       "kind": "import",
       "line": 20
+    },
+    {
+      "source": "src/context/AuthContext.tsx",
+      "target": "src/utils/cashfree.ts",
+      "kind": "import",
+      "line": 21
     },
     {
       "source": "src/context/NoteEditorContext.tsx",
@@ -7659,14 +7773,19 @@
         "server/database/notificationDao.ts",
         "server/utils/alertDecision.ts",
         "server/utils/telegramTarget.ts",
-        "src/components/WatchlistManager.tsx"
+        "src/components/WatchlistManager.tsx",
+        "src/components/AlertRulesModal.tsx",
+        "src/shared/alertRules.ts",
+        "server/api/routes.ts"
       ],
       "tests": [
         "server/tests/alertDecision.test.ts",
         "server/tests/oneSignal.test.ts",
-        "server/tests/batchOperations.test.ts"
+        "server/tests/batchOperations.test.ts",
+        "server/tests/alertRulesReliability.test.ts",
+        "server/tests/alertRulesApi.test.ts"
       ],
-      "reason": "Poll → normalize/dedupe → persistence → feed and alert decisions → recipient-specific delivery/inbox. Global and personal recipients must remain distinct."
+      "reason": "Poll → normalize/dedupe → persistence → feed and alert decisions → recipient-specific delivery/inbox. Global and personal recipients must remain distinct. Preset saves replace stable per-owner IDs atomically; confirmed cloud settings feed every poll. Personal channels supersede inherited defaults once presets are saved."
     },
     {
       "id": "user-data",
@@ -7934,12 +8053,15 @@
         "src/hooks/useFeedDensity.ts",
         "src/hooks/useVisibilityInterval.ts",
         "src/hooks/useMarketIndices.ts",
-        "src/api.ts"
+        "src/api.ts",
+        "src/components/AlertRulesModal.tsx",
+        "src/shared/alertRules.ts"
       ],
       "tests": [
         "server/tests/core.test.ts",
         "server/tests/auditData.test.ts",
-        "server/tests/apiCancellation.test.ts"
+        "server/tests/apiCancellation.test.ts",
+        "server/tests/alertRulesApi.test.ts"
       ],
       "reason": "List/detail identity, filters, watchlist membership, badge counts and timestamps must agree. Background refresh preserves content, density, selection and scroll. Rapid filter changes must not render older responses."
     },
@@ -8130,7 +8252,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5113,
+      "line": 5131,
       "receiver": "app",
       "method": "GET",
       "path": "['/health', '/healthz']",
@@ -8140,7 +8262,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5119,
+      "line": 5137,
       "receiver": "app",
       "method": "GET",
       "path": "/robots.txt",
@@ -8150,7 +8272,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5125,
+      "line": 5143,
       "receiver": "app",
       "method": "GET",
       "path": "['/sitemap.xml', '/sitemap', '/sitemap_index.xml', '/sitemap.txt']",
@@ -8160,7 +8282,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5132,
+      "line": 5150,
       "receiver": "app",
       "method": "GET",
       "path": "['/rss.xml', '/rss', '/feed.xml', '/feed']",
@@ -8170,7 +8292,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5198,
+      "line": 5216,
       "receiver": "app",
       "method": "GET",
       "path": "[/^\\/https?:\\/?\\/?(?:www\\.)?bsenexus\\.in\\/sitemap(?:\\.xml)?$/i]",
@@ -8180,7 +8302,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5203,
+      "line": 5221,
       "receiver": "app",
       "method": "GET",
       "path": "[`/${INDEXNOW_KEY}.txt`, '/indexnow-key.txt']",
@@ -8190,7 +8312,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5210,
+      "line": 5228,
       "receiver": "app",
       "method": "GET",
       "path": "/opensearch.xml",
@@ -8200,7 +8322,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5228,
+      "line": 5246,
       "receiver": "app",
       "method": "GET",
       "path": "[sourcePath, sourcePath + '/']",
@@ -8210,7 +8332,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5237,
+      "line": 5255,
       "receiver": "app",
       "method": "GET",
       "path": "/filing/:symbol/:newsId",
@@ -8220,7 +8342,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5295,
+      "line": 5313,
       "receiver": "app",
       "method": "GET",
       "path": "/announcement/:newsId",
@@ -8230,7 +8352,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5620,
+      "line": 5638,
       "receiver": "app",
       "method": "GET",
       "path": "/results/:symbol/:quarterKey",
@@ -8240,7 +8362,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5676,
+      "line": 5694,
       "receiver": "app",
       "method": "GET",
       "path": "['/company/:symbol', '/stock/:symbol']",
@@ -8250,7 +8372,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5745,
+      "line": 5763,
       "receiver": "app",
       "method": "GET",
       "path": "/guides/:slug",
@@ -8260,7 +8382,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5791,
+      "line": 5809,
       "receiver": "app",
       "method": "GET",
       "path": "['/faq', '/faqs']",
@@ -8270,7 +8392,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5798,
+      "line": 5816,
       "receiver": "app",
       "method": "GET",
       "path": "['/pricing', '/pricing/']",
@@ -8280,7 +8402,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5805,
+      "line": 5823,
       "receiver": "app",
       "method": "GET",
       "path": "['/plans', '/plans/']",
@@ -8290,7 +8412,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5810,
+      "line": 5828,
       "receiver": "app",
       "method": "GET",
       "path": "['/guides', '/guides/']",
@@ -8300,7 +8422,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5817,
+      "line": 5835,
       "receiver": "app",
       "method": "GET",
       "path": "['/market-guides', '/market-guides/']",
@@ -8310,7 +8432,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5822,
+      "line": 5840,
       "receiver": "app",
       "method": "GET",
       "path": "['/companies', '/companies/']",
@@ -8320,7 +8442,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5829,
+      "line": 5847,
       "receiver": "app",
       "method": "GET",
       "path": "['/company-directory', '/company-directory/']",
@@ -8330,7 +8452,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5834,
+      "line": 5852,
       "receiver": "app",
       "method": "GET",
       "path": "['/about', '/about/']",
@@ -8340,7 +8462,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5841,
+      "line": 5859,
       "receiver": "app",
       "method": "GET",
       "path": "['/contact', '/contact/']",
@@ -8350,7 +8472,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5848,
+      "line": 5866,
       "receiver": "app",
       "method": "GET",
       "path": "['/disclaimer', '/disclaimer/']",
@@ -8360,7 +8482,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5855,
+      "line": 5873,
       "receiver": "app",
       "method": "GET",
       "path": "['/privacy-policy', '/privacy-policy/']",
@@ -8370,7 +8492,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5862,
+      "line": 5880,
       "receiver": "app",
       "method": "GET",
       "path": "['/privacy', '/privacy/']",
@@ -8380,7 +8502,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5867,
+      "line": 5885,
       "receiver": "app",
       "method": "GET",
       "path": "['/terms', '/terms/']",
@@ -8390,7 +8512,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5874,
+      "line": 5892,
       "receiver": "app",
       "method": "GET",
       "path": "['/terms-of-service', '/terms-of-service/']",
@@ -8400,7 +8522,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5879,
+      "line": 5897,
       "receiver": "app",
       "method": "GET",
       "path": "/embed/widget",
@@ -8410,7 +8532,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5933,
+      "line": 5951,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-companies.xml",
@@ -8420,7 +8542,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5953,
+      "line": 5971,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-guides.xml",
@@ -8430,7 +8552,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5971,
+      "line": 5989,
       "receiver": "app",
       "method": "GET",
       "path": "/llms.txt",
@@ -8440,7 +8562,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5976,
+      "line": 5994,
       "receiver": "app",
       "method": "GET",
       "path": "/llms-full.txt",
@@ -8450,7 +8572,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5982,
+      "line": 6000,
       "receiver": "app",
       "method": "GET",
       "path": "/^\\/google([a-zA-Z0-9_-]+)\\.html$/",
@@ -8460,7 +8582,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5989,
+      "line": 6007,
       "receiver": "app",
       "method": "USE",
       "path": "express.static(path.join(process.cwd(), 'public'), { maxAge: '1d', immutable: false })",
@@ -8468,7 +8590,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5995,
+      "line": 6013,
       "receiver": "app",
       "method": "USE",
       "path": "/auth",
@@ -8478,7 +8600,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5998,
+      "line": 6016,
       "receiver": "app",
       "method": "POST",
       "path": "/api/security/verify-recaptcha",
@@ -8489,7 +8611,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6039,
+      "line": 6057,
       "receiver": "app",
       "method": "USE",
       "path": "/api",
@@ -8500,7 +8622,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6043,
+      "line": 6061,
       "receiver": "app",
       "method": "USE",
       "path": "['/api/*', '/auth/*']",
@@ -8510,7 +8632,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6048,
+      "line": 6066,
       "receiver": "app",
       "method": "USE",
       "path": "(err: any, req: express.Request, res: express.Response, next: express.NextFunction) => { if (req.path.startsWith('/api') || req.path.startsWith('/auth')) { console.error(\"API Error handler caught:\", err?.message || err); const isProd = proc",
@@ -8518,7 +8640,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6453,
+      "line": 6471,
       "receiver": "app",
       "method": "GET",
       "path": "[\"/\", \"/announcements\", \"/live\", \"/results-calendar\", \"/watchlist\", \"/watchlists\", \"/companies\", \"/about\", \"/contact\", \"/disclaimer\", \"/privacy-policy\", \"/terms\"]",
@@ -8528,7 +8650,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6480,
+      "line": 6498,
       "receiver": "app",
       "method": "USE",
       "path": "(req, res, next) => { if (req.method !== 'GET' && req.method !== 'HEAD') return next(); const p = req.path; if ( p === '/' || p === '/announcements' || p === '/results-calendar' || p === '/watchlist' || p === '/watchlists' || p === '/compan",
@@ -8536,7 +8658,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6512,
+      "line": 6530,
       "receiver": "app",
       "method": "USE",
       "path": "vite.middlewares",
@@ -8544,7 +8666,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6524,
+      "line": 6542,
       "receiver": "app",
       "method": "USE",
       "path": "express.static(distPath, { maxAge: '1y', immutable: true, index: false, setHeaders: (res, filePath) => { if (filePath.endsWith('.html')) { res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600'); } } }",
@@ -8552,7 +8674,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6551,
+      "line": 6569,
       "receiver": "app",
       "method": "GET",
       "path": "*",
@@ -10005,12 +10127,13 @@
       "method": "GET",
       "path": "/alert-rules",
       "middleware": [
+        "requireAuth",
         "<handler>"
       ]
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2497,
+      "line": 2498,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/alert-rules",
@@ -10021,7 +10144,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2507,
+      "line": 2508,
       "receiver": "apiRouter",
       "method": "PATCH",
       "path": "/alert-rules/:id/toggle",
@@ -10032,7 +10155,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2518,
+      "line": 2519,
       "receiver": "apiRouter",
       "method": "DELETE",
       "path": "/alert-rules/:id",
@@ -10043,7 +10166,18 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2532,
+      "line": 2529,
+      "receiver": "apiRouter",
+      "method": "PUT",
+      "path": "/alert-rules/presets",
+      "middleware": [
+        "requireAuth",
+        "<handler>"
+      ]
+    },
+    {
+      "file": "server/api/routes.ts",
+      "line": 2538,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/market/indices",
@@ -10054,7 +10188,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2545,
+      "line": 2551,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/market/status",
@@ -10065,7 +10199,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2567,
+      "line": 2573,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/telemetry/event",
@@ -10076,7 +10210,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2602,
+      "line": 2608,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/admin/diagnostics",
@@ -10087,7 +10221,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2628,
+      "line": 2634,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/admin/diagnostics/clear",
@@ -10098,7 +10232,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2638,
+      "line": 2644,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/admin/diagnostics/test-alert",
@@ -10109,7 +10243,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2675,
+      "line": 2681,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/admin/diagnostics/approved-bugs",
@@ -10120,7 +10254,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2685,
+      "line": 2691,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/admin/diagnostics/approved-bugs",
@@ -10131,7 +10265,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2699,
+      "line": 2705,
       "receiver": "apiRouter",
       "method": "DELETE",
       "path": "/admin/diagnostics/approved-bugs/:id",
@@ -10142,7 +10276,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2709,
+      "line": 2715,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/admin/diagnostics/toggle-mute-alerts",
@@ -10153,7 +10287,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2726,
+      "line": 2732,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/security/audit",
@@ -10164,7 +10298,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2737,
+      "line": 2743,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/security/pen-test",
@@ -10175,7 +10309,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2748,
+      "line": 2754,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/admin/bloom-stats",
@@ -10186,7 +10320,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2758,
+      "line": 2764,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/admin/bloom-test",
@@ -10389,6 +10523,32 @@
       ]
     },
     {
+      "file": "server/tests/alertRulesApi.test.ts",
+      "line": 12,
+      "receiver": "app",
+      "method": "USE",
+      "path": "express.json()",
+      "middleware": []
+    },
+    {
+      "file": "server/tests/alertRulesApi.test.ts",
+      "line": 15,
+      "receiver": "app",
+      "method": "USE",
+      "path": "(req,_res,next)=>{const uid=req.headers.authorization;if(uid==='alice'||uid==='bob')(req as any).user={uid,isAnonymous:false,auth:true};next();}",
+      "middleware": []
+    },
+    {
+      "file": "server/tests/alertRulesApi.test.ts",
+      "line": 16,
+      "receiver": "app",
+      "method": "USE",
+      "path": "/api",
+      "middleware": [
+        "apiRouter"
+      ]
+    },
+    {
       "file": "server/tests/auditSecurity.test.ts",
       "line": 61,
       "receiver": "app",
@@ -10544,7 +10704,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6166,
+      "line": 6184,
       "function": "fetch",
       "target": "`http://127.0.0.1:${port}/api/health`"
     },
@@ -10709,6 +10869,12 @@
       "line": 126,
       "function": "fetch",
       "target": "url"
+    },
+    {
+      "file": "server/tests/alertRulesApi.test.ts",
+      "line": 20,
+      "function": "fetch",
+      "target": "base+suffix"
     },
     {
       "file": "server/tests/apiCancellation.test.ts",
@@ -10972,43 +11138,7 @@
       "file": "src/components/AlertRulesModal.tsx",
       "line": 105,
       "function": "customFetch",
-      "target": "'/api/alert-rules'"
-    },
-    {
-      "file": "src/components/AlertRulesModal.tsx",
-      "line": 130,
-      "function": "customFetch",
-      "target": "`/api/alert-rules/${id}/toggle`"
-    },
-    {
-      "file": "src/components/AlertRulesModal.tsx",
-      "line": 146,
-      "function": "customFetch",
-      "target": "`/api/alert-rules/${id}`"
-    },
-    {
-      "file": "src/components/AlertRulesModal.tsx",
-      "line": 159,
-      "function": "customFetch",
-      "target": "'/api/alert-rules'"
-    },
-    {
-      "file": "src/components/AlertRulesModal.tsx",
-      "line": 177,
-      "function": "customFetch",
-      "target": "'/api/alert-rules'"
-    },
-    {
-      "file": "src/components/AlertRulesModal.tsx",
-      "line": 195,
-      "function": "customFetch",
-      "target": "'/api/alert-rules'"
-    },
-    {
-      "file": "src/components/AlertRulesModal.tsx",
-      "line": 247,
-      "function": "customFetch",
-      "target": "'/api/alert-rules'"
+      "target": "url"
     },
     {
       "file": "src/components/Announcements.tsx",
@@ -11138,25 +11268,25 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 179,
+      "line": 180,
       "function": "customFetch",
       "target": "'/api/storage/quota-mode'"
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 206,
+      "line": 207,
       "function": "customFetch",
       "target": "'/api/announcements?limit=1'"
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 227,
+      "line": 228,
       "function": "customFetch",
       "target": "'/api/notifications/unread-count'"
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 792,
+      "line": 802,
       "function": "customFetch",
       "target": "'/api/health'"
     },
@@ -11522,127 +11652,127 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 693,
+      "line": 695,
       "function": "customFetch",
       "target": "'/api/watchlists/sync?mode=background'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 751,
+      "line": 753,
       "function": "customFetch",
       "target": "'/api/send-to-telegram-manual'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 802,
+      "line": 804,
       "function": "customFetch",
       "target": "`/api/announcements/${id}/generate-summary`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 857,
+      "line": 859,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 902,
+      "line": 904,
       "function": "customFetch",
       "target": "url"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 942,
+      "line": 944,
       "function": "customFetch",
       "target": "'/api/stock-master'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 971,
+      "line": 974,
       "function": "customFetch",
-      "target": "`/api/search-company?q=${encodeURIComponent(newSymbol)}`"
+      "target": "`/api/search-company?q=${encodeURIComponent(query)}`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1007,
+      "line": 1011,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1029,
+      "line": 1033,
       "function": "customFetch",
       "target": "`/api/watchlists/${id}/name`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1048,
+      "line": 1052,
       "function": "customFetch",
       "target": "`/api/watchlists/${id}`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1060,
+      "line": 1064,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1073,
+      "line": 1077,
       "function": "customFetch",
       "target": "`/api/watchlists/${created.id}/symbols`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1111,
+      "line": 1115,
       "function": "customFetch",
       "target": "`/api/watchlists/${id}/toggle`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1201,
+      "line": 1209,
       "function": "customFetch",
       "target": "`/api/watchlists/${targetList.id}/symbols`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1222,
+      "line": 1234,
       "function": "customFetch",
       "target": "'/api/watchlists/sync-stock'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1269,
+      "line": 1287,
       "function": "customFetch",
       "target": "`/api/watchlists/${targetId}/symbols/bulk`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1295,
+      "line": 1313,
       "function": "customFetch",
       "target": "'/api/watchlists/sync-stock'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1331,
+      "line": 1349,
       "function": "customFetch",
       "target": "`/api/watchlists/symbols/${encodeURIComponent(currentItem.symbol)}/priority-sync`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1377,
+      "line": 1395,
       "function": "customFetch",
       "target": "`/api/watchlists/${listId}/symbols`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1395,
+      "line": 1413,
       "function": "customFetch",
       "target": "`/api/watchlists/${listId}/symbols/${encodeURIComponent(symbol)}`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 4212,
+      "line": 4237,
       "function": "customFetch",
       "target": "url"
     },
@@ -11732,79 +11862,79 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 289,
+      "line": 290,
       "function": "customFetch",
       "target": "'/auth/session'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 314,
+      "line": 315,
       "function": "customFetch",
       "target": "'/api/users/profile'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 569,
+      "line": 570,
       "function": "customFetch",
       "target": "'/auth/status'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 831,
+      "line": 832,
       "function": "customFetch",
       "target": "'/auth/login'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 856,
+      "line": 857,
       "function": "customFetch",
       "target": "'/auth/verify-pin'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 889,
+      "line": 890,
       "function": "customFetch",
       "target": "'/auth/session'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 910,
+      "line": 911,
       "function": "customFetch",
       "target": "'/auth/logout'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 961,
+      "line": 962,
       "function": "customFetch",
       "target": "`/api/users/check-username?username=${encodeURIComponent(clean)}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1035,
+      "line": 1036,
       "function": "customFetch",
       "target": "'/api/users/profile'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1100,
+      "line": 1101,
       "function": "customFetch",
       "target": "'/api/users/profile'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1176,
+      "line": 1177,
       "function": "customFetch",
       "target": "'/api/users/telegram/settings'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1198,
+      "line": 1199,
       "function": "customFetch",
       "target": "'/api/users/profile'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1255,
+      "line": 1256,
       "function": "customFetch",
       "target": "'/api/users/profile'"
     },
@@ -11926,21 +12056,39 @@
     },
     {
       "file": "server/database/alertRulesDao.ts",
-      "line": 102,
+      "line": 99,
       "function": "getSupabase().from",
-      "key": "ALERT_RULES_TABLE"
+      "key": "'alert_rules'"
     },
     {
       "file": "server/database/alertRulesDao.ts",
-      "line": 138,
-      "function": "getSupabase()\n        .from",
-      "key": "ALERT_RULES_TABLE"
+      "line": 129,
+      "function": "getSupabase().from",
+      "key": "'alert_rules'"
     },
     {
       "file": "server/database/alertRulesDao.ts",
-      "line": 150,
+      "line": 140,
       "function": "getSupabase().from",
-      "key": "ALERT_RULES_TABLE"
+      "key": "'alert_rules'"
+    },
+    {
+      "file": "server/database/alertRulesDao.ts",
+      "line": 144,
+      "function": "getSupabase().from",
+      "key": "'alert_rules'"
+    },
+    {
+      "file": "server/database/alertRulesDao.ts",
+      "line": 147,
+      "function": "getSupabase().from",
+      "key": "'alert_rules'"
+    },
+    {
+      "file": "server/database/alertRulesDao.ts",
+      "line": 166,
+      "function": "getSupabase().from",
+      "key": "'alert_rules'"
     },
     {
       "file": "server/database/announcementDao.ts",
@@ -12604,19 +12752,19 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 106,
+      "line": 107,
       "function": "localStorage.getItem",
       "key": "sessionKey"
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 113,
+      "line": 114,
       "function": "localStorage.getItem",
       "key": "sessionKey"
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 126,
+      "line": 127,
       "function": "localStorage.setItem",
       "key": "sessionKey"
     },
@@ -12766,31 +12914,31 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 863,
+      "line": 865,
       "function": "localStorage.setItem",
       "key": "'bsenexus_watchlists_cache'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 879,
+      "line": 881,
       "function": "Array.from",
       "key": "new Set(watchlists.flatMap(l => (l.items || []).map((it: any) => parseSymbolItem(it).symbol).filter(Boolean)))"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 888,
+      "line": 890,
       "function": "Array.from",
       "key": "new Set(watchlists.flatMap(l => (l.items || []).map((it: any) => parseSymbolItem(it).symbol).filter(Boolean)))"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 912,
+      "line": 914,
       "function": "localStorage.setItem",
       "key": "'bsenexus_watchlist_feed'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1149,
+      "line": 1157,
       "function": "Array.from",
       "key": "new Set(watchlists.flatMap(l => (l.items || []).map((it: any) => parseSymbolItem(it).symbol)))"
     },
@@ -12862,211 +13010,211 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 168,
+      "line": 169,
       "function": "localStorage.getItem",
-      "key": "STORAGE_SESSION_KEY"
-    },
-    {
-      "file": "src/context/AuthContext.tsx",
-      "line": 181,
-      "function": "localStorage.removeItem",
       "key": "STORAGE_SESSION_KEY"
     },
     {
       "file": "src/context/AuthContext.tsx",
       "line": 182,
       "function": "localStorage.removeItem",
+      "key": "STORAGE_SESSION_KEY"
+    },
+    {
+      "file": "src/context/AuthContext.tsx",
+      "line": 183,
+      "function": "localStorage.removeItem",
       "key": "'bse_nexus_fb_id_token'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 218,
+      "line": 219,
       "function": "localStorage.removeItem",
       "key": "STORAGE_SESSION_KEY"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 229,
+      "line": 230,
       "function": "localStorage.removeItem",
       "key": "STORAGE_SESSION_KEY"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 239,
+      "line": 240,
       "function": "localStorage.setItem",
       "key": "STORAGE_SESSION_KEY"
-    },
-    {
-      "file": "src/context/AuthContext.tsx",
-      "line": 254,
-      "function": "localStorage.getItem",
-      "key": "`bse_user_handle_${uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
       "line": 255,
       "function": "localStorage.getItem",
-      "key": "`bse_user_tg_chat_id_${uid}`"
+      "key": "`bse_user_handle_${uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
       "line": 256,
       "function": "localStorage.getItem",
+      "key": "`bse_user_tg_chat_id_${uid}`"
+    },
+    {
+      "file": "src/context/AuthContext.tsx",
+      "line": 257,
+      "function": "localStorage.getItem",
       "key": "`bse_user_tg_username_${uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 278,
+      "line": 279,
       "function": "localStorage.setItem",
       "key": "'bse_nexus_fb_id_token'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 280,
+      "line": 281,
       "function": "localStorage.removeItem",
       "key": "'bse_nexus_fb_id_token'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 322,
+      "line": 323,
       "function": "localStorage.setItem",
       "key": "`bse_user_handle_${uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 482,
+      "line": 483,
       "function": "sessionStorage.getItem",
       "key": "'bse_guest_active_session'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 490,
+      "line": 491,
       "function": "localStorage.removeItem",
       "key": "STORAGE_SESSION_KEY"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 491,
+      "line": 492,
       "function": "localStorage.removeItem",
       "key": "'bse_nexus_fb_id_token'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 508,
+      "line": 509,
       "function": "localStorage.getItem",
       "key": "STORAGE_SESSION_KEY"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 522,
+      "line": 523,
       "function": "localStorage.removeItem",
       "key": "STORAGE_SESSION_KEY"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 544,
+      "line": 545,
       "function": "localStorage.getItem",
       "key": "STORAGE_SESSION_KEY"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 558,
+      "line": 559,
       "function": "localStorage.removeItem",
       "key": "STORAGE_SESSION_KEY"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 659,
+      "line": 660,
       "function": "sessionStorage.setItem",
       "key": "'bse_guest_active_session'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 886,
+      "line": 887,
       "function": "localStorage.getItem",
       "key": "'bse_nexus_fb_id_token'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 914,
+      "line": 915,
       "function": "localStorage.removeItem",
       "key": "STORAGE_SESSION_KEY"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 915,
+      "line": 916,
       "function": "localStorage.removeItem",
       "key": "'bse_nexus_auth_token'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 916,
+      "line": 917,
       "function": "localStorage.removeItem",
       "key": "'bse_nexus_fb_id_token'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 917,
+      "line": 918,
       "function": "localStorage.removeItem",
       "key": "'bse_user_tg_chat_id_global'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 918,
+      "line": 919,
       "function": "localStorage.removeItem",
       "key": "'bse_user_tg_username_global'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 919,
+      "line": 920,
       "function": "localStorage.removeItem",
       "key": "'bse_telegram_chat_id'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 920,
+      "line": 921,
       "function": "localStorage.removeItem",
       "key": "'bse_chat_id'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 925,
+      "line": 926,
       "function": "localStorage.removeItem",
       "key": "k"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1028,
+      "line": 1029,
       "function": "localStorage.setItem",
       "key": "`bse_user_handle_${user.uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1163,
+      "line": 1164,
       "function": "localStorage.setItem",
       "key": "`bse_user_tg_chat_id_${profile.uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1165,
+      "line": 1166,
       "function": "localStorage.removeItem",
       "key": "`bse_user_tg_chat_id_${profile.uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1168,
+      "line": 1169,
       "function": "localStorage.setItem",
       "key": "`bse_user_tg_username_${profile.uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1170,
+      "line": 1171,
       "function": "localStorage.removeItem",
       "key": "`bse_user_tg_username_${profile.uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1251,
+      "line": 1252,
       "function": "localStorage.setItem",
       "key": "`bse_trial_used_${trialUid}`"
     },
@@ -13312,27 +13460,27 @@
     },
     {
       "file": "server.ts",
-      "line": 6051,
+      "line": 6069,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6442,
+      "line": 6460,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6447,
+      "line": 6465,
       "name": "DISABLE_HMR"
     },
     {
       "file": "server.ts",
-      "line": 6651,
+      "line": 6669,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6651,
+      "line": 6669,
       "name": "TEST_RUNNER"
     },
     {
@@ -13512,12 +13660,17 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2739,
+      "line": 2745,
       "name": "PORT"
     },
     {
       "file": "server/database/aiQuotaDao.ts",
       "line": 7,
+      "name": "NODE_ENV"
+    },
+    {
+      "file": "server/database/alertRulesDao.ts",
+      "line": 76,
       "name": "NODE_ENV"
     },
     {
@@ -14051,6 +14204,36 @@
       "name": "NVIDIA_API_KEY"
     },
     {
+      "file": "server/tests/alertRulesApi.test.ts",
+      "line": 9,
+      "name": "NODE_ENV"
+    },
+    {
+      "file": "server/tests/alertRulesApi.test.ts",
+      "line": 9,
+      "name": "JWT_SECRET"
+    },
+    {
+      "file": "server/tests/alertRulesApi.test.ts",
+      "line": 10,
+      "name": "SUPABASE_URL"
+    },
+    {
+      "file": "server/tests/alertRulesApi.test.ts",
+      "line": 10,
+      "name": "SUPABASE_SERVICE_ROLE_KEY"
+    },
+    {
+      "file": "server/tests/alertRulesReliability.test.ts",
+      "line": 4,
+      "name": "SUPABASE_URL"
+    },
+    {
+      "file": "server/tests/alertRulesReliability.test.ts",
+      "line": 5,
+      "name": "SUPABASE_SERVICE_ROLE_KEY"
+    },
+    {
       "file": "server/tests/auditSecurity.test.ts",
       "line": 14,
       "name": "JWT_SECRET"
@@ -14461,7 +14644,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 93,
+      "line": 94,
       "target": "window",
       "kind": "listen",
       "name": "open-referral-modal",
@@ -14469,7 +14652,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 94,
+      "line": 95,
       "target": "window",
       "kind": "remove",
       "name": "open-referral-modal",
@@ -14477,7 +14660,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 165,
+      "line": 166,
       "target": "window",
       "kind": "listen",
       "name": "network-status",
@@ -14485,7 +14668,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 168,
+      "line": 169,
       "target": "window",
       "kind": "listen",
       "name": "online",
@@ -14493,7 +14676,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 169,
+      "line": 170,
       "target": "window",
       "kind": "listen",
       "name": "offline",
@@ -14501,7 +14684,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 171,
+      "line": 172,
       "target": "window",
       "kind": "remove",
       "name": "network-status",
@@ -14509,7 +14692,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 172,
+      "line": 173,
       "target": "window",
       "kind": "remove",
       "name": "online",
@@ -14517,11 +14700,19 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 173,
+      "line": 174,
       "target": "window",
       "kind": "remove",
       "name": "offline",
       "expression": "window.removeEventListener('offline', handleOffline)"
+    },
+    {
+      "file": "src/components/Layout.tsx",
+      "line": 253,
+      "target": "window",
+      "kind": "dispatch",
+      "name": "bse_nav_tab_refresh",
+      "expression": "window.dispatchEvent(new CustomEvent('bse_nav_tab_refresh', { detail: { tab: tabId } }))"
     },
     {
       "file": "src/components/NotificationInbox.tsx",
@@ -14725,7 +14916,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 935,
+      "line": 937,
       "target": "window",
       "kind": "listen",
       "name": "auth-state-changed",
@@ -14733,7 +14924,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 936,
+      "line": 938,
       "target": "window",
       "kind": "remove",
       "name": "auth-state-changed",
@@ -15085,7 +15276,7 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 154,
+      "line": 155,
       "target": "window",
       "kind": "dispatch",
       "name": "auth-state-changed",
@@ -15178,6 +15369,38 @@
       "kind": "listen",
       "name": "unhandledrejection",
       "expression": "window.addEventListener('unhandledrejection', (event) => { if (isPendingPromiseAssertion(event.reason)) { event.preventDefault(); event.stopImmediatePropagation(); } }, true)"
+    },
+    {
+      "file": "src/hooks/useExpiryClock.ts",
+      "line": 17,
+      "target": "window",
+      "kind": "listen",
+      "name": "focus",
+      "expression": "window.addEventListener('focus', update)"
+    },
+    {
+      "file": "src/hooks/useExpiryClock.ts",
+      "line": 18,
+      "target": "document",
+      "kind": "listen",
+      "name": "visibilitychange",
+      "expression": "document.addEventListener('visibilitychange', visible)"
+    },
+    {
+      "file": "src/hooks/useExpiryClock.ts",
+      "line": 21,
+      "target": "window",
+      "kind": "remove",
+      "name": "focus",
+      "expression": "window.removeEventListener('focus', update)"
+    },
+    {
+      "file": "src/hooks/useExpiryClock.ts",
+      "line": 22,
+      "target": "document",
+      "kind": "remove",
+      "name": "visibilitychange",
+      "expression": "document.removeEventListener('visibilitychange', visible)"
     },
     {
       "file": "src/hooks/useFeedDensity.ts",

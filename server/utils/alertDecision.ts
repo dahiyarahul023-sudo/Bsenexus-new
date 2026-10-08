@@ -140,3 +140,16 @@ export function wantsTelegramEnable(patch: TelegramEnablePatch, existingProfile:
   if (patch.telegramNewsAlerts === true && cur.telegramNewsAlerts !== true) return true;
   return false;
 }
+
+/** Explicit saved presets replace inherited filing defaults, including OFF channels. */
+export function personalAlertChannels(
+  rules: { hasConfiguredPresets: boolean; shouldSendInApp: boolean; shouldSendTelegram: boolean },
+  prefsMatch: boolean,
+  watchlistMatch: boolean
+): { inApp: boolean; telegram: boolean } {
+  const inheritedMatch = !rules.hasConfiguredPresets && prefsMatch;
+  return {
+    inApp: rules.shouldSendInApp || (inheritedMatch && watchlistMatch),
+    telegram: isTelegramEligible(inheritedMatch, rules.shouldSendTelegram)
+  };
+}
