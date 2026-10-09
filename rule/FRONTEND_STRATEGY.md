@@ -49,3 +49,6 @@ Current status (2026-10-07): these missing requirements are now specified; their
 2026-10-08 bounded alert implementation: stable preset identity, durable confirmation, separate custom rules with edit controls, owner/session response guards, and periodic server snapshot refresh address phase C for alert settings. Browser and live provider verification remain separate release gates; see `changes/alert-reliability.md`.
 
 2026-10-09 bounded referral repair: full-link parsing and shared checkout input address truncated paste and forced capitalization; wrapping URL/code presentation addresses clipping. Backend alias ownership/reward policy remains unchanged. Automated and browser evidence are recorded separately in `changes/referral-link-input.md`; this does not complete the full frontend program.
+
+
+2026-10-09 bounded Home news implementation: prominent text-only lead/support cards, visible-screen polling, explicit pending-headline acceptance, original-link/date provenance and mobile News access address this Home journey. Existing NewsPortal and server RSS cache remain compatible. Behavior tests/build/map checks are separate from actual device/browser verification; see `changes/home-market-news.md`. No claim of full frontend completion or deployment.

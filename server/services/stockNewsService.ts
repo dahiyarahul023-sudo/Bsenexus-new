@@ -13,6 +13,8 @@ export interface StockNewsItem {
   title: string;
   link: string;
   publishedAt: string;
+  publicationTimeKnown?: boolean;
+  hasArticleLink?: boolean;
   timeAgo: string;
   source: 'Economic Times' | 'LiveMint' | 'Moneycontrol' | 'Business Standard' | 'Financial Express' | string;
   sourceSlug: 'et' | 'mint' | 'moneycontrol' | 'bs' | 'fe' | string;
@@ -288,6 +290,8 @@ function parseRssFeedXml(
       title,
       link: link || 'https://www.google.com/search?q=' + encodeURIComponent(title),
       publishedAt: pubDate,
+      hasArticleLink: Boolean(link && /^https?:\/\//i.test(link)),
+      publicationTimeKnown: Boolean(pubDateMatch && Number.isFinite(Date.parse(pubDate))),
       timeAgo: calculateTimeAgo(pubDate),
       source: sourceConfig.name,
       sourceSlug: sourceConfig.slug,

@@ -1,5 +1,6 @@
+import { HomeMarketNews } from './HomeMarketNews';
 import { HomeSkeleton } from './ui/PageSkeleton';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Plus, 
@@ -49,9 +50,10 @@ const STARTER_STOCKS = [
 
 interface HomeForYouProps {
   onNavigate: (tabId: string) => void;
+  isActive?: boolean;
 }
 
-export function HomeForYou({ onNavigate }: HomeForYouProps) {
+export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
   // Shared feed density (Settings screen) — visibly resizes home cards.
   const [density] = useFeedDensity();
   const homeCardPad = density === 'comfortable' ? 'p-5' : density === 'dense' ? 'p-3' : 'p-3.5';
@@ -63,7 +65,6 @@ export function HomeForYou({ onNavigate }: HomeForYouProps) {
   const [watchlistSymbols, setWatchlistSymbols] = useState<Set<string>>(new Set());
   const [upcomingResults, setUpcomingResults] = useState<any[]>([]);
   const [allAnnouncements, setAllAnnouncements] = useState<any[]>([]);
-  const [topNews, setTopNews] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
@@ -77,64 +78,71 @@ export function HomeForYou({ onNavigate }: HomeForYouProps) {
   // Prevent background scroll chaining when any modal or sheet is open
   useBodyScrollLock(Boolean(isAddModalOpen || selectedFiling || selectedResult));
 
-  const fetchHomeData = async () => {
-    try {
-      setLoading(true);
-      const [wlRes, calRes, filRes, newsRes] = await Promise.all([
-        (user || profile) ? customFetch('/api/watchlists').catch(() => null) : Promise.resolve(null),
-        customFetch('/api/results-calendar?filter=upcoming&limit=8').catch(() => null),
-        customFetch('/api/announcements?limit=50').catch(() => null),
-        customFetch('/api/news?limit=6').catch(() => null),
-      ]);
-
-      const syms = new Set<string>();
-      if (wlRes && wlRes.ok) {
-        const wlData = await wlRes.json();
-        const list = Array.isArray(wlData) ? wlData : [];
-        setWatchlists(list);
-        list.forEach((w: any) => {
-          (w.items || []).forEach((it: any) => {
-            const s = typeof it === 'string' ? it.trim().toUpperCase() : it?.symbol?.trim()?.toUpperCase();
-            if (s) syms.add(s);
-          });
-        });
-      }
-      setWatchlistSymbols(syms);
-
-      if (calRes && calRes.ok) {
-        const calData = await calRes.json();
-        const items = calData.items || [];
-        // Keep meetings scheduled in the next 7 days
-        const weekUpcoming = items.filter((i: any) => {
-          if (i.daysLeft !== undefined) return i.daysLeft >= 0 && i.daysLeft <= 7;
-          return !i.isDeclared;
-        });
-        setUpcomingResults(weekUpcoming.slice(0, 4));
-      }
-
-      if (filRes && filRes.ok) {
-        const filData = await filRes.json();
-        if (Array.isArray(filData)) {
-          setAllAnnouncements(filData);
-        }
-      }
-
-      if (newsRes && newsRes.ok) {
-        const newsData = await newsRes.json();
-        const items = Array.isArray(newsData) ? newsData : (newsData?.items || []);
-        setTopNews(items.slice(0, 3));
-      }
-    } catch (e) {
-      console.warn("Error loading Home For You data:", e);
-    } finally {
-      setLoading(false);
-      setHasLoaded(true);
-    }
-  };
-
+  const identity = user?.uid || profile?.uid || 'guest';
+  const loadedIdentity = useRef(identity);
   useEffect(() => {
-    fetchHomeData();
-  }, [user?.uid, profile?.uid]);
+    if (!isActive) return;
+    const controller = new AbortController();
+    const signal = controller.signal;
+    if (loadedIdentity.current !== identity) {
+      loadedIdentity.current = identity;
+      setWatchlists([]); setWatchlistSymbols(new Set()); setUpcomingResults([]); setAllAnnouncements([]); setHasLoaded(false);
+    }
+    const fetchHomeData = async () => {
+      try {
+        setLoading(true);
+        const [wlRes, calRes, filRes] = await Promise.all([
+          (user || profile) ? customFetch('/api/watchlists', { signal }).catch(() => null) : Promise.resolve(null),
+          customFetch('/api/results-calendar?filter=upcoming&limit=8', { signal }).catch(() => null),
+          customFetch('/api/announcements?limit=50', { signal }).catch(() => null),
+        ]);
+
+        if (signal.aborted) return;
+        const syms = new Set<string>();
+        if (wlRes && wlRes.ok) {
+          const wlData = await wlRes.json();
+          if (signal.aborted) return;
+          const list = Array.isArray(wlData) ? wlData : [];
+          setWatchlists(list);
+          list.forEach((w: any) => {
+            (w.items || []).forEach((it: any) => {
+              const s = typeof it === 'string' ? it.trim().toUpperCase() : it?.symbol?.trim()?.toUpperCase();
+              if (s) syms.add(s);
+            });
+          });
+        }
+        setWatchlistSymbols(syms);
+
+        if (calRes && calRes.ok) {
+          const calData = await calRes.json();
+          if (signal.aborted) return;
+          const items = calData.items || [];
+          // Keep meetings scheduled in the next 7 days
+          const weekUpcoming = items.filter((i: any) => {
+            if (i.daysLeft !== undefined) return i.daysLeft >= 0 && i.daysLeft <= 7;
+            return !i.isDeclared;
+          });
+          setUpcomingResults(weekUpcoming.slice(0, 4));
+        }
+
+        if (filRes && filRes.ok) {
+          const filData = await filRes.json();
+          if (signal.aborted) return;
+          if (Array.isArray(filData)) {
+            setAllAnnouncements(filData);
+          }
+        }
+
+      } catch (e) {
+        console.warn("Error loading Home For You data:", e);
+      } finally {
+        if (!signal.aborted) { setLoading(false); setHasLoaded(true); }
+      }
+    };
+
+    void fetchHomeData();
+    return () => controller.abort();
+  }, [identity, isActive]);
 
   const handleAddStock = async (symbol: string, scripCode?: string, name?: string) => {
     if (!user && !profile) {
@@ -177,7 +185,8 @@ export function HomeForYou({ onNavigate }: HomeForYouProps) {
     }
   };
 
-  const hasWatchlist = watchlistSymbols.size > 0;
+  const sameIdentity = loadedIdentity.current === identity;
+  const hasWatchlist = sameIdentity && watchlistSymbols.size > 0;
 
   // 1. Filtered Watchlist Filings
   const watchlistFilings = useMemo(() => {
@@ -189,7 +198,7 @@ export function HomeForYou({ onNavigate }: HomeForYouProps) {
         if (sym.includes(s) || scrip === s) return true;
       }
       return false;
-    }).slice(0, 4);
+    }).slice(0, 2);
   }, [allAnnouncements, watchlistSymbols, hasWatchlist]);
 
   // Starter stocks filtered by search query in modal
@@ -202,7 +211,7 @@ export function HomeForYou({ onNavigate }: HomeForYouProps) {
   }, [modalSearch]);
 
   return (
-    <div className="max-w-4xl mx-auto px-3.5 sm:px-6 py-4 sm:py-6 space-y-6">
+    <div className="max-w-6xl mx-auto px-3.5 sm:px-6 py-4 sm:py-6 space-y-6">
       
       {/* 1. Top Header: Calm Page Title & ONLY Primary Action Button */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-200/80 dark:border-[#262335]">
@@ -211,7 +220,7 @@ export function HomeForYou({ onNavigate }: HomeForYouProps) {
             For You
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-normal">
-            Personalized watchlist filings and upcoming catalysts
+            Your market. Your watchlist. One place.
           </p>
         </div>
 
@@ -224,12 +233,15 @@ export function HomeForYou({ onNavigate }: HomeForYouProps) {
           className="min-h-[44px] sm:min-h-[38px] px-4 py-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer shrink-0 select-none"
         >
           <Plus size={15} />
-          <span>Add companies to your watchlist</span>
+          <span>Add stocks</span>
         </motion.button>
       </div>
 
+      <HomeMarketNews active={isActive} identity={user?.uid || profile?.uid || 'guest'}
+        watched={sameIdentity ? [...watchlistSymbols, ...watchlists.flatMap(list => (list.items || []).flatMap((item: any) => typeof item === 'string' ? [] : [item.companyName, item.name].filter((name: unknown) => typeof name === 'string')))] : []} onNavigate={onNavigate} density={density} />
+
       {/* 2. Focused Sections or Calm Summary */}
-      {loading && !hasLoaded ? <HomeSkeleton /> : (
+      {!sameIdentity || (loading && !hasLoaded) ? <HomeSkeleton /> : (
       <div className="space-y-6">
 
         {/* Watchlist Section */}
@@ -237,7 +249,7 @@ export function HomeForYou({ onNavigate }: HomeForYouProps) {
           /* Empty Watchlist State with Actionable Starter Recommendations */
           <section className="space-y-3">
             <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white font-display">
-              New watchlist filings
+              Your Watchlist Updates
             </h2>
             <div className={cn(heliosCard, "p-5 text-center space-y-2")}>
               <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-[#201E2E] flex items-center justify-center mx-auto text-slate-400">
@@ -265,7 +277,7 @@ export function HomeForYou({ onNavigate }: HomeForYouProps) {
           <section className="space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white font-display">
-                New watchlist filings
+                Your Watchlist Updates
               </h2>
               <button
                 type="button"
@@ -327,12 +339,12 @@ export function HomeForYou({ onNavigate }: HomeForYouProps) {
           </div>
         )}
 
-        {/* SECTION 2: Results this week / Upcoming earnings date */}
+        {/* SECTION 2: Upcoming Results / Upcoming earnings date */}
         {upcomingResults.length > 0 && (
           <section className="space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white font-display">
-                Results this week
+                Upcoming Results
               </h2>
               <button
                 type="button"
@@ -391,60 +403,6 @@ export function HomeForYou({ onNavigate }: HomeForYouProps) {
                   </div>
                 );
               })}
-            </div>
-          </section>
-        )}
-
-        {/* SECTION 3: Market news & useful market stories */}
-        {topNews.length > 0 && (
-          <section className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white font-display">
-                Market stories
-              </h2>
-              <button
-                type="button"
-                onClick={() => onNavigate('news')}
-                className="text-xs font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white flex items-center gap-1 cursor-pointer"
-              >
-                <span>All stories</span>
-                <ChevronRight size={13} />
-              </button>
-            </div>
-
-            <div className={cn("flex flex-col", homeGridGap)}>
-              {topNews.map((news, idx) => (
-                <div
-                  key={news.id || idx}
-                  className={cn(heliosCard, homeCardPad, "transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:shadow-[0_12px_28px_rgba(15,23,42,0.09)] dark:hover:shadow-[0_12px_28px_rgba(0,0,0,0.5)]")}
-                >
-                  <div className="space-y-1 min-w-0 flex-1">
-                    <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white line-clamp-1">
-                      {news.title}
-                    </h3>
-                    {news.snippet && (
-                      <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
-                        {news.snippet}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2 text-[11px] text-slate-400 shrink-0">
-                    <HeliosPill tone="slate" dot={false}>{news.source || 'News'}</HeliosPill>
-                    {news.link && (
-                      <a
-                        href={news.link}
-                        target="_blank"
-                        rel="noreferrer noopener"
-                        className="text-slate-600 dark:text-slate-300 hover:underline flex items-center gap-0.5"
-                      >
-                        <span>Read</span>
-                        <ExternalLink size={11} />
-                      </a>
-                    )}
-                  </div>
-                </div>
-              ))}
             </div>
           </section>
         )}

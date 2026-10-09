@@ -1028,7 +1028,7 @@ function AppContent() {
         <div ref={tabMotion.ref} tabIndex={-1} className="outline-none" aria-label="Page content">
         {(visitedTabs.has('home') || activeTab === 'home') && (
           <div data-screen-page="home" hidden={tabMotion.displayedKey !== 'home'}>
-            <HomeForYou onNavigate={(tab) => handleTabChange(tab)} />
+            <HomeForYou isActive={activeTab === 'home'} onNavigate={(tab) => handleTabChange(tab)} />
           </div>
         )}
         {(visitedTabs.has('dashboard') || activeTab === 'dashboard') && (

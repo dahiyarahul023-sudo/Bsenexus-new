@@ -377,7 +377,7 @@ export function Layout({
     { id: 'dashboard', label: 'Filings', shortLabel: 'Filings', icon: Flame },
     { id: 'watchlists', label: 'Watchlist', shortLabel: 'Watchlist', icon: Star },
     { id: 'results-calendar', label: 'Earnings', shortLabel: 'Earnings', icon: CalendarDays },
-    { id: 'settings', label: 'Settings', shortLabel: 'Settings', icon: Settings },
+    { id: 'news', label: 'Market News', shortLabel: 'News', icon: Newspaper },
   ].filter(i => i.id !== 'watchlists' || canUseWatchlist);
 
   return (
@@ -425,7 +425,7 @@ export function Layout({
               </motion.button>
 
               <div 
-                className="flex items-center gap-1.5 cursor-pointer select-none"
+                className="hidden min-[400px]:flex items-center gap-1.5 cursor-pointer select-none"
                 onClick={() => onTabChange('dashboard')}
                 role="button"
                 tabIndex={0}
@@ -604,14 +604,14 @@ export function Layout({
                 </motion.button>
               )}
 
-              {/* Dedicated Settings Gear Icon - Visible on tablet/desktop */}
+              {/* Settings stays directly accessible after mobile News takes its dock slot */}
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={buttonTap}
                 transition={springSnappy}
                 onClick={() => onTabChange('settings')}
                 aria-label="Open Settings and Preferences"
-                className="hidden md:flex items-center justify-center p-2 sm:p-1.5 rounded-lg bg-slate-100 dark:bg-[#252233] hover:bg-slate-200 dark:hover:bg-[#2F2B40] border border-slate-200/90 dark:border-[#352F48] text-slate-700 dark:text-slate-200 cursor-pointer select-none shadow-xs shrink-0 min-w-[32px] min-h-[32px]"
+                className="flex items-center justify-center p-2 sm:p-1.5 rounded-lg bg-slate-100 dark:bg-[#252233] hover:bg-slate-200 dark:hover:bg-[#2F2B40] border border-slate-200/90 dark:border-[#352F48] text-slate-700 dark:text-slate-200 cursor-pointer select-none shadow-xs shrink-0 min-w-[44px] min-h-[44px] sm:min-w-[32px] sm:min-h-[32px]"
                 title="Open Settings & Preferences"
               >
                 <Settings size={15} className="text-slate-600 dark:text-slate-300" />

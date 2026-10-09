@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "3b1fc2365e17898a96cb9bbe8cd5667d67f3d77c55bdb39e3e75646b269b24fa",
+  "sourceDigest": "ca6c2317b2ea5ea7fdc619fce5ce08afe61e75f90bfdc7e04cd48e779eb6efc9",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -755,7 +755,7 @@
     },
     {
       "path": "server/services/stockNewsService.ts",
-      "sha256": "b652dce0a378d526e8c01120181b88d9a697a8f56565cd7fa506ccf64664c9b3",
+      "sha256": "d1973382f2a0a0bed3928f347ed52e6789f066e7f7ef7b22f8df48e17f10545f",
       "importedBy": [
         "server.ts",
         "server/api/routes.ts",
@@ -888,6 +888,11 @@
     {
       "path": "server/tests/followupAudit.test.ts",
       "sha256": "387af58e79cf1d48dab2c2f978abaf6d5f0ece8648ce642a7b1a3048640ecb13",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/homeNews.test.ts",
+      "sha256": "1c9c4895982c9b5f1ce5c948e648e3f146082a0487fb9087d400bb0fb4d906cf",
       "importedBy": []
     },
     {
@@ -1144,7 +1149,7 @@
     },
     {
       "path": "src/App.tsx",
-      "sha256": "f48e037af0a1d1858f6640a44532bcd30cfa3d16b8e3f620d9ac25c66fd103bd",
+      "sha256": "4018302a5c6c63f9e17d44fb29a641c9ff1f889e291a895aad928ca3ad7132b9",
       "importedBy": [
         "src/main.tsx"
       ]
@@ -1161,6 +1166,7 @@
         "src/components/CompanyIntelligenceModal.tsx",
         "src/components/HelpModal.tsx",
         "src/components/HomeForYou.tsx",
+        "src/components/HomeMarketNews.tsx",
         "src/components/Layout.tsx",
         "src/components/LogsTab.tsx",
         "src/components/NewsPortal.tsx",
@@ -1298,9 +1304,16 @@
     },
     {
       "path": "src/components/HomeForYou.tsx",
-      "sha256": "4fefe3d01f96c133f8de9f47fd16d611052cff6224d8dd1d33e08f4f5752256a",
+      "sha256": "37721a7ef9289f5953b622534582688194741727c0a7103929eb6367ff748be8",
       "importedBy": [
         "src/App.tsx"
+      ]
+    },
+    {
+      "path": "src/components/HomeMarketNews.tsx",
+      "sha256": "37e8745d3f6fa672cb27a8b7f10d5de3d3e0770cfdf9de95e6c8c705df038842",
+      "importedBy": [
+        "src/components/HomeForYou.tsx"
       ]
     },
     {
@@ -1312,7 +1325,7 @@
     },
     {
       "path": "src/components/Layout.tsx",
-      "sha256": "11f5fee81c1c250f04b03044e5e5e07ed698c036fc6c0b5bedb823cc43b07eff",
+      "sha256": "6d66aff989509ef88b6e29a4fa29b912516a31274b7d1fb1bdce9aabe6ee914d",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -2207,6 +2220,7 @@
         "src/App.tsx",
         "src/components/AdminDiagnostics.tsx",
         "src/components/Announcements.tsx",
+        "src/components/HomeMarketNews.tsx",
         "src/components/Layout.tsx",
         "src/components/NewsPortal.tsx",
         "src/components/WatchlistManager.tsx",
@@ -2261,6 +2275,13 @@
         "server/database/alertRulesDao.ts",
         "server/tests/alertRulesReliability.test.ts",
         "src/components/AlertRulesModal.tsx"
+      ]
+    },
+    {
+      "path": "src/styles/home-news.css",
+      "sha256": "0b6905e6b16f72b07879d4c50b512b8352b0d76125ba69ee6c393617c968ce38",
+      "importedBy": [
+        "src/components/HomeMarketNews.tsx"
       ]
     },
     {
@@ -2414,6 +2435,14 @@
       "sha256": "251dc52b0f4891918f12ba80313959c2113c108c82c4ef3e58028d154050d594",
       "importedBy": [
         "src/hooks/usePullToRefresh.ts"
+      ]
+    },
+    {
+      "path": "src/utils/homeNews.ts",
+      "sha256": "4d1584d0c9b396ea80d7c15fc30255b23f491c389300c9ada9243fdce02c1af9",
+      "importedBy": [
+        "server/tests/homeNews.test.ts",
+        "src/components/HomeMarketNews.tsx"
       ]
     },
     {
@@ -4606,6 +4635,12 @@
       "line": 185
     },
     {
+      "source": "server/tests/homeNews.test.ts",
+      "target": "src/utils/homeNews.ts",
+      "kind": "import",
+      "line": 6
+    },
+    {
       "source": "server/tests/notes.test.ts",
       "target": "server/database/notesDao.ts",
       "kind": "import",
@@ -5579,87 +5614,117 @@
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/components/ui/PageSkeleton.tsx",
+      "target": "src/components/HomeMarketNews.tsx",
       "kind": "import",
       "line": 1
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/api.ts",
+      "target": "src/components/ui/PageSkeleton.tsx",
       "kind": "import",
-      "line": 19
+      "line": 2
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/context/AuthContext.tsx",
+      "target": "src/api.ts",
       "kind": "import",
       "line": 20
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/context/IntelModalContext.tsx",
+      "target": "src/context/AuthContext.tsx",
       "kind": "import",
       "line": 21
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/utils/timeFormat.ts",
+      "target": "src/context/IntelModalContext.tsx",
       "kind": "import",
       "line": 22
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/utils/cleanBseSubject.ts",
+      "target": "src/utils/timeFormat.ts",
       "kind": "import",
       "line": 23
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/utils/pdfHelper.ts",
+      "target": "src/utils/cleanBseSubject.ts",
       "kind": "import",
       "line": 24
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/utils/calendarDateTile.ts",
+      "target": "src/utils/pdfHelper.ts",
       "kind": "import",
       "line": 25
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/hooks/useBodyScrollLock.ts",
+      "target": "src/utils/calendarDateTile.ts",
       "kind": "import",
       "line": 26
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/hooks/useFeedDensity.ts",
+      "target": "src/hooks/useBodyScrollLock.ts",
       "kind": "import",
       "line": 27
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/components/ui/helios.tsx",
+      "target": "src/hooks/useFeedDensity.ts",
       "kind": "import",
       "line": 28
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/utils/motionTokens.ts",
+      "target": "src/components/ui/helios.tsx",
       "kind": "import",
       "line": 29
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/components/ui/ActionButton.tsx",
+      "target": "src/utils/motionTokens.ts",
       "kind": "import",
       "line": 30
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/components/ui/CommonQuestionsFAQ.tsx",
+      "target": "src/components/ui/ActionButton.tsx",
       "kind": "import",
       "line": 31
+    },
+    {
+      "source": "src/components/HomeForYou.tsx",
+      "target": "src/components/ui/CommonQuestionsFAQ.tsx",
+      "kind": "import",
+      "line": 32
+    },
+    {
+      "source": "src/components/HomeMarketNews.tsx",
+      "target": "src/api.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "src/components/HomeMarketNews.tsx",
+      "target": "src/hooks/useVisibilityInterval.ts",
+      "kind": "import",
+      "line": 4
+    },
+    {
+      "source": "src/components/HomeMarketNews.tsx",
+      "target": "src/utils/homeNews.ts",
+      "kind": "import",
+      "line": 5
+    },
+    {
+      "source": "src/components/HomeMarketNews.tsx",
+      "target": "src/styles/home-news.css",
+      "kind": "import",
+      "line": 6
     },
     {
       "source": "src/components/LandingPage.tsx",
@@ -7999,12 +8064,15 @@
         "server/utils/helpers.ts",
         "server/api/routes.ts",
         "src/hooks/useMarketIndices.ts",
-        "src/utils/timeFormat.ts"
+        "src/utils/timeFormat.ts",
+        "src/components/HomeMarketNews.tsx",
+        "src/utils/homeNews.ts"
       ],
       "tests": [
         "server/tests/core.test.ts",
         "server/tests/auditData.test.ts",
-        "server/tests/followupAudit.test.ts"
+        "server/tests/followupAudit.test.ts",
+        "server/tests/homeNews.test.ts"
       ],
       "reason": "Upstream timestamps, stock identity and market sessions affect cached API results, screen freshness and alert timing. Public market data availability does not establish trading-data accuracy."
     },
@@ -8077,10 +8145,14 @@
         "src/hooks/useScrollRestoration.ts",
         "src/hooks/useScreenTransition.ts",
         "src/components/ui/PageSkeleton.tsx",
-        "src/components/ui/TabErrorBoundary.tsx"
+        "src/components/ui/TabErrorBoundary.tsx",
+        "src/components/HomeMarketNews.tsx",
+        "src/utils/homeNews.ts",
+        "src/styles/home-news.css"
       ],
       "tests": [
-        "server/tests/routeResolution.test.ts"
+        "server/tests/routeResolution.test.ts",
+        "server/tests/homeNews.test.ts"
       ],
       "reason": "URL and active tab must agree across direct links, refresh, browser Back/Forward and share pages. Loading, focus and scroll restoration are part of navigation; route tests do not prove browser behavior."
     },
@@ -8126,9 +8198,14 @@
         "src/hooks/useBodyScrollLock.ts",
         "src/hooks/usePaymentDialog.ts",
         "src/components/notes/useNoteDialog.ts",
-        "src/utils/motionTokens.ts"
+        "src/utils/motionTokens.ts",
+        "src/components/HomeMarketNews.tsx",
+        "src/utils/homeNews.ts",
+        "src/styles/home-news.css"
       ],
-      "tests": [],
+      "tests": [
+        "server/tests/homeNews.test.ts"
+      ],
       "reason": "Global CSS, inherited theme tokens, shared controls, focus, z-index and scroll locks connect screens without direct imports. Review all changed selector/token consumers; this seed list is not every affected screen. No browser accessibility or screenshot test suite is established by this domain."
     },
     {
@@ -8152,13 +8229,17 @@
         "src/hooks/useMarketIndices.ts",
         "src/api.ts",
         "src/components/AlertRulesModal.tsx",
-        "src/shared/alertRules.ts"
+        "src/shared/alertRules.ts",
+        "src/components/HomeMarketNews.tsx",
+        "src/utils/homeNews.ts",
+        "src/styles/home-news.css"
       ],
       "tests": [
         "server/tests/core.test.ts",
         "server/tests/auditData.test.ts",
         "server/tests/apiCancellation.test.ts",
-        "server/tests/alertRulesApi.test.ts"
+        "server/tests/alertRulesApi.test.ts",
+        "server/tests/homeNews.test.ts"
       ],
       "reason": "List/detail identity, filters, watchlist membership, badge counts and timestamps must agree. Background refresh preserves content, density, selection and scroll. Rapid filter changes must not render older responses."
     },
@@ -10948,7 +11029,7 @@
     },
     {
       "file": "server/services/stockNewsService.ts",
-      "line": 332,
+      "line": 336,
       "function": "fetch",
       "target": "feed.url"
     },
@@ -11332,39 +11413,39 @@
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 84,
+      "line": 95,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 85,
+      "line": 96,
       "function": "customFetch",
       "target": "'/api/results-calendar?filter=upcoming&limit=8'"
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 86,
+      "line": 97,
       "function": "customFetch",
       "target": "'/api/announcements?limit=50'"
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 87,
-      "function": "customFetch",
-      "target": "'/api/news?limit=6'"
-    },
-    {
-      "file": "src/components/HomeForYou.tsx",
-      "line": 152,
+      "line": 160,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 164,
+      "line": 172,
       "function": "customFetch",
       "target": "`/api/watchlists/${targetList.id}/symbols`"
+    },
+    {
+      "file": "src/components/HomeMarketNews.tsx",
+      "line": 42,
+      "function": "customFetch",
+      "target": "'/api/news'"
     },
     {
       "file": "src/components/Layout.tsx",
@@ -12612,25 +12693,25 @@
     },
     {
       "file": "server/services/stockNewsService.ts",
-      "line": 93,
+      "line": 95,
       "function": "getSupabase()\n        .from",
       "key": "'sent_news_alerts'"
     },
     {
       "file": "server/services/stockNewsService.ts",
-      "line": 139,
+      "line": 141,
       "function": "getSupabase().from",
       "key": "'sent_news_alerts'"
     },
     {
       "file": "server/services/stockNewsService.ts",
-      "line": 365,
+      "line": 369,
       "function": "Array.from",
       "key": "resultsMap.values()"
     },
     {
       "file": "server/services/stockNewsService.ts",
-      "line": 482,
+      "line": 486,
       "function": "Array.from",
       "key": "symbolSet"
     },
@@ -14765,6 +14846,38 @@
       "kind": "remove",
       "name": "open-cookie-settings",
       "expression": "window.removeEventListener('open-cookie-settings', handleOpenSettings)"
+    },
+    {
+      "file": "src/components/HomeMarketNews.tsx",
+      "line": 52,
+      "target": "document",
+      "kind": "listen",
+      "name": "visibilitychange",
+      "expression": "document.addEventListener('visibilitychange', onVisibility)"
+    },
+    {
+      "file": "src/components/HomeMarketNews.tsx",
+      "line": 53,
+      "target": "window",
+      "kind": "listen",
+      "name": "bse_nav_tab_refresh",
+      "expression": "window.addEventListener('bse_nav_tab_refresh', onNavRefresh)"
+    },
+    {
+      "file": "src/components/HomeMarketNews.tsx",
+      "line": 56,
+      "target": "document",
+      "kind": "remove",
+      "name": "visibilitychange",
+      "expression": "document.removeEventListener('visibilitychange', onVisibility)"
+    },
+    {
+      "file": "src/components/HomeMarketNews.tsx",
+      "line": 57,
+      "target": "window",
+      "kind": "remove",
+      "name": "bse_nav_tab_refresh",
+      "expression": "window.removeEventListener('bse_nav_tab_refresh', onNavRefresh)"
     },
     {
       "file": "src/components/Layout.tsx",
