@@ -1,6 +1,8 @@
+import { KEYWORD_GUIDES } from '../../src/content/keywordGuides.js';
+
 /**
- * Server-side fail-safe Market Guides provider.
- * Guarantees server.ts never crashes even if frontend files are modified or deleted.
+ * Static Market Guides provider. Existing plain-text guides remain local;
+ * keyword articles share checked-in content with the frontend catalogue.
  */
 
 export interface ServerMarketGuide {
@@ -13,6 +15,7 @@ export interface ServerMarketGuide {
   excerpt: string;
   date: string;
   publishedAt: string;
+  editorialStatus?: string;
   author: {
     name: string;
     role: string;
@@ -697,7 +700,7 @@ export const FALLBACK_MARKET_GUIDES: ServerMarketGuide[] = [
   },
 ];
 
-export const MARKET_GUIDES: ServerMarketGuide[] = FALLBACK_MARKET_GUIDES;
+export const MARKET_GUIDES: ServerMarketGuide[] = [...KEYWORD_GUIDES, ...FALLBACK_MARKET_GUIDES];
 
 export function getMarketGuides(): ServerMarketGuide[] {
   return MARKET_GUIDES;
@@ -707,4 +710,9 @@ export function getMarketGuideBySlug(slug: string): ServerMarketGuide | undefine
   if (!slug) return undefined;
   const clean = slug.toLowerCase().trim();
   return MARKET_GUIDES.find(g => (g.slug && g.slug.toLowerCase() === clean) || (g.id && g.id.toLowerCase() === clean));
+}
+
+/** Only verified/public articles participate in search discovery. */
+export function getIndexableMarketGuides(): ServerMarketGuide[] {
+  return MARKET_GUIDES.filter(guide => guide.editorialStatus !== "verification-pending");
 }

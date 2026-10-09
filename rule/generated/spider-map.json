@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "b59965241cd693a460f8dea5d3c185d235adb0a6d7b077116cb71ffb233e45ff",
+  "sourceDigest": "ba1fda9eb9f65bbaac857c5cc33482b952332f2da879a8e4613b68140acbf6e1",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -167,7 +167,7 @@
     },
     {
       "path": "server.ts",
-      "sha256": "5396a45bca5e76add65bedf0b773e714df74847aa15a026d701f2d439bc0cf21",
+      "sha256": "b190ff8d5376e4a095cd71fcf67df2192b990c50f8a3cb7c5fae9d50894cf517",
       "importedBy": [
         "server/tests/routeResolution.test.ts"
       ]
@@ -658,7 +658,7 @@
     },
     {
       "path": "server/services/guideIndexNow.ts",
-      "sha256": "7d7275a35f57f7a3224bb193f3303bd1ae0fec0c213310e858a30cb715fd998a",
+      "sha256": "b2d467f91182feb85871d7b1c2327ad3391bcfd19f4a0f7d6833b13c6bcc9aca",
       "importedBy": [
         "server.ts"
       ]
@@ -677,11 +677,12 @@
     },
     {
       "path": "server/services/marketGuidesService.ts",
-      "sha256": "c696adb46180e87e34397f2161a93c0e1c9c075697570326f2e8a11a77b3a880",
+      "sha256": "dc9707be757c6961ed836331ee82656d52deeee1b32d2740e8992f1168984988",
       "importedBy": [
         "server.ts",
         "server/api/routes.ts",
-        "server/services/guideIndexNow.ts"
+        "server/services/guideIndexNow.ts",
+        "server/tests/keywordGuides.test.ts"
       ]
     },
     {
@@ -893,6 +894,11 @@
     {
       "path": "server/tests/homeNews.test.ts",
       "sha256": "205ff64582d64443de5d374e372885a5601530fa9334af8da555d0967ff8c5b6",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/keywordGuides.test.ts",
+      "sha256": "5c8d8462704ae4e0f024d23965a039ecab586e45892cd0501d79a8cd0d5b1373",
       "importedBy": []
     },
     {
@@ -1344,7 +1350,7 @@
     },
     {
       "path": "src/components/MarketGuidesSection.tsx",
-      "sha256": "36bc86e826d9889e6785eca3789402718bfde8f3696cd37b522c360438d98ec8",
+      "sha256": "877976236a7da7dfe94e3a623cfc9c286b1d5a1cebb9ab490a74dce41fc5ca3c",
       "importedBy": [
         "src/components/GuidesPage.tsx",
         "src/components/LandingPage.tsx"
@@ -2041,6 +2047,16 @@
       ]
     },
     {
+      "path": "src/content/keywordGuides.ts",
+      "sha256": "6fe0012ef15035fcd5cfe2d02369cb3c4a9c31d998c37ac9dd1d42df4d0047fd",
+      "importedBy": [
+        "server.ts",
+        "server/services/marketGuidesService.ts",
+        "server/tests/keywordGuides.test.ts",
+        "src/components/MarketGuidesSection.tsx"
+      ]
+    },
+    {
       "path": "src/context/AuthContext.tsx",
       "sha256": "b7b1bd791854644ae7d4f191627c25ef48759e8a65c5fcb80776b73690d04956",
       "importedBy": [
@@ -2313,7 +2329,7 @@
     },
     {
       "path": "src/types.ts",
-      "sha256": "8621357c3bf859e2a622ff3d8b31882e8d5687119346229fa765bcead067884f",
+      "sha256": "09bc6fcdd2c20676d8c840721c71663b133a64b8e55c0c1cb3308c88aa279394",
       "importedBy": [
         "server/database/usersDao.ts",
         "src/App.tsx",
@@ -2689,97 +2705,97 @@
     },
     {
       "source": "server.ts",
+      "target": "src/content/keywordGuides.ts",
+      "kind": "import",
+      "line": 1
+    },
+    {
+      "source": "server.ts",
       "target": "server/sentry.ts",
       "kind": "import",
-      "line": 2
+      "line": 3
     },
     {
       "source": "server.ts",
       "target": "server/utils/serverStartup.ts",
       "kind": "import",
-      "line": 13
+      "line": 14
     },
     {
       "source": "server.ts",
       "target": "server/security/auth.ts",
       "kind": "import",
-      "line": 15
+      "line": 16
     },
     {
       "source": "server.ts",
       "target": "server/api/routes.ts",
       "kind": "import",
-      "line": 16
+      "line": 17
     },
     {
       "source": "server.ts",
       "target": "server/services/monitor.ts",
       "kind": "import",
-      "line": 17
+      "line": 18
     },
     {
       "source": "server.ts",
       "target": "server/services/resultsCalendarService.ts",
       "kind": "import",
-      "line": 18
+      "line": 19
     },
     {
       "source": "server.ts",
       "target": "server/services/bse.ts",
       "kind": "import",
-      "line": 19
+      "line": 20
     },
     {
       "source": "server.ts",
       "target": "server/database/watchlistDao.ts",
       "kind": "import",
-      "line": 20
+      "line": 21
     },
     {
       "source": "server.ts",
       "target": "server/services/telegram.ts",
       "kind": "import",
-      "line": 21
+      "line": 22
     },
     {
       "source": "server.ts",
       "target": "server/services/stockNewsService.ts",
       "kind": "import",
-      "line": 22
+      "line": 23
     },
     {
       "source": "server.ts",
       "target": "server/database/logDao.ts",
       "kind": "import",
-      "line": 23
+      "line": 24
     },
     {
       "source": "server.ts",
       "target": "server/utils/helpers.ts",
       "kind": "import",
-      "line": 24
+      "line": 25
     },
     {
       "source": "server.ts",
       "target": "server/database/announcementDao.ts",
       "kind": "import",
-      "line": 25
+      "line": 26
     },
     {
       "source": "server.ts",
       "target": "server/utils/stockResolver.ts",
       "kind": "import",
-      "line": 26
-    },
-    {
-      "source": "server.ts",
-      "target": "server/services/companyIntelService.ts",
-      "kind": "import",
       "line": 27
     },
     {
       "source": "server.ts",
-      "target": "server/services/marketGuidesService.ts",
+      "target": "server/services/companyIntelService.ts",
       "kind": "import",
       "line": 28
     },
@@ -2791,45 +2807,51 @@
     },
     {
       "source": "server.ts",
-      "target": "server/database/firebase.ts",
+      "target": "server/services/marketGuidesService.ts",
       "kind": "import",
       "line": 30
     },
     {
       "source": "server.ts",
-      "target": "server/database/localStore.ts",
+      "target": "server/database/firebase.ts",
       "kind": "import",
       "line": 31
     },
     {
       "source": "server.ts",
-      "target": "server/utils/renderCache.ts",
+      "target": "server/database/localStore.ts",
       "kind": "import",
       "line": 32
     },
     {
       "source": "server.ts",
-      "target": "server/services/indexNow.ts",
+      "target": "server/utils/renderCache.ts",
       "kind": "import",
       "line": 33
     },
     {
       "source": "server.ts",
-      "target": "server/services/guideIndexNow.ts",
+      "target": "server/services/indexNow.ts",
       "kind": "import",
       "line": 34
     },
     {
       "source": "server.ts",
-      "target": "server/security/recaptchaService.ts",
+      "target": "server/services/guideIndexNow.ts",
       "kind": "import",
       "line": 35
     },
     {
       "source": "server.ts",
-      "target": "server/services/bse.ts",
+      "target": "server/security/recaptchaService.ts",
       "kind": "import",
       "line": 36
+    },
+    {
+      "source": "server.ts",
+      "target": "server/services/bse.ts",
+      "kind": "import",
+      "line": 37
     },
     {
       "source": "server/api/faq.ts",
@@ -3960,6 +3982,12 @@
       "line": 3
     },
     {
+      "source": "server/services/marketGuidesService.ts",
+      "target": "src/content/keywordGuides.ts",
+      "kind": "import",
+      "line": 1
+    },
+    {
       "source": "server/services/monitor.ts",
       "target": "server/utils/pollCycle.ts",
       "kind": "import",
@@ -4642,6 +4670,18 @@
       "target": "src/utils/homeNews.ts",
       "kind": "import",
       "line": 6
+    },
+    {
+      "source": "server/tests/keywordGuides.test.ts",
+      "target": "src/content/keywordGuides.ts",
+      "kind": "import",
+      "line": 6
+    },
+    {
+      "source": "server/tests/keywordGuides.test.ts",
+      "target": "server/services/marketGuidesService.ts",
+      "kind": "import",
+      "line": 7
     },
     {
       "source": "server/tests/notes.test.ts",
@@ -6097,9 +6137,15 @@
     },
     {
       "source": "src/components/MarketGuidesSection.tsx",
+      "target": "src/content/keywordGuides.ts",
+      "kind": "import",
+      "line": 1
+    },
+    {
+      "source": "src/components/MarketGuidesSection.tsx",
       "target": "src/types.ts",
       "kind": "import",
-      "line": 3
+      "line": 4
     },
     {
       "source": "src/components/NewsPortal.tsx",
@@ -8114,12 +8160,14 @@
         "public/robots.txt",
         "public/sitemap.xml",
         "public/llms.txt",
-        "public/llms-full.txt"
+        "public/llms-full.txt",
+        "src/content/keywordGuides.ts"
       ],
       "tests": [
         "server/tests/faqBank.test.ts",
         "server/tests/searchEngineDiscovery.test.ts",
-        "server/tests/routeResolution.test.ts"
+        "server/tests/routeResolution.test.ts",
+        "server/tests/keywordGuides.test.ts"
       ],
       "reason": "Public copy and crawler metadata must agree with actual API/product contracts. Admin SEO mutations inherit mount guards; generated summaries are not evidence of source accuracy."
     },
@@ -8381,11 +8429,15 @@
         "src/components/TermsModal.tsx",
         "index.html",
         "public/llms.txt",
-        "public/llms-full.txt"
+        "public/llms-full.txt",
+        "src/content/keywordGuides.ts",
+        "server/services/marketGuidesService.ts",
+        "server/services/guideIndexNow.ts"
       ],
       "tests": [
         "server/tests/searchEngineDiscovery.test.ts",
-        "server/tests/routeResolution.test.ts"
+        "server/tests/routeResolution.test.ts",
+        "server/tests/keywordGuides.test.ts"
       ],
       "reason": "Public links, pricing claims, server-rendered content and client views must agree. Lazy navigation, responsive composition, keyboard operation and motion require browser evidence beyond server discovery tests."
     }
@@ -8393,7 +8445,7 @@
   "routes": [
     {
       "file": "server.ts",
-      "line": 54,
+      "line": 55,
       "receiver": "app",
       "method": "USE",
       "path": "compression({ threshold: 1024, // Don't compress payloads under 1KB level: 6, // Optimal balance between CPU usage and compression ratio filter: (req, res) => { // 1. Honor client bypass header if requested if (req.headers['x-no-compression",
@@ -8401,7 +8453,7 @@
     },
     {
       "file": "server.ts",
-      "line": 85,
+      "line": 86,
       "receiver": "app",
       "method": "USE",
       "path": "helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false, frameguard: false, crossOriginOpenerPolicy: false, crossOriginResourcePolicy: false, referrerPolicy: { policy: 'strict-origin-when-cross-origin' } })",
@@ -8409,7 +8461,7 @@
     },
     {
       "file": "server.ts",
-      "line": 93,
+      "line": 94,
       "receiver": "app",
       "method": "USE",
       "path": "/api/payments/webhook",
@@ -8419,7 +8471,7 @@
     },
     {
       "file": "server.ts",
-      "line": 94,
+      "line": 95,
       "receiver": "app",
       "method": "USE",
       "path": "express.json({ limit: '1mb' })",
@@ -8427,7 +8479,7 @@
     },
     {
       "file": "server.ts",
-      "line": 95,
+      "line": 96,
       "receiver": "app",
       "method": "USE",
       "path": "cookieParser()",
@@ -8435,7 +8487,7 @@
     },
     {
       "file": "server.ts",
-      "line": 96,
+      "line": 97,
       "receiver": "app",
       "method": "USE",
       "path": "authMiddleware",
@@ -8443,7 +8495,7 @@
     },
     {
       "file": "server.ts",
-      "line": 99,
+      "line": 100,
       "receiver": "app",
       "method": "GET",
       "path": "/sw.js",
@@ -8453,7 +8505,7 @@
     },
     {
       "file": "server.ts",
-      "line": 120,
+      "line": 121,
       "receiver": "app",
       "method": "GET",
       "path": "/OneSignalSDKWorker.js",
@@ -8463,7 +8515,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5131,
+      "line": 5137,
       "receiver": "app",
       "method": "GET",
       "path": "['/health', '/healthz']",
@@ -8473,7 +8525,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5137,
+      "line": 5143,
       "receiver": "app",
       "method": "GET",
       "path": "/robots.txt",
@@ -8483,7 +8535,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5143,
+      "line": 5149,
       "receiver": "app",
       "method": "GET",
       "path": "['/sitemap.xml', '/sitemap', '/sitemap_index.xml', '/sitemap.txt']",
@@ -8493,7 +8545,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5150,
+      "line": 5156,
       "receiver": "app",
       "method": "GET",
       "path": "['/rss.xml', '/rss', '/feed.xml', '/feed']",
@@ -8503,7 +8555,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5216,
+      "line": 5222,
       "receiver": "app",
       "method": "GET",
       "path": "[/^\\/https?:\\/?\\/?(?:www\\.)?bsenexus\\.in\\/sitemap(?:\\.xml)?$/i]",
@@ -8513,7 +8565,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5221,
+      "line": 5227,
       "receiver": "app",
       "method": "GET",
       "path": "[`/${INDEXNOW_KEY}.txt`, '/indexnow-key.txt']",
@@ -8523,7 +8575,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5228,
+      "line": 5234,
       "receiver": "app",
       "method": "GET",
       "path": "/opensearch.xml",
@@ -8533,7 +8585,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5246,
+      "line": 5252,
       "receiver": "app",
       "method": "GET",
       "path": "[sourcePath, sourcePath + '/']",
@@ -8543,7 +8595,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5255,
+      "line": 5261,
       "receiver": "app",
       "method": "GET",
       "path": "/filing/:symbol/:newsId",
@@ -8553,7 +8605,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5313,
+      "line": 5319,
       "receiver": "app",
       "method": "GET",
       "path": "/announcement/:newsId",
@@ -8563,7 +8615,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5638,
+      "line": 5644,
       "receiver": "app",
       "method": "GET",
       "path": "/results/:symbol/:quarterKey",
@@ -8573,7 +8625,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5694,
+      "line": 5700,
       "receiver": "app",
       "method": "GET",
       "path": "['/company/:symbol', '/stock/:symbol']",
@@ -8583,7 +8635,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5763,
+      "line": 5769,
       "receiver": "app",
       "method": "GET",
       "path": "/guides/:slug",
@@ -8593,7 +8645,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5809,
+      "line": 5815,
       "receiver": "app",
       "method": "GET",
       "path": "['/faq', '/faqs']",
@@ -8603,7 +8655,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5816,
+      "line": 5822,
       "receiver": "app",
       "method": "GET",
       "path": "['/pricing', '/pricing/']",
@@ -8613,7 +8665,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5823,
+      "line": 5829,
       "receiver": "app",
       "method": "GET",
       "path": "['/plans', '/plans/']",
@@ -8623,7 +8675,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5828,
+      "line": 5834,
       "receiver": "app",
       "method": "GET",
       "path": "['/guides', '/guides/']",
@@ -8633,7 +8685,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5835,
+      "line": 5841,
       "receiver": "app",
       "method": "GET",
       "path": "['/market-guides', '/market-guides/']",
@@ -8643,7 +8695,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5840,
+      "line": 5846,
       "receiver": "app",
       "method": "GET",
       "path": "['/companies', '/companies/']",
@@ -8653,7 +8705,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5847,
+      "line": 5853,
       "receiver": "app",
       "method": "GET",
       "path": "['/company-directory', '/company-directory/']",
@@ -8663,7 +8715,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5852,
+      "line": 5858,
       "receiver": "app",
       "method": "GET",
       "path": "['/about', '/about/']",
@@ -8673,7 +8725,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5859,
+      "line": 5865,
       "receiver": "app",
       "method": "GET",
       "path": "['/contact', '/contact/']",
@@ -8683,7 +8735,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5866,
+      "line": 5872,
       "receiver": "app",
       "method": "GET",
       "path": "['/disclaimer', '/disclaimer/']",
@@ -8693,7 +8745,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5873,
+      "line": 5879,
       "receiver": "app",
       "method": "GET",
       "path": "['/privacy-policy', '/privacy-policy/']",
@@ -8703,7 +8755,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5880,
+      "line": 5886,
       "receiver": "app",
       "method": "GET",
       "path": "['/privacy', '/privacy/']",
@@ -8713,7 +8765,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5885,
+      "line": 5891,
       "receiver": "app",
       "method": "GET",
       "path": "['/terms', '/terms/']",
@@ -8723,7 +8775,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5892,
+      "line": 5898,
       "receiver": "app",
       "method": "GET",
       "path": "['/terms-of-service', '/terms-of-service/']",
@@ -8733,7 +8785,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5897,
+      "line": 5903,
       "receiver": "app",
       "method": "GET",
       "path": "/embed/widget",
@@ -8743,7 +8795,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5951,
+      "line": 5957,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-companies.xml",
@@ -8753,7 +8805,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5971,
+      "line": 5977,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-guides.xml",
@@ -8763,7 +8815,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5989,
+      "line": 5995,
       "receiver": "app",
       "method": "GET",
       "path": "/llms.txt",
@@ -8773,7 +8825,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5994,
+      "line": 6000,
       "receiver": "app",
       "method": "GET",
       "path": "/llms-full.txt",
@@ -8783,7 +8835,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6000,
+      "line": 6006,
       "receiver": "app",
       "method": "GET",
       "path": "/^\\/google([a-zA-Z0-9_-]+)\\.html$/",
@@ -8793,7 +8845,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6007,
+      "line": 6013,
       "receiver": "app",
       "method": "USE",
       "path": "express.static(path.join(process.cwd(), 'public'), { maxAge: '1d', immutable: false })",
@@ -8801,7 +8853,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6013,
+      "line": 6019,
       "receiver": "app",
       "method": "USE",
       "path": "/auth",
@@ -8811,7 +8863,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6016,
+      "line": 6022,
       "receiver": "app",
       "method": "POST",
       "path": "/api/security/verify-recaptcha",
@@ -8822,7 +8874,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6057,
+      "line": 6063,
       "receiver": "app",
       "method": "USE",
       "path": "/api",
@@ -8833,7 +8885,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6061,
+      "line": 6067,
       "receiver": "app",
       "method": "USE",
       "path": "['/api/*', '/auth/*']",
@@ -8843,7 +8895,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6066,
+      "line": 6072,
       "receiver": "app",
       "method": "USE",
       "path": "(err: any, req: express.Request, res: express.Response, next: express.NextFunction) => { if (req.path.startsWith('/api') || req.path.startsWith('/auth')) { console.error(\"API Error handler caught:\", err?.message || err); const isProd = proc",
@@ -8851,7 +8903,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6471,
+      "line": 6477,
       "receiver": "app",
       "method": "GET",
       "path": "[\"/\", \"/announcements\", \"/live\", \"/results-calendar\", \"/watchlist\", \"/watchlists\", \"/companies\", \"/about\", \"/contact\", \"/disclaimer\", \"/privacy-policy\", \"/terms\"]",
@@ -8861,7 +8913,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6498,
+      "line": 6504,
       "receiver": "app",
       "method": "USE",
       "path": "(req, res, next) => { if (req.method !== 'GET' && req.method !== 'HEAD') return next(); const p = req.path; if ( p === '/' || p === '/announcements' || p === '/results-calendar' || p === '/watchlist' || p === '/watchlists' || p === '/compan",
@@ -8869,7 +8921,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6530,
+      "line": 6536,
       "receiver": "app",
       "method": "USE",
       "path": "vite.middlewares",
@@ -8877,7 +8929,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6542,
+      "line": 6548,
       "receiver": "app",
       "method": "USE",
       "path": "express.static(distPath, { maxAge: '1y', immutable: true, index: false, setHeaders: (res, filePath) => { if (filePath.endsWith('.html')) { res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600'); } } }",
@@ -8885,7 +8937,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6569,
+      "line": 6575,
       "receiver": "app",
       "method": "GET",
       "path": "*",
@@ -10915,7 +10967,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6184,
+      "line": 6190,
       "function": "fetch",
       "target": "`http://127.0.0.1:${port}/api/health`"
     },
@@ -11509,7 +11561,7 @@
     },
     {
       "file": "src/components/MarketGuidesSection.tsx",
-      "line": 390,
+      "line": 392,
       "function": "fetch",
       "target": "'/api/market-guides'"
     },
@@ -13678,32 +13730,32 @@
     },
     {
       "file": "server.ts",
-      "line": 102,
+      "line": 103,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6069,
+      "line": 6075,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6460,
+      "line": 6466,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6465,
+      "line": 6471,
       "name": "DISABLE_HMR"
     },
     {
       "file": "server.ts",
-      "line": 6669,
+      "line": 6675,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6669,
+      "line": 6675,
       "name": "TEST_RUNNER"
     },
     {

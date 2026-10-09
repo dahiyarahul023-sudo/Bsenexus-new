@@ -1,3 +1,4 @@
+import { KEYWORD_GUIDES, getKeywordGuide } from '../content/keywordGuides';
 import React, { useState, useEffect } from 'react';
 import { Search, Clock, ArrowUpRight } from 'lucide-react';
 import { MarketGuide } from '../types';
@@ -5,6 +6,7 @@ import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
 export const MARKET_GUIDES: MarketGuide[] = [
+  ...KEYWORD_GUIDES,
   {
     id: 'sebi-lodr-reg-30',
     slug: 'sebi-lodr-reg-30-disclosures',
@@ -475,7 +477,7 @@ export function MarketGuidesSection({ onSelectGuide }: MarketGuidesSectionProps)
                 key={guide.id}
                 href={`/guides/${guide.slug || guide.id}`}
                 onClick={(e) => {
-                  if (!e.ctrlKey && !e.metaKey) {
+                  if (!getKeywordGuide(guide.slug || guide.id) && !e.ctrlKey && !e.metaKey) {
                     e.preventDefault();
                     onSelectGuide(guide);
                   }
@@ -494,6 +496,9 @@ export function MarketGuidesSection({ onSelectGuide }: MarketGuidesSectionProps)
                     </span>
                   </div>
 
+                  {guide.editorialStatus === "verification-pending" && (
+                    <p className="text-xs font-semibold text-amber-700 dark:text-amber-300">Editorial draft · verification pending</p>
+                  )}
                   {/* Title */}
                   <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-snug group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
                     {guide.title}

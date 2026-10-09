@@ -58,3 +58,6 @@ Current status (2026-10-07): these missing requirements are now specified; their
 
 
 2026-10-09 news simplification: icon-only AI/Share/Notes replace redundant direct dispatch/external-open controls. Dedicated News navigation replaces Settings news discovery shortcut. Existing AI feedback, note editor, share actions and automatic delivery preferences remain; evidence in changes/news-minimal-actions.md.
+
+
+2026-10-09 keyword guides: shared static English article records supply server catalogue and frontend fallback. Native links open full server-rendered API/shareholding drafts with code, semantic tables, eight FAQs/schema and exact metadata. Pending review is explicit; getIndexableMarketGuides excludes them from discovery/sitemap/IndexNow. Existing guide modal and backend business rules remain compatible. See changes/keyword-guides.md for tests and separate browser/deployment limits.

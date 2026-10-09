@@ -1,3 +1,4 @@
+import { getKeywordGuide, KEYWORD_GUIDE_CSS } from './src/content/keywordGuides.js';
 import 'dotenv/config';
 import { initServerSentry, Sentry } from "./server/sentry.js";
 initServerSentry();
@@ -25,7 +26,7 @@ import { getPollingIntervalMs, parseBseDate, getISTMarketStatus } from "./server
 import { getAnnouncementById, getRecentAnnouncements } from "./server/database/announcementDao.js";
 import { getScripCode, getAllStockEntries } from "./server/utils/stockResolver.js";
 import { getCompanyIntelligence } from "./server/services/companyIntelService.js";
-import { MARKET_GUIDES, getMarketGuides, getMarketGuideBySlug } from "./server/services/marketGuidesService.js";
+import { MARKET_GUIDES, getMarketGuides, getMarketGuideBySlug, getIndexableMarketGuides } from "./server/services/marketGuidesService.js";
 import type { ServerMarketGuide as MarketGuide } from "./server/services/marketGuidesService.js";
 import { resumeFirestoreNetwork, startStorageRecoveryProbe } from "./server/database/firebase.js";
 import { isFirestoreQuotaExceeded, getManualStorageMode, resetAdminPermissionDenied } from "./server/database/localStore.js";
@@ -229,7 +230,7 @@ async function generateDynamicSitemap(): Promise<string> {
 
     // Append educational Market Guides
     try {
-      for (const guide of MARKET_GUIDES) {
+      for (const guide of getIndexableMarketGuides()) {
         const slug = guide.slug || guide.id;
         if (!slug) continue;
         xml += `  <url>\n    <loc>https://bsenexus.in/guides/${escapeHtmlAttr(slug)}</loc>\n    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
@@ -2464,7 +2465,7 @@ export function renderGuidesIndexPage(): string {
         "description": description,
         "mainEntity": {
           "@type": "ItemList",
-          "itemListElement": MARKET_GUIDES.map((g, idx) => ({
+          "itemListElement": getIndexableMarketGuides().map((g, idx) => ({
             "@type": "ListItem",
             "position": idx + 1,
             "url": `https://bsenexus.in/guides/${g.slug || g.id}`,
@@ -2759,7 +2760,7 @@ ${jsonLd}
     </div>
 
     <div class="guides-grid">
-      ${MARKET_GUIDES.map(guide => `
+      ${getIndexableMarketGuides().map(guide => `
         <article class="guide-card">
           <div>
             <div class="card-meta">
@@ -4434,7 +4435,9 @@ function getRelatedCompaniesForGuide(slug: string): Array<{ symbol: string; name
 
 function renderGuidePage(guide: MarketGuide): string {
   const slug = guide.slug || guide.id;
-  const pageTitle = `${guide.title} | Bsenexus`;
+  const keywordGuide = getKeywordGuide(slug);
+  const pendingReview = guide.editorialStatus === "verification-pending";
+  const pageTitle = keywordGuide ? guide.title : `${guide.title} | Bsenexus`;
 
   let description = (guide.summary || guide.excerpt || '').trim().replace(/\s+/g, ' ');
   if (description.length > 155) {
@@ -4458,9 +4461,9 @@ function renderGuidePage(guide: MarketGuide): string {
     "@type": "Article",
     "headline": guide.title,
     "description": description,
-    "datePublished": publishedIso,
+    ...(pendingReview ? {} : { "datePublished": publishedIso }),
     "author": {
-      "@type": "Person",
+      "@type": keywordGuide ? "Organization" : "Person",
       "name": guide.author?.name || "Bsenexus Research",
       ...(guide.author?.role ? { "jobTitle": guide.author.role } : {})
     },
@@ -4587,7 +4590,7 @@ function renderGuidePage(guide: MarketGuide): string {
   <title>${escapeHtmlText(pageTitle)}</title>
   <meta name="description" content="${escapeHtmlAttr(description)}">
   <link rel="canonical" href="${escapeHtmlAttr(canonicalUrl)}">
-  <meta name="robots" content="index, follow">
+  <meta name="robots" content="${pendingReview ? 'noindex, follow' : 'index, follow'}">
 ${AI_STUDIO_REDIRECT_SCRIPT}
 
   <!-- Open Graph -->
@@ -4615,6 +4618,7 @@ ${faqJsonLd ? `  <script type="application/ld+json">\n${faqJsonLd}\n  </script>`
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
+    ${keywordGuide ? KEYWORD_GUIDE_CSS : ""}
     :root {
       --bg: #F8FAFC;
       --card-bg: #FFFFFF;
@@ -4990,7 +4994,7 @@ ${faqJsonLd ? `  <script type="application/ld+json">\n${faqJsonLd}\n  </script>`
     }
   </style>
 </head>
-<body>
+<body${keywordGuide ? ' class="keyword-guide-page"' : ''}>
   <nav class="top-banner">
     <a href="https://bsenexus.in" class="top-brand">
       BSE <span>Nexus</span>
@@ -5022,6 +5026,8 @@ ${faqJsonLd ? `  <script type="application/ld+json">\n${faqJsonLd}\n  </script>`
       </div>
       ` : ''}
 
+      ${keywordGuide ? `<p role="note" class="keyword-verification">Editorial draft · factual verification pending</p><div class="keyword-guide">${keywordGuide.articleHtml}</div>` : ""}
+
       ${guide.content?.introduction ? `
       <div class="intro-box">
         <p>${escapeHtmlText(guide.content.introduction)}</p>
@@ -5034,7 +5040,7 @@ ${faqJsonLd ? `  <script type="application/ld+json">\n${faqJsonLd}\n  </script>`
 
       ${conclusionHtml}
 
-      ${relatedCompaniesHtml}
+      ${keywordGuide ? "" : relatedCompaniesHtml}
 
       <div class="cta-row">
         <a href="https://bsenexus.in/?tab=guides" class="app-btn-large">
@@ -5974,7 +5980,7 @@ app.get('/sitemap-guides.xml', (_req, res) => {
   xml += `  <url>\n    <loc>https://bsenexus.in/pricing</loc>\n    <lastmod>${todayStr}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.9</priority>\n  </url>\n`;
   xml += `  <url>\n    <loc>https://bsenexus.in/guides</loc>\n    <lastmod>${todayStr}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.9</priority>\n  </url>\n`;
   xml += `  <url>\n    <loc>https://bsenexus.in/faq</loc>\n    <lastmod>${todayStr}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
-  for (const guide of MARKET_GUIDES) {
+  for (const guide of getIndexableMarketGuides()) {
     const slug = guide.slug || guide.id;
     if (!slug) continue;
     xml += `  <url>\n    <loc>https://bsenexus.in/guides/${escapeHtmlAttr(slug)}</loc>\n    <lastmod>${todayStr}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;

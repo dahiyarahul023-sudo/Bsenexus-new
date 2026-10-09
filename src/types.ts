@@ -131,6 +131,7 @@ export interface MarketGuideSection {
 }
 
 export interface MarketGuide {
+  editorialStatus?: string;
   id: string;
   slug?: string;
   title: string;

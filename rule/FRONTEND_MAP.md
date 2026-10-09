@@ -74,3 +74,6 @@ Home news appears before a two-item watchlist preview and results. Existing News
 
 
 2026-10-09 minimal-action follow-up: full NewsPortal footer now contains only AI icon, shared Share menu and Notes. Original article remains reachable from the headline; manual direct Telegram dispatch handler/state and duplicate external link removed. AI retains authentication/quota/network error feedback through its own aiError state. Share menu still offers Telegram. Home preview removes its duplicate Read footer action and keeps compact share/note icons. Settings removes news-feed from search registry/tool group; dedicated navigation remains authoritative. Automatic Telegram news preferences and server dispatch route are unchanged. See changes/news-minimal-actions.md.
+
+
+2026-10-09 keyword guides: shared static English article records supply server catalogue and frontend fallback. Native links open full server-rendered API/shareholding drafts with code, semantic tables, eight FAQs/schema and exact metadata. Pending review is explicit; getIndexableMarketGuides excludes them from discovery/sitemap/IndexNow. Existing guide modal and backend business rules remain compatible. See changes/keyword-guides.md for tests and separate browser/deployment limits.

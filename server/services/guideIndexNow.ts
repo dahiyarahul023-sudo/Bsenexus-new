@@ -12,7 +12,7 @@
  */
 import fs from 'fs';
 import path from 'path';
-import { getMarketGuides } from './marketGuidesService.js';
+import { getIndexableMarketGuides } from './marketGuidesService.js';
 import { notifySearchEnginesOfNewPages } from './indexNow.js';
 import { addLog } from '../database/logDao.js';
 
@@ -47,7 +47,7 @@ function saveSubmitted(set: Set<string>): void {
  */
 export function autoIndexNewGuides(): void {
   try {
-    const guides = getMarketGuides();
+    const guides = getIndexableMarketGuides();
     const submitted = loadSubmitted();
     const fresh: string[] = [];
 
