@@ -146,9 +146,11 @@ apiRouter.get("/config/public", (_req, res) => {
 
 // Health Check Endpoint with Circuit Breakers & Cache Telemetry
 apiRouter.get("/health", (_req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
   res.json({ 
     status: "ok", 
-    uptime: process.uptime(), 
+    uptime: process.uptime(),
+    bseSource: { ...getBseHealth(), ...getBseFeedStaleness() },
     timestamp: Date.now(),
     circuitBreakers: circuitRegistry.getAllStatuses(),
     caches: {

@@ -6,8 +6,8 @@ import ts from 'typescript';
 
 // Exercise the actual BSE module with isolated storage/network and a virtual clock.
 // No exchange requests, database writes or notifications leave this harness.
-function harness(pages: Record<number, any[] | null>, processed = new Set<string>()) {
-  let now = 1000; // Keep the unrelated periodic backup sample outside its 60s window.
+function harness(pages: Record<number, any[] | null>, processed = new Set<string>(), options: { backup?: any[] | null; yesterday?: any[] | null; sample?: boolean; market?: boolean; failureStatus?: number } = {}) {
+  let now = options.sample ? 61_000 : 1000; // Keep the unrelated periodic backup sample outside its 60s window.
   const calls: { page: number; at: number }[] = [];
   const delays: number[] = [];
   const logs: string[] = [];
@@ -28,14 +28,16 @@ function harness(pages: Record<number, any[] | null>, processed = new Set<string
     fetch: async (url: string) => {
       const page = Number(new URL(url).searchParams.get('pageno'));
       calls.push({ page, at: now });
-      const rows = pages[page];
-      return { ok: rows !== null, status: rows === null ? 503 : 200,
+      const params = new URL(url).searchParams;
+      const rows = params.get('strSearch') === 'P' && 'backup' in options ? options.backup
+        : params.get('strPrevDate') !== '19700101' && 'yesterday' in options ? options.yesterday : pages[page];
+      return { ok: rows !== null, status: rows === null ? (options.failureStatus || 503) : 200,
         text: async () => JSON.stringify({ Table: rows ?? [] }) };
     },
     require(path: string) {
       if (path.endsWith('/logDao.js')) return { addLog: async (_level: string, _area: string, message: string) => { logs.push(message); } };
       if (path.endsWith('/announcementDao.js')) return { isAnnouncementProcessed: async (id: string) => processed.has(id) };
-      if (path.endsWith('/helpers.js')) return { isMarketHoursIST: () => false };
+      if (path.endsWith('/helpers.js')) return { isMarketHoursIST: () => options.market || false };
       if (path.endsWith('/circuitBreaker.js')) return { bseCircuitBreaker: { execute: async (action: () => Promise<any>) => action() } };
       return {};
     },
@@ -45,7 +47,7 @@ function harness(pages: Record<number, any[] | null>, processed = new Set<string
     module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022,
   } }).outputText;
   vm.runInContext(compiled, context, { filename: 'bse.cjs' });
-  return { poll: () => exports.fetchBSEAnnouncements(), calls, delays, logs, pages, processed };
+  return { poll: () => exports.fetchBSEAnnouncements(), calls, delays, logs, pages, processed, state: () => exports.getBseFeedStaleness() };
 }
 
 function rows(page: number, count = 50) {
@@ -95,4 +97,69 @@ test('failed deeper page retains page one and the existing retry delay', async (
   assert.equal(result.length, 50);
   assert.deepEqual(h.calls, [{ page: 1, at: 1000 }, { page: 2, at: 3500 }, { page: 2, at: 3900 }]);
   assert.deepEqual(h.delays, [2500, 400]);
+});
+
+
+test('empty primary recovers today through alternate search and returns those filings', async () => {
+  const h = harness({ 1: [] }, new Set(), { backup: [{ NEWSID: 'new-today' }], yesterday: [] });
+  assert.ok((await h.poll()).some((row: any) => row.NEWSID === 'new-today'));
+});
+
+test('periodic alternate source rows join ingestion instead of remaining diagnostic-only', async () => {
+  const first = rows(1);
+  const h = harness({ 1: first }, new Set(['page-1-0']), { backup: [{ NEWSID: 'newer-backup' }, { NEWSID: 'page-1-0' }], sample: true });
+  const result = await h.poll();
+  assert.ok(result.some((row: any) => row.NEWSID === 'newer-backup'));
+  assert.equal(result.filter((row: any) => row.NEWSID === 'page-1-0').length, 1);
+  assert.equal(result.find((row: any) => row.NEWSID === 'newer-backup')._source, 'PARALLEL_BACKUP_SEARCH_P');
+});
+
+test('yesterday-only fallback cannot advance today freshness or clear its failed source', async () => {
+  const h = harness({ 1: null }, new Set(), { backup: null, yesterday: rows(9) });
+  assert.equal((await h.poll()).length, 50);
+  assert.equal(h.state().lastSuccessfulFetchMs, 0);
+});
+
+
+test('yesterday recovery keeps a today-source block and never certifies freshness', async () => {
+  const h = harness({ 1: null }, new Set(), { backup: null, yesterday: rows(9), failureStatus: 403 });
+  assert.equal((await h.poll()).length, 50);
+  assert.equal(h.state().blocked, true);
+  assert.equal(h.state().lastSuccessfulFetchMs, 0);
+});
+
+test('failed optional backup preserves the current primary feed', async () => {
+  const first = rows(1);
+  const h = harness({ 1: first }, new Set(['page-1-0']), { backup: null, sample: true });
+  assert.equal((await h.poll()).length, 50);
+});
+
+test('empty market-hours responses do not refresh a source marked delayed', async () => {
+  const h = harness({ 1: [] }, new Set(), { backup: [], yesterday: [], market: true });
+  assert.equal((await h.poll()).length, 0);
+  assert.equal(h.state().blocked, true);
+  assert.equal(h.state().lastSuccessfulFetchMs, 0);
+});
+
+test('a response whose body hangs stays under the request abort deadline', async () => {
+  const exports: any = {};
+  const source = readFileSync(new URL('../services/bse.ts', import.meta.url), 'utf8');
+  const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
+  let aborted = false;
+  vm.runInNewContext(code, { exports, Date, URL, AbortController, console, setTimeout, clearTimeout,
+    fetch: async (_url: string, options: { signal: AbortSignal }) => ({ ok: true, text: () => new Promise((_resolve, reject) => {
+      options.signal.addEventListener('abort', () => { aborted = true; reject(Object.assign(new Error('aborted body'), { name: 'AbortError' })); }, { once: true });
+    }) }),
+    require(path: string) {
+      if (path.endsWith('/logDao.js')) return { addLog: async () => {} };
+      if (path.endsWith('/circuitBreaker.js')) return { bseCircuitBreaker: { execute: async (action: () => Promise<any>) => action() } };
+      return {};
+    },
+  });
+  let guard: ReturnType<typeof setTimeout>;
+  const result = await Promise.race([exports.fetchSingleBsePage(1, '', 'AnnSubCategoryGetData', 20, '20261009', 0),
+    new Promise(resolve => { guard = setTimeout(() => resolve('body deadline missed'), 250); })]);
+  clearTimeout(guard!);
+  assert.equal(result, null);
+  assert.equal(aborted, true);
 });

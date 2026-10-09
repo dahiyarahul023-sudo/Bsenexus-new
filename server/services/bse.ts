@@ -140,17 +140,17 @@ export function getBseISTDate(offsetDays: number = 0): string {
 
 async function fetchWithHardenedRetries(url: string, timeoutMs: number = 5000, maxRetries: number = 2): Promise<any[] | null> {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    let timer: ReturnType<typeof setTimeout> | undefined;
     try {
       const headers = getNextBrowserHeaders();
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      timer = setTimeout(() => controller.abort(), timeoutMs);
 
       const res = await fetch(url, {
         headers,
         signal: controller.signal,
       });
-      clearTimeout(timer);
-
+      // Keep the abort deadline active while reading the response body too.
       if (!res.ok) {
         if (res.status === 403) {
           lastBseErrorDetails = "HTTP 403 Forbidden (BSE Akamai Edge WAF rate limit or cloud IP block)";
@@ -183,6 +183,8 @@ async function fetchWithHardenedRetries(url: string, timeoutMs: number = 5000, m
         const delay = RETRY_BACKOFF_DELAYS[attempt] || 500;
         await new Promise(r => setTimeout(r, delay));
       }
+    } finally {
+      if (timer !== undefined) clearTimeout(timer);
     }
   }
   return null;
@@ -314,12 +316,17 @@ export async function fetchBSEAnnouncements() {
   // Primary live endpoint: AnnSubCategoryGetData page 1 returns ~50 latest filings
   let table = await fetchSingleBsePage(1, '', 'AnnSubCategoryGetData', 5000, todayDate);
   
-  // If primary returned null (network/timeout failure), attempt Fallback 1: strSearch=P
-  if (table === null) {
+  // A valid-but-empty primary may differ from the alternate search. Try the
+  // existing recovery endpoint before treating it as no new filings.
+  let checkedAlternate = false;
+  if (table === null || table.length === 0) {
+    checkedAlternate = true;
+    lastBackupCheckTime = Date.now();
     source = 'BSE_FALLBACK_SEARCH_P';
     const fallbackPUrl = `https://api.bseindia.com/BseIndiaAPI/api/AnnSubCategoryGetData/w?pageno=1&strCat=-1&strPrevDate=${todayDate}&strScrip=&strSearch=P&strToDate=${todayDate}&strType=C&_cb=${Date.now()}`;
-    table = await fetchWithHardenedRetries(fallbackPUrl, 5000, 1);
-    if (table) {
+    const alternate = await fetchWithHardenedRetries(fallbackPUrl, 5000, 1);
+    if (alternate !== null) table = alternate;
+    if (alternate && alternate.length > 0) {
       await addLog('INFO', 'POLLER', `Primary BSE endpoint degraded; switched to BSE_FALLBACK_SEARCH_P in ${Date.now() - start}ms`);
     }
   }
@@ -333,29 +340,28 @@ export async function fetchBSEAnnouncements() {
     }
   }
 
-  // If we have data, periodically sample backup to measure staleness
-  if (table && table.length > 0) {
+  // Use the existing minute-spaced sample for recovery, not only telemetry.
+  // Alternate rows must reach the monitor, which owns persistence/dedupe.
+  if (!checkedAlternate && source !== 'BSE_FALLBACK_YESTERDAY' && table && table.length > 0) {
     const now = Date.now();
     if (now - lastBackupCheckTime > 60000) {
       lastBackupCheckTime = now;
-      fetchParallelBackupSource().then(backupRes => {
-        if (backupRes.items.length > 0 && table && table.length > 0) {
-          const primaryLatestTs = Math.max(...table.map((i: any) => parseItemTimestamp(i)));
-          const backupLatestTs = backupRes.latestTs;
-          if (primaryLatestTs > 0 && backupLatestTs > 0) {
-            const stalenessSec = Math.max(0, Math.round((primaryLatestTs - backupLatestTs) / 1000));
-            lastBackupStalenessSec = stalenessSec;
-          }
+      const backupRes = await fetchParallelBackupSource();
+      if (backupRes.items.length > 0) {
+        const primaryLatestTs = Math.max(...table.map((i: any) => parseItemTimestamp(i)));
+        if (primaryLatestTs > 0 && backupRes.latestTs > 0) {
+          lastBackupStalenessSec = Math.max(0, Math.round((primaryLatestTs - backupRes.latestTs) / 1000));
         }
-      }).catch(() => {});
+        table = [...table, ...backupRes.items.map(item => ({ ...item, _source: backupRes.source }))];
+      }
     }
   }
 
   // Block-signal check on today's page 1: HTTP 200 with data
-  const todayHadRows = Array.isArray(table) && table.length > 0;
+  const todayHadRows = source !== 'BSE_FALLBACK_YESTERDAY' && Array.isArray(table) && table.length > 0;
   if (todayHadRows) {
     clearBseBlock();
-  } else if (table !== null && isMarketHoursIST()) {
+  } else if (table !== null && source !== 'BSE_FALLBACK_YESTERDAY' && isMarketHoursIST()) {
     markBseBlocked("BSE returned 'No Record Found' during market hours (likely rate-limited)");
   }
 
@@ -391,20 +397,22 @@ export async function fetchBSEAnnouncements() {
   // merge yesterday's filings so that the feed has complete historical continuity!
   if (table && Array.isArray(table) && table.length < 30) {
     const yestItems = await fetchSingleBsePage(1, '', 'AnnSubCategoryGetData', 4500, yesterdayDate) || [];
-    table = [...table, ...yestItems];
+    table = [...table, ...yestItems.map(item => ({ ...item, _source: 'BSE_HISTORY_YESTERDAY' }))];
   }
 
   const totalLatency = Date.now() - start;
 
   if (table && Array.isArray(table) && table.length > 0) {
     bseHealth = { status: totalLatency > 4000 ? 'degraded' : 'stable', latency: Math.round(totalLatency) };
-    lastSuccessfulFetchMs = Date.now();
+    // History returned by yesterday's fallback does not verify today's source.
+    if (source !== 'BSE_FALLBACK_YESTERDAY' && !bseSourceBlocked) lastSuccessfulFetchMs = Date.now();
+    else bseHealth = { status: 'degraded', latency: Math.round(totalLatency) };
     
     // Deduplicate by NEWSID and attach diagnostic metadata
     const uniqueMap = new Map();
     for (const item of table) {
       if (item.NEWSID && !uniqueMap.has(item.NEWSID)) {
-        item._source = source;
+        item._source = item._source || source;
         item._fetchLatency = totalLatency;
         uniqueMap.set(item.NEWSID, item);
       }
@@ -413,8 +421,8 @@ export async function fetchBSEAnnouncements() {
   }
   
   if (table !== null) {
-    bseHealth = { status: 'stable', latency: Math.round(totalLatency) };
-    lastSuccessfulFetchMs = Date.now();
+    bseHealth = { status: bseSourceBlocked ? 'degraded' : 'stable', latency: Math.round(totalLatency) };
+    if (source !== 'BSE_FALLBACK_YESTERDAY' && !bseSourceBlocked) lastSuccessfulFetchMs = Date.now();
     return [];
   }
   bseHealth = { status: 'down', latency: -1 };
