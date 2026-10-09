@@ -334,7 +334,9 @@
         "src/components/ui/TabErrorBoundary.tsx",
         "src/components/HomeMarketNews.tsx",
         "src/utils/homeNews.ts",
-        "src/styles/home-news.css"
+        "src/styles/home-news.css",
+        "src/components/ui/motion/ShareActionMenu.tsx",
+        "src/components/notes/SaveNoteButton.tsx"
       ],
       "tests": [
         "server/tests/routeResolution.test.ts",
@@ -387,7 +389,9 @@
         "src/utils/motionTokens.ts",
         "src/components/HomeMarketNews.tsx",
         "src/utils/homeNews.ts",
-        "src/styles/home-news.css"
+        "src/styles/home-news.css",
+        "src/components/ui/motion/ShareActionMenu.tsx",
+        "src/components/notes/SaveNoteButton.tsx"
       ],
       "tests": [
         "server/tests/homeNews.test.ts"
@@ -418,7 +422,9 @@
         "src/shared/alertRules.ts",
         "src/components/HomeMarketNews.tsx",
         "src/utils/homeNews.ts",
-        "src/styles/home-news.css"
+        "src/styles/home-news.css",
+        "src/components/ui/motion/ShareActionMenu.tsx",
+        "src/components/notes/SaveNoteButton.tsx"
       ],
       "tests": [
         "server/tests/core.test.ts",
@@ -441,10 +447,13 @@
         "src/components/notes/notes.css",
         "src/components/SettingsTab.tsx",
         "src/api/notesApi.ts",
-        "src/components/ui/AutosaveIndicator.tsx"
+        "src/components/ui/AutosaveIndicator.tsx",
+        "src/components/HomeMarketNews.tsx",
+        "src/components/ui/motion/ShareActionMenu.tsx"
       ],
       "tests": [
-        "server/tests/notes.test.ts"
+        "server/tests/notes.test.ts",
+        "server/tests/homeNews.test.ts"
       ],
       "reason": "Editor writes dispatch notes-changed; saved-list and Settings listeners refresh independently. Preserve draft, list and count consistency across save, edit, delete, retry, account change and overlay close. API tests do not establish DOM focus or draft behavior."
     },

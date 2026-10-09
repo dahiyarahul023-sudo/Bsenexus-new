@@ -110,7 +110,8 @@ test('RSS provenance distinguishes missing publication date and search fallback 
 test('actual text card renders full long headline, original link and honest unknown time without images', () => {
   const source = readFileSync(new URL('../../src/components/HomeMarketNews.tsx', import.meta.url), 'utf8');
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText;
-  const actualRequire = createRequire(import.meta.url);
+  const actualRequire = createRequire(new URL('../../src/components/HomeMarketNews.tsx', import.meta.url));
+  const { NoteEditorProvider } = actualRequire('../context/NoteEditorContext');
   const exports: any = {};
   vm.runInNewContext(code, { exports, console, require(path: string) {
     if (path.endsWith('homeNews')) return { safeNewsUrl };
@@ -118,13 +119,44 @@ test('actual text card renders full long headline, original link and honest unkn
     return actualRequire(path);
   } });
   const title = 'A very long company headline '.repeat(12).trim();
-  const html = renderToStaticMarkup(React.createElement(exports.NewsTextCard, { item: { ...item('render'), title, publishedAt: '' }, lead: true }));
+  const html = renderToStaticMarkup(React.createElement(NoteEditorProvider, null, React.createElement(exports.NewsTextCard, { item: { ...item('render'), title, publishedAt: '' }, lead: true })));
   assert.ok(html.includes(title));
   assert.ok(html.includes('href="https://publisher.example/story/render"'));
   assert.ok(html.includes('Publication time unavailable'));
   assert.ok(html.includes('Read original'));
+  assert.ok(html.includes('Save note'));
+  assert.ok(html.includes('Share article'));
+  assert.ok(html.startsWith('<article'));
+  assert.ok(!/<a[^>]*>[^<]*<button/.test(html));
   assert.ok(html.includes('noopener noreferrer'));
   assert.ok(!html.includes('<img'));
   assert.ok(!html.includes('<time'));
   assert.equal(renderToStaticMarkup(React.createElement(exports.NewsTextCard, { item: { ...item('unsafe'), link: 'javascript:alert(1)' } })), '');
+});
+
+test('full news card retains separate shared actions and honest busy/sent states', () => {
+  const source = readFileSync(new URL('../../src/components/NewsPortal.tsx', import.meta.url), 'utf8');
+  const code = ts.transpileModule(source + '\nexports.testCard = NewsCardItem;', { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText;
+  const actualRequire = createRequire(new URL('../../src/components/NewsPortal.tsx', import.meta.url));
+  const { NoteEditorProvider } = actualRequire('../context/NoteEditorContext');
+  const exports: any = {};
+  vm.runInNewContext(code, { exports, console, require(path: string) {
+    if (path.endsWith('useFeedDensity')) return { useFeedDensity: () => ['standard'] };
+    if (['./ui/helios', './ui/ActionButton', './ui/motion/ShareActionMenu', './notes/SaveNoteButton'].includes(path)) return actualRequire(path);
+    if (path.startsWith('.')) return {};
+    return actualRequire(path);
+  } });
+  const props = { item: { ...item('portal'), timeAgo: '1h ago' }, viewMode: 'list', isSending: true, isSentSuccess: false, isAiLoading: true, onSendTelegram: () => { throw new Error('No dispatch during render'); }, onToggleAi: () => { throw new Error('No AI request during render'); } };
+  const render = (options: object) => renderToStaticMarkup(React.createElement(NoteEditorProvider, null, React.createElement(exports.testCard, { ...props, ...options })));
+  const busy = render({});
+  assert.ok(busy.includes('Sending…'));
+  assert.ok(busy.includes('Thinking…'));
+  assert.ok((busy.match(/disabled=""/g) || []).length >= 2);
+  assert.ok(busy.includes('Share article'));
+  assert.ok(busy.includes('Save note on this article'));
+  assert.ok(busy.includes('Read original article'));
+  const sent = render({ isSending: false, isSentSuccess: true, isAiLoading: false });
+  assert.ok(sent.includes('Dispatched'));
+  assert.ok(sent.includes('>Sent</span>'));
+  assert.ok(sent.includes('>AI Takeaway</span>'));
 });

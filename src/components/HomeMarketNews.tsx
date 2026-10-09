@@ -2,6 +2,9 @@ import React, { useCallback, useEffect, useMemo, useRef, useSyncExternalStore } 
 import { ArrowRight, ExternalLink, Newspaper, RefreshCw } from 'lucide-react';
 import { customFetch } from '../api';
 import { useVisibilityInterval } from '../hooks/useVisibilityInterval';
+import { ActionButton } from './ui/ActionButton';
+import { ShareActionMenu } from './ui/motion/ShareActionMenu';
+import { SaveNoteButton } from './notes/SaveNoteButton';
 import { HomeNewsFeed, HomeNewsItem, selectHomeNews, safeNewsUrl } from '../utils/homeNews';
 import '../styles/home-news.css';
 
@@ -13,22 +16,25 @@ export function NewsTextCard({ item, lead = false }: { item: HomeNewsItem; lead?
   const timestamp = Date.parse(item.publishedAt);
   const hasDate = Number.isFinite(timestamp) && timestamp <= Date.now() + 5 * 60_000;
   return (
-    <a className={`home-news-card${lead ? ' home-news-card--lead' : ''}`} href={href}
-      target="_blank" rel="noopener noreferrer" aria-label={`${item.title} — read original at ${item.source} (opens a new tab)`}>
+    <article className={`home-news-card${lead ? ' home-news-card--lead' : ''}`}>
       <div className="home-news-card-top">
         <span className="home-news-category">{labels[item.category] || 'Market News'}</span>
         {lead && <span className="home-news-featured">Top story</span>}
       </div>
-      <h3>{item.title}</h3>
+      <h3><a href={href} target="_blank" rel="noopener noreferrer" aria-label={`${item.title} — read original at ${item.source} (opens a new tab)`}>{item.title}</a></h3>
       {lead && item.snippet && <p className="home-news-summary">{item.snippet.length > 180 ? `${item.snippet.slice(0, 177)}…` : item.snippet}</p>}
       <div className="home-news-card-footer">
         <div className="home-news-source"><span>{item.source}</span>
           {hasDate ? <time dateTime={new Date(timestamp).toISOString()}>{new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' }).format(timestamp)} IST</time>
             : <span className="home-news-date">Publication time unavailable</span>}
         </div>
-        <span className="home-news-read">Read original <ExternalLink size={13} aria-hidden="true" /></span>
       </div>
-    </a>
+      <div className="home-news-card-actions">
+        <SaveNoteButton variant="pill" label="Save note" link={{ type: 'news', label: (item.symbol || item.source).slice(0, 60), symbol: item.symbol, url: href }} className="home-news-note" />
+        <ShareActionMenu contentKind="news" title={item.title} headline={`Source: ${item.source}`} url={href} size="sm" buttonLabel="Share" className="home-news-share" />
+        <a className="home-news-read" href={href} target="_blank" rel="noopener noreferrer" aria-label={`Read original at ${item.source} (opens a new tab)`}>Read <ExternalLink size={13} aria-hidden="true" /></a>
+      </div>
+    </article>
   );
 }
 
@@ -67,18 +73,18 @@ export function HomeMarketNews({ active, identity, watched, onNavigate, density 
           <span className="home-news-icon"><Newspaper size={20} aria-hidden="true" /></span>
           <div><h2 id="home-news-title">Market News</h2><p>Headlines that matter, from trusted sources.</p></div>
         </div>
-        <button type="button" className="home-news-all" onClick={() => onNavigate('news')}>View all news <ArrowRight size={15} aria-hidden="true" /></button>
+        <div className="home-news-heading-actions">
+          <ActionButton type="button" variant="ghost" size="sm" className="home-news-control" onClick={() => onNavigate('news')}>All news <ArrowRight size={14} aria-hidden="true" className="inline" /></ActionButton>
+          <ActionButton type="button" variant="secondary" size="sm" className="home-news-control home-news-refresh" isLoading={state.loading} loadingText="" onClick={() => refresh()} aria-label={state.loading ? 'Checking market news' : 'Refresh market news'} title="Refresh market news" icon={<RefreshCw size={14} aria-hidden="true" />} />
+        </div>
       </div>
       <div className="home-news-toolbar">
         <span>{state.checkedAt ? `Feed checked ${new Intl.DateTimeFormat('en-IN', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' }).format(state.checkedAt)} IST` : 'Latest market headlines'}</span>
-        <button type="button" className="home-news-refresh" disabled={state.loading} onClick={() => void refresh()} aria-label="Refresh market news">
-          <RefreshCw size={14} aria-hidden="true" /> {state.loading ? 'Checking…' : 'Refresh'}
-        </button>
       </div>
       {state.error && <div className="home-news-status" role="status">{state.displayed.length ? 'Could not check for updates. Previous headlines are still available.' : 'Market news is unavailable right now. Try Refresh again.'}</div>}
-      {state.pending && <button type="button" className="home-news-updates" onClick={() => feed.accept()}>
-        New headlines available <span>Show updates <ArrowRight size={14} aria-hidden="true" /></span>
-      </button>}
+      {state.pending && <div className="home-news-updates" role="status"><span>New headlines available</span>
+        <ActionButton type="button" variant="ghost" size="sm" className="home-news-control" onClick={() => feed.accept()}>Show updates <ArrowRight size={14} aria-hidden="true" className="inline" /></ActionButton>
+      </div>}
       {initial && !state.displayed.length ? <div role="status" className="home-news-skeleton"><span className="sr-only">Checking market headlines…</span><div aria-hidden="true" className="home-news-grid">{[0, 1, 2].map(index => <div key={index} className={`home-news-card${index === 0 ? ' home-news-card--lead' : ''}`}><span /><span /><span /></div>)}</div></div>
         : state.displayed.length ? <div className="home-news-grid">{state.displayed.map((item, index) => <NewsTextCard key={item.id} item={item} lead={index === 0} />)}</div>
         : !state.error && <div className="home-news-status">No headlines available yet. Check again soon or explore Market News.</div>}

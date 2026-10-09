@@ -52,3 +52,6 @@ Current status (2026-10-07): these missing requirements are now specified; their
 
 
 2026-10-09 bounded Home news implementation: prominent text-only lead/support cards, visible-screen polling, explicit pending-headline acceptance, original-link/date provenance and mobile News access address this Home journey. Existing NewsPortal and server RSS cache remain compatible. Behavior tests/build/map checks are separate from actual device/browser verification; see `changes/home-market-news.md`. No claim of full frontend completion or deployment.
+
+
+2026-10-09 screenshot-guided mobile correction: Home news metadata/controls compacted, shared action primitives adopted, full news search/action wrapping fixed, and mobile branding restored after removing phone theme toggle. Separate Story/Active header controls removed as requested. Source/automated evidence and browser/device acceptance remain separate; see `changes/news-mobile-controls.md`.

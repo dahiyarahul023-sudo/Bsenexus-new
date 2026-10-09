@@ -21,6 +21,7 @@ import { getDirectBsePdfUrl } from '../../../utils/pdfHelper';
 
 export interface ShareActionMenuProps {
   title: string;
+  contentKind?: 'disclosure' | 'news';
   headline?: string;
   text?: string;
   url?: string;
@@ -38,6 +39,7 @@ export interface ShareActionMenuProps {
 
 export const ShareActionMenu: React.FC<ShareActionMenuProps> = ({
   title,
+  contentKind = 'disclosure',
   headline,
   text = '',
   url = '',
@@ -66,6 +68,9 @@ export const ShareActionMenu: React.FC<ShareActionMenuProps> = ({
 
   // 1. Intelligent URL and Metadata Unwrapping
   // Ensures internal /api/pdf-open proxy routes are never leaked into user shares
+  const isNews = contentKind === 'news';
+  const destinationLabel = isNews ? 'Read original' : 'View on Bsenexus';
+  const shareCaption = isNews ? 'Market news on Bsenexus' : 'Live BSE corporate disclosures on Bsenexus';
   const rawUrl = url || '';
   const rawPdf = pdfUrl || '';
 
@@ -220,7 +225,7 @@ export const ShareActionMenu: React.FC<ShareActionMenuProps> = ({
       effectiveTitle,
       effectiveHeadline ? `Subject: ${effectiveHeadline}` : null,
       '',
-      `View on Bsenexus: ${canonicalWebUrl}`,
+      `${destinationLabel}: ${canonicalWebUrl}`,
       directPdfUrl ? `Official Filing (PDF): ${directPdfUrl}` : null,
     ].filter(l => l !== null).join('\n');
     copyToClipboard(lines, 'summary');
@@ -250,11 +255,11 @@ export const ShareActionMenu: React.FC<ShareActionMenuProps> = ({
       `*${effectiveTitle}*`,
       effectiveHeadline ? `📝 ${effectiveHeadline}` : null,
       '',
-      `🔗 *View on Bsenexus:*`,
+      `🔗 *${destinationLabel}:*`,
       canonicalWebUrl,
       directPdfUrl ? `\n📄 *Official Filing (PDF):*\n${directPdfUrl}` : null,
       '',
-      `⚡ _Live BSE corporate disclosures on Bsenexus_`
+      `⚡ _${shareCaption}_`
     ].filter(l => l !== null) as string[];
 
     const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(lines.join('\n'))}`;
@@ -268,7 +273,7 @@ export const ShareActionMenu: React.FC<ShareActionMenuProps> = ({
       `📢 ${effectiveTitle}`,
       effectiveHeadline ? `📝 ${effectiveHeadline}` : null,
       directPdfUrl ? `📄 Official PDF: ${directPdfUrl}` : null,
-      `⚡ Live disclosures on Bsenexus`
+      `⚡ ${isNews ? shareCaption : 'Live disclosures on Bsenexus'}`
     ].filter(Boolean) as string[];
 
     const tgUrl = `https://t.me/share/url?url=${encodeURIComponent(canonicalWebUrl)}&text=${encodeURIComponent(lines.join('\n'))}`;
@@ -321,7 +326,7 @@ export const ShareActionMenu: React.FC<ShareActionMenuProps> = ({
         aria-expanded={isOpen}
         aria-haspopup="true"
         aria-label="Share options"
-        title="Share Disclosure"
+        title={isNews ? 'Share article' : 'Share Disclosure'}
         className={cn(
           "inline-flex items-center justify-center font-bold transition-all select-none cursor-pointer border touch-manipulation",
           isOpen
@@ -376,7 +381,7 @@ export const ShareActionMenu: React.FC<ShareActionMenuProps> = ({
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                         <Share2 size={14} className="text-amber-500" />
-                        <span>Share BSE Disclosure</span>
+                        <span>{isNews ? 'Share article' : 'Share BSE Disclosure'}</span>
                       </div>
                       <motion.button
                         whileTap={{ scale: 0.9 }}
@@ -499,7 +504,7 @@ export const ShareActionMenu: React.FC<ShareActionMenuProps> = ({
                     >
                       <span className="flex items-center gap-2.5">
                         {copiedState === 'web' ? <Check size={15} className="text-emerald-600" /> : <Globe size={15} className="text-emerald-500" />}
-                        <span>{copiedState === 'web' ? 'Web Link Copied!' : 'Copy Bsenexus Web Link'}</span>
+                        <span>{copiedState === 'web' ? 'Web Link Copied!' : (isNews ? 'Copy original article link' : 'Copy Bsenexus Web Link')}</span>
                       </span>
                       <span className="text-[10px] font-mono opacity-60">Clean URL</span>
                     </motion.button>

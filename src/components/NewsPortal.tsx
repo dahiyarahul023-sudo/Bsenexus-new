@@ -181,7 +181,7 @@ const NewsCardItem: React.FC<NewsCardProps> = React.memo(({
       data-news-card="true"
       style={{ touchAction: 'pan-y', pointerEvents: 'auto' }}
       className={cn(
-        "news-touch-scroll news-card-item touch-pan-y pointer-events-auto relative group transition-all",
+        "news-touch-scroll news-card-item min-w-0 touch-pan-y pointer-events-auto relative group transition-all",
         heliosCard,
         "hover:shadow-[0_16px_40px_rgba(15,23,42,0.10)] dark:hover:shadow-[0_16px_40px_rgba(0,0,0,0.55)]",
         viewMode === 'grid' ? cn("flex flex-col justify-between", newsCardPad, newsCardGap) : newsListPad
@@ -189,8 +189,8 @@ const NewsCardItem: React.FC<NewsCardProps> = React.memo(({
     >
       <div className="space-y-2.5">
           {/* Header Row: Source, Symbol, Category & Timestamp */}
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-1.5 flex-wrap">
               <HeliosPill tone="slate" dot={false}>
                 {item.source}
               </HeliosPill>
@@ -223,7 +223,7 @@ const NewsCardItem: React.FC<NewsCardProps> = React.memo(({
           </div>
 
           {/* Headline (Crisp, Sanitized & Direct) */}
-          <h3 className="text-[15px] font-extrabold text-slate-900 dark:text-white leading-snug tracking-tight hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+          <h3 className="break-words text-[15px] font-extrabold text-slate-900 dark:text-white leading-snug tracking-tight hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
             <a 
               href={item.link} 
               target="_blank" 
@@ -297,7 +297,7 @@ const NewsCardItem: React.FC<NewsCardProps> = React.memo(({
         </div>
 
         {/* Footer Minimalist Action Bar */}
-        <div className="flex items-center justify-between pt-2.5 mt-2.5 border-t border-slate-100 dark:border-[#201E2E] text-[10px] text-slate-400">
+        <div className="flex flex-col items-start gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between pt-2.5 mt-2.5 border-t border-slate-100 dark:border-[#201E2E] text-[10px] text-slate-400">
           <div className="flex items-center gap-1.5">
             {isSentSuccess ? (
               <span className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
@@ -311,60 +311,30 @@ const NewsCardItem: React.FC<NewsCardProps> = React.memo(({
             )}
           </div>
 
-          <div className="flex items-center gap-1.5">
-            {/* Quick 1-Tap Telegram Dispatch */}
-            <motion.button
-              type="button"
-              whileTap={buttonTap}
-              transition={springSnappy}
-              onClick={(e) => {
-                e.stopPropagation();
-                onSendTelegram(item);
-              }}
-              disabled={isSending || isSentSuccess}
-              className={cn(
-                "px-2.5 py-1 rounded-lg text-[10.5px] font-bold transition-all flex items-center gap-1 cursor-pointer select-none min-h-[32px]",
-                isSentSuccess
-                  ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700"
-                  : "bg-slate-100 hover:bg-sky-50 dark:bg-[#222030] dark:hover:bg-sky-950/40 text-slate-600 hover:text-sky-600 dark:text-slate-300 dark:hover:text-sky-300 border border-slate-200 dark:border-[#2D283E]"
-              )}
-              title="Broadcast headline to Telegram"
-            >
-              {isSending ? (
-                <RefreshCw size={11} className="animate-spin text-sky-500" />
-              ) : isSentSuccess ? (
-                <Check size={11} className="text-emerald-500" />
-              ) : (
-                <Send size={11} className="text-sky-500" />
-              )}
-              <span>{isSentSuccess ? 'Sent' : 'Telegram'}</span>
-            </motion.button>
-
-            {/* Quick 1-Tap AI Toggle Button */}
-            <motion.button
-              type="button"
-              whileTap={buttonTap}
-              transition={springSnappy}
-              onClick={() => onToggleAi(item)}
-              disabled={isAiLoading}
-              className={cn(
-                "px-2.5 py-1 rounded-lg text-[10.5px] font-bold transition-all flex items-center gap-1 cursor-pointer select-none min-h-[32px]",
-                isAiExpanded
-                  ? "bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-200 border border-purple-300 dark:border-purple-700"
-                  : "bg-slate-100 hover:bg-purple-50 dark:bg-[#222030] dark:hover:bg-purple-950/40 text-slate-600 hover:text-purple-600 dark:text-slate-300 dark:hover:text-purple-300 border border-slate-200 dark:border-[#2D283E]"
-              )}
-              title="Gemini AI Summary"
-            >
-              <Sparkles size={11} className={cn("text-purple-500", isAiLoading && "animate-spin")} />
-              <span>{isAiExpanded ? 'Hide AI' : 'AI Takeaway'}</span>
-            </motion.button>
+          <div className="flex w-full flex-wrap items-center gap-1.5 sm:w-auto">
+            {/* Existing command handlers, shared presentation/loading controls. */}
+            <ActionButton type="button" variant="secondary" size="sm"
+              isLoading={isSending} loadingText="Sending…" disabled={isSentSuccess}
+              className="min-h-[44px] sm:min-h-[32px]" title="Broadcast headline to Telegram"
+              onClick={() => onSendTelegram(item)}
+              icon={isSentSuccess ? <Check size={12} aria-hidden="true" /> : <Send size={12} aria-hidden="true" />}>
+              {isSentSuccess ? 'Sent' : 'Telegram'}
+            </ActionButton>
+            <ActionButton type="button" variant="secondary" size="sm"
+              isLoading={isAiLoading} loadingText="Thinking…" aria-expanded={Boolean(isAiExpanded)}
+              className="min-h-[44px] sm:min-h-[32px]" title="Gemini AI Summary"
+              onClick={() => onToggleAi(item)} icon={<Sparkles size={12} aria-hidden="true" />}>
+              {isAiExpanded ? 'Hide AI' : 'AI Takeaway'}
+            </ActionButton>
 
             {/* 1-Tap Share Action Menu */}
-            <ShareActionMenu
+            <ShareActionMenu contentKind="news"
               title={item.title}
               headline={item.source ? `Source: ${item.source}` : undefined}
               url={item.link}
-              size="xs"
+              size="sm"
+              buttonLabel="Share"
+              className="min-h-[44px] sm:min-h-[32px]"
             />
 
             {/* Saved Notes: one-tap note linked to this article */}
@@ -376,6 +346,7 @@ const NewsCardItem: React.FC<NewsCardProps> = React.memo(({
                 url: item.link,
               }}
               label="Save note on this article"
+              className="min-h-[44px] min-w-[44px]"
             />
 
             {/* External Source Link */}
@@ -385,8 +356,9 @@ const NewsCardItem: React.FC<NewsCardProps> = React.memo(({
               href={item.link}
               target="_blank"
               rel="noreferrer noopener"
-              className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-[#222030] dark:hover:bg-[#2D283E] text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer border border-slate-200 dark:border-[#2D283E] min-h-[32px] min-w-[32px] flex items-center justify-center select-none"
+              className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-[#222030] dark:hover:bg-[#2D283E] text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer border border-slate-200 dark:border-[#2D283E] min-h-[44px] min-w-[44px] sm:min-h-[32px] sm:min-w-[32px] flex items-center justify-center select-none"
               title="Open full news article in new tab"
+              aria-label="Read original article (opens a new tab)"
             >
               <ExternalLink size={12} />
             </motion.a>
@@ -905,9 +877,9 @@ export const NewsPortal: React.FC<NewsPortalProps> = ({
       />
 
       {/* 1. STREAMLINED UNIFIED TOOLBAR: Sticky below navbar - Page Title, Search & Filter Trigger */}
-      <div className="sticky top-14 md:top-[89px] z-30 bg-white/95 dark:bg-[#1A1926]/95 backdrop-blur-md border border-slate-200/90 dark:border-[#2D283E] rounded-xl p-2.5 sm:p-3 shadow-xs flex flex-col gap-2">
+      <div className="sm:sticky sm:top-14 md:top-[89px] z-30 bg-white/95 dark:bg-[#1A1926]/95 backdrop-blur-md border border-slate-200/90 dark:border-[#2D283E] rounded-xl p-2.5 sm:p-3 shadow-xs flex flex-col gap-2">
         {/* Row 1: Title, Search Bar & Filter Bottom Sheet Trigger */}
-        <div className="flex items-center gap-2 justify-between">
+        <div className="flex flex-wrap items-center gap-2 justify-between sm:flex-nowrap">
           
           {/* Left: Brand Title & Single Count */}
           <div className="flex items-center gap-1.5 shrink-0">
@@ -921,12 +893,13 @@ export const NewsPortal: React.FC<NewsPortalProps> = ({
           </div>
 
           {/* Center: Search Box (44px min height for mobile precision) */}
-          <div className="relative flex-1 max-w-lg min-h-[44px] sm:min-h-[36px] flex items-center">
+          <div className="relative order-3 w-full sm:w-auto basis-full sm:order-none sm:basis-auto min-w-0 sm:flex-1 max-w-lg min-h-[44px] sm:min-h-[36px] flex items-center">
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input 
               type="text" 
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
+              aria-label="Search market news"
               placeholder={activeSubTab === 'general' ? "Search news headlines..." : "Filter by stock symbol..."}
               className="w-full h-10 sm:h-9 pl-8 pr-7 bg-slate-50 dark:bg-[#15141E] border border-slate-200 dark:border-[#2D283E] rounded-lg text-xs font-medium focus:outline-none focus:ring-1 focus:ring-slate-400 text-slate-900 dark:text-white"
             />
@@ -934,6 +907,7 @@ export const NewsPortal: React.FC<NewsPortalProps> = ({
               <button 
                 type="button" 
                 onClick={() => setSearchQuery('')}
+                aria-label="Clear news search"
                 className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
               >
                 <X size={12} />
@@ -955,6 +929,7 @@ export const NewsPortal: React.FC<NewsPortalProps> = ({
                     : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
                 )}
                 title="Grid View"
+                aria-label="Grid view" aria-pressed={viewMode === 'grid'}
               >
                 <LayoutGrid size={13} />
               </button>
@@ -968,6 +943,7 @@ export const NewsPortal: React.FC<NewsPortalProps> = ({
                     : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
                 )}
                 title="List View"
+                aria-label="List view" aria-pressed={viewMode === 'list'}
               >
                 <List size={13} />
               </button>
@@ -986,6 +962,7 @@ export const NewsPortal: React.FC<NewsPortalProps> = ({
                   : "bg-white dark:bg-[#1A1926] hover:bg-slate-50 dark:hover:bg-[#222030] text-slate-700 dark:text-slate-300 border-slate-200 dark:border-[#2D283E]"
               )}
               title="Open News Filters, Sources & Telegram Dispatches"
+              aria-expanded={isFilterSheetOpen}
             >
               <span>Filter</span>
               <ChevronDown size={13} className="text-slate-500" />
@@ -1009,6 +986,7 @@ export const NewsPortal: React.FC<NewsPortalProps> = ({
               disabled={isLoading}
               className="min-h-[44px] sm:min-h-[36px] min-w-[44px] sm:min-w-[36px] px-2.5 rounded-lg bg-white dark:bg-[#1A1926] hover:bg-slate-50 dark:hover:bg-[#222030] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#2D283E] flex items-center justify-center cursor-pointer select-none transition-all"
               title="Refresh News Feed"
+              aria-label="Refresh news feed"
             >
               <RefreshCw size={13} className={cn(isLoading && "animate-spin text-emerald-500")} />
             </motion.button>
@@ -1031,7 +1009,7 @@ export const NewsPortal: React.FC<NewsPortalProps> = ({
                 type="button"
                 onClick={() => handleSelectNavScope(tab.id)}
                 className={cn(
-                  "relative py-1.5 font-medium transition-colors cursor-pointer whitespace-nowrap select-none",
+                  "relative min-h-[44px] sm:min-h-[32px] py-1.5 font-medium transition-colors cursor-pointer whitespace-nowrap select-none",
                   isTabActive
                     ? "text-slate-900 dark:text-white font-bold"
                     : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"

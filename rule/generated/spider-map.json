@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "ca6c2317b2ea5ea7fdc619fce5ce08afe61e75f90bfdc7e04cd48e779eb6efc9",
+  "sourceDigest": "b9904d099fc373846c6a509d7121b692670f193a61af810c8443c6d3af6d0f77",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -892,7 +892,7 @@
     },
     {
       "path": "server/tests/homeNews.test.ts",
-      "sha256": "1c9c4895982c9b5f1ce5c948e648e3f146082a0487fb9087d400bb0fb4d906cf",
+      "sha256": "2da9078d76e7c86169b9a633232cfb31429793959d41b4b2b9c765989b89c5dc",
       "importedBy": []
     },
     {
@@ -1311,7 +1311,7 @@
     },
     {
       "path": "src/components/HomeMarketNews.tsx",
-      "sha256": "37e8745d3f6fa672cb27a8b7f10d5de3d3e0770cfdf9de95e6c8c705df038842",
+      "sha256": "8540c0f2f91fc50d24dec5c732868c9bbfb3cfce3d6b573fe58806c15978b6a4",
       "importedBy": [
         "src/components/HomeForYou.tsx"
       ]
@@ -1325,7 +1325,7 @@
     },
     {
       "path": "src/components/Layout.tsx",
-      "sha256": "6d66aff989509ef88b6e29a4fa29b912516a31274b7d1fb1bdce9aabe6ee914d",
+      "sha256": "e7d0370bcab5d3fca2789d446945cc2d4ff744e1010cfa76b7d7c9789caddaac",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -1352,7 +1352,7 @@
     },
     {
       "path": "src/components/NewsPortal.tsx",
-      "sha256": "9fff9847fc44de599977415725736709d87a460a720f70d0c9a19faf1b6a9c3a",
+      "sha256": "ceb1c48c5f2840b4b244819fa71b5017224619871e26f25e04357793095c77a3",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -1590,6 +1590,7 @@
       "importedBy": [
         "src/components/Announcements.tsx",
         "src/components/CompanyIntelligenceModal.tsx",
+        "src/components/HomeMarketNews.tsx",
         "src/components/NewsPortal.tsx",
         "src/components/ResultsCalendar.tsx",
         "src/components/WatchlistManager.tsx",
@@ -1708,6 +1709,7 @@
         "src/components/CompanyIntelligenceModal.tsx",
         "src/components/HelpModal.tsx",
         "src/components/HomeForYou.tsx",
+        "src/components/HomeMarketNews.tsx",
         "src/components/LogsTab.tsx",
         "src/components/NewsPortal.tsx",
         "src/components/QuarterlyResultsLedger.tsx",
@@ -1997,10 +1999,11 @@
     },
     {
       "path": "src/components/ui/motion/ShareActionMenu.tsx",
-      "sha256": "57da784bc1f7d0126f88521a47a541a141488fb5ec0e7c14c4ef6e92fe191ca4",
+      "sha256": "6794f1d116f21e9858bdc8bc3de59d17233a251456a8027715b3f5fc16dea224",
       "importedBy": [
         "src/components/Announcements.tsx",
         "src/components/CompanyIntelligenceModal.tsx",
+        "src/components/HomeMarketNews.tsx",
         "src/components/NewsPortal.tsx",
         "src/components/ResultsCalendar.tsx",
         "src/components/WatchlistManager.tsx",
@@ -2279,7 +2282,7 @@
     },
     {
       "path": "src/styles/home-news.css",
-      "sha256": "0b6905e6b16f72b07879d4c50b512b8352b0d76125ba69ee6c393617c968ce38",
+      "sha256": "ba7e72cbb953840d9e72e6923b97598ac44cb57996b9837d53420c17dca3b7ef",
       "importedBy": [
         "src/components/HomeMarketNews.tsx"
       ]
@@ -5716,15 +5719,33 @@
     },
     {
       "source": "src/components/HomeMarketNews.tsx",
-      "target": "src/utils/homeNews.ts",
+      "target": "src/components/ui/ActionButton.tsx",
       "kind": "import",
       "line": 5
     },
     {
       "source": "src/components/HomeMarketNews.tsx",
-      "target": "src/styles/home-news.css",
+      "target": "src/components/ui/motion/ShareActionMenu.tsx",
       "kind": "import",
       "line": 6
+    },
+    {
+      "source": "src/components/HomeMarketNews.tsx",
+      "target": "src/components/notes/SaveNoteButton.tsx",
+      "kind": "import",
+      "line": 7
+    },
+    {
+      "source": "src/components/HomeMarketNews.tsx",
+      "target": "src/utils/homeNews.ts",
+      "kind": "import",
+      "line": 8
+    },
+    {
+      "source": "src/components/HomeMarketNews.tsx",
+      "target": "src/styles/home-news.css",
+      "kind": "import",
+      "line": 9
     },
     {
       "source": "src/components/LandingPage.tsx",
@@ -8148,7 +8169,9 @@
         "src/components/ui/TabErrorBoundary.tsx",
         "src/components/HomeMarketNews.tsx",
         "src/utils/homeNews.ts",
-        "src/styles/home-news.css"
+        "src/styles/home-news.css",
+        "src/components/ui/motion/ShareActionMenu.tsx",
+        "src/components/notes/SaveNoteButton.tsx"
       ],
       "tests": [
         "server/tests/routeResolution.test.ts",
@@ -8201,7 +8224,9 @@
         "src/utils/motionTokens.ts",
         "src/components/HomeMarketNews.tsx",
         "src/utils/homeNews.ts",
-        "src/styles/home-news.css"
+        "src/styles/home-news.css",
+        "src/components/ui/motion/ShareActionMenu.tsx",
+        "src/components/notes/SaveNoteButton.tsx"
       ],
       "tests": [
         "server/tests/homeNews.test.ts"
@@ -8232,7 +8257,9 @@
         "src/shared/alertRules.ts",
         "src/components/HomeMarketNews.tsx",
         "src/utils/homeNews.ts",
-        "src/styles/home-news.css"
+        "src/styles/home-news.css",
+        "src/components/ui/motion/ShareActionMenu.tsx",
+        "src/components/notes/SaveNoteButton.tsx"
       ],
       "tests": [
         "server/tests/core.test.ts",
@@ -8255,10 +8282,13 @@
         "src/components/notes/notes.css",
         "src/components/SettingsTab.tsx",
         "src/api/notesApi.ts",
-        "src/components/ui/AutosaveIndicator.tsx"
+        "src/components/ui/AutosaveIndicator.tsx",
+        "src/components/HomeMarketNews.tsx",
+        "src/components/ui/motion/ShareActionMenu.tsx"
       ],
       "tests": [
-        "server/tests/notes.test.ts"
+        "server/tests/notes.test.ts",
+        "server/tests/homeNews.test.ts"
       ],
       "reason": "Editor writes dispatch notes-changed; saved-list and Settings listeners refresh independently. Preserve draft, list and count consistency across save, edit, delete, retry, account change and overlay close. API tests do not establish DOM focus or draft behavior."
     },
@@ -11443,7 +11473,7 @@
     },
     {
       "file": "src/components/HomeMarketNews.tsx",
-      "line": 42,
+      "line": 48,
       "function": "customFetch",
       "target": "'/api/news'"
     },
@@ -11455,19 +11485,13 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 207,
-      "function": "customFetch",
-      "target": "'/api/announcements?limit=1'"
-    },
-    {
-      "file": "src/components/Layout.tsx",
-      "line": 228,
+      "line": 200,
       "function": "customFetch",
       "target": "'/api/notifications/unread-count'"
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 802,
+      "line": 711,
       "function": "customFetch",
       "target": "'/api/health'"
     },
@@ -11491,37 +11515,37 @@
     },
     {
       "file": "src/components/NewsPortal.tsx",
-      "line": 487,
+      "line": 459,
       "function": "customFetch",
       "target": "'/api/news/telegram/preferences'"
     },
     {
       "file": "src/components/NewsPortal.tsx",
-      "line": 507,
+      "line": 479,
       "function": "customFetch",
       "target": "`/api/news/general?${queryParams.toString()}`"
     },
     {
       "file": "src/components/NewsPortal.tsx",
-      "line": 531,
+      "line": 503,
       "function": "customFetch",
       "target": "`/api/news/watchlist?${queryParams.toString()}`"
     },
     {
       "file": "src/components/NewsPortal.tsx",
-      "line": 595,
+      "line": 567,
       "function": "customFetch",
       "target": "'/api/news/telegram/toggle-auto'"
     },
     {
       "file": "src/components/NewsPortal.tsx",
-      "line": 673,
+      "line": 645,
       "function": "customFetch",
       "target": "'/api/news/telegram/send'"
     },
     {
       "file": "src/components/NewsPortal.tsx",
-      "line": 734,
+      "line": 706,
       "function": "customFetch",
       "target": "'/api/news/summarize'"
     },
@@ -12975,19 +12999,19 @@
     },
     {
       "file": "src/components/NewsPortal.tsx",
-      "line": 455,
+      "line": 427,
       "function": "localStorage.getItem",
       "key": "'nexus_news_view_mode'"
     },
     {
       "file": "src/components/NewsPortal.tsx",
-      "line": 466,
+      "line": 438,
       "function": "localStorage.setItem",
       "key": "'nexus_news_view_mode'"
     },
     {
       "file": "src/components/NewsPortal.tsx",
-      "line": 481,
+      "line": 453,
       "function": "Array.from",
       "key": "syms"
     },
@@ -14849,7 +14873,7 @@
     },
     {
       "file": "src/components/HomeMarketNews.tsx",
-      "line": 52,
+      "line": 58,
       "target": "document",
       "kind": "listen",
       "name": "visibilitychange",
@@ -14857,7 +14881,7 @@
     },
     {
       "file": "src/components/HomeMarketNews.tsx",
-      "line": 53,
+      "line": 59,
       "target": "window",
       "kind": "listen",
       "name": "bse_nav_tab_refresh",
@@ -14865,7 +14889,7 @@
     },
     {
       "file": "src/components/HomeMarketNews.tsx",
-      "line": 56,
+      "line": 62,
       "target": "document",
       "kind": "remove",
       "name": "visibilitychange",
@@ -14873,7 +14897,7 @@
     },
     {
       "file": "src/components/HomeMarketNews.tsx",
-      "line": 57,
+      "line": 63,
       "target": "window",
       "kind": "remove",
       "name": "bse_nav_tab_refresh",
@@ -14945,7 +14969,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 253,
+      "line": 225,
       "target": "window",
       "kind": "dispatch",
       "name": "bse_nav_tab_refresh",
@@ -15449,7 +15473,7 @@
     },
     {
       "file": "src/components/ui/motion/ShareActionMenu.tsx",
-      "line": 134,
+      "line": 139,
       "target": "window",
       "kind": "listen",
       "name": "resize",
@@ -15457,7 +15481,7 @@
     },
     {
       "file": "src/components/ui/motion/ShareActionMenu.tsx",
-      "line": 135,
+      "line": 140,
       "target": "window",
       "kind": "remove",
       "name": "resize",
@@ -15465,7 +15489,7 @@
     },
     {
       "file": "src/components/ui/motion/ShareActionMenu.tsx",
-      "line": 164,
+      "line": 169,
       "target": "window",
       "kind": "listen",
       "name": "scroll",
@@ -15473,7 +15497,7 @@
     },
     {
       "file": "src/components/ui/motion/ShareActionMenu.tsx",
-      "line": 165,
+      "line": 170,
       "target": "window",
       "kind": "listen",
       "name": "resize",
@@ -15481,7 +15505,7 @@
     },
     {
       "file": "src/components/ui/motion/ShareActionMenu.tsx",
-      "line": 170,
+      "line": 175,
       "target": "window",
       "kind": "listen",
       "name": "keydown",
@@ -15489,7 +15513,7 @@
     },
     {
       "file": "src/components/ui/motion/ShareActionMenu.tsx",
-      "line": 173,
+      "line": 178,
       "target": "window",
       "kind": "remove",
       "name": "scroll",
@@ -15497,7 +15521,7 @@
     },
     {
       "file": "src/components/ui/motion/ShareActionMenu.tsx",
-      "line": 174,
+      "line": 179,
       "target": "window",
       "kind": "remove",
       "name": "resize",
@@ -15505,7 +15529,7 @@
     },
     {
       "file": "src/components/ui/motion/ShareActionMenu.tsx",
-      "line": 175,
+      "line": 180,
       "target": "window",
       "kind": "remove",
       "name": "keydown",

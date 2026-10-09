@@ -195,34 +195,6 @@ export function Layout({
 
   useVisibilityInterval(checkQuotaStatus, 30000);
 
-  // Honest engine pill: "Active" only means the user's engine switch is ON —
-  // it says nothing about BSE reachability. Poll the feed's real staleness so
-  // the pill shows "Delayed" (amber) when BSE hasn't returned usable data for
-  // 15+ min, instead of a fake green "Active" on day-old data.
-  const [feedStale, setFeedStale] = useState(false);
-  const [feedStaleAt, setFeedStaleAt] = useState<number | null>(null);
-
-  const checkFeedStaleness = async () => {
-    try {
-      const res = await customFetch('/api/announcements?limit=1');
-      if (res.ok) {
-        const stale = res.headers.get('x-bse-feed-stale') === 'true';
-        const updatedAt = res.headers.get('x-bse-feed-updated-at');
-        setFeedStale(stale);
-        const ts = updatedAt ? parseInt(updatedAt, 10) : 0;
-        setFeedStaleAt(stale && Number.isFinite(ts) && ts > 0 ? ts : null);
-      }
-    } catch {
-      // Ignore background errors — pill keeps its last known state
-    }
-  };
-
-  useEffect(() => {
-    checkFeedStaleness();
-  }, []);
-
-  useVisibilityInterval(checkFeedStaleness, 60000);
-
   const fetchUnreadCount = async () => {
     try {
       const res = await customFetch('/api/notifications/unread-count');
@@ -397,10 +369,10 @@ export function Layout({
 
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           {/* Row 1: Brand Logo & Right Utility Controls */}
-          <div className="flex items-center justify-between h-14 sm:h-12 gap-2 sm:gap-3">
+          <div className="flex flex-wrap min-h-14 sm:min-h-12 gap-x-2 gap-y-1 py-1 sm:py-0 items-center justify-between">
             
             {/* Brand Logo & Title with Circular Story Ring */}
-            <div className="flex items-center gap-2 shrink-0 select-none">
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 select-none">
               <motion.button 
                 whileHover={{ scale: 1.06 }}
                 whileTap={{ scale: 0.94 }}
@@ -425,14 +397,14 @@ export function Layout({
               </motion.button>
 
               <div 
-                className="hidden min-[400px]:flex items-center gap-1.5 cursor-pointer select-none"
+                className="flex items-center gap-1 sm:gap-1.5 cursor-pointer select-none"
                 onClick={() => onTabChange('dashboard')}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onTabChange('dashboard'); }}
                 aria-label="Bsenexus Dashboard"
               >
-                <span className="font-extrabold text-sm sm:text-base tracking-tight text-slate-900 dark:text-white font-display">
+                <span className="font-extrabold text-[12px] sm:text-base tracking-tight text-slate-900 dark:text-white font-display">
                   BSE<span className="text-emerald-500">NEXUS</span>
                 </span>
                 {/* PRO badge — paid subscription active (or admin). Simple monochrome pill;
@@ -454,31 +426,12 @@ export function Layout({
                   </span>
                 )}
                 
-                {/* Interactive Story Pill Trigger */}
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={buttonTap}
-                  transition={springSnappy}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setStoryModalOpen(true);
-                  }}
-                  className={cn(
-                    "hidden sm:inline-flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-full cursor-pointer transition-all",
-                    hasSeenStory
-                      ? "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10"
-                      : "bg-gradient-to-r from-rose-500/15 via-amber-500/15 to-emerald-500/15 text-rose-600 dark:text-rose-400 border border-rose-300/40 dark:border-rose-500/30"
-                  )}
-                  title={hasSeenStory ? "Today's Story (Viewed)" : "Today's Market Story • Live Highlights"}
-                >
-                  {!hasSeenStory && <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />}
-                  <span>Story</span>
-                </motion.button>
+
               </div>
             </div>
 
             {/* Right Tools: Status, Clock, Theme, Profile */}
-            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <div className="flex items-center gap-1 sm:gap-2 shrink-0 max-[359px]:w-full max-[359px]:justify-end">
               {/* Item 1: ⌘K Quick Search Trigger */}
               <motion.button
                 whileHover={{ scale: 1.02 }}
@@ -490,55 +443,11 @@ export function Layout({
                 title="Search companies & commands (⌘K)"
               >
                 <Search size={14} className="text-emerald-500 shrink-0" />
-                <span className="text-xs font-semibold hidden sm:inline">Search</span>
-                <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.2 rounded bg-slate-200/80 dark:bg-[#352F48] text-[9px] font-mono font-bold text-slate-600 dark:text-slate-300">
+                <span className="text-xs font-semibold hidden md:inline">Search</span>
+                <kbd className="hidden md:inline-flex items-center px-1.5 py-0.2 rounded bg-slate-200/80 dark:bg-[#352F48] text-[9px] font-mono font-bold text-slate-600 dark:text-slate-300">
                   ⌘K
                 </kbd>
               </motion.button>
-
-              {/* Engine Toggle Pill with Live Radar Beacon (Desktop only).
-                  Honest states: "Active" (green) = switch ON and feed fresh;
-                  "Delayed" (amber) = switch ON but BSE feed stale 15+ min;
-                  "Paused" (amber) = user switched the engine off. */}
-              <motion.div 
-                whileHover={{ scale: 1.03 }}
-                whileTap={buttonTap}
-                transition={springSnappy}
-                onClick={onToggleEngine}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onToggleEngine?.(); }}
-                aria-label={
-                  !isRunning
-                    ? "BSE indexing engine paused. Click to resume."
-                    : (feedStale
-                        ? "BSE feed delayed — engine is on and retrying automatically. Click to pause."
-                        : "BSE indexing engine active. Click to pause.")
-                }
-                className={cn(
-                  "hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-bold cursor-pointer transition-colors shadow-xs shrink-0 select-none min-h-[32px]",
-                  (isRunning && !feedStale)
-                    ? "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-700/80 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-950"
-                    : "bg-amber-50 dark:bg-amber-950/50 border-amber-300 dark:border-amber-700/80 text-amber-700 dark:text-amber-300 hover:bg-amber-100"
-                )}
-                title={
-                  isRunning && feedStale && feedStaleAt
-                    ? `BSE feed delayed — last updated ${new Date(feedStaleAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' })} IST. Click to pause the engine.`
-                    : "Click to toggle real-time BSE indexing engine"
-                }
-              >
-                <span className="relative flex h-2 w-2 shrink-0">
-                  {(isRunning && !feedStale) && (
-                    <motion.span 
-                      animate={{ scale: [1, 2, 2.5], opacity: [0.8, 0.4, 0] }}
-                      transition={{ duration: 1.6, repeat: Infinity, ease: 'easeOut' }}
-                      className="absolute inline-flex h-full w-full rounded-full bg-emerald-400" 
-                    />
-                  )}
-                  <span className={cn("relative inline-flex rounded-full h-2 w-2", (isRunning && !feedStale) ? "bg-emerald-500" : "bg-amber-500")} />
-                </span>
-                <span className="whitespace-nowrap">{!isRunning ? "Paused" : (feedStale ? "Delayed" : "Active")}</span>
-              </motion.div>
 
               {/* Item 6: Autosave Status Indicator */}
               <AutosaveIndicator className="hidden xl:inline-flex" />
@@ -575,7 +484,7 @@ export function Layout({
                 transition={springSnappy}
                 onClick={() => setReferralModalOpen(true)}
                 aria-label="Refer and Earn partner dashboard"
-                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-300 dark:border-emerald-700/80 text-emerald-700 dark:text-emerald-300 cursor-pointer select-none shadow-xs shrink-0 min-h-[32px]"
+                className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-300 dark:border-emerald-700/80 text-emerald-700 dark:text-emerald-300 cursor-pointer select-none shadow-xs shrink-0 min-h-[32px]"
                 title="Refer & Earn — Flat ₹100 OFF for friends & 25% commission"
               >
                 <Sparkles size={13} className="text-emerald-500 shrink-0" />
@@ -593,7 +502,7 @@ export function Layout({
                   transition={springSnappy}
                   onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                   aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-                  className="flex items-center justify-center p-2 sm:p-1.5 rounded-lg bg-slate-100 dark:bg-[#252233] hover:bg-slate-200 dark:hover:bg-[#2F2B40] border border-slate-200/90 dark:border-[#352F48] text-slate-700 dark:text-slate-200 cursor-pointer select-none shadow-xs shrink-0 min-w-[36px] sm:min-w-[32px] min-h-[36px] sm:min-h-[32px]"
+                  className="hidden sm:flex items-center justify-center p-2 sm:p-1.5 rounded-lg bg-slate-100 dark:bg-[#252233] hover:bg-slate-200 dark:hover:bg-[#2F2B40] border border-slate-200/90 dark:border-[#352F48] text-slate-700 dark:text-slate-200 cursor-pointer select-none shadow-xs shrink-0 min-w-[36px] sm:min-w-[32px] min-h-[36px] sm:min-h-[32px]"
                   title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
                 >
                   {theme === 'dark' ? (
