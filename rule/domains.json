@@ -433,7 +433,8 @@
         "server/tests/auditData.test.ts",
         "server/tests/apiCancellation.test.ts",
         "server/tests/alertRulesApi.test.ts",
-        "server/tests/homeNews.test.ts"
+        "server/tests/homeNews.test.ts",
+        "server/tests/announcementFeed.test.ts"
       ],
       "reason": "List/detail identity, filters, watchlist membership, badge counts and timestamps must agree. Background refresh preserves content, density, selection and scroll. Rapid filter changes must not render older responses."
     },

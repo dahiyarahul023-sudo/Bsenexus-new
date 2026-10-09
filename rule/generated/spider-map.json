@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "ba1fda9eb9f65bbaac857c5cc33482b952332f2da879a8e4613b68140acbf6e1",
+  "sourceDigest": "c62e4ae75a42c3dcc0371a4fed1ca4f1332dd851247f4d303e4a640240ccb0ec",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -832,6 +832,11 @@
       "importedBy": []
     },
     {
+      "path": "server/tests/announcementFeed.test.ts",
+      "sha256": "ef6ec7b9345de2107d5026b7285518ab4beddae65a1742545332f75ee6444f98",
+      "importedBy": []
+    },
+    {
       "path": "server/tests/apiCancellation.test.ts",
       "sha256": "f96e972480f8368bd107cdea69f015b1fd706996c403af4b281c54c5c84a316f",
       "importedBy": []
@@ -1251,7 +1256,7 @@
     },
     {
       "path": "src/components/Announcements.tsx",
-      "sha256": "ad49d49738ee68c7ed871b304ff505993efaa9421a16e6ffde31277d28559e7e",
+      "sha256": "0846c250d17194c6700e5575b47e4e4f9960dec88296ab2658c5f538aff0cd2a",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -2364,8 +2369,9 @@
     },
     {
       "path": "src/utils/announcementFeed.ts",
-      "sha256": "2d90bee50f3f1c7d1475e01f6b452c81521c7278489f6288d8251500211f31b2",
+      "sha256": "6ef52e26f36261bc8445f52e99cc23b452e7b153990516f885fafe0e4e5b6681",
       "importedBy": [
+        "server/tests/announcementFeed.test.ts",
         "src/components/Announcements.tsx",
         "src/components/WatchlistManager.tsx"
       ]
@@ -2630,15 +2636,17 @@
     },
     {
       "path": "src/utils/timeFormat.ts",
-      "sha256": "7a0ab90d9058543553a75614140859b063ce8acb9b264cc6dc79f28eda050f2c",
+      "sha256": "793a3954228cf34b4f1c811a1e583feac6149da914401031831bba5845bdbb1d",
       "importedBy": [
+        "server/tests/announcementFeed.test.ts",
         "src/components/Announcements.tsx",
         "src/components/CompanyIntelligenceModal.tsx",
         "src/components/HomeForYou.tsx",
         "src/components/NotificationInbox.tsx",
         "src/components/ResultsCalendar.tsx",
         "src/components/WatchlistManager.tsx",
-        "src/components/results/ResultsPage.tsx"
+        "src/components/results/ResultsPage.tsx",
+        "src/utils/announcementFeed.ts"
       ]
     },
     {
@@ -4406,6 +4414,18 @@
       "target": "server/database/alertRulesDao.ts",
       "kind": "dynamic",
       "line": 25
+    },
+    {
+      "source": "server/tests/announcementFeed.test.ts",
+      "target": "src/utils/announcementFeed.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "server/tests/announcementFeed.test.ts",
+      "target": "src/utils/timeFormat.ts",
+      "kind": "import",
+      "line": 4
     },
     {
       "source": "server/tests/auditData.test.ts",
@@ -7870,6 +7890,12 @@
       "line": 3
     },
     {
+      "source": "src/utils/announcementFeed.ts",
+      "target": "src/utils/timeFormat.ts",
+      "kind": "import",
+      "line": 13
+    },
+    {
       "source": "src/utils/cashfree.ts",
       "target": "src/api.ts",
       "kind": "import",
@@ -8314,7 +8340,8 @@
         "server/tests/auditData.test.ts",
         "server/tests/apiCancellation.test.ts",
         "server/tests/alertRulesApi.test.ts",
-        "server/tests/homeNews.test.ts"
+        "server/tests/homeNews.test.ts",
+        "server/tests/announcementFeed.test.ts"
       ],
       "reason": "List/detail identity, filters, watchlist membership, badge counts and timestamps must agree. Background refresh preserves content, density, selection and scroll. Rapid filter changes must not render older responses."
     },
@@ -11405,67 +11432,67 @@
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 149,
+      "line": 154,
       "function": "customFetch",
       "target": "`/api/announcements/${encodeURIComponent(annId)}`"
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 364,
+      "line": 369,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 407,
+      "line": 412,
       "function": "customFetch",
       "target": "`/api/watchlists/${targetList.id}/symbols/${encodeURIComponent(symbolOrScrip)}`"
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 435,
+      "line": 440,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 446,
+      "line": 451,
       "function": "customFetch",
       "target": "`/api/watchlists/${targetList.id}/symbols`"
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 489,
+      "line": 494,
       "function": "customFetch",
       "target": "'/api/settings'"
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 513,
+      "line": 518,
       "function": "customFetch",
       "target": "'/api/toggle'"
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 570,
+      "line": 575,
       "function": "customFetch",
       "target": "'/api/send-to-telegram-manual'"
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 630,
+      "line": 635,
       "function": "customFetch",
       "target": "`/api/announcements/${id}/generate-summary`"
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 771,
+      "line": 780,
       "function": "customFetch",
       "target": "`/api/announcements/${encodeURIComponent(String(id))}`"
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 785,
+      "line": 795,
       "function": "customFetch",
       "target": "'/api/announcements?limit=300'"
     },
@@ -12961,63 +12988,57 @@
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 116,
+      "line": 121,
       "function": "sessionStorage.getItem",
       "key": "'bse_shared_query'"
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 118,
+      "line": 123,
       "function": "sessionStorage.removeItem",
       "key": "'bse_shared_query'"
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 177,
+      "line": 182,
       "function": "localStorage.getItem",
       "key": "'nexus_announcements_view_mode'"
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 188,
+      "line": 193,
       "function": "localStorage.setItem",
       "key": "'nexus_announcements_view_mode'"
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 195,
+      "line": 200,
       "function": "localStorage.getItem",
       "key": "'nexus_last_checked_ts'"
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 319,
+      "line": 324,
       "function": "localStorage.setItem",
       "key": "'nexus_last_checked_ts'"
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 326,
+      "line": 331,
       "function": "localStorage.getItem",
       "key": "'nexus_read_filings'"
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 339,
+      "line": 344,
       "function": "localStorage.setItem",
       "key": "'nexus_read_filings'"
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 339,
+      "line": 344,
       "function": "Array.from",
       "key": "next"
-    },
-    {
-      "file": "src/components/Announcements.tsx",
-      "line": 812,
-      "function": "Array.from",
-      "key": "uniqueMap.values()"
     },
     {
       "file": "src/components/CompaniesPage.tsx",
@@ -13579,7 +13600,7 @@
     },
     {
       "file": "src/utils/announcementFeed.ts",
-      "line": 38,
+      "line": 41,
       "function": "Array.from",
       "key": "map.values()"
     },
@@ -14855,7 +14876,7 @@
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 133,
+      "line": 138,
       "target": "window",
       "kind": "listen",
       "name": "bse-share-target",
@@ -14863,7 +14884,7 @@
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 134,
+      "line": 139,
       "target": "window",
       "kind": "remove",
       "name": "bse-share-target",
@@ -14871,7 +14892,7 @@
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 385,
+      "line": 390,
       "target": "window",
       "kind": "listen",
       "name": "auth-state-changed",
@@ -14879,7 +14900,7 @@
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 386,
+      "line": 391,
       "target": "window",
       "kind": "remove",
       "name": "auth-state-changed",

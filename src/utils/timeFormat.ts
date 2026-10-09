@@ -91,6 +91,11 @@ function parseDateInput(input: string | number | Date | undefined | null): Date 
   return !isNaN(fallback) ? new Date(fallback) : null;
 }
 
+/** Use the same exchange/IST date interpretation for sorting and display. */
+export function parseFilingTimestamp(input: string | number | Date | undefined | null): number {
+  return parseDateInput(input)?.getTime() || 0;
+}
+
 function formatInIST(
   date: Date, 
   options: { includeDate?: boolean; shortDate?: boolean; includeTime?: boolean; includeSeconds?: boolean }

@@ -30,7 +30,7 @@ import { ActionButton } from './ui/ActionButton';
 import { clusterAnnouncements, AnnouncementCluster } from '../utils/clusterAnnouncements';
 import { detectFilingType, getMutedTypes, saveMutedTypes, getMutedCompanies, saveMutedCompanies } from '../utils/noiseFilter';
 import { getCacheItem, setCacheItem } from '../utils/cache';
-import { mergeAnnouncementFeed } from '../utils/announcementFeed';
+import { announcementTs, mergeAnnouncementFeed, getAnnouncementFeedStatus } from '../utils/announcementFeed';
 import { 
   springStandard, 
   springSnappy, 
@@ -94,10 +94,15 @@ export function Announcements({
   // (12h TTL — survives app restarts via localStorage; fresh data loads in background)
   const [announcements, setAnnouncements] = useState<any[]>(() => {
     const cached = getCacheItem<any[]>('announcements_feed', 12 * 60 * 60 * 1000);
-    if (cached && cached.length > 0) return cached;
+    if (Array.isArray(cached)) return mergeAnnouncementFeed([], cached);
     return [];
   });
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [feedChecked, setFeedChecked] = useState(false);
+  const [feedError, setFeedError] = useState<string | null>(null);
+  const [feedRefreshing, setFeedRefreshing] = useState(false);
+  const feedRequestSequence = useRef(0);
+  const feedRequestController = useRef<AbortController | null>(null);
   // Subtle "feed delayed" state: BSE is rate-limiting our poller (sourceBlocked
   // from the server). Shows instead of silently serving stale data.
   const [feedDelayed, setFeedDelayed] = useState<boolean>(false);
@@ -756,6 +761,10 @@ export function Announcements({
   // Efficient 30s background polling with visibility gating and immediate resume on active
   useEffect(() => {
     fetchData(true);
+    return () => {
+      feedRequestSequence.current++;
+      feedRequestController.current?.abort();
+    };
   }, []);
 
   useVisibilityInterval(() => {
@@ -776,85 +785,59 @@ export function Announcements({
   }, [search, filterType, itemsPerPage]);
 
   const fetchData = async (isInitial: boolean = false) => {
-    if (isInitial && announcements.length === 0) {
-      setIsLoading(true);
-    }
+    const sequence = ++feedRequestSequence.current;
+    feedRequestController.current?.abort();
+    const controller = new AbortController();
+    feedRequestController.current = controller;
+    setFeedRefreshing(true);
+    if (isInitial && announcements.length === 0) setIsLoading(true);
     try {
-      // 300 items is fast, rich, and prevents browser hanging / memory exhaustion.
-      // fetchpriority=high on the first feed request: it drives the initial paint.
-      const res = await customFetch('/api/announcements?limit=300', isInitial ? { fetchpriority: 'high' } as any : {});
-      if (res.ok) {
-        // BSE source-block flag (server sets X-BSE-Source-Blocked while backing off)
-        try { setFeedDelayed(res.headers.get('x-bse-source-blocked') === 'true'); } catch { /* non-fatal */ }
-        // Honest staleness (server sets X-BSE-Feed-Stale when no usable BSE
-        // response for 15+ min). Any fresh success clears it.
-        try {
-          const staleHeader = res.headers.get('x-bse-feed-stale');
-          const updatedAt = res.headers.get('x-bse-feed-updated-at');
-          if (staleHeader === 'true') {
-            const ts = updatedAt ? parseInt(updatedAt, 10) : 0;
-            setFeedStaleAt(Number.isFinite(ts) && ts > 0 ? ts : -1);
-          } else {
-            setFeedStaleAt(null);
-          }
-        } catch { /* non-fatal */ }
-        const data = await res.json();
-        if (Array.isArray(data)) {
-          const uniqueMap = new Map<string, any>();
-          for (const item of data) {
-            const idKey = item?.id || item?.newsId;
-            if (idKey && !uniqueMap.has(idKey)) {
-              uniqueMap.set(idKey, item);
-            } else if (!idKey) {
-              uniqueMap.set(`item-${Math.random()}`, item);
-            }
-          }
-          const incomingList = Array.from(uniqueMap.values());
-          incomingList.sort((a, b) => {
-            const tsA = (typeof a.bseTimestamp === 'number' && !isNaN(a.bseTimestamp) && a.bseTimestamp > 0) ? a.bseTimestamp : (a.fetched_at || 0);
-            const tsB = (typeof b.bseTimestamp === 'number' && !isNaN(b.bseTimestamp) && b.bseTimestamp > 0) ? b.bseTimestamp : (b.fetched_at || 0);
-            return tsB - tsA;
-          });
-
-          if (isInitial) {
-            // Merge with the on-device cache, never blindly replace: right after
-            // a server restart/republish the API returns only a handful of
-            // freshly-polled filings — replacing would shrink the feed to those.
-            setAnnouncements(prev => {
-              const merged = mergeAnnouncementFeed(prev, incomingList);
-              setCacheItem('announcements_feed', merged.slice(0, 150));
-              return merged;
-            });
-          } else {
-            // Stable delta merge: avoids jumpy scroll position on background polling
-            setAnnouncements(prev => {
-              const existingIds = new Set(prev.map(p => p.id || p.newsId));
-              const newItems = incomingList.filter(item => !existingIds.has(item.id || item.newsId));
-              let updatedList: any[];
-              if (newItems.length === 0) {
-                // Update only modified properties (e.g. aiSummary or is_sent) without replacing references
-                updatedList = prev.map(existing => {
-                  const updated = incomingList.find(inc => (inc.id || inc.newsId) === (existing.id || existing.newsId));
-                  if (updated && (updated.aiSummary !== existing.aiSummary || updated.is_sent !== existing.is_sent)) {
-                    return { ...existing, ...updated };
-                  }
-                  return existing;
-                });
-              } else {
-                updatedList = [...newItems, ...prev];
-              }
-              setCacheItem('announcements_feed', updatedList.slice(0, 150));
-              return updatedList;
-            });
-          }
-        }
-      }
-    } catch (e) {
-      console.warn("Error fetching announcements:", e);
+      const res = await customFetch('/api/announcements?limit=300', {
+        signal: controller.signal,
+        cache: 'no-store',
+        ...(isInitial ? { fetchpriority: 'high' } : {})
+      } as RequestInit);
+      if (!res.ok) throw new Error(`Filings request failed (${res.status})`);
+      const data = await res.json();
+      if (!Array.isArray(data)) throw new Error('Invalid filings response');
+      if (sequence !== feedRequestSequence.current || controller.signal.aborted) return;
+      setFeedDelayed(res.headers.get('x-bse-source-blocked') === 'true');
+      const staleHeader = res.headers.get('x-bse-feed-stale');
+      const updatedAt = Number(res.headers.get('x-bse-feed-updated-at'));
+      setFeedStaleAt(staleHeader === 'true' ? (Number.isFinite(updatedAt) && updatedAt > 0 ? updatedAt : -1) : null);
+      setFeedChecked(true);
+      setFeedError(null);
+      // Every refresh follows one publication-date merge policy. A historical
+      // backfill is never blindly prepended ahead of today's filings.
+      setAnnouncements(prev => {
+        const merged = mergeAnnouncementFeed(prev, data);
+        setCacheItem('announcements_feed', merged.slice(0, 150));
+        return merged;
+      });
+    } catch (error) {
+      if (sequence !== feedRequestSequence.current || controller.signal.aborted) return;
+      setFeedError(error instanceof Error ? error.message : 'Unable to refresh filings');
     } finally {
-      setIsLoading(false);
+      if (sequence === feedRequestSequence.current) {
+        setFeedRefreshing(false);
+        setIsLoading(false);
+      }
     }
   };
+
+  const feedStatus = getAnnouncementFeedStatus({ checked: feedChecked, error: feedError, blocked: feedDelayed, staleAt: feedStaleAt, items: announcements });
+  const latestFilingAt = Math.max(0, ...announcements.map(announcementTs));
+  const feedStatusMessage = feedStatus === 'error'
+    ? "Couldn't refresh filings. Showing saved data; retrying automatically."
+    : feedStatus === 'checking' ? 'Checking the latest filings…'
+    : feedStatus === 'historical' ? (latestFilingAt > 0
+      ? `Showing historical filings. Latest available: ${formatFullDateTime(latestFilingAt)}. Live feed freshness has not been verified.`
+      : 'Filing dates unavailable. Live feed freshness has not been verified.')
+    : feedStatus === 'delayed' ? (feedStaleAt !== null && feedStaleAt > 0
+      ? `Feed delayed — source last checked ${formatFullDateTime(feedStaleAt)}. Retrying automatically.`
+      : 'Feed delayed — source freshness has not been verified. Retrying automatically.')
+    : feedStatus === 'empty' ? 'No recent filings available. Retrying automatically.'
+    : 'Feed checked successfully; source delivery latency is not verified.';
 
   const filteredByScope = announcements.filter(a => {
     if (activeScope === 'watchlist') {
@@ -905,10 +888,8 @@ export function Announcements({
   });
 
   const filtered = React.useMemo(() => {
-    if (sortOrder === 'oldest') {
-      return [...searched].reverse();
-    }
-    return searched;
+    const sorted = [...searched].sort((a, b) => announcementTs(b) - announcementTs(a));
+    return sortOrder === 'oldest' ? sorted.reverse() : sorted;
   }, [searched, sortOrder]);
 
   // Calculate items arrived since last checked
@@ -1283,12 +1264,11 @@ export function Announcements({
             {effectiveIsRunning && (
               <span
                 className="relative flex h-2.5 w-2.5 items-center justify-center shrink-0"
-                title={feedStaleAt !== null
-                  ? "BSE feed delayed — showing last available data, retrying automatically"
-                  : "BSE Live Realtime Poller Active (30s market hours / 5m off-hours)"}
+                title={feedStatusMessage}
+                aria-label={feedStatusMessage}
               >
-                {feedStaleAt !== null ? (
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
+                {feedStatus !== 'checked' ? (
+                  <span className={`relative inline-flex rounded-full h-2 w-2 ${feedStatus === 'checking' ? 'bg-slate-400' : 'bg-amber-500'}`} />
                 ) : (
                   <>
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
@@ -1297,6 +1277,11 @@ export function Announcements({
                 )}
               </span>
             )}
+            <button type="button" onClick={() => fetchData(true)} disabled={feedRefreshing}
+              aria-label="Refresh filings" title="Refresh filings"
+              className="p-2 rounded-lg text-slate-500 hover:text-emerald-600 disabled:opacity-50 min-h-[44px] min-w-[44px] cursor-pointer">
+              <RefreshCw size={16} className={feedRefreshing ? 'animate-spin' : ''} />
+            </button>
             <button
               type="button"
               onClick={handleShareFeedLink}
@@ -1707,14 +1692,10 @@ export function Announcements({
             {/* Subtle source-blocked state: BSE is rate-limiting our feed; retrying automatically.
                 Also covers honest staleness (no usable BSE response for 15+ min): shows the
                 last-updated time instead of a fake green "Live" dot on day-old data. */}
-            {(feedDelayed || feedStaleAt !== null) && (
-              <div className="px-3.5 py-2 bg-slate-500/10 dark:bg-slate-400/10 border-b border-slate-300/60 dark:border-slate-600/40 flex items-center gap-1.5 text-[11px] font-bold text-slate-600 dark:text-slate-300 animate-in fade-in duration-200">
-                <Info size={12} className="text-slate-400 shrink-0" />
-                <span>
-                  {feedStaleAt !== null && feedStaleAt > 0
-                    ? `Feed delayed — last updated ${new Date(feedStaleAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' })} IST. Retrying automatically.`
-                    : 'Feed delayed — BSE is rate-limiting our connection. Retrying automatically.'}
-                </span>
+            {feedStatus !== 'checked' && (
+              <div role="status" className="mb-3 px-3 py-2 rounded-lg border border-amber-300/60 bg-amber-50/70 dark:bg-amber-950/30 text-xs text-amber-800 dark:text-amber-200 flex items-center gap-2">
+                <Info size={14} className="shrink-0" />
+                <span>{feedStatusMessage}</span>
               </div>
             )}
 

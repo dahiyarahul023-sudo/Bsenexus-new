@@ -61,3 +61,8 @@ Current status (2026-10-07): these missing requirements are now specified; their
 
 
 2026-10-09 keyword guides: shared static English article records supply server catalogue and frontend fallback. Native links open full server-rendered API/shareholding drafts with code, semantic tables, eight FAQs/schema and exact metadata. Pending review is explicit; getIndexableMarketGuides excludes them from discovery/sitemap/IndexNow. Existing guide modal and backend business rules remain compatible. See changes/keyword-guides.md for tests and separate browser/deployment limits.
+
+
+## Filings refresh verification — 2026-10-09
+
+Cache initialization and every refresh share publication-date sorting and seven-day pruning. Historical backfill cannot outrank current filings through ingestion time. Cached/unverified, failed, blocked, empty and historical feeds have explicit status; the header offers refresh. `server/tests/announcementFeed.test.ts` covers data ordering, corrected records, IST parsing and status policy. Fresh production browser showed today’s filings before this change; the screenshot’s old session was not reproduced. Post-change device/reconnect verification remains a deployment audit item. See `changes/filings-freshness.md`.
