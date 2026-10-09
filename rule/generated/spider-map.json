@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "f433590044e589ec87cbbbef125d6af68dc990a1d7caaf0ca59b940080eb103d",
+  "sourceDigest": "e50cc222f727a9b4c6ec1a623f8bc3a919ba3cd549a26286c0f47df8cd8360bf",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -951,6 +951,11 @@
       "importedBy": []
     },
     {
+      "path": "server/tests/referralInput.test.ts",
+      "sha256": "a417934eb5f1b3d311830a426fbbd04ca8348e0ee5e2348f82f28a19fd71a564",
+      "importedBy": []
+    },
+    {
       "path": "server/tests/referrals.test.ts",
       "sha256": "862ad04e2d3417a09f2a17f834367dc23765d4b50d429a39fce9f0fdaec2bdfe",
       "importedBy": []
@@ -1127,7 +1132,7 @@
     },
     {
       "path": "src/App.tsx",
-      "sha256": "d51dc48a1785fdb09ebe3ae8d226416bbb62957fdf5158ad2d17d6c287538071",
+      "sha256": "f48e037af0a1d1858f6640a44532bcd30cfa3d16b8e3f620d9ac25c66fd103bd",
       "importedBy": [
         "src/main.tsx"
       ]
@@ -1357,7 +1362,7 @@
     },
     {
       "path": "src/components/ProCheckoutView.tsx",
-      "sha256": "8938aad667b2bec90c2f9b0ea7262c7163a1eaa82fc2d9b32b8e54390d377349",
+      "sha256": "119d15fb6ff001637e0a8a3f72d2eb924e2444e15cb4faa5899df4410409b3f1",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -1394,7 +1399,7 @@
     },
     {
       "path": "src/components/ReferralDashboardModal.tsx",
-      "sha256": "fb2eea71247b4f9e0313fd3f4a52389a2e4432d02b7f2054e06a2e66d7943af9",
+      "sha256": "4e65ae925a672c82991d0cf650ceab7b3911c31c658cca3f4aae67766e16b973",
       "importedBy": [
         "src/components/Layout.tsx"
       ]
@@ -1866,6 +1871,14 @@
       ]
     },
     {
+      "path": "src/components/ui/ReferralCodeField.tsx",
+      "sha256": "730569cf158ad06e4a141e3acbf5b9b7fd744f29a80f7c7bfd8351505eaa5fe0",
+      "importedBy": [
+        "server/tests/referralInput.test.ts",
+        "src/components/ProCheckoutView.tsx"
+      ]
+    },
+    {
       "path": "src/components/ui/Reveal.tsx",
       "sha256": "2c54c3a4be92c734c9eaee1836e9ad48d5414411510e51690e47e45fca3d6f19",
       "importedBy": [
@@ -2247,7 +2260,7 @@
     },
     {
       "path": "src/styles/payment.css",
-      "sha256": "b48a7509e5c1ca4316e56a79ba534976a6cec792f8d8706d7c786bca656998f7",
+      "sha256": "385adbcbad5497e4276f72f99546a49581ddbdca751199dc8e213c973f7ce9c7",
       "importedBy": [
         "src/components/ProCheckoutView.tsx",
         "src/components/ProReceiptView.tsx",
@@ -2257,7 +2270,7 @@
     },
     {
       "path": "src/styles/referral.css",
-      "sha256": "755532da7fb98674f82b7b1033d4d3c51a2c3aad1a16f6cb1f528a8e478db79e",
+      "sha256": "dd1cad9b95cfc7f54b2b6fd3248757acae2bb97428b74d300701efbf501f5fae",
       "importedBy": [
         "src/components/ReferralDashboardModal.tsx"
       ]
@@ -2487,6 +2500,17 @@
         "src/components/ui/ModernAuthCard.tsx",
         "src/context/AuthContext.tsx",
         "src/firebase.ts"
+      ]
+    },
+    {
+      "path": "src/utils/referralInput.ts",
+      "sha256": "131b0420c13156165b2249374895efad0a494f8d4372ef2e431db8d204bf08bb",
+      "importedBy": [
+        "server/tests/referralInput.test.ts",
+        "src/App.tsx",
+        "src/components/ProCheckoutView.tsx",
+        "src/components/ReferralDashboardModal.tsx",
+        "src/components/ui/ReferralCodeField.tsx"
       ]
     },
     {
@@ -4654,6 +4678,18 @@
       "line": 27
     },
     {
+      "source": "server/tests/referralInput.test.ts",
+      "target": "src/utils/referralInput.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "server/tests/referralInput.test.ts",
+      "target": "src/components/ui/ReferralCodeField.tsx",
+      "kind": "import",
+      "line": 4
+    },
+    {
       "source": "server/tests/referrals.test.ts",
       "target": "server/database/referralsDao.ts",
       "kind": "import",
@@ -4739,243 +4775,249 @@
     },
     {
       "source": "src/App.tsx",
-      "target": "src/components/ui/PageSkeleton.tsx",
+      "target": "src/utils/referralInput.ts",
       "kind": "import",
-      "line": 2
+      "line": 1
     },
     {
       "source": "src/App.tsx",
-      "target": "src/hooks/useScreenTransition.ts",
+      "target": "src/components/ui/PageSkeleton.tsx",
       "kind": "import",
       "line": 3
     },
     {
       "source": "src/App.tsx",
-      "target": "src/context/AuthContext.tsx",
+      "target": "src/hooks/useScreenTransition.ts",
       "kind": "import",
       "line": 4
     },
     {
       "source": "src/App.tsx",
-      "target": "src/context/IntelModalContext.tsx",
+      "target": "src/context/AuthContext.tsx",
       "kind": "import",
       "line": 5
     },
     {
       "source": "src/App.tsx",
-      "target": "src/context/NoteEditorContext.tsx",
+      "target": "src/context/IntelModalContext.tsx",
       "kind": "import",
       "line": 6
     },
     {
       "source": "src/App.tsx",
-      "target": "src/context/ToastContext.tsx",
+      "target": "src/context/NoteEditorContext.tsx",
       "kind": "import",
       "line": 7
     },
     {
       "source": "src/App.tsx",
-      "target": "src/api.ts",
+      "target": "src/context/ToastContext.tsx",
       "kind": "import",
       "line": 8
     },
     {
       "source": "src/App.tsx",
-      "target": "src/utils/cashfree.ts",
+      "target": "src/api.ts",
       "kind": "import",
       "line": 9
     },
     {
       "source": "src/App.tsx",
-      "target": "src/hooks/useVisibilityInterval.ts",
+      "target": "src/utils/cashfree.ts",
       "kind": "import",
       "line": 10
     },
     {
       "source": "src/App.tsx",
-      "target": "src/types.ts",
+      "target": "src/hooks/useVisibilityInterval.ts",
       "kind": "import",
       "line": 11
     },
     {
       "source": "src/App.tsx",
-      "target": "src/components/LandingPage.tsx",
+      "target": "src/types.ts",
       "kind": "import",
-      "line": 13
+      "line": 12
     },
     {
       "source": "src/App.tsx",
-      "target": "src/components/Layout.tsx",
+      "target": "src/components/LandingPage.tsx",
       "kind": "import",
       "line": 14
     },
     {
       "source": "src/App.tsx",
-      "target": "src/components/Announcements.tsx",
+      "target": "src/components/Layout.tsx",
       "kind": "import",
       "line": 15
     },
     {
       "source": "src/App.tsx",
-      "target": "src/components/AuthModal.tsx",
+      "target": "src/components/Announcements.tsx",
       "kind": "import",
       "line": 16
     },
     {
       "source": "src/App.tsx",
-      "target": "src/components/ProUpgradeModal.tsx",
+      "target": "src/components/AuthModal.tsx",
       "kind": "import",
       "line": 17
     },
     {
       "source": "src/App.tsx",
-      "target": "src/components/ProCheckoutView.tsx",
+      "target": "src/components/ProUpgradeModal.tsx",
       "kind": "import",
       "line": 18
     },
     {
       "source": "src/App.tsx",
-      "target": "src/components/ProReceiptView.tsx",
+      "target": "src/components/ProCheckoutView.tsx",
       "kind": "import",
       "line": 19
     },
     {
       "source": "src/App.tsx",
-      "target": "src/components/AdminPinModal.tsx",
+      "target": "src/components/ProReceiptView.tsx",
       "kind": "import",
       "line": 20
     },
     {
       "source": "src/App.tsx",
-      "target": "src/components/HomeForYou.tsx",
+      "target": "src/components/AdminPinModal.tsx",
       "kind": "import",
       "line": 21
     },
     {
       "source": "src/App.tsx",
-      "target": "src/components/WatchlistManager.tsx",
-      "kind": "dynamic",
-      "line": 25
+      "target": "src/components/HomeForYou.tsx",
+      "kind": "import",
+      "line": 22
     },
     {
       "source": "src/App.tsx",
-      "target": "src/components/ResultsCalendar.tsx",
+      "target": "src/components/WatchlistManager.tsx",
       "kind": "dynamic",
       "line": 26
     },
     {
       "source": "src/App.tsx",
-      "target": "src/components/NewsPortal.tsx",
+      "target": "src/components/ResultsCalendar.tsx",
       "kind": "dynamic",
       "line": 27
     },
     {
       "source": "src/App.tsx",
-      "target": "src/components/StorageManager.tsx",
+      "target": "src/components/NewsPortal.tsx",
       "kind": "dynamic",
       "line": 28
     },
     {
       "source": "src/App.tsx",
-      "target": "src/components/AdminDiagnostics.tsx",
+      "target": "src/components/StorageManager.tsx",
       "kind": "dynamic",
       "line": 29
     },
     {
       "source": "src/App.tsx",
-      "target": "src/components/LogsTab.tsx",
+      "target": "src/components/AdminDiagnostics.tsx",
       "kind": "dynamic",
       "line": 30
     },
     {
       "source": "src/App.tsx",
-      "target": "src/components/SettingsTab.tsx",
+      "target": "src/components/LogsTab.tsx",
       "kind": "dynamic",
       "line": 31
     },
     {
       "source": "src/App.tsx",
-      "target": "src/components/seo/SeoStudio.tsx",
+      "target": "src/components/SettingsTab.tsx",
       "kind": "dynamic",
       "line": 32
     },
     {
       "source": "src/App.tsx",
-      "target": "src/hooks/useScrollRestoration.ts",
-      "kind": "import",
-      "line": 43
+      "target": "src/components/seo/SeoStudio.tsx",
+      "kind": "dynamic",
+      "line": 33
     },
     {
       "source": "src/App.tsx",
-      "target": "src/components/ui/TabErrorBoundary.tsx",
+      "target": "src/hooks/useScrollRestoration.ts",
       "kind": "import",
       "line": 44
     },
     {
       "source": "src/App.tsx",
-      "target": "src/components/ui/ScrollRestoredPill.tsx",
+      "target": "src/components/ui/TabErrorBoundary.tsx",
       "kind": "import",
       "line": 45
     },
     {
       "source": "src/App.tsx",
-      "target": "src/utils/scrollState.ts",
+      "target": "src/components/ui/ScrollRestoredPill.tsx",
       "kind": "import",
       "line": 46
     },
     {
       "source": "src/App.tsx",
-      "target": "src/utils/shareUrls.ts",
+      "target": "src/utils/scrollState.ts",
       "kind": "import",
       "line": 47
     },
     {
       "source": "src/App.tsx",
-      "target": "src/components/filing/FilingPage.tsx",
+      "target": "src/utils/shareUrls.ts",
       "kind": "import",
       "line": 48
     },
     {
       "source": "src/App.tsx",
-      "target": "src/components/results/ResultsPage.tsx",
+      "target": "src/components/filing/FilingPage.tsx",
       "kind": "import",
       "line": 49
     },
     {
       "source": "src/App.tsx",
-      "target": "src/components/notes/NoteEditor.tsx",
+      "target": "src/components/results/ResultsPage.tsx",
       "kind": "import",
       "line": 50
     },
     {
       "source": "src/App.tsx",
-      "target": "src/components/PricingPage.tsx",
-      "kind": "dynamic",
+      "target": "src/components/notes/NoteEditor.tsx",
+      "kind": "import",
       "line": 51
     },
     {
       "source": "src/App.tsx",
-      "target": "src/components/GuidesPage.tsx",
+      "target": "src/components/PricingPage.tsx",
       "kind": "dynamic",
       "line": 52
     },
     {
       "source": "src/App.tsx",
-      "target": "src/components/CompaniesPage.tsx",
+      "target": "src/components/GuidesPage.tsx",
       "kind": "dynamic",
       "line": 53
     },
     {
       "source": "src/App.tsx",
-      "target": "src/components/TrustPages.tsx",
+      "target": "src/components/CompaniesPage.tsx",
       "kind": "dynamic",
       "line": 54
     },
     {
       "source": "src/App.tsx",
-      "target": "src/components/NotFoundPage.tsx",
+      "target": "src/components/TrustPages.tsx",
       "kind": "dynamic",
       "line": 55
+    },
+    {
+      "source": "src/App.tsx",
+      "target": "src/components/NotFoundPage.tsx",
+      "kind": "dynamic",
+      "line": 56
     },
     {
       "source": "src/api.ts",
@@ -6190,6 +6232,18 @@
       "line": 9
     },
     {
+      "source": "src/components/ProCheckoutView.tsx",
+      "target": "src/utils/referralInput.ts",
+      "kind": "import",
+      "line": 10
+    },
+    {
+      "source": "src/components/ProCheckoutView.tsx",
+      "target": "src/components/ui/ReferralCodeField.tsx",
+      "kind": "import",
+      "line": 11
+    },
+    {
       "source": "src/components/ProReceiptView.tsx",
       "target": "src/hooks/usePaymentDialog.ts",
       "kind": "import",
@@ -6311,9 +6365,15 @@
     },
     {
       "source": "src/components/ReferralDashboardModal.tsx",
-      "target": "src/context/AuthContext.tsx",
+      "target": "src/utils/referralInput.ts",
       "kind": "import",
       "line": 25
+    },
+    {
+      "source": "src/components/ReferralDashboardModal.tsx",
+      "target": "src/context/AuthContext.tsx",
+      "kind": "import",
+      "line": 26
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
@@ -7414,6 +7474,12 @@
       "line": 3
     },
     {
+      "source": "src/components/ui/ReferralCodeField.tsx",
+      "target": "src/utils/referralInput.ts",
+      "kind": "import",
+      "line": 2
+    },
+    {
       "source": "src/components/ui/ScrollRestoredPill.tsx",
       "target": "src/utils/motionTokens.ts",
       "kind": "import",
@@ -7884,14 +7950,17 @@
         "supabase/migrations/006_durable_referrals.sql",
         "server/database/paymentOrdersDao.ts",
         "server/database/paymentEntitlementsDao.ts",
-        "server/database/usersDao.ts"
+        "server/database/usersDao.ts",
+        "src/utils/referralInput.ts",
+        "src/components/ui/ReferralCodeField.tsx"
       ],
       "tests": [
         "server/tests/referrals.test.ts",
         "server/tests/pricingSync.test.ts",
         "server/tests/referralDurability.test.ts",
         "server/tests/referralContract.test.ts",
-        "server/tests/referralApi.test.ts"
+        "server/tests/referralApi.test.ts",
+        "server/tests/referralInput.test.ts"
       ],
       "reason": "Verified UID owns immutable unique code aliases. Application creates a private pending intent; checkout snapshots attribution and reward mode; a paid-grant trigger settles the unique reward transactionally. SSE carries owner-only snapshots with reconciliation. See rule/REFERRALS.md for legacy cutover requirements."
     },
@@ -8109,12 +8178,15 @@
         "src/utils/referralStream.ts",
         "src/hooks/usePaymentDialog.ts",
         "src/styles/payment.css",
-        "src/styles/referral.css"
+        "src/styles/referral.css",
+        "src/utils/referralInput.ts",
+        "src/components/ui/ReferralCodeField.tsx"
       ],
       "tests": [
         "server/tests/pricingSync.test.ts",
         "server/tests/subscriptionProgress.test.ts",
-        "server/tests/referralContract.test.ts"
+        "server/tests/referralContract.test.ts",
+        "server/tests/referralInput.test.ts"
       ],
       "reason": "Displayed amount, checkout attribution, return verification, receipt/history and subscription display share one contract. Pending referral, confirmed reward and stale stream are different UI states. Never turn a redirect or unconfirmed write into success."
     },
@@ -11016,37 +11088,37 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 328,
+      "line": 327,
       "function": "fetch",
       "target": "'/api/referrals/track-visit'"
     },
     {
       "file": "src/App.tsx",
-      "line": 715,
+      "line": 714,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/App.tsx",
-      "line": 725,
+      "line": 724,
       "function": "customFetch",
       "target": "'/auth/status'"
     },
     {
       "file": "src/App.tsx",
-      "line": 748,
+      "line": 747,
       "function": "customFetch",
       "target": "'/api/settings'"
     },
     {
       "file": "src/App.tsx",
-      "line": 758,
+      "line": 757,
       "function": "customFetch",
       "target": "'/api/logs?limit=400'"
     },
     {
       "file": "src/App.tsx",
-      "line": 790,
+      "line": 789,
       "function": "customFetch",
       "target": "'/api/toggle'"
     },
@@ -11406,43 +11478,43 @@
     },
     {
       "file": "src/components/ProCheckoutView.tsx",
-      "line": 96,
+      "line": 101,
       "function": "customFetch",
       "target": "'/api/referrals/apply'"
     },
     {
       "file": "src/components/ProCheckoutView.tsx",
-      "line": 120,
+      "line": 125,
       "function": "customFetch",
       "target": "'/api/referrals/apply'"
     },
     {
       "file": "src/components/ReferralDashboardModal.tsx",
-      "line": 118,
+      "line": 119,
       "function": "customFetch",
       "target": "'/api/referrals/my-code'"
     },
     {
       "file": "src/components/ReferralDashboardModal.tsx",
-      "line": 142,
+      "line": 143,
       "function": "customFetch",
       "target": "'/api/referrals/events'"
     },
     {
       "file": "src/components/ReferralDashboardModal.tsx",
-      "line": 188,
+      "line": 190,
       "function": "customFetch",
       "target": "'/api/referrals/custom-code'"
     },
     {
       "file": "src/components/ReferralDashboardModal.tsx",
-      "line": 214,
+      "line": 216,
       "function": "customFetch",
       "target": "'/api/referrals/payout-info'"
     },
     {
       "file": "src/components/ReferralDashboardModal.tsx",
-      "line": 234,
+      "line": 236,
       "function": "customFetch",
       "target": "'/api/referrals/set-tier'"
     },
@@ -12608,73 +12680,73 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 139,
+      "line": 140,
       "function": "sessionStorage.setItem",
       "key": "'cf_pending_order_id'"
     },
     {
       "file": "src/App.tsx",
-      "line": 180,
+      "line": 181,
       "function": "sessionStorage.getItem",
       "key": "'cf_pending_order_id'"
     },
     {
       "file": "src/App.tsx",
-      "line": 182,
+      "line": 183,
       "function": "sessionStorage.removeItem",
       "key": "'cf_pending_order_id'"
     },
     {
       "file": "src/App.tsx",
-      "line": 301,
+      "line": 302,
       "function": "localStorage.getItem",
       "key": "'theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 327,
+      "line": 326,
       "function": "localStorage.setItem",
       "key": "'bse_referral_code'"
     },
     {
       "file": "src/App.tsx",
-      "line": 493,
+      "line": 492,
       "function": "sessionStorage.setItem",
       "key": "'bse_shared_query'"
     },
     {
       "file": "src/App.tsx",
-      "line": 634,
+      "line": 633,
       "function": "localStorage.setItem",
       "key": "'theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 649,
+      "line": 648,
       "function": "localStorage.getItem",
+      "key": "'bse_design_theme'"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 665,
+      "function": "localStorage.setItem",
       "key": "'bse_design_theme'"
     },
     {
       "file": "src/App.tsx",
       "line": 666,
       "function": "localStorage.setItem",
-      "key": "'bse_design_theme'"
-    },
-    {
-      "file": "src/App.tsx",
-      "line": 667,
-      "function": "localStorage.setItem",
       "key": "`bse_design_theme_${user.uid}`"
     },
     {
       "file": "src/App.tsx",
-      "line": 699,
+      "line": 698,
       "function": "localStorage.getItem",
       "key": "user?.uid ? `bse_design_theme_${user.uid}` : 'bse_design_theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 708,
+      "line": 707,
       "function": "localStorage.setItem",
       "key": "user?.uid ? `bse_design_theme_${user.uid}` : 'bse_design_theme'"
     },
@@ -12824,19 +12896,19 @@
     },
     {
       "file": "src/components/ProCheckoutView.tsx",
-      "line": 40,
+      "line": 42,
       "function": "localStorage.getItem",
       "key": "'bse_referral_code'"
     },
     {
       "file": "src/components/ProCheckoutView.tsx",
-      "line": 104,
+      "line": 109,
       "function": "localStorage.setItem",
       "key": "'bse_referral_code'"
     },
     {
       "file": "src/components/ProCheckoutView.tsx",
-      "line": 128,
+      "line": 133,
       "function": "localStorage.removeItem",
       "key": "'bse_referral_code'"
     },
@@ -14478,12 +14550,12 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 641,
+      "line": 640,
       "name": "DEV"
     },
     {
       "file": "src/App.tsx",
-      "line": 648,
+      "line": 647,
       "name": "DEV"
     },
     {
@@ -14510,7 +14582,7 @@
   "browserEvents": [
     {
       "file": "src/App.tsx",
-      "line": 494,
+      "line": 493,
       "target": "window",
       "kind": "dispatch",
       "name": "bse-share-target",
@@ -14518,23 +14590,23 @@
     },
     {
       "file": "src/App.tsx",
+      "line": 502,
+      "target": "window",
+      "kind": "listen",
+      "name": "popstate",
+      "expression": "window.addEventListener('popstate', handlePopState)"
+    },
+    {
+      "file": "src/App.tsx",
       "line": 503,
       "target": "window",
-      "kind": "listen",
-      "name": "popstate",
-      "expression": "window.addEventListener('popstate', handlePopState)"
-    },
-    {
-      "file": "src/App.tsx",
-      "line": 504,
-      "target": "window",
       "kind": "remove",
       "name": "popstate",
       "expression": "window.removeEventListener('popstate', handlePopState)"
     },
     {
       "file": "src/App.tsx",
-      "line": 609,
+      "line": 608,
       "target": "window",
       "kind": "listen",
       "name": "popstate",
@@ -14542,7 +14614,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 611,
+      "line": 610,
       "target": "window",
       "kind": "remove",
       "name": "popstate",
@@ -14550,7 +14622,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 742,
+      "line": 741,
       "target": "window",
       "kind": "listen",
       "name": "auth-expired",
@@ -14558,7 +14630,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 743,
+      "line": 742,
       "target": "window",
       "kind": "remove",
       "name": "auth-expired",
@@ -14750,7 +14822,7 @@
     },
     {
       "file": "src/components/ReferralDashboardModal.tsx",
-      "line": 160,
+      "line": 161,
       "target": "document",
       "kind": "listen",
       "name": "visibilitychange",
@@ -14758,7 +14830,7 @@
     },
     {
       "file": "src/components/ReferralDashboardModal.tsx",
-      "line": 161,
+      "line": 162,
       "target": "document",
       "kind": "remove",
       "name": "visibilitychange",

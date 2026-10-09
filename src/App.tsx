@@ -1,3 +1,4 @@
+import { parseReferralInput } from './utils/referralInput';
 import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { PageSkeleton } from './components/ui/PageSkeleton';
 import { useScreenTransition } from './hooks/useScreenTransition';
@@ -320,10 +321,8 @@ function AppContent() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
-      const params = new URLSearchParams(window.location.search);
-      const ref = params.get('ref');
-      if (ref) {
-        const clean = ref.trim().toUpperCase();
+      const clean = parseReferralInput(window.location.href);
+      if (clean) {
         localStorage.setItem('bse_referral_code', clean);
         fetch('/api/referrals/track-visit', {
           method: 'POST',
@@ -331,9 +330,9 @@ function AppContent() {
           body: JSON.stringify({ code: clean }),
         }).catch(() => {});
         showToast({
-          title: `Referral Applied: ${clean}`,
-          message: 'Flat ₹100 OFF on Monthly (Pay ₹199 instead of ₹299)!',
-          type: 'success',
+          title: 'Referral link saved',
+          message: 'Your code will be checked when you open checkout.',
+          type: 'info',
         });
       }
     } catch {}

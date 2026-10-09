@@ -59,3 +59,5 @@ The map does not execute the UI, inspect production traffic, prove context corre
 
 
 2026-10-08 alert follow-through: SettingsTab and both Layout entry points share AlertRulesModal. Preset drafts → one durable PUT → confirmed rules/switches; custom create/edit/toggle/delete → owner-scoped API → same list/count. Presets are excluded from the custom count. Session/open lifecycle aborts obsolete requests and retains failed-save drafts; explicit channel selections feed recipient-specific monitor decisions. See `changes/alert-reliability.md` for tests and remaining browser/runtime gates.
+
+2026-10-09 referral input repair: App link capture and ProCheckoutView apply use `utils/referralInput.ts`; plan/pay forms share `ui/ReferralCodeField.tsx`. Dashboard derives copy/social/manual share from one full lowercase link and exposes a wrapping full code/URL. Case formatting does not change backend aliases or unique ownership. Custom-code drafts preserve typing and match the server 3–20 limit. See `changes/referral-link-input.md` for acceptance and browser evidence limits.

@@ -147,7 +147,7 @@
 .payment-referral-prompt svg,.payment-referral-badge>svg{flex-shrink:0}
 .payment-referral-toggle,.payment-referral-remove{flex:none;min-height:44px;padding:8px 4px;color:var(--pay-accent);font-size:12px;font-weight:600;text-decoration:underline;text-underline-offset:3px;cursor:pointer;background:none;border:0}
 .payment-referral-input-group{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:stretch;gap:8px;margin-top:8px;animation:payment-referral-reveal .18s ease-out}
-.payment-referral-input-group input{width:100%;min-width:0;min-height:44px;padding:10px 12px;border:1px solid var(--pay-border);border-radius:12px;background:var(--pay-bg);color:var(--pay-ink);font-size:16px;line-height:1.25;text-transform:uppercase;scroll-margin:12px}
+.payment-referral-input-group input{width:100%;min-width:0;min-height:44px;padding:10px 12px;border:1px solid var(--pay-border);border-radius:12px;background:var(--pay-bg);color:var(--pay-ink);font-size:16px;line-height:1.25;text-transform:none;scroll-margin:12px}
 .payment-referral-input-group input::placeholder{text-transform:none;color:var(--pay-muted)}
 .payment-referral-input-group button{min-height:44px;min-width:88px;padding:10px 12px;border-radius:12px;background:var(--pay-ink);color:var(--pay-bg);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
 .payment-referral-badge{display:flex;flex:1 1 180px;min-width:0;flex-wrap:wrap;align-items:center;gap:6px;font-size:12px;line-height:1.6;font-weight:500;color:var(--pay-accent)}

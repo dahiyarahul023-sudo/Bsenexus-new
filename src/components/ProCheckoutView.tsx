@@ -7,6 +7,8 @@ import { startProPayment, formatReceiptDate, PRO_PLAN_LIST, getPlanDisplay } fro
 import { usePaymentDialog } from '../hooks/usePaymentDialog';
 import { paymentFeedback } from '../utils/paymentFeedback';
 import '../styles/payment.css';
+import { parseReferralInput } from '../utils/referralInput';
+import { ReferralCodeField } from './ui/ReferralCodeField';
 
 export function ProCheckoutView() {
   const { isCheckoutOpen, setIsCheckoutOpen, checkoutPlanId, user, profile } = useAuth();
@@ -39,7 +41,7 @@ export function ProCheckoutView() {
     const controller=new AbortController();
     const stored=localStorage.getItem('bse_referral_code')||'';
     setIsReferralApplied(false);
-    if(stored){setReferralInput(stored);void handleApplyReferral(stored,controller.signal);}
+    if(stored){setReferralInput((parseReferralInput(stored) || stored).toLowerCase());void handleApplyReferral(stored,controller.signal);}
     return()=>controller.abort();
   },[isCheckoutOpen,user?.uid,user?.isAnonymous]);
 
@@ -88,8 +90,11 @@ export function ProCheckoutView() {
 
   const handleApplyReferral = async (codeToTry: string, signal?:AbortSignal) => {
     const request=++referralRequest.current;
-    const clean = codeToTry.trim().toUpperCase();
-    if (!clean) return;
+    const clean = parseReferralInput(codeToTry);
+    if (!clean) {
+      setError('Enter a valid referral code or a complete BSE Nexus referral link.');
+      return;
+    }
     setValidatingRef(true);
     setError(null);
     try {
@@ -254,19 +259,11 @@ export function ProCheckoutView() {
                       handleApplyReferral(referralInput);
                     }}
                   >
-                    <input
-                      ref={referralField}
-                      aria-label="Referral code"
-                      autoComplete="off"
-                      autoCapitalize="characters"
-                      spellCheck={false}
-                      enterKeyHint="done"
-                      disabled={paying || validatingRef}
-                      type="text"
-                      placeholder="Enter referral code"
+                    <ReferralCodeField
+                      inputRef={referralField}
                       value={referralInput}
-                      onChange={(e) => setReferralInput(e.target.value.toUpperCase())}
-                      maxLength={20}
+                      onChange={setReferralInput}
+                      disabled={paying || validatingRef}
                     />
                     <button type="submit" disabled={paying || validatingRef || !referralInput.trim()}>
                       {validatingRef ? 'Verifying…' : 'Apply'}
@@ -420,19 +417,11 @@ export function ProCheckoutView() {
                       handleApplyReferral(referralInput);
                     }}
                   >
-                    <input
-                      ref={referralField}
-                      aria-label="Referral code"
-                      autoComplete="off"
-                      autoCapitalize="characters"
-                      spellCheck={false}
-                      enterKeyHint="done"
-                      disabled={paying || validatingRef}
-                      type="text"
-                      placeholder="Enter referral code"
+                    <ReferralCodeField
+                      inputRef={referralField}
                       value={referralInput}
-                      onChange={(e) => setReferralInput(e.target.value.toUpperCase())}
-                      maxLength={20}
+                      onChange={setReferralInput}
+                      disabled={paying || validatingRef}
                     />
                     <button type="submit" disabled={paying || validatingRef || !referralInput.trim()}>
                       {validatingRef ? 'Verifying…' : 'Apply'}

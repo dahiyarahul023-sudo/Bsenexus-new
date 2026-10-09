@@ -52,3 +52,5 @@ The example widths are review starting points, not universal device coverage. Te
 5. Run relevant existing tests, `npm run test:map`, `npm run map:generate`, `npm run map:check`, `npm run lint` and the configured build. Honor root refactor checks and disclose unavailable host tools. For runtime UI changes, execute the relevant browser matrix.
 6. Update frontend rules when a general lesson is discovered, domain membership when relationships change, strategy when a gap is resolved, and the change record every time. Generated outputs are never hand-edited.
 7. Report the observable result and exact delivery status. List remaining evidence gaps without presenting them as completed work.
+
+Referral input rule (2026-10-09): editable referral drafts must not force capitalization or apply the 20-character code limit to a full share URL. Parse the entire same-site link before normalization; validate rather than strip/truncate. Keep full unique aliases in share/copy output and normalize case only at the code/API boundary. Both checkout steps share `ui/ReferralCodeField`; see `changes/referral-link-input.md`.

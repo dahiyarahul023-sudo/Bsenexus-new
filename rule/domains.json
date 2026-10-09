@@ -219,14 +219,17 @@
         "supabase/migrations/006_durable_referrals.sql",
         "server/database/paymentOrdersDao.ts",
         "server/database/paymentEntitlementsDao.ts",
-        "server/database/usersDao.ts"
+        "server/database/usersDao.ts",
+        "src/utils/referralInput.ts",
+        "src/components/ui/ReferralCodeField.tsx"
       ],
       "tests": [
         "server/tests/referrals.test.ts",
         "server/tests/pricingSync.test.ts",
         "server/tests/referralDurability.test.ts",
         "server/tests/referralContract.test.ts",
-        "server/tests/referralApi.test.ts"
+        "server/tests/referralApi.test.ts",
+        "server/tests/referralInput.test.ts"
       ],
       "reason": "Verified UID owns immutable unique code aliases. Application creates a private pending intent; checkout snapshots attribution and reward mode; a paid-grant trigger settles the unique reward transactionally. SSE carries owner-only snapshots with reconciliation. See rule/REFERRALS.md for legacy cutover requirements."
     },
@@ -444,12 +447,15 @@
         "src/utils/referralStream.ts",
         "src/hooks/usePaymentDialog.ts",
         "src/styles/payment.css",
-        "src/styles/referral.css"
+        "src/styles/referral.css",
+        "src/utils/referralInput.ts",
+        "src/components/ui/ReferralCodeField.tsx"
       ],
       "tests": [
         "server/tests/pricingSync.test.ts",
         "server/tests/subscriptionProgress.test.ts",
-        "server/tests/referralContract.test.ts"
+        "server/tests/referralContract.test.ts",
+        "server/tests/referralInput.test.ts"
       ],
       "reason": "Displayed amount, checkout attribution, return verification, receipt/history and subscription display share one contract. Pending referral, confirmed reward and stale stream are different UI states. Never turn a redirect or unconfirmed write into success."
     },

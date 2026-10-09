@@ -11,6 +11,14 @@
 .referral-tab-subtitle { font-size:10px; line-height:16px; white-space:nowrap; }
 .referral-content { flex:1 1 0%; min-height:0; min-width:0; overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; scrollbar-gutter:stable; padding-bottom:max(24px,env(safe-area-inset-bottom)); }
 .referral-content input { min-width:0; max-width:100%; font-size:16px; }
+.referral-share-link-row { display:flex; align-items:center; gap:12px; }
+.referral-share-link-text { flex:1; min-width:0; padding:12px 14px; border:1px solid #10b98130; border-radius:14px; background:rgb(255 255 255 / .75); }
+.dark .referral-share-link-text { background:rgb(15 23 42 / .7); }
+.referral-share-code-label { display:block; font-size:11px; color:#64748b; }
+.dark .referral-share-code-label { color:#94a3b8; }
+.referral-share-code { display:block; font-size:17px; line-height:1.5; overflow-wrap:anywhere; }
+.referral-share-url { display:block; margin-top:4px; font-size:12px; line-height:1.6; overflow-wrap:anywhere; user-select:all; }
+@media(max-width:420px) { .referral-share-link-row { align-items:stretch; flex-direction:column; } .referral-share-link-row button { align-self:flex-end; } }
 .referral-content .grid > * { min-width:0; overflow-wrap:anywhere; }
 .referral-content button, .referral-content a { min-height:40px; }
 .referral-overlay :focus-visible { outline:2px solid #10b981; outline-offset:2px; }

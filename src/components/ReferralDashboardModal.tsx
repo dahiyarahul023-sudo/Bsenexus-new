@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { customFetch } from '../api';
 import { consumeReferralEvents } from '../utils/referralStream';
+import { formatReferralLink, parseReferralInput } from '../utils/referralInput';
 import { useAuth } from '../context/AuthContext';
 
 interface ReferralConversionItem {
@@ -121,7 +122,7 @@ export function ReferralDashboardModal({
       if (!res.ok || !json.success) throw new Error(json?.error || 'Could not load referral dashboard');
       setData(json);setError(null);
       // Live updates must not overwrite an unfinished custom-code or payout edit.
-      if(initial){setCustomCodeInput(json.code);setUpiInput(json.payoutUpiId||'');setBankInfoInput(json.payoutBankInfo||'');setActiveTab(json.type==='creator'?'creator':'friends');}
+      if(initial){setCustomCodeInput(json.code.toLowerCase());setUpiInput(json.payoutUpiId||'');setBankInfoInput(json.payoutBankInfo||'');setActiveTab(json.type==='creator'?'creator':'friends');}
     } catch (e:any) {
       if(!signal?.aborted&&session===sessionRef.current&&request===requestRef.current)setError(e.message||'Referral updates unavailable');
     } finally { if(session===sessionRef.current&&request===requestRef.current)setLoading(false); }
@@ -163,9 +164,9 @@ export function ReferralDashboardModal({
 
   if (!isOpen) return null;
 
-  // Always enforce canonical https://bsenexus.in/?ref=CODE
+  // Keep the full unique alias; lowercase is presentation, not an ownership change.
   const cleanCode = data?.code || '';
-  const canonicalLink = `https://bsenexus.in/?ref=${encodeURIComponent(cleanCode)}`;
+  const canonicalLink = formatReferralLink(cleanCode);
 
   const handleCopy = async () => {
     try {
@@ -180,8 +181,9 @@ export function ReferralDashboardModal({
 
   const handleCustomCodeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const clean = customCodeInput.trim().toUpperCase();
-    if (!clean || clean === data?.code) return;
+    const clean = /^[a-z0-9_-]{3,20}$/i.test(customCodeInput.trim()) ? parseReferralInput(customCodeInput) : null;
+    if (!clean) { setCustomCodeMsg({ text: 'Use 3–20 letters, numbers, hyphens or underscores.', ok: false }); return; }
+    if (clean === data?.code) return;
     setCustomCodeLoading(true);
     setCustomCodeMsg(null);
     try {
@@ -193,7 +195,7 @@ export function ReferralDashboardModal({
       const json = await res.json();
       if (res.ok && json.success) {
         setCustomCodeMsg({ text: 'Referral code updated successfully!', ok: true });
-        setCustomCodeInput(json.code);
+        setCustomCodeInput(json.code.toLowerCase());
         fetchReferralData();
       } else {
         setCustomCodeMsg({ text: json?.error || 'Could not update code', ok: false });
@@ -350,16 +352,17 @@ export function ReferralDashboardModal({
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    readOnly
-                    aria-label="Your referral link"
-                    value={canonicalLink}
-                    className="min-w-0 flex-1 px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs sm:text-sm font-mono select-all focus:outline-none"
-                  />
+                <div className="referral-share-link-row">
+                  <div className="referral-share-link-text">
+                    <span className="referral-share-code-label">Your code</span>
+                    <strong className="referral-share-code">{cleanCode.toLowerCase()}</strong>
+                    <span className="referral-share-url" role="textbox" aria-readonly="true"
+                      aria-label="Your referral link" tabIndex={0}>{canonicalLink}</span>
+                  </div>
                   <button
+                    type="button"
                     onClick={handleCopy}
+                    aria-label={copied ? 'Referral link copied' : 'Copy referral link'}
                     className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs sm:text-sm flex items-center gap-1.5 transition-colors shadow-sm shrink-0 cursor-pointer"
                   >
                     {copied ? <Check size={16} /> : <Copy size={16} />}
@@ -703,20 +706,22 @@ export function ReferralDashboardModal({
                   <input
                     type="text"
                     value={customCodeInput}
-                    onChange={(e) => setCustomCodeInput(e.target.value.toUpperCase())}
+                    onChange={(e) => setCustomCodeInput(e.target.value)}
+                    autoCapitalize="none" autoCorrect="off" autoComplete="off" spellCheck={false}
                     aria-label="Custom referral code" placeholder="3–20 letters, numbers, _ or -"
-                    maxLength={16}
-                    className="min-w-0 flex-1 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono uppercase focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    maxLength={20}
+                    className="min-w-0 flex-1 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
                   />
                   <button
                     type="submit"
-                    disabled={customCodeLoading || customCodeInput.trim().toUpperCase() === data.code}
+                    disabled={customCodeLoading || customCodeInput.trim().toUpperCase() === data.code || !customCodeInput.trim()}
                     className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold transition-colors cursor-pointer disabled:opacity-50"
                   >
                     {customCodeLoading ? 'Saving…' : 'Update Code'}
                   </button>
                 </form>
 
+                <p className="text-xs text-slate-500 mt-2">Choose a short name, such as rahul. Available names are unique; your previously shared links keep working.</p>
                 {customCodeMsg && (
                   <p className={`text-xs mt-1.5 ${customCodeMsg.ok ? 'text-emerald-600' : 'text-red-500'}`}>
                     {customCodeMsg.text}
