@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "b9904d099fc373846c6a509d7121b692670f193a61af810c8443c6d3af6d0f77",
+  "sourceDigest": "b59965241cd693a460f8dea5d3c185d235adb0a6d7b077116cb71ffb233e45ff",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -892,7 +892,7 @@
     },
     {
       "path": "server/tests/homeNews.test.ts",
-      "sha256": "2da9078d76e7c86169b9a633232cfb31429793959d41b4b2b9c765989b89c5dc",
+      "sha256": "205ff64582d64443de5d374e372885a5601530fa9334af8da555d0967ff8c5b6",
       "importedBy": []
     },
     {
@@ -1311,7 +1311,7 @@
     },
     {
       "path": "src/components/HomeMarketNews.tsx",
-      "sha256": "8540c0f2f91fc50d24dec5c732868c9bbfb3cfce3d6b573fe58806c15978b6a4",
+      "sha256": "f4a46e1ffff3498e219cf1f0a7d6b01c07256ee2e99a50107d5f427c50d31634",
       "importedBy": [
         "src/components/HomeForYou.tsx"
       ]
@@ -1352,7 +1352,7 @@
     },
     {
       "path": "src/components/NewsPortal.tsx",
-      "sha256": "ceb1c48c5f2840b4b244819fa71b5017224619871e26f25e04357793095c77a3",
+      "sha256": "f66f3453cc0f98099e135319d30fa877084d32c1815572e0514b5c4f4ca1b8d1",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -1446,7 +1446,7 @@
     },
     {
       "path": "src/components/SettingsTab.tsx",
-      "sha256": "e5cb5a8b23c959fc3f8ce75651381c40163533123c36ecf402feb005f30decd9",
+      "sha256": "307915f5047b324ab0bd4756f91c05a1aec9230d85673fd0bc373855fcedc783",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -2282,7 +2282,7 @@
     },
     {
       "path": "src/styles/home-news.css",
-      "sha256": "ba7e72cbb953840d9e72e6923b97598ac44cb57996b9837d53420c17dca3b7ef",
+      "sha256": "83d2d2ee44d2c3a7e8ac80f104fc53a044be6a53c8b7684a15b0e56f73d2c027",
       "importedBy": [
         "src/components/HomeMarketNews.tsx"
       ]
@@ -6783,7 +6783,7 @@
       "source": "src/components/SettingsTab.tsx",
       "target": "src/api/notesApi.ts",
       "kind": "dynamic",
-      "line": 139
+      "line": 138
     },
     {
       "source": "src/components/StorageManager.tsx",
@@ -11515,37 +11515,31 @@
     },
     {
       "file": "src/components/NewsPortal.tsx",
-      "line": 459,
+      "line": 415,
       "function": "customFetch",
       "target": "'/api/news/telegram/preferences'"
     },
     {
       "file": "src/components/NewsPortal.tsx",
-      "line": 479,
+      "line": 435,
       "function": "customFetch",
       "target": "`/api/news/general?${queryParams.toString()}`"
     },
     {
       "file": "src/components/NewsPortal.tsx",
-      "line": 503,
+      "line": 459,
       "function": "customFetch",
       "target": "`/api/news/watchlist?${queryParams.toString()}`"
     },
     {
       "file": "src/components/NewsPortal.tsx",
-      "line": 567,
+      "line": 523,
       "function": "customFetch",
       "target": "'/api/news/telegram/toggle-auto'"
     },
     {
       "file": "src/components/NewsPortal.tsx",
-      "line": 645,
-      "function": "customFetch",
-      "target": "'/api/news/telegram/send'"
-    },
-    {
-      "file": "src/components/NewsPortal.tsx",
-      "line": 706,
+      "line": 612,
       "function": "customFetch",
       "target": "'/api/news/summarize'"
     },
@@ -11737,49 +11731,49 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 336,
+      "line": 335,
       "function": "customFetch",
       "target": "'/api/settings'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 381,
+      "line": 380,
       "function": "customFetch",
       "target": "'/api/settings'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 614,
+      "line": 613,
       "function": "customFetch",
       "target": "'/api/users/test-telegram'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 643,
+      "line": 642,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 782,
+      "line": 781,
       "function": "customFetch",
       "target": "'/api/toggle'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 819,
+      "line": 818,
       "function": "customFetch",
       "target": "'/api/settings'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 844,
+      "line": 843,
       "function": "customFetch",
       "target": "'/api/test-telegram'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 863,
+      "line": 862,
       "function": "customFetch",
       "target": "'/api/test-gemini'"
     },
@@ -12999,19 +12993,19 @@
     },
     {
       "file": "src/components/NewsPortal.tsx",
-      "line": 427,
+      "line": 383,
       "function": "localStorage.getItem",
       "key": "'nexus_news_view_mode'"
     },
     {
       "file": "src/components/NewsPortal.tsx",
-      "line": 438,
+      "line": 394,
       "function": "localStorage.setItem",
       "key": "'nexus_news_view_mode'"
     },
     {
       "file": "src/components/NewsPortal.tsx",
-      "line": 453,
+      "line": 409,
       "function": "Array.from",
       "key": "syms"
     },
@@ -13095,25 +13089,25 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 214,
+      "line": 213,
       "function": "localStorage.getItem",
       "key": "'bse_sound_enabled'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 324,
+      "line": 323,
       "function": "localStorage.setItem",
       "key": "'bse_sound_enabled'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 371,
+      "line": 370,
       "function": "localStorage.setItem",
       "key": "'bse_sound_enabled'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 712,
+      "line": 711,
       "function": "localStorage.removeItem",
       "key": "k"
     },
@@ -15009,7 +15003,7 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 146,
+      "line": 145,
       "target": "window",
       "kind": "listen",
       "name": "notes-changed",
@@ -15017,7 +15011,7 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 147,
+      "line": 146,
       "target": "window",
       "kind": "remove",
       "name": "notes-changed",
@@ -15025,7 +15019,7 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 307,
+      "line": 306,
       "target": "window",
       "kind": "listen",
       "name": "keydown",
@@ -15033,7 +15027,7 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 308,
+      "line": 307,
       "target": "window",
       "kind": "remove",
       "name": "keydown",
@@ -15041,7 +15035,7 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 1827,
+      "line": 1819,
       "target": "window",
       "kind": "dispatch",
       "name": "open-referral-modal",

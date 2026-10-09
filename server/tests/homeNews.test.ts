@@ -123,7 +123,9 @@ test('actual text card renders full long headline, original link and honest unkn
   assert.ok(html.includes(title));
   assert.ok(html.includes('href="https://publisher.example/story/render"'));
   assert.ok(html.includes('Publication time unavailable'));
-  assert.ok(html.includes('Read original'));
+  assert.ok(html.includes('read original at Publisher'));
+  assert.equal((html.match(/<button\b/g) || []).length, 2);
+  assert.ok(!html.includes('home-news-read'));
   assert.ok(html.includes('Save note'));
   assert.ok(html.includes('Share article'));
   assert.ok(html.startsWith('<article'));
@@ -134,7 +136,7 @@ test('actual text card renders full long headline, original link and honest unkn
   assert.equal(renderToStaticMarkup(React.createElement(exports.NewsTextCard, { item: { ...item('unsafe'), link: 'javascript:alert(1)' } })), '');
 });
 
-test('full news card retains separate shared actions and honest busy/sent states', () => {
+test('full news card exposes only AI, share and notes while headline opens the article', () => {
   const source = readFileSync(new URL('../../src/components/NewsPortal.tsx', import.meta.url), 'utf8');
   const code = ts.transpileModule(source + '\nexports.testCard = NewsCardItem;', { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText;
   const actualRequire = createRequire(new URL('../../src/components/NewsPortal.tsx', import.meta.url));
@@ -146,17 +148,20 @@ test('full news card retains separate shared actions and honest busy/sent states
     if (path.startsWith('.')) return {};
     return actualRequire(path);
   } });
-  const props = { item: { ...item('portal'), timeAgo: '1h ago' }, viewMode: 'list', isSending: true, isSentSuccess: false, isAiLoading: true, onSendTelegram: () => { throw new Error('No dispatch during render'); }, onToggleAi: () => { throw new Error('No AI request during render'); } };
+  const props = { item: { ...item('portal'), timeAgo: '1h ago' }, viewMode: 'list', isAiLoading: true, onToggleAi: () => { throw new Error('No AI request during render'); } };
   const render = (options: object) => renderToStaticMarkup(React.createElement(NoteEditorProvider, null, React.createElement(exports.testCard, { ...props, ...options })));
   const busy = render({});
-  assert.ok(busy.includes('Sending…'));
-  assert.ok(busy.includes('Thinking…'));
-  assert.ok((busy.match(/disabled=""/g) || []).length >= 2);
+  assert.ok(busy.includes('Generating AI summary'));
+  assert.equal((busy.match(/<button\b/g) || []).length, 3);
+  assert.equal((busy.match(/disabled=""/g) || []).length, 1);
   assert.ok(busy.includes('Share article'));
   assert.ok(busy.includes('Save note on this article'));
-  assert.ok(busy.includes('Read original article'));
-  const sent = render({ isSending: false, isSentSuccess: true, isAiLoading: false });
-  assert.ok(sent.includes('Dispatched'));
-  assert.ok(sent.includes('>Sent</span>'));
-  assert.ok(sent.includes('>AI Takeaway</span>'));
+  assert.ok(busy.includes('href="https://publisher.example/story/portal"'));
+  assert.ok(!busy.includes('Broadcast headline'));
+  assert.ok(!busy.includes('AI Takeaway'));
+  assert.ok(!busy.includes('Read original article'));
+  const expanded = render({ isAiLoading: false, isAiExpanded: true, aiSummary: 'Verified fixture summary' });
+  assert.ok(expanded.includes('Hide AI summary'));
+  assert.ok(expanded.includes('aria-expanded="true"'));
+  assert.ok(expanded.includes('Verified fixture summary'));
 });

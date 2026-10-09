@@ -55,3 +55,6 @@ Current status (2026-10-07): these missing requirements are now specified; their
 
 
 2026-10-09 screenshot-guided mobile correction: Home news metadata/controls compacted, shared action primitives adopted, full news search/action wrapping fixed, and mobile branding restored after removing phone theme toggle. Separate Story/Active header controls removed as requested. Source/automated evidence and browser/device acceptance remain separate; see `changes/news-mobile-controls.md`.
+
+
+2026-10-09 news simplification: icon-only AI/Share/Notes replace redundant direct dispatch/external-open controls. Dedicated News navigation replaces Settings news discovery shortcut. Existing AI feedback, note editor, share actions and automatic delivery preferences remain; evidence in changes/news-minimal-actions.md.

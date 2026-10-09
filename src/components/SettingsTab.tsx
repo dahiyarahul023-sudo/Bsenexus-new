@@ -12,7 +12,7 @@ import {
   FileJson, Trash2, MoreHorizontal, X, Bell, ShieldCheck,
   Volume2, VolumeX, Eye, HelpCircle, Scale, MessageSquare,
   Cookie, FileText, Search, RotateCcw, LayoutGrid, Layers, ArrowUpRight,
-  Power, Unlink, Bot, Zap, UserX, SlidersHorizontal, Newspaper, Building2,
+  Power, Unlink, Bot, Zap, UserX, SlidersHorizontal, Building2,
   Crown, ArrowLeft, StickyNote
 } from 'lucide-react';
 import { TermsModal, LegalTabType } from './TermsModal';
@@ -75,7 +75,6 @@ const SETTINGS_REGISTRY = [
   { id: 'delete-account', title: 'Delete Account & All Personal Data', description: 'Permanently wipe your account, stored watchlists, and all cloud preferences', category: 'Danger Zone', keywords: ['delete account', 'delete my data', 'erase', 'wipe account', 'remove profile', 'gdpr', 'dpdp', 'danger'] },
   { id: 'sign-out', title: 'Sign out of account', description: 'Log out of current investor session on this device', category: 'Danger Zone', keywords: ['sign out', 'logout', 'log out', 'exit', 'session'] },
   { id: 'alerts-triggers', title: 'Alerts & Triggers', description: 'Keyword and filing-based alert rules', category: 'Tools', keywords: ['alerts', 'triggers', 'keyword', 'filters', 'rules', 'notifications'] },
-  { id: 'news-feed', title: 'Market News Feed', description: 'Live Indian business and macro news', category: 'Tools', keywords: ['news', 'market news', 'feed', 'headlines', 'macro'] },
   { id: 'companies-dir', title: 'BSE Listed Companies', description: 'Company profiles, filings and disclosures', category: 'Tools', keywords: ['companies', 'directory', 'listed', 'profiles', 'bse'] },
   { id: 'guides', title: 'User Guides & Tutorials', description: 'SEBI LODR and disclosure guides', category: 'Help & Support', keywords: ['guides', 'tutorials', 'help', 'how to', 'learn', 'user guide'] },
   { id: 'sebi', title: 'SEBI & Legal Disclaimer', description: 'Investment risks and regulatory disclosures', category: 'About & Legal', keywords: ['sebi', 'disclaimer', 'legal', 'risk', 'regulatory'] },
@@ -1023,13 +1022,6 @@ export function SettingsTab({
       action: () => setAlertRulesOpen(true),
     },
     {
-      id: 'news', title: 'Market News Feed',
-      subtitle: 'Live Indian business & macro news',
-      icon: Newspaper, iconClass: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
-      registryIds: ['news-feed'],
-      action: () => { if (onNavigate) onNavigate('news'); },
-    },
-    {
       id: 'companies', title: 'BSE Listed Companies',
       subtitle: 'Profiles, filings & disclosures',
       icon: Building2, iconClass: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
@@ -1118,7 +1110,7 @@ export function SettingsTab({
 
   const indexGroups: { label?: string; ids: string[]; danger?: boolean }[] = [
     { ids: ['preferences', 'account', 'subscription', 'notes', 'watchlist'] },
-    { label: 'Tools & Discovery', ids: ['alerts', 'news', 'companies'] },
+    { label: 'Tools & Discovery', ids: ['alerts', 'companies'] },
     { label: 'Support', ids: ['help', 'about'] },
   ];
 

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
-import { ArrowRight, ExternalLink, Newspaper, RefreshCw } from 'lucide-react';
+import { ArrowRight, Newspaper, RefreshCw } from 'lucide-react';
 import { customFetch } from '../api';
 import { useVisibilityInterval } from '../hooks/useVisibilityInterval';
 import { ActionButton } from './ui/ActionButton';
@@ -30,9 +30,9 @@ export function NewsTextCard({ item, lead = false }: { item: HomeNewsItem; lead?
         </div>
       </div>
       <div className="home-news-card-actions">
-        <SaveNoteButton variant="pill" label="Save note" link={{ type: 'news', label: (item.symbol || item.source).slice(0, 60), symbol: item.symbol, url: href }} className="home-news-note" />
-        <ShareActionMenu contentKind="news" title={item.title} headline={`Source: ${item.source}`} url={href} size="sm" buttonLabel="Share" className="home-news-share" />
-        <a className="home-news-read" href={href} target="_blank" rel="noopener noreferrer" aria-label={`Read original at ${item.source} (opens a new tab)`}>Read <ExternalLink size={13} aria-hidden="true" /></a>
+        <SaveNoteButton label="Save note" link={{ type: 'news', label: (item.symbol || item.source).slice(0, 60), symbol: item.symbol, url: href }} className="home-news-note" />
+        <ShareActionMenu contentKind="news" title={item.title} headline={`Source: ${item.source}`} url={href} size="sm" className="home-news-share" />
+
       </div>
     </article>
   );

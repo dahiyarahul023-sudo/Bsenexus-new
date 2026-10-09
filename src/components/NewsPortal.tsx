@@ -130,24 +130,18 @@ function getCategoryBadge(category?: string) {
 interface NewsCardProps {
   item: StockNewsItem;
   viewMode: 'grid' | 'list';
-  isSending: boolean;
-  isSentSuccess: boolean;
   isAiLoading: boolean;
   aiSummary?: string;
   isAiExpanded?: boolean;
-  onSendTelegram: (item: StockNewsItem) => void;
   onToggleAi: (item: StockNewsItem) => void;
 }
 
 const NewsCardItem: React.FC<NewsCardProps> = React.memo(({
   item,
   viewMode,
-  isSending,
-  isSentSuccess,
   isAiLoading,
   aiSummary,
   isAiExpanded,
-  onSendTelegram,
   onToggleAi
 }) => {
   const [copiedSummary, setCopiedSummary] = useState(false);
@@ -298,34 +292,12 @@ const NewsCardItem: React.FC<NewsCardProps> = React.memo(({
 
         {/* Footer Minimalist Action Bar */}
         <div className="flex flex-col items-start gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between pt-2.5 mt-2.5 border-t border-slate-100 dark:border-[#201E2E] text-[10px] text-slate-400">
-          <div className="flex items-center gap-1.5">
-            {isSentSuccess ? (
-              <span className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
-                <Check size={10} />
-                <span>Dispatched</span>
-              </span>
-            ) : (
-              <span className="text-[10.5px] text-slate-400 font-medium">
-                {item.source}
-              </span>
-            )}
-          </div>
-
           <div className="flex w-full flex-wrap items-center gap-1.5 sm:w-auto">
-            {/* Existing command handlers, shared presentation/loading controls. */}
             <ActionButton type="button" variant="secondary" size="sm"
-              isLoading={isSending} loadingText="Sending…" disabled={isSentSuccess}
-              className="min-h-[44px] sm:min-h-[32px]" title="Broadcast headline to Telegram"
-              onClick={() => onSendTelegram(item)}
-              icon={isSentSuccess ? <Check size={12} aria-hidden="true" /> : <Send size={12} aria-hidden="true" />}>
-              {isSentSuccess ? 'Sent' : 'Telegram'}
-            </ActionButton>
-            <ActionButton type="button" variant="secondary" size="sm"
-              isLoading={isAiLoading} loadingText="Thinking…" aria-expanded={Boolean(isAiExpanded)}
-              className="min-h-[44px] sm:min-h-[32px]" title="Gemini AI Summary"
-              onClick={() => onToggleAi(item)} icon={<Sparkles size={12} aria-hidden="true" />}>
-              {isAiExpanded ? 'Hide AI' : 'AI Takeaway'}
-            </ActionButton>
+              isLoading={isAiLoading} loadingText="" aria-expanded={Boolean(isAiExpanded)}
+              aria-label={isAiLoading ? 'Generating AI summary' : isAiExpanded ? 'Hide AI summary' : 'Show AI summary'}
+              className="min-h-[44px] min-w-[44px] sm:min-h-[32px] sm:min-w-[32px]" title="AI summary"
+              onClick={() => onToggleAi(item)} icon={<Sparkles size={14} aria-hidden="true" />} />
 
             {/* 1-Tap Share Action Menu */}
             <ShareActionMenu contentKind="news"
@@ -333,7 +305,6 @@ const NewsCardItem: React.FC<NewsCardProps> = React.memo(({
               headline={item.source ? `Source: ${item.source}` : undefined}
               url={item.link}
               size="sm"
-              buttonLabel="Share"
               className="min-h-[44px] sm:min-h-[32px]"
             />
 
@@ -349,19 +320,7 @@ const NewsCardItem: React.FC<NewsCardProps> = React.memo(({
               className="min-h-[44px] min-w-[44px]"
             />
 
-            {/* External Source Link */}
-            <motion.a
-              whileTap={buttonTap}
-              transition={springSnappy}
-              href={item.link}
-              target="_blank"
-              rel="noreferrer noopener"
-              className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-[#222030] dark:hover:bg-[#2D283E] text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer border border-slate-200 dark:border-[#2D283E] min-h-[44px] min-w-[44px] sm:min-h-[32px] sm:min-w-[32px] flex items-center justify-center select-none"
-              title="Open full news article in new tab"
-              aria-label="Read original article (opens a new tab)"
-            >
-              <ExternalLink size={12} />
-            </motion.a>
+
           </div>
         </div>
       </motion.div>
@@ -409,10 +368,7 @@ export const NewsPortal: React.FC<NewsPortalProps> = ({
   const [isSavingTgPref, setIsSavingTgPref] = useState(false);
   const [tgSaveSuccess, setTgSaveSuccess] = useState(false);
 
-  // Telegram sending state
-  const [sendingId, setSendingId] = useState<string | null>(null);
-  const [sentSuccessId, setSentSuccessId] = useState<string | null>(null);
-  const [sendError, setSendError] = useState<string | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
 
   // Lock background scroll when Filter Sheet or Telegram Preferences Modal is open
@@ -623,65 +579,15 @@ export const NewsPortal: React.FC<NewsPortalProps> = ({
     setTgSelectedSources(next);
   };
 
-  const handleSendToTelegram = useCallback(async (item: StockNewsItem) => {
-    const isGuestUser = !authUser || authUser.isAnonymous;
-    if (isGuestUser) {
-      setIsAuthModalOpen(true);
-      setSendError('Google Sign-In Required: Sign in with Google to activate your 1-Week Free Pro trial to broadcast to Telegram!');
-      setTimeout(() => setSendError(null), 5000);
-      return;
-    }
 
-    if (!isPro && !isAdmin) {
-      setIsProModalOpen(true);
-      setSendError(isPaidPro ? `Your Pro subscription has expired. Renew Pro (one-time plans from ₹${getLowestPlanPrice()}) to broadcast to Telegram!` : `1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to broadcast to Telegram!`);
-      setTimeout(() => setSendError(null), 5000);
-      return;
-    }
-
-    setSendingId(item.id);
-    setSendError(null);
-    try {
-      const res = await customFetch('/api/news/telegram/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ newsItem: item })
-      });
-      const data = await res.json();
-      if (res.status === 401 || data?.authRequired) {
-        setIsAuthModalOpen(true);
-        setSendError(data?.error || 'Google Sign-In Required.');
-        setTimeout(() => setSendError(null), 5000);
-        return;
-      }
-      if (res.status === 403 || data?.proRequired) {
-        setIsProModalOpen(true);
-        setSendError(data?.error || 'Pro upgrade required.');
-        setTimeout(() => setSendError(null), 5000);
-        return;
-      }
-      if (data.success) {
-        setSentSuccessId(item.id);
-        setTimeout(() => setSentSuccessId(null), 3000);
-      } else {
-        setSendError(data.error || 'Failed to dispatch to Telegram');
-        setTimeout(() => setSendError(null), 4000);
-      }
-    } catch (err: any) {
-      setSendError(err.message || 'Network error');
-      setTimeout(() => setSendError(null), 4000);
-    } finally {
-      setSendingId(null);
-    }
-  }, [authUser, isPro, isAdmin, setIsAuthModalOpen, setIsProModalOpen]);
 
   const handleToggleAiSummary = useCallback(async (item: StockNewsItem) => {
     // 1. Guests are strictly view-only
     const isGuestUser = !authUser || authUser.isAnonymous;
     if (isGuestUser) {
       setIsAuthModalOpen(true);
-      setSendError('Google Sign-In Required: Sign in with Google to get 1 week (7 days) of Free Pro AI summaries!');
-      setTimeout(() => setSendError(null), 5000);
+      setAiError('Google Sign-In Required: Sign in with Google to get 1 week (7 days) of Free Pro AI summaries!');
+      setTimeout(() => setAiError(null), 5000);
       return;
     }
 
@@ -689,8 +595,8 @@ export const NewsPortal: React.FC<NewsPortalProps> = ({
     const demoAlreadyUsed = (profile as any)?.freeSummaryUsed === true;
     if (!isPro && !isAdmin && demoAlreadyUsed) {
       setIsProModalOpen(true);
-      setSendError(`🔒 You've used your one free AI summary demo. Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) for 100 AI summaries/day!`);
-      setTimeout(() => setSendError(null), 5000);
+      setAiError(`🔒 You've used your one free AI summary demo. Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) for 100 AI summaries/day!`);
+      setTimeout(() => setAiError(null), 5000);
       return;
     }
 
@@ -719,16 +625,16 @@ export const NewsPortal: React.FC<NewsPortalProps> = ({
 
       if (res.status === 401 || data?.authRequired) {
         setIsAuthModalOpen(true);
-        setSendError(data?.error || 'Google Sign-In Required: Sign in to enjoy 1 week of Free Pro AI features.');
-        setTimeout(() => setSendError(null), 5000);
+        setAiError(data?.error || 'Google Sign-In Required: Sign in to enjoy 1 week of Free Pro AI features.');
+        setTimeout(() => setAiError(null), 5000);
         setExpandedAiIds(prev => ({ ...prev, [item.id]: false }));
         return;
       }
 
       if (res.status === 429) {
         syncQuotaFromResponse(data || { remainingQuota: 0 });
-        setSendError(data?.error || 'Daily AI summary quota reached (100/day)');
-        setTimeout(() => setSendError(null), 4000);
+        setAiError(data?.error || 'Daily AI summary quota reached (100/day)');
+        setTimeout(() => setAiError(null), 4000);
         setExpandedAiIds(prev => ({ ...prev, [item.id]: false }));
         return;
       }
@@ -738,17 +644,17 @@ export const NewsPortal: React.FC<NewsPortalProps> = ({
         setAiSummaries(prev => ({ ...prev, [item.id]: data.aiSummary }));
       } else if (res.status === 403 && data?.demoUsed) {
         setIsProModalOpen(true);
-        setSendError(`🔒 ${data?.error || "You've used your one free AI summary demo. Upgrade to Pro for 100 AI summaries/day!"}`);
-        setTimeout(() => setSendError(null), 5000);
+        setAiError(`🔒 ${data?.error || "You've used your one free AI summary demo. Upgrade to Pro for 100 AI summaries/day!"}`);
+        setTimeout(() => setAiError(null), 5000);
         setExpandedAiIds(prev => ({ ...prev, [item.id]: false }));
       } else {
-        setSendError(data?.error || 'Could not generate AI summary');
-        setTimeout(() => setSendError(null), 4000);
+        setAiError(data?.error || 'Could not generate AI summary');
+        setTimeout(() => setAiError(null), 4000);
         setExpandedAiIds(prev => ({ ...prev, [item.id]: false }));
       }
     } catch (err: any) {
-      setSendError(err.message || 'Failed to generate AI summary');
-      setTimeout(() => setSendError(null), 4000);
+      setAiError(err.message || 'Failed to generate AI summary');
+      setTimeout(() => setAiError(null), 4000);
       setExpandedAiIds(prev => ({ ...prev, [item.id]: false }));
     } finally {
       setGeneratingAiId(null);
@@ -1245,13 +1151,9 @@ export const NewsPortal: React.FC<NewsPortalProps> = ({
         style={{ touchAction: 'pan-y', pointerEvents: 'auto' }}
         className="news-feed-container touch-pan-y pointer-events-auto bg-white dark:bg-[#1A1926] border border-slate-200/90 dark:border-[#2D283E] rounded-xl shadow-xs min-h-[500px] relative"
       >
-        {/* Global Feedback Banner */}
-        {sendError && (
-          <div className="m-3 p-2.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-300 text-xs font-medium rounded-lg flex items-center gap-2">
-            <AlertCircle size={14} className="text-rose-600 shrink-0" />
-            <span>{sendError}</span>
-          </div>
-        )}
+        {aiError && <div role="status" className="m-3 p-2.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-300 text-xs font-medium rounded-lg flex items-center gap-2">
+          <AlertCircle size={14} aria-hidden="true" /><span>{aiError}</span>
+        </div>}
 
         {/* Designed Skeleton for Initial Loading State */}
         {isLoading && filteredNews.length === 0 && (
@@ -1323,12 +1225,9 @@ export const NewsPortal: React.FC<NewsPortalProps> = ({
                 key={item.id}
                 item={item}
                 viewMode={viewMode}
-                isSending={sendingId === item.id}
-                isSentSuccess={sentSuccessId === item.id}
                 isAiLoading={generatingAiId === item.id}
                 aiSummary={aiSummaries[item.id]}
                 isAiExpanded={expandedAiIds[item.id]}
-                onSendTelegram={handleSendToTelegram}
                 onToggleAi={handleToggleAiSummary}
               />
             ))}
