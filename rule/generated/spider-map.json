@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "a9c10ac5dca0192dc01dfc98b7c91585fa982473b109f9d4a1eae0ed24676cd2",
+  "sourceDigest": "3b1fc2365e17898a96cb9bbe8cd5667d67f3d77c55bdb39e3e75646b269b24fa",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -326,7 +326,7 @@
     },
     {
       "path": "server/database/logDao.ts",
-      "sha256": "76c6ce245a9681da90e257d6602151b61bfa39537ccf5ecb693be9bf5b2b47ee",
+      "sha256": "ee067a424d261ba2aade4058aa8b1ae872bb91615260264503b392ae666ce94e",
       "importedBy": [
         "server.ts",
         "server/api/routes.ts",
@@ -695,7 +695,7 @@
     },
     {
       "path": "server/services/monitor.ts",
-      "sha256": "f23237be2279595b6080e0efaa189f421b51889d882493d527d0859e5860fc0c",
+      "sha256": "6838c3fda330e01fd85f2762e45d6e39a98312e15b06d1cef3066647c038b977",
       "importedBy": [
         "server.ts",
         "server/api/routes.ts"
@@ -906,6 +906,11 @@
       "importedBy": []
     },
     {
+      "path": "server/tests/pollerStall.test.ts",
+      "sha256": "4b4c62975f8ea8a805aedfae32846a90bd509892afe66c0cd5951adc3d8a4168",
+      "importedBy": []
+    },
+    {
       "path": "server/tests/preferenceSaveQueue.test.ts",
       "sha256": "feff074882ee8bad2995f771a4fd5776fe1289a2bfd8f4510c919ab195dc5ca9",
       "importedBy": []
@@ -1061,6 +1066,13 @@
       "sha256": "4220a0cd43b500217fdadf8bee286b51d0da2fa9519912802715aaca615a896a",
       "importedBy": [
         "server/services/aiQuotaService.ts"
+      ]
+    },
+    {
+      "path": "server/utils/pollCycle.ts",
+      "sha256": "9ceb209d9cb6b3edea534c305cc6d7d0a9b82c627ad4c56f56682c6e6b7689ad",
+      "importedBy": [
+        "server/services/monitor.ts"
       ]
     },
     {
@@ -3917,87 +3929,93 @@
     },
     {
       "source": "server/services/monitor.ts",
-      "target": "server/database/settingsDao.ts",
+      "target": "server/utils/pollCycle.ts",
       "kind": "import",
       "line": 1
     },
     {
       "source": "server/services/monitor.ts",
-      "target": "server/database/logDao.ts",
+      "target": "server/database/settingsDao.ts",
       "kind": "import",
       "line": 2
     },
     {
       "source": "server/services/monitor.ts",
-      "target": "server/services/bse.ts",
+      "target": "server/database/logDao.ts",
       "kind": "import",
       "line": 3
     },
     {
       "source": "server/services/monitor.ts",
-      "target": "server/services/telegram.ts",
+      "target": "server/services/bse.ts",
       "kind": "import",
       "line": 4
     },
     {
       "source": "server/services/monitor.ts",
-      "target": "server/services/gemini.ts",
+      "target": "server/services/telegram.ts",
       "kind": "import",
       "line": 5
     },
     {
       "source": "server/services/monitor.ts",
-      "target": "server/database/watchlistDao.ts",
+      "target": "server/services/gemini.ts",
       "kind": "import",
       "line": 6
     },
     {
       "source": "server/services/monitor.ts",
-      "target": "server/database/usersDao.ts",
+      "target": "server/database/watchlistDao.ts",
       "kind": "import",
       "line": 7
     },
     {
       "source": "server/services/monitor.ts",
-      "target": "server/database/announcementDao.ts",
+      "target": "server/database/usersDao.ts",
       "kind": "import",
       "line": 8
     },
     {
       "source": "server/services/monitor.ts",
-      "target": "server/utils/helpers.ts",
+      "target": "server/database/announcementDao.ts",
       "kind": "import",
       "line": 9
     },
     {
       "source": "server/services/monitor.ts",
-      "target": "server/database/notificationDao.ts",
+      "target": "server/utils/helpers.ts",
       "kind": "import",
       "line": 10
     },
     {
       "source": "server/services/monitor.ts",
-      "target": "server/database/alertRulesDao.ts",
+      "target": "server/database/notificationDao.ts",
       "kind": "import",
       "line": 11
     },
     {
       "source": "server/services/monitor.ts",
-      "target": "server/services/timelineClassifier.ts",
+      "target": "server/database/alertRulesDao.ts",
       "kind": "import",
       "line": 12
     },
     {
       "source": "server/services/monitor.ts",
-      "target": "server/utils/alertDecision.ts",
+      "target": "server/services/timelineClassifier.ts",
       "kind": "import",
       "line": 13
     },
     {
       "source": "server/services/monitor.ts",
-      "target": "server/services/oneSignal.ts",
+      "target": "server/utils/alertDecision.ts",
       "kind": "import",
       "line": 14
+    },
+    {
+      "source": "server/services/monitor.ts",
+      "target": "server/services/oneSignal.ts",
+      "kind": "import",
+      "line": 15
     },
     {
       "source": "server/services/resultsCalendarService.ts",
@@ -7847,7 +7865,8 @@
         "src/components/WatchlistManager.tsx",
         "src/components/AlertRulesModal.tsx",
         "src/shared/alertRules.ts",
-        "server/api/routes.ts"
+        "server/api/routes.ts",
+        "server/utils/pollCycle.ts"
       ],
       "tests": [
         "server/tests/bseBackfill.test.ts",
@@ -7855,7 +7874,8 @@
         "server/tests/oneSignal.test.ts",
         "server/tests/batchOperations.test.ts",
         "server/tests/alertRulesReliability.test.ts",
-        "server/tests/alertRulesApi.test.ts"
+        "server/tests/alertRulesApi.test.ts",
+        "server/tests/pollerStall.test.ts"
       ],
       "reason": "Poll → normalize/dedupe → persistence → feed and alert decisions → recipient-specific delivery/inbox. Global and personal recipients must remain distinct. Preset saves replace stable per-owner IDs atomically; confirmed cloud settings feed every poll. Personal channels supersede inherited defaults once presets are saved."
     },
@@ -8030,15 +8050,17 @@
         "server/sentry.ts",
         "server/services/resendMailer.ts",
         "server/utils/retry.ts",
-        "server/utils/circuitBreaker.ts"
+        "server/utils/circuitBreaker.ts",
+        "server/utils/pollCycle.ts"
       ],
       "tests": [
         "server/tests/startupRecovery.test.ts",
         "server/tests/accountProtection.test.ts",
         "server/tests/circuitBreaker.test.ts",
-        "server/tests/recaptchaSecurity.test.ts"
+        "server/tests/recaptchaSecurity.test.ts",
+        "server/tests/pollerStall.test.ts"
       ],
-      "reason": "Startup and settings influence background jobs, provider calls, abuse limits and logs. A live HTTP listener does not establish that durable stores or external providers are ready."
+      "reason": "Startup and settings influence background jobs, provider calls, abuse limits and logs. A live HTTP listener does not establish that durable stores or external providers are ready. Poller stage deadlines release the monitor lock without resuming abandoned workers; dedicated local poller history is not cloud deployment durability."
     },
     {
       "id": "frontend-navigation",
@@ -12254,7 +12276,7 @@
     },
     {
       "file": "server/database/logDao.ts",
-      "line": 93,
+      "line": 108,
       "function": "getSupabase()\n      .from",
       "key": "'logs'"
     },
@@ -12629,6 +12651,18 @@
       "line": 56,
       "function": "Array.from",
       "key": "{ length: 10 }"
+    },
+    {
+      "file": "server/tests/pollerStall.test.ts",
+      "line": 135,
+      "function": "Array.from",
+      "key": "{ length: 700 }"
+    },
+    {
+      "file": "server/tests/pollerStall.test.ts",
+      "line": 142,
+      "function": "Array.from",
+      "key": "await exports.getLogs(2500)"
     },
     {
       "file": "server/utils/bloomFilter.ts",

@@ -2,6 +2,18 @@ import { getSupabase, isSupabaseConfigured } from './supabase.js';
 import { readLocalJson, writeLocalJson } from './localStore.js';
 
 const LOGS_FILE = 'logs.json';
+// Dedicated bounded history: a Gemini warning burst cannot evict poller evidence.
+// Local storage survives process restart, not necessarily a container republish.
+const POLLER_LOGS_FILE = 'poller-logs.json';
+const pollerLogsCache: any[] = readLocalJson<any[]>(POLLER_LOGS_FILE, []);
+const isPollerLog = (module: string) => module === 'POLLER' || module === 'POLLER_CYCLE';
+function retainLog(item: any) {
+  const target = isPollerLog(item.module) ? pollerLogsCache : logsCache;
+  target.unshift(item);
+  const cap = target === pollerLogsCache ? 2000 : 500;
+  if (target.length > cap) target.length = cap;
+}
+
 const logsCache: any[] = readLocalJson<any[]>(LOGS_FILE, []);
 
 // Redacts sensitive credentials (Item 12: Remove sensitive logs)
@@ -29,6 +41,7 @@ export function scheduleLogsDiskSave() {
   saveLogsDiskTimer = setTimeout(() => {
     saveLogsDiskTimer = null;
     writeLocalJson(LOGS_FILE, logsCache);
+    writeLocalJson(POLLER_LOGS_FILE, pollerLogsCache);
   }, 1000);
 }
 
@@ -38,6 +51,7 @@ export function flushLogsDiskSave() {
     saveLogsDiskTimer = null;
   }
   writeLocalJson(LOGS_FILE, logsCache);
+  writeLocalJson(POLLER_LOGS_FILE, pollerLogsCache);
 }
 
 export async function addLog(level: string, module: string, message: string) {
@@ -50,8 +64,7 @@ export async function addLog(level: string, module: string, message: string) {
     timestamp: Date.now()
   };
 
-  logsCache.unshift(item);
-  if (logsCache.length > 500) logsCache.pop();
+  retainLog(item);
   scheduleLogsDiskSave();
 }
 
@@ -61,7 +74,7 @@ export async function addLogsBatch(entries: { level: string; module: string; mes
   for (const entry of entries) {
     if (!entry) continue;
     const sanitizedMessage = sanitizeSensitiveLog(entry.message || '');
-    logsCache.unshift({
+    retainLog({
       id: `${now}_${Math.random().toString(36).slice(2, 6)}`,
       level: (entry.level || 'INFO').substring(0, 45).toUpperCase(),
       module: (entry.module || 'SYSTEM').substring(0, 45).toUpperCase(),
@@ -81,12 +94,14 @@ export async function clearLogs() {
     saveLogsDiskTimer = null;
   }
   logsCache.length = 0;
+  pollerLogsCache.length = 0;
   writeLocalJson(LOGS_FILE, logsCache);
+  writeLocalJson(POLLER_LOGS_FILE, pollerLogsCache);
 }
 
 export async function getLogs(limitNum: number = 200) {
-  if (logsCache.length > 0 || !isSupabaseConfigured()) {
-    return logsCache.slice(0, limitNum);
+  if (logsCache.length > 0 || pollerLogsCache.length > 0 || !isSupabaseConfigured()) {
+    return [...logsCache, ...pollerLogsCache].sort((a, b) => b.timestamp - a.timestamp).slice(0, limitNum);
   }
 
   try {

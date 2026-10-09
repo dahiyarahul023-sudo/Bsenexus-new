@@ -1,3 +1,4 @@
+import { PollCycle, PollStageTimeout } from '../utils/pollCycle.js';
 import { getSettings } from '../database/settingsDao.js';
 import { addLog } from '../database/logDao.js';
 import { fetchBSEAnnouncements, getLastBseError } from './bse.js';
@@ -20,7 +21,7 @@ let isBseOutageActive = false;
 let lastAlertTime = 0;
 const ALERT_COOLDOWN_MS = 60 * 60 * 1000;
 // Startup grace: after a (re)deploy the cold boot fires a burst of BSE requests
-// (10-page backfill + parallel syncs) that can trip Akamai rate-limiting for a
+// (backfill + parallel syncs) that can trip Akamai rate-limiting for a
 // few minutes. Never send the outage Telegram alert during this window — the
 // feed genuinely failing AFTER the grace period still alerts normally.
 const PROCESS_BOOT_MS = Date.now();
@@ -116,17 +117,25 @@ async function getCachedMonitorConfig() {
 export async function processAnnouncements() {
   if (isPolling) return;
   isPolling = true;
+  const cycleId = Date.now().toString(36);
+  let outcome = 'success';
+  const cycle = new PollCycle(event => {
+    const message = `cycle=${cycleId} ${event}`;
+    console.log(`[POLLER_CYCLE] ${message}`);
+    void addLog('INFO', 'POLLER_CYCLE', message).catch(() => {});
+  });
   try {
     if (!isCacheInitialized) {
-      await initAnnouncementCache();
+      await cycle.step('cache-init', () => initAnnouncementCache());
       // Restore in-app notifications from Supabase in the background (never blocks polling)
       initNotificationsFromCloud().catch(() => {});
       isCacheInitialized = true;
     }
 
-    const announcements = await fetchBSEAnnouncements();
+    const announcements = await cycle.step('exchange-fetch', () => fetchBSEAnnouncements(), 60_000);
     
     if (!announcements) {
+      outcome = 'source-unavailable';
       consecutiveFailures++;
       // Fire outage alert ONLY when all tiers fail for 6 consecutive cycles and cooldown has elapsed.
       // Suppressed during the post-boot grace window: a fresh deploy's cold-start burst can fail
@@ -134,13 +143,13 @@ export async function processAnnouncements() {
       const pastStartupGrace = (Date.now() - PROCESS_BOOT_MS) > OUTAGE_ALERT_STARTUP_GRACE_MS;
       const canAlert = ((lastAlertTime === 0) || (Date.now() - lastAlertTime > ALERT_COOLDOWN_MS)) && pastStartupGrace;
       if (consecutiveFailures >= 6 && !isBseOutageActive && canAlert) {
-        const settings = await getSettings();
+        const settings = await cycle.step('outage-settings', () => getSettings());
         if (settings.botToken && settings.chatId) {
           isBseOutageActive = true;
           lastAlertTime = Date.now();
           const errDetail = getLastBseError();
           const alertMsg = `⚠️ <b>BSE Nexus System Alert</b>\n\nUnable to fetch live feed from BSE India (${errDetail}). Both primary and backup endpoints failed.\n\n<b>Diagnostics:</b>\n• Exchange API unreachable or cloud IP filtered.\n• Exponential backoff retries active.\n• Recovery notification will be sent automatically upon reconnection.\n\n<i>No further outage alerts will be sent during this episode.</i>`;
-          await sendToTelegram(alertMsg);
+          await cycle.step('outage-notice', () => sendToTelegram(alertMsg));
           await addLog('CRITICAL', 'SYSTEM', `Sent BSE Outage Alert to Telegram: ${errDetail}`);
         }
       }
@@ -150,11 +159,11 @@ export async function processAnnouncements() {
     // If the feed was previously in an outage state, send one recovery notice!
     if (isBseOutageActive) {
       isBseOutageActive = false;
-      const settings = await getSettings();
+      const settings = await cycle.step('outage-settings', () => getSettings());
       if (settings.botToken && settings.chatId) {
         const isMarket = isMarketHoursIST();
         const recoveryMsg = `✅ <b>BSE Live Feed Restored</b>\n\nLive corporate filings feed has successfully reconnected to BSE India. Normal ${isMarket ? 'Live (20s)' : 'Relaxed (5m)'} polling resumed.`;
-        await sendToTelegram(recoveryMsg);
+        await cycle.step('recovery-notice', () => sendToTelegram(recoveryMsg));
         await addLog('INFO', 'SYSTEM', 'Sent BSE Feed Recovery Notice to Telegram');
       }
     }
@@ -162,8 +171,8 @@ export async function processAnnouncements() {
     consecutiveFailures = 0;
 
     // Instant in-memory configuration read (~60s TTL) - Zero DB latency on critical path
-    const { settings, activeSymbols, activeSymbolMap, allUsers, userWatchlistCache } = await getCachedMonitorConfig();
-    const alertRulesSnapshot = await initAlertRulesFromCloud();
+    const { settings, activeSymbols, activeSymbolMap, allUsers, userWatchlistCache } = await cycle.step('config-refresh', () => getCachedMonitorConfig());
+    const alertRulesSnapshot = await cycle.step('alert-rules', () => initAlertRulesFromCloud());
     
     // Pass 1: Find pending items (all unprocessed items in batch)
     const pendingAnnouncements = [];
@@ -171,7 +180,7 @@ export async function processAnnouncements() {
     for (const item of announcements) {
       const newsId = item.NEWSID;
       if (!newsId) continue;
-      if (!(await isAnnouncementProcessed(newsId))) {
+      if (!(await cycle.step('dedupe-read', () => isAnnouncementProcessed(newsId)))) {
         pendingAnnouncements.push(item);
       }
     }
@@ -298,21 +307,22 @@ export async function processAnnouncements() {
         }
 
         // Double check against duplicate Telegram alert storms on service restart or cache clear
-        const alreadySent = await isAnnouncementSent(newsId);
+        const alreadySent = await cycle.step('sent-read', () => isAnnouncementSent(newsId));
         if (alreadySent) {
           shouldSendAdminTelegram = false;
         }
 
         // ALWAYS save to DB and in-memory cache so website UI shows it in real-time
         try {
-          await saveAnnouncement({
+          await cycle.step('filing-save', () => saveAnnouncement({
             newsId, companyName, subject, details, pdfLink, scrip_cd,
             bseTime: item.News_submission_dt || item.DT_TM || item.NEWS_DT,
             priority: priority.level,
             category: priority.category,
             isWatchlist: isWatchlistMatch
-          });
+          }));
         } catch (e: any) {
+          if (e instanceof PollStageTimeout) throw e;
           console.error("saveAnnouncement error:", e?.message || e);
         }
 
@@ -491,7 +501,7 @@ export async function processAnnouncements() {
             if (matchesUser) {
               if (!userNotifMuted && channels.inApp) {
                 const notifType = materialEvt ? (materialEvt.eventType as any) : (priority.category === 'RESULTS' ? 'RESULT' : (userRuleEval.shouldSendInApp ? 'RULE_MATCH' : 'GENERAL'));
-                await addNotification({
+                await cycle.step('inbox-save', () => addNotification({
                   id: `notif_${newsId}_${u.uid}`,
                   userId: u.uid,
                   title: materialEvt ? materialEvt.title : `${companyName}: ${subject}`,
@@ -505,7 +515,7 @@ export async function processAnnouncements() {
                   timestamp: itemTs || Date.now(),
                   isRead: false,
                   isWatchlist: uWatchlistMatch
-                });
+                }));
               }
 
               // Deduplicate Telegram dispatch: skip if the match is not
@@ -523,7 +533,7 @@ export async function processAnnouncements() {
                 // trigger this send. (Custom alert rules with telegram ON are
                 // explicit per-rule opt-ins and are not affected by this.)
                 if (uWatchlistMatch) {
-                  const freshSymbols = await getActiveWatchlistSymbols(u.uid, { noCreate: true });
+                  const freshSymbols = await cycle.step('watchlist-recheck', () => getActiveWatchlistSymbols(u.uid, { noCreate: true }));
                   const stillWatched = freshSymbols.some(kw => isSymbolMatch(companyName, subject, kw, scrip_cd));
                   // Opportunistically refresh the snapshot for later items.
                   monitorUserWatchlistCache.set(u.uid, { symbols: freshSymbols, map: userSymbolMap, fetchedAt: Date.now() });
@@ -567,10 +577,21 @@ export async function processAnnouncements() {
         }
 
       } catch (itemErr: any) {
+        if (itemErr instanceof PollStageTimeout) throw itemErr;
         addLog('ERROR', 'MONITOR', `Error processing item ${item?.NEWSID || 'unknown'} (${item?.SLONGNAME || 'unknown'}): ${itemErr.message}`);
       }
     }
+  } catch (error) {
+    outcome = error instanceof PollStageTimeout ? 'timeout' : 'error';
+    if (error instanceof PollStageTimeout) {
+      if (error.stage === 'exchange-fetch') consecutiveFailures++;
+      console.warn(`[POLLER_CYCLE] cycle=${cycleId} timeout stage=${error.stage}`);
+      void addLog('WARNING', 'POLLER_CYCLE', `cycle=${cycleId} timeout stage=${error.stage}; monitor released; underlying operation outcome unknown`).catch(() => {});
+    } else {
+      throw error;
+    }
   } finally {
+    cycle.finish(outcome);
     isPolling = false;
   }
 }
