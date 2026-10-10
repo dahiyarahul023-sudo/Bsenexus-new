@@ -15,6 +15,7 @@ import { listenForStartup, resolveServerPort } from './server/utils/serverStartu
 
 import { authMiddleware, authRouter, apiRateLimiter, authRateLimiter } from "./server/security/auth.js";
 import { apiRouter } from "./server/api/routes.js";
+import { createAnnouncementCronHandler } from "./server/api/announcementCron.js";
 import { processAnnouncements, getConsecutiveFailures, pruneAndCheckStorageCapacity } from "./server/services/monitor.js";
 import { fetchAndSyncResultsCalendar, getStockResultsHistory, getResultsCalendarData } from "./server/services/resultsCalendarService.js";
 import { syncWatchlistHistoricalData, backfillRecentAnnouncements } from "./server/services/bse.js";
@@ -22,7 +23,7 @@ import { initWatchlists } from "./server/database/watchlistDao.js";
 import { updateTelegramHealth } from "./server/services/telegram.js";
 import { processAutomatedNewsAlerts } from "./server/services/stockNewsService.js";
 import { addLog } from "./server/database/logDao.js";
-import { getPollingIntervalMs, parseBseDate, getISTMarketStatus } from "./server/utils/helpers.js";
+import { getPollingIntervalMs, parseBseDate } from "./server/utils/helpers.js";
 import { getAnnouncementById, getRecentAnnouncements } from "./server/database/announcementDao.js";
 import { getScripCode, getAllStockEntries } from "./server/utils/stockResolver.js";
 import { getCompanyIntelligence } from "./server/services/companyIntelService.js";
@@ -34,7 +35,7 @@ import { pageRenderCache, staticGuideCache, apiResponseCache } from "./server/ut
 import { INDEXNOW_KEY, indexNowQueue } from "./server/services/indexNow.js";
 import { autoIndexNewGuides } from "./server/services/guideIndexNow.js";
 import { verifyRecaptchaToken } from "./server/security/recaptchaService.js";
-import { getBackupStalenessMetrics, getBseBlockBackoffLevel, isBseSourceBlocked } from "./server/services/bse.js";
+import { getBseBlockBackoffLevel } from "./server/services/bse.js";
 import { getAllFeedback } from "./server/database/feedbackDao.js";
 
 // Global error handlers to prevent background quota/network exceptions from crashing the process
@@ -95,6 +96,15 @@ app.use(helmet({
 app.use('/api/payments/webhook', express.raw({ type: 'application/json', limit: '1mb' }));
 app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser());
+// The scheduler uses its own server-only secret, never a user session token.
+app.get('/api/cron/poll-announcements', createAnnouncementCronHandler({
+  poll: processAnnouncements,
+  backoffMs: () => {
+    const failures = getConsecutiveFailures();
+    const blockLevel = getBseBlockBackoffLevel();
+    return failures > 0 || blockLevel > 0 ? getPollingIntervalMs(failures, blockLevel) : 0;
+  },
+}));
 app.use(authMiddleware);
 
 // Explicit Service Worker handler with no-cache headers
@@ -6187,43 +6197,8 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   next(err);
 });
 
-// Background Poller (20s market-hours / 5m off-hours with effective interval logging;
-// exponential 20s -> 1min -> 5min backoff while the BSE source is flagged blocked)
-let pollerCycleCount = 0;
-let lastPollerStartMs = 0;
-
-async function scheduleAnnouncementPoller() {
-  pollerCycleCount++;
-  const startMs = Date.now();
-  const effectiveIntervalSec = lastPollerStartMs > 0 ? ((startMs - lastPollerStartMs) / 1000).toFixed(1) : 'initial';
-  lastPollerStartMs = startMs;
-
-  try {
-    await processAnnouncements();
-  } catch (error: any) {
-    await addLog('ERROR', 'SYSTEM', `Unhandled poller error: ${error.message}`);
-  } finally {
-    const elapsedMs = Date.now() - startMs;
-    const failures = getConsecutiveFailures();
-    const blockLevel = getBseBlockBackoffLevel();
-    const targetIntervalMs = getPollingIntervalMs(failures, blockLevel);
-    const nextInterval = Math.max(0, targetIntervalMs - elapsedMs);
-    const { isMarketHours, statusLabel, hours, minutes } = getISTMarketStatus();
-    const backupMetrics = getBackupStalenessMetrics();
-    const backupStr = backupMetrics.stalenessSec !== null ? ` | Backup Staleness: ${backupMetrics.stalenessSec}s (${backupMetrics.status})` : '';
-    const blockedStr = isBseSourceBlocked() ? ` | SOURCE BLOCKED (backoff L${blockLevel})` : '';
-
-    // Log effective poll interval on each cycle for outside verification
-    const cycleLogMsg = `[POLLER] Cycle #${pollerCycleCount} | Duration: ${elapsedMs}ms | Mode: ${statusLabel} (IST: ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}, Market: ${isMarketHours ? 'YES' : 'NO'}) | Interval: ${effectiveIntervalSec}s (Target: ${targetIntervalMs / 1000}s, Next in: ${(nextInterval / 1000).toFixed(1)}s)${backupStr}${blockedStr}`;
-    
-    // Add to activity logs
-    addLog('INFO', 'POLLER', cycleLogMsg).catch(() => {});
-    console.log(cycleLogMsg);
-
-    setTimeout(scheduleAnnouncementPoller, nextInterval);
-  }
-}
-scheduleAnnouncementPoller();
+// Live announcements are polled only by /api/cron/poll-announcements.
+// No boot call or repeating in-container polling timer.
 
 // PERF-006 (1 Oct 2026 audit): Track all setInterval handles for graceful shutdown.
 // Cloud Run sends SIGTERM ~10s before killing the instance. Without clearing

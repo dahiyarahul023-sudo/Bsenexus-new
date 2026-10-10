@@ -12,6 +12,7 @@ function harness(hanging?: string) {
   let release!: (value: any) => void;
   const pending = new Promise(resolve => { release = resolve; });
   let held = false;
+  const processed = new Set<string>();
   const rows = [{ NEWSID: 'filing-1', SLONGNAME: 'Test', NEWSSUB: 'Results', DT_TM: 'today' }];
   const invoke = async (name: string, value: any) => {
     calls.push(name);
@@ -20,7 +21,7 @@ function harness(hanging?: string) {
   };
   class Clock extends Date { static now() { return now; } }
   const globals = {
-    Date: Clock, console: { log() {}, warn() {}, error() {}, debug() {} },
+    Date: Clock, AbortController, console: { log() {}, warn() {}, error() {}, debug() {} },
     setTimeout(callback: () => void, ms: number) {
       const id = {}; timers.set(id, { at: now + ms, callback }); return id;
     },
@@ -43,9 +44,11 @@ function harness(hanging?: string) {
     './bse.js': { fetchBSEAnnouncements: () => invoke('fetch', rows) },
     '../database/announcementDao.js': {
       initAnnouncementCache: () => invoke('init', undefined),
-      isAnnouncementProcessed: async () => false,
+      flushSupabaseWriteQueue: () => invoke('drain', undefined),
+      flushLocalDiskSave() {},
+      isAnnouncementProcessed: async (id: string) => processed.has(id),
       isAnnouncementSent: () => invoke('sent', false),
-      saveAnnouncement: () => invoke('save', undefined),
+      saveAnnouncement: async (data: { newsId: string }) => { await invoke('save', undefined); processed.add(data.newsId); },
     },
     '../database/watchlistDao.js': { getActiveWatchlistSymbols: async () => ['Test'], getActiveWatchlistSymbolMap: async () => ({}) },
     '../database/usersDao.js': { getAllUserProfiles: async () => [{ uid: 'owner', muteInAppNotifications: false }] },
@@ -67,7 +70,7 @@ function harness(hanging?: string) {
   };
 }
 
-for (const stage of ['init', 'fetch', 'settings', 'sent', 'save', 'inbox']) {
+for (const stage of ['init', 'fetch', 'settings', 'sent', 'save', 'inbox', 'drain']) {
   test(`a hung ${stage} releases the monitor; late completion cannot resume it`, async () => {
     const h = harness(stage);
     let done = false;
@@ -108,7 +111,7 @@ test('cycle budget expires between steps and clears heartbeat on finish', async 
   class Clock extends Date { static now() { return now; } }
   const source = readFileSync(new URL('../utils/pollCycle.ts', import.meta.url), 'utf8');
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
-  vm.runInNewContext(code, { exports, Date: Clock, setTimeout, clearTimeout, setInterval: () => ({}), clearInterval: () => { cleared = true; } });
+  vm.runInNewContext(code, { exports, Date: Clock, AbortController, setTimeout, clearTimeout, setInterval: () => ({}), clearInterval: () => { cleared = true; } });
   const cycle = new exports.PollCycle((event: string) => reports.push(event), 120);
   await cycle.step('first', async () => { now += 121; });
   let invoked = false;
@@ -140,4 +143,17 @@ test('poller evidence survives 500 unrelated log entries, restart, and clears to
   assert.ok((await exports.getLogs(2500)).some((x: any) => x.module === 'POLLER_CYCLE'));
   await exports.clearLogs();
   assert.deepEqual(Array.from(await exports.getLogs(2500)), []);
+});
+
+test('replaying the same NEWSID does not save or alert again and reports zero new', async () => {
+  const h = harness();
+  const first = await h.poll();
+  assert.equal(first.new, 1);
+  const saved = h.calls.filter(x => x === 'save').length;
+  const inbox = h.calls.filter(x => x === 'inbox').length;
+  const second = await h.poll();
+  assert.equal(second.fetched, 1);
+  assert.equal(second.new, 0);
+  assert.equal(h.calls.filter(x => x === 'save').length, saved);
+  assert.equal(h.calls.filter(x => x === 'inbox').length, inbox);
 });

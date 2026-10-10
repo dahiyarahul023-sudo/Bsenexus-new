@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+import { withHttpDeadline } from '../utils/httpDeadline.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -14,7 +16,7 @@ function harness(pages: Record<number, any[] | null>, processed = new Set<string
   class Clock extends Date { static now() { return now; } }
   const exports: Record<string, any> = {};
   const context = vm.createContext({
-    exports, Date: Clock, URL, AbortController, console,
+    exports, Date: Clock, URL, AbortController, AbortSignal, console,
     setTimeout(callback: () => void, ms: number) {
       const timer = { cancelled: false };
       // Request abort timers stay pending; successful mock responses clear them.
@@ -26,6 +28,9 @@ function harness(pages: Record<number, any[] | null>, processed = new Set<string
     },
     clearTimeout(timer: { cancelled: boolean }) { timer.cancelled = true; },
     fetch: async (url: string) => {
+      if (new URL(url).hostname === 'www.nseindia.com') {
+        return { ok: true, status: 200, headers: { getSetCookie: () => [] }, json: async () => [] };
+      }
       const page = Number(new URL(url).searchParams.get('pageno'));
       calls.push({ page, at: now });
       const params = new URL(url).searchParams;
@@ -35,6 +40,8 @@ function harness(pages: Record<number, any[] | null>, processed = new Set<string
         text: async () => JSON.stringify({ Table: rows ?? [] }) };
     },
     require(path: string) {
+      if (path === 'node:crypto') return { createHash };
+      if (path.endsWith('/httpDeadline.js')) return { withHttpDeadline };
       if (path.endsWith('/logDao.js')) return { addLog: async (_level: string, _area: string, message: string) => { logs.push(message); } };
       if (path.endsWith('/announcementDao.js')) return { isAnnouncementProcessed: async (id: string) => processed.has(id) };
       if (path.endsWith('/helpers.js')) return { isMarketHoursIST: () => options.market || false };
@@ -146,11 +153,13 @@ test('a response whose body hangs stays under the request abort deadline', async
   const source = readFileSync(new URL('../services/bse.ts', import.meta.url), 'utf8');
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
   let aborted = false;
-  vm.runInNewContext(code, { exports, Date, URL, AbortController, console, setTimeout, clearTimeout,
+  vm.runInNewContext(code, { exports, Date, URL, AbortController, AbortSignal, console, setTimeout, clearTimeout,
     fetch: async (_url: string, options: { signal: AbortSignal }) => ({ ok: true, text: () => new Promise((_resolve, reject) => {
       options.signal.addEventListener('abort', () => { aborted = true; reject(Object.assign(new Error('aborted body'), { name: 'AbortError' })); }, { once: true });
     }) }),
     require(path: string) {
+      if (path === 'node:crypto') return { createHash };
+      if (path.endsWith('/httpDeadline.js')) return { withHttpDeadline };
       if (path.endsWith('/logDao.js')) return { addLog: async () => {} };
       if (path.endsWith('/circuitBreaker.js')) return { bseCircuitBreaker: { execute: async (action: () => Promise<any>) => action() } };
       return {};

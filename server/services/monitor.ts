@@ -6,7 +6,7 @@ import { sendToTelegram } from './telegram.js';
 import { generateAndSendSummary } from './gemini.js';
 import { getActiveWatchlistSymbols, getActiveWatchlistSymbolMap } from '../database/watchlistDao.js';
 import { getAllUserProfiles } from '../database/usersDao.js';
-import { isAnnouncementProcessed, isAnnouncementSent, markAnnouncementSent, saveAnnouncement, pruneAndCheckStorageCapacity, initAnnouncementCache } from '../database/announcementDao.js';
+import { isAnnouncementProcessed, isAnnouncementSent, markAnnouncementSent, saveAnnouncement, pruneAndCheckStorageCapacity, initAnnouncementCache, flushSupabaseWriteQueue, flushLocalDiskSave } from '../database/announcementDao.js';
 import { escapeHTML, determinePriority, isSymbolMatch, parseBseDate, isMarketHoursIST } from '../utils/helpers.js';
 import { addNotification, initNotificationsFromCloud } from '../database/notificationDao.js';
 import { evaluateAlertRulesForUser, initAlertRulesFromCloud } from '../database/alertRulesDao.js';
@@ -114,8 +114,19 @@ async function getCachedMonitorConfig() {
   return configCache;
 }
 
-export async function processAnnouncements() {
-  if (isPolling) return;
+export interface AnnouncementPollResult {
+  fetched: number;
+  new: number;
+  durationMs: number;
+  mode: string;
+}
+
+export async function processAnnouncements(): Promise<AnnouncementPollResult> {
+  const startedAt = Date.now();
+  let fetched = 0;
+  let newCount = 0;
+  const result = (mode: string): AnnouncementPollResult => ({ fetched, new: newCount, durationMs: Date.now() - startedAt, mode });
+  if (isPolling) return result('busy');
   isPolling = true;
   const cycleId = Date.now().toString(36);
   let outcome = 'success';
@@ -132,7 +143,7 @@ export async function processAnnouncements() {
       isCacheInitialized = true;
     }
 
-    const announcements = await cycle.step('exchange-fetch', () => fetchBSEAnnouncements(), 60_000);
+    const announcements = await cycle.step('exchange-fetch', () => fetchBSEAnnouncements(cycle.signal), 60_000);
     
     if (!announcements) {
       outcome = 'source-unavailable';
@@ -150,21 +161,21 @@ export async function processAnnouncements() {
           const errDetail = getLastBseError();
           const alertMsg = `⚠️ <b>BSE Nexus System Alert</b>\n\nUnable to fetch live feed from BSE India (${errDetail}). Both primary and backup endpoints failed.\n\n<b>Diagnostics:</b>\n• Exchange API unreachable or cloud IP filtered.\n• Exponential backoff retries active.\n• Recovery notification will be sent automatically upon reconnection.\n\n<i>No further outage alerts will be sent during this episode.</i>`;
           await cycle.step('outage-notice', () => sendToTelegram(alertMsg));
-          await addLog('CRITICAL', 'SYSTEM', `Sent BSE Outage Alert to Telegram: ${errDetail}`);
+          await cycle.step('outage-log', () => addLog('CRITICAL', 'SYSTEM', `Sent BSE Outage Alert to Telegram: ${errDetail}`));
         }
       }
-      return;
+      return result(outcome);
     }
+    fetched = announcements.length;
     
     // If the feed was previously in an outage state, send one recovery notice!
     if (isBseOutageActive) {
       isBseOutageActive = false;
       const settings = await cycle.step('outage-settings', () => getSettings());
       if (settings.botToken && settings.chatId) {
-        const isMarket = isMarketHoursIST();
-        const recoveryMsg = `✅ <b>BSE Live Feed Restored</b>\n\nLive corporate filings feed has successfully reconnected to BSE India. Normal ${isMarket ? 'Live (20s)' : 'Relaxed (5m)'} polling resumed.`;
+        const recoveryMsg = `✅ <b>BSE Live Feed Restored</b>\n\nLive corporate filings feed has successfully reconnected to BSE India. Scheduled HTTP polling resumed.`;
         await cycle.step('recovery-notice', () => sendToTelegram(recoveryMsg));
-        await addLog('INFO', 'SYSTEM', 'Sent BSE Feed Recovery Notice to Telegram');
+        await cycle.step('recovery-log', () => addLog('INFO', 'SYSTEM', 'Sent BSE Feed Recovery Notice to Telegram'));
       }
     }
 
@@ -321,9 +332,11 @@ export async function processAnnouncements() {
             category: priority.category,
             isWatchlist: isWatchlistMatch
           }));
+          newCount++;
         } catch (e: any) {
           if (e instanceof PollStageTimeout) throw e;
-          console.error("saveAnnouncement error:", e?.message || e);
+          outcome = 'error';
+          console.error("[POLLER] Filing save failed");
         }
 
         // Classify Material Event if applicable
@@ -578,9 +591,13 @@ export async function processAnnouncements() {
 
       } catch (itemErr: any) {
         if (itemErr instanceof PollStageTimeout) throw itemErr;
+        outcome = 'error';
         addLog('ERROR', 'MONITOR', `Error processing item ${item?.NEWSID || 'unknown'} (${item?.SLONGNAME || 'unknown'}): ${itemErr.message}`);
       }
     }
+    // Keep the existing DAO writes on request CPU until drained (bounded stage).
+    await cycle.step('write-drain', () => flushSupabaseWriteQueue());
+    flushLocalDiskSave();
   } catch (error) {
     outcome = error instanceof PollStageTimeout ? 'timeout' : 'error';
     if (error instanceof PollStageTimeout) {
@@ -588,10 +605,11 @@ export async function processAnnouncements() {
       console.warn(`[POLLER_CYCLE] cycle=${cycleId} timeout stage=${error.stage}`);
       void addLog('WARNING', 'POLLER_CYCLE', `cycle=${cycleId} timeout stage=${error.stage}; monitor released; underlying operation outcome unknown`).catch(() => {});
     } else {
-      throw error;
+      console.error('[POLLER] Cycle failed');
     }
   } finally {
     cycle.finish(outcome);
     isPolling = false;
   }
+  return result(outcome);
 }

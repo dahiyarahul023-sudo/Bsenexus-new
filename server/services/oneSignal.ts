@@ -123,6 +123,7 @@ export async function sendOneSignalPush(payload: PushNotificationPayload): Promi
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(bodyData),
+      signal: AbortSignal.timeout(8000),
     });
 
     const data: any = await res.json().catch(() => null);

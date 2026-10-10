@@ -9,6 +9,8 @@ export class PollStageTimeout extends Error {
 }
 
 export class PollCycle {
+  private readonly controller = new AbortController();
+  get signal(): AbortSignal { return this.controller.signal; }
   private readonly startedAt = Date.now();
   private stage = 'start';
   private closed = false;
@@ -28,7 +30,7 @@ export class PollCycle {
       return await Promise.race([
         Promise.resolve().then(action),
         new Promise<never>((_, reject) => {
-          timer = setTimeout(() => reject(new PollStageTimeout(stage)), Math.min(limitMs, remaining));
+          timer = setTimeout(() => { this.controller.abort(); reject(new PollStageTimeout(stage)); }, Math.min(limitMs, remaining));
         }),
       ]);
     } finally {
@@ -38,6 +40,7 @@ export class PollCycle {
 
   finish(outcome: string) {
     this.closed = true;
+    this.controller.abort();
     clearInterval(this.heartbeat);
     this.report(`end outcome=${outcome} stage=${this.stage} elapsedMs=${Date.now() - this.startedAt}`);
   }

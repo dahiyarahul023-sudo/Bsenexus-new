@@ -31,7 +31,7 @@ import {
 } from "../database/watchlistDao.js";
 import { getBseHealth, testBSEConnection, syncWatchlistHistoricalData, syncSingleStockHistoricalData, backfillRecentAnnouncements, getBackupStalenessMetrics, isBseSourceBlocked, getBseFeedStaleness } from "../services/bse.js";
 import { getAllStockEntries } from "../utils/stockResolver.js";
-import { invalidateMonitorConfigCache, processAnnouncements } from "../services/monitor.js";
+import { invalidateMonitorConfigCache } from "../services/monitor.js";
 import { wantsTelegramEnable } from "../utils/alertDecision.js";
 import { getTelegramHealth, sendToTelegram, getBotUsername } from "../services/telegram.js";
 import { 
@@ -161,26 +161,11 @@ apiRouter.get("/health", (_req, res) => {
   });
 });
 
-// External Cron Poller & Keep-Alive Endpoint
-// Allows external pingers (cron-job.org, UptimeRobot, Cloud Scheduler) to keep the container awake 24/7
-// and trigger an immediate announcement check.
-apiRouter.get("/cron/poll", async (_req, res) => {
-  try {
-    const isMarket = isMarketHoursIST();
-    // Trigger announcement check asynchronously
-    processAnnouncements().catch(err => {
-      console.warn('[CronPoller] Announcement process notice:', err?.message || err);
-    });
-    res.json({
-      success: true,
-      message: "Poller triggered successfully",
-      isMarketHours: isMarket,
-      serverTime: new Date().toISOString(),
-      uptimeSec: Math.round(process.uptime()),
-    });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err?.message || "Internal error triggering poller" });
-  }
+// Retired fire-and-forget poll route: it released request CPU before ingestion.
+// Only the secret-protected /api/cron/poll-announcements may trigger a cycle.
+apiRouter.get("/cron/poll", (_req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.status(410).json({ success: false, error: 'Use the configured Cloud Scheduler polling endpoint.' });
 });
 
 apiRouter.get("/ping", (_req, res) => {

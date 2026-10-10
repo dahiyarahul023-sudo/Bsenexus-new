@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+import { withHttpDeadline } from '../utils/httpDeadline.js';
 import { addLog } from '../database/logDao.js';
 import { isAnnouncementProcessed, saveAnnouncement, saveAnnouncementsBatch, flushLocalDiskSave, getTotalAnnouncementsCount } from '../database/announcementDao.js';
 import { getScripCodeForSymbolOrName, determinePriority, isSymbolMatch, isMarketHoursIST } from '../utils/helpers.js';
@@ -118,18 +120,15 @@ export function getBseISTDate(offsetDays: number = 0): string {
   return `${year}${month}${day}`;
 }
 
-async function fetchWithHardenedRetries(url: string, timeoutMs: number = 5000, maxRetries: number = 2): Promise<any[] | null> {
+async function fetchWithHardenedRetries(url: string, timeoutMs: number = 5000, maxRetries: number = 2, signal?: AbortSignal): Promise<any[] | null> {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    let timer: ReturnType<typeof setTimeout> | undefined;
+    signal?.throwIfAborted();
     try {
       const headers = getNextBrowserHeaders();
-      const controller = new AbortController();
-      timer = setTimeout(() => controller.abort(), timeoutMs);
-
-      const res = await fetch(url, {
-        headers,
-        signal: controller.signal,
-      });
+      const { res, txt } = await withHttpDeadline(async requestSignal => {
+        const res = await fetch(url, { headers, signal: requestSignal });
+        return { res, txt: res.ok ? await res.text() : '' };
+      }, timeoutMs, signal);
       // Keep the abort deadline active while reading the response body too.
       if (!res.ok) {
         if (res.status === 403) {
@@ -141,6 +140,7 @@ async function fetchWithHardenedRetries(url: string, timeoutMs: number = 5000, m
           lastBseErrorDetails = `HTTP ${res.status} response from BSE`;
         }
 
+        console.warn(`[POLLER] BSE request failed: HTTP ${res.status}`);
         if (attempt < maxRetries) {
           const delay = RETRY_BACKOFF_DELAYS[attempt] || 500;
           await new Promise(r => setTimeout(r, delay));
@@ -149,7 +149,6 @@ async function fetchWithHardenedRetries(url: string, timeoutMs: number = 5000, m
         return null;
       }
 
-      const txt = await res.text();
       if (!txt || txt.includes("No Record") || txt.trim() === "{}" || txt.trim() === "[]") return [];
       const data = JSON.parse(txt);
       if (data && data.Table && Array.isArray(data.Table)) {
@@ -162,13 +161,13 @@ async function fetchWithHardenedRetries(url: string, timeoutMs: number = 5000, m
       }
       return [];
     } catch (err: any) {
+      console.warn('[POLLER] BSE request timeout or network failure');
+      signal?.throwIfAborted();
       lastBseErrorDetails = err?.name === 'AbortError' ? 'Connection Timeout' : (err?.message || 'Network Error');
       if (attempt < maxRetries) {
         const delay = RETRY_BACKOFF_DELAYS[attempt] || 500;
         await new Promise(r => setTimeout(r, delay));
       }
-    } finally {
-      if (timer !== undefined) clearTimeout(timer);
     }
   }
   return null;
@@ -180,7 +179,8 @@ export async function fetchSingleBsePage(
   apiType: string = 'AnnSubCategoryGetData', 
   timeoutMs: number = 5000,
   targetDate?: string,
-  maxRetries: number = 1
+  maxRetries: number = 1,
+  signal?: AbortSignal
 ) {
   // Validate and whitelist parameters against injection
   const safeApiType = (apiType === 'AnnGetData') ? 'AnnGetData' : 'AnnSubCategoryGetData';
@@ -209,8 +209,8 @@ export async function fetchSingleBsePage(
   const url = `https://api.bseindia.com/BseIndiaAPI/api/${safeApiType}/w?pageno=${safePage}&strCat=-1&strPrevDate=${prevDate}&strScrip=${cleanScrip}&strSearch=${searchType}&strToDate=${toDate}&strType=C&_cb=${Date.now()}`;
   
   return await bseCircuitBreaker.execute(
-    async () => {
-      return await fetchWithHardenedRetries(url, timeoutMs, maxRetries);
+    async breakerSignal => {
+      return await fetchWithHardenedRetries(url, timeoutMs, maxRetries, signal && breakerSignal ? AbortSignal.any([signal, breakerSignal]) : signal || breakerSignal);
     },
     (_err) => {
       // Graceful fallback when circuit breaker is OPEN or request failed
@@ -275,11 +275,11 @@ export async function testBSEConnection() {
   }
 }
 
-export async function fetchParallelBackupSource(): Promise<{ items: any[]; source: string; latestTs: number }> {
+export async function fetchParallelBackupSource(signal?: AbortSignal): Promise<{ items: any[]; source: string; latestTs: number }> {
   const todayDate = getBseISTDate(0);
   // Real working backup: AnnSubCategoryGetData with strSearch=P
   const backupUrl = `https://api.bseindia.com/BseIndiaAPI/api/AnnSubCategoryGetData/w?pageno=1&strCat=-1&strPrevDate=${todayDate}&strScrip=&strSearch=P&strToDate=${todayDate}&strType=C&_cb=${Date.now()}`;
-  const backupItems = await fetchWithHardenedRetries(backupUrl, 4000, 1) || [];
+  const backupItems = await fetchWithHardenedRetries(backupUrl, 4000, 1, signal) || [];
   let latestTs = 0;
   for (const it of backupItems) {
     const ts = parseItemTimestamp(it);
@@ -291,48 +291,54 @@ export async function fetchParallelBackupSource(): Promise<{ items: any[]; sourc
 let nseSessionCookie = '';
 let nseSessionExpiry = 0;
 
-async function getNSECorporateCookie(): Promise<string> {
+async function getNSECorporateCookie(signal?: AbortSignal): Promise<string> {
   const now = Date.now();
   if (nseSessionCookie && now < nseSessionExpiry) {
     return nseSessionCookie;
   }
   try {
-    const res = await fetch('https://www.nseindia.com', {
+    const res = await withHttpDeadline(requestSignal => fetch('https://www.nseindia.com', {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
       },
-      signal: AbortSignal.timeout(5000)
-    });
+      signal: requestSignal
+    }), 5000, signal);
     const raw = (res.headers as any).getSetCookie ? (res.headers as any).getSetCookie() : [res.headers.get('set-cookie')];
     nseSessionCookie = (raw || []).map((c: any) => (c || '').split(';')[0]).filter(Boolean).join('; ');
     nseSessionExpiry = now + (10 * 60 * 1000);
     return nseSessionCookie;
   } catch (_e) {
+    console.warn('[POLLER] NSE session timeout or network failure');
+    signal?.throwIfAborted();
     return nseSessionCookie;
   }
 }
 
-export async function fetchNSECorporateAnnouncements(): Promise<any[]> {
+export async function fetchNSECorporateAnnouncements(signal?: AbortSignal): Promise<any[]> {
   try {
-    const cookie = await getNSECorporateCookie();
-    const res = await fetch('https://www.nseindia.com/api/corporate-announcements?index=equities', {
+    const cookie = await getNSECorporateCookie(signal);
+    signal?.throwIfAborted();
+    const { res, items } = await withHttpDeadline(async requestSignal => {
+      const res = await fetch('https://www.nseindia.com/api/corporate-announcements?index=equities', {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
         'Referer': 'https://www.nseindia.com/companies-listing/corporate-filings-announcements',
         'Cookie': cookie,
         'Accept': 'application/json, text/plain, */*'
       },
-      signal: AbortSignal.timeout(6000)
-    });
-    if (!res.ok) return [];
-    const items = await res.json();
+      signal: requestSignal
+      });
+      return { res, items: res.ok ? await res.json() : [] };
+    }, 6000, signal);
+    if (!res.ok) { console.warn(`[POLLER] NSE request failed: HTTP ${res.status}`); return []; }
     if (!Array.isArray(items)) return [];
 
     return items.map((item: any) => {
       const symbol = (item.symbol || '').trim();
       const scrip_cd = getScripCodeForSymbolOrName(symbol) || '';
-      const newsId = `corp_nse_${item.seq_id || item.dt || Date.now()}`;
+      const fallbackId = createHash('sha256').update(JSON.stringify([item.symbol, item.sm_name, item.an_dt, item.sort_date, item.desc, item.attchmntText, item.attchmntFile])).digest('hex');
+      const newsId = `corp_nse_${item.seq_id || item.dt || fallbackId}`;
       const companyName = item.sm_name || symbol || 'NSE Stock';
       const subject = item.attchmntText || item.desc || 'Corporate Announcement';
       const details = item.desc ? `${item.desc}${item.attchmntText ? ' - ' + item.attchmntText : ''}` : (item.attchmntText || '');
@@ -356,11 +362,14 @@ export async function fetchNSECorporateAnnouncements(): Promise<any[]> {
       };
     });
   } catch (_err) {
+    console.warn('[POLLER] NSE request timeout or network failure');
+    signal?.throwIfAborted();
     return [];
   }
 }
 
-export async function fetchBSEAnnouncements() {
+export async function fetchBSEAnnouncements(signal?: AbortSignal) {
+  signal?.throwIfAborted();
   const start = Date.now();
   const todayDate = getBseISTDate(0);
   const yesterdayDate = getBseISTDate(1);
@@ -370,7 +379,7 @@ export async function fetchBSEAnnouncements() {
   const maxDeepPages = 3; // Bound restart bursts to the same window as normal polling.
   
   // Primary live endpoint: AnnSubCategoryGetData page 1 returns ~50 latest filings
-  let table = await fetchSingleBsePage(1, '', 'AnnSubCategoryGetData', 5000, todayDate);
+  let table = await fetchSingleBsePage(1, '', 'AnnSubCategoryGetData', 5000, todayDate, 1, signal);
   
   // A valid-but-empty primary may differ from the alternate search. Try the
   // existing recovery endpoint before treating it as no new filings.
@@ -380,7 +389,7 @@ export async function fetchBSEAnnouncements() {
     lastBackupCheckTime = Date.now();
     source = 'BSE_FALLBACK_SEARCH_P';
     const fallbackPUrl = `https://api.bseindia.com/BseIndiaAPI/api/AnnSubCategoryGetData/w?pageno=1&strCat=-1&strPrevDate=${todayDate}&strScrip=&strSearch=P&strToDate=${todayDate}&strType=C&_cb=${Date.now()}`;
-    const alternate = await fetchWithHardenedRetries(fallbackPUrl, 5000, 1);
+    const alternate = await fetchWithHardenedRetries(fallbackPUrl, 5000, 1, signal);
     if (alternate !== null) table = alternate;
     if (alternate && alternate.length > 0) {
       await addLog('INFO', 'POLLER', `Primary BSE endpoint degraded; switched to BSE_FALLBACK_SEARCH_P in ${Date.now() - start}ms`);
@@ -390,7 +399,7 @@ export async function fetchBSEAnnouncements() {
   // If still null, attempt Fallback 2: yesterday's filings
   if (table === null) {
     source = 'BSE_FALLBACK_YESTERDAY';
-    table = await fetchSingleBsePage(1, '', 'AnnSubCategoryGetData', 5000, yesterdayDate);
+    table = await fetchSingleBsePage(1, '', 'AnnSubCategoryGetData', 5000, yesterdayDate, 1, signal);
     if (table) {
       await addLog('INFO', 'POLLER', `Today's BSE endpoint unreachable; recovered with BSE_FALLBACK_YESTERDAY in ${Date.now() - start}ms`);
     }
@@ -402,7 +411,7 @@ export async function fetchBSEAnnouncements() {
     const now = Date.now();
     if (now - lastBackupCheckTime > 60000) {
       lastBackupCheckTime = now;
-      const backupRes = await fetchParallelBackupSource();
+      const backupRes = await fetchParallelBackupSource(signal);
       if (backupRes.items.length > 0) {
         const primaryLatestTs = Math.max(...table.map((i: any) => parseItemTimestamp(i)));
         if (primaryLatestTs > 0 && backupRes.latestTs > 0) {
@@ -426,6 +435,7 @@ export async function fetchBSEAnnouncements() {
   if (todayHadRows && Array.isArray(table) && table.length >= 50) {
     let prevPageAllNew = true;
     for (const it of table) {
+      signal?.throwIfAborted();
       if (!it.NEWSID || await isAnnouncementProcessed(it.NEWSID)) { prevPageAllNew = false; break; }
     }
     let page = 1;
@@ -433,7 +443,7 @@ export async function fetchBSEAnnouncements() {
       page++;
       // Pace only deeper pages; page 1 stays immediate in boot and normal cycles.
       await new Promise(r => setTimeout(r, 2500));
-      const next = await fetchSingleBsePage(page, '', 'AnnSubCategoryGetData', 4500, todayDate) || [];
+      const next = await fetchSingleBsePage(page, '', 'AnnSubCategoryGetData', 4500, todayDate, 1, signal) || [];
       if (next.length === 0) break;
       table = [...table, ...next];
       prevPageAllNew = next.length >= 50;
@@ -447,12 +457,13 @@ export async function fetchBSEAnnouncements() {
       await addLog('INFO', 'POLLER', `Boot backfill walked ${page} BSE pages to fill post-restart gap`);
     }
   }
+  signal?.throwIfAborted();
   bootBackfillDone = true;
 
   // If today has fewer than 30 filings (e.g. market just opened or overnight),
   // merge yesterday's filings so that the feed has complete historical continuity!
   if (table && Array.isArray(table) && table.length < 30) {
-    const yestItems = await fetchSingleBsePage(1, '', 'AnnSubCategoryGetData', 4500, yesterdayDate) || [];
+    const yestItems = await fetchSingleBsePage(1, '', 'AnnSubCategoryGetData', 4500, yesterdayDate, 1, signal) || [];
     table = [...table, ...yestItems.map(item => ({ ...item, _source: 'BSE_HISTORY_YESTERDAY' }))];
   }
 
@@ -468,6 +479,7 @@ export async function fetchBSEAnnouncements() {
     const uniqueMap = new Map();
     if (table && Array.isArray(table)) {
       for (const item of table) {
+        signal?.throwIfAborted();
         if (item.NEWSID && !uniqueMap.has(item.NEWSID)) {
           item._source = item._source || source;
           item._fetchLatency = totalLatency;
@@ -479,7 +491,7 @@ export async function fetchBSEAnnouncements() {
     // Live NSE corporate announcements merge: ensures zero-lag coverage even when
     // BSE has an Akamai WAF block, edge delay, or late evening lull
     try {
-      const nseRows = await fetchNSECorporateAnnouncements();
+      const nseRows = await fetchNSECorporateAnnouncements(signal);
       if (nseRows && nseRows.length > 0) {
         for (const item of nseRows) {
           if (item.NEWSID && !uniqueMap.has(item.NEWSID)) {
@@ -488,25 +500,26 @@ export async function fetchBSEAnnouncements() {
         }
       }
     } catch (_nseErr) {
+      signal?.throwIfAborted();
       // NSE is an enhancement/fallback; network hiccups never crash monitor
     }
 
     if (uniqueMap.size > 0) {
       bseHealth = { status: totalLatency > 4000 ? 'degraded' : 'stable', latency: Math.round(totalLatency) };
-      if (!bseSourceBlocked) lastSuccessfulFetchMs = Date.now();
+      if (source !== 'BSE_FALLBACK_YESTERDAY' && !bseSourceBlocked) lastSuccessfulFetchMs = Date.now();
       return Array.from(uniqueMap.values());
     }
   }
 
   // If table had no rows or was null, attempt NSE feed directly before declaring source down
   try {
-    const nseRows = await fetchNSECorporateAnnouncements();
+    const nseRows = await fetchNSECorporateAnnouncements(signal);
     if (nseRows && nseRows.length > 0) {
       bseHealth = { status: 'stable', latency: 450 };
       lastSuccessfulFetchMs = Date.now();
       return nseRows;
     }
-  } catch (_e) {}
+  } catch (_e) { signal?.throwIfAborted(); }
   
   if (table !== null) {
     bseHealth = { status: bseSourceBlocked ? 'degraded' : 'stable', latency: Math.round(totalLatency) };
