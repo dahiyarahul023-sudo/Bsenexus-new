@@ -261,7 +261,7 @@ export async function processAnnouncements() {
 
         // 2. Watchlist Check & Priority Determination
         const priority = determinePriority(subject, details);
-        const pdfLink = item.ATTACHMENTNAME ? `https://www.bseindia.com/xml-data/corpfiling/AttachLive/${item.ATTACHMENTNAME}` : '';
+        const pdfLink = item.pdfLink || (item.ATTACHMENTNAME ? `https://www.bseindia.com/xml-data/corpfiling/AttachLive/${item.ATTACHMENTNAME}` : '');
         const scrip_cd = String(item.SCRIP_CD || item.scrip_cd || item.Scrip_Code || item.SCRIPCODE || "").trim();
 
         let isWatchlistMatch = false;

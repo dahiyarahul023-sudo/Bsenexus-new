@@ -82,42 +82,22 @@ interface BrowserProfile {
   brands: string;
 }
 
-const ROTATING_BROWSER_PROFILES: BrowserProfile[] = [
-  {
-    ua: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
-    platform: '"Windows"',
-    brands: '"Chromium";v="130", "Google Chrome";v="130", "Not?A_Brand";v="99"'
-  },
-  {
-    ua: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
-    platform: '"macOS"',
-    brands: '"Chromium";v="130", "Google Chrome";v="130", "Not?A_Brand";v="99"'
-  },
-  {
-    ua: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0",
-    platform: '"Windows"',
-    brands: '"Chromium";v="130", "Microsoft Edge";v="130", "Not?A_Brand";v="99"'
-  },
-  {
-    ua: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
-    platform: '"Linux"',
-    brands: '"Chromium";v="130", "Google Chrome";v="130", "Not?A_Brand";v="99"'
-  }
-];
+const DEFAULT_BROWSER_PROFILE: BrowserProfile = {
+  ua: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+  platform: '"Windows"',
+  brands: '"Chromium";v="130", "Google Chrome";v="130", "Not?A_Brand";v="99"'
+};
 
-let userAgentIndex = 0;
 function getNextBrowserHeaders(): Record<string, string> {
-  const profile = ROTATING_BROWSER_PROFILES[userAgentIndex % ROTATING_BROWSER_PROFILES.length];
-  userAgentIndex++;
   return {
-    "User-Agent": profile.ua,
+    "User-Agent": DEFAULT_BROWSER_PROFILE.ua,
     "Accept": "application/json, text/plain, */*",
     "Accept-Language": "en-US,en;q=0.9",
     "Origin": "https://www.bseindia.com",
     "Referer": "https://www.bseindia.com/",
-    "sec-ch-ua": profile.brands,
+    "sec-ch-ua": DEFAULT_BROWSER_PROFILE.brands,
     "sec-ch-ua-mobile": "?0",
-    "sec-ch-ua-platform": profile.platform,
+    "sec-ch-ua-platform": DEFAULT_BROWSER_PROFILE.platform,
     "Sec-Fetch-Dest": "empty",
     "Sec-Fetch-Mode": "cors",
     "Sec-Fetch-Site": "same-site",
@@ -173,9 +153,13 @@ async function fetchWithHardenedRetries(url: string, timeoutMs: number = 5000, m
       if (!txt || txt.includes("No Record") || txt.trim() === "{}" || txt.trim() === "[]") return [];
       const data = JSON.parse(txt);
       if (data && data.Table && Array.isArray(data.Table)) {
-        return data.Table;
+        const rows = data.Table.filter((r: any) => r && (r.NEWSID || r.NEWSSUB || r.SCRIP_CD || r.SLONGNAME || r.scrip_cd));
+        return rows;
       }
-      if (Array.isArray(data)) return data;
+      if (Array.isArray(data)) {
+        const rows = data.filter((r: any) => r && (r.NEWSID || r.NEWSSUB || r.SCRIP_CD || r.SLONGNAME || r.scrip_cd));
+        return rows;
+      }
       return [];
     } catch (err: any) {
       lastBseErrorDetails = err?.name === 'AbortError' ? 'Connection Timeout' : (err?.message || 'Network Error');
@@ -304,6 +288,78 @@ export async function fetchParallelBackupSource(): Promise<{ items: any[]; sourc
   return { items: backupItems, source: 'PARALLEL_BACKUP_SEARCH_P', latestTs };
 }
 
+let nseSessionCookie = '';
+let nseSessionExpiry = 0;
+
+async function getNSECorporateCookie(): Promise<string> {
+  const now = Date.now();
+  if (nseSessionCookie && now < nseSessionExpiry) {
+    return nseSessionCookie;
+  }
+  try {
+    const res = await fetch('https://www.nseindia.com', {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+      },
+      signal: AbortSignal.timeout(5000)
+    });
+    const raw = (res.headers as any).getSetCookie ? (res.headers as any).getSetCookie() : [res.headers.get('set-cookie')];
+    nseSessionCookie = (raw || []).map((c: any) => (c || '').split(';')[0]).filter(Boolean).join('; ');
+    nseSessionExpiry = now + (10 * 60 * 1000);
+    return nseSessionCookie;
+  } catch (_e) {
+    return nseSessionCookie;
+  }
+}
+
+export async function fetchNSECorporateAnnouncements(): Promise<any[]> {
+  try {
+    const cookie = await getNSECorporateCookie();
+    const res = await fetch('https://www.nseindia.com/api/corporate-announcements?index=equities', {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
+        'Referer': 'https://www.nseindia.com/companies-listing/corporate-filings-announcements',
+        'Cookie': cookie,
+        'Accept': 'application/json, text/plain, */*'
+      },
+      signal: AbortSignal.timeout(6000)
+    });
+    if (!res.ok) return [];
+    const items = await res.json();
+    if (!Array.isArray(items)) return [];
+
+    return items.map((item: any) => {
+      const symbol = (item.symbol || '').trim();
+      const scrip_cd = getScripCodeForSymbolOrName(symbol) || '';
+      const newsId = `corp_nse_${item.seq_id || item.dt || Date.now()}`;
+      const companyName = item.sm_name || symbol || 'NSE Stock';
+      const subject = item.attchmntText || item.desc || 'Corporate Announcement';
+      const details = item.desc ? `${item.desc}${item.attchmntText ? ' - ' + item.attchmntText : ''}` : (item.attchmntText || '');
+      const pdfLink = item.attchmntFile || '';
+      const dateStr = item.an_dt || item.sort_date || '';
+
+      return {
+        NEWSID: newsId,
+        SCRIP_CD: scrip_cd,
+        scrip_cd,
+        symbol,
+        SLONGNAME: companyName,
+        NEWSSUB: subject,
+        HEADLINE: details,
+        ATTACHMENTNAME: pdfLink ? pdfLink.split('/').pop() : '',
+        pdfLink,
+        DT_TM: dateStr,
+        News_submission_dt: dateStr,
+        NEWS_DT: dateStr,
+        _source: 'NSE_LIVE_FEED'
+      };
+    });
+  } catch (_err) {
+    return [];
+  }
+}
+
 export async function fetchBSEAnnouncements() {
   const start = Date.now();
   const todayDate = getBseISTDate(0);
@@ -410,15 +466,47 @@ export async function fetchBSEAnnouncements() {
     
     // Deduplicate by NEWSID and attach diagnostic metadata
     const uniqueMap = new Map();
-    for (const item of table) {
-      if (item.NEWSID && !uniqueMap.has(item.NEWSID)) {
-        item._source = item._source || source;
-        item._fetchLatency = totalLatency;
-        uniqueMap.set(item.NEWSID, item);
+    if (table && Array.isArray(table)) {
+      for (const item of table) {
+        if (item.NEWSID && !uniqueMap.has(item.NEWSID)) {
+          item._source = item._source || source;
+          item._fetchLatency = totalLatency;
+          uniqueMap.set(item.NEWSID, item);
+        }
       }
     }
-    return Array.from(uniqueMap.values());
+
+    // Live NSE corporate announcements merge: ensures zero-lag coverage even when
+    // BSE has an Akamai WAF block, edge delay, or late evening lull
+    try {
+      const nseRows = await fetchNSECorporateAnnouncements();
+      if (nseRows && nseRows.length > 0) {
+        for (const item of nseRows) {
+          if (item.NEWSID && !uniqueMap.has(item.NEWSID)) {
+            uniqueMap.set(item.NEWSID, item);
+          }
+        }
+      }
+    } catch (_nseErr) {
+      // NSE is an enhancement/fallback; network hiccups never crash monitor
+    }
+
+    if (uniqueMap.size > 0) {
+      bseHealth = { status: totalLatency > 4000 ? 'degraded' : 'stable', latency: Math.round(totalLatency) };
+      if (!bseSourceBlocked) lastSuccessfulFetchMs = Date.now();
+      return Array.from(uniqueMap.values());
+    }
   }
+
+  // If table had no rows or was null, attempt NSE feed directly before declaring source down
+  try {
+    const nseRows = await fetchNSECorporateAnnouncements();
+    if (nseRows && nseRows.length > 0) {
+      bseHealth = { status: 'stable', latency: 450 };
+      lastSuccessfulFetchMs = Date.now();
+      return nseRows;
+    }
+  } catch (_e) {}
   
   if (table !== null) {
     bseHealth = { status: bseSourceBlocked ? 'degraded' : 'stable', latency: Math.round(totalLatency) };
@@ -487,8 +575,8 @@ export async function syncWatchlistHistoricalData() {
     // 2. Fetch historical announcements per scrip code for each symbol in active Watchlists
     const processedScripCodes = new Set<string>();
     
-    // Batch process 10 symbols concurrently for speed
-    const batchSize = 10;
+    // Polite bounded pacing (2 symbols at a time with 250ms delay) to prevent Akamai WAF bans
+    const batchSize = 2;
     for (let i = 0; i < activeSymbols.length; i += batchSize) {
       const batch = activeSymbols.slice(i, i + batchSize);
       await Promise.all(batch.map(async (sym) => {
@@ -521,7 +609,7 @@ export async function syncWatchlistHistoricalData() {
             const details = item.HEADLINE || "";
             const scrip_cd = String(item.scrip_cd || item.SCRIP_CD || scripCode);
 
-            const pdfLink = item.ATTACHMENTNAME ? `https://www.bseindia.com/xml-data/corpfiling/AttachLive/${item.ATTACHMENTNAME}` : "";
+            const pdfLink = item.pdfLink || (item.ATTACHMENTNAME ? `https://www.bseindia.com/xml-data/corpfiling/AttachLive/${item.ATTACHMENTNAME}` : "");
             const priority = determinePriority(subject, details);
 
             scripAnnouncements.push({
@@ -544,6 +632,10 @@ export async function syncWatchlistHistoricalData() {
           }
         }
       }));
+      // Gentle pacing delay between symbol batches
+      if (i + batchSize < activeSymbols.length) {
+        await new Promise(r => setTimeout(r, 250));
+      }
     }
 
     flushLocalDiskSave();

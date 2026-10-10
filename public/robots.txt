@@ -1,5 +1,10 @@
 User-agent: *
 Allow: /
+# Disallow non-indexable parameterized and test URLs to protect crawl budget
+Disallow: /*?query=
+Disallow: /*?action=upgrade*
+Disallow: /*?*query=
+Disallow: /announcement/batch_test_*
 Disallow: /api/
 Disallow: /auth/
 
@@ -13,6 +18,9 @@ User-agent: CCBot
 User-agent: anthropic-ai
 User-agent: Claude-Web
 Allow: /
+Disallow: /*?query=
+Disallow: /*?action=upgrade*
+Disallow: /announcement/batch_test_*
 Disallow: /api/
 Disallow: /auth/
 

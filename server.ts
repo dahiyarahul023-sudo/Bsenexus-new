@@ -35,6 +35,7 @@ import { INDEXNOW_KEY, indexNowQueue } from "./server/services/indexNow.js";
 import { autoIndexNewGuides } from "./server/services/guideIndexNow.js";
 import { verifyRecaptchaToken } from "./server/security/recaptchaService.js";
 import { getBackupStalenessMetrics, getBseBlockBackoffLevel, isBseSourceBlocked } from "./server/services/bse.js";
+import { getAllFeedback } from "./server/database/feedbackDao.js";
 
 // Global error handlers to prevent background quota/network exceptions from crashing the process
 process.on('unhandledRejection', (reason: any) => {
@@ -285,7 +286,7 @@ const AI_STUDIO_REDIRECT_SCRIPT = `  <script>
     })();
   </script>`;
 
-function renderAnnouncementPage(announcement: any, newsId: string, canonicalOverride?: string): string {
+async function renderAnnouncementPage(announcement: any, newsId: string, canonicalOverride?: string): Promise<string> {
   const companyName = announcement.companyName || announcement.SLONGNAME || 'BSE Listed Company';
   const subject = announcement.subject || announcement.NEWSSUB || 'Corporate Announcement';
   const details = announcement.details || announcement.ATTACHMENTNAME || '';
@@ -295,19 +296,6 @@ function renderAnnouncementPage(announcement: any, newsId: string, canonicalOver
   const scripCode = announcement.scripCode || announcement.scrip_cd || announcement.SCRIP_CD || '';
   const symbol = announcement.symbol || announcement.scrip_id || '';
   const aiSummary = announcement.aiSummary || '';
-
-  // 1-2 sentence description (~155 chars)
-  let description = '';
-  if (aiSummary && aiSummary.trim()) {
-    description = aiSummary.trim().replace(/\s+/g, ' ');
-  } else if (details && details.trim() && details.trim() !== subject.trim()) {
-    description = `${subject.trim()} — ${details.trim().replace(/\s+/g, ' ')}`;
-  } else {
-    description = `${companyName} corporate disclosure to BSE: ${subject.trim()}`;
-  }
-  if (description.length > 155) {
-    description = description.slice(0, 152).trim() + '...';
-  }
 
   // Publication timestamps
   let pubTs = announcement.bseTimestamp || announcement.fetched_at;
@@ -329,9 +317,47 @@ function renderAnnouncementPage(announcement: any, newsId: string, canonicalOver
     hour12: true
   }) + ' IST';
 
+  // FIX 6 (c): Unique <title> and meta description formatted as: company name + announcement subject + date
+  const dateSuffix = displayDate ? ` (${displayDate.replace(' IST', '')})` : '';
+  const pageTitle = `${companyName} — ${subject}${dateSuffix} | Bsenexus`;
+
+  let description = `${companyName} — ${subject} (${displayDate}). `;
+  if (aiSummary && aiSummary.trim()) {
+    description += aiSummary.trim().replace(/\s+/g, ' ');
+  } else if (details && details.trim() && details.trim() !== subject.trim()) {
+    description += details.trim().replace(/\s+/g, ' ');
+  } else {
+    description += `Official regulatory disclosure filed with BSE India. Track real-time corporate announcements on Bsenexus.`;
+  }
+  if (description.length > 158) {
+    description = description.slice(0, 155).trim() + '...';
+  }
+
+  // FIX 6 (a): 5 Related announcements block (same company first, then same sector/category)
+  let relatedAnnouncements: any[] = [];
+  try {
+    const recentPool = await getRecentAnnouncements(150);
+    const pool = (recentPool || []).filter((a: any) => a && (a.id !== newsId && a.newsId !== newsId));
+    const compNorm = (companyName || '').toLowerCase().trim();
+    const scripNorm = String(scripCode || '').trim();
+
+    const sameCompany = pool.filter((a: any) => {
+      const aComp = (a.companyName || a.SLONGNAME || '').toLowerCase().trim();
+      const aScrip = String(a.scrip_cd || a.SCRIP_CD || a.scripCode || '').trim();
+      return (scripNorm && aScrip === scripNorm) || (compNorm && aComp === compNorm);
+    });
+
+    const sameSector = pool.filter((a: any) => {
+      if (sameCompany.includes(a)) return false;
+      return a.category && a.category === category;
+    });
+
+    const otherRecent = pool.filter((a: any) => !sameCompany.includes(a) && !sameSector.includes(a));
+    relatedAnnouncements = [...sameCompany, ...sameSector, ...otherRecent].slice(0, 5);
+  } catch { /* graceful fallback */ }
+
   const canonicalUrl = canonicalOverride
     || `https://bsenexus.in/announcement/${encodeURIComponent(newsId)}`;
-  const pageTitle = `${companyName} — ${subject} | Bsenexus`;
   const isBatchTest = newsId.toLowerCase().includes('batch_test_');
   const robotsMeta = isBatchTest
     ? '<meta name="robots" content="noindex, nofollow">'
@@ -553,6 +579,85 @@ ${JSON.stringify(jsonLd, null, 2)}
       padding: 20px;
       margin-bottom: 24px;
     }
+    .related-block {
+      margin: 28px 0 20px 0;
+      padding-top: 24px;
+      border-top: 1px solid var(--border-subtle);
+    }
+    .related-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .related-tag {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #064E3B;
+    }
+    .related-count {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: #F1F5F9;
+      padding: 2px 8px;
+      border-radius: 9999px;
+    }
+    .related-items {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .related-card {
+      display: block;
+      background: #022C22;
+      border: 1px solid #064E3B;
+      border-radius: 10px;
+      padding: 12px 16px;
+      text-decoration: none;
+      transition: background 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+    }
+    .related-card:hover {
+      background: #064E3B;
+      border-color: #10B981;
+      transform: translateY(-1px);
+    }
+    .related-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+    .related-company {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #34D399;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .related-badge {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: #A7F3D0;
+      background: rgba(16, 185, 129, 0.18);
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+    .related-time {
+      font-size: 0.75rem;
+      color: #94A3B8;
+      margin-left: auto;
+    }
+    .related-title {
+      font-size: 0.875rem;
+      color: #F8FAFC;
+      line-height: 1.45;
+      font-weight: 500;
+    }
     .action-row {
       display: flex;
       flex-wrap: wrap;
@@ -628,6 +733,32 @@ ${JSON.stringify(jsonLd, null, 2)}
         <div class="section-label">Filing Details / Description</div>
         <div class="details-box">${escapeHtmlText(details)}</div>
       </div>
+      ` : ''}
+
+      ${relatedAnnouncements.length > 0 ? `
+      <section class="related-block">
+        <div class="related-head">
+          <span class="related-tag">🔗 Related Announcements</span>
+          <span class="related-count">${relatedAnnouncements.length} Disclosures</span>
+        </div>
+        <div class="related-items">
+          ${relatedAnnouncements.map((rel: any) => {
+            const relId = rel.id || rel.newsId || '';
+            const relComp = rel.companyName || rel.SLONGNAME || 'BSE Company';
+            const relSub = rel.subject || rel.NEWSSUB || 'Corporate Disclosure';
+            const relTime = rel.bseTime || (rel.timestamp ? new Date(rel.timestamp).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' }) : 'Recent');
+            const relCat = rel.category || 'ANNOUNCEMENT';
+            return `<a href="/announcement/${escapeHtmlAttr(encodeURIComponent(relId))}" class="related-card">
+              <div class="related-meta">
+                <span class="related-company">${escapeHtmlText(relComp)}</span>
+                <span class="related-badge">${escapeHtmlText(relCat)}</span>
+                <time class="related-time">${escapeHtmlText(relTime)}</time>
+              </div>
+              <div class="related-title">${escapeHtmlText(relSub)}</div>
+            </a>`;
+          }).join('\n')}
+        </div>
+      </section>
       ` : ''}
 
       <div class="action-row">
@@ -1869,6 +2000,42 @@ export function renderPricingPage(): string {
     "description": "7-day no-questions-asked money-back guarantee on all Pro packs. Email admin@bsenexus.in within 7 days of purchase for a full refund, processed within 5-7 business days."
   };
 
+  // Real review wiring for Product schema (Google Search Console compliance)
+  // Renders aggregateRating & review ONLY when genuine review data exists in data source.
+  // Never inject fake ratings or review counts.
+  let reviewSchemaProps: Record<string, any> = {};
+  try {
+    const allFeedback = getAllFeedback(200);
+    const realReviews = (allFeedback || []).filter((f: any) => f && typeof f.rating === 'number' && f.rating >= 1 && f.rating <= 5);
+    if (realReviews.length > 0) {
+      const totalScore = realReviews.reduce((sum: number, r: any) => sum + r.rating, 0);
+      const avgScore = (totalScore / realReviews.length).toFixed(1);
+      reviewSchemaProps = {
+        aggregateRating: {
+          "@type": "AggregateRating",
+          "ratingValue": avgScore,
+          "reviewCount": realReviews.length,
+          "bestRating": "5",
+          "worstRating": "1"
+        },
+        review: realReviews.slice(0, 10).map((r: any) => ({
+          "@type": "Review",
+          "reviewRating": {
+            "@type": "Rating",
+            "ratingValue": String(r.rating),
+            "bestRating": "5",
+            "worstRating": "1"
+          },
+          "author": {
+            "@type": "Person",
+            "name": r.authorName || (r.email ? r.email.split('@')[0] : "Verified Investor")
+          },
+          "reviewBody": String(r.message || "")
+        }))
+      };
+    }
+  } catch { /* reviews schema remains empty if data source unavailable */ }
+
   const jsonLd = JSON.stringify({
     "@context": "https://schema.org",
     "@graph": [
@@ -1882,6 +2049,7 @@ export function renderPricingPage(): string {
           "@type": "Brand",
           "name": "Bsenexus"
         },
+        ...reviewSchemaProps,
         "offers": [
           {
             "@type": "Offer",
@@ -5255,67 +5423,13 @@ for (const [sourcePath, targetPath] of Object.entries(PERMANENT_301_REDIRECTS)) 
   });
 }
 
-// Crawlable, server-rendered individual filing pages (canonical shareable URL
-// scheme: /filing/:symbol/:newsId) for search engines & direct visitors.
-// Public — no login required, like /company/:symbol.
-app.get('/filing/:symbol/:newsId', async (req, res) => {
-  const rawSymbol = req.params.symbol;
-  const newsId = req.params.newsId;
-  if (!rawSymbol || typeof rawSymbol !== 'string' || !newsId || typeof newsId !== 'string') {
-    return res.status(404).setHeader('Content-Type', 'text/html; charset=utf-8').send(renderAnnouncement404Page());
-  }
-
-  const symbol = rawSymbol.trim().toUpperCase();
-  const cleanId = newsId.trim();
-  if (!/^[A-Z0-9-]{2,20}$/.test(symbol) || !cleanId) {
-    return res.status(404).setHeader('Content-Type', 'text/html; charset=utf-8').send(renderAnnouncement404Page());
-  }
-
-  const cacheKey = `filing:${symbol}:${cleanId}`;
-  const clientEtag = req.headers['if-none-match'];
-
-  const cached = pageRenderCache.get(cacheKey);
-  if (cached) {
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.setHeader('ETag', cached.etag);
-    res.setHeader('X-Cache', 'HIT');
-    res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
-    if (clientEtag && clientEtag === cached.etag) {
-      return res.status(304).end();
-    }
-    return res.send(cached.body);
-  }
-
-  try {
-    const announcement = await getAnnouncementById(cleanId);
-    if (!announcement) {
-      return res.status(404).setHeader('Content-Type', 'text/html; charset=utf-8').send(renderAnnouncement404Page());
-    }
-    // Symbol in the URL must match the filing's own symbol (case-insensitive).
-    const annSymbol = String(announcement.symbol || announcement.scrip_id || '').trim().toUpperCase();
-    if (annSymbol && annSymbol !== symbol) {
-      return res.status(404).setHeader('Content-Type', 'text/html; charset=utf-8').send(renderAnnouncement404Page());
-    }
-
-    const canonicalUrl = `https://bsenexus.in/filing/${encodeURIComponent(symbol)}/${encodeURIComponent(cleanId)}`;
-    const html = renderAnnouncementPage(announcement, cleanId, canonicalUrl);
-    const entry = pageRenderCache.set(cacheKey, html, 'text/html; charset=utf-8', { ttlMs: 60 * 60 * 1000 });
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.setHeader('ETag', entry.etag);
-    res.setHeader('X-Cache', 'MISS');
-    res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
-    if (clientEtag && clientEtag === entry.etag) {
-      return res.status(304).end();
-    }
-    return res.send(html);
-  } catch (err: any) {
-    console.error("Error serving filing page:", err?.message || err);
-    return res.status(500).setHeader('Content-Type', 'text/html; charset=utf-8').send(renderAnnouncement404Page());
-  }
+// Pattern-based 301 Redirect for legacy /filing/* URLs (Fix 1)
+app.get(['/filing', '/filing/*'], (_req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800');
+  return res.redirect(301, '/announcements');
 });
 
-// Legacy /announcement/:newsId URLs 301-redirect to the canonical /filing/:symbol/:newsId
-// scheme (single canonical URL per filing — no duplicate-content SEO split).
+// Canonical announcement detail pages: /announcement/:newsId
 app.get('/announcement/:newsId', async (req, res) => {
   const newsId = req.params.newsId;
   if (!newsId || typeof newsId !== 'string') {
@@ -5324,8 +5438,8 @@ app.get('/announcement/:newsId', async (req, res) => {
 
   const cleanId = newsId.trim();
 
-  // Explicit check for legacy 301 redirects
-  if (cleanId === 'nse_ADANIGREEN_1753641000000_FY26-Q1' || cleanId === 'nse_ADANIGREEN_1761589800000_FY26-Q2') {
+  // Pattern-based 301 Redirect for legacy /announcement/nse_* URLs (Fix 1)
+  if (cleanId.startsWith('nse_')) {
     res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800');
     return res.redirect(301, '/announcements');
   }
@@ -5336,13 +5450,7 @@ app.get('/announcement/:newsId', async (req, res) => {
     if (!announcement) {
       return res.status(404).setHeader('Content-Type', 'text/html; charset=utf-8').send(renderAnnouncement404Page(isBatchTest));
     }
-    const annSymbol = String(announcement.symbol || announcement.scrip_id || '').trim().toUpperCase();
-    if (annSymbol) {
-      const target = `/filing/${encodeURIComponent(annSymbol)}/${encodeURIComponent(cleanId)}`;
-      res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800');
-      return res.redirect(301, target);
-    }
-    // No symbol on record — serve the legacy page as-is rather than breaking the URL.
+
     const cacheKey = `ann:${cleanId}`;
     const clientEtag = req.headers['if-none-match'];
     const cached = pageRenderCache.get(cacheKey);
@@ -5356,7 +5464,7 @@ app.get('/announcement/:newsId', async (req, res) => {
       }
       return res.send(cached.body);
     }
-    const html = renderAnnouncementPage(announcement, cleanId);
+    const html = await renderAnnouncementPage(announcement, cleanId);
     const entry = pageRenderCache.set(cacheKey, html, 'text/html; charset=utf-8', { ttlMs: 60 * 60 * 1000 });
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('ETag', entry.etag);
