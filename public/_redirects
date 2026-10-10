@@ -1,3 +1,2 @@
 /announcement/nse_* /announcements 301
-/filing/* /announcements 301
 /* /index.html 200

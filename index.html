@@ -2,7 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- PERF-007 + UI-140: Preload critical fonts so they fetch in parallel with CSS -->
+    <link rel="preload" href="/fonts/PlusJakartaSans.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/Outfit.woff2" as="font" type="font/woff2" crossorigin />
     <script>
       /* Payment-return boot splash: when Cashfree redirects back to
          /?cf_order_id=..., the whole SPA cold-boots. Paint a "Confirming your
