@@ -66,3 +66,10 @@ Current status (2026-10-07): these missing requirements are now specified; their
 ## Filings refresh verification — 2026-10-09
 
 Cache initialization and every refresh share publication-date sorting and seven-day pruning. Historical backfill cannot outrank current filings through ingestion time. Cached/unverified, failed, blocked, empty and historical feeds have explicit status; the header offers refresh. `server/tests/announcementFeed.test.ts` covers data ordering, corrected records, IST parsing and status policy. Fresh production browser showed today’s filings before this change; the screenshot’s old session was not reproduced. Post-change device/reconnect verification remains a deployment audit item. See `changes/filings-freshness.md`.
+
+
+## Approved material visuals — 2026-10-10
+
+Shared `styles/rich-ui.css` owns light/dark surfaces, semantic accents, layered edges and explicit action/focus/pressed/disabled states. `ui/RichVisual` supplies small decorative native vectors and real Earnings date tiles. Navigation retains one `renderNavIcon` across desktop, menu and phone dock; the active footprint is fixed. Helios badges preserve semantic tone and text, and shared ActionButton/PlanCard/SlidingTabList distribute the approved treatment to existing consumers.
+
+Notes/Watchlist empty illustrations, locked Pro, checkout selected/next plans, confirmed receipt, referral metrics/stable tabs, compact push prompt, quiet inbox unread accents and filing controls adopt the system. Logos and company identity are excluded. Cashfree prices/verification, expiry, referral drafts/SSE/payouts, notes writes, watchlist search and modal ownership remain with their existing modules. Legacy softglass is an explicit warm-light exception, not a new app theme. Browser execution was blocked by the environment; source/build evidence does not certify rendered/device behavior. See `changes/rich-visual-system.md`.

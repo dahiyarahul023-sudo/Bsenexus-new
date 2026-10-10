@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, BellRing, Check, X, Share2, Info, AlertCircle } from 'lucide-react';
 import { requestPushPermission, isPushSubscribed, isIOS, isStandalonePWA } from '../utils/oneSignal';
+import { RichIllustration } from './ui/RichVisual';
 
 const DISMISS_KEY = 'bsenexus_push_prompt_dismissed_until';
 
@@ -69,18 +70,16 @@ export function PushNotificationBanner() {
   return (
     <>
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-2 mb-3">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-blue-600/10 via-indigo-600/10 to-purple-600/10 border border-blue-500/20 backdrop-blur-md">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/15 flex items-center justify-center shrink-0 text-blue-500 dark:text-blue-400">
-              {subscribed ? <BellRing className="w-5 h-5 animate-pulse text-emerald-500" /> : <Bell className="w-5 h-5" />}
-            </div>
+        <div className="rich-push-banner">
+          <div className="rich-push-copy">
+            <RichIllustration kind={subscribed ? "success" : "bell"} className="rich-illustration-compact" />
             <div>
-              <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                <span>Instant BSE Push Notifications</span>
+              <h4 className="rich-push-title text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                <span>Instant filing alerts</span>
                 <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-blue-500/20 text-blue-600 dark:text-blue-300">Free for All</span>
               </h4>
               <p className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-                Get immediate alerts on your phone or PC when High-Impact corporate filings &amp; results drop — even if the tab is closed.
+                Get important filing updates, even when the tab is closed.
               </p>
               {notice && (
                 <div className="mt-1 text-[11px] font-medium text-amber-600 dark:text-amber-300 flex items-center gap-1">
@@ -91,7 +90,7 @@ export function PushNotificationBanner() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+          <div className="rich-push-actions">
             {subscribed ? (
               <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
                 <Check className="w-3.5 h-3.5" /> Alerts Active
@@ -100,9 +99,9 @@ export function PushNotificationBanner() {
               <button
                 onClick={handleEnable}
                 disabled={loading}
-                className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-all active:scale-95 disabled:opacity-60 cursor-pointer"
+                className="rich-action rich-action-primary px-4 py-2 rounded-xl text-xs font-bold disabled:opacity-60 cursor-pointer"
               >
-                {loading ? 'Requesting…' : 'Allow Alerts'}
+                {loading ? 'Requesting…' : 'Allow alerts'}
               </button>
             )}
             <button
@@ -141,15 +140,15 @@ export function PushNotificationBanner() {
             <ol className="mt-3.5 space-y-2.5 text-xs text-slate-700 dark:text-slate-300 font-medium">
               <li className="flex items-start gap-2">
                 <span className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-500 flex items-center justify-center font-bold text-[11px] shrink-0 mt-0.5">1</span>
-                <span>Neeche browser me <b>Share button (📤)</b> par tap karein.</span>
+                <span>Tap the <b>Share button</b> in your browser.</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-500 flex items-center justify-center font-bold text-[11px] shrink-0 mt-0.5">2</span>
-                <span>Menu me scroll karke <b>"Add to Home Screen"</b> chunein.</span>
+                <span>Scroll through the menu and choose <b>"Add to Home Screen"</b>.</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-500 flex items-center justify-center font-bold text-[11px] shrink-0 mt-0.5">3</span>
-                <span>Home Screen par bane BSE Nexus icon ko kholein aur alerts allow karein!</span>
+                <span>Open BSE Nexus from your Home Screen, then allow alerts.</span>
               </li>
             </ol>
 

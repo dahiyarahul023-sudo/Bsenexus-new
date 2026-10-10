@@ -116,7 +116,7 @@ export function PricingPage({ onChoosePlan }: { onChoosePlan: (planId: string) =
                     />
                     <button
                       type="submit"
-                      className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700"
+                      className="rich-action rich-action-primary px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700"
                     >
                       Apply
                     </button>

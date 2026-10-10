@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, ShieldCheck, Check, Tag, Sparkles } from 'lucide-react';
+import { X, ShieldCheck, Check, Tag, Sparkles, Crown } from 'lucide-react';
+import { RichIcon } from './ui/RichVisual';
 import { BseNexusLogo } from './ui/BseNexusLogo';
 import { customFetch } from '../api';
 import { useAuth } from '../context/AuthContext';
@@ -180,7 +181,7 @@ export function ProCheckoutView() {
           <div>
             <p className="payment-eyebrow">BSE NEXUS · PRO</p>
             <h2 id="payment-title" ref={heading} tabIndex={-1}>
-              {step === 'plan' ? 'Choose your Pro plan' : 'Upgrade to Pro'}
+              {step === 'plan' ? 'Choose your Pro plan' : 'Review & Pay'}
             </h2>
           </div>
           <button className="payment-icon" onClick={close} disabled={paying} aria-label="Close checkout">
@@ -289,7 +290,7 @@ export function ProCheckoutView() {
                       }}
                     >
                       <span className="payment-plan-top">
-                        <strong>{p.label}</strong>
+                        <strong className="payment-plan-name"><RichIcon tone="amber" className="payment-plan-icon"><Crown /></RichIcon>{p.label}</strong>
                         <span className="payment-radio" aria-hidden="true">
                           {p.id === plan.id && <Check size={13} />}
                         </span>

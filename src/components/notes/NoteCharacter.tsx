@@ -23,8 +23,8 @@ export function NotesIllustration({ onCreate }: { onCreate: () => void }) {
     <span className="notes-scene" aria-hidden="true">
       <span className="notes-orbit" />
       <span className="notes-paper notes-paper--back" />
-      <span className="notes-paper"><span /><span /><span /><b>+</b></span>
-      <NoteCharacter variant={0} />
+      <span className="notes-paper"><i className="notes-bookmark" /><span /><span /><span /></span>
+      <NoteCharacter variant={2} />
       <span className="notes-spark">✦</span><span className="notes-dot" />
     </span>
   </button>;

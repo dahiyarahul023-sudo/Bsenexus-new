@@ -1,4 +1,5 @@
 import '../styles/mobile-repairs.css';
+import { RichIcon } from './ui/RichVisual';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -317,9 +318,10 @@ export function Layout({
       <motion.div
         variants={tabIconBounceVariants}
         animate={isActive ? "active" : "idle"}
-        className="flex items-center justify-center shrink-0"
+        className={`rich-nav-icon ${isActive ? 'is-active' : ''} flex items-center justify-center shrink-0`}
+        data-nav={itemId}
       >
-        {iconElement}
+        {isActive ? <RichIcon tone="emerald" className="rich-nav-tile">{iconElement}</RichIcon> : iconElement}
       </motion.div>
     );
   };
@@ -597,7 +599,7 @@ export function Layout({
                   className={cn(
                     "group relative flex items-center gap-2 px-3.5 py-1.5 text-xs rounded-lg whitespace-nowrap select-none cursor-pointer z-10 transition-colors",
                     isActive
-                      ? "text-white font-bold"
+                      ? "rich-nav-label-active font-bold"
                       : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium"
                   )}
                 >
@@ -606,7 +608,7 @@ export function Layout({
                     <motion.div
                       layoutId="activeNavTabPill"
                       transition={springSmoothPill}
-                      className="absolute inset-0 bg-slate-900 dark:bg-[#262335] rounded-lg shadow-xs border border-slate-900/10 dark:border-[#3C3652] -z-10"
+                      className="rich-nav-surface absolute inset-0 rounded-lg -z-10"
                     />
                   )}
 
@@ -651,7 +653,7 @@ export function Layout({
                     className={cn(
                       "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors",
                       isActive
-                        ? "bg-slate-900 text-white dark:bg-[#2A263D] dark:text-white font-bold shadow-xs border border-slate-900/10 dark:border-[#423A5B]"
+                        ? "rich-nav-surface rich-nav-label-active font-bold"
                         : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#222030] font-medium"
                     )}
                   >
@@ -783,7 +785,7 @@ export function Layout({
                   transition={springSmoothPill}
                   className={cn(
                     "p-1.5 rounded-xl transition-all relative flex items-center justify-center min-w-[34px] min-h-[34px] pointer-events-none",
-                    isActive && "bg-slate-100 dark:bg-[#282438] text-slate-900 dark:text-white ring-1 ring-slate-200 dark:ring-[#3D3754]"
+                    isActive && "rich-nav-surface rich-nav-label-active"
                   )}
                 >
                   {renderNavIcon(item.id, isActive)}
@@ -803,7 +805,7 @@ export function Layout({
                   <motion.span 
                     layoutId="mobileNavActivePill"
                     transition={springSmoothPill}
-                    className="w-5 h-1 rounded-full mt-0.5 bg-slate-900 dark:bg-amber-400 shadow-[0_1px_4px_rgba(251,191,36,0.3)] pointer-events-none" 
+                    className="rich-nav-active-indicator w-5 h-1 rounded-full mt-0.5 pointer-events-none" 
                   />
                 )}
               </motion.button>

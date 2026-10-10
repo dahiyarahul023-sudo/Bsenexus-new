@@ -1,11 +1,12 @@
 import React from 'react';
-import { Check } from 'lucide-react';
+import { Check, Crown } from 'lucide-react';
+import { RichIcon } from './RichVisual';
 
 /**
  * PlanCard — the single shared payment/plan card for the whole app.
  *
- * Implements the "Design Cheatsheet" system: monochrome discipline
- * (near-black / white / grays only), hairline 1px borders, generous
+ * Implements the approved layered material system: teal actions, a gold
+ * decorative Pro mark, hairline 1px borders, generous
  * 24px padding on a strict 4px spacing grid, tight-tracked large price,
  * full-width pill CTA, and thin-checkmark feature rows.
  *
@@ -73,6 +74,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
     <>
       {/* Header */}
       <div>
+        <RichIcon tone="amber" className="rich-plan-mark"><Crown /></RichIcon>
         <div className="flex items-center gap-2 flex-wrap">
           <h3 className="text-[20px] font-medium tracking-[-0.02em] text-[#121212] dark:text-white leading-tight">
             {title}
@@ -123,7 +125,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
           type="button"
           onClick={onCta}
           disabled={ctaDisabled || ctaLoading}
-          className="w-full h-12 rounded-full bg-[#121212] dark:bg-white text-white dark:text-black text-[15px] font-medium tracking-[-0.01em] hover:opacity-85 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="rich-action rich-action-primary w-full min-h-12 px-4 py-3 text-[15px] font-semibold tracking-[-0.01em] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {ctaLoading ? (ctaLoadingText || 'Please wait…') : ctaLabel}
         </button>
@@ -167,9 +169,9 @@ export const PlanCard: React.FC<PlanCardProps> = ({
         type="button"
         onClick={onSelect}
         aria-pressed={selected}
-        className={`w-full text-left rounded-[20px] border bg-[#FCFCFC] dark:bg-[#16161B] p-6 flex flex-col gap-5 transition-all cursor-pointer ${
+        className={`rich-plan-card w-full text-left rounded-[20px] border p-6 flex flex-col gap-5 transition-all cursor-pointer ${
           selected
-            ? 'border-[#121212] dark:border-white border-2 shadow-[0_8px_24px_rgba(0,0,0,0.08)]'
+            ? 'border-2'
             : 'border-[#E2E2E2] dark:border-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:border-[#c9c9c9] dark:hover:border-white/25'
         } ${className}`}
       >
@@ -223,7 +225,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
 
   return (
     <div
-      className={`rounded-[20px] border border-[#E2E2E2] dark:border-white/10 bg-[#FCFCFC] dark:bg-[#16161B] p-6 flex flex-col gap-6 shadow-[0_2px_12px_rgba(0,0,0,0.05)] ${className}`}
+      className={`rich-plan-card rounded-[20px] border p-6 flex flex-col gap-6 ${className}`}
     >
       {card}
     </div>

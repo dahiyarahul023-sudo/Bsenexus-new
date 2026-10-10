@@ -393,7 +393,12 @@
         "src/utils/homeNews.ts",
         "src/styles/home-news.css",
         "src/components/ui/motion/ShareActionMenu.tsx",
-        "src/components/notes/SaveNoteButton.tsx"
+        "src/components/notes/SaveNoteButton.tsx",
+        "src/styles/rich-ui.css",
+        "src/components/ui/RichVisual.tsx",
+        "src/components/ui/helios.tsx",
+        "src/components/ui/PlanCard.tsx",
+        "src/components/ui/motion/SlidingTabList.tsx"
       ],
       "tests": [
         "server/tests/homeNews.test.ts"
@@ -452,7 +457,8 @@
         "src/api/notesApi.ts",
         "src/components/ui/AutosaveIndicator.tsx",
         "src/components/HomeMarketNews.tsx",
-        "src/components/ui/motion/ShareActionMenu.tsx"
+        "src/components/ui/motion/ShareActionMenu.tsx",
+        "src/components/notes/NoteCharacter.tsx"
       ],
       "tests": [
         "server/tests/notes.test.ts",

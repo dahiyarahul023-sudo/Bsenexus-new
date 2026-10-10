@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Check, RefreshCw } from 'lucide-react';
 
 export interface ActionButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onAnimationStart' | 'onDrag' | 'onDragStart' | 'onDragEnd'> {
@@ -36,6 +36,7 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
   disabled,
   ...props
 }) => {
+  const reduceMotion = useReducedMotion();
   const [internalIsLoading, setInternalIsLoading] = useState(false);
   const [justSucceeded, setJustSucceeded] = useState(false);
 
@@ -80,11 +81,11 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
 
   return (
     <motion.button
-      whileTap={!disabled && !isBusy ? { scale: 0.96 } : undefined}
+      whileTap={!reduceMotion && !disabled && !isBusy ? { scale: 0.96 } : undefined}
       transition={{ type: 'spring', stiffness: 500, damping: 28 }}
       onClick={handleClick}
       disabled={disabled || isBusy}
-      className={`relative inline-flex items-center justify-center font-bold rounded-xl transition-colors cursor-pointer select-none disabled:opacity-60 disabled:cursor-not-allowed active:outline-hidden ${variantStyles} ${sizeStyles} ${className}`}
+      className={`rich-action rich-action-${variant} relative inline-flex items-center justify-center font-bold rounded-xl transition-colors cursor-pointer select-none disabled:opacity-60 disabled:cursor-not-allowed ${variantStyles} ${sizeStyles} ${className}`}
       {...props}
     >
       {justSucceeded ? (

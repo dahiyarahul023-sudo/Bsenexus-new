@@ -1243,7 +1243,7 @@ export function Announcements({
           <button
             type="button"
             onClick={handleToggleEngine}
-            className="min-h-[44px] sm:min-h-[36px] px-3.5 py-2 bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-900 font-black text-xs rounded-lg shrink-0 transition-all cursor-pointer shadow-xs flex items-center gap-1.5"
+            className="rich-action rich-action-amber min-h-[44px] sm:min-h-[36px] px-3.5 py-2 bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-900 font-black text-xs rounded-lg shrink-0 transition-all cursor-pointer shadow-xs flex items-center gap-1.5"
           >
             <Zap size={12} className="fill-slate-900" />
             <span>Resume</span>

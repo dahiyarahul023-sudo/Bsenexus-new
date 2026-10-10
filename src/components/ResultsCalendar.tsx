@@ -44,6 +44,7 @@ function cn(...inputs: ClassValue[]) {
 }
 
 import { parseMeetingDateTile } from '../utils/calendarDateTile';
+import { RichDateTile } from './ui/RichVisual';
 export { parseMeetingDateTile };
 
 const TELEGRAM_SUCCESS_MESSAGES = [
@@ -2015,27 +2016,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                         const meetingDateStr = getResolvedMeetingDate(item);
                         const tileDate = parseMeetingDateTile(meetingDateStr || undefined);
                         return (
-                          <div className={cn(
-                            "w-8 h-9 rounded-md flex flex-col overflow-hidden shrink-0 border transition-all duration-200 shadow-2xs group-hover:scale-105",
-                            isSelected
-                              ? "bg-white dark:bg-[#252233] border-slate-400 dark:border-[#4A4364] ring-1 ring-slate-300 dark:ring-[#4A4364]"
-                              : isToday
-                              ? "bg-white dark:bg-[#201E2E] border-slate-300 dark:border-[#38324E]"
-                              : "bg-white dark:bg-[#1E1C2B] border-slate-200 dark:border-[#2D283E]"
-                          )}>
-                            <div className={cn(
-                              "h-3.5 w-full flex items-center justify-center px-0.5 transition-colors font-mono text-[7.5px] font-bold uppercase tracking-wider text-white",
-                              isSelected ? "bg-slate-800 dark:bg-[#38324E]" : isToday ? "bg-slate-700 dark:bg-[#342E48]" : "bg-slate-600 dark:bg-[#2D283E]"
-                            )}>
-                              <span className="truncate">{tileDate.month}</span>
-                            </div>
-                            <div className={cn(
-                              "flex-1 flex items-center justify-center font-bold text-xs leading-none transition-colors",
-                              isSelected ? "text-slate-900 dark:text-slate-100" : isToday ? "text-slate-900 dark:text-slate-100" : "text-slate-800 dark:text-slate-200"
-                            )}>
-                              {tileDate.day}
-                            </div>
-                          </div>
+                          <RichDateTile day={tileDate.day} month={tileDate.month} selected={isSelected} today={isToday} />
                         );
                       })()}
 
@@ -2752,7 +2733,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                           type="button"
                           onClick={() => handleFetchDeepHistory(selectedModalItem.scripCode, selectedModalItem.symbol, selectedYears)}
                           disabled={isFetchingDeepHistory}
-                          className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold rounded-lg shadow-2xs flex items-center gap-1.5 disabled:opacity-50 transition-all cursor-pointer"
+                          className="rich-action rich-action-primary px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold rounded-lg shadow-2xs flex items-center gap-1.5 disabled:opacity-50 transition-all cursor-pointer"
                         >
                           <Download size={13} className={cn(isFetchingDeepHistory && "animate-bounce")} />
                           <span>{isFetchingDeepHistory ? "Fetching History..." : `Fetch ${selectedYears} Yr History`}</span>

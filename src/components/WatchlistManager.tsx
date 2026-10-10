@@ -20,6 +20,7 @@ import { StockPriority, WatchlistStockItem } from '../types';
 import { useAiQuota, syncQuotaFromResponse } from '../utils/aiQuota';
 import { mergeAnnouncementFeed } from '../utils/announcementFeed';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
+import { RichIllustration } from './ui/RichVisual';
 import { useFeedDensity } from '../hooks/useFeedDensity';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { useVisibilityInterval } from '../hooks/useVisibilityInterval';
@@ -1845,17 +1846,15 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
   // Watchlist is Pro-only: free users see an upgrade card instead of the manager.
   if (!isProOrAdmin) {
     return (
-      <div className="flex flex-col items-center justify-center text-center px-6 py-16 space-y-4">
-        <div className="w-16 h-16 rounded-2xl bg-amber-100 dark:bg-amber-900/40 border border-amber-200 dark:border-amber-800 flex items-center justify-center">
-          <Lock className="w-8 h-8 text-amber-600 dark:text-amber-400" />
-        </div>
+      <div className="rich-pro-gate flex flex-col items-center justify-center text-center px-6 py-16 space-y-4">
+        <RichIllustration kind="pro" />
         <h2 className="text-lg font-black text-slate-900 dark:text-white">Watchlists are a Pro feature</h2>
         <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xs leading-relaxed">
           Track unlimited stocks with priority tiers and instant Telegram alerts. Upgrade to Pro — one-time plans from ₹{getLowestPlanPrice()}.
         </p>
         <button
           onClick={() => setIsProModalOpen(true)}
-          className="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-black shadow-lg shadow-amber-500/25 transition-colors flex items-center gap-2"
+          className="rich-action rich-action-amber px-6 py-3 rounded-xl text-sm font-black flex items-center gap-2"
         >
           <Crown className="w-4 h-4" />
           Upgrade to Pro
@@ -1891,14 +1890,14 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
                 className={cn(
                   "relative flex items-center gap-1.5 px-3 min-h-[36px] py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer whitespace-nowrap select-none",
                   watchlistSubTab === 'companies'
-                    ? "text-white"
+                    ? "rich-nav-label-active"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 )}
               >
                 {watchlistSubTab === 'companies' && (
                   <motion.span
                     layoutId="activeWatchlistSubTab"
-                    className="absolute inset-0 bg-slate-900 dark:bg-[#2A263D] rounded-md shadow-xs"
+                    className="rich-tab-pill absolute inset-0 rounded-md"
                     transition={springSnappy}
                   />
                 )}
@@ -1907,7 +1906,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
                   <span>My companies</span>
                   <span className={cn(
                     "px-1.5 py-0.2 text-[10px] font-mono rounded-full font-black",
-                    watchlistSubTab === 'companies' ? "bg-white/20 text-white" : "bg-slate-200 dark:bg-[#252233] text-slate-700 dark:text-slate-300"
+                    watchlistSubTab === 'companies' ? "bg-emerald-900/10 text-emerald-900 dark:bg-white/10 dark:text-emerald-100" : "bg-slate-200 dark:bg-[#252233] text-slate-700 dark:text-slate-300"
                   )}>
                     {myCompaniesList.length}
                   </span>
@@ -1923,14 +1922,14 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
                 className={cn(
                   "relative flex items-center gap-1.5 px-3 min-h-[36px] py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer whitespace-nowrap select-none",
                   watchlistSubTab === 'updates'
-                    ? "text-white"
+                    ? "rich-nav-label-active"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 )}
               >
                 {watchlistSubTab === 'updates' && (
                   <motion.span
                     layoutId="activeWatchlistSubTab"
-                    className="absolute inset-0 bg-slate-900 dark:bg-[#2A263D] rounded-md shadow-xs"
+                    className="rich-tab-pill absolute inset-0 rounded-md"
                     transition={springSnappy}
                   />
                 )}
@@ -1939,7 +1938,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
                   <span>Updates</span>
                   <span className={cn(
                     "px-1.5 py-0.2 text-[10px] font-mono rounded-full font-black",
-                    watchlistSubTab === 'updates' ? "bg-white/20 text-white" : "bg-slate-200 dark:bg-[#252233] text-slate-700 dark:text-slate-300"
+                    watchlistSubTab === 'updates' ? "bg-emerald-900/10 text-emerald-900 dark:bg-white/10 dark:text-emerald-100" : "bg-slate-200 dark:bg-[#252233] text-slate-700 dark:text-slate-300"
                   )}>
                     {watchlistAnnouncements.length}
                   </span>
@@ -1955,14 +1954,14 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
                 className={cn(
                   "relative flex items-center gap-1.5 px-3 min-h-[36px] py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer whitespace-nowrap select-none",
                   watchlistSubTab === 'edit'
-                    ? "text-white"
+                    ? "rich-nav-label-active"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 )}
               >
                 {watchlistSubTab === 'edit' && (
                   <motion.span
                     layoutId="activeWatchlistSubTab"
-                    className="absolute inset-0 bg-slate-900 dark:bg-[#2A263D] rounded-md shadow-xs"
+                    className="rich-tab-pill absolute inset-0 rounded-md"
                     transition={springSnappy}
                   />
                 )}
@@ -2009,7 +2008,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
                     "flex items-center gap-1.5 px-3.5 min-h-[36px] py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs whitespace-nowrap select-none active:scale-[0.96]",
                     isAddCompanyOpen
                       ? "bg-slate-800 text-white dark:bg-[#322C4A]"
-                      : "bg-emerald-600 hover:bg-emerald-500 text-white"
+                      : "rich-action rich-action-primary"
                   )}
                 >
                   <Plus size={14} className={isAddCompanyOpen ? "rotate-45 transition-transform" : "transition-transform"} />
@@ -2408,7 +2407,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
               <button
                 type="button"
                 onClick={() => setIsFilterDrawerOpen(false)}
-                className="px-4 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors shadow-xs cursor-pointer min-h-[36px] active:scale-[0.96]"
+                className="rich-action rich-action-primary px-4 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors shadow-xs cursor-pointer min-h-[36px] active:scale-[0.96]"
               >
                 Apply Filters ({watchlistAnnouncements.length})
               </button>
@@ -2564,10 +2563,8 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
           {companyAddError && <p role="alert" className="p-3 rounded-xl text-sm text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/30">{companyAddError}</p>}
           {/* Companies List / Grid */}
           {filteredMyCompanies.length === 0 ? (
-            <div className="my-4 p-6 sm:p-8 text-left text-slate-400 space-y-4 bg-white dark:bg-[#1A1926] border border-slate-200/90 dark:border-[#2D283E] rounded-2xl max-w-lg shadow-xs">
-              <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800/80 flex items-center justify-center text-slate-400 dark:text-slate-500">
-                <Building2 size={20} />
-              </div>
+            <div className="rich-panel rich-empty my-4 p-6 sm:p-8 text-slate-400 space-y-4 border rounded-2xl max-w-lg">
+              {myCompaniesList.length === 0 ? <RichIllustration kind="companies" /> : <Search size={28} className="mx-auto" aria-hidden="true" />}
               <div className="space-y-1">
                 <div className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">
                   {myCompaniesList.length === 0
@@ -2585,7 +2582,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
                   <button
                     type="button"
                     onClick={() => setIsAddCompanyOpen(true)}
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-xs min-h-[36px] active:scale-[0.96]"
+                    className="rich-action rich-action-primary px-4 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer min-h-[44px]"
                   >
                     <Plus size={14} />
                     <span>Add your first company</span>
@@ -2988,7 +2985,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
                         className="sm:w-48 px-3 py-1.5 bg-white dark:bg-[#201E2E] border border-slate-200 dark:border-[#2D283E] text-xs rounded-lg focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-900 dark:text-white min-h-[38px]"
                       />
 
-                      <button type="submit" className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg transition-colors cursor-pointer shrink-0 flex items-center gap-1.5 min-h-[38px] active:scale-[0.96]">
+                      <button type="submit" className="rich-action rich-action-primary px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg transition-colors cursor-pointer shrink-0 flex items-center gap-1.5 min-h-[38px] active:scale-[0.96]">
                         <Plus size={14} />
                         <span>Add Stock</span>
                       </button>

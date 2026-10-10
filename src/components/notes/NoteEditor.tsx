@@ -308,7 +308,7 @@ function NoteEditorSheet({
               ? 'Your icon leads every note in the list.'
               : (link ? 'Tap the × on the link chip to make this a personal note.' : 'Saved notes sync to your account.')}
           </p>
-          <button type="button" className="notes-primary shrink-0 disabled:opacity-50" disabled={saving || folding || (step === 1 && !canSave)} onClick={() => step === 0 ? setStep(1) : handleSave()}>
+          <button type="button" className="notes-primary rich-action rich-action-primary shrink-0 disabled:opacity-50" disabled={saving || folding || (step === 1 && !canSave)} onClick={() => step === 0 ? setStep(1) : handleSave()}>
             {saving ? <Loader2 size={18} className="animate-spin" /> : step === 0 ? <ArrowRight size={18} /> : <Check size={18} />}
             {saving ? 'Saving…' : step === 0 ? 'Continue' : 'Save note'}
           </button>

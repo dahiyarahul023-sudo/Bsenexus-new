@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { usePaymentDialog } from '../hooks/usePaymentDialog';
 import '../styles/referral.css';
+import { RichIcon, RichIllustration } from './ui/RichVisual';
 import {
   X,
   Copy,
@@ -267,16 +268,14 @@ export function ReferralDashboardModal({
       onClick={onClose}
     >
       <div
-        className="referral-sheet bg-white dark:bg-[#14131B] text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-800 shadow-2xl"
+        className="rich-panel referral-sheet bg-white dark:bg-[#14131B] text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-800 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="referral-handle" aria-hidden="true" />
         {/* Header */}
         <div className="referral-header flex items-center justify-between gap-3 px-4 sm:px-6 py-3 border-b border-slate-100 dark:border-slate-800/80">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-              <Sparkles size={20} />
-            </div>
+            <RichIcon tone="violet"><Sparkles size={20} /></RichIcon>
             <div>
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <h2 id="referral-title" className="text-base sm:text-lg font-bold">Refer &amp; Earn Rewards</h2>
@@ -363,7 +362,7 @@ export function ReferralDashboardModal({
                     type="button"
                     onClick={handleCopy}
                     aria-label={copied ? 'Referral link copied' : 'Copy referral link'}
-                    className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs sm:text-sm flex items-center gap-1.5 transition-colors shadow-sm shrink-0 cursor-pointer"
+                    className="rich-action rich-action-primary px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs sm:text-sm flex items-center gap-1.5 transition-colors shadow-sm shrink-0 cursor-pointer"
                   >
                     {copied ? <Check size={16} /> : <Copy size={16} />}
                     {copied ? 'Copied!' : 'Copy'}
@@ -406,7 +405,7 @@ export function ReferralDashboardModal({
                 <div className="space-y-6">
                   {/* Community Stats */}
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
+                    <div className="referral-metric p-4 rounded-2xl border">
                       <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
                         <span>Free Pro Earned</span>
                         <Award size={16} className="text-amber-500" />
@@ -419,7 +418,7 @@ export function ReferralDashboardModal({
                       </div>
                     </div>
 
-                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
+                    <div className="referral-metric p-4 rounded-2xl border">
                       <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
                         <span>Friends Joined</span>
                         <Users size={16} className="text-emerald-500" />
@@ -432,7 +431,7 @@ export function ReferralDashboardModal({
                       </div>
                     </div>
 
-                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 col-span-2 sm:col-span-1">
+                    <div className="referral-metric p-4 rounded-2xl border col-span-2 sm:col-span-1">
                       <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
                         <span>Friend's Discount</span>
                         <BadgePercent size={16} className="text-indigo-500" />
@@ -478,7 +477,7 @@ export function ReferralDashboardModal({
                     </div>
                     <button
                       onClick={() => selectTab('creator')}
-                      className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shrink-0 cursor-pointer transition-colors"
+                      className="rich-action rich-action-violet px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shrink-0 cursor-pointer transition-colors"
                     >
                       View Creator Tier
                     </button>
@@ -491,7 +490,8 @@ export function ReferralDashboardModal({
                 <div className="space-y-6">
                   {/* Tier Progress Bar */}
                   <div className="p-5 rounded-2xl bg-gradient-to-r from-indigo-500/10 via-emerald-500/5 to-transparent border border-indigo-500/20 space-y-3">
-                    <div className="flex items-center justify-between">
+                    <div className="referral-creator-visual">
+                      <RichIllustration kind="creator" />
                       <div>
                         <span className="text-[10px] uppercase font-bold tracking-wider text-indigo-600 dark:text-indigo-400">
                           Current Commission Tier
@@ -530,7 +530,7 @@ export function ReferralDashboardModal({
 
                   {/* Creator Financial Stats */}
                   <div className="grid grid-cols-1 min-[420px]:grid-cols-2 sm:grid-cols-3 gap-3">
-                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
+                    <div className="referral-metric p-4 rounded-2xl border">
                       <div className="text-slate-500 text-xs font-medium">Total Earned</div>
                       <div className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-1">
                         ₹{data.stats.totalEarningsRupees}
@@ -538,7 +538,7 @@ export function ReferralDashboardModal({
                       <div className="text-[11px] text-slate-400 mt-0.5">{totalConversions} conversions</div>
                     </div>
 
-                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
+                    <div className="referral-metric p-4 rounded-2xl border">
                       <div className="text-slate-500 text-xs font-medium">Pending Payout</div>
                       <div className="text-xl sm:text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">
                         ₹{data.stats.pendingPayoutRupees}
@@ -546,7 +546,7 @@ export function ReferralDashboardModal({
                       <div className="text-[11px] text-slate-400 mt-0.5">Verified ledger</div>
                     </div>
 
-                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
+                    <div className="referral-metric p-4 rounded-2xl border">
                       <div className="text-slate-500 text-xs font-medium">Paid Out</div>
                       <div className="text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
                         ₹{data.stats.paidPayoutRupees}

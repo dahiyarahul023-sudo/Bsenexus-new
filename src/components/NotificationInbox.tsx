@@ -276,7 +276,7 @@ export function NotificationInbox({
       aria-labelledby="notification-inbox-title"
     >
       <div 
-        className="mobile-alert-sheet bg-white dark:bg-[#0F172A] border-t sm:border border-slate-200 dark:border-slate-800 rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[85vh] sm:max-h-[92vh] flex flex-col shadow-2xl overflow-hidden sm:mt-14 mb-0 animate-in slide-in-from-bottom-4 sm:slide-in-from-right-4 duration-150 overscroll-contain"
+        className="rich-alert-sheet mobile-alert-sheet bg-white dark:bg-[#1A1926] border-t sm:border border-slate-200 dark:border-slate-800 rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[85vh] sm:max-h-[92vh] flex flex-col shadow-2xl overflow-hidden sm:mt-14 mb-0 animate-in slide-in-from-bottom-4 sm:slide-in-from-right-4 duration-150 overscroll-contain"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Mobile Pull Handle */}
@@ -469,16 +469,6 @@ export function NotificationInbox({
                   const isOrder = n.type === 'ORDER_WIN';
                   const isHighPriority = n.priority === 'HIGH';
 
-                  const notifBorder = isHighPriority
-                    ? "border-l-4 border-l-rose-500"
-                    : isResult
-                    ? "border-l-4 border-l-purple-500"
-                    : isAction
-                    ? "border-l-4 border-l-emerald-500"
-                    : isOrder
-                    ? "border-l-4 border-l-blue-500"
-                    : "border-l-4 border-l-slate-300 dark:border-l-slate-700";
-
                   return (
                     <motion.div
                       key={n.id || `notif-${idx}`}
@@ -490,21 +480,19 @@ export function NotificationInbox({
                       transition={springStandard}
                       onClick={() => handleNotificationClick(n)}
                       className={cn(
-                        "p-3 rounded-xl border transition-all cursor-pointer flex items-start gap-3 relative group",
-                        notifBorder,
-                        n.isRead
-                          ? "bg-white dark:bg-slate-800/40 border-slate-200 dark:border-slate-800/80 opacity-85 hover:opacity-100"
-                          : "bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-300/80 dark:border-emerald-700/80 shadow-xs hover:border-emerald-400"
+                        "rich-alert-card p-3 rounded-xl border transition-colors cursor-pointer flex items-start gap-3 relative group",
+                        !n.isRead && "is-unread"
                       )}
                     >
                     {/* Unread Indicator Bar */}
                     {!n.isRead && (
-                      <div className="absolute left-0 top-3 bottom-3 w-1 bg-emerald-500 rounded-r" />
+                      <div className="absolute left-0 top-3 bottom-3 w-0.5 bg-emerald-500 rounded-r" />
                     )}
 
                     {/* Icon Indicator */}
                     <div className={cn(
                       "p-2 rounded-lg shrink-0 mt-0.5",
+                      isHighPriority ? "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300" :
                       isResult ? "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300" :
                       isAction ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" :
                       isOrder ? "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300" :
@@ -517,7 +505,7 @@ export function NotificationInbox({
 
                     {/* Content */}
                     <div className="min-w-0 flex-1 space-y-1">
-                      <div className="flex items-center justify-between gap-2">
+                      <div className="rich-alert-meta flex items-center justify-between gap-2">
                         <div className="flex items-center gap-1.5 min-w-0">
                           {n.isWatchlist && (
                             <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 shrink-0 flex items-center gap-0.5">
@@ -525,9 +513,10 @@ export function NotificationInbox({
                               <span>Watchlist</span>
                             </span>
                           )}
-                          <span className="text-xs font-black text-slate-900 dark:text-white truncate">
+                          <span className="rich-alert-title text-xs font-black text-slate-900 dark:text-white">
                             {n.title}
                           </span>
+                          {!n.isRead && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" aria-label="Unread" />}
                         </div>
                         <span className="text-[10px] text-slate-400 font-mono shrink-0">
                           {formatTimeOnly(n.timestamp)}

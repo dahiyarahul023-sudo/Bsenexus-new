@@ -223,7 +223,7 @@ export function SavedNotesScreen({ onNavigate }: { onNavigate?: (tab: string) =>
         </p>
         <button
           type="button" onClick={() => setIsAuthModalOpen(true)}
-          className="mt-4 px-6 py-2.5 rounded-2xl bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 text-sm font-bold hover:opacity-90 transition-opacity cursor-pointer"
+          className="rich-action rich-action-primary mt-4 px-6 py-2.5 rounded-2xl text-sm font-bold min-h-[44px] cursor-pointer"
         >
           Sign in
         </button>
@@ -235,7 +235,7 @@ export function SavedNotesScreen({ onNavigate }: { onNavigate?: (tab: string) =>
     <div className="notes-workspace space-y-4 text-slate-900 dark:text-white">
       <div className="notes-toolbar">
         <div><p className="notes-eyebrow">Your research, remembered</p><h2 className="notes-title">Saved notes</h2></div>
-        <button type="button" className="notes-primary" onClick={() => openNoteEditor()}><Plus size={18} /> New note</button>
+        <button type="button" className="notes-primary rich-action rich-action-primary" onClick={() => openNoteEditor()}><Plus size={18} /> New note</button>
       </div>
       {/* Search */}
       <div className="relative">
@@ -243,7 +243,7 @@ export function SavedNotesScreen({ onNavigate }: { onNavigate?: (tab: string) =>
         <input
           aria-label="Search notes, tags or stocks" type="search" value={query} onChange={e => setQuery(e.target.value)}
           placeholder="Search notes, tags, stocks..."
-          className="notes-search w-full pl-9 pr-4 py-2.5 bg-white dark:bg-[#181626] border border-slate-200/90 dark:border-[#2D283E] rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-orange-500/40 shadow-2xs"
+          className="rich-input notes-search w-full pl-9 pr-4 py-2.5 bg-white dark:bg-[#181626] border border-slate-200/90 dark:border-[#2D283E] rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-orange-500/40 shadow-2xs"
         />
       </div>
 
@@ -263,7 +263,7 @@ export function SavedNotesScreen({ onNavigate }: { onNavigate?: (tab: string) =>
           {q ? <Search size={38} className="text-slate-400" aria-hidden="true" /> : <NotesIllustration onCreate={() => openNoteEditor()} />}
           <h3>{q ? 'No matching notes' : 'Big ideas start with a little note.'}</h3>
           <p>{q ? 'Try another keyword, tag or stock name.' : 'Keep a thought, track a stock, or save the detail you’ll want to come back to.'}</p>
-          <button type="button" className="notes-primary" onClick={() => q ? setQuery('') : openNoteEditor()}>
+          <button type="button" className="notes-primary rich-action rich-action-primary" onClick={() => q ? setQuery('') : openNoteEditor()}>
             {!q && <Plus size={18} />}{q ? 'Clear search' : 'Create your first note'}
           </button>
           {!q && <span className="notes-empty-hint">Your notes stay together, across devices.</span>}

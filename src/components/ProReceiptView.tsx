@@ -21,6 +21,7 @@ import '../styles/payment.css';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { X, Mail, Printer, Scissors, Copy, Check } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { RichIllustration } from './ui/RichVisual';
 import { buildReceiptMailto, sendReceiptByEmail, formatReceiptDate, type PaymentReceipt } from '../utils/cashfree';
 
 /* ------------------------------------------------------------------ */
@@ -387,7 +388,7 @@ export function ProReceiptView() {
           </button>
         </div>
 
-        <div className="payment-success-banner" role="status"><h2>Payment successful</h2><p>{receipt.planLabel || 'Pro'} · ₹{Number(receipt.amount).toLocaleString('en-IN')} paid</p><p>Your receipt is ready. Keep a copy for your records.</p></div>
+        <div className="payment-success-banner" role="status"><RichIllustration kind="success" /><h2>Payment successful</h2><p>{receipt.planLabel || 'Pro'} · ₹{Number(receipt.amount).toLocaleString('en-IN')} paid</p><p>Your receipt is ready. Keep a copy for your records.</p></div>
         {/* Animated scene — key change replays the whole print sequence */}
         <div key={printKey} className="flex flex-col items-center">
           {/* Printer bar */}
@@ -468,7 +469,7 @@ export function ProReceiptView() {
           <button
             onClick={sendReceipt}
             disabled={sending}
-            className="shrink-0 px-4 py-2 rounded-xl bg-slate-950 text-white text-[12px] font-bold hover:opacity-90 active:scale-95 transition-all disabled:opacity-60"
+            className="rich-action rich-action-primary shrink-0 px-4 py-2 rounded-xl text-[12px] font-bold disabled:opacity-60"
           >
             {sending ? 'Sending…' : sentOk ? 'Sent ✓' : 'Send'}
           </button>
@@ -496,9 +497,9 @@ export function ProReceiptView() {
 
         <button
           onClick={() => setReceipt(null)}
-          className="mt-3 w-full py-3 rounded-2xl bg-white/10 hover:bg-white/15 text-white text-sm font-bold transition-colors"
+          className="rich-action rich-action-primary mt-3 w-full py-3 rounded-2xl text-sm font-bold"
         >
-          Done
+          Continue
         </button>
       </div>
     </div>

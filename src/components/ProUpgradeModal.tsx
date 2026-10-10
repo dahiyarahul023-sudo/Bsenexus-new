@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { usePaymentDialog } from '../hooks/usePaymentDialog';
 import '../styles/payment.css';
 import { PlanCard } from './ui/PlanCard';
+import { RichIllustration } from './ui/RichVisual';
 import { hasUsedTrial, getPlanDisplay, getLowestPlanPrice } from '../utils/cashfree';
 
 export function ProUpgradeModal() {
@@ -82,9 +83,7 @@ export function ProUpgradeModal() {
 
         {activatedSuccess ? (
           <div className="rounded-[20px] border border-[#E2E2E2] dark:border-white/10 bg-[#FCFCFC] dark:bg-[#16161B] p-10 flex flex-col items-center gap-3 text-center shadow-[0_2px_12px_rgba(0,0,0,0.05)]">
-            <span className="w-12 h-12 rounded-full bg-[#121212] dark:bg-white flex items-center justify-center">
-              <Check size={22} className="text-white dark:text-black" />
-            </span>
+            <RichIllustration kind="success" />
             <p className="text-[20px] font-medium tracking-[-0.02em] text-[#121212] dark:text-white">
               1-Week Free Pro Activated!
             </p>

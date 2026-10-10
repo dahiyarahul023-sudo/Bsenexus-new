@@ -31,7 +31,7 @@ export function SlidingTabList<T extends string = string>({
     <div
       role="tablist"
       className={cn(
-        "relative flex items-center gap-1 p-1 bg-slate-100/90 dark:bg-[#161422] border border-slate-200/80 dark:border-[#2D283E] rounded-xl overflow-x-auto no-scrollbar select-none",
+        "rich-tabs relative flex items-center gap-1 p-1 bg-slate-100/90 dark:bg-[#161422] border border-slate-200/80 dark:border-[#2D283E] rounded-xl overflow-x-auto no-scrollbar select-none",
         className
       )}
     >
@@ -57,7 +57,7 @@ export function SlidingTabList<T extends string = string>({
               <motion.div
                 layoutId={layoutId}
                 transition={springSmoothPill}
-                className="absolute inset-0 z-[-1] rounded-lg bg-white dark:bg-[#28243A] shadow-xs border border-slate-200/60 dark:border-[#3D3754]"
+                className="rich-tab-pill absolute inset-0 z-[-1] rounded-lg"
               />
             )}
 
