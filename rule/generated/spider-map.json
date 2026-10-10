@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "6dc780d688c82eb80ca55e7b0a00cb26e3c57d33157178c2e639d0c89cb8e2e3",
+  "sourceDigest": "508365675c5fec5c100f077279318ad30aed7fc4b80ade327f83f71d09fa21e1",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -858,6 +858,11 @@
       "importedBy": []
     },
     {
+      "path": "server/tests/avatar.test.ts",
+      "sha256": "bb01673785aa66d211275433ac34447676928cfcb89883d3dee4d42d99c9b148",
+      "importedBy": []
+    },
+    {
       "path": "server/tests/batchOperations.test.ts",
       "sha256": "f71e1e7732ae0aac667306acc771ad17519168a8c8d24d38b28e4b7dbe48df10",
       "importedBy": []
@@ -1271,6 +1276,14 @@
       ]
     },
     {
+      "path": "src/components/AvatarPicker.tsx",
+      "sha256": "84e60f6962937d31def53bf136478232884f96aac5f9469896a425364c2f0243",
+      "importedBy": [
+        "src/components/SettingsTab.tsx",
+        "src/components/UserProfileModal.tsx"
+      ]
+    },
+    {
       "path": "src/components/BlogReaderModal.tsx",
       "sha256": "96941d25a47358d6487f8725334e28c33b9dc1ab93097c9125179c05a3bdc637",
       "importedBy": [
@@ -1337,7 +1350,7 @@
     },
     {
       "path": "src/components/Layout.tsx",
-      "sha256": "fbb17b094b5f145998cad113255222905283b5cc312ae439e84bf9c25bef1ad3",
+      "sha256": "5f8e04a1236609140b86fe77493c7ca3e166cbe35ae5493ab7c7e4427a85a94f",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -1458,7 +1471,7 @@
     },
     {
       "path": "src/components/SettingsTab.tsx",
-      "sha256": "307915f5047b324ab0bd4756f91c05a1aec9230d85673fd0bc373855fcedc783",
+      "sha256": "e21f52ce159ce748694e8cb5431acb6dc1a7c3a63363fa410d13e98618656b93",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -1508,7 +1521,7 @@
     },
     {
       "path": "src/components/UserProfileModal.tsx",
-      "sha256": "4bd0b3f629f7f520838db9233a5a14636abd89b366576b39f3bb9bfb314105ed",
+      "sha256": "669ef8b99c6d10d6b8212838b75bf7ec2d53c083d9405dd7afa92255cc9305e7",
       "importedBy": [
         "src/components/Layout.tsx"
       ]
@@ -1718,6 +1731,7 @@
         "src/components/AiSummaryViewer.tsx",
         "src/components/AlertRulesModal.tsx",
         "src/components/Announcements.tsx",
+        "src/components/AvatarPicker.tsx",
         "src/components/CompanyIntelligenceModal.tsx",
         "src/components/HelpModal.tsx",
         "src/components/HomeForYou.tsx",
@@ -2003,6 +2017,17 @@
       ]
     },
     {
+      "path": "src/components/ui/UserAvatar.tsx",
+      "sha256": "d9b0b069c645f938afdd09bb3b765ace1865e4d8e63f4fa0407cbc0e6efeb84c",
+      "importedBy": [
+        "server/tests/avatar.test.ts",
+        "src/components/AvatarPicker.tsx",
+        "src/components/Layout.tsx",
+        "src/components/SettingsTab.tsx",
+        "src/components/UserProfileModal.tsx"
+      ]
+    },
+    {
       "path": "src/components/ui/helios.tsx",
       "sha256": "3d92c30ca46d8ee4351fd9a5fb6d4fbe26c4a09b4f6f9fbdccf3c3005c975180",
       "importedBy": [
@@ -2058,6 +2083,17 @@
       ]
     },
     {
+      "path": "src/config/avatars.ts",
+      "sha256": "ea28f31615536e9b5884f831eab1bb7e888944a730a7954d1d49cd39d95060e3",
+      "importedBy": [
+        "server/tests/avatar.test.ts",
+        "src/components/AvatarPicker.tsx",
+        "src/components/ui/UserAvatar.tsx",
+        "src/context/AuthContext.tsx",
+        "src/utils/avatarSave.ts"
+      ]
+    },
+    {
       "path": "src/config/plans.ts",
       "sha256": "cf887c4c7adb52ee0e672f3e879b567a39febdb76702e6f9faed12402eeedf90",
       "importedBy": [
@@ -2079,7 +2115,7 @@
     },
     {
       "path": "src/context/AuthContext.tsx",
-      "sha256": "b7b1bd791854644ae7d4f191627c25ef48759e8a65c5fcb80776b73690d04956",
+      "sha256": "ee95d6396184fc0683d85f6d060c2d2de61779bc55eb625afbb9a7d630fe2dfa",
       "importedBy": [
         "src/App.tsx",
         "src/components/AdminDiagnostics.tsx",
@@ -2088,6 +2124,7 @@
         "src/components/AlertRulesModal.tsx",
         "src/components/Announcements.tsx",
         "src/components/AuthModal.tsx",
+        "src/components/AvatarPicker.tsx",
         "src/components/CompanyIntelligenceModal.tsx",
         "src/components/HelpModal.tsx",
         "src/components/HomeForYou.tsx",
@@ -2300,7 +2337,7 @@
     },
     {
       "path": "src/main.tsx",
-      "sha256": "ede22bfdf57cb870333edde784b6c4548a557d76815f4397f79a1235e54464f4",
+      "sha256": "70693844f7f8b7f784ecffa234624c12a54d8a02f5e9cec3cf77f78d3dd2d1a8",
       "importedBy": []
     },
     {
@@ -2315,6 +2352,13 @@
         "server/database/alertRulesDao.ts",
         "server/tests/alertRulesReliability.test.ts",
         "src/components/AlertRulesModal.tsx"
+      ]
+    },
+    {
+      "path": "src/styles/avatars.css",
+      "sha256": "b9364475f964992871d392760026d90897c953fad9fbec3328ae4d18937f8468",
+      "importedBy": [
+        "src/main.tsx"
       ]
     },
     {
@@ -2398,6 +2442,14 @@
         "server/tests/announcementFeed.test.ts",
         "src/components/Announcements.tsx",
         "src/components/WatchlistManager.tsx"
+      ]
+    },
+    {
+      "path": "src/utils/avatarSave.ts",
+      "sha256": "2ac96c8bc408aa9224c684df771e3f1ea238471fa1d305e4aed8489a13e52d71",
+      "importedBy": [
+        "server/tests/avatar.test.ts",
+        "src/context/AuthContext.tsx"
       ]
     },
     {
@@ -4560,6 +4612,24 @@
       "line": 86
     },
     {
+      "source": "server/tests/avatar.test.ts",
+      "target": "src/config/avatars.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "server/tests/avatar.test.ts",
+      "target": "src/utils/avatarSave.ts",
+      "kind": "import",
+      "line": 4
+    },
+    {
+      "source": "server/tests/avatar.test.ts",
+      "target": "src/components/ui/UserAvatar.tsx",
+      "kind": "import",
+      "line": 7
+    },
+    {
       "source": "server/tests/batchOperations.test.ts",
       "target": "server/database/announcementDao.ts",
       "kind": "import",
@@ -5496,6 +5566,30 @@
       "line": 4
     },
     {
+      "source": "src/components/AvatarPicker.tsx",
+      "target": "src/context/AuthContext.tsx",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "src/components/AvatarPicker.tsx",
+      "target": "src/config/avatars.ts",
+      "kind": "import",
+      "line": 4
+    },
+    {
+      "source": "src/components/AvatarPicker.tsx",
+      "target": "src/components/ui/UserAvatar.tsx",
+      "kind": "import",
+      "line": 5
+    },
+    {
+      "source": "src/components/AvatarPicker.tsx",
+      "target": "src/components/ui/ActionButton.tsx",
+      "kind": "import",
+      "line": 6
+    },
+    {
       "source": "src/components/BlogReaderModal.tsx",
       "target": "src/types.ts",
       "kind": "import",
@@ -5971,207 +6065,213 @@
     },
     {
       "source": "src/components/Layout.tsx",
-      "target": "src/styles/mobile-repairs.css",
+      "target": "src/components/ui/UserAvatar.tsx",
       "kind": "import",
       "line": 1
     },
     {
       "source": "src/components/Layout.tsx",
-      "target": "src/components/ui/RichVisual.tsx",
+      "target": "src/styles/mobile-repairs.css",
       "kind": "import",
       "line": 2
     },
     {
       "source": "src/components/Layout.tsx",
-      "target": "src/components/ui/MarketClock.tsx",
+      "target": "src/components/ui/RichVisual.tsx",
       "kind": "import",
-      "line": 13
+      "line": 3
     },
     {
       "source": "src/components/Layout.tsx",
-      "target": "src/components/ui/BseNexusLogo.tsx",
+      "target": "src/components/ui/MarketClock.tsx",
       "kind": "import",
       "line": 14
     },
     {
       "source": "src/components/Layout.tsx",
-      "target": "src/components/ui/MarketTickerTape.tsx",
+      "target": "src/components/ui/BseNexusLogo.tsx",
       "kind": "import",
       "line": 15
     },
     {
       "source": "src/components/Layout.tsx",
-      "target": "src/components/ui/SyncStatusBadge.tsx",
+      "target": "src/components/ui/MarketTickerTape.tsx",
       "kind": "import",
       "line": 16
     },
     {
       "source": "src/components/Layout.tsx",
-      "target": "src/components/ui/ComponentSkeleton.tsx",
+      "target": "src/components/ui/SyncStatusBadge.tsx",
       "kind": "import",
       "line": 17
     },
     {
       "source": "src/components/Layout.tsx",
-      "target": "src/components/ui/ScrollProgressBar.tsx",
+      "target": "src/components/ui/ComponentSkeleton.tsx",
       "kind": "import",
       "line": 18
     },
     {
       "source": "src/components/Layout.tsx",
-      "target": "src/components/ui/BackToTop.tsx",
+      "target": "src/components/ui/ScrollProgressBar.tsx",
       "kind": "import",
       "line": 19
     },
     {
       "source": "src/components/Layout.tsx",
-      "target": "src/components/ui/SupportFloat.tsx",
+      "target": "src/components/ui/BackToTop.tsx",
       "kind": "import",
       "line": 20
     },
     {
       "source": "src/components/Layout.tsx",
-      "target": "src/components/ui/AutosaveIndicator.tsx",
+      "target": "src/components/ui/SupportFloat.tsx",
       "kind": "import",
       "line": 21
     },
     {
       "source": "src/components/Layout.tsx",
-      "target": "src/components/ui/CommandPalette.tsx",
+      "target": "src/components/ui/AutosaveIndicator.tsx",
       "kind": "import",
       "line": 22
     },
     {
       "source": "src/components/Layout.tsx",
-      "target": "src/context/AuthContext.tsx",
+      "target": "src/components/ui/CommandPalette.tsx",
       "kind": "import",
       "line": 23
     },
     {
       "source": "src/components/Layout.tsx",
-      "target": "src/context/IntelModalContext.tsx",
+      "target": "src/context/AuthContext.tsx",
       "kind": "import",
       "line": 24
     },
     {
       "source": "src/components/Layout.tsx",
-      "target": "src/api.ts",
+      "target": "src/context/IntelModalContext.tsx",
       "kind": "import",
       "line": 25
     },
     {
       "source": "src/components/Layout.tsx",
-      "target": "src/hooks/useVisibilityInterval.ts",
+      "target": "src/api.ts",
       "kind": "import",
       "line": 26
     },
     {
       "source": "src/components/Layout.tsx",
+      "target": "src/hooks/useVisibilityInterval.ts",
+      "kind": "import",
+      "line": 27
+    },
+    {
+      "source": "src/components/Layout.tsx",
       "target": "src/utils/motionTokens.ts",
       "kind": "import",
-      "line": 29
+      "line": 30
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/UserProfileModal.tsx",
       "kind": "import",
-      "line": 39
+      "line": 40
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/AuthModal.tsx",
       "kind": "import",
-      "line": 40
+      "line": 41
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/ProUpgradeModal.tsx",
       "kind": "import",
-      "line": 41
+      "line": 42
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/ui/SocialLinks.tsx",
       "kind": "import",
-      "line": 42
+      "line": 43
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/AdminPinModal.tsx",
       "kind": "import",
-      "line": 43
+      "line": 44
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/HelpModal.tsx",
       "kind": "import",
-      "line": 44
+      "line": 45
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/TermsModal.tsx",
       "kind": "import",
-      "line": 45
+      "line": 46
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/SecurityAuditModal.tsx",
       "kind": "import",
-      "line": 46
+      "line": 47
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/CookieConsentBanner.tsx",
       "kind": "import",
-      "line": 47
+      "line": 48
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/NotificationInbox.tsx",
       "kind": "import",
-      "line": 48
+      "line": 49
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/AlertRulesModal.tsx",
       "kind": "import",
-      "line": 49
+      "line": 50
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/CompanyIntelligenceModal.tsx",
       "kind": "import",
-      "line": 50
+      "line": 51
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/notes/NoteEditor.tsx",
       "kind": "import",
-      "line": 51
+      "line": 52
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/TodayMarketStoryModal.tsx",
       "kind": "import",
-      "line": 52
+      "line": 53
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/PushNotificationPrompt.tsx",
       "kind": "import",
-      "line": 53
+      "line": 54
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/ReferralDashboardModal.tsx",
       "kind": "import",
-      "line": 54
+      "line": 55
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/story/storyData.ts",
       "kind": "import",
-      "line": 55
+      "line": 56
     },
     {
       "source": "src/components/Login.tsx",
@@ -6805,123 +6905,135 @@
     },
     {
       "source": "src/components/SettingsTab.tsx",
-      "target": "src/hooks/useScreenTransition.ts",
+      "target": "src/components/AvatarPicker.tsx",
+      "kind": "import",
+      "line": 1
+    },
+    {
+      "source": "src/components/SettingsTab.tsx",
+      "target": "src/components/ui/UserAvatar.tsx",
       "kind": "import",
       "line": 2
     },
     {
       "source": "src/components/SettingsTab.tsx",
-      "target": "src/utils/cashfree.ts",
+      "target": "src/hooks/useScreenTransition.ts",
       "kind": "import",
       "line": 4
     },
     {
       "source": "src/components/SettingsTab.tsx",
+      "target": "src/utils/cashfree.ts",
+      "kind": "import",
+      "line": 6
+    },
+    {
+      "source": "src/components/SettingsTab.tsx",
       "target": "src/components/TermsModal.tsx",
-      "kind": "import",
-      "line": 18
-    },
-    {
-      "source": "src/components/SettingsTab.tsx",
-      "target": "src/components/SecurityAuditModal.tsx",
-      "kind": "import",
-      "line": 19
-    },
-    {
-      "source": "src/components/SettingsTab.tsx",
-      "target": "src/components/AlertRulesModal.tsx",
       "kind": "import",
       "line": 20
     },
     {
       "source": "src/components/SettingsTab.tsx",
-      "target": "src/components/HelpModal.tsx",
+      "target": "src/components/SecurityAuditModal.tsx",
       "kind": "import",
       "line": 21
     },
     {
       "source": "src/components/SettingsTab.tsx",
-      "target": "src/components/SubscriptionCard.tsx",
+      "target": "src/components/AlertRulesModal.tsx",
       "kind": "import",
       "line": 22
     },
     {
       "source": "src/components/SettingsTab.tsx",
-      "target": "src/components/AiUsageCard.tsx",
+      "target": "src/components/HelpModal.tsx",
       "kind": "import",
       "line": 23
     },
     {
       "source": "src/components/SettingsTab.tsx",
-      "target": "src/context/AuthContext.tsx",
+      "target": "src/components/SubscriptionCard.tsx",
       "kind": "import",
       "line": 24
     },
     {
       "source": "src/components/SettingsTab.tsx",
-      "target": "src/api.ts",
+      "target": "src/components/AiUsageCard.tsx",
       "kind": "import",
       "line": 25
     },
     {
       "source": "src/components/SettingsTab.tsx",
-      "target": "src/utils/developerMode.ts",
+      "target": "src/context/AuthContext.tsx",
       "kind": "import",
       "line": 26
     },
     {
       "source": "src/components/SettingsTab.tsx",
-      "target": "src/components/notes/SavedNotesScreen.tsx",
+      "target": "src/api.ts",
       "kind": "import",
       "line": 27
     },
     {
       "source": "src/components/SettingsTab.tsx",
-      "target": "src/version.ts",
+      "target": "src/utils/developerMode.ts",
       "kind": "import",
       "line": 28
     },
     {
       "source": "src/components/SettingsTab.tsx",
-      "target": "src/hooks/useBodyScrollLock.ts",
+      "target": "src/components/notes/SavedNotesScreen.tsx",
       "kind": "import",
       "line": 29
     },
     {
       "source": "src/components/SettingsTab.tsx",
-      "target": "src/hooks/useFeedDensity.ts",
+      "target": "src/version.ts",
       "kind": "import",
       "line": 30
     },
     {
       "source": "src/components/SettingsTab.tsx",
-      "target": "src/types.ts",
+      "target": "src/hooks/useBodyScrollLock.ts",
       "kind": "import",
       "line": 31
     },
     {
       "source": "src/components/SettingsTab.tsx",
-      "target": "src/utils/motionTokens.ts",
+      "target": "src/hooks/useFeedDensity.ts",
       "kind": "import",
       "line": 32
     },
     {
       "source": "src/components/SettingsTab.tsx",
-      "target": "src/components/ui/SupportFloat.tsx",
+      "target": "src/types.ts",
       "kind": "import",
       "line": 33
     },
     {
       "source": "src/components/SettingsTab.tsx",
-      "target": "src/components/ui/ActionButton.tsx",
+      "target": "src/utils/motionTokens.ts",
       "kind": "import",
       "line": 34
     },
     {
       "source": "src/components/SettingsTab.tsx",
+      "target": "src/components/ui/SupportFloat.tsx",
+      "kind": "import",
+      "line": 35
+    },
+    {
+      "source": "src/components/SettingsTab.tsx",
+      "target": "src/components/ui/ActionButton.tsx",
+      "kind": "import",
+      "line": 36
+    },
+    {
+      "source": "src/components/SettingsTab.tsx",
       "target": "src/api/notesApi.ts",
       "kind": "dynamic",
-      "line": 138
+      "line": 140
     },
     {
       "source": "src/components/StorageManager.tsx",
@@ -7033,27 +7145,39 @@
     },
     {
       "source": "src/components/UserProfileModal.tsx",
+      "target": "src/components/AvatarPicker.tsx",
+      "kind": "import",
+      "line": 1
+    },
+    {
+      "source": "src/components/UserProfileModal.tsx",
+      "target": "src/components/ui/UserAvatar.tsx",
+      "kind": "import",
+      "line": 2
+    },
+    {
+      "source": "src/components/UserProfileModal.tsx",
       "target": "src/context/AuthContext.tsx",
-      "kind": "import",
-      "line": 8
-    },
-    {
-      "source": "src/components/UserProfileModal.tsx",
-      "target": "src/hooks/useBodyScrollLock.ts",
-      "kind": "import",
-      "line": 9
-    },
-    {
-      "source": "src/components/UserProfileModal.tsx",
-      "target": "src/api.ts",
       "kind": "import",
       "line": 10
     },
     {
       "source": "src/components/UserProfileModal.tsx",
-      "target": "src/utils/motionTokens.ts",
+      "target": "src/hooks/useBodyScrollLock.ts",
       "kind": "import",
       "line": 11
+    },
+    {
+      "source": "src/components/UserProfileModal.tsx",
+      "target": "src/api.ts",
+      "kind": "import",
+      "line": 12
+    },
+    {
+      "source": "src/components/UserProfileModal.tsx",
+      "target": "src/utils/motionTokens.ts",
+      "kind": "import",
+      "line": 13
     },
     {
       "source": "src/components/WatchlistManager.tsx",
@@ -7782,6 +7906,12 @@
       "line": 3
     },
     {
+      "source": "src/components/ui/UserAvatar.tsx",
+      "target": "src/config/avatars.ts",
+      "kind": "import",
+      "line": 2
+    },
+    {
       "source": "src/components/ui/motion/RollingNumber.tsx",
       "target": "src/utils/motionTokens.ts",
       "kind": "import",
@@ -7831,57 +7961,69 @@
     },
     {
       "source": "src/context/AuthContext.tsx",
-      "target": "src/hooks/useExpiryClock.ts",
+      "target": "src/utils/avatarSave.ts",
       "kind": "import",
       "line": 1
     },
     {
       "source": "src/context/AuthContext.tsx",
+      "target": "src/config/avatars.ts",
+      "kind": "import",
+      "line": 2
+    },
+    {
+      "source": "src/context/AuthContext.tsx",
+      "target": "src/hooks/useExpiryClock.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "src/context/AuthContext.tsx",
       "target": "src/firebase.ts",
-      "kind": "import",
-      "line": 14
-    },
-    {
-      "source": "src/context/AuthContext.tsx",
-      "target": "src/types.ts",
-      "kind": "import",
-      "line": 15
-    },
-    {
-      "source": "src/context/AuthContext.tsx",
-      "target": "src/api.ts",
       "kind": "import",
       "line": 16
     },
     {
       "source": "src/context/AuthContext.tsx",
-      "target": "src/utils/retry.ts",
+      "target": "src/types.ts",
       "kind": "import",
       "line": 17
     },
     {
       "source": "src/context/AuthContext.tsx",
-      "target": "src/utils/preferenceSaveQueue.ts",
+      "target": "src/api.ts",
       "kind": "import",
       "line": 18
     },
     {
       "source": "src/context/AuthContext.tsx",
-      "target": "src/utils/recaptcha.ts",
+      "target": "src/utils/retry.ts",
       "kind": "import",
       "line": 19
     },
     {
       "source": "src/context/AuthContext.tsx",
-      "target": "src/utils/cashfree.ts",
+      "target": "src/utils/preferenceSaveQueue.ts",
       "kind": "import",
       "line": 20
     },
     {
       "source": "src/context/AuthContext.tsx",
-      "target": "src/utils/cashfree.ts",
+      "target": "src/utils/recaptcha.ts",
       "kind": "import",
       "line": 21
+    },
+    {
+      "source": "src/context/AuthContext.tsx",
+      "target": "src/utils/cashfree.ts",
+      "kind": "import",
+      "line": 22
+    },
+    {
+      "source": "src/context/AuthContext.tsx",
+      "target": "src/utils/cashfree.ts",
+      "kind": "import",
+      "line": 23
     },
     {
       "source": "src/context/NoteEditorContext.tsx",
@@ -7963,15 +8105,21 @@
     },
     {
       "source": "src/main.tsx",
-      "target": "src/utils/telemetry.ts",
+      "target": "src/styles/avatars.css",
       "kind": "import",
       "line": 7
     },
     {
       "source": "src/main.tsx",
-      "target": "src/utils/oneSignal.ts",
+      "target": "src/utils/telemetry.ts",
       "kind": "import",
       "line": 8
+    },
+    {
+      "source": "src/main.tsx",
+      "target": "src/utils/oneSignal.ts",
+      "kind": "import",
+      "line": 9
     },
     {
       "source": "src/utils/aiQuota.ts",
@@ -7990,6 +8138,12 @@
       "target": "src/utils/timeFormat.ts",
       "kind": "import",
       "line": 13
+    },
+    {
+      "source": "src/utils/avatarSave.ts",
+      "target": "src/config/avatars.ts",
+      "kind": "import",
+      "line": 1
     },
     {
       "source": "src/utils/cashfree.ts",
@@ -8015,12 +8169,17 @@
         "server/database/usersDao.ts",
         "src/context/AuthContext.tsx",
         "src/firebase.ts",
-        "src/api.ts"
+        "src/api.ts",
+        "src/config/avatars.ts",
+        "src/utils/avatarSave.ts",
+        "src/components/AvatarPicker.tsx",
+        "src/components/ui/UserAvatar.tsx"
       ],
       "tests": [
         "server/tests/authIdentity.test.ts",
         "server/tests/accountProtection.test.ts",
-        "server/tests/recaptchaSecurity.test.ts"
+        "server/tests/recaptchaSecurity.test.ts",
+        "server/tests/avatar.test.ts"
       ],
       "reason": "Verified token → server session → current durable profile → route authorization. Browser roles are display state; never authority."
     },
@@ -8362,12 +8521,17 @@
         "src/components/ui/SyncStatusBadge.tsx",
         "src/utils/preferenceSaveQueue.ts",
         "src/api.ts",
-        "src/firebase.ts"
+        "src/firebase.ts",
+        "src/config/avatars.ts",
+        "src/utils/avatarSave.ts",
+        "src/components/AvatarPicker.tsx",
+        "src/components/ui/UserAvatar.tsx"
       ],
       "tests": [
         "server/tests/preferenceSaveQueue.test.ts",
         "server/tests/recaptchaUiState.test.ts",
-        "server/tests/apiCancellation.test.ts"
+        "server/tests/apiCancellation.test.ts",
+        "server/tests/avatar.test.ts"
       ],
       "reason": "Guest, restoring, signed-in and expired states must stay distinct. Late requests and saved preferences must not overwrite newer edits or leak between accounts. A success message requires the appropriate confirmed result."
     },
@@ -8401,10 +8565,16 @@
         "src/components/ui/RichVisual.tsx",
         "src/components/ui/helios.tsx",
         "src/components/ui/PlanCard.tsx",
-        "src/components/ui/motion/SlidingTabList.tsx"
+        "src/components/ui/motion/SlidingTabList.tsx",
+        "src/config/avatars.ts",
+        "src/utils/avatarSave.ts",
+        "src/components/AvatarPicker.tsx",
+        "src/components/ui/UserAvatar.tsx",
+        "src/styles/avatars.css"
       ],
       "tests": [
-        "server/tests/homeNews.test.ts"
+        "server/tests/homeNews.test.ts",
+        "server/tests/avatar.test.ts"
       ],
       "reason": "Global CSS, inherited theme tokens, shared controls, focus, z-index and scroll locks connect screens without direct imports. Review all changed selector/token consumers; this seed list is not every affected screen. No browser accessibility or screenshot test suite is established by this domain."
     },
@@ -11672,19 +11842,19 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 181,
+      "line": 182,
       "function": "customFetch",
       "target": "'/api/storage/quota-mode'"
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 201,
+      "line": 202,
       "function": "customFetch",
       "target": "'/api/notifications/unread-count'"
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 713,
+      "line": 701,
       "function": "customFetch",
       "target": "'/api/health'"
     },
@@ -11924,49 +12094,49 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 335,
+      "line": 339,
       "function": "customFetch",
       "target": "'/api/settings'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 380,
+      "line": 384,
       "function": "customFetch",
       "target": "'/api/settings'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 613,
+      "line": 617,
       "function": "customFetch",
       "target": "'/api/users/test-telegram'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 642,
+      "line": 646,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 781,
+      "line": 785,
       "function": "customFetch",
       "target": "'/api/toggle'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 818,
+      "line": 822,
       "function": "customFetch",
       "target": "'/api/settings'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 843,
+      "line": 847,
       "function": "customFetch",
       "target": "'/api/test-telegram'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 862,
+      "line": 866,
       "function": "customFetch",
       "target": "'/api/test-gemini'"
     },
@@ -12032,13 +12202,13 @@
     },
     {
       "file": "src/components/UserProfileModal.tsx",
-      "line": 65,
+      "line": 69,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/UserProfileModal.tsx",
-      "line": 66,
+      "line": 70,
       "function": "customFetch",
       "target": "'/api/notifications/unread-count'"
     },
@@ -12254,79 +12424,79 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 290,
+      "line": 298,
       "function": "customFetch",
       "target": "'/auth/session'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 315,
+      "line": 323,
       "function": "customFetch",
       "target": "'/api/users/profile'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 570,
+      "line": 578,
       "function": "customFetch",
       "target": "'/auth/status'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 832,
+      "line": 840,
       "function": "customFetch",
       "target": "'/auth/login'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 857,
+      "line": 865,
       "function": "customFetch",
       "target": "'/auth/verify-pin'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 890,
+      "line": 898,
       "function": "customFetch",
       "target": "'/auth/session'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 911,
+      "line": 919,
       "function": "customFetch",
       "target": "'/auth/logout'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 962,
+      "line": 970,
       "function": "customFetch",
       "target": "`/api/users/check-username?username=${encodeURIComponent(clean)}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1036,
+      "line": 1068,
       "function": "customFetch",
       "target": "'/api/users/profile'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1101,
+      "line": 1136,
       "function": "customFetch",
       "target": "'/api/users/profile'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1177,
+      "line": 1212,
       "function": "customFetch",
       "target": "'/api/users/telegram/settings'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1199,
+      "line": 1234,
       "function": "customFetch",
       "target": "'/api/users/profile'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1256,
+      "line": 1291,
       "function": "customFetch",
       "target": "'/api/users/profile'"
     },
@@ -13162,19 +13332,19 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 108,
+      "line": 109,
       "function": "localStorage.getItem",
       "key": "sessionKey"
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 115,
+      "line": 116,
       "function": "localStorage.getItem",
       "key": "sessionKey"
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 128,
+      "line": 129,
       "function": "localStorage.setItem",
       "key": "sessionKey"
     },
@@ -13276,25 +13446,25 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 213,
+      "line": 217,
       "function": "localStorage.getItem",
       "key": "'bse_sound_enabled'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 323,
+      "line": 327,
       "function": "localStorage.setItem",
       "key": "'bse_sound_enabled'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 370,
+      "line": 374,
       "function": "localStorage.setItem",
       "key": "'bse_sound_enabled'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 711,
+      "line": 715,
       "function": "localStorage.removeItem",
       "key": "k"
     },
@@ -13420,211 +13590,211 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 169,
+      "line": 173,
       "function": "localStorage.getItem",
       "key": "STORAGE_SESSION_KEY"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 182,
+      "line": 186,
       "function": "localStorage.removeItem",
       "key": "STORAGE_SESSION_KEY"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 183,
+      "line": 187,
       "function": "localStorage.removeItem",
       "key": "'bse_nexus_fb_id_token'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 219,
+      "line": 227,
       "function": "localStorage.removeItem",
       "key": "STORAGE_SESSION_KEY"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 230,
+      "line": 238,
       "function": "localStorage.removeItem",
       "key": "STORAGE_SESSION_KEY"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 240,
+      "line": 248,
       "function": "localStorage.setItem",
       "key": "STORAGE_SESSION_KEY"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 255,
+      "line": 263,
       "function": "localStorage.getItem",
       "key": "`bse_user_handle_${uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 256,
+      "line": 264,
       "function": "localStorage.getItem",
       "key": "`bse_user_tg_chat_id_${uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 257,
+      "line": 265,
       "function": "localStorage.getItem",
       "key": "`bse_user_tg_username_${uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 279,
+      "line": 287,
       "function": "localStorage.setItem",
       "key": "'bse_nexus_fb_id_token'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 281,
+      "line": 289,
       "function": "localStorage.removeItem",
       "key": "'bse_nexus_fb_id_token'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 323,
+      "line": 331,
       "function": "localStorage.setItem",
       "key": "`bse_user_handle_${uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 483,
+      "line": 491,
       "function": "sessionStorage.getItem",
       "key": "'bse_guest_active_session'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 491,
+      "line": 499,
       "function": "localStorage.removeItem",
       "key": "STORAGE_SESSION_KEY"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 492,
+      "line": 500,
       "function": "localStorage.removeItem",
       "key": "'bse_nexus_fb_id_token'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 509,
+      "line": 517,
       "function": "localStorage.getItem",
       "key": "STORAGE_SESSION_KEY"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 523,
+      "line": 531,
       "function": "localStorage.removeItem",
       "key": "STORAGE_SESSION_KEY"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 545,
+      "line": 553,
       "function": "localStorage.getItem",
       "key": "STORAGE_SESSION_KEY"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 559,
+      "line": 567,
       "function": "localStorage.removeItem",
       "key": "STORAGE_SESSION_KEY"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 660,
+      "line": 668,
       "function": "sessionStorage.setItem",
       "key": "'bse_guest_active_session'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 887,
+      "line": 895,
       "function": "localStorage.getItem",
       "key": "'bse_nexus_fb_id_token'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 915,
+      "line": 923,
       "function": "localStorage.removeItem",
       "key": "STORAGE_SESSION_KEY"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 916,
+      "line": 924,
       "function": "localStorage.removeItem",
       "key": "'bse_nexus_auth_token'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 917,
+      "line": 925,
       "function": "localStorage.removeItem",
       "key": "'bse_nexus_fb_id_token'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 918,
+      "line": 926,
       "function": "localStorage.removeItem",
       "key": "'bse_user_tg_chat_id_global'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 919,
+      "line": 927,
       "function": "localStorage.removeItem",
       "key": "'bse_user_tg_username_global'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 920,
+      "line": 928,
       "function": "localStorage.removeItem",
       "key": "'bse_telegram_chat_id'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 921,
+      "line": 929,
       "function": "localStorage.removeItem",
       "key": "'bse_chat_id'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 926,
+      "line": 934,
       "function": "localStorage.removeItem",
       "key": "k"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1029,
+      "line": 1061,
       "function": "localStorage.setItem",
       "key": "`bse_user_handle_${user.uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1164,
+      "line": 1199,
       "function": "localStorage.setItem",
       "key": "`bse_user_tg_chat_id_${profile.uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1166,
+      "line": 1201,
       "function": "localStorage.removeItem",
       "key": "`bse_user_tg_chat_id_${profile.uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1169,
+      "line": 1204,
       "function": "localStorage.setItem",
       "key": "`bse_user_tg_username_${profile.uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1171,
+      "line": 1206,
       "function": "localStorage.removeItem",
       "key": "`bse_user_tg_username_${profile.uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1252,
+      "line": 1287,
       "function": "localStorage.setItem",
       "key": "`bse_trial_used_${trialUid}`"
     },
@@ -15086,7 +15256,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 95,
+      "line": 96,
       "target": "window",
       "kind": "listen",
       "name": "open-referral-modal",
@@ -15094,7 +15264,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 96,
+      "line": 97,
       "target": "window",
       "kind": "remove",
       "name": "open-referral-modal",
@@ -15102,7 +15272,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 167,
+      "line": 168,
       "target": "window",
       "kind": "listen",
       "name": "network-status",
@@ -15110,7 +15280,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 170,
+      "line": 171,
       "target": "window",
       "kind": "listen",
       "name": "online",
@@ -15118,7 +15288,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 171,
+      "line": 172,
       "target": "window",
       "kind": "listen",
       "name": "offline",
@@ -15126,7 +15296,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 173,
+      "line": 174,
       "target": "window",
       "kind": "remove",
       "name": "network-status",
@@ -15134,7 +15304,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 174,
+      "line": 175,
       "target": "window",
       "kind": "remove",
       "name": "online",
@@ -15142,7 +15312,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 175,
+      "line": 176,
       "target": "window",
       "kind": "remove",
       "name": "offline",
@@ -15150,7 +15320,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 226,
+      "line": 227,
       "target": "window",
       "kind": "dispatch",
       "name": "bse_nav_tab_refresh",
@@ -15190,7 +15360,7 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 145,
+      "line": 147,
       "target": "window",
       "kind": "listen",
       "name": "notes-changed",
@@ -15198,7 +15368,7 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 146,
+      "line": 148,
       "target": "window",
       "kind": "remove",
       "name": "notes-changed",
@@ -15206,7 +15376,7 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 306,
+      "line": 310,
       "target": "window",
       "kind": "listen",
       "name": "keydown",
@@ -15214,7 +15384,7 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 307,
+      "line": 311,
       "target": "window",
       "kind": "remove",
       "name": "keydown",
@@ -15222,7 +15392,7 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 1819,
+      "line": 1823,
       "target": "window",
       "kind": "dispatch",
       "name": "open-referral-modal",
@@ -15718,7 +15888,7 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 155,
+      "line": 159,
       "target": "window",
       "kind": "dispatch",
       "name": "auth-state-changed",

@@ -1,3 +1,5 @@
+import { createAvatarSaveController } from '../utils/avatarSave';
+import type { AvatarId } from '../config/avatars';
 import { useExpiryClock } from '../hooks/useExpiryClock';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { 
@@ -113,6 +115,8 @@ interface AuthContextType {
   verifyAdminPin: (pin: string) => Promise<{ success: boolean; error?: string }>;
   lockAdminSession: () => Promise<void>;
   logout: () => Promise<void>;
+  accountPhotoURL: string | null;
+  updateAvatar: (id: AvatarId | null) => Promise<ProfileUpdateResult>;
   updateProfileInfo: (displayNameOrObj: string | UpdateProfileParams, usernameOrTg?: string, telegramUsername?: string) => Promise<ProfileUpdateResult>;
   checkUsernameAvailability: (username: string) => Promise<{ available: boolean; cleanUsername: string; reason?: string; suggestion?: string }>;
   updateNotificationPreferences: (prefs: Partial<UserNotificationPreferences>) => Promise<boolean>;
@@ -196,6 +200,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const cached = getCachedSession();
   const [user, setUser] = useState<any | null>(cached.user);
   const [profile, setProfile] = useState<UserProfile | null>(cached.profile);
+  const avatarStateRef = React.useRef({ user, profile });
+  avatarStateRef.current = { user, profile };
+  const avatarSaveRef = React.useRef<ReturnType<typeof createAvatarSaveController> | null>(null);
+  if (!avatarSaveRef.current) avatarSaveRef.current = createAvatarSaveController();
   const [profileUnavailable, setProfileUnavailable] = useState(false);
   const [loading, setLoading] = useState(!cached.user);
   const [authLoading, setAuthLoading] = useState(false);
@@ -348,7 +356,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               email: firebaseUser.email,
               displayName: firebaseUser.displayName || data.profile.displayName || (firebaseUser.email ? firebaseUser.email.split('@')[0] : 'Trader'),
               username: resolvedUsername,
-              photoURL: firebaseUser.photoURL || data.profile.photoURL || null,
+              photoURL: firebaseUser.photoURL ?? null,
               tier: resolvedTier,
               proExpiresAt: proExpiresAt,
               // HARD RULE: payment markers must survive into the client profile —
@@ -981,6 +989,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Firebase Auth already owns the account photo. The server profile whitelist stays unchanged.
+  const updateAvatar = async (id: AvatarId | null): Promise<ProfileUpdateResult> => {
+    const account = auth?.currentUser || null;
+    if (!account || avatarStateRef.current.user?.uid !== account.uid || avatarStateRef.current.profile?.uid !== account.uid) {
+      return { success: false, error: 'Wait for your account to finish loading, then try again.' };
+    }
+    return avatarSaveRef.current!.save(id, {
+      account,
+      currentAccount: () => {
+        const current = auth?.currentUser;
+        return current && avatarStateRef.current.user?.uid === current.uid && avatarStateRef.current.profile?.uid === current.uid ? current : null;
+      },
+      persist: (actor, photoURL) => updateProfile(actor, { photoURL }),
+      apply: (uid, photoURL) => {
+        const current = avatarStateRef.current;
+        if (current.user?.uid !== uid || current.profile?.uid !== uid) return;
+        const next = { ...current.profile, photoURL };
+        avatarStateRef.current = { ...current, profile: next };
+        setProfile(next);
+        saveLocalSession(account, next);
+      },
+    });
+  };
+
   const updateProfileInfo = async (
     displayNameOrObj: string | UpdateProfileParams, 
     usernameOrTg?: string, 
@@ -1058,7 +1090,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (res.ok && data.success) {
-        const finalProfile = data.profile || updatedProfile;
+        const confirmed = data.profile || updatedProfile;
+        // A name/handle save must not overwrite the separately confirmed Firebase avatar.
+        const photoURL = auth?.currentUser?.uid === user.uid ? auth.currentUser.photoURL : updatedProfile.photoURL;
+        const finalProfile = { ...confirmed, photoURL: photoURL ?? null };
         setProfile(finalProfile);
         saveLocalSession(user, finalProfile);
         reportSyncStatus('synced');
@@ -1335,6 +1370,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         verifyAdminPin,
         lockAdminSession,
         logout,
+        accountPhotoURL: user?.providerData?.find((p: any) => p.photoURL)?.photoURL || null,
+        updateAvatar,
         updateProfileInfo,
         checkUsernameAvailability,
         updateNotificationPreferences,

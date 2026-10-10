@@ -1,3 +1,5 @@
+import { AvatarPicker } from './AvatarPicker';
+import { UserAvatar } from './ui/UserAvatar';
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
@@ -49,6 +51,8 @@ export function UserProfileModal({
   } = useAuth();
 
   useBodyScrollLock(isOpen);
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  useEffect(() => { setShowAvatarPicker(false); }, [isOpen, user?.uid]);
 
   // Real-time research stats
   const [watchlistCount, setWatchlistCount] = useState<number>(0);
@@ -176,22 +180,7 @@ export function UserProfileModal({
         <div className="p-4 sm:p-5 overflow-y-auto space-y-4">
           {/* Identity Block: Photo, Name, Watching Since */}
           <div className="flex items-center gap-3.5">
-            {profile?.photoURL ? (
-              <img 
-                src={profile.photoURL} 
-                alt={`Avatar for ${displayName}`} 
-                width={52}
-                height={52}
-                loading="lazy"
-                decoding="async"
-                className="w-13 h-13 rounded-2xl border-2 border-slate-100 dark:border-[#2D283E] object-cover shadow-xs shrink-0" 
-                referrerPolicy="no-referrer"
-              />
-            ) : (
-              <div className="w-13 h-13 rounded-2xl bg-slate-900 dark:bg-slate-800 text-white font-black flex items-center justify-center text-lg shadow-xs shrink-0 uppercase">
-                {displayName.substring(0, 2)}
-              </div>
-            )}
+            <UserAvatar photoURL={profile?.photoURL} name={displayName} size={52} className="rounded-2xl" />
 
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5 mb-0.5">
@@ -225,6 +214,13 @@ export function UserProfileModal({
               </div>
             </div>
           </div>
+
+          {user && !user.isAnonymous && <div>
+            <button type="button" className="rich-action rich-action-secondary min-h-[44px] w-full rounded-xl px-3 py-2 text-xs font-semibold" aria-expanded={showAvatarPicker} aria-controls="profile-avatar-picker" onClick={() => setShowAvatarPicker(v => !v)}>
+              {showAvatarPicker ? 'Close avatar picker' : 'Choose your avatar'}
+            </button>
+            {showAvatarPicker && <div id="profile-avatar-picker" className="mt-3"><AvatarPicker key={user.uid} /></div>}
+          </div>}
 
           {/* Compact "Your Research" Snapshot */}
           <div className="bg-slate-50 dark:bg-[#1C1A2B] border border-slate-200/80 dark:border-[#2A273D] rounded-2xl p-3">

@@ -12,12 +12,17 @@
         "server/database/usersDao.ts",
         "src/context/AuthContext.tsx",
         "src/firebase.ts",
-        "src/api.ts"
+        "src/api.ts",
+        "src/config/avatars.ts",
+        "src/utils/avatarSave.ts",
+        "src/components/AvatarPicker.tsx",
+        "src/components/ui/UserAvatar.tsx"
       ],
       "tests": [
         "server/tests/authIdentity.test.ts",
         "server/tests/accountProtection.test.ts",
-        "server/tests/recaptchaSecurity.test.ts"
+        "server/tests/recaptchaSecurity.test.ts",
+        "server/tests/avatar.test.ts"
       ],
       "reason": "Verified token \u2192 server session \u2192 current durable profile \u2192 route authorization. Browser roles are display state; never authority."
     },
@@ -359,12 +364,17 @@
         "src/components/ui/SyncStatusBadge.tsx",
         "src/utils/preferenceSaveQueue.ts",
         "src/api.ts",
-        "src/firebase.ts"
+        "src/firebase.ts",
+        "src/config/avatars.ts",
+        "src/utils/avatarSave.ts",
+        "src/components/AvatarPicker.tsx",
+        "src/components/ui/UserAvatar.tsx"
       ],
       "tests": [
         "server/tests/preferenceSaveQueue.test.ts",
         "server/tests/recaptchaUiState.test.ts",
-        "server/tests/apiCancellation.test.ts"
+        "server/tests/apiCancellation.test.ts",
+        "server/tests/avatar.test.ts"
       ],
       "reason": "Guest, restoring, signed-in and expired states must stay distinct. Late requests and saved preferences must not overwrite newer edits or leak between accounts. A success message requires the appropriate confirmed result."
     },
@@ -398,10 +408,16 @@
         "src/components/ui/RichVisual.tsx",
         "src/components/ui/helios.tsx",
         "src/components/ui/PlanCard.tsx",
-        "src/components/ui/motion/SlidingTabList.tsx"
+        "src/components/ui/motion/SlidingTabList.tsx",
+        "src/config/avatars.ts",
+        "src/utils/avatarSave.ts",
+        "src/components/AvatarPicker.tsx",
+        "src/components/ui/UserAvatar.tsx",
+        "src/styles/avatars.css"
       ],
       "tests": [
-        "server/tests/homeNews.test.ts"
+        "server/tests/homeNews.test.ts",
+        "server/tests/avatar.test.ts"
       ],
       "reason": "Global CSS, inherited theme tokens, shared controls, focus, z-index and scroll locks connect screens without direct imports. Review all changed selector/token consumers; this seed list is not every affected screen. No browser accessibility or screenshot test suite is established by this domain."
     },

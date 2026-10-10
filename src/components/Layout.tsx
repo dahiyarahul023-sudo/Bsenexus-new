@@ -1,3 +1,4 @@
+import { UserAvatar } from './ui/UserAvatar';
 import '../styles/mobile-repairs.css';
 import { RichIcon } from './ui/RichVisual';
 import React, { useState, useEffect } from 'react';
@@ -558,20 +559,7 @@ export function Layout({
                 title={user || profile ? `${profile?.displayName || 'User'} (${isAdmin ? 'Admin' : isPro ? 'Pro' : 'Guest'})` : 'Guest / Sign In'}
               >
                 <div className="w-full h-full rounded-full bg-white dark:bg-[#1E1B2E] flex items-center justify-center overflow-hidden">
-                  {profile?.photoURL ? (
-                    <img 
-                      src={profile.photoURL} 
-                      alt="Avatar" 
-                      className="w-full h-full rounded-full object-cover" 
-                      referrerPolicy="no-referrer"
-                    />
-                  ) : (
-                    <span className="text-xs font-black uppercase text-slate-800 dark:text-slate-100 select-none">
-                      {((user?.isAnonymous || (!user && !profile)) 
-                        ? 'G' 
-                        : (profile?.displayName || profile?.email || 'U')).charAt(0)}
-                    </span>
-                  )}
+                  <UserAvatar photoURL={profile?.photoURL} name={(user?.isAnonymous || (!user && !profile)) ? 'Guest' : profile?.displayName || profile?.email || 'User'} size={30} className="user-avatar-header" decorative />
                 </div>
 
                 {/* Story ready indicator status badge */}

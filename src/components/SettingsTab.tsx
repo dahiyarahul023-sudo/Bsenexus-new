@@ -1,3 +1,5 @@
+import { AvatarPicker } from './AvatarPicker';
+import { UserAvatar } from './ui/UserAvatar';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useScreenTransition } from '../hooks/useScreenTransition';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -206,6 +208,8 @@ export function SettingsTab({
 
   // Lock body scroll whenever settings modal/drawer is open
   useBodyScrollLock(Boolean(activeSheet || showClearConfirm || showDeleteAccountConfirm));
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  useEffect(() => { setShowAvatarPicker(false); }, [activeSheet, user?.uid]);
 
   // Sound preference from localStorage
   const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
@@ -2323,7 +2327,7 @@ export function SettingsTab({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               transition={springSnappy}
-              className="bg-white dark:bg-[#181626] border border-slate-200 dark:border-[#2D283E] rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4 overscroll-contain"
+              className="bg-white dark:bg-[#181626] border border-slate-200 dark:border-[#2D283E] rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4 max-h-[90dvh] overflow-y-auto overscroll-contain"
             >
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#252236] pb-3">
                 <h3 className="font-bold text-sm text-slate-900 dark:text-white">Edit Profile</h3>
@@ -2336,6 +2340,12 @@ export function SettingsTab({
                 </button>
               </div>
 
+              <div className="avatar-settings-entry">
+                <UserAvatar photoURL={profile?.photoURL} name={profile?.displayName || 'User'} size={52} className="rounded-2xl" decorative />
+                <div><h4>Your avatar</h4><p>Characters or your account photo. Saves separately from your name.</p></div>
+                <button type="button" className="rich-action rich-action-secondary min-h-[44px] px-3 rounded-xl text-xs font-semibold" aria-expanded={showAvatarPicker} aria-controls="settings-avatar-picker" onClick={() => setShowAvatarPicker(v => !v)}>{showAvatarPicker ? 'Close' : 'Choose'}</button>
+              </div>
+              {showAvatarPicker && <div id="settings-avatar-picker"><AvatarPicker key={user?.uid || 'guest'} /></div>}
               <form onSubmit={handleSaveProfile} className="space-y-3 text-xs">
                 <div>
                   <label className="block text-slate-600 dark:text-slate-400 font-semibold mb-1">Display Name</label>

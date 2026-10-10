@@ -4,6 +4,7 @@ import {Sentry, initSentry} from './lib/sentry.ts';
 import App from './App.tsx';
 import './index.css';
 import './styles/rich-ui.css';
+import './styles/avatars.css';
 import { initClientTelemetry } from './utils/telemetry.ts';
 import { initOneSignal } from './utils/oneSignal.ts';
 
