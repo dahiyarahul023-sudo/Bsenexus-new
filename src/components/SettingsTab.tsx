@@ -59,7 +59,7 @@ const SETTINGS_REGISTRY = [
   { id: 'density', title: 'Feed Display Density', description: 'Adjust spacing for disclosure feeds (Comfortable, Compact, Dense)', category: 'Preferences', keywords: ['density', 'compact', 'comfortable', 'dense', 'spacing', 'feed', 'layout'] },
   { id: 'sound', title: 'Audio alerts', description: 'Play chime on high-impact filing updates', category: 'Preferences', keywords: ['sound', 'audio', 'chime', 'bell', 'alert', 'volume', 'audio cue'] },
   { id: 'filter', title: 'High impact filter', description: 'Highlight material price-sensitive disclosures (SEBI LODR 30)', category: 'Preferences', keywords: ['filter', 'materiality', 'high impact', 'sebi', 'lodr', 'price-sensitive'] },
-  { id: 'profile', title: 'Profile & Display name', description: 'Investor identity, name, and public @username handle', category: 'Account & Identity', keywords: ['profile', 'display name', 'username', 'handle', 'account', 'identity'] },
+  { id: 'profile', title: 'Profile & Display name', description: 'Profile avatar, investor name, and public @username handle', category: 'Account & Identity', keywords: ['profile', 'avatar', 'character', 'photo', 'display name', 'username', 'handle', 'account', 'identity'] },
   { id: 'telegram', title: 'Telegram Alert Delivery', description: 'Instant push notifications for watchlist disclosures', category: 'Account & Identity', keywords: ['telegram', 'chat id', 'push', 'notifications', 'phone', 'bot', 'mobile'] },
   { id: 'subscription', title: 'Subscription & Billing', description: 'Pro plan status, payments and verified AI usage', category: 'Account & Identity', keywords: ['subscription', 'billing', 'pro', 'payment', 'renew', 'plan', 'cashfree', 'auto-renew', 'ai', 'quota', 'usage', 'remaining', 'summaries'] },
   { id: 'referrals', title: 'Refer & Earn (Creator Program)', description: 'Referral links, flat ₹100 discount, earnings and verified audit ledger', category: 'Account & Identity', keywords: ['refer', 'referral', 'earn', 'commission', 'affiliate', 'creator', 'discount', '100', '199', '299'] },
@@ -209,7 +209,7 @@ export function SettingsTab({
   // Lock body scroll whenever settings modal/drawer is open
   useBodyScrollLock(Boolean(activeSheet || showClearConfirm || showDeleteAccountConfirm));
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
-  useEffect(() => { setShowAvatarPicker(false); }, [activeSheet, user?.uid]);
+  useEffect(() => { setShowAvatarPicker(false); }, [activeSheet, activeSection, user?.uid]);
 
   // Sound preference from localStorage
   const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
@@ -1090,9 +1090,13 @@ export function SettingsTab({
       )}
     >
       <div className="flex items-center gap-3 min-w-0">
-        <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", def.iconClass)}>
-          <def.icon size={16} />
-        </div>
+        {def.id === 'account' ? (
+          <UserAvatar photoURL={profile?.photoURL} name={profile?.displayName || user?.displayName || 'Guest'} size={32} className="rounded-lg" decorative />
+        ) : (
+          <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", def.iconClass)}>
+            <def.icon size={16} />
+          </div>
+        )}
         <div className="min-w-0">
           <span className={cn("font-semibold", def.danger ? "text-rose-600 dark:text-rose-400" : "text-slate-900 dark:text-white")}>
             {def.title}
@@ -1719,21 +1723,32 @@ export function SettingsTab({
                 onClick={() => setActiveSheet('profile')}
                 className="w-full min-h-[48px] p-3.5 flex items-center justify-between text-left hover:bg-slate-50 dark:hover:bg-[#201E2E] transition-colors cursor-pointer text-xs"
               >
-                <div>
-                  {renderSearchBreadcrumb('Account & Identity')}
-                  <span className="font-semibold text-slate-900 dark:text-white">Profile &amp; Display Name</span>
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                    {profile?.displayName || user?.displayName || 'Investor'}
+                <div className="flex items-center gap-3 min-w-0">
+                  <UserAvatar photoURL={profile?.photoURL} name={profile?.displayName || user?.displayName || 'Guest'} size={40} className="rounded-xl" decorative />
+                  <div className="min-w-0">
+                    {renderSearchBreadcrumb('Account & Identity')}
+                    <span className="font-semibold text-slate-900 dark:text-white">Profile &amp; Display Name</span>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                      {profile?.displayName || user?.displayName || 'Investor'}
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-1.5 text-slate-400">
-                  <span className="text-[11px] font-mono text-purple-600 dark:text-purple-400 font-medium">
+                <div className="flex items-center gap-1.5 text-slate-400 min-w-0 max-w-[35%] shrink-0">
+                  <span className="text-[11px] font-mono text-purple-600 dark:text-purple-400 font-medium truncate">
                     {profile?.username ? `@${profile.username}` : ''}
                   </span>
                   <ChevronRight size={14} />
                 </div>
               </motion.button>
             )}
+
+            {isMatch('profile') && user && !user.isAnonymous && <div className="p-3.5 space-y-3">
+              <button type="button" className="rich-action rich-action-secondary min-h-[44px] w-full rounded-xl px-3 py-2 text-xs font-semibold"
+                aria-expanded={showAvatarPicker} aria-controls="account-avatar-picker" onClick={() => setShowAvatarPicker(v => !v)}>
+                {showAvatarPicker ? 'Close avatar picker' : 'Change avatar'}
+              </button>
+              {showAvatarPicker && !activeSheet && <div id="account-avatar-picker"><AvatarPicker key={user.uid} /></div>}
+            </div>}
 
             {/* 2.2 Telegram Instant Push Delivery & AI Summaries */}
             {isMatch('telegram') && (

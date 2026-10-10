@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "508365675c5fec5c100f077279318ad30aed7fc4b80ade327f83f71d09fa21e1",
+  "sourceDigest": "a861f2adfa9866a61b839cc53af00f47d4cfd91dff2a888e210533e2031df684",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -1471,7 +1471,7 @@
     },
     {
       "path": "src/components/SettingsTab.tsx",
-      "sha256": "e21f52ce159ce748694e8cb5431acb6dc1a7c3a63363fa410d13e98618656b93",
+      "sha256": "660979fd6e0e9e10df6c236d23e29a4704ab64282b6bff28c90fc91ac8a5c383",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -15392,7 +15392,7 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 1823,
+      "line": 1838,
       "target": "window",
       "kind": "dispatch",
       "name": "open-referral-modal",
