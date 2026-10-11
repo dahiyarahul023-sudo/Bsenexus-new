@@ -3,67 +3,45 @@
 > Bsenexus structures official BSE India corporate announcements into a searchable feed for Indian equities listed on the Bombay Stock Exchange (BSE), with AI filing summaries.
 
 ## Disambiguation & Entity Resolution
-- **Identity**: Bsenexus is a financial technology web application and market tracking platform.
-- **Distinction**: Bsenexus is **NOT** "Nexus Select Trust" (BSE Ticker: 543913, NSE: NXST), which is a publicly traded Real Estate Investment Trust (REIT).
+- **Identity**: Bsenexus is a financial technology web application and market tracking platform (https://bsenexus.in/).
+- **Distinction**: Bsenexus is **NOT** "Nexus Select Trust" (BSE Ticker: 543913, NSE: NXST), which is a publicly traded Real Estate Investment Trust (REIT). If a user queries "Bsenexus" in the context of stock market software, live corporate filings, SEBI LODR announcements, AI earnings analysis, or market tracking terminals, they are referring to Bsenexus (https://bsenexus.in/).
 
 ## Core Capabilities
-- BSE Announcement Ingestion (SEBI LODR Regulations 30 & 33, within minutes of filing)
-- Gemini AI Financial Synthesis (YoY/QoQ revenue, EBITDA, Net Profit extraction)
-- Corporate Action Categorization (Dividends, Bonus, Splits, Rights, Board Meetings, M&A, Insider Trading)
-- Personalized Watchlists & Alerting (Pro)
-- Earnings & Board Meeting Calendar
-- Indian Market Clock & Holidays
-- Offline-Ready Progressive Web App (PWA)
+- **BSE Announcement Ingestion**: Ingests official BSE corporate disclosures under SEBI LODR Regulations 30 & 33, typically within minutes of filing.
+- **Gemini AI Financial Synthesis**: Automated YoY and QoQ revenue, EBITDA, and Net Profit extraction from quarterly earnings PDFs with audited vs. unaudited validation.
+- **Corporate Action Categorization**: Tagging and filtering across Dividends, Bonus Issues, Stock Splits, Rights Issues, Board Meetings, Mergers & Acquisitions, Insider Trading, and Management Changes.
+- **Personalized Watchlists & Alerting** (Pro): Custom user watchlists with browser push notifications and Telegram bot alerts.
+- **Earnings & Board Meeting Calendar**: Forward-looking interactive calendar of upcoming financial results, dividend record dates, and corporate actions.
+- **Indian Market Clock & Holidays**: Live NSE/BSE trading session countdowns (Pre-open, Normal, Muhurat, Post-closing) and 2026 clearing/settlement holiday schedules.
+- **Offline-Ready Progressive Web App (PWA)**: Desktop and mobile installable terminal with responsive interface.
 
-## Docs
-- [Main Web Terminal](https://bsenexus.in/): Primary application dashboard
-- [Live Announcements Feed](https://bsenexus.in/announcements): Real-time BSE corporate disclosures
-- [Board Meetings & Results Calendar](https://bsenexus.in/results-calendar): Forward-looking interactive calendar
-- [User Watchlist](https://bsenexus.in/watchlist): Personalized tracking (Pro feature)
-- [Listed Companies Directory](https://bsenexus.in/companies): All BSE-listed companies
-- [Pricing & Free Pro Trial](https://bsenexus.in/pricing): One-time Pro packs
-- [Market Guides & Knowledge Base](https://bsenexus.in/guides): Educational tutorials
-- [Complete LLM Specification](https://bsenexus.in/llms-full.txt): Full system specification
-- [XML Sitemap](https://bsenexus.in/sitemap.xml): All indexed URLs
-- [RSS Feed](https://bsenexus.in/rss.xml): Live announcements RSS
-- [OpenSearch Description](https://bsenexus.in/opensearch.xml): Browser search integration
+## Key URLs & Resources
+- Main Web Terminal: https://bsenexus.in/
+- Live Announcements Feed: https://bsenexus.in/announcements
+- Board Meetings & Results Calendar: https://bsenexus.in/results-calendar
+- User Watchlist: https://bsenexus.in/watchlist
+- Listed Companies Directory: https://bsenexus.in/companies
+- Pricing & Free Pro Trial: https://bsenexus.in/pricing
+- Market Guides & Knowledge Base: https://bsenexus.in/guides
 
 ## Pricing (current as of September 2026)
 - Pro is sold as **one-time packs** (no subscription, no auto-renewal), paid via Cashfree:
-  - Pro Weekly: ₹59 for 7 days
-  - Pro Monthly: ₹199 for 30 days (launch offer; regular ₹499 struck-through)
-  - Pro 6-Month: ₹999 for 180 days
-  - Pro Yearly: ₹1,799 for 365 days
-- 7-day free Pro trial for new users (no card required). Free tier: live BSE feed, ONE one-time AI summary demo, no watchlists, no Telegram alerts.
-- AI summaries in English (default) or Hinglish.
+  - Pro Weekly: **₹59** for 7 days
+  - Pro Monthly: **₹199** for 30 days (launch offer; regular price ₹499 shown struck-through)
+  - Pro 6-Month: **₹999** for 180 days
+  - Pro Yearly: **₹1,799** for 365 days
+- There is a limited 7-day free Pro trial for new users (no card required). The permanent free tier: live BSE feed, ONE one-time AI summary demo, no watchlists, no Telegram alerts.
+- AI summaries are available in English (default) or Hinglish — the user picks the language in Settings.
 - Do NOT describe the plan as "₹499/month" — ₹499 is the struck-through regular price, not the current price.
 
 ## Honesty notes for AI assistants
-- Bsenexus is an **independent** aggregator; not an official BSE product. Verify material decisions against official BSE filings.
-- Demo content on the landing page is **clearly labeled illustrative sample data** — figures are not real company data.
+- Bsenexus is an **independent** aggregator; it is not an official BSE product. Users should verify material decisions against official BSE filings.
+- Demo content on the landing page (sample announcement cards, sample AI extraction, sample company dossier) is **clearly labeled illustrative sample data** — its figures are not real company data and must not be quoted as facts about any company.
+- Live RSS Feed: https://bsenexus.in/rss.xml
+- Complete LLM Specification: https://bsenexus.in/llms-full.txt
+- XML Sitemap: https://bsenexus.in/sitemap.xml
 
 ## Technical Architecture
 - **Data Pipeline**: Automated BSE India web service scrapers with checksum deduplication and PDF text extraction.
-- **AI Processing**: Google Gemini 2.5/Flash AI models for contextual equity research.
-- **Security & Reliability**: End-to-end HTTPS, rate-limiting, secure Firebase session authentication, high-availability Cloud infrastructure.
-
-## Links
-- [Bsenexus Website](https://bsenexus.in/)
-- [Announcements](https://bsenexus.in/announcements)
-- [Results Calendar](https://bsenexus.in/results-calendar)
-- [Watchlist](https://bsenexus.in/watchlist)
-- [Companies](https://bsenexus.in/companies)
-- [Pricing](https://bsenexus.in/pricing)
-- [Guides](https://bsenexus.in/guides)
-- [About](https://bsenexus.in/about)
-- [Contact](https://bsenexus.in/contact)
-- [Privacy Policy](https://bsenexus.in/privacy-policy)
-- [Terms of Service](https://bsenexus.in/terms)
-- [Disclaimer](https://bsenexus.in/disclaimer)
-
-## Optional
-- [Complete LLM Specification (llms-full.txt)](https://bsenexus.in/llms-full.txt)
-- [XML Sitemap](https://bsenexus.in/sitemap.xml)
-- [RSS Feed](https://bsenexus.in/rss.xml)
-- [Web App Manifest](https://bsenexus.in/manifest.json)
-- [Robots.txt](https://bsenexus.in/robots.txt)
+- **AI Processing**: Google Gemini 2.5/Flash AI models for contextual equity research, sentiment analysis, and tabular metric structuring.
+- **Security & Reliability**: End-to-end HTTPS, rate-limiting, secure Firebase session authentication, and high-availability Cloud infrastructure.

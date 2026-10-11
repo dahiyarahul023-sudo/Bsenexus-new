@@ -85,52 +85,13 @@ app.use(compression({
   }
 }));
 
-// SEC-101 fix (Oct 2026 audit): Enable ALL security headers previously disabled.
-// PageSpeed confirmed missing: CSP, HSTS, COOP, XFO, CORP — full clickjacking + XSS surface.
 app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: [
-        "'self'",
-        "'unsafe-inline'",
-        "'unsafe-eval'",
-        'https://www.google.com',
-        'https://www.gstatic.com',
-        'https://cdn.onesignal.com',
-      ],
-      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-      fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
-      imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
-      connectSrc: [
-        "'self'",
-        'https://api.bseindia.com',
-        'https://api.cashfree.com',
-        'https://api.telegram.org',
-        'https://firestore.googleapis.com',
-        'https://securetoken.google.com',
-        'https://recaptchaenterprise.googleapis.com',
-        'https://sentry.io',
-        'https://o*.ingest.sentry.io',
-      ],
-      frameSrc: ["'self'", 'https://www.google.com'],
-      frameAncestors: ["'none'"],
-      formAction: ["'self'"],
-      baseUri: ["'self'"],
-      objectSrc: ["'none'"],
-      upgradeInsecureRequests: [],
-    },
-  },
+  contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false,
-  frameguard: { action: 'deny' },
-  crossOriginOpenerPolicy: { policy: 'same-origin' },
-  crossOriginResourcePolicy: { policy: 'same-site' },
-  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
-  hsts: {
-    maxAge: 31536000,
-    includeSubDomains: true,
-    preload: true,
-  },
+  frameguard: false,
+  crossOriginOpenerPolicy: false,
+  crossOriginResourcePolicy: false,
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
 }));
 app.use('/api/payments/webhook', express.raw({ type: 'application/json', limit: '1mb' }));
 app.use(express.json({ limit: '1mb' }));
@@ -5472,12 +5433,11 @@ for (const [sourcePath, targetPath] of Object.entries(PERMANENT_301_REDIRECTS)) 
   });
 }
 
-// LOGIC-101 fix (Oct 2026 audit): /filing/:symbol/:newsId is the CANONICAL
-// shareable URL scheme (used by sitemap, IndexNow, share menu, notes, App.tsx
-// routing). The previous 301 redirect to /announcements broke ALL filing detail
-// pages, sitemap SEO, IndexNow pings, and share links. Removed entirely.
-// The SPA catch-all below serves index.html for /filing/* paths, and App.tsx
-// parses the path client-side to render FilingPage.
+// Pattern-based 301 Redirect for legacy /filing/* URLs (Fix 1)
+app.get(['/filing', '/filing/*'], (_req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800');
+  return res.redirect(301, '/announcements');
+});
 
 // Canonical announcement detail pages: /announcement/:newsId
 app.get('/announcement/:newsId', async (req, res) => {

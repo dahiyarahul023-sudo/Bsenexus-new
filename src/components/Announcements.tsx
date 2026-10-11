@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { customFetch } from '../api';
-import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { 
   FileText, ExternalLink, Search, Send, Clock, 
   Upload, Sparkles, ArrowUpRight, CheckCircle2, 
@@ -113,7 +112,7 @@ export function Announcements({
   const [feedStaleAt, setFeedStaleAt] = useState<number | null>(null);
   // Prefetch-on-intent: announcement ids whose detail JSON is already warming
   const prefetchedIds = useRef<Set<string>>(new Set());
-  const [searchInput, setSearchInput] = useState<string>(() => {
+  const [search, setSearch] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       try {
         const urlParams = new URLSearchParams(window.location.search);
@@ -128,17 +127,12 @@ export function Announcements({
     }
     return '';
   });
-  // PERF-008 fix (Oct 2026 audit): Debounce search input to prevent O(n×6) filter +
-  // O(n log n) sort + O(n²) cluster pipeline on every keystroke. 180ms is enough
-  // for human typing rhythm — the input stays responsive (controlled by searchInput)
-  // while the expensive filter only runs after the user pauses.
-  const search = useDebouncedValue(searchInput, 180);
 
   // Listen to incoming share target events
   useEffect(() => {
     const handleShareTarget = (e: any) => {
       if (e.detail?.query) {
-        setSearchInput(e.detail.query);
+        setSearch(e.detail.query);
       }
     };
     window.addEventListener('bse-share-target', handleShareTarget);
@@ -1305,7 +1299,7 @@ export function Announcements({
             <input 
               type="text" 
               value={search}
-              onChange={e => setSearchInput(e.target.value)}
+              onChange={e => setSearch(e.target.value)}
               placeholder="Search symbol, company or text..."
               aria-label="Search symbol, company or text"
               className="w-full h-9 sm:h-9 pl-8 pr-7 bg-slate-50 dark:bg-[#15141E] border border-slate-200 dark:border-[#2D283E] rounded-lg text-xs font-medium focus:outline-none focus:ring-1 focus:ring-slate-400 text-slate-900 dark:text-white"
@@ -1313,7 +1307,7 @@ export function Announcements({
             {search && (
               <button 
                 type="button" 
-                onClick={() => setSearchInput('')}
+                onClick={() => setSearch('')}
                 aria-label="Clear search"
                 className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
               >
@@ -2020,7 +2014,7 @@ export function Announcements({
                       onClick={() => {
                         setIsResultDayMode(false);
                         setFilterType('ALL');
-                        setSearchInput('');
+                        setSearch('');
                       }}
                       className="px-3.5 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl text-xs font-bold shadow-2xs hover:opacity-90 transition-all cursor-pointer select-none"
                     >

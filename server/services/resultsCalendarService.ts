@@ -683,7 +683,7 @@ export async function getResultsCalendarData(
     allEnrichedItems = enrichedCache.items;
   } else {
     const todayStartTs = getIstMidnightTs(new Date());
-    const recentAnnouncements = await getRecentAnnouncements(1500);
+    const recentAnnouncements = await getRecentAnnouncements(10000);
 
     // Build O(1) indexed lookup by scrip_cd and normalized symbol
     const annByScrip = new Map<string, any[]>();
@@ -1219,7 +1219,7 @@ export async function getStockResultsHistory(
   const todayStartTs = getIstMidnightTs(new Date());
 
   // 1. Fetch announcements for this stock from Dao
-  const recentAnnouncements = await getRecentAnnouncements(1500);
+  const recentAnnouncements = await getRecentAnnouncements(10000);
   const stockAnns = recentAnnouncements.filter((ann: any) => {
     const annScrip = String(ann.scrip_cd || ann.SCRIP_CD || ann.scripCode || '').trim();
     const annSym = (ann.symbol || '').toUpperCase().trim();

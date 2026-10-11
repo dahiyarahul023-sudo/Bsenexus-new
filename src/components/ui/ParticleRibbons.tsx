@@ -58,12 +58,7 @@ export default function ParticleRibbons() {
     };
 
     const build = () => {
-      // PERF-006 fix (Oct 2026 audit): Reduced particle counts on mobile to cut
-      // main-thread work. 20 ribbons × 48 segments × 2 passes = 1920 stroke calls
-      // per frame was a major contributor to the 9.5s main-thread work metric.
-      // Mobile now uses 6 ribbons / 10 nodes / 12 sparks (75% reduction).
-      // Desktop stays at 14 ribbons / 24 nodes / 32 sparks (30% reduction).
-      const count = w < 640 ? 6 : (w < 1024 ? 10 : 14);
+      const count = w < 640 ? 10 : 20;
       ribbons = [];
       for (let i = 0; i < count; i++) {
         const c = pickHue();
@@ -79,12 +74,12 @@ export default function ParticleRibbons() {
         });
       }
       nodes = [];
-      const nn = w < 640 ? 10 : (w < 1024 ? 18 : 24);
+      const nn = w < 640 ? 20 : 34;
       for (let i = 0; i < nn; i++) {
         nodes.push({ x: rand(0, w), y: rand(0, h), vx: rand(-14, 14), vy: rand(-12, 12), r: rand(1, 2.2) });
       }
       sparks = [];
-      const sn = w < 640 ? 12 : (w < 1024 ? 24 : 32);
+      const sn = w < 640 ? 24 : 48;
       for (let i = 0; i < sn; i++) {
         sparks.push({ x: rand(0, w), y: rand(0, h), vx: rand(-6, 14), vy: rand(-10, 6), r: rand(0.6, 1.8), ph: rand(0, Math.PI * 2), sp: rand(0.6, 2) });
       }

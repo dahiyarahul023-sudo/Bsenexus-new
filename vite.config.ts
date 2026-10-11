@@ -41,24 +41,7 @@ export default defineConfig(() => {
     build: {
       minify: 'esbuild' as const,
       target: 'es2020',
-      chunkSizeWarningLimit: 800,
-      cssCodeSplit: true,
-      sourcemap: false,
-      rollupOptions: {
-        output: {
-          manualChunks(id) {
-            if (!id.includes('node_modules')) return;
-            if (id.includes('framer-motion')) return 'vendor-framer';
-            if (id.includes('firebase') || id.includes('@firebase')) return 'vendor-firebase';
-            if (id.includes('@sentry')) return 'vendor-sentry';
-            if (id.includes('react-dom') || /[\\/]react[\\/]/.test(id)) return 'vendor-react';
-            if (id.includes('lucide-react')) return 'vendor-icons';
-            if (id.includes('date-fns')) return 'vendor-date';
-            if (id.includes('clsx') || id.includes('tailwind-merge')) return 'vendor-utils';
-            return 'vendor';
-          },
-        },
-      },
+      chunkSizeWarningLimit: 1200,
     },
     esbuild: {
       drop: ['console', 'debugger'] as ('console' | 'debugger')[],

@@ -338,11 +338,7 @@ export async function fetchNSECorporateAnnouncements(signal?: AbortSignal): Prom
       const symbol = (item.symbol || '').trim();
       const scrip_cd = getScripCodeForSymbolOrName(symbol) || '';
       const fallbackId = createHash('sha256').update(JSON.stringify([item.symbol, item.sm_name, item.an_dt, item.sort_date, item.desc, item.attchmntText, item.attchmntFile])).digest('hex');
-      // LOGIC-103 fix (Oct 2026 audit): Removed `item.dt` from the fallback chain.
-      // `dt` is a datetime string — NOT unique. Two different NSE announcements filed
-      // at the same second would both get `corp_nse_<same_dt>` and be deduplicated as one.
-      // Now always uses the deterministic hash when seq_id is missing.
-      const newsId = `corp_nse_${item.seq_id || fallbackId}`;
+      const newsId = `corp_nse_${item.seq_id || item.dt || fallbackId}`;
       const companyName = item.sm_name || symbol || 'NSE Stock';
       const subject = item.attchmntText || item.desc || 'Corporate Announcement';
       const details = item.desc ? `${item.desc}${item.attchmntText ? ' - ' + item.attchmntText : ''}` : (item.attchmntText || '');

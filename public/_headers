@@ -5,27 +5,6 @@
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
 
-/fonts/*
-  Cache-Control: public, max-age=31536000, immutable
-
-/screenshots/*
-  Cache-Control: public, max-age=2592000, immutable
-
-/avatars/*
-  Cache-Control: public, max-age=2592000, immutable
-
-/company-logos/*
-  Cache-Control: public, max-age=2592000, immutable
-
-/og-image.png
-  Cache-Control: public, max-age=604800
-
-/manifest.json
-  Cache-Control: public, max-age=86400
-
-/sw.js
-  Cache-Control: public, max-age=0, must-revalidate
-
 /
   Cache-Control: public, max-age=60, s-maxage=300, stale-while-revalidate=600
 

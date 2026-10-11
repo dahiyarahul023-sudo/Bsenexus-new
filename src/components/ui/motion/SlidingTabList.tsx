@@ -1,13 +1,7 @@
 import React from 'react';
+import { motion } from 'framer-motion';
+import { springSmoothPill, buttonTap } from '../../../utils/motionTokens';
 import { cn } from '../../../lib/utils';
-
-// UI-103 fix (Oct 2026 audit): Rewrote SlidingTabList to remove ALL framer-motion
-// usage (layoutId FLIP + whileTap + motion.span animate). This component is used
-// across 6 surfaces (WatchlistManager, CompanyIntelligenceModal, Announcements,
-// ResultsCalendar, NewsPortal, NotificationInbox) — each had a layoutId pill that
-// forced getBoundingClientRect() on every tab change = forced synchronous layout.
-// Now uses CSS transform + opacity (GPU-composited, zero main-thread cost).
-// Also wrapped in React.memo so parent re-renders don't cascade into tab re-renders.
 
 export interface TabItem<T extends string = string> {
   id: T;
@@ -25,10 +19,11 @@ interface SlidingTabListProps<T extends string = string> {
   size?: 'sm' | 'md';
 }
 
-export const SlidingTabList = React.memo(function SlidingTabList<T extends string = string>({
+export function SlidingTabList<T extends string = string>({
   tabs,
   activeTab,
   onChange,
+  layoutId = 'activeSlidingPill',
   className = '',
   size = 'md',
 }: SlidingTabListProps<T>) {
@@ -43,36 +38,37 @@ export const SlidingTabList = React.memo(function SlidingTabList<T extends strin
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;
         return (
-          <button
+          <motion.button
             key={tab.id}
             role="tab"
             aria-selected={isActive}
+            whileTap={buttonTap}
             onClick={() => onChange(tab.id)}
             className={cn(
-              "relative z-10 flex items-center justify-center gap-1.5 font-bold transition-colors cursor-pointer whitespace-nowrap rounded-lg select-none active:scale-95 transition-transform duration-150",
+              "relative z-10 flex items-center justify-center gap-1.5 font-bold transition-colors cursor-pointer whitespace-nowrap rounded-lg select-none",
               size === 'sm' ? "min-h-[30px] px-2.5 py-1 text-xs" : "min-h-[36px] px-3.5 py-1.5 text-xs sm:text-sm",
               isActive
                 ? "text-slate-900 dark:text-white"
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
             )}
           >
-            {/* CSS transform pill — GPU composited, no JS layout measurement */}
+            {/* Sliding Pill Indicator */}
             {isActive && (
-              <span
-                aria-hidden="true"
-                className="rich-tab-pill absolute inset-0 z-[-1] rounded-lg transition-transform duration-200 ease-out"
+              <motion.div
+                layoutId={layoutId}
+                transition={springSmoothPill}
+                className="rich-tab-pill absolute inset-0 z-[-1] rounded-lg"
               />
             )}
 
             {tab.icon && (
-              <span
-                className={cn(
-                  "flex items-center justify-center transition-transform duration-150",
-                  isActive && "scale-110"
-                )}
+              <motion.span
+                animate={isActive ? { scale: 1.1 } : { scale: 1 }}
+                transition={springSmoothPill}
+                className="flex items-center justify-center"
               >
                 {tab.icon}
-              </span>
+              </motion.span>
             )}
 
             <span>{tab.label}</span>
@@ -89,9 +85,9 @@ export const SlidingTabList = React.memo(function SlidingTabList<T extends strin
                 {tab.count}
               </span>
             )}
-          </button>
+          </motion.button>
         );
       })}
     </div>
   );
-}) as <T extends string = string>(props: SlidingTabListProps<T>) => React.ReactElement;
+}
