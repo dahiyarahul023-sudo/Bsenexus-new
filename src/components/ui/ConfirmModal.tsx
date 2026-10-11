@@ -26,6 +26,7 @@ export function ConfirmModal({
   onCancel,
 }: ConfirmModalProps) {
   const cancelBtnRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   useBodyScrollLock(isOpen);
 
   useEffect(() => {
@@ -34,6 +35,7 @@ export function ConfirmModal({
     }
   }, [isOpen]);
 
+  // ESC handler
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -43,6 +45,33 @@ export function ConfirmModal({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onCancel]);
+
+  // UI-119 fix (Oct 2026 audit): Focus trap — prevent Tab from escaping the modal.
+  // Previously a keyboard user could Tab out of the modal into background content,
+  // violating WCAG 2.4.3 Focus Order. Now Tab/Shift+Tab cycles within the dialog.
+  useEffect(() => {
+    if (!isOpen) return;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const trap = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+      const focusable = dialog.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    dialog.addEventListener('keydown', trap);
+    return () => dialog.removeEventListener('keydown', trap);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -63,6 +92,7 @@ export function ConfirmModal({
       />
 
       <motion.div
+        ref={dialogRef}
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 10 }}

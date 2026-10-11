@@ -208,7 +208,7 @@ export async function getCompanyIntelligence(scripCode: string, symbol: string):
   let quarterlyResults = Array.from(resultMap.values()).sort((a, b) => (b.submissionTimestamp || 0) - (a.submissionTimestamp || 0));
 
   // 4. Extract Material Corporate Events Timeline & All Recent Filings
-  const recentAnnouncements = await getRecentAnnouncements(10000);
+  const recentAnnouncements = await getRecentAnnouncements(1500);
   let announcementPool: any[] = recentAnnouncements;
   if (targetScrip) {
     try {

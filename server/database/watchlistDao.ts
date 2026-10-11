@@ -768,6 +768,26 @@ export async function updateSymbolPriorityAcrossAllWatchlists(
 }
 
 export async function getAllActiveWatchlistsAcrossUsers(): Promise<any[]> {
+  // PERF-013 fix (Oct 2026 audit): Was N+1 — iterated known UIDs sequentially,
+  // calling getAllWatchlists() per UID. For 100 users = 100 sequential DB calls.
+  // Now uses a single Supabase query that fetches ALL watchlists in one round-trip.
+  if (isSupabaseConfigured()) {
+    try {
+      const { data, error } = await getSupabase()
+        .from(WATCHLISTS_TABLE)
+        .select('lists');
+      if (!error && Array.isArray(data)) {
+        const allLists: any[] = [];
+        for (const row of data) {
+          const lists = Array.isArray(row.lists) ? row.lists : [];
+          allLists.push(...lists);
+        }
+        return allLists;
+      }
+    } catch {}
+  }
+
+  // Legacy local fallback — only runs when Supabase is unconfigured
   const allLists: any[] = [];
   const knownUids = new Set<string>(['bcb4FayOgxYPdyH7HoBKlfCpjZB2', 'guest']);
   try {
@@ -776,13 +796,10 @@ export async function getAllActiveWatchlistsAcrossUsers(): Promise<any[]> {
       if (k && k !== 'admin') knownUids.add(k);
     });
   } catch {}
-
   for (const uid of knownUids) {
     try {
       const watchlists = await getAllWatchlists(uid);
-      if (Array.isArray(watchlists)) {
-        allLists.push(...watchlists);
-      }
+      if (Array.isArray(watchlists)) allLists.push(...watchlists);
     } catch {}
   }
   return allLists;

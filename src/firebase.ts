@@ -120,11 +120,24 @@ export function initAppCheck(): AppCheck | null {
   return appCheckInstance;
 }
 
+// PERF-004 fix (Oct 2026 audit): Defer reCAPTCHA + App Check init until the
+// FIRST user interaction. Previously this fired on every page load, including
+// for logged-out LandingPage visitors who never need reCAPTCHA. The script is
+// ~30KB gzipped + executes on main thread + requires a DNS lookup to google.com.
+// Now arms on first pointerdown/keydown, then detaches.
 if (typeof window !== "undefined" && isFirebaseConfigured) {
-  (async () => {
-    try { await loadRecaptchaScript(); } catch { }
-    try { initAppCheck(); } catch { }
-  })();
+  const armAppCheckOnce = () => {
+    window.removeEventListener('pointerdown', armAppCheckOnce);
+    window.removeEventListener('keydown', armAppCheckOnce);
+    window.removeEventListener('open-auth-modal', armAppCheckOnce);
+    (async () => {
+      try { await loadRecaptchaScript(); } catch { }
+      try { initAppCheck(); } catch { }
+    })();
+  };
+  window.addEventListener('pointerdown', armAppCheckOnce, { passive: true, once: true });
+  window.addEventListener('keydown', armAppCheckOnce, { passive: true, once: true });
+  window.addEventListener('open-auth-modal', armAppCheckOnce, { once: true });
 }
 
 

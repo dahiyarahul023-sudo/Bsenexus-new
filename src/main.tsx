@@ -10,6 +10,8 @@ import { initOneSignal } from './utils/oneSignal.ts';
 
 initSentry();
 initClientTelemetry();
+// PERF-005 fix: OneSignal init deferred — SDK now loads via idle callback in index.html.
+// initOneSignal() will self-detect when the SDK is ready (it polls for window.OneSignal).
 initOneSignal();
 
 createRoot(document.getElementById('root')!).render(

@@ -13,10 +13,12 @@
 
 /** Raw key is read here and never leaves the server. Checks standard key names. */
 function getApiKey(): string {
+  // SEC-105 fix (Oct 2026 audit): Removed VITE_RESEND_API_KEY fallback.
+  // VITE_ vars are browser-bundled — a misconfiguration would leak the server
+  // API key to every visitor's browser. Server keys must NEVER use VITE_ prefix.
   return String(
     process.env.RESEND_API_KEY ||
     process.env.RESEND_KEY ||
-    process.env.VITE_RESEND_API_KEY ||
     ''
   ).trim();
 }

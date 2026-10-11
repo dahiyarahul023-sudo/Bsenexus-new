@@ -38,10 +38,10 @@ export function setOneSignalApiKey(key: string | null): void {
 
 export function getOneSignalApiKey(): string {
   if (dynamicApiKey) return dynamicApiKey;
+  // SEC-105 fix (Oct 2026 audit): Removed VITE_ONESIGNAL_REST_API_KEY fallback.
   return String(
     process.env.ONESIGNAL_REST_API_KEY ||
     process.env.ONESIGNAL_API_KEY ||
-    process.env.VITE_ONESIGNAL_REST_API_KEY ||
     ''
   ).trim();
 }
