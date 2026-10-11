@@ -1,0 +1,67 @@
+{
+  "engine": "PGlite / PostgreSQL",
+  "baseline": "55d35a16a0a0b09017f685af4f4170acc2d30b3e",
+  "tests": [
+    {
+      "name": "baseline RPC permissions",
+      "result": {
+        "anon": true,
+        "authenticated": true,
+        "service_role": true
+      }
+    },
+    {
+      "name": "baseline anonymous free grant",
+      "result": "SUCCEEDED"
+    },
+    {
+      "name": "baseline unauthorized entitlement persisted",
+      "result": [
+        {
+          "uid": "test-victim",
+          "plan_id": "pro_yearly",
+          "expires_at": 9999999999999,
+          "granted_at": 1791059949946,
+          "last_order_id": "TEST-NO-PAYMENT"
+        }
+      ]
+    },
+    {
+      "name": "upgrade repair idempotent and removes anonymous execution",
+      "result": {
+        "anon": false
+      }
+    },
+    {
+      "name": "baseline deployed schema RPC contract",
+      "result": [
+        {
+          "proname": "grant_payment_atomic",
+          "args": "p_uid text, p_plan_id text, p_expires_at bigint, p_order_id text, p_amount_paise integer"
+        }
+      ]
+    },
+    {
+      "name": "fixed RPC permissions",
+      "result": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": true
+      }
+    },
+    {
+      "name": "fixed anonymous free grant",
+      "result": "DENIED",
+      "sqlstate": "42501"
+    },
+    {
+      "name": "fixed deployed schema RPC contract",
+      "result": [
+        {
+          "proname": "grant_payment_atomic",
+          "args": "p_uid text, p_plan_id text, p_expires_at bigint, p_order_id text, p_amount_paise integer"
+        }
+      ]
+    }
+  ]
+}
