@@ -6,6 +6,24 @@ on:
 permissions:
   contents: read
 jobs:
+  bun-application:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Exercise fresh Bun resolution without npm lockfile
+        run: |
+          mv package-lock.json "$RUNNER_TEMP/bsenexus-npm-lock.json"
+          npx --yes bun@1.4.3 install --ignore-scripts
+          node scripts/patch-firebase-auth.cjs
+      - name: Bun-installed application build and type check
+        run: npm run build --ignore-scripts
   rules-map:
     runs-on: ubuntu-latest
     timeout-minutes: 10

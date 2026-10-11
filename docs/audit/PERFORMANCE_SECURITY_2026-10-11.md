@@ -1,5 +1,7 @@
 # Fresh performance and security audit — 2026-10-11
 
+Follow-up screenshot: AI Studio fresh Bun resolution exposed TS2769 at compression middleware despite locked npm/CI passing. Reproduced Express app types 4.17.25 vs compression types 5.0.6; pinning the shared Express 4 types fixes it. Clean Bun and npm builds pass locally; separate fresh-Bun CI build added. See rule/changes/bun-express-types.md. Cloud Run precondition toast still needs deployment details; a local build does not establish its cause or a successful publish.
+
 Starting main: `3d925b0b41841a4636fa8336adf41b0339a09760`. Re-read current source and earlier assistant changes, supplied screenshots, release trees, current HTTP response/public login journey, production/staging database catalogs/advisors, clean install, tests and production build. This is a bounded audit with explicit gaps, not security certification.
 
 ## Confirmed findings
