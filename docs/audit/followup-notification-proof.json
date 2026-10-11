@@ -1,7 +1,0 @@
-{
-  "migrationAppliedTwice": true,
-  "serviceRoleWrites": true,
-  "userAReadDoesNotCreateUserBReceipt": true,
-  "anonymousAndAuthenticatedTableAccessDenied": true,
-  "liveExistingSchemaCompatibility": "pending"
-}
