@@ -14,10 +14,29 @@ declare global {
   }
 }
 
+let sdkScheduled = false;
+export function loadOneSignalSdk(): void {
+  if (typeof document === 'undefined' || document.querySelector('script[data-bse-push-sdk]')) return;
+  const script = document.createElement('script');
+  script.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
+  script.async = true;
+  script.dataset.bsePushSdk = 'true';
+  script.onerror = () => { script.remove(); sdkScheduled = false; };
+  document.head.appendChild(script);
+}
+function schedulePushSdk(): void {
+  if (sdkScheduled) return;
+  sdkScheduled = true;
+  if ('requestIdleCallback' in window) window.requestIdleCallback(() => loadOneSignalSdk(), { timeout: 4000 });
+  else setTimeout(loadOneSignalSdk, 1500);
+}
+
 let isInitialized = false;
 
 export function initOneSignal(): void {
   if (typeof window === 'undefined' || isInitialized) return;
+
+  schedulePushSdk();
 
   // Initialize deferred queue
   window.OneSignalDeferred = window.OneSignalDeferred || [];
@@ -70,6 +89,7 @@ export interface PushRequestResult {
  * Includes timeout and platform-aware checks so it never hangs.
  */
 export async function requestPushPermission(): Promise<PushRequestResult> {
+  loadOneSignalSdk();
   if (typeof window === 'undefined') {
     return { granted: false, reason: 'unsupported', message: 'Not in a browser.' };
   }

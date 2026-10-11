@@ -1,5 +1,7 @@
 # Frontend strategy and evidence-based priorities
 
+2026-10-11 performance follow-up: entry JavaScript 1,692,008→1,464,208 raw bytes; default CTA delay and recursive layout reads removed; decorative work bounded/paused and optional SDKs deferred. Clean install/tests/build pass. Browser acceptance, real INP/PageSpeed improvement and deployment remain separate gates. See docs/audit/PERFORMANCE_SECURITY_2026-10-11.md; P3 is not complete from bundle size alone.
+
 User clarification, 2026-10-07: apply the depth of backend planning to FRONTEND work. The backend-only restriction added in PR #9 was a misunderstanding. This strategy corrects scope and preserves existing backend safety controls. It does not claim a complete frontend redesign or a full browser audit.
 
 Baseline inspected: main `d1df67a462fc4ec4222b9c1944a6ebff93fabeb9`. Read current source when resuming; generated maps and historical reports are aids.

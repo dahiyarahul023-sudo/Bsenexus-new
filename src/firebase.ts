@@ -120,12 +120,14 @@ export function initAppCheck(): AppCheck | null {
   return appCheckInstance;
 }
 
-if (typeof window !== "undefined" && isFirebaseConfigured) {
-  (async () => {
-    try { await loadRecaptchaScript(); } catch { }
-    try { initAppCheck(); } catch { }
-  })();
+// Public rendering needs no attestation network work. Auth still loads and
+// assesses reCAPTCHA on demand before the server can issue a session.
+if (typeof window !== 'undefined' && isFirebaseConfigured) {
+  const arm = () => {
+    window.removeEventListener('pointerdown', arm);
+    window.removeEventListener('keydown', arm);
+    void loadRecaptchaScript().then(() => initAppCheck()).catch(() => {});
+  };
+  window.addEventListener('pointerdown', arm, { once: true, passive: true });
+  window.addEventListener('keydown', arm, { once: true });
 }
-
-
-

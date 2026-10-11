@@ -49,6 +49,9 @@
     "tailwind-merge": "^3.6.0",
     "yahoo-finance2": "^4.0.2"
   },
+  "overrides": {
+    "@grpc/grpc-js": "^1.14.6"
+  },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.8",
     "@firebase/eslint-plugin-security-rules": "^0.0.2",

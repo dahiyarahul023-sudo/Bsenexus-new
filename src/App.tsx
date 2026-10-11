@@ -13,16 +13,15 @@ import type { DesignTheme } from './types';
 
 import { LandingPage } from './components/LandingPage';
 import { Layout } from './components/Layout';
-import Announcements from './components/Announcements';
+const Announcements = lazy(() => import('./components/Announcements'));
 import { AuthModal } from './components/AuthModal';
 import { ProUpgradeModal } from './components/ProUpgradeModal';
 import { ProCheckoutView } from './components/ProCheckoutView';
 import { ProReceiptView } from './components/ProReceiptView';
 import { AdminPinModal } from './components/AdminPinModal';
-import { HomeForYou } from './components/HomeForYou';
+const HomeForYou = lazy(() => import('./components/HomeForYou').then(m => ({ default: m.HomeForYou })));
 // Route-level code splitting: heavy tab/route panels load on first visit,
-// keeping the initial bundle (landing + feed) small for fast first paint.
-// The feed (Announcements) and home stay eager — everything else is lazy.
+// keeping feed and home code out of the landing page's initial download.
 const WatchlistManager = lazy(() => import('./components/WatchlistManager').then(m => ({ default: m.WatchlistManager })));
 const ResultsCalendar = lazy(() => import('./components/ResultsCalendar').then(m => ({ default: m.ResultsCalendar })));
 const NewsPortal = lazy(() => import('./components/NewsPortal').then(m => ({ default: m.NewsPortal })));
@@ -92,12 +91,12 @@ function Dashboard({ bseHealth, telegramHealth, isRunning, handleToggle }: any) 
   return (
     <div className="space-y-2">
       {/* Main Announcements Feed */}
-      <Announcements 
+      <Suspense fallback={<PageSkeleton page="announcements" />}><Announcements
         isRunning={isRunning}
         onToggleEngine={handleToggle}
         bseHealth={bseHealth}
         telegramHealth={telegramHealth}
-      />
+      /></Suspense>
     </div>
   );
 }
@@ -1028,17 +1027,17 @@ function AppContent() {
         <div ref={tabMotion.ref} tabIndex={-1} className="outline-none" aria-label="Page content">
         {(visitedTabs.has('home') || activeTab === 'home') && (
           <div data-screen-page="home" hidden={tabMotion.displayedKey !== 'home'}>
-            <HomeForYou isActive={activeTab === 'home'} onNavigate={(tab) => handleTabChange(tab)} />
+            <TabErrorBoundary label="home"><Suspense fallback={<TabFallback />}><HomeForYou isActive={activeTab === 'home'} onNavigate={(tab) => handleTabChange(tab)} /></Suspense></TabErrorBoundary>
           </div>
         )}
         {(visitedTabs.has('dashboard') || activeTab === 'dashboard') && (
           <div data-screen-page="dashboard" hidden={tabMotion.displayedKey !== 'dashboard'}>
-            <Dashboard 
+            <TabErrorBoundary label="announcements"><Dashboard
               bseHealth={health.bse} 
               telegramHealth={health.telegram} 
               isRunning={settings.isRunning} 
               handleToggle={handleToggle} 
-            />
+            /></TabErrorBoundary>
           </div>
         )}
         {(visitedTabs.has('watchlists') || activeTab === 'watchlists') && (

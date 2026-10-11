@@ -41,7 +41,6 @@ export function getOneSignalApiKey(): string {
   return String(
     process.env.ONESIGNAL_REST_API_KEY ||
     process.env.ONESIGNAL_API_KEY ||
-    process.env.VITE_ONESIGNAL_REST_API_KEY ||
     ''
   ).trim();
 }

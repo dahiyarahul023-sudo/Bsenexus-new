@@ -7,7 +7,7 @@ import express from "express";
 import path from "path";
 import fs from "fs";
 import cookieParser from "cookie-parser";
-import helmet from "helmet";
+import { responseHeaders } from './server/security/responseHeaders.js';
 import compression from "compression";
 import { createServer as createViteServer } from "vite";
 import { createServer as createHttpServer } from 'node:http';
@@ -85,14 +85,7 @@ app.use(compression({
   }
 }));
 
-app.use(helmet({
-  contentSecurityPolicy: false,
-  crossOriginEmbedderPolicy: false,
-  frameguard: false,
-  crossOriginOpenerPolicy: false,
-  crossOriginResourcePolicy: false,
-  referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
-}));
+app.use(responseHeaders());
 app.use('/api/payments/webhook', express.raw({ type: 'application/json', limit: '1mb' }));
 app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser());
@@ -280,7 +273,7 @@ async function generateDynamicSitemap(): Promise<string> {
 const AI_STUDIO_REDIRECT_SCRIPT = `  <script>
     (function() {
       try {
-        if (window.location.hostname && window.location.hostname.indexOf('ai.studio') !== -1) {
+        if (window.location.hostname && window.self === window.top && window.location.hostname.indexOf('ai.studio') !== -1) {
           var robotsMeta = document.querySelector('meta[name="robots"]');
           if (robotsMeta) {
             robotsMeta.setAttribute('content', 'noindex, nofollow');
@@ -6130,7 +6123,11 @@ app.get(/^\/google([a-zA-Z0-9_-]+)\.html$/, (req, res) => {
 // Serve static assets from public directory (favicons, apple-touch-icons, manifest, etc.)
 app.use(express.static(path.join(process.cwd(), 'public'), {
   maxAge: '1d',
-  immutable: false
+  immutable: false,
+  setHeaders: (res, filePath) => {
+    if (filePath.includes(`${path.sep}fonts${path.sep}`)) res.setHeader('Cache-Control', 'public, max-age=2592000');
+    if (filePath.includes(`${path.sep}avatars${path.sep}`)) res.setHeader('Cache-Control', 'public, max-age=2592000');
+  }
 }));
 
 // Authentication Routes (Login/Logout/Status)

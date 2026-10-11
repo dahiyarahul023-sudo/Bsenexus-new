@@ -1,6 +1,6 @@
-import {StrictMode} from 'react';
+import {Component, StrictMode, type ReactNode} from 'react';
 import {createRoot} from 'react-dom/client';
-import {Sentry, initSentry} from './lib/sentry.ts';
+import {captureClientException, initSentry} from './lib/sentry.ts';
 import App from './App.tsx';
 import './index.css';
 import './styles/rich-ui.css';
@@ -12,13 +12,20 @@ initSentry();
 initClientTelemetry();
 initOneSignal();
 
+class ClientErrorBoundary extends Component<{ children: ReactNode; fallback: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  componentDidCatch(error: Error) { captureClientException(error); }
+  render() { return this.state.failed ? this.props.fallback : this.props.children; }
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <Sentry.ErrorBoundary
+    <ClientErrorBoundary
       fallback={
         <div style={{padding: 32, fontFamily: 'system-ui, sans-serif', textAlign: 'center'}}>
           <h2>Something went wrong</h2>
-          <p>Please refresh the page. The error has been reported.</p>
+          <p>Please refresh the page to try again.</p>
           <button
             onClick={() => window.location.reload()}
             style={{padding: '10px 20px', marginTop: 12, cursor: 'pointer'}}
@@ -29,6 +36,6 @@ createRoot(document.getElementById('root')!).render(
       }
     >
       <App />
-    </Sentry.ErrorBoundary>
+    </ClientErrorBoundary>
   </StrictMode>,
 );

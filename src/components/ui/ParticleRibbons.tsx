@@ -58,7 +58,7 @@ export default function ParticleRibbons() {
     };
 
     const build = () => {
-      const count = w < 640 ? 10 : 20;
+      const count = w < 640 ? 4 : 8;
       ribbons = [];
       for (let i = 0; i < count; i++) {
         const c = pickHue();
@@ -74,12 +74,12 @@ export default function ParticleRibbons() {
         });
       }
       nodes = [];
-      const nn = w < 640 ? 20 : 34;
+      const nn = w < 640 ? 8 : 16;
       for (let i = 0; i < nn; i++) {
         nodes.push({ x: rand(0, w), y: rand(0, h), vx: rand(-14, 14), vy: rand(-12, 12), r: rand(1, 2.2) });
       }
       sparks = [];
-      const sn = w < 640 ? 24 : 48;
+      const sn = w < 640 ? 10 : 20;
       for (let i = 0; i < sn; i++) {
         sparks.push({ x: rand(0, w), y: rand(0, h), vx: rand(-6, 14), vy: rand(-10, 6), r: rand(0.6, 1.8), ph: rand(0, Math.PI * 2), sp: rand(0.6, 2) });
       }
@@ -100,7 +100,12 @@ export default function ParticleRibbons() {
     const onMouse = (e: MouseEvent) => { mouse.x = e.clientX; mouse.y = e.clientY; };
     window.addEventListener('mousemove', onMouse, { passive: true });
 
-    const onVis = () => { /* loop checks document.hidden */ };
+    let lastFrame = 0;
+    const onVis = () => {
+      cancelAnimationFrame(raf);
+      raf = 0;
+      if (!document.hidden && !reducedMotion) raf = requestAnimationFrame(loop);
+    };
     document.addEventListener('visibilitychange', onVis);
 
     // Glow-burst point drifts slowly across the viewport (lissajous)
@@ -109,7 +114,7 @@ export default function ParticleRibbons() {
       h * (0.42 + 0.3 * Math.sin(t * 0.073 + 1.3)),
     ];
 
-    const SEG = 48;
+    const SEG = 24;
 
     const ribbonPoint = (r: Ribbon, t: number, k: number, bx: number, by: number): [number, number] => {
       const tt = t * r.speed + r.phase;
@@ -262,7 +267,8 @@ export default function ParticleRibbons() {
     }
 
     const loop = (time: number) => {
-      if (!document.hidden) draw(time);
+      if (document.hidden) { raf = 0; return; }
+      if (time - lastFrame >= 1000 / 30) { draw(time); lastFrame = time; }
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);

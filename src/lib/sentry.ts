@@ -4,21 +4,23 @@
 //   1. import.meta.env.VITE_SENTRY_DSN (build-time, from AI Studio Secret VITE_SENTRY_DSN)
 //   2. GET /api/config/public -> { sentryDsn } (runtime, server reads SENTRY_DSN env)
 // If neither is set, Sentry stays disabled and the app works normally.
-import * as Sentry from '@sentry/react';
+import type * as SentryTypes from '@sentry/react';
 import { APP_VERSION } from '../version';
 
 let initialized = false;
 let initPromise: Promise<void> | null = null;
+let sdk: Pick<typeof SentryTypes, 'init' | 'setUser' | 'captureException'> | null = null;
 
 // Noise we never want in Sentry (matches the client telemetry filters).
 const BENIGN_PATTERNS =
   /ResizeObserver loop|Failed to fetch dynamically imported module|AbortError|NetworkError when attempting to fetch resource|Database is closing|websocket|closed without opened/i;
 
-function startSentry(dsn: string) {
+async function startSentry(dsn: string) {
   if (initialized) return;
-  initialized = true;
   try {
-    Sentry.init({
+    const { init, setUser, captureException } = await import('./sentrySdk');
+    sdk = { init, setUser, captureException };
+    sdk.init({
       dsn,
       environment: import.meta.env.MODE === 'production' ? 'production' : 'development',
       release: `bsenexus@${APP_VERSION}`,
@@ -34,6 +36,7 @@ function startSentry(dsn: string) {
         return event;
       },
     });
+    initialized = true;
   } catch {
     // Sentry must never break the app.
   }
@@ -46,14 +49,14 @@ export function initSentry(): Promise<void> {
     if (typeof window === 'undefined') return;
     const buildDsn = (import.meta.env.VITE_SENTRY_DSN as string | undefined)?.trim();
     if (buildDsn) {
-      startSentry(buildDsn);
+      await startSentry(buildDsn);
       return;
     }
     try {
-      const res = await fetch('/api/config/public', { credentials: 'same-origin' });
+      const res = await fetch('/api/config/public', { credentials: 'same-origin', signal: AbortSignal.timeout(8000) });
       if (res.ok) {
         const data = await res.json();
-        if (data?.sentryDsn) startSentry(String(data.sentryDsn).trim());
+        if (data?.sentryDsn) await startSentry(String(data.sentryDsn).trim());
       }
     } catch {
       // Offline or server unreachable — Sentry stays off, app unaffected.
@@ -65,8 +68,11 @@ export function initSentry(): Promise<void> {
 /** Attach the signed-in user to error reports (call after login). */
 export function setSentryUser(id: string | null, email?: string | null) {
   try {
-    Sentry.setUser(id ? { id, email: email || undefined } : null);
+    void initSentry().then(() => sdk?.setUser(id ? { id, email: email || undefined } : null));
   } catch {}
 }
 
-export { Sentry };
+/** Early render failures wait for configured monitoring without blocking paint. */
+export function captureClientException(error: unknown) {
+  void initSentry().then(() => { if (initialized) sdk?.captureException(error); });
+}

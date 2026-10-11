@@ -571,17 +571,14 @@ export function Layout({
             </div>
           </div>
 
-          {/* Row 2: Clean Tabs Navigation Bar with Fluid FLIP Floating Pill */}
+          {/* Row 2: Tabs with a transform-only active indicator */}
           <nav aria-label="Primary Navigation" className="hidden md:flex items-center gap-1 pb-2 pt-1 border-t border-slate-100 dark:border-[#2D283E]/60 overflow-x-auto no-scrollbar relative">
             {navItems.map((item) => {
               const isActive = activeTab === item.id;
               return (
-                <motion.button
+                <button
                   key={item.id}
                   onClick={() => handleTabClick(item.id)}
-                  whileHover={subtleHover}
-                  whileTap={buttonTap}
-                  transition={springSnappy}
                   aria-label={item.label}
                   aria-current={isActive ? 'page' : undefined}
                   className={cn(
@@ -591,14 +588,7 @@ export function Layout({
                       : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium"
                   )}
                 >
-                  {/* Floating active background pill */}
-                  {isActive && (
-                    <motion.div
-                      layoutId="activeNavTabPill"
-                      transition={springSmoothPill}
-                      className="rich-nav-surface absolute inset-0 rounded-lg -z-10"
-                    />
-                  )}
+                  <span aria-hidden="true" className={cn("rich-nav-surface absolute inset-0 rounded-lg -z-10 transition-[transform,opacity] duration-150 motion-reduce:transition-none", isActive ? "scale-100 opacity-100" : "scale-95 opacity-0")} />
 
                   {renderNavIcon(item.id, isActive)}
                   <span className="relative z-10">{item.label}</span>
@@ -612,7 +602,7 @@ export function Layout({
                       {item.badge}
                     </span>
                   )}
-                </motion.button>
+                </button>
               );
             })}
           </nav>
@@ -748,7 +738,7 @@ export function Layout({
         {children}
       </main>
 
-      {/* App-Style Bottom Navigation Dock for Mobile (Always Visible & Intuitive with FLIP indicator) */}
+      {/* Mobile bottom navigation with active indicator */}
       <nav aria-label="Mobile Navigation" className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#1A1926]/95 backdrop-blur-xl border-t border-slate-200/90 dark:border-[#2D283E] py-1 px-1 sm:px-2 safe-area-bottom shadow-[0_-4px_20px_rgba(0,0,0,0.25)]">
         <div className="flex items-center justify-around gap-1">
           {mobileNavItems.map((item) => {
@@ -790,10 +780,8 @@ export function Layout({
                   {item.shortLabel || item.label}
                 </span>
                 {isActive && (
-                  <motion.span 
-                    layoutId="mobileNavActivePill"
-                    transition={springSmoothPill}
-                    className="rich-nav-active-indicator w-5 h-1 rounded-full mt-0.5 pointer-events-none" 
+                  <span
+                    className="rich-nav-active-indicator w-5 h-1 rounded-full mt-0.5 pointer-events-none"
                   />
                 )}
               </motion.button>
@@ -935,7 +923,7 @@ export function Layout({
               <span>Companies</span>
             </a>
 
-            <span className="text-slate-300 dark:text-slate-700">&bull;</span>
+            <span className="text-slate-500 dark:text-slate-400" aria-hidden="true">&bull;</span>
 
             <a
               href="/about"
@@ -944,7 +932,7 @@ export function Layout({
               About
             </a>
 
-            <span className="text-slate-300 dark:text-slate-700">&bull;</span>
+            <span className="text-slate-500 dark:text-slate-400" aria-hidden="true">&bull;</span>
 
             <a
               href="/contact"
@@ -953,7 +941,7 @@ export function Layout({
               Contact
             </a>
 
-            <span className="text-slate-300 dark:text-slate-700">&bull;</span>
+            <span className="text-slate-500 dark:text-slate-400" aria-hidden="true">&bull;</span>
 
             <a
               href="/disclaimer"
@@ -962,7 +950,7 @@ export function Layout({
               Disclaimer
             </a>
 
-            <span className="text-slate-300 dark:text-slate-700">&bull;</span>
+            <span className="text-slate-500 dark:text-slate-400" aria-hidden="true">&bull;</span>
 
             <a
               href="/privacy-policy"
@@ -971,7 +959,7 @@ export function Layout({
               Privacy
             </a>
 
-            <span className="text-slate-300 dark:text-slate-700">&bull;</span>
+            <span className="text-slate-500 dark:text-slate-400" aria-hidden="true">&bull;</span>
 
             <a
               href="/terms"
@@ -982,7 +970,7 @@ export function Layout({
 
             {isAdmin && (
               <>
-                <span className="text-slate-300 dark:text-slate-700">&bull;</span>
+                <span className="text-slate-500 dark:text-slate-400" aria-hidden="true">&bull;</span>
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={buttonTap}

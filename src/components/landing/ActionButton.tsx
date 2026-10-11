@@ -8,11 +8,10 @@ interface ActionButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement
 }
 
 /**
- * ActionButton — every tap visibly shows processing (standing UX rule):
- * the button swaps to a spinner + "Processing…" state for a short beat
- * before the action fires, and ignores double-taps while busy.
+ * Navigation fires immediately. An explicitly requested processing interval
+ * retains the spinner and duplicate-tap protection for existing callers.
  */
-export function ActionButton({ onAction, processingMs = 400, children, disabled, className = '', ...rest }: ActionButtonProps) {
+export function ActionButton({ onAction, processingMs = 0, children, disabled, className = '', ...rest }: ActionButtonProps) {
   const [processing, setProcessing] = useState(false);
   const timer = useRef<number | null>(null);
 
@@ -20,6 +19,7 @@ export function ActionButton({ onAction, processingMs = 400, children, disabled,
 
   const handleClick = () => {
     if (processing || disabled) return;
+    if (processingMs <= 0) { onAction(); return; }
     setProcessing(true);
     timer.current = window.setTimeout(() => {
       try { onAction(); } finally { setProcessing(false); }

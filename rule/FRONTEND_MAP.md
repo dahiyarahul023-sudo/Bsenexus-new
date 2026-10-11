@@ -1,5 +1,7 @@
 # Frontend spider web: where changes travel
 
+2026-10-11 startup audit: App feed/home lazy imports, immediate main error boundary and dynamically configured Sentry. Shared nav/tab indicators avoid layout tracking; screen transitions animate direct children after paint scheduling. See changes/performance-security-audit.md for linked consumers and unverified browser gates.
+
 Source inspected at main `d1df67a462fc4ec4222b9c1944a6ebff93fabeb9` on 2026-10-07. This is a code-based navigation guide, not proof of live browser behavior. Update it with related source changes; use the generated map for exact current import/call-site locations.
 
 ## Layers and owners

@@ -1,6 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { springSmoothPill, buttonTap } from '../../../utils/motionTokens';
 import { cn } from '../../../lib/utils';
 
 export interface TabItem<T extends string = string> {
@@ -38,11 +36,10 @@ export function SlidingTabList<T extends string = string>({
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;
         return (
-          <motion.button
+          <button
             key={tab.id}
             role="tab"
             aria-selected={isActive}
-            whileTap={buttonTap}
             onClick={() => onChange(tab.id)}
             className={cn(
               "relative z-10 flex items-center justify-center gap-1.5 font-bold transition-colors cursor-pointer whitespace-nowrap rounded-lg select-none",
@@ -52,24 +49,8 @@ export function SlidingTabList<T extends string = string>({
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
             )}
           >
-            {/* Sliding Pill Indicator */}
-            {isActive && (
-              <motion.div
-                layoutId={layoutId}
-                transition={springSmoothPill}
-                className="rich-tab-pill absolute inset-0 z-[-1] rounded-lg"
-              />
-            )}
-
-            {tab.icon && (
-              <motion.span
-                animate={isActive ? { scale: 1.1 } : { scale: 1 }}
-                transition={springSmoothPill}
-                className="flex items-center justify-center"
-              >
-                {tab.icon}
-              </motion.span>
-            )}
+            <span aria-hidden="true" className={cn("rich-tab-pill absolute inset-0 z-[-1] rounded-lg transition-[transform,opacity] duration-150 motion-reduce:transition-none", isActive ? "scale-100 opacity-100" : "scale-95 opacity-0")} />
+            {tab.icon && <span className={cn("flex items-center justify-center transition-transform duration-150 motion-reduce:transition-none", isActive && "scale-110")}>{tab.icon}</span>}
 
             <span>{tab.label}</span>
 
@@ -85,7 +66,7 @@ export function SlidingTabList<T extends string = string>({
                 {tab.count}
               </span>
             )}
-          </motion.button>
+          </button>
         );
       })}
     </div>
