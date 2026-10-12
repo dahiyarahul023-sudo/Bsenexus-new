@@ -160,7 +160,7 @@ async function generateDynamicSitemap(): Promise<string> {
     { loc: "https://bsenexus.in/about", lastmod: todayStr, changefreq: "monthly", priority: "0.8" },
     { loc: "https://bsenexus.in/contact", lastmod: todayStr, changefreq: "monthly", priority: "0.8" },
     { loc: "https://bsenexus.in/disclaimer", lastmod: todayStr, changefreq: "monthly", priority: "0.8" },
-    { loc: "https://bsenexus.in/privacy-policy", lastmod: todayStr, changefreq: "monthly", priority: "0.7" },
+    { loc: "https://bsenexus.in/privacy", lastmod: todayStr, changefreq: "monthly", priority: "0.7" },
     { loc: "https://bsenexus.in/terms", lastmod: todayStr, changefreq: "monthly", priority: "0.7" }
   ];
 
@@ -4006,7 +4006,7 @@ ${AI_STUDIO_REDIRECT_SCRIPT}
         <a href="https://bsenexus.in/about" class="trust-nav-pill ${options.canonicalUrl.endsWith('/about') ? 'active' : ''}">About Us</a>
         <a href="https://bsenexus.in/contact" class="trust-nav-pill ${options.canonicalUrl.endsWith('/contact') ? 'active' : ''}">Contact</a>
         <a href="https://bsenexus.in/disclaimer" class="trust-nav-pill ${options.canonicalUrl.endsWith('/disclaimer') ? 'active' : ''}">Disclaimer</a>
-        <a href="https://bsenexus.in/privacy-policy" class="trust-nav-pill ${options.canonicalUrl.endsWith('/privacy-policy') ? 'active' : ''}">Privacy Policy</a>
+        <a href="https://bsenexus.in/privacy" class="trust-nav-pill ${options.canonicalUrl.endsWith('/privacy') ? 'active' : ''}">Privacy Policy</a>
         <a href="https://bsenexus.in/terms" class="trust-nav-pill ${options.canonicalUrl.endsWith('/terms') ? 'active' : ''}">Terms of Service</a>
       </div>
     </div>
@@ -4267,9 +4267,9 @@ function renderPrivacyPolicyPage(): string {
   const schema = JSON.stringify({
     "@context": "https://schema.org",
     "@type": "WebPage",
-    "@id": "https://bsenexus.in/privacy-policy#webpage",
-    "url": "https://bsenexus.in/privacy-policy",
-    "name": "Privacy Policy | Bsenexus",
+    "@id": "https://bsenexus.in/privacy#webpage",
+    "url": "https://bsenexus.in/privacy",
+    "name": "Privacy Policy | BSE Nexus",
     "description": "Read the Bsenexus privacy policy. Learn how we safeguard your data, preferences, watchlists, and communications."
   }, null, 2);
 
@@ -4314,9 +4314,9 @@ function renderPrivacyPolicyPage(): string {
   `;
 
   return renderTrustPageLayout({
-    title: "Privacy Policy | Bsenexus",
+    title: "Privacy Policy | BSE Nexus",
     description: "Read the Bsenexus privacy policy. Learn how we safeguard your data, preferences, watchlists, and communications.",
-    canonicalUrl: "https://bsenexus.in/privacy-policy",
+    canonicalUrl: "https://bsenexus.in/privacy",
     badge: "Privacy & Data Protection",
     heading: "Privacy Policy",
     subheading: "Last updated: September 2026 • Clear, transparent data protection standards.",
@@ -5989,15 +5989,15 @@ app.get(['/disclaimer', '/disclaimer/'], (_req, res) => {
 });
 
 // Crawlable, server-rendered Privacy Policy page
-app.get(['/privacy-policy', '/privacy-policy/'], (_req, res) => {
+app.get(['/privacy', '/privacy/'], (_req, res) => {
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400');
   res.send(renderPrivacyPolicyPage());
 });
 
-// Intentional alias redirect: /privacy -> /privacy-policy
-app.get(['/privacy', '/privacy/'], (_req, res) => {
-  res.redirect(301, '/privacy-policy');
+// Intentional alias redirect: /privacy-policy -> /privacy
+app.get(['/privacy-policy', '/privacy-policy/'], (_req, res) => {
+  res.redirect(301, '/privacy');
 });
 
 // Crawlable, server-rendered Terms of Service page
@@ -6301,6 +6301,11 @@ const TAB_SEO_CONFIG: Record<string, TabSeoMeta> = {
     description: "Track BSE corporate announcements, board meetings, financial disclosures, and regulatory filings with AI-powered financial summaries on Bsenexus.",
     canonical: "https://bsenexus.in/announcements",
   },
+  live: {
+    title: "Live BSE Feed | BSE Nexus",
+    description: "Track BSE corporate announcements, board meetings, financial disclosures, and regulatory filings with AI-powered financial summaries on Bsenexus.",
+    canonical: "https://bsenexus.in/announcements",
+  },
   "results-calendar": {
     title: "BSE Results Calendar — Upcoming Quarterly Results & Earnings Dates | Bsenexus",
     description: "Track upcoming BSE quarterly results, board meeting dates, earnings releases, and financial result disclosures for Indian listed companies live on Bsenexus.",
@@ -6342,9 +6347,9 @@ const TAB_SEO_CONFIG: Record<string, TabSeoMeta> = {
     canonical: "https://bsenexus.in/disclaimer",
   },
   privacy: {
-    title: "Privacy Policy | Bsenexus",
+    title: "Privacy Policy | BSE Nexus",
     description: "Read the Bsenexus privacy policy. Learn how we safeguard your data, preferences, watchlists, and communications.",
-    canonical: "https://bsenexus.in/privacy-policy",
+    canonical: "https://bsenexus.in/privacy",
   },
   terms: {
     title: "Terms of Service | Bsenexus",
@@ -6477,7 +6482,7 @@ function injectTabSeoMetadata(html: string, tabQuery?: string): string {
       '</head>',
       `  <script type="application/ld+json">\n${faqSchema}\n  </script>\n</head>`
     );
-  } else if (normalizedKey === "announcements") {
+  } else if (normalizedKey === "announcements" || normalizedKey === "live") {
     const announcementsSchema = JSON.stringify({
       "@context": "https://schema.org",
       "@type": "CollectionPage",
@@ -6565,18 +6570,18 @@ async function startServer() {
     });
 
     // In development mode, allow verifying tab-specific SEO metadata in responses with proper headers
-    app.get(["/", "/announcements", "/live", "/results-calendar", "/watchlist", "/watchlists", "/companies", "/about", "/contact", "/disclaimer", "/privacy-policy", "/terms"], async (req, res, next) => {
-      let tab = req.path === "/live" ? "announcements" : req.query.tab as string | undefined;
+    app.get(["/", "/announcements", "/live", "/results-calendar", "/watchlist", "/watchlists", "/companies", "/about", "/contact", "/disclaimer", "/privacy", "/terms"], async (req, res, next) => {
+      let tab = req.path === "/live" ? "live" : req.query.tab as string | undefined;
       if (!tab) {
         if (req.path === '/announcements') tab = 'announcements';
-        else if (req.path === '/live') tab = 'announcements';
+        else if (req.path === '/live') tab = 'live';
         else if (req.path === '/results-calendar') tab = 'results-calendar';
         else if (req.path === '/watchlist' || req.path === '/watchlists') tab = 'watchlists';
         else if (req.path === '/companies') tab = 'companies';
         else if (req.path === '/about') tab = 'about';
         else if (req.path === '/contact') tab = 'contact';
         else if (req.path === '/disclaimer') tab = 'disclaimer';
-        else if (req.path === '/privacy-policy') tab = 'privacy';
+        else if (req.path === '/privacy') tab = 'privacy';
         else if (req.path === '/terms') tab = 'terms';
       }
       try {
@@ -6605,7 +6610,7 @@ async function startServer() {
         p === '/about' ||
         p === '/contact' ||
         p === '/disclaimer' ||
-        p === '/privacy-policy' ||
+        p === '/privacy' ||
         p === '/terms' ||
         p.startsWith('/@') ||
         p.startsWith('/src') ||
@@ -6659,7 +6664,7 @@ async function startServer() {
       '/about',
       '/contact',
       '/disclaimer',
-      '/privacy-policy',
+      '/privacy',
       '/terms'
     ]);
     const tabHtmlCache = new Map<string, { html: string; etag: string }>();
@@ -6669,17 +6674,17 @@ async function startServer() {
         return res.status(404).setHeader('Content-Type', 'text/html; charset=utf-8').send(renderGeneral404Page(req.path));
       }
 
-      let tabParam = req.path === "/live" ? "announcements" : (typeof req.query.tab === "string" ? req.query.tab.trim().toLowerCase() : "");
+      let tabParam = req.path === "/live" ? "live" : (typeof req.query.tab === "string" ? req.query.tab.trim().toLowerCase() : "");
       if (!tabParam) {
         if (req.path === '/announcements') tabParam = 'announcements';
-        else if (req.path === '/live') tabParam = 'announcements';
+        else if (req.path === '/live') tabParam = 'live';
         else if (req.path === '/results-calendar') tabParam = 'results-calendar';
         else if (req.path === '/watchlist' || req.path === '/watchlists') tabParam = 'watchlists';
         else if (req.path === '/companies') tabParam = 'companies';
         else if (req.path === '/about') tabParam = 'about';
         else if (req.path === '/contact') tabParam = 'contact';
         else if (req.path === '/disclaimer') tabParam = 'disclaimer';
-        else if (req.path === '/privacy-policy') tabParam = 'privacy';
+        else if (req.path === '/privacy') tabParam = 'privacy';
         else if (req.path === '/terms') tabParam = 'terms';
         else tabParam = 'default';
       }
