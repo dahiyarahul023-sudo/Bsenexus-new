@@ -1476,6 +1476,8 @@ export async function fetchDeepHistoricalResultsForStock(
           if (mDate) {
             const safeDateKey = mDate.replace(/[^a-zA-Z0-9]/g, '_');
             const newsId = `bm_${cleanTargetScrip}_${safeDateKey}`;
+            const mTs = parseBseDate(mDate);
+            const isFuture = mTs > Date.now();
             bmAnnouncements.push({
               newsId,
               companyName: bm.Long_Name || targetSym || "BSE Stock",
@@ -1483,7 +1485,9 @@ export async function fetchDeepHistoricalResultsForStock(
               details: `Board Meeting scheduled on ${mDate} to consider ${purpose}`,
               pdfLink: "",
               scrip_cd: cleanTargetScrip,
-              bseTime: mDate,
+              // If meeting date is in the future, publication time is now (not the future meeting date)
+              bseTime: isFuture ? new Date().toISOString() : mDate,
+              meetingDate: mDate,
               priority: 'MEDIUM',
               category: 'BOARD_MEETING',
               isWatchlist: true

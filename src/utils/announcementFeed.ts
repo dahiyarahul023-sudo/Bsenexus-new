@@ -14,13 +14,27 @@ import { parseFilingTimestamp } from './timeFormat';
 
 const FEED_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
-export function announcementTs(a: any): number {
+export function announcementTs(a: any, now?: number): number {
+  // Guard against .map(announcementTs) passing index (e.g. 0, 1, 2...) as now.
+  const effectiveNow = (typeof now === 'number' && now > 1_000_000_000_000) ? now : Date.now();
+
   // Historical backfill can be ingested today. Its exchange publication date,
   // also displayed on the card, must not become "new" through fetched_at.
-  const exchangeTs = parseFilingTimestamp(a?.bseTime || a?.News_submission_dt || a?.DT_TM || a?.NEWS_DT);
+  // CRITICAL: An announcement's publication date can NEVER be in the future (> effectiveNow + 120_000).
+  // Upcoming board meeting dates stored in bseTime must not float ahead of live filings.
+  const rawExchangeTs = parseFilingTimestamp(a?.bseTime || a?.News_submission_dt || a?.DT_TM || a?.NEWS_DT);
+  const exchangeTs = (rawExchangeTs > 0 && rawExchangeTs <= effectiveNow + 120_000) ? rawExchangeTs : 0;
   if (exchangeTs > 0) return exchangeTs;
-  const timestamp = parseFilingTimestamp(a?.bseTimestamp);
-  return timestamp || parseFilingTimestamp(a?.fetched_at);
+
+  const rawTimestamp = parseFilingTimestamp(a?.bseTimestamp);
+  const timestamp = (rawTimestamp > 0 && rawTimestamp <= effectiveNow + 120_000) ? rawTimestamp : 0;
+  if (timestamp > 0) return timestamp;
+
+  const rawFetchedAt = parseFilingTimestamp(a?.fetched_at);
+  const fetchedAt = (rawFetchedAt > 0 && rawFetchedAt <= effectiveNow + 120_000) ? rawFetchedAt : 0;
+  if (fetchedAt > 0) return fetchedAt;
+
+  return 0;
 }
 
 export function mergeAnnouncementFeed(prev: any[], incoming: any[], now: number = Date.now()): any[] {
@@ -39,13 +53,13 @@ export function mergeAnnouncementFeed(prev: any[], incoming: any[], now: number 
     map.set(key, map.has(key) ? { ...map.get(key), ...item } : item);
   }
   const merged = Array.from(map.values()).filter(a => {
-    const ts = announcementTs(a);
+    const ts = announcementTs(a, now);
     return ts === 0 || ts >= cutoff;
   }).map(a => {
-    const timestamp = announcementTs(a);
+    const timestamp = announcementTs(a, now);
     return timestamp > 0 && a.bseTimestamp !== timestamp ? { ...a, bseTimestamp: timestamp } : a;
   });
-  merged.sort((a, b) => announcementTs(b) - announcementTs(a));
+  merged.sort((a, b) => announcementTs(b, now) - announcementTs(a, now));
   return merged;
 }
 
@@ -56,7 +70,7 @@ export function getAnnouncementFeedStatus({ checked, error, blocked, staleAt, it
   if (!checked) return 'checking';
   if (blocked || staleAt !== null) return 'delayed';
   if (items.length === 0) return 'empty';
-  const latest = Math.max(0, ...items.map(announcementTs));
+  const latest = Math.max(0, ...items.map(a => announcementTs(a, now)));
   // Old filings may be legitimate (weekend/holiday). Mark history, not outage.
   if (items.length > 0 && (latest === 0 || latest < now - 24 * 60 * 60 * 1000)) return 'historical';
   return 'checked';

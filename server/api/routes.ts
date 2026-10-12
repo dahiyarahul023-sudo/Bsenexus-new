@@ -31,7 +31,7 @@ import {
 } from "../database/watchlistDao.js";
 import { getBseHealth, testBSEConnection, syncWatchlistHistoricalData, syncSingleStockHistoricalData, backfillRecentAnnouncements, getBackupStalenessMetrics, isBseSourceBlocked, getBseFeedStaleness } from "../services/bse.js";
 import { getAllStockEntries } from "../utils/stockResolver.js";
-import { invalidateMonitorConfigCache } from "../services/monitor.js";
+import { invalidateMonitorConfigCache, processAnnouncements } from "../services/monitor.js";
 import { wantsTelegramEnable } from "../utils/alertDecision.js";
 import { getTelegramHealth, sendToTelegram, getBotUsername } from "../services/telegram.js";
 import { 
@@ -534,6 +534,11 @@ apiRouter.get("/announcements",
         if (lastSuccessfulFetchMs > 0) {
           res.setHeader('X-BSE-Feed-Updated-At', String(lastSuccessfulFetchMs));
         }
+      }
+      // If feed has not refreshed in 75 seconds, opportunistically trigger background poll
+      // so active user navigation automatically warms and keeps filings up to date
+      if (lastSuccessfulFetchMs === 0 || (nowMs - lastSuccessfulFetchMs) > 75 * 1000) {
+        processAnnouncements().catch(() => {});
       }
     } catch { /* non-fatal: staleness headers are best-effort */ }
     // Cap derived from per-stock policy: 25 filings per tracked stock × up to 100 stocks.

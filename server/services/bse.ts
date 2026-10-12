@@ -515,6 +515,7 @@ export async function fetchBSEAnnouncements(signal?: AbortSignal) {
   try {
     const nseRows = await fetchNSECorporateAnnouncements(signal);
     if (nseRows && nseRows.length > 0) {
+      clearBseBlock();
       bseHealth = { status: 'stable', latency: 450 };
       lastSuccessfulFetchMs = Date.now();
       return nseRows;

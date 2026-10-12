@@ -7,6 +7,8 @@ import { listenForStartup, resolveServerPort } from '../utils/serverStartup.js';
 test('PORT supports platform configuration and rejects invalid values', () => {
   assert.equal(resolveServerPort(''), 3000);
   assert.equal(resolveServerPort('8080'), 8080);
+  assert.equal(resolveServerPort('8080', ['node', 'server.ts', '--port', '3000']), 3000);
+  assert.equal(resolveServerPort('8080', ['node', 'server.ts', '--port=3000']), 3000);
   for (const value of ['0', '-1', '65536', '3.5', 'abc']) {
     assert.throws(() => resolveServerPort(value), /PORT must/);
   }
@@ -32,7 +34,13 @@ test('occupied ports reject startup with an actionable error without disturbing 
 test('Vite HMR shares the HTTP listener even when the default HMR port is occupied', async () => {
   const occupiedHmr = createServer();
   const httpServer = createServer((_req, res) => res.end('shared HTTP listener'));
-  await listenForStartup(occupiedHmr, 24678, '0.0.0.0');
+  let boundOccupied = false;
+  try {
+    await listenForStartup(occupiedHmr, 24678, '0.0.0.0');
+    boundOccupied = true;
+  } catch (error: any) {
+    if (error.code !== 'EADDRINUSE') throw error;
+  }
   const vite = await createViteServer({
     configFile: false,
     server: { middlewareMode: true, hmr: { server: httpServer } },
@@ -46,6 +54,8 @@ test('Vite HMR shares the HTTP listener even when the default HMR port is occupi
   } finally {
     await vite.close();
     await new Promise<void>(resolve => httpServer.close(() => resolve()));
-    await new Promise<void>(resolve => occupiedHmr.close(() => resolve()));
+    if (boundOccupied) {
+      await new Promise<void>(resolve => occupiedHmr.close(() => resolve()));
+    }
   }
 });

@@ -132,7 +132,20 @@ export async function initAnnouncementCache() {
       }
       if (bseTs > now + 120000) bseTs = now;
 
-      const updated = { ...item, bseTimestamp: bseTs };
+      const isFutureBseTime = parseBseDate(item.bseTime) > now + 120000;
+      let meetingDate = item.meetingDate;
+      let safeBseTime = item.bseTime;
+      if (isFutureBseTime) {
+        meetingDate = meetingDate || item.bseTime;
+        safeBseTime = new Date(bseTs).toISOString();
+      }
+
+      const updated = {
+        ...item,
+        bseTimestamp: bseTs,
+        bseTime: safeBseTime,
+        meetingDate: meetingDate
+      };
       if (!updated.priority || !updated.category) {
         const p = determinePriority(updated.subject || '', updated.details || '');
         return { ...updated, priority: p.level, category: p.category };
@@ -485,6 +498,7 @@ export interface AnnouncementInput {
   details: string;
   pdfLink: string;
   bseTime?: string;
+  meetingDate?: string;
   category?: string;
   priority?: string;
   is_sent?: number;
@@ -532,7 +546,8 @@ export async function saveAnnouncementsBatch(items: AnnouncementInput[]): Promis
       const parsed = parseBseDate(data.bseTime);
       if (parsed > 0) bseTs = parsed;
     }
-    if (!bseTs || bseTs > now + 120000) bseTs = now;
+    const isFutureTime = bseTs > now + 120000;
+    if (!bseTs || isFutureTime) bseTs = now;
 
     const safeData = {
       ...data,
@@ -540,7 +555,8 @@ export async function saveAnnouncementsBatch(items: AnnouncementInput[]): Promis
       details: String(data.details || "").substring(0, 4900),
       companyName: String(data.companyName || "").substring(0, 190),
       pdfLink: String(data.pdfLink || "").substring(0, 990),
-      bseTime: String(data.bseTime || "").substring(0, 90),
+      bseTime: isFutureTime ? new Date(now).toISOString() : String(data.bseTime || "").substring(0, 90),
+      meetingDate: data.meetingDate || (isFutureTime ? String(data.bseTime || '') : undefined),
       scrip_cd: String(data.scrip_cd || "").substring(0, 30),
       isWatchlist: data.isWatchlist ?? false,
       fetched_at: now,

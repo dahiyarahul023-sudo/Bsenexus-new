@@ -35,7 +35,7 @@ import { pageRenderCache, staticGuideCache, apiResponseCache } from "./server/ut
 import { INDEXNOW_KEY, indexNowQueue } from "./server/services/indexNow.js";
 import { autoIndexNewGuides } from "./server/services/guideIndexNow.js";
 import { verifyRecaptchaToken } from "./server/security/recaptchaService.js";
-import { getBseBlockBackoffLevel } from "./server/services/bse.js";
+import { getBseBlockBackoffLevel, getBseFeedStaleness } from "./server/services/bse.js";
 import { getAllFeedback } from "./server/database/feedbackDao.js";
 
 // Global error handlers to prevent background quota/network exceptions from crashing the process
@@ -83,7 +83,7 @@ app.use(compression({
     // 4. Default to standard compressible check (covers application/json, text/*, JS, CSS, SVG)
     return compression.filter(req, res);
   }
-}));
+}) as unknown as express.RequestHandler);
 
 app.use(responseHeaders());
 app.use('/api/payments/webhook', express.raw({ type: 'application/json', limit: '1mb' }));
@@ -6194,9 +6194,6 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   next(err);
 });
 
-// Live announcements are polled only by /api/cron/poll-announcements.
-// No boot call or repeating in-container polling timer.
-
 // PERF-006 (1 Oct 2026 audit): Track all setInterval handles for graceful shutdown.
 // Cloud Run sends SIGTERM ~10s before killing the instance. Without clearing
 // these intervals, in-flight work (Telegram dispatches, BSE polls) is cut mid-
@@ -6206,6 +6203,23 @@ function trackInterval(handle: NodeJS.Timeout): NodeJS.Timeout {
   trackedIntervals.push(handle);
   return handle;
 }
+
+// Live announcements poller: /api/cron/poll-announcements is the primary external cron trigger.
+// As a safety net to prevent feed stalls if Cloud Scheduler is paused, misconfigured, or delayed,
+// this watchdog ensures the feed is checked automatically every 60s during active traffic/staleness.
+trackInterval(setInterval(async () => {
+  try {
+    const { lastSuccessfulFetchMs, bootMs } = getBseFeedStaleness();
+    const now = Date.now();
+    const staleMs = lastSuccessfulFetchMs > 0 ? (now - lastSuccessfulFetchMs) : (now - bootMs);
+    // If not fetched in the last 75 seconds, poll automatically
+    if (staleMs > 75 * 1000) {
+      await processAnnouncements();
+    }
+  } catch (err: any) {
+    console.warn("[PollerWatchdog] Notice:", err?.message || err);
+  }
+}, 60 * 1000));
 
 // Independent Storage Capacity & Pruning (Every 15 minutes, completely decoupled from critical poller path)
 setTimeout(() => {

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { customFetch } from '../api';
 import { 
-  FileText, ExternalLink, Search, Send, Clock, 
+  FileText, ExternalLink, Search, Send, Clock, Calendar,
   Upload, Sparkles, ArrowUpRight, CheckCircle2, 
   Building2, ChevronRight, ChevronDown, Info, X, RefreshCw,
   Layers, Zap, Copy, Check, Flame, Bot, Share2,
@@ -14,7 +14,7 @@ import { getLowestPlanPrice } from '../utils/cashfree';
 import { CustomDropdown } from './ui/CustomDropdown';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { formatFullDateTime, formatShortDateTime, formatTimeOnly, formatDateOnly, formatCleanDateTime, formatCleanTime, formatFilingRelativeTime } from '../utils/timeFormat';
+import { formatFullDateTime, formatShortDateTime, formatTimeOnly, formatDateOnly, formatCleanDateTime, formatCleanTime, formatFilingRelativeTime, parseFilingTimestamp } from '../utils/timeFormat';
 import { cleanBseSubject } from '../utils/cleanBseSubject';
 import { getSafePdfUrl } from '../utils/pdfHelper';
 import { navigateToFiling } from '../utils/shareUrls';
@@ -826,7 +826,7 @@ export function Announcements({
   };
 
   const feedStatus = getAnnouncementFeedStatus({ checked: feedChecked, error: feedError, blocked: feedDelayed, staleAt: feedStaleAt, items: announcements });
-  const latestFilingAt = Math.max(0, ...announcements.map(announcementTs));
+  const latestFilingAt = Math.max(0, ...announcements.map(a => announcementTs(a)));
   const feedStatusMessage = feedStatus === 'error'
     ? "Couldn't refresh filings. Showing saved data; retrying automatically."
     : feedStatus === 'checking' ? 'Checking the latest filings…'
@@ -949,6 +949,25 @@ export function Announcements({
   const todayConcalls = announcements.filter(a => a.category === 'CONFERENCE_CALL');
   const todayPriorities = announcements.filter(a => a.category === 'HIGH_PRIORITY' || a.priority === 'HIGH');
 
+  // Helper to ensure future meeting dates are never displayed as filing timestamps
+  const getFilingTimeInfo = (item: any) => {
+    const rawTs = parseFilingTimestamp(item?.bseTime);
+    const now = Date.now();
+    const isFuture = rawTs > now + 120_000;
+    const meetingDate = item?.meetingDate || (isFuture ? item?.bseTime : null);
+    const filingTs = isFuture
+      ? (parseFilingTimestamp(item?.fetched_at) || parseFilingTimestamp(item?.bseTimestamp) || now)
+      : (rawTs || parseFilingTimestamp(item?.fetched_at) || now);
+
+    return {
+      relativeTime: formatFilingRelativeTime(filingTs),
+      fullDateTime: formatFullDateTime(filingTs),
+      dateOnly: formatDateOnly(filingTs),
+      meetingDateText: meetingDate ? formatDateOnly(meetingDate) : null,
+      isMeetingNotice: Boolean(meetingDate) || item?.category === 'BOARD_MEETING'
+    };
+  };
+
   // Reusable Drawer Content Component to avoid duplication between Desktop and Mobile Modal
   const renderDrawerBody = (item: any, isMobileModal: boolean = false) => {
     const isSavedInWatchlist = Boolean(
@@ -957,6 +976,7 @@ export function Announcements({
     );
     const cleanSub = cleanBseSubject(item.subject, item.companyName, item.scrip_cd);
     const detectedNoiseType = detectFilingType(item.subject);
+    const timeInfo = getFilingTimeInfo(item);
 
     return (
       <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 sm:space-y-5 overscroll-contain bg-slate-100/70 dark:bg-[#12111C]">
@@ -987,9 +1007,14 @@ export function Announcements({
               <HeliosPill tone="slate" dot={false} className="font-mono">
                 {cleanSub.regulation || 'Reg 30 (LODR)'}
               </HeliosPill>
+              {timeInfo.meetingDateText && (
+                <HeliosPill tone="amber" dot={false} className="font-mono">
+                  Meeting: {timeInfo.meetingDateText}
+                </HeliosPill>
+              )}
             </div>
             <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 font-medium whitespace-nowrap">
-              {formatDateOnly(item.bseTime || item.fetched_at)}
+              {timeInfo.dateOnly}
             </span>
           </div>
 
@@ -1054,13 +1079,24 @@ export function Announcements({
 
         {/* Disclosed Timing Box */}
         <div className={cn(heliosCard, "p-3 space-y-1.5 text-xs font-medium")}>
+          {timeInfo.meetingDateText && (
+            <div className="flex items-center justify-between pb-1.5 border-b border-slate-200/60 dark:border-slate-800/60">
+              <span className="text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1.5">
+                <Calendar size={13} className="text-amber-500" />
+                Scheduled Board Meeting:
+              </span>
+              <strong className="text-amber-600 dark:text-amber-400 font-mono font-bold">
+                {timeInfo.meetingDateText}
+              </strong>
+            </div>
+          )}
           <div className="flex items-center justify-between">
             <span className="text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
               <Clock size={13} className="text-slate-500 dark:text-slate-400" />
               BSE Disclosed Time:
             </span>
             <strong className="text-slate-900 dark:text-white font-mono font-bold">
-              {formatFullDateTime(item.bseTime || item.fetched_at)}
+              {timeInfo.fullDateTime}
             </strong>
           </div>
         </div>
@@ -1746,6 +1782,7 @@ export function Announcements({
               const isExpanded = Boolean(expandedClusters[cluster.id]);
               const cleanSub = cleanBseSubject(item.subject, item.companyName, item.scrip_cd);
               const detectedNoiseType = detectFilingType(item.subject);
+              const timeInfo = getFilingTimeInfo(item);
 
               // ==========================================
               // GRID CARD VIEW (Multi-column desktop & responsive)
@@ -1777,7 +1814,10 @@ export function Announcements({
                         {isHigh && <HeliosPill tone="rose">High impact</HeliosPill>}
                         {isConcall && !isResults && <HeliosPill tone="sky">Concall</HeliosPill>}
                         {cluster.isCluster && <HeliosPill tone="amber">{cluster.count} filings</HeliosPill>}
-                        <HeliosPill tone="slate">{formatFilingRelativeTime(item.bseTime || item.fetched_at)}</HeliosPill>
+                        {timeInfo.meetingDateText && (
+                          <HeliosPill tone="amber">Meeting: {timeInfo.meetingDateText}</HeliosPill>
+                        )}
+                        <HeliosPill tone="slate">{timeInfo.relativeTime}</HeliosPill>
                         <span className="flex-1" />
                         {item.scrip_cd && (
                           <HeliosPill tone="slate" dot={false} className="font-mono">BSE: {item.scrip_cd}</HeliosPill>
@@ -1868,8 +1908,11 @@ export function Announcements({
                       {isHigh && <HeliosPill tone="rose">High impact</HeliosPill>}
                       {isConcall && !isResults && <HeliosPill tone="sky">Concall</HeliosPill>}
                       <HeliosPill tone="amber">{cluster.count} filings · {cluster.timeSpanLabel}</HeliosPill>
+                      {timeInfo.meetingDateText && (
+                        <HeliosPill tone="amber">Meeting: {timeInfo.meetingDateText}</HeliosPill>
+                      )}
                       <span className="flex-1" />
-                      <HeliosPill tone="slate">{formatFilingRelativeTime(item.bseTime || item.fetched_at)}</HeliosPill>
+                      <HeliosPill tone="slate">{timeInfo.relativeTime}</HeliosPill>
                     </div>
 
                     <div className="min-w-0">
@@ -1943,8 +1986,11 @@ export function Announcements({
                     {item.is_sent === 1 && (
                       <span className="w-1.5 h-1.5 rounded-full bg-sky-500 shrink-0 inline-block" title="Dispatched to Telegram" />
                     )}
+                    {timeInfo.meetingDateText && (
+                      <HeliosPill tone="amber">Meeting: {timeInfo.meetingDateText}</HeliosPill>
+                    )}
                     <span className="flex-1" />
-                    <HeliosPill tone="slate">{formatFilingRelativeTime(item.bseTime || item.fetched_at)}</HeliosPill>
+                    <HeliosPill tone="slate">{timeInfo.relativeTime}</HeliosPill>
                   </div>
 
                   <div className="min-w-0">
