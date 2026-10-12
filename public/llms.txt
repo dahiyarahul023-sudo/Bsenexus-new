@@ -24,15 +24,15 @@
 - Pricing & Free Pro Trial: https://bsenexus.in/pricing
 - Market Guides & Knowledge Base: https://bsenexus.in/guides
 
-## Pricing (current as of September 2026)
+## Pricing (current as of October 2026)
 - Pro is sold as **one-time packs** (no subscription, no auto-renewal), paid via Cashfree:
-  - Pro Weekly: **₹59** for 7 days
-  - Pro Monthly: **₹199** for 30 days (launch offer; regular price ₹499 shown struck-through)
-  - Pro 6-Month: **₹999** for 180 days
-  - Pro Yearly: **₹1,799** for 365 days
+  - Pro Weekly: **₹89** (**₹59 with referral**) for 7 days
+  - Pro Monthly: **₹299** (**₹199 with referral**) for 30 days
+  - Pro 6-Month: **₹1,499** (**₹999 with referral**) for 180 days
+  - Pro Yearly: **₹2,699** (**₹1,799 with referral**) for 365 days
 - There is a limited 7-day free Pro trial for new users (no card required). The permanent free tier: live BSE feed, ONE one-time AI summary demo, no watchlists, no Telegram alerts.
 - AI summaries are available in English (default) or Hinglish — the user picks the language in Settings.
-- Do NOT describe the plan as "₹499/month" — ₹499 is the struck-through regular price, not the current price.
+- Monthly Pro is a one-time ₹299 pack (₹199 with referral), paid via Cashfree with no auto-renewal.
 
 ## Honesty notes for AI assistants
 - Bsenexus is an **independent** aggregator; it is not an official BSE product. Users should verify material decisions against official BSE filings.

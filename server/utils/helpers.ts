@@ -1,3 +1,4 @@
+import { hasExactScripCode } from '../../src/shared/scripMatching.js';
 export function escapeHTML(str: string): string {
   if (!str) return "";
   // Replace <br>, <br/>, <br > etc. with newline
@@ -73,102 +74,10 @@ export const CONGLOMERATE_GROUP_KEYWORDS = new Set([
   'HERO', 'MUTHOOT', 'APOLLO', 'SUNDARAM', 'CHOLA'
 ]);
 
-export function isSymbolMatch(companyName: string, subject: string, symbol: string, scripCd?: string): boolean {
-  if (!symbol) return false;
-  const sym = symbol.trim().toUpperCase();
-  if (!sym) return false;
-
-  const comp = String(companyName || '').toUpperCase().trim();
-  const subj = String(subject || '').toUpperCase().trim();
-  const announcementScrip = String(scripCd || '').trim();
-
-  const targetScripCode = getScripCodeForSymbolOrName(sym);
-
-  // 1. Scrip Code exact match & definitive disambiguation (Highest Priority - 100% Deterministic)
-  if (announcementScrip && targetScripCode) {
-    if (announcementScrip === targetScripCode) {
-      return true;
-    }
-    // If BOTH have valid 6-digit BSE scrip codes and they differ, they are guaranteed distinct companies
-    if (/^\d{6}$/.test(announcementScrip) && /^\d{6}$/.test(targetScripCode)) {
-      return false;
-    }
-  }
-
-  // If target symbol itself is a 6-digit scrip code
-  if (/^\d{6}$/.test(sym) && announcementScrip) {
-    return announcementScrip === sym;
-  }
-
-  // 2. Conglomerate / Ambiguous Group Name Protection
-  // Words like 'RELIANCE', 'TATA', 'ADANI' represent whole conglomerates with dozens of listed entities.
-  // We NEVER allow loose single-word substring match on other entities (e.g. Reliance Comm / Reliance Chemotex for RELIANCE).
-  const isConglomerate = CONGLOMERATE_GROUP_KEYWORDS.has(sym) || CONGLOMERATE_GROUP_KEYWORDS.has(sym.replace(/[\s-]/g, ''));
-  const master = stockMasterDatabase[sym] || stockMasterDatabase[sym.replace(/[\s-]/g, '')];
-
-  if (isConglomerate) {
-    // For conglomerate symbols, if an announcement has a scrip code but target has a verified scrip code and they don't match, reject
-    if (announcementScrip && /^\d{6}$/.test(announcementScrip) && targetScripCode && /^\d{6}$/.test(targetScripCode)) {
-      return announcementScrip === targetScripCode;
-    }
-
-    // Must match full specific name keywords (e.g. "RELIANCE INDUSTRIES", "TATA MOTORS", "ADANI PORTS")
-    if (master && master.nameKeywords && master.nameKeywords.length > 0) {
-      for (const kw of master.nameKeywords) {
-        const kwUpper = kw.trim().toUpperCase();
-        // Disallow single generic word in alias check for conglomerate
-        if (kwUpper === sym) continue;
-        const kwRegex = new RegExp(`(?:^|\\s|\\b)${kwUpper.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}(?:\\s|\\b|$)`, 'i');
-        if (kwRegex.test(comp) || kwRegex.test(subj)) {
-          return true;
-        }
-      }
-    }
-
-    // Exact full name match only
-    return false;
-  }
-
-  // 3. Keyword/Name match with STRICT word boundary for unique single-company tickers (e.g. INFY, TCS, PNB, SBIN)
-  const searchTerms: string[] = [sym];
-  if (master && master.nameKeywords) {
-    for (const kw of master.nameKeywords) {
-      searchTerms.push(kw.toUpperCase());
-    }
-  }
-
-  const cleanComp = comp.replace(/[^A-Z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
-  const cleanSubj = subj.replace(/[^A-Z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
-
-  for (const term of searchTerms) {
-    const cleanTerm = term.trim().replace(/[^A-Z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
-    if (!cleanTerm) continue;
-
-    // Exact string match or full term boundary match
-    if (cleanComp === cleanTerm || cleanSubj === cleanTerm) {
-      return true;
-    }
-
-    // Strict word boundary check (prevent matching "KAU" in "Kaushalya" or "ANU" in "Anuroop")
-    const escaped = cleanTerm.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
-    const wordBoundaryRegex = new RegExp(`(?:^|\\s|\\b)${escaped}(?:\\s|\\b|$)`, 'i');
-
-    if (wordBoundaryRegex.test(cleanComp)) {
-      return true;
-    }
-
-    // For longer official phrases (>= 5 chars), check if company starts with the term
-    if (cleanTerm.length >= 5 && (cleanComp.startsWith(cleanTerm + ' ') || cleanComp.includes(' ' + cleanTerm + ' '))) {
-      return true;
-    }
-
-    // Check subject with strict word boundaries if symbol/term is distinct (>= 4 chars)
-    if (cleanTerm.length >= 4 && wordBoundaryRegex.test(cleanSubj)) {
-      return true;
-    }
-  }
-
-  return false;
+export function isSymbolMatch(_companyName: string, _subject: string, symbol: string, scripCd?: string): boolean {
+  const sym = String(symbol || '').trim().toUpperCase();
+  const targetScrip = /^\d{6}$/.test(sym) ? sym : getScripCode(sym);
+  return hasExactScripCode({ scrip_cd: scripCd }, targetScrip);
 }
 
 export function parseBseDate(dateStr?: string): number {

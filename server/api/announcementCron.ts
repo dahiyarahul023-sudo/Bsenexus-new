@@ -15,10 +15,8 @@ export function createAnnouncementCronHandler(deps: Dependencies): RequestHandle
   const log = deps.log || console.log;
   let running = false;
   let nextEligibleAt = 0;
-  let requestNumber = 0;
   return async (req, res) => {
     const startedAt = now();
-    const cycleNumber = ++requestNumber;
     let mode = 'unauthorized';
     let fetched = 0;
     let added = 0;
@@ -63,18 +61,11 @@ export function createAnnouncementCronHandler(deps: Dependencies): RequestHandle
       mode = 'error';
       // Do not log exception text: upstream messages may contain request secrets.
       log('[POLLER] Poll invocation failed');
-      // Anchor recovery to the attempt start so a slow failure cannot skip
-      // the next scheduled minute merely because it finished late.
-      nextEligibleAt = startedAt + 60_000;
+      nextEligibleAt = now() + 60_000;
       res.status(503).json({ success: false, mode, fetched, new: added, durationMs: now() - startedAt });
     } finally {
-      const timestampIST = new Date(startedAt + 19_800_000).toISOString().replace('Z', '+05:30');
-      log(`[POLLER] Cycle ${JSON.stringify({
-        event: 'poll-request', timestampIST, cycleNumber, durationMs: now() - startedAt,
-        fetched, newFilingsCount: added, skipped: mode === 'busy' || mode === 'backoff',
-        error: mode !== 'success' && mode !== 'busy' && mode !== 'backoff', mode,
-        ...(mode === 'busy' ? { reason: 'skipped: previous cycle running' } : {}),
-      })}`);
+      const timestampIST = new Date(now() + 19_800_000).toISOString().replace('Z', '+05:30');
+      log(`[POLLER] Cycle | Duration: ${now() - startedAt}ms | New: ${added} | Mode: ${mode} | Timestamp IST: ${timestampIST}`);
     }
   };
 }

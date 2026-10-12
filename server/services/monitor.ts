@@ -32,7 +32,6 @@ export function getConsecutiveFailures(): number {
 }
 
 let isPolling = false;
-let pollCycleNumber = 0;
 let isCacheInitialized = false;
 
 // Per-User Watchlist Cache with 10-minute TTL to drastically reduce Firestore read volume
@@ -124,40 +123,19 @@ export interface AnnouncementPollResult {
 
 export async function processAnnouncements(): Promise<AnnouncementPollResult> {
   const startedAt = Date.now();
-  const cycleNumber = ++pollCycleNumber;
   let fetched = 0;
   let newCount = 0;
   const result = (mode: string): AnnouncementPollResult => ({ fetched, new: newCount, durationMs: Date.now() - startedAt, mode });
-  const logSummary = (mode: string) => {
-    const message = JSON.stringify({
-      event: 'poll-cycle',
-      timestampIST: new Date(startedAt + 19_800_000).toISOString().replace('Z', '+05:30'),
-      cycleNumber,
-      durationMs: Date.now() - startedAt,
-      fetched,
-      newFilingsCount: newCount,
-      skipped: mode === 'busy',
-      error: mode !== 'success' && mode !== 'busy',
-      mode,
-      ...(mode === 'busy' ? { reason: 'skipped: previous cycle running' } : {}),
-    });
-    console.log(`[POLLER_CYCLE] ${message}`);
-    void addLog('INFO', 'POLLER_CYCLE', message).catch(() => {});
-  };
-  if (isPolling) {
-    logSummary('busy');
-    return result('busy');
-  }
+  if (isPolling) return result('busy');
   isPolling = true;
   const cycleId = Date.now().toString(36);
   let outcome = 'success';
-  let cycle: PollCycle | undefined;
+  const cycle = new PollCycle(event => {
+    const message = `cycle=${cycleId} ${event}`;
+    console.log(`[POLLER_CYCLE] ${message}`);
+    void addLog('INFO', 'POLLER_CYCLE', message).catch(() => {});
+  });
   try {
-    cycle = new PollCycle(event => {
-      const message = `cycle=${cycleId} ${event}`;
-      console.log(`[POLLER_CYCLE] ${message}`);
-      void addLog('INFO', 'POLLER_CYCLE', message).catch(() => {});
-    });
     if (!isCacheInitialized) {
       await cycle.step('cache-init', () => initAnnouncementCache());
       // Restore in-app notifications from Supabase in the background (never blocks polling)
@@ -630,12 +608,8 @@ export async function processAnnouncements(): Promise<AnnouncementPollResult> {
       console.error('[POLLER] Cycle failed');
     }
   } finally {
-    try {
-      cycle?.finish(outcome);
-    } finally {
-      isPolling = false;
-      logSummary(outcome);
-    }
+    cycle.finish(outcome);
+    isPolling = false;
   }
   return result(outcome);
 }

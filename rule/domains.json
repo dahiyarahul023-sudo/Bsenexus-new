@@ -136,10 +136,9 @@
         "server/tests/alertRulesReliability.test.ts",
         "server/tests/alertRulesApi.test.ts",
         "server/tests/pollerStall.test.ts",
-        "server/tests/announcementCron.test.ts",
-        "server/tests/announcementCadence.test.ts"
+        "server/tests/announcementCron.test.ts"
       ],
-      "reason": "Poll \u2192 normalize/dedupe \u2192 persistence \u2192 feed and alert decisions \u2192 recipient-specific delivery/inbox. Global and personal recipients must remain distinct. Preset saves replace stable per-owner IDs atomically; confirmed cloud settings feed every poll. Personal channels supersede inherited defaults once presets are saved. Live polling has a CRON_SECRET bearer-protected HTTP trigger, a 60-second in-container timer and a 75-second-stale traffic trigger. The shared process-local monitor lock skips running cycles without queueing. Request lifetime covers bounded ingestion/write drain; cron source failure eligibility is capped at 60 seconds. External Scheduler remains necessary for idle request-based Cloud Run; legacy cron returns 410. Numbered IST worker summaries and cron request summaries have distinct event fields."
+      "reason": "Poll \u2192 normalize/dedupe \u2192 persistence \u2192 feed and alert decisions \u2192 recipient-specific delivery/inbox. Global and personal recipients must remain distinct. Preset saves replace stable per-owner IDs atomically; confirmed cloud settings feed every poll. Personal channels supersede inherited defaults once presets are saved. Live polling is driven by the CRON_SECRET bearer-protected HTTP endpoint; no repeating live-poll timer or fire-and-forget legacy cron. Request lifetime covers bounded ingestion/write drain; source failure backoff is eligibility time, not a timer."
     },
     {
       "id": "user-data",
@@ -202,13 +201,15 @@
         "src/App.tsx",
         "src/api.ts",
         "public/sw.js",
-        "server/services/marketGuidesService.ts"
+        "server/services/marketGuidesService.ts",
+        "src/shared/scripMatching.ts"
       ],
       "tests": [
         "server/tests/routeResolution.test.ts",
         "server/tests/renderCache.test.ts",
         "server/tests/searchEngineDiscovery.test.ts",
-        "server/tests/pwaOfflineSync.test.ts"
+        "server/tests/pwaOfflineSync.test.ts",
+        "server/tests/sevenFixes.test.ts"
       ],
       "reason": "API responses, SSR routes, browser deep links, SEO and service-worker caching must remain compatible. User-specific responses must never enter shared public caches."
     },
@@ -263,13 +264,15 @@
         "src/hooks/useMarketIndices.ts",
         "src/utils/timeFormat.ts",
         "src/components/HomeMarketNews.tsx",
-        "src/utils/homeNews.ts"
+        "src/utils/homeNews.ts",
+        "src/shared/scripMatching.ts"
       ],
       "tests": [
         "server/tests/core.test.ts",
         "server/tests/auditData.test.ts",
         "server/tests/followupAudit.test.ts",
-        "server/tests/homeNews.test.ts"
+        "server/tests/homeNews.test.ts",
+        "server/tests/sevenFixes.test.ts"
       ],
       "reason": "Upstream timestamps, stock identity and market sessions affect cached API results, screen freshness and alert timing. Public market data availability does not establish trading-data accuracy."
     },
@@ -291,13 +294,15 @@
         "public/sitemap.xml",
         "public/llms.txt",
         "public/llms-full.txt",
-        "src/content/keywordGuides.ts"
+        "src/content/keywordGuides.ts",
+        "src/shared/scripMatching.ts"
       ],
       "tests": [
         "server/tests/faqBank.test.ts",
         "server/tests/searchEngineDiscovery.test.ts",
         "server/tests/routeResolution.test.ts",
-        "server/tests/keywordGuides.test.ts"
+        "server/tests/keywordGuides.test.ts",
+        "server/tests/sevenFixes.test.ts"
       ],
       "reason": "Public copy and crawler metadata must agree with actual API/product contracts. Admin SEO mutations inherit mount guards; generated summaries are not evidence of source accuracy."
     },
@@ -325,8 +330,7 @@
         "server/tests/accountProtection.test.ts",
         "server/tests/circuitBreaker.test.ts",
         "server/tests/recaptchaSecurity.test.ts",
-        "server/tests/pollerStall.test.ts",
-        "server/tests/announcementCadence.test.ts"
+        "server/tests/pollerStall.test.ts"
       ],
       "reason": "Startup and settings influence background jobs, provider calls, abuse limits and logs. A live HTTP listener does not establish that durable stores or external providers are ready. Poller stage deadlines release the monitor lock without resuming abandoned workers; dedicated local poller history is not cloud deployment durability."
     },
@@ -454,7 +458,8 @@
         "src/utils/homeNews.ts",
         "src/styles/home-news.css",
         "src/components/ui/motion/ShareActionMenu.tsx",
-        "src/components/notes/SaveNoteButton.tsx"
+        "src/components/notes/SaveNoteButton.tsx",
+        "src/shared/scripMatching.ts"
       ],
       "tests": [
         "server/tests/core.test.ts",
@@ -462,7 +467,8 @@
         "server/tests/apiCancellation.test.ts",
         "server/tests/alertRulesApi.test.ts",
         "server/tests/homeNews.test.ts",
-        "server/tests/announcementFeed.test.ts"
+        "server/tests/announcementFeed.test.ts",
+        "server/tests/sevenFixes.test.ts"
       ],
       "reason": "List/detail identity, filters, watchlist membership, badge counts and timestamps must agree. Background refresh preserves content, density, selection and scroll. Rapid filter changes must not render older responses."
     },
@@ -581,12 +587,15 @@
         "public/llms-full.txt",
         "src/content/keywordGuides.ts",
         "server/services/marketGuidesService.ts",
-        "server/services/guideIndexNow.ts"
+        "server/services/guideIndexNow.ts",
+        "src/shared/scripMatching.ts",
+        "src/config/topCompanies.ts"
       ],
       "tests": [
         "server/tests/searchEngineDiscovery.test.ts",
         "server/tests/routeResolution.test.ts",
-        "server/tests/keywordGuides.test.ts"
+        "server/tests/keywordGuides.test.ts",
+        "server/tests/sevenFixes.test.ts"
       ],
       "reason": "Public links, pricing claims, server-rendered content and client views must agree. Lazy navigation, responsive composition, keyboard operation and motion require browser evidence beyond server discovery tests."
     },

@@ -1,7 +1,8 @@
+import { hasExactScripCode } from '../../src/shared/scripMatching.js';
 import fs from 'fs';
 import path from 'path';
 import { getActiveWatchlistSymbols, getAllWatchlists, extractSymbol } from '../database/watchlistDao.js';
-import { getScripCodeForSymbolOrName, isSymbolMatch, parseBseDate, resolveStockDetails } from '../utils/helpers.js';
+import { getScripCodeForSymbolOrName, parseBseDate, resolveStockDetails } from '../utils/helpers.js';
 import { addLog } from '../database/logDao.js';
 import { 
   getRecentAnnouncements, 
@@ -737,6 +738,7 @@ export async function getResultsCalendarData(
 
       // Filter candidate matches for actual Board Outcome / Result
       const validMatches = candidates.filter(a => {
+        if (!hasExactScripCode(a, item.scripCode)) return false;
         const fullText = `${a.subject || ''} ${a.details || ''}`.toLowerCase();
         const isPreNotice = isIntimationOrNoticeFiling(a.subject || '', a.details || '');
         if (isPreNotice) return false;
@@ -1220,13 +1222,7 @@ export async function getStockResultsHistory(
 
   // 1. Fetch announcements for this stock from Dao
   const recentAnnouncements = await getRecentAnnouncements(10000);
-  const stockAnns = recentAnnouncements.filter((ann: any) => {
-    const annScrip = String(ann.scrip_cd || ann.SCRIP_CD || ann.scripCode || '').trim();
-    const annSym = (ann.symbol || '').toUpperCase().trim();
-    const annComp = (ann.companyName || ann.SLONGNAME || '').toUpperCase();
-    return (targetScrip && annScrip === targetScrip) ||
-      (sym && (annSym === sym || isSymbolMatch(annComp, ann.subject || '', sym, annScrip)));
-  });
+  const stockAnns = recentAnnouncements.filter((ann: any) => hasExactScripCode(ann, targetScrip));
 
   // Group announcements strictly by calendar date in IST
   const dateMap = new Map<string, any[]>();
@@ -1363,9 +1359,7 @@ export async function getStockResultsHistory(
   // 4. Also check active Results Calendar items for upcoming / today meetings
   const calendarData = await getResultsCalendarData('all');
   for (const calItem of calendarData.items || []) {
-    const calScrip = String(calItem.scripCode || '').trim();
-    const isCalMatch = (targetScrip && calScrip === targetScrip) ||
-      (sym && calItem.symbol && calItem.symbol.toUpperCase() === sym);
+    const isCalMatch = hasExactScripCode(calItem, targetScrip);
 
     if (isCalMatch) {
       const meetingTs = calItem.meetingTimestamp || parseMeetingDateToIstMidnight(calItem.meetingDate || '');
@@ -1556,12 +1550,12 @@ export async function fetchDeepHistoricalResultsForStock(
       const historicalAnnouncements: any[] = [];
       for (const item of items) {
         const newsId = item.NEWSID;
-        if (!newsId) continue;
+        if (!newsId || !hasExactScripCode(item, targetScrip)) continue;
 
         const companyName = item.SLONGNAME || item.scrip_cd || targetSym || "BSE Stock";
         const subject = item.NEWSSUB || "No Subject";
         const details = item.HEADLINE || "";
-        const scrip_cd = String(item.scrip_cd || item.SCRIP_CD || targetScrip);
+        const scrip_cd = String(item.scrip_cd || item.SCRIP_CD).trim();
         const pdfLink = item.ATTACHMENTNAME ? `https://www.bseindia.com/xml-data/corpfiling/AttachLive/${item.ATTACHMENTNAME}` : "";
         const priority = determinePriority(subject, details);
         const rawTime = item.News_submission_dt || item.DT_TM || item.NEWS_DT;

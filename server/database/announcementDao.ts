@@ -1,3 +1,4 @@
+import { hasExactScripCode } from '../../src/shared/scripMatching.js';
 import { getSupabase, isSupabaseConfigured } from './supabase.js';
 import { determinePriority, parseBseDate, isSymbolMatch } from '../utils/helpers.js';
 import { addLog } from './logDao.js';
@@ -718,8 +719,7 @@ export async function getAnnouncementsForScrip(scripCode: string, limitNum: numb
 
   const byId = new Map<string, any>();
   for (const ann of announcementsMemoryCache) {
-    const annScrip = String(ann.scrip_cd || ann.SCRIP_CD || ann.scripCode || '').trim();
-    if (annScrip === target) {
+    if (hasExactScripCode(ann, target)) {
       byId.set(ann.id || ann.newsId, ann);
     }
   }
@@ -736,7 +736,8 @@ export async function getAnnouncementsForScrip(scripCode: string, limitNum: numb
         const dataItem: any = row.data || {};
         let bseTs = parseBseDate(dataItem.bseTime);
         if (!bseTs) bseTs = dataItem.bseTimestamp || dataItem.fetched_at || 0;
-        const item = { id: row.id, ...dataItem, bseTimestamp: bseTs };
+        const item = { id: row.id, scrip_cd: row.scrip_cd, ...dataItem, bseTimestamp: bseTs };
+        if (!hasExactScripCode(item, target)) continue;
         byId.set(row.id, { ...(byId.get(row.id) || {}), ...item });
       }
     } catch (e) {
@@ -761,17 +762,9 @@ export async function boostAnnouncementsPriorityForWindow(
   let boostedCount = 0;
 
   for (const ann of announcementsMemoryCache) {
-    const annScrip = String(ann.scrip_cd || ann.SCRIP_CD || '').trim();
-    const annComp = (ann.companyName || ann.SLONGNAME || '').toUpperCase();
-    const annSub = (ann.subject || ann.NEWSSUB || '');
     const ts = ann.bseTimestamp || ann.fetched_at || 0;
 
-    let isMatch = false;
-    if (targetScrip && annScrip === targetScrip) {
-      isMatch = true;
-    } else if (targetSym && (annComp.includes(targetSym) || annSub.toUpperCase().includes(targetSym))) {
-      isMatch = true;
-    }
+    const isMatch = hasExactScripCode(ann, targetScrip);
 
     if (isMatch && ts >= startTs && ts <= endTs) {
       const prevPriority = ann.priority;
@@ -812,17 +805,9 @@ export function getAnnouncementsForStockInWindow(
   const results: any[] = [];
 
   for (const ann of announcementsMemoryCache) {
-    const annScrip = String(ann.scrip_cd || ann.SCRIP_CD || '').trim();
-    const annComp = (ann.companyName || ann.SLONGNAME || '').toUpperCase();
-    const annSub = (ann.subject || ann.NEWSSUB || '');
     const ts = ann.bseTimestamp || ann.fetched_at || 0;
 
-    let isMatch = false;
-    if (targetScrip && annScrip === targetScrip) {
-      isMatch = true;
-    } else if (targetSym && (annComp.includes(targetSym) || annSub.toUpperCase().includes(targetSym))) {
-      isMatch = true;
-    }
+    const isMatch = hasExactScripCode(ann, targetScrip);
 
     if (isMatch && ts >= startTs && ts <= endTs) {
       results.push(ann);

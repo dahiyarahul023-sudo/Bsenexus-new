@@ -1,3 +1,4 @@
+import { hasExactScripCode } from '../../src/shared/scripMatching.js';
 import YahooFinance from 'yahoo-finance2';
 import { getStockResultsHistory, getResultsCalendarData, autoFetchDeepHistoricalResults } from './resultsCalendarService.js';
 import { classifyMaterialEvent, MaterialEvent } from './timelineClassifier.js';
@@ -142,13 +143,12 @@ export async function getCompanyIntelligence(scripCode: string, symbol: string):
   }
 
   // 2. Fetch Historical Results & Calendar Data
-  const rawHistory = await getStockResultsHistory(targetScrip, targetSym);
+  const rawHistory = (await getStockResultsHistory(targetScrip, targetSym)).filter(h => hasExactScripCode(h, targetScrip));
   const calendarData = await getResultsCalendarData();
   
   // Find strictly upcoming or today event from calendarData
   const upcomingItem = (calendarData.items || []).find((c: any) => 
-    ((c.scripCode && String(c.scripCode).trim() === targetScrip) || 
-     (c.symbol && targetSym && c.symbol.toUpperCase() === targetSym)) &&
+    hasExactScripCode(c, targetScrip) &&
     (c.status === 'UPCOMING' || c.status === 'TODAY' || (typeof c.daysLeft === 'number' && c.daysLeft >= 0))
   );
 
@@ -219,13 +219,7 @@ export async function getCompanyIntelligence(scripCode: string, symbol: string):
       }
     } catch (e) {}
   }
-  const rawStockAnnouncements = announcementPool.filter((ann: any) => {
-    const annScrip = String(ann.scrip_cd || ann.SCRIP_CD || ann.scripCode || '').trim();
-    const annSym = (ann.symbol || '').toUpperCase().trim();
-    const annComp = (ann.companyName || ann.SLONGNAME || '').toUpperCase();
-    return (targetScrip && annScrip === targetScrip) ||
-      (targetSym && (annSym === targetSym || annComp.includes(targetSym)));
-  });
+  const rawStockAnnouncements = announcementPool.filter((ann: any) => hasExactScripCode(ann, targetScrip));
 
   const filingMap = new Map<string, any>();
 
@@ -283,7 +277,7 @@ export async function getCompanyIntelligence(scripCode: string, symbol: string):
   if (targetScrip && (filingMap.size === 0 || !hasDeclaredResult)) {
     try {
       const fetchedInTime = await autoFetchDeepHistoricalResults(targetScrip, targetSym, 1);
-      const syncedHistory = fetchedInTime ? await getStockResultsHistory(targetScrip, targetSym) : [];
+      const syncedHistory = fetchedInTime ? (await getStockResultsHistory(targetScrip, targetSym)).filter(h => hasExactScripCode(h, targetScrip)) : [];
       for (const h of syncedHistory || []) {
         const hId = h.id || `hist_${h.meetingDate}`;
         if (!filingMap.has(hId)) {

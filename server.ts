@@ -1,3 +1,4 @@
+import { hasExactScripCode } from './src/shared/scripMatching.js';
 import { getKeywordGuide, KEYWORD_GUIDE_CSS } from './src/content/keywordGuides.js';
 import 'dotenv/config';
 import { initServerSentry, Sentry } from "./server/sentry.js";
@@ -35,7 +36,7 @@ import { pageRenderCache, staticGuideCache, apiResponseCache } from "./server/ut
 import { INDEXNOW_KEY, indexNowQueue } from "./server/services/indexNow.js";
 import { autoIndexNewGuides } from "./server/services/guideIndexNow.js";
 import { verifyRecaptchaToken } from "./server/security/recaptchaService.js";
-import { getBseBlockBackoffLevel } from "./server/services/bse.js";
+import { getBseBlockBackoffLevel, getBseFeedStaleness } from "./server/services/bse.js";
 import { getAllFeedback } from "./server/database/feedbackDao.js";
 
 // Global error handlers to prevent background quota/network exceptions from crashing the process
@@ -95,8 +96,7 @@ app.get('/api/cron/poll-announcements', createAnnouncementCronHandler({
   backoffMs: () => {
     const failures = getConsecutiveFailures();
     const blockLevel = getBseBlockBackoffLevel();
-    // A source failure must not suppress the next scheduled minute.
-    return failures > 0 || blockLevel > 0 ? Math.min(60_000, getPollingIntervalMs(failures, blockLevel)) : 0;
+    return failures > 0 || blockLevel > 0 ? getPollingIntervalMs(failures, blockLevel) : 0;
   },
 }));
 app.use(authMiddleware);
@@ -789,8 +789,8 @@ function renderCompanyPage(data: any, symbol: string, scripCode: string): string
   const companyName = data.companyName || symbol;
   const quote = data.quote;
   const upcomingEvent = data.upcomingEvent;
-  const quarterlyResults: any[] = Array.isArray(data.quarterlyResults) ? data.quarterlyResults : [];
-  const recentFilings: any[] = Array.isArray(data.recentFilings) ? data.recentFilings : [];
+  const quarterlyResults: any[] = Array.isArray(data.quarterlyResults) ? data.quarterlyResults.filter((filing: any) => hasExactScripCode(filing, scripCode)) : [];
+  const recentFilings: any[] = Array.isArray(data.recentFilings) ? data.recentFilings.filter((filing: any) => hasExactScripCode(filing, scripCode)) : [];
   const aiSnapshot = (data.aiSnapshot || '').trim();
 
   // Programmatic Stock Page Title formula: <Company Name> (<SYMBOL>) — BSE Announcements, Results & Corporate Actions | Bsenexus
@@ -6043,7 +6043,7 @@ app.get('/embed/widget', async (req, res) => {
       }
     }
 
-    if (filings.length === 0) {
+    if (filings.length === 0 && !rawSymbol) {
       const recent = await getRecentAnnouncements(limit);
       filings = recent.slice(0, limit);
     }
@@ -6207,11 +6207,16 @@ function trackInterval(handle: NodeJS.Timeout): NodeJS.Timeout {
 
 // Live announcements poller: /api/cron/poll-announcements is the primary external cron trigger.
 // As a safety net to prevent feed stalls if Cloud Scheduler is paused, misconfigured, or delayed,
-// Attempt every 60s while the container has CPU. The monitor skips running cycles;
-// Cloud Scheduler is still required when request-based Cloud Run is idle.
+// this watchdog ensures the feed is checked automatically every 60s during active traffic/staleness.
 trackInterval(setInterval(async () => {
   try {
-    await processAnnouncements();
+    const { lastSuccessfulFetchMs, bootMs } = getBseFeedStaleness();
+    const now = Date.now();
+    const staleMs = lastSuccessfulFetchMs > 0 ? (now - lastSuccessfulFetchMs) : (now - bootMs);
+    // If not fetched in the last 75 seconds, poll automatically
+    if (staleMs > 75 * 1000) {
+      await processAnnouncements();
+    }
   } catch (err: any) {
     console.warn("[PollerWatchdog] Notice:", err?.message || err);
   }
@@ -6565,7 +6570,7 @@ async function startServer() {
 
     // In development mode, allow verifying tab-specific SEO metadata in responses with proper headers
     app.get(["/", "/announcements", "/live", "/results-calendar", "/watchlist", "/watchlists", "/companies", "/about", "/contact", "/disclaimer", "/privacy-policy", "/terms"], async (req, res, next) => {
-      let tab = req.query.tab as string | undefined;
+      let tab = req.path === "/live" ? "announcements" : req.query.tab as string | undefined;
       if (!tab) {
         if (req.path === '/announcements') tab = 'announcements';
         else if (req.path === '/live') tab = 'announcements';
@@ -6668,7 +6673,7 @@ async function startServer() {
         return res.status(404).setHeader('Content-Type', 'text/html; charset=utf-8').send(renderGeneral404Page(req.path));
       }
 
-      let tabParam = typeof req.query.tab === "string" ? req.query.tab.trim().toLowerCase() : "";
+      let tabParam = req.path === "/live" ? "announcements" : (typeof req.query.tab === "string" ? req.query.tab.trim().toLowerCase() : "");
       if (!tabParam) {
         if (req.path === '/announcements') tabParam = 'announcements';
         else if (req.path === '/live') tabParam = 'announcements';

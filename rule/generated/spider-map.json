@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "14762b1f2fafb2bb7a5bfdf57b665a6957eb03a3f42b971b7ea47dc8bd3c134c",
+  "sourceDigest": "2f6fd1d248afa180df8fcefc87674ca895e00e7c88a8ebda70c5f2d2b8db9bdf",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -8,11 +8,6 @@
     "Browser-event links match literal names on window/document only, one hop; computed names, aliases, bubbling, CSS selectors, React context semantics and live state need manual review."
   ],
   "files": [
-    {
-      "path": ".env.example",
-      "sha256": "f844a58fd2a2e10ec2b362e1123ed1d203355e39b12a0cef4d46e28702e36231",
-      "importedBy": []
-    },
     {
       "path": "eslint.config.mjs",
       "sha256": "19401d83b4bcfbc08fdc003ad77af6a28667ffbdae86258af06a0b8b48c55e18",
@@ -25,12 +20,12 @@
     },
     {
       "path": "firestore.rules",
-      "sha256": "6c8328543bc294bcca51e221bae0580c66cbaa8a7ebcf94eac2673f6d89bbd5f",
+      "sha256": "f16208d25d6f5af323fe973203bcd72a44eeed97661b771ed696814e62cbfbbf",
       "importedBy": []
     },
     {
       "path": "index.html",
-      "sha256": "f361ce578d0c39b55e47d8ebdbb53fedc7a4a4af0a119f72e7338b0d7bde65d7",
+      "sha256": "7ee0e8b2f16aae7640625e558e767a2b78d08a2bed665b5de840fe1f8095c14a",
       "importedBy": []
     },
     {
@@ -75,7 +70,7 @@
     },
     {
       "path": "public/llms.txt",
-      "sha256": "dff603d6996b1760d8f0cb91c42df003153404d26d291f45924ac60b729d226c",
+      "sha256": "5b7f87f0dbe970090c3b144850cf65e88f75d8540471e459326b7cc2c52d9673",
       "importedBy": []
     },
     {
@@ -95,7 +90,7 @@
     },
     {
       "path": "public/sitemap.xml",
-      "sha256": "1ead7d697de26ef57e034ff7d51224b0c48374f92ea6722e1230ac7c66d2bdcb",
+      "sha256": "fc98f2a927d4bd4d1d4a1935acc5fab009833b40eb9959dc000b8e7027427c49",
       "importedBy": []
     },
     {
@@ -162,14 +157,14 @@
     },
     {
       "path": "server.ts",
-      "sha256": "032f2225c869470d6be8b84823256fd950d1d0426581bb4f986b460aa4a1131f",
+      "sha256": "75a697f8ca4eaeff3d7fcee339ef8a1f21442150875fe3ed5a6ac9a16f05700a",
       "importedBy": [
         "server/tests/routeResolution.test.ts"
       ]
     },
     {
       "path": "server/api/announcementCron.ts",
-      "sha256": "fe670332d7d486ce11f3cd43d054aa14d7a5f4a274c594b2dc23eef41b645e60",
+      "sha256": "fdb941ea7cc3827f1bbad02aacbec8c000daecc931538aa37d71573687c9681c",
       "importedBy": [
         "server.ts",
         "server/tests/announcementCron.test.ts"
@@ -257,7 +252,7 @@
     },
     {
       "path": "server/database/announcementDao.ts",
-      "sha256": "f1dd47f02377af18bc6806738bc0f511064cf7072af5b840167c2ba35de86cfe",
+      "sha256": "03d2d8516336dcb089316e3de47c55d16ede65dd957ef6edf3d8312122a26115",
       "importedBy": [
         "server.ts",
         "server/api/routes.ts",
@@ -635,7 +630,7 @@
     },
     {
       "path": "server/services/companyIntelService.ts",
-      "sha256": "c8be06813dc973483d3d424a165124c428b1babd85a45dce9e8c0cc2be16bb9d",
+      "sha256": "4b9cc2306bcea34a5fd2f3a4a75be83a77aeef8f80a838cbcfe1326527ffc443",
       "importedBy": [
         "server.ts",
         "server/api/routes.ts"
@@ -708,7 +703,7 @@
     },
     {
       "path": "server/services/monitor.ts",
-      "sha256": "158ca20692f52c553115c5d0db133b0055d5c4afa996bd25d92f614966775dd9",
+      "sha256": "e9ee51db906ecb85c3cf7ca840dbab716d4fff5315c683d86f18242b650d49ab",
       "importedBy": [
         "server.ts",
         "server/api/announcementCron.ts",
@@ -749,7 +744,7 @@
     },
     {
       "path": "server/services/resultsCalendarService.ts",
-      "sha256": "51c4626b8905886ab3ac878b2de1a5ea1e6105e432a2529294644b14c37cc3e3",
+      "sha256": "4ec415ea361ba67b0c27f4ea430a91c447753c3638c0de57e843e2f3cf60a21b",
       "importedBy": [
         "server.ts",
         "server/api/routes.ts",
@@ -845,13 +840,8 @@
       "importedBy": []
     },
     {
-      "path": "server/tests/announcementCadence.test.ts",
-      "sha256": "aa4de6343631a61c5ee9be9709697d4f71729ba09a2cb0451adb7dc5464d4acf",
-      "importedBy": []
-    },
-    {
       "path": "server/tests/announcementCron.test.ts",
-      "sha256": "2b21a1545d4a1b21bd039b2cca17bccc61f4d1f345e1fbd192ae909edd343b4a",
+      "sha256": "b4b51eb37f82aaeb6dc029a895c4fc348b74b4596e8d55d869fb748e43680ffa",
       "importedBy": []
     },
     {
@@ -951,7 +941,7 @@
     },
     {
       "path": "server/tests/pollerStall.test.ts",
-      "sha256": "a8ac222f14ef563b7446eeafe36e0a9eaaefd45139896bbbbb6ae92ba7d06dd3",
+      "sha256": "d0ebe0f1711bf4b8be541cd3c5c655f541494387daf04e4505f66a7c6b91cddf",
       "importedBy": []
     },
     {
@@ -1026,7 +1016,12 @@
     },
     {
       "path": "server/tests/searchEngineDiscovery.test.ts",
-      "sha256": "ea1737d0760c2f7cb6e2f6365418a6ac3565e2981ff564f85942e70f02c5192c",
+      "sha256": "4f6efcef52339f5803eba0abad754bac0a0d706206904bfc646255e72f998bff",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/sevenFixes.test.ts",
+      "sha256": "06dbcb93cabf64000ed05b0ae7bbd8e480d384845511aa94b904ec327d6a7448",
       "importedBy": []
     },
     {
@@ -1102,7 +1097,7 @@
     },
     {
       "path": "server/utils/helpers.ts",
-      "sha256": "797e86f5cf2b49a177f62a461acee5a7c2d4ee45eeeec906818b4b16bc469aca",
+      "sha256": "f4f294afa7b1fe35d25a8407c5a896b9fe398cfc2bb596d9831ba789602735e0",
       "importedBy": [
         "server.ts",
         "server/api/routes.ts",
@@ -1112,7 +1107,8 @@
         "server/services/companyIntelService.ts",
         "server/services/monitor.ts",
         "server/services/resultsCalendarService.ts",
-        "server/services/storyFeedService.ts"
+        "server/services/storyFeedService.ts",
+        "server/tests/sevenFixes.test.ts"
       ]
     },
     {
@@ -1194,6 +1190,7 @@
         "server/database/watchlistDao.ts",
         "server/services/bse.ts",
         "server/services/storyFeedService.ts",
+        "server/tests/sevenFixes.test.ts",
         "server/utils/helpers.ts"
       ]
     },
@@ -1384,7 +1381,7 @@
     },
     {
       "path": "src/components/LandingPage.tsx",
-      "sha256": "16633e81f57875e4edaadd8db416095b1d57dbbb496a327fd333cd9a4d7ca5a6",
+      "sha256": "bf8fe6d8a9574b633d265974029b086533e523ddf84409a4cee555bd0f9545cf",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -2145,6 +2142,14 @@
       ]
     },
     {
+      "path": "src/config/topCompanies.ts",
+      "sha256": "f4fa82041ba66ac3a04024c9a9d9447c1be957d427796fe2974aba552d58617a",
+      "importedBy": [
+        "server/tests/sevenFixes.test.ts",
+        "src/components/LandingPage.tsx"
+      ]
+    },
+    {
       "path": "src/content/keywordGuides.ts",
       "sha256": "6fe0012ef15035fcd5cfe2d02369cb3c4a9c31d998c37ac9dd1d42df4d0047fd",
       "importedBy": [
@@ -2400,6 +2405,18 @@
         "server/database/alertRulesDao.ts",
         "server/tests/alertRulesReliability.test.ts",
         "src/components/AlertRulesModal.tsx"
+      ]
+    },
+    {
+      "path": "src/shared/scripMatching.ts",
+      "sha256": "abf8dbb4f233bd3e7541144d409e611a01a3babe68b005ef68e2bdea7a4be30a",
+      "importedBy": [
+        "server.ts",
+        "server/database/announcementDao.ts",
+        "server/services/companyIntelService.ts",
+        "server/services/resultsCalendarService.ts",
+        "server/tests/sevenFixes.test.ts",
+        "server/utils/helpers.ts"
       ]
     },
     {
@@ -2846,115 +2863,115 @@
     },
     {
       "source": "server.ts",
-      "target": "src/content/keywordGuides.ts",
+      "target": "src/shared/scripMatching.ts",
       "kind": "import",
       "line": 1
     },
     {
       "source": "server.ts",
+      "target": "src/content/keywordGuides.ts",
+      "kind": "import",
+      "line": 2
+    },
+    {
+      "source": "server.ts",
       "target": "server/sentry.ts",
       "kind": "import",
-      "line": 3
+      "line": 4
     },
     {
       "source": "server.ts",
       "target": "server/security/responseHeaders.ts",
       "kind": "import",
-      "line": 10
+      "line": 11
     },
     {
       "source": "server.ts",
       "target": "server/utils/serverStartup.ts",
       "kind": "import",
-      "line": 14
+      "line": 15
     },
     {
       "source": "server.ts",
       "target": "server/security/auth.ts",
       "kind": "import",
-      "line": 16
+      "line": 17
     },
     {
       "source": "server.ts",
       "target": "server/api/routes.ts",
       "kind": "import",
-      "line": 17
+      "line": 18
     },
     {
       "source": "server.ts",
       "target": "server/api/announcementCron.ts",
       "kind": "import",
-      "line": 18
+      "line": 19
     },
     {
       "source": "server.ts",
       "target": "server/services/monitor.ts",
       "kind": "import",
-      "line": 19
+      "line": 20
     },
     {
       "source": "server.ts",
       "target": "server/services/resultsCalendarService.ts",
       "kind": "import",
-      "line": 20
+      "line": 21
     },
     {
       "source": "server.ts",
       "target": "server/services/bse.ts",
       "kind": "import",
-      "line": 21
+      "line": 22
     },
     {
       "source": "server.ts",
       "target": "server/database/watchlistDao.ts",
       "kind": "import",
-      "line": 22
+      "line": 23
     },
     {
       "source": "server.ts",
       "target": "server/services/telegram.ts",
       "kind": "import",
-      "line": 23
+      "line": 24
     },
     {
       "source": "server.ts",
       "target": "server/services/stockNewsService.ts",
       "kind": "import",
-      "line": 24
+      "line": 25
     },
     {
       "source": "server.ts",
       "target": "server/database/logDao.ts",
       "kind": "import",
-      "line": 25
+      "line": 26
     },
     {
       "source": "server.ts",
       "target": "server/utils/helpers.ts",
       "kind": "import",
-      "line": 26
+      "line": 27
     },
     {
       "source": "server.ts",
       "target": "server/database/announcementDao.ts",
       "kind": "import",
-      "line": 27
+      "line": 28
     },
     {
       "source": "server.ts",
       "target": "server/utils/stockResolver.ts",
       "kind": "import",
-      "line": 28
-    },
-    {
-      "source": "server.ts",
-      "target": "server/services/companyIntelService.ts",
-      "kind": "import",
       "line": 29
     },
     {
       "source": "server.ts",
-      "target": "server/services/marketGuidesService.ts",
+      "target": "server/services/companyIntelService.ts",
       "kind": "import",
       "line": 30
     },
@@ -2966,51 +2983,57 @@
     },
     {
       "source": "server.ts",
-      "target": "server/database/firebase.ts",
+      "target": "server/services/marketGuidesService.ts",
       "kind": "import",
       "line": 32
     },
     {
       "source": "server.ts",
-      "target": "server/database/localStore.ts",
+      "target": "server/database/firebase.ts",
       "kind": "import",
       "line": 33
     },
     {
       "source": "server.ts",
-      "target": "server/utils/renderCache.ts",
+      "target": "server/database/localStore.ts",
       "kind": "import",
       "line": 34
     },
     {
       "source": "server.ts",
-      "target": "server/services/indexNow.ts",
+      "target": "server/utils/renderCache.ts",
       "kind": "import",
       "line": 35
     },
     {
       "source": "server.ts",
-      "target": "server/services/guideIndexNow.ts",
+      "target": "server/services/indexNow.ts",
       "kind": "import",
       "line": 36
     },
     {
       "source": "server.ts",
-      "target": "server/security/recaptchaService.ts",
+      "target": "server/services/guideIndexNow.ts",
       "kind": "import",
       "line": 37
     },
     {
       "source": "server.ts",
-      "target": "server/services/bse.ts",
+      "target": "server/security/recaptchaService.ts",
       "kind": "import",
       "line": 38
     },
     {
       "source": "server.ts",
-      "target": "server/database/feedbackDao.ts",
+      "target": "server/services/bse.ts",
       "kind": "import",
       "line": 39
+    },
+    {
+      "source": "server.ts",
+      "target": "server/database/feedbackDao.ts",
+      "kind": "import",
+      "line": 40
     },
     {
       "source": "server/api/announcementCron.ts",
@@ -3500,57 +3523,63 @@
     },
     {
       "source": "server/database/announcementDao.ts",
-      "target": "server/database/supabase.ts",
+      "target": "src/shared/scripMatching.ts",
       "kind": "import",
       "line": 1
     },
     {
       "source": "server/database/announcementDao.ts",
-      "target": "server/utils/helpers.ts",
+      "target": "server/database/supabase.ts",
       "kind": "import",
       "line": 2
     },
     {
       "source": "server/database/announcementDao.ts",
-      "target": "server/database/logDao.ts",
+      "target": "server/utils/helpers.ts",
       "kind": "import",
       "line": 3
     },
     {
       "source": "server/database/announcementDao.ts",
-      "target": "server/database/localStore.ts",
+      "target": "server/database/logDao.ts",
       "kind": "import",
       "line": 4
     },
     {
       "source": "server/database/announcementDao.ts",
-      "target": "server/utils/bloomFilter.ts",
+      "target": "server/database/localStore.ts",
       "kind": "import",
       "line": 5
     },
     {
       "source": "server/database/announcementDao.ts",
-      "target": "server/utils/renderCache.ts",
+      "target": "server/utils/bloomFilter.ts",
       "kind": "import",
       "line": 6
     },
     {
       "source": "server/database/announcementDao.ts",
-      "target": "server/services/indexNow.ts",
+      "target": "server/utils/renderCache.ts",
       "kind": "import",
       "line": 7
     },
     {
       "source": "server/database/announcementDao.ts",
-      "target": "server/utils/stockResolver.ts",
+      "target": "server/services/indexNow.ts",
       "kind": "import",
       "line": 8
     },
     {
       "source": "server/database/announcementDao.ts",
+      "target": "server/utils/stockResolver.ts",
+      "kind": "import",
+      "line": 9
+    },
+    {
+      "source": "server/database/announcementDao.ts",
       "target": "server/services/storageMonitor.ts",
       "kind": "dynamic",
-      "line": 646
+      "line": 647
     },
     {
       "source": "server/database/diagnosticsDao.ts",
@@ -4034,33 +4063,39 @@
     },
     {
       "source": "server/services/companyIntelService.ts",
-      "target": "server/services/resultsCalendarService.ts",
+      "target": "src/shared/scripMatching.ts",
       "kind": "import",
-      "line": 2
+      "line": 1
     },
     {
       "source": "server/services/companyIntelService.ts",
-      "target": "server/services/timelineClassifier.ts",
+      "target": "server/services/resultsCalendarService.ts",
       "kind": "import",
       "line": 3
     },
     {
       "source": "server/services/companyIntelService.ts",
-      "target": "server/database/announcementDao.ts",
+      "target": "server/services/timelineClassifier.ts",
       "kind": "import",
       "line": 4
     },
     {
       "source": "server/services/companyIntelService.ts",
-      "target": "server/services/gemini.ts",
+      "target": "server/database/announcementDao.ts",
       "kind": "import",
       "line": 5
     },
     {
       "source": "server/services/companyIntelService.ts",
-      "target": "server/utils/helpers.ts",
+      "target": "server/services/gemini.ts",
       "kind": "import",
       "line": 6
+    },
+    {
+      "source": "server/services/companyIntelService.ts",
+      "target": "server/utils/helpers.ts",
+      "kind": "import",
+      "line": 7
     },
     {
       "source": "server/services/fiiDiiService.ts",
@@ -4250,63 +4285,69 @@
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "server/database/watchlistDao.ts",
+      "target": "src/shared/scripMatching.ts",
       "kind": "import",
-      "line": 3
+      "line": 1
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "server/utils/helpers.ts",
+      "target": "server/database/watchlistDao.ts",
       "kind": "import",
       "line": 4
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "server/database/logDao.ts",
+      "target": "server/utils/helpers.ts",
       "kind": "import",
       "line": 5
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "server/database/announcementDao.ts",
+      "target": "server/database/logDao.ts",
       "kind": "import",
       "line": 6
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "server/services/telegram.ts",
+      "target": "server/database/announcementDao.ts",
       "kind": "import",
-      "line": 14
+      "line": 7
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "server/database/settingsDao.ts",
+      "target": "server/services/telegram.ts",
       "kind": "import",
       "line": 15
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "server/utils/helpers.ts",
+      "target": "server/database/settingsDao.ts",
       "kind": "import",
       "line": 16
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "server/database/supabase.ts",
+      "target": "server/utils/helpers.ts",
       "kind": "import",
       "line": 17
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "server/services/bse.ts",
+      "target": "server/database/supabase.ts",
       "kind": "import",
       "line": 18
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "server/utils/circuitBreaker.ts",
+      "target": "server/services/bse.ts",
       "kind": "import",
       "line": 19
+    },
+    {
+      "source": "server/services/resultsCalendarService.ts",
+      "target": "server/utils/circuitBreaker.ts",
+      "kind": "import",
+      "line": 20
     },
     {
       "source": "server/services/seoService.ts",
@@ -5047,6 +5088,30 @@
       "line": 5
     },
     {
+      "source": "server/tests/sevenFixes.test.ts",
+      "target": "src/shared/scripMatching.ts",
+      "kind": "import",
+      "line": 7
+    },
+    {
+      "source": "server/tests/sevenFixes.test.ts",
+      "target": "src/config/topCompanies.ts",
+      "kind": "import",
+      "line": 8
+    },
+    {
+      "source": "server/tests/sevenFixes.test.ts",
+      "target": "server/utils/stockResolver.ts",
+      "kind": "import",
+      "line": 9
+    },
+    {
+      "source": "server/tests/sevenFixes.test.ts",
+      "target": "server/utils/helpers.ts",
+      "kind": "import",
+      "line": 10
+    },
+    {
       "source": "server/tests/startupRecovery.test.ts",
       "target": "server/utils/serverStartup.ts",
       "kind": "import",
@@ -5084,9 +5149,15 @@
     },
     {
       "source": "server/utils/helpers.ts",
+      "target": "src/shared/scripMatching.ts",
+      "kind": "import",
+      "line": 1
+    },
+    {
+      "source": "server/utils/helpers.ts",
       "target": "server/utils/stockResolver.ts",
       "kind": "import",
-      "line": 8
+      "line": 9
     },
     {
       "source": "server/utils/retry.ts",
@@ -6038,135 +6109,141 @@
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/components/ui/BseNexusLogo.tsx",
+      "target": "src/config/topCompanies.ts",
       "kind": "import",
-      "line": 12
+      "line": 1
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/components/landing/FeatureIcons.tsx",
+      "target": "src/components/ui/BseNexusLogo.tsx",
       "kind": "import",
       "line": 13
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/components/ui/MarketClock.tsx",
+      "target": "src/components/landing/FeatureIcons.tsx",
       "kind": "import",
-      "line": 17
+      "line": 14
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/components/ui/MarketTickerTape.tsx",
+      "target": "src/components/ui/MarketClock.tsx",
       "kind": "import",
       "line": 18
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/types.ts",
+      "target": "src/components/ui/MarketTickerTape.tsx",
       "kind": "import",
       "line": 19
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/components/ui/ComponentSkeleton.tsx",
+      "target": "src/types.ts",
       "kind": "import",
       "line": 20
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/context/AuthContext.tsx",
+      "target": "src/components/ui/ComponentSkeleton.tsx",
       "kind": "import",
       "line": 21
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/hooks/useBodyScrollLock.ts",
+      "target": "src/context/AuthContext.tsx",
       "kind": "import",
       "line": 22
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/components/MarketGuidesSection.tsx",
+      "target": "src/hooks/useBodyScrollLock.ts",
       "kind": "import",
-      "line": 26
+      "line": 23
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/components/BlogReaderModal.tsx",
+      "target": "src/components/MarketGuidesSection.tsx",
       "kind": "import",
       "line": 27
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/utils/scrollState.ts",
+      "target": "src/components/BlogReaderModal.tsx",
       "kind": "import",
       "line": 28
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/components/ui/SocialLinks.tsx",
+      "target": "src/utils/scrollState.ts",
       "kind": "import",
       "line": 29
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/components/ui/CommonQuestionsFAQ.tsx",
+      "target": "src/components/ui/SocialLinks.tsx",
       "kind": "import",
       "line": 30
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/components/ui/AiFaqSection.tsx",
+      "target": "src/components/ui/CommonQuestionsFAQ.tsx",
       "kind": "import",
       "line": 31
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/utils/cashfree.ts",
+      "target": "src/components/ui/AiFaqSection.tsx",
       "kind": "import",
       "line": 32
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/components/ui/PlanCard.tsx",
+      "target": "src/utils/cashfree.ts",
       "kind": "import",
       "line": 33
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/components/ui/ParticleRibbons.tsx",
+      "target": "src/components/ui/PlanCard.tsx",
       "kind": "import",
       "line": 34
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/components/ui/MagneticButton.tsx",
+      "target": "src/components/ui/ParticleRibbons.tsx",
       "kind": "import",
       "line": 35
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/components/ui/Reveal.tsx",
+      "target": "src/components/ui/MagneticButton.tsx",
       "kind": "import",
       "line": 36
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/components/landing/CreativeHero.tsx",
+      "target": "src/components/ui/Reveal.tsx",
       "kind": "import",
       "line": 37
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/components/landing/FeatureTabs.tsx",
+      "target": "src/components/landing/CreativeHero.tsx",
       "kind": "import",
       "line": 38
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/components/landing/FilingJourney.tsx",
+      "target": "src/components/landing/FeatureTabs.tsx",
       "kind": "import",
       "line": 39
+    },
+    {
+      "source": "src/components/LandingPage.tsx",
+      "target": "src/components/landing/FilingJourney.tsx",
+      "kind": "import",
+      "line": 40
     },
     {
       "source": "src/components/Layout.tsx",
@@ -8398,10 +8475,9 @@
         "server/tests/alertRulesReliability.test.ts",
         "server/tests/alertRulesApi.test.ts",
         "server/tests/pollerStall.test.ts",
-        "server/tests/announcementCron.test.ts",
-        "server/tests/announcementCadence.test.ts"
+        "server/tests/announcementCron.test.ts"
       ],
-      "reason": "Poll → normalize/dedupe → persistence → feed and alert decisions → recipient-specific delivery/inbox. Global and personal recipients must remain distinct. Preset saves replace stable per-owner IDs atomically; confirmed cloud settings feed every poll. Personal channels supersede inherited defaults once presets are saved. Live polling has a CRON_SECRET bearer-protected HTTP trigger, a 60-second in-container timer and a 75-second-stale traffic trigger. The shared process-local monitor lock skips running cycles without queueing. Request lifetime covers bounded ingestion/write drain; cron source failure eligibility is capped at 60 seconds. External Scheduler remains necessary for idle request-based Cloud Run; legacy cron returns 410. Numbered IST worker summaries and cron request summaries have distinct event fields."
+      "reason": "Poll → normalize/dedupe → persistence → feed and alert decisions → recipient-specific delivery/inbox. Global and personal recipients must remain distinct. Preset saves replace stable per-owner IDs atomically; confirmed cloud settings feed every poll. Personal channels supersede inherited defaults once presets are saved. Live polling is driven by the CRON_SECRET bearer-protected HTTP endpoint; no repeating live-poll timer or fire-and-forget legacy cron. Request lifetime covers bounded ingestion/write drain; source failure backoff is eligibility time, not a timer."
     },
     {
       "id": "user-data",
@@ -8464,13 +8540,15 @@
         "src/App.tsx",
         "src/api.ts",
         "public/sw.js",
-        "server/services/marketGuidesService.ts"
+        "server/services/marketGuidesService.ts",
+        "src/shared/scripMatching.ts"
       ],
       "tests": [
         "server/tests/routeResolution.test.ts",
         "server/tests/renderCache.test.ts",
         "server/tests/searchEngineDiscovery.test.ts",
-        "server/tests/pwaOfflineSync.test.ts"
+        "server/tests/pwaOfflineSync.test.ts",
+        "server/tests/sevenFixes.test.ts"
       ],
       "reason": "API responses, SSR routes, browser deep links, SEO and service-worker caching must remain compatible. User-specific responses must never enter shared public caches."
     },
@@ -8525,13 +8603,15 @@
         "src/hooks/useMarketIndices.ts",
         "src/utils/timeFormat.ts",
         "src/components/HomeMarketNews.tsx",
-        "src/utils/homeNews.ts"
+        "src/utils/homeNews.ts",
+        "src/shared/scripMatching.ts"
       ],
       "tests": [
         "server/tests/core.test.ts",
         "server/tests/auditData.test.ts",
         "server/tests/followupAudit.test.ts",
-        "server/tests/homeNews.test.ts"
+        "server/tests/homeNews.test.ts",
+        "server/tests/sevenFixes.test.ts"
       ],
       "reason": "Upstream timestamps, stock identity and market sessions affect cached API results, screen freshness and alert timing. Public market data availability does not establish trading-data accuracy."
     },
@@ -8553,13 +8633,15 @@
         "public/sitemap.xml",
         "public/llms.txt",
         "public/llms-full.txt",
-        "src/content/keywordGuides.ts"
+        "src/content/keywordGuides.ts",
+        "src/shared/scripMatching.ts"
       ],
       "tests": [
         "server/tests/faqBank.test.ts",
         "server/tests/searchEngineDiscovery.test.ts",
         "server/tests/routeResolution.test.ts",
-        "server/tests/keywordGuides.test.ts"
+        "server/tests/keywordGuides.test.ts",
+        "server/tests/sevenFixes.test.ts"
       ],
       "reason": "Public copy and crawler metadata must agree with actual API/product contracts. Admin SEO mutations inherit mount guards; generated summaries are not evidence of source accuracy."
     },
@@ -8587,8 +8669,7 @@
         "server/tests/accountProtection.test.ts",
         "server/tests/circuitBreaker.test.ts",
         "server/tests/recaptchaSecurity.test.ts",
-        "server/tests/pollerStall.test.ts",
-        "server/tests/announcementCadence.test.ts"
+        "server/tests/pollerStall.test.ts"
       ],
       "reason": "Startup and settings influence background jobs, provider calls, abuse limits and logs. A live HTTP listener does not establish that durable stores or external providers are ready. Poller stage deadlines release the monitor lock without resuming abandoned workers; dedicated local poller history is not cloud deployment durability."
     },
@@ -8716,7 +8797,8 @@
         "src/utils/homeNews.ts",
         "src/styles/home-news.css",
         "src/components/ui/motion/ShareActionMenu.tsx",
-        "src/components/notes/SaveNoteButton.tsx"
+        "src/components/notes/SaveNoteButton.tsx",
+        "src/shared/scripMatching.ts"
       ],
       "tests": [
         "server/tests/core.test.ts",
@@ -8724,7 +8806,8 @@
         "server/tests/apiCancellation.test.ts",
         "server/tests/alertRulesApi.test.ts",
         "server/tests/homeNews.test.ts",
-        "server/tests/announcementFeed.test.ts"
+        "server/tests/announcementFeed.test.ts",
+        "server/tests/sevenFixes.test.ts"
       ],
       "reason": "List/detail identity, filters, watchlist membership, badge counts and timestamps must agree. Background refresh preserves content, density, selection and scroll. Rapid filter changes must not render older responses."
     },
@@ -8843,12 +8926,15 @@
         "public/llms-full.txt",
         "src/content/keywordGuides.ts",
         "server/services/marketGuidesService.ts",
-        "server/services/guideIndexNow.ts"
+        "server/services/guideIndexNow.ts",
+        "src/shared/scripMatching.ts",
+        "src/config/topCompanies.ts"
       ],
       "tests": [
         "server/tests/searchEngineDiscovery.test.ts",
         "server/tests/routeResolution.test.ts",
-        "server/tests/keywordGuides.test.ts"
+        "server/tests/keywordGuides.test.ts",
+        "server/tests/sevenFixes.test.ts"
       ],
       "reason": "Public links, pricing claims, server-rendered content and client views must agree. Lazy navigation, responsive composition, keyboard operation and motion require browser evidence beyond server discovery tests."
     },
@@ -8875,7 +8961,7 @@
   "routes": [
     {
       "file": "server.ts",
-      "line": 57,
+      "line": 58,
       "receiver": "app",
       "method": "USE",
       "path": "compression({ threshold: 1024, // Don't compress payloads under 1KB level: 6, // Optimal balance between CPU usage and compression ratio filter: (req, res) => { // 1. Honor client bypass header if requested if (req.headers['x-no-compression",
@@ -8883,7 +8969,7 @@
     },
     {
       "file": "server.ts",
-      "line": 88,
+      "line": 89,
       "receiver": "app",
       "method": "USE",
       "path": "responseHeaders()",
@@ -8891,7 +8977,7 @@
     },
     {
       "file": "server.ts",
-      "line": 89,
+      "line": 90,
       "receiver": "app",
       "method": "USE",
       "path": "/api/payments/webhook",
@@ -8901,7 +8987,7 @@
     },
     {
       "file": "server.ts",
-      "line": 90,
+      "line": 91,
       "receiver": "app",
       "method": "USE",
       "path": "express.json({ limit: '1mb' })",
@@ -8909,7 +8995,7 @@
     },
     {
       "file": "server.ts",
-      "line": 91,
+      "line": 92,
       "receiver": "app",
       "method": "USE",
       "path": "cookieParser()",
@@ -8917,12 +9003,12 @@
     },
     {
       "file": "server.ts",
-      "line": 93,
+      "line": 94,
       "receiver": "app",
       "method": "GET",
       "path": "/api/cron/poll-announcements",
       "middleware": [
-        "createAnnouncementCronHandler({ poll: processAnnouncements, backoffMs: () => { const failures = getConsecutiveFailures(); const blockLevel = getBseBlockBackoffLevel(); // A source failure must not suppress the next scheduled minute. return "
+        "createAnnouncementCronHandler({ poll: processAnnouncements, backoffMs: () => { const failures = getConsecutiveFailures(); const blockLevel = getBseBlockBackoffLevel(); return failures > 0 || blockLevel > 0 ? getPollingIntervalMs(failures, b"
       ]
     },
     {
@@ -9343,7 +9429,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6567,
+      "line": 6572,
       "receiver": "app",
       "method": "GET",
       "path": "[\"/\", \"/announcements\", \"/live\", \"/results-calendar\", \"/watchlist\", \"/watchlists\", \"/companies\", \"/about\", \"/contact\", \"/disclaimer\", \"/privacy-policy\", \"/terms\"]",
@@ -9353,7 +9439,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6594,
+      "line": 6599,
       "receiver": "app",
       "method": "USE",
       "path": "(req, res, next) => { if (req.method !== 'GET' && req.method !== 'HEAD') return next(); const p = req.path; if ( p === '/' || p === '/announcements' || p === '/results-calendar' || p === '/watchlist' || p === '/watchlists' || p === '/compan",
@@ -9361,7 +9447,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6626,
+      "line": 6631,
       "receiver": "app",
       "method": "USE",
       "path": "vite.middlewares",
@@ -9369,7 +9455,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6638,
+      "line": 6643,
       "receiver": "app",
       "method": "USE",
       "path": "express.static(distPath, { maxAge: '1y', immutable: true, index: false, setHeaders: (res, filePath) => { if (filePath.endsWith('.html')) { res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600'); } } }",
@@ -9377,7 +9463,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6665,
+      "line": 6670,
       "receiver": "app",
       "method": "GET",
       "path": "*",
@@ -11435,7 +11521,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6280,
+      "line": 6285,
       "function": "fetch",
       "target": "`http://127.0.0.1:${port}/api/health`"
     },
@@ -11549,43 +11635,43 @@
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 208,
+      "line": 209,
       "function": "fetch",
       "target": "url"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 225,
+      "line": 226,
       "function": "fetch",
       "target": "url"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 319,
+      "line": 320,
       "function": "fetch",
       "target": "url"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 481,
+      "line": 482,
       "function": "fetch",
       "target": "url"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 1465,
+      "line": 1459,
       "function": "fetch",
       "target": "bmUrl"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 1518,
+      "line": 1512,
       "function": "fetch",
       "target": "url"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 1534,
+      "line": 1528,
       "function": "fetch",
       "target": "fbUrl"
     },
@@ -12829,43 +12915,43 @@
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 88,
+      "line": 89,
       "function": "getSupabase()\n      .from",
       "key": "ANNOUNCEMENTS_TABLE"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 122,
+      "line": 123,
       "function": "Array.from",
       "key": "mergedMap.values()"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 188,
+      "line": 189,
       "function": "getSupabase()\n      .from",
       "key": "ANNOUNCEMENTS_TABLE"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 225,
+      "line": 226,
       "function": "getSupabase()\n      .from",
       "key": "ANNOUNCEMENTS_TABLE"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 318,
+      "line": 319,
       "function": "getSupabase()\n          .from",
       "key": "ANNOUNCEMENTS_TABLE"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 337,
+      "line": 338,
       "function": "getSupabase()\n          .from",
       "key": "ANNOUNCEMENTS_TABLE"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 450,
+      "line": 451,
       "function": "getSupabase()\n          .from",
       "key": "ANNOUNCEMENTS_TABLE"
     },
@@ -12877,7 +12963,7 @@
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 747,
+      "line": 748,
       "function": "Array.from",
       "key": "byId.values()"
     },
@@ -13177,13 +13263,13 @@
     },
     {
       "file": "server/services/companyIntelService.ts",
-      "line": 310,
+      "line": 304,
       "function": "Array.from",
       "key": "resultMap.values()"
     },
     {
       "file": "server/services/companyIntelService.ts",
-      "line": 317,
+      "line": 311,
       "function": "Array.from",
       "key": "filingMap.values()"
     },
@@ -13201,49 +13287,49 @@
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 119,
+      "line": 120,
       "function": "getSupabase()\n        .from",
       "key": "'results_calendar'"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 138,
+      "line": 139,
       "function": "Array.from",
       "key": "notifiedMeetingIds"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 381,
+      "line": 382,
       "function": "Array.from",
       "key": "uniqueStockItems.values()"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 472,
+      "line": 473,
       "function": "Array.from",
       "key": "scripMap.entries()"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 557,
+      "line": 558,
       "function": "Array.from",
       "key": "uniqueMap.values()"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 588,
+      "line": 589,
       "function": "getSupabase()\n              .from",
       "key": "'results_calendar'"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 1436,
+      "line": 1430,
       "function": "Array.from",
       "key": "quarterOutcomesMap.values()"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 1510,
+      "line": 1504,
       "function": "Array.from",
       "key": "{ length: Math.min(batchSize, maxPages - startPage + 1) }"
     },
@@ -13291,15 +13377,27 @@
     },
     {
       "file": "server/tests/pollerStall.test.ts",
-      "line": 164,
+      "line": 138,
       "function": "Array.from",
       "key": "{ length: 700 }"
     },
     {
       "file": "server/tests/pollerStall.test.ts",
-      "line": 171,
+      "line": 145,
       "function": "Array.from",
       "key": "await exports.getLogs(2500)"
+    },
+    {
+      "file": "server/tests/sevenFixes.test.ts",
+      "line": 68,
+      "function": "Array.from",
+      "key": "result.recentFilings"
+    },
+    {
+      "file": "server/tests/sevenFixes.test.ts",
+      "line": 69,
+      "function": "Array.from",
+      "key": "result.quarterlyResults"
     },
     {
       "file": "server/utils/bloomFilter.ts",
@@ -14214,27 +14312,27 @@
     },
     {
       "file": "server.ts",
-      "line": 6556,
+      "line": 6561,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6561,
+      "line": 6566,
       "name": "DISABLE_HMR"
     },
     {
       "file": "server.ts",
-      "line": 6765,
+      "line": 6770,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6765,
+      "line": 6770,
       "name": "TEST_RUNNER"
     },
     {
       "file": "server/api/announcementCron.ts",
-      "line": 28,
+      "line": 26,
       "name": "CRON_SECRET"
     },
     {

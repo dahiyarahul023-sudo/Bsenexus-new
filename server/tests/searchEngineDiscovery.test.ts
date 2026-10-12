@@ -36,14 +36,15 @@ describe('Search Engine & Cross-Browser Discovery (Step 06: IndexNow & OpenSearc
     assert.ok(stats.pendingQueueSize >= 2);
   });
 
-  test('index.html references OpenSearch XML and verification tags', () => {
+  test('index.html references OpenSearch XML without placeholder verification tags', () => {
     const indexHtmlPath = path.join(process.cwd(), 'index.html');
     const indexHtml = fs.readFileSync(indexHtmlPath, 'utf8');
 
     assert.ok(indexHtml.includes('href="/opensearch.xml"'));
     assert.ok(indexHtml.includes('rel="search"'));
-    assert.ok(indexHtml.includes('msvalidate.01'));
-    assert.ok(indexHtml.includes('google-site-verification'));
+    for (const tag of ['msvalidate.01', 'google-site-verification', 'yandex-verification']) {
+      assert.ok(!indexHtml.includes(`<meta name="${tag}"`));
+    }
   });
 
   test('Public search engine verification files have exact expected contents', () => {
