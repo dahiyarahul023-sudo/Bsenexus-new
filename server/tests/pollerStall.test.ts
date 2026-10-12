@@ -103,6 +103,32 @@ test('healthy monitor saves the filing and recipient inbox in order', async () =
   assert.ok(h.logs.some(x => x.includes('outcome=success')));
 });
 
+test('all monitor attempts emit one numbered IST summary; overlapping attempts skip without a queue', async () => {
+  const h = harness('fetch');
+  const first = h.poll();
+  await h.settle();
+  const skipped = await h.poll();
+  assert.equal(skipped.mode, 'busy');
+  assert.equal(h.calls.filter(x => x === 'fetch').length, 1);
+  await h.advance(60_000);
+  await first;
+  h.release(h.rows);
+  await h.settle();
+  assert.equal(h.calls.filter(x => x === 'fetch').length, 1, 'skipped attempt must never be queued');
+  await h.poll();
+  const summaries = h.logs.filter(line => line.startsWith('{')).map(line => JSON.parse(line));
+  assert.equal(summaries.length, 3);
+  assert.deepEqual(summaries.map(s => s.cycleNumber), [2, 1, 3]);
+  assert.ok(summaries.every(s => s.timestampIST.endsWith('+05:30') && s.durationMs >= 0));
+  assert.equal(summaries[0].reason, 'skipped: previous cycle running');
+  assert.equal(summaries[0].skipped, true);
+  assert.equal(summaries[0].error, false);
+  assert.equal(summaries[1].error, true);
+  assert.equal(summaries[1].mode, 'timeout');
+  assert.equal(summaries[2].mode, 'success');
+  assert.equal(summaries[2].newFilingsCount, 1);
+});
+
 test('cycle budget expires between steps and clears heartbeat on finish', async () => {
   let now = 100;
   let cleared = false;

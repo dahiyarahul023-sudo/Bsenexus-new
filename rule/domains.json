@@ -136,9 +136,10 @@
         "server/tests/alertRulesReliability.test.ts",
         "server/tests/alertRulesApi.test.ts",
         "server/tests/pollerStall.test.ts",
-        "server/tests/announcementCron.test.ts"
+        "server/tests/announcementCron.test.ts",
+        "server/tests/announcementCadence.test.ts"
       ],
-      "reason": "Poll \u2192 normalize/dedupe \u2192 persistence \u2192 feed and alert decisions \u2192 recipient-specific delivery/inbox. Global and personal recipients must remain distinct. Preset saves replace stable per-owner IDs atomically; confirmed cloud settings feed every poll. Personal channels supersede inherited defaults once presets are saved. Live polling is driven by the CRON_SECRET bearer-protected HTTP endpoint; no repeating live-poll timer or fire-and-forget legacy cron. Request lifetime covers bounded ingestion/write drain; source failure backoff is eligibility time, not a timer."
+      "reason": "Poll \u2192 normalize/dedupe \u2192 persistence \u2192 feed and alert decisions \u2192 recipient-specific delivery/inbox. Global and personal recipients must remain distinct. Preset saves replace stable per-owner IDs atomically; confirmed cloud settings feed every poll. Personal channels supersede inherited defaults once presets are saved. Live polling has a CRON_SECRET bearer-protected HTTP trigger, a 60-second in-container timer and a 75-second-stale traffic trigger. The shared process-local monitor lock skips running cycles without queueing. Request lifetime covers bounded ingestion/write drain; cron source failure eligibility is capped at 60 seconds. External Scheduler remains necessary for idle request-based Cloud Run; legacy cron returns 410. Numbered IST worker summaries and cron request summaries have distinct event fields."
     },
     {
       "id": "user-data",
@@ -330,7 +331,8 @@
         "server/tests/accountProtection.test.ts",
         "server/tests/circuitBreaker.test.ts",
         "server/tests/recaptchaSecurity.test.ts",
-        "server/tests/pollerStall.test.ts"
+        "server/tests/pollerStall.test.ts",
+        "server/tests/announcementCadence.test.ts"
       ],
       "reason": "Startup and settings influence background jobs, provider calls, abuse limits and logs. A live HTTP listener does not establish that durable stores or external providers are ready. Poller stage deadlines release the monitor lock without resuming abandoned workers; dedicated local poller history is not cloud deployment durability."
     },
