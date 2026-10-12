@@ -262,8 +262,8 @@ export async function processAnnouncements(): Promise<AnnouncementPollResult> {
         if (itemTs > 0) {
           const ageHours = (now - itemTs) / (1000 * 60 * 60);
           
-          if (ingestLagSec > 90) {
-            // Diagnostic logging for filings that exceed the 90s delay threshold
+          if (ingestLagSec > 180 && (now - PROCESS_BOOT_MS) > 3 * 60 * 1000) {
+            // Diagnostic logging for live filings that exceed the delay threshold after boot warmup
             addLog('WARNING', 'DELAY_DIAGNOSTIC', `Filing latency alert: ${companyName} (${newsId}) took ${ingestLagSec}s to reach platform. BSE Time: ${bseTimeStr} | Source: ${sourceName} | Fetch Latency: ${item._fetchLatency || 0}ms.`);
           }
 

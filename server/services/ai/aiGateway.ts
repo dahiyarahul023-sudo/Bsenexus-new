@@ -133,14 +133,13 @@ export async function aiComplete(task: AiTask, opts: AiCompleteOptions): Promise
   const chain = TASK_CHAINS[task] || [];
   const timeoutMs = opts.timeoutMs ?? 25000;
 
-  // PDF sirf Gemini le sakta hai — chain ko usi tak seemit karo
-  const pdfOnly = Boolean(opts.pdfInline);
+  // PDF inline sirf Gemini le sakta hai — PDF ke waqt Gemini models ko chain me aage rakho
+  const hasPdf = Boolean(opts.pdfInline);
   const candidates: ModelEntry[] = [];
   const skipped: string[] = [];
   for (const alias of chain) {
     const entry = getModelEntry(alias);
     if (!entry) { skipped.push(`${alias}: unknown alias`); continue; }
-    if (pdfOnly && entry.provider !== 'gemini') { skipped.push(`${alias}: pdf-only`); continue; }
     if (!providerKeyPresent(entry.provider)) { skipped.push(`${alias}: no ${PROVIDER_ENV_KEY[entry.provider]}`); continue; }
     if (!isModelVerified(alias)) {
       skipped.push(`${alias}: unverified model id`);
@@ -152,6 +151,10 @@ export async function aiComplete(task: AiTask, opts: AiCompleteOptions): Promise
       continue;
     }
     candidates.push(entry);
+  }
+  // PDF attached hai to Gemini models ko pehle try karo, baki models text fallback ke liye rahenge
+  if (hasPdf) {
+    candidates.sort((a, b) => (a.provider === 'gemini' ? -1 : b.provider === 'gemini' ? 1 : 0));
   }
   // Diagnosis ke liye: kaunse candidates kyun skip hue — agli baar turant pata chalega
   // (jaise: keys server env me nahi hain to yahan "no GROQ_API_KEY" dikhega).

@@ -1,4 +1,3 @@
-import fetch from 'node-fetch';
 import { addLog } from '../database/logDao.js';
 import { circuitRegistry } from '../utils/circuitBreaker.js';
 

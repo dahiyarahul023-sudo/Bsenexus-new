@@ -76,7 +76,7 @@ export async function geminiComplete(opts: GeminiCompleteOptions): Promise<Adapt
 
   try {
     // Timeout guard — SDK ke paas built-in abort nahi hai, isliye race karte hain
-    const timeoutMs = opts.timeoutMs ?? 25000;
+    const timeoutMs = opts.timeoutMs ?? (opts.pdfInline ? 45000 : 25000);
     const call = ai.models.generateContent({ model: opts.modelId, contents, config });
     const res: any = await Promise.race([
       call,

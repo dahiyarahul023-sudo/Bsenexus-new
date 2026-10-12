@@ -161,8 +161,8 @@ async function generateLocalizedSummary(company: string, subject: string, detail
           const buffer = await readBoundedDocument(res);
           const sizeMB = (buffer.length / (1024 * 1024)).toFixed(2);
 
-          if (buffer.length <= 20 * 1024 * 1024) {
-            // Send inline PDF to Gemini directly (up to 20MB)
+          if (buffer.length <= 6 * 1024 * 1024) {
+            // Send inline PDF to Gemini directly (up to 6MB)
             pdfData = {
               inlineData: {
                 data: buffer.toString("base64"),
@@ -171,7 +171,7 @@ async function generateLocalizedSummary(company: string, subject: string, detail
             };
             addLog('INFO', 'GEMINI', `[${company}] Attached inline PDF (${sizeMB} MB) for deep financial analysis`);
           } else {
-            // PDF is > 20MB, fallback to extracting text via pdf-parse
+            // PDF is > 6MB, fallback to extracting text via pdf-parse
             addLog('INFO', 'GEMINI', `[${company}] PDF is large (${sizeMB} MB), extracting text via parser...`);
             try {
               const pdfParseMod: any = await import("pdf-parse");
@@ -298,7 +298,7 @@ Details: ${combinedDetails}`;
           pdfInline: pdfData ? { data: pdfData.inlineData.data, mimeType: pdfData.inlineData.mimeType } : undefined,
           temperature: 0.3,
           taskLabel: `[${company}]`,
-          timeoutMs: 25000,
+          timeoutMs: pdfData ? 45000 : 25000,
         });
       }, undefined, 60000);
       gwText = gw.text || "";
