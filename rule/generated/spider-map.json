@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "c994e772923ecf354d1e01111be1bace624358e7d3923ba3d4c2ba1acd561cd6",
+  "sourceDigest": "14762b1f2fafb2bb7a5bfdf57b665a6957eb03a3f42b971b7ea47dc8bd3c134c",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -162,14 +162,14 @@
     },
     {
       "path": "server.ts",
-      "sha256": "295db53d406e52be17ae052ec8c9ea77d1987920a0357481e0edec3ec5cca039",
+      "sha256": "032f2225c869470d6be8b84823256fd950d1d0426581bb4f986b460aa4a1131f",
       "importedBy": [
         "server/tests/routeResolution.test.ts"
       ]
     },
     {
       "path": "server/api/announcementCron.ts",
-      "sha256": "fdb941ea7cc3827f1bbad02aacbec8c000daecc931538aa37d71573687c9681c",
+      "sha256": "fe670332d7d486ce11f3cd43d054aa14d7a5f4a274c594b2dc23eef41b645e60",
       "importedBy": [
         "server.ts",
         "server/tests/announcementCron.test.ts"
@@ -708,7 +708,7 @@
     },
     {
       "path": "server/services/monitor.ts",
-      "sha256": "e9ee51db906ecb85c3cf7ca840dbab716d4fff5315c683d86f18242b650d49ab",
+      "sha256": "158ca20692f52c553115c5d0db133b0055d5c4afa996bd25d92f614966775dd9",
       "importedBy": [
         "server.ts",
         "server/api/announcementCron.ts",
@@ -845,8 +845,13 @@
       "importedBy": []
     },
     {
+      "path": "server/tests/announcementCadence.test.ts",
+      "sha256": "aa4de6343631a61c5ee9be9709697d4f71729ba09a2cb0451adb7dc5464d4acf",
+      "importedBy": []
+    },
+    {
       "path": "server/tests/announcementCron.test.ts",
-      "sha256": "b4b51eb37f82aaeb6dc029a895c4fc348b74b4596e8d55d869fb748e43680ffa",
+      "sha256": "2b21a1545d4a1b21bd039b2cca17bccc61f4d1f345e1fbd192ae909edd343b4a",
       "importedBy": []
     },
     {
@@ -946,7 +951,7 @@
     },
     {
       "path": "server/tests/pollerStall.test.ts",
-      "sha256": "d0ebe0f1711bf4b8be541cd3c5c655f541494387daf04e4505f66a7c6b91cddf",
+      "sha256": "a8ac222f14ef563b7446eeafe36e0a9eaaefd45139896bbbbb6ae92ba7d06dd3",
       "importedBy": []
     },
     {
@@ -2769,7 +2774,7 @@
     },
     {
       "path": "src/version.ts",
-      "sha256": "d6bae8cf2ba6539c6020da6632f8f4ccfdcca44ef1fff1e853d05b5d121df511",
+      "sha256": "f0e8335098fb957edbd6f5d4bc0d08eba4fdf1da18659091603d6bf00d3a9982",
       "importedBy": [
         "src/components/SettingsTab.tsx",
         "src/lib/sentry.ts"
@@ -8393,9 +8398,10 @@
         "server/tests/alertRulesReliability.test.ts",
         "server/tests/alertRulesApi.test.ts",
         "server/tests/pollerStall.test.ts",
-        "server/tests/announcementCron.test.ts"
+        "server/tests/announcementCron.test.ts",
+        "server/tests/announcementCadence.test.ts"
       ],
-      "reason": "Poll → normalize/dedupe → persistence → feed and alert decisions → recipient-specific delivery/inbox. Global and personal recipients must remain distinct. Preset saves replace stable per-owner IDs atomically; confirmed cloud settings feed every poll. Personal channels supersede inherited defaults once presets are saved. Live polling is driven by the CRON_SECRET bearer-protected HTTP endpoint; no repeating live-poll timer or fire-and-forget legacy cron. Request lifetime covers bounded ingestion/write drain; source failure backoff is eligibility time, not a timer."
+      "reason": "Poll → normalize/dedupe → persistence → feed and alert decisions → recipient-specific delivery/inbox. Global and personal recipients must remain distinct. Preset saves replace stable per-owner IDs atomically; confirmed cloud settings feed every poll. Personal channels supersede inherited defaults once presets are saved. Live polling has a CRON_SECRET bearer-protected HTTP trigger, a 60-second in-container timer and a 75-second-stale traffic trigger. The shared process-local monitor lock skips running cycles without queueing. Request lifetime covers bounded ingestion/write drain; cron source failure eligibility is capped at 60 seconds. External Scheduler remains necessary for idle request-based Cloud Run; legacy cron returns 410. Numbered IST worker summaries and cron request summaries have distinct event fields."
     },
     {
       "id": "user-data",
@@ -8581,7 +8587,8 @@
         "server/tests/accountProtection.test.ts",
         "server/tests/circuitBreaker.test.ts",
         "server/tests/recaptchaSecurity.test.ts",
-        "server/tests/pollerStall.test.ts"
+        "server/tests/pollerStall.test.ts",
+        "server/tests/announcementCadence.test.ts"
       ],
       "reason": "Startup and settings influence background jobs, provider calls, abuse limits and logs. A live HTTP listener does not establish that durable stores or external providers are ready. Poller stage deadlines release the monitor lock without resuming abandoned workers; dedicated local poller history is not cloud deployment durability."
     },
@@ -8915,12 +8922,12 @@
       "method": "GET",
       "path": "/api/cron/poll-announcements",
       "middleware": [
-        "createAnnouncementCronHandler({ poll: processAnnouncements, backoffMs: () => { const failures = getConsecutiveFailures(); const blockLevel = getBseBlockBackoffLevel(); return failures > 0 || blockLevel > 0 ? getPollingIntervalMs(failures, b"
+        "createAnnouncementCronHandler({ poll: processAnnouncements, backoffMs: () => { const failures = getConsecutiveFailures(); const blockLevel = getBseBlockBackoffLevel(); // A source failure must not suppress the next scheduled minute. return "
       ]
     },
     {
       "file": "server.ts",
-      "line": 101,
+      "line": 102,
       "receiver": "app",
       "method": "USE",
       "path": "authMiddleware",
@@ -8928,7 +8935,7 @@
     },
     {
       "file": "server.ts",
-      "line": 104,
+      "line": 105,
       "receiver": "app",
       "method": "GET",
       "path": "/sw.js",
@@ -8938,7 +8945,7 @@
     },
     {
       "file": "server.ts",
-      "line": 125,
+      "line": 126,
       "receiver": "app",
       "method": "GET",
       "path": "/OneSignalSDKWorker.js",
@@ -8948,7 +8955,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5308,
+      "line": 5309,
       "receiver": "app",
       "method": "GET",
       "path": "['/health', '/healthz']",
@@ -8958,7 +8965,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5314,
+      "line": 5315,
       "receiver": "app",
       "method": "GET",
       "path": "/robots.txt",
@@ -8968,7 +8975,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5320,
+      "line": 5321,
       "receiver": "app",
       "method": "GET",
       "path": "['/sitemap.xml', '/sitemap', '/sitemap_index.xml', '/sitemap.txt']",
@@ -8978,7 +8985,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5327,
+      "line": 5328,
       "receiver": "app",
       "method": "GET",
       "path": "['/rss.xml', '/rss', '/feed.xml', '/feed']",
@@ -8988,7 +8995,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5393,
+      "line": 5394,
       "receiver": "app",
       "method": "GET",
       "path": "[/^\\/https?:\\/?\\/?(?:www\\.)?bsenexus\\.in\\/sitemap(?:\\.xml)?$/i]",
@@ -8998,7 +9005,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5398,
+      "line": 5399,
       "receiver": "app",
       "method": "GET",
       "path": "[`/${INDEXNOW_KEY}.txt`, '/indexnow-key.txt']",
@@ -9008,7 +9015,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5405,
+      "line": 5406,
       "receiver": "app",
       "method": "GET",
       "path": "/opensearch.xml",
@@ -9018,7 +9025,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5423,
+      "line": 5424,
       "receiver": "app",
       "method": "GET",
       "path": "[sourcePath, sourcePath + '/']",
@@ -9028,7 +9035,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5430,
+      "line": 5431,
       "receiver": "app",
       "method": "GET",
       "path": "['/filing', '/filing/*']",
@@ -9038,7 +9045,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5436,
+      "line": 5437,
       "receiver": "app",
       "method": "GET",
       "path": "/announcement/:newsId",
@@ -9048,7 +9055,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5755,
+      "line": 5756,
       "receiver": "app",
       "method": "GET",
       "path": "/results/:symbol/:quarterKey",
@@ -9058,7 +9065,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5811,
+      "line": 5812,
       "receiver": "app",
       "method": "GET",
       "path": "['/company/:symbol', '/stock/:symbol']",
@@ -9068,7 +9075,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5880,
+      "line": 5881,
       "receiver": "app",
       "method": "GET",
       "path": "/guides/:slug",
@@ -9078,7 +9085,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5926,
+      "line": 5927,
       "receiver": "app",
       "method": "GET",
       "path": "['/faq', '/faqs']",
@@ -9088,7 +9095,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5933,
+      "line": 5934,
       "receiver": "app",
       "method": "GET",
       "path": "['/pricing', '/pricing/']",
@@ -9098,7 +9105,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5940,
+      "line": 5941,
       "receiver": "app",
       "method": "GET",
       "path": "['/plans', '/plans/']",
@@ -9108,7 +9115,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5945,
+      "line": 5946,
       "receiver": "app",
       "method": "GET",
       "path": "['/guides', '/guides/']",
@@ -9118,7 +9125,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5952,
+      "line": 5953,
       "receiver": "app",
       "method": "GET",
       "path": "['/market-guides', '/market-guides/']",
@@ -9128,7 +9135,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5957,
+      "line": 5958,
       "receiver": "app",
       "method": "GET",
       "path": "['/companies', '/companies/']",
@@ -9138,7 +9145,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5964,
+      "line": 5965,
       "receiver": "app",
       "method": "GET",
       "path": "['/company-directory', '/company-directory/']",
@@ -9148,7 +9155,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5969,
+      "line": 5970,
       "receiver": "app",
       "method": "GET",
       "path": "['/about', '/about/']",
@@ -9158,7 +9165,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5976,
+      "line": 5977,
       "receiver": "app",
       "method": "GET",
       "path": "['/contact', '/contact/']",
@@ -9168,7 +9175,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5983,
+      "line": 5984,
       "receiver": "app",
       "method": "GET",
       "path": "['/disclaimer', '/disclaimer/']",
@@ -9178,7 +9185,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5990,
+      "line": 5991,
       "receiver": "app",
       "method": "GET",
       "path": "['/privacy-policy', '/privacy-policy/']",
@@ -9188,7 +9195,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5997,
+      "line": 5998,
       "receiver": "app",
       "method": "GET",
       "path": "['/privacy', '/privacy/']",
@@ -9198,7 +9205,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6002,
+      "line": 6003,
       "receiver": "app",
       "method": "GET",
       "path": "['/terms', '/terms/']",
@@ -9208,7 +9215,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6009,
+      "line": 6010,
       "receiver": "app",
       "method": "GET",
       "path": "['/terms-of-service', '/terms-of-service/']",
@@ -9218,7 +9225,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6014,
+      "line": 6015,
       "receiver": "app",
       "method": "GET",
       "path": "/embed/widget",
@@ -9228,7 +9235,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6068,
+      "line": 6069,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-companies.xml",
@@ -9238,7 +9245,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6088,
+      "line": 6089,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-guides.xml",
@@ -9248,7 +9255,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6106,
+      "line": 6107,
       "receiver": "app",
       "method": "GET",
       "path": "/llms.txt",
@@ -9258,7 +9265,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6111,
+      "line": 6112,
       "receiver": "app",
       "method": "GET",
       "path": "/llms-full.txt",
@@ -9268,7 +9275,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6117,
+      "line": 6118,
       "receiver": "app",
       "method": "GET",
       "path": "/^\\/google([a-zA-Z0-9_-]+)\\.html$/",
@@ -9278,7 +9285,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6124,
+      "line": 6125,
       "receiver": "app",
       "method": "USE",
       "path": "express.static(path.join(process.cwd(), 'public'), { maxAge: '1d', immutable: false, setHeaders: (res, filePath) => { if (filePath.includes(`${path.sep}fonts${path.sep}`)) res.setHeader('Cache-Control', 'public, max-age=2592000'); if (fileP",
@@ -9286,7 +9293,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6134,
+      "line": 6135,
       "receiver": "app",
       "method": "USE",
       "path": "/auth",
@@ -9296,7 +9303,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6137,
+      "line": 6138,
       "receiver": "app",
       "method": "POST",
       "path": "/api/security/verify-recaptcha",
@@ -9307,7 +9314,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6178,
+      "line": 6179,
       "receiver": "app",
       "method": "USE",
       "path": "/api",
@@ -9318,7 +9325,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6182,
+      "line": 6183,
       "receiver": "app",
       "method": "USE",
       "path": "['/api/*', '/auth/*']",
@@ -9328,7 +9335,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6187,
+      "line": 6188,
       "receiver": "app",
       "method": "USE",
       "path": "(err: any, req: express.Request, res: express.Response, next: express.NextFunction) => { if (req.path.startsWith('/api') || req.path.startsWith('/auth')) { console.error(\"API Error handler caught:\", err?.message || err); const isProd = proc",
@@ -9336,7 +9343,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6571,
+      "line": 6567,
       "receiver": "app",
       "method": "GET",
       "path": "[\"/\", \"/announcements\", \"/live\", \"/results-calendar\", \"/watchlist\", \"/watchlists\", \"/companies\", \"/about\", \"/contact\", \"/disclaimer\", \"/privacy-policy\", \"/terms\"]",
@@ -9346,7 +9353,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6598,
+      "line": 6594,
       "receiver": "app",
       "method": "USE",
       "path": "(req, res, next) => { if (req.method !== 'GET' && req.method !== 'HEAD') return next(); const p = req.path; if ( p === '/' || p === '/announcements' || p === '/results-calendar' || p === '/watchlist' || p === '/watchlists' || p === '/compan",
@@ -9354,7 +9361,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6630,
+      "line": 6626,
       "receiver": "app",
       "method": "USE",
       "path": "vite.middlewares",
@@ -9362,7 +9369,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6642,
+      "line": 6638,
       "receiver": "app",
       "method": "USE",
       "path": "express.static(distPath, { maxAge: '1y', immutable: true, index: false, setHeaders: (res, filePath) => { if (filePath.endsWith('.html')) { res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600'); } } }",
@@ -9370,7 +9377,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6669,
+      "line": 6665,
       "receiver": "app",
       "method": "GET",
       "path": "*",
@@ -11428,7 +11435,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6284,
+      "line": 6280,
       "function": "fetch",
       "target": "`http://127.0.0.1:${port}/api/health`"
     },
@@ -13284,13 +13291,13 @@
     },
     {
       "file": "server/tests/pollerStall.test.ts",
-      "line": 138,
+      "line": 164,
       "function": "Array.from",
       "key": "{ length: 700 }"
     },
     {
       "file": "server/tests/pollerStall.test.ts",
-      "line": 145,
+      "line": 171,
       "function": "Array.from",
       "key": "await exports.getLogs(2500)"
     },
@@ -14197,37 +14204,37 @@
     },
     {
       "file": "server.ts",
-      "line": 107,
+      "line": 108,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6190,
+      "line": 6191,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6560,
+      "line": 6556,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6565,
+      "line": 6561,
       "name": "DISABLE_HMR"
     },
     {
       "file": "server.ts",
-      "line": 6769,
+      "line": 6765,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6769,
+      "line": 6765,
       "name": "TEST_RUNNER"
     },
     {
       "file": "server/api/announcementCron.ts",
-      "line": 26,
+      "line": 28,
       "name": "CRON_SECRET"
     },
     {
