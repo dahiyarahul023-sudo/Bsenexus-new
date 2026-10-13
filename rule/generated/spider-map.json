@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "fdcf53da270c254be8af35f59dfb0ddce510047e05df68b8b33546454eaee483",
+  "sourceDigest": "143cc3cff0c9c3aeaad25f0457c6e66f99398f5df32fb879aab27c271a2d0644",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -20,7 +20,7 @@
     },
     {
       "path": "firestore.rules",
-      "sha256": "f16208d25d6f5af323fe973203bcd72a44eeed97661b771ed696814e62cbfbbf",
+      "sha256": "6c8328543bc294bcca51e221bae0580c66cbaa8a7ebcf94eac2673f6d89bbd5f",
       "importedBy": []
     },
     {
@@ -90,7 +90,7 @@
     },
     {
       "path": "public/sitemap.xml",
-      "sha256": "fc98f2a927d4bd4d1d4a1935acc5fab009833b40eb9959dc000b8e7027427c49",
+      "sha256": "2987ab21d882bbc2c37e05f52b516cb590c906ed18eba9be72b8e98338764eee",
       "importedBy": []
     },
     {
@@ -157,7 +157,7 @@
     },
     {
       "path": "server.ts",
-      "sha256": "d21a2358e300b93e5daea617104f7e740a7e1ca8c2174159ef8ca288e34a8668",
+      "sha256": "f38d96da7ae73dfa3021217d46e9e11b4eb517c4cad62ff7c899c2105e38eacb",
       "importedBy": [
         "server/tests/routeResolution.test.ts"
       ]
@@ -556,7 +556,7 @@
     },
     {
       "path": "server/services/ai/aiGateway.ts",
-      "sha256": "979d92b97b8a958a2fea3f87f422b0a594160bb7ba9e01fa8e587503bc3e1682",
+      "sha256": "b664227035ceac7804288a044d2df85e32302349773fddc1c75428d5584f5e98",
       "importedBy": [
         "server/services/ai/verifyModels.ts",
         "server/services/gemini.ts",
@@ -588,7 +588,7 @@
     },
     {
       "path": "server/services/ai/providers/geminiAdapter.ts",
-      "sha256": "825cc925ddc829bea4b49453784c406f2dab91a37707e1d23dc73dad71bfb639",
+      "sha256": "07b8b91ae8b79a0b77c643a6aea67c8617b40af8834a2e9d0ebbfa9896dd395d",
       "importedBy": [
         "server/services/ai/aiGateway.ts"
       ]
@@ -654,7 +654,7 @@
     },
     {
       "path": "server/services/gemini.ts",
-      "sha256": "510a11840448d8d948527b53919a4df80671f0bb5b4eee43f45388d81d2017f8",
+      "sha256": "a01a824e2ec507b2f5eea27dda885e0ca52f32b31f6e9e1700a79a033d9a0fd6",
       "importedBy": [
         "server/api/faq.ts",
         "server/api/routes.ts",
@@ -672,7 +672,7 @@
     },
     {
       "path": "server/services/indexNow.ts",
-      "sha256": "bedd451c4cf5b71f5e4e91bdd7447eeb9f934fd561169d1b4bd4066e05e092ac",
+      "sha256": "2b5590aca292609120b70fe8d3083108ffc5b0c39eaedc9a5f1d71a80e4cbb0f",
       "importedBy": [
         "server.ts",
         "server/api/seoRoutes.ts",
@@ -703,7 +703,7 @@
     },
     {
       "path": "server/services/monitor.ts",
-      "sha256": "158ca20692f52c553115c5d0db133b0055d5c4afa996bd25d92f614966775dd9",
+      "sha256": "4ea79705a1d9f1e69353fb4954c1bcebfa2ca2718269e409d15583a23ecef394",
       "importedBy": [
         "server.ts",
         "server/api/announcementCron.ts",
@@ -860,6 +860,11 @@
       "importedBy": []
     },
     {
+      "path": "server/tests/appCheckStartup.test.ts",
+      "sha256": "8894a6e4ddff0fad2dffa61805dea9a975b83fbed629ff9f026b7e8d33c1af1d",
+      "importedBy": []
+    },
+    {
       "path": "server/tests/auditData.test.ts",
       "sha256": "c1cbaf13cd749d072d3a14da9e0c5e10c227c902c0bb25a8834587d9b5f622be",
       "importedBy": []
@@ -946,7 +951,7 @@
     },
     {
       "path": "server/tests/pollerStall.test.ts",
-      "sha256": "a8ac222f14ef563b7446eeafe36e0a9eaaefd45139896bbbbb6ae92ba7d06dd3",
+      "sha256": "bf485c22b384c9f65bd0ea2e308ce652181ca548661ad6aea95baafdc426675b",
       "importedBy": []
     },
     {
@@ -2236,7 +2241,7 @@
     },
     {
       "path": "src/firebase.ts",
-      "sha256": "9b5379166278db85bbb2a63d12d360444ee13d6e7d12a44516faf6093c0f1b95",
+      "sha256": "8a9a9f5f9c675af4e8b316bc003b9c1db85bf234435db8e8ef1639a413607f23",
       "importedBy": [
         "src/api.ts",
         "src/context/AuthContext.tsx"
@@ -2709,8 +2714,7 @@
       "sha256": "8da5edced223dd25fdf955b25685eef6921baca950b74c89304a3ec705faaebe",
       "importedBy": [
         "src/components/ui/ModernAuthCard.tsx",
-        "src/context/AuthContext.tsx",
-        "src/firebase.ts"
+        "src/context/AuthContext.tsx"
       ]
     },
     {
@@ -4184,13 +4188,13 @@
       "source": "server/services/indexNow.ts",
       "target": "server/database/logDao.ts",
       "kind": "import",
-      "line": 2
+      "line": 1
     },
     {
       "source": "server/services/indexNow.ts",
       "target": "server/utils/circuitBreaker.ts",
       "kind": "import",
-      "line": 3
+      "line": 2
     },
     {
       "source": "server/services/marketGuidesService.ts",
@@ -8219,12 +8223,6 @@
       "line": 4
     },
     {
-      "source": "src/firebase.ts",
-      "target": "src/utils/recaptcha.ts",
-      "kind": "import",
-      "line": 4
-    },
-    {
       "source": "src/hooks/useMarketIndices.ts",
       "target": "src/api.ts",
       "kind": "import",
@@ -8731,7 +8729,8 @@
         "server/tests/preferenceSaveQueue.test.ts",
         "server/tests/recaptchaUiState.test.ts",
         "server/tests/apiCancellation.test.ts",
-        "server/tests/avatar.test.ts"
+        "server/tests/avatar.test.ts",
+        "server/tests/appCheckStartup.test.ts"
       ],
       "reason": "Guest, restoring, signed-in and expired states must stay distinct. Late requests and saved preferences must not overwrite newer edits or leak between accounts. A success message requires the appropriate confirmed result."
     },
@@ -8960,7 +8959,8 @@
       ],
       "tests": [
         "server/tests/responseHeaders.test.ts",
-        "server/tests/recaptchaSecurity.test.ts"
+        "server/tests/recaptchaSecurity.test.ts",
+        "server/tests/appCheckStartup.test.ts"
       ],
       "reason": "Canonical document headers preserve OAuth popups, AI Studio preview and public embeds. Deferred optional SDKs preserve authentication assessment, configured monitoring and explicit push requests without blocking public paint."
     }
@@ -9281,7 +9281,7 @@
       "line": 5992,
       "receiver": "app",
       "method": "GET",
-      "path": "['/privacy-policy', '/privacy-policy/']",
+      "path": "['/privacy', '/privacy/']",
       "middleware": [
         "<handler>"
       ]
@@ -9291,7 +9291,7 @@
       "line": 5999,
       "receiver": "app",
       "method": "GET",
-      "path": "['/privacy', '/privacy/']",
+      "path": "['/privacy-policy', '/privacy-policy/']",
       "middleware": [
         "<handler>"
       ]
@@ -9436,17 +9436,17 @@
     },
     {
       "file": "server.ts",
-      "line": 6568,
+      "line": 6573,
       "receiver": "app",
       "method": "GET",
-      "path": "[\"/\", \"/announcements\", \"/live\", \"/results-calendar\", \"/watchlist\", \"/watchlists\", \"/companies\", \"/about\", \"/contact\", \"/disclaimer\", \"/privacy-policy\", \"/terms\"]",
+      "path": "[\"/\", \"/announcements\", \"/live\", \"/results-calendar\", \"/watchlist\", \"/watchlists\", \"/companies\", \"/about\", \"/contact\", \"/disclaimer\", \"/privacy\", \"/terms\"]",
       "middleware": [
         "<handler>"
       ]
     },
     {
       "file": "server.ts",
-      "line": 6595,
+      "line": 6600,
       "receiver": "app",
       "method": "USE",
       "path": "(req, res, next) => { if (req.method !== 'GET' && req.method !== 'HEAD') return next(); const p = req.path; if ( p === '/' || p === '/announcements' || p === '/results-calendar' || p === '/watchlist' || p === '/watchlists' || p === '/compan",
@@ -9454,7 +9454,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6627,
+      "line": 6632,
       "receiver": "app",
       "method": "USE",
       "path": "vite.middlewares",
@@ -9462,7 +9462,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6639,
+      "line": 6644,
       "receiver": "app",
       "method": "USE",
       "path": "express.static(distPath, { maxAge: '1y', immutable: true, index: false, setHeaders: (res, filePath) => { if (filePath.endsWith('.html')) { res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600'); } } }",
@@ -9470,7 +9470,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6666,
+      "line": 6671,
       "receiver": "app",
       "method": "GET",
       "path": "*",
@@ -11600,7 +11600,7 @@
     },
     {
       "file": "server/services/indexNow.ts",
-      "line": 85,
+      "line": 84,
       "function": "fetch",
       "target": "'https://api.indexnow.org/indexnow'"
     },
@@ -13288,7 +13288,7 @@
     },
     {
       "file": "server/services/indexNow.ts",
-      "line": 69,
+      "line": 68,
       "function": "Array.from",
       "key": "this.queue"
     },
@@ -13384,13 +13384,13 @@
     },
     {
       "file": "server/tests/pollerStall.test.ts",
-      "line": 164,
+      "line": 173,
       "function": "Array.from",
       "key": "{ length: 700 }"
     },
     {
       "file": "server/tests/pollerStall.test.ts",
-      "line": 171,
+      "line": 180,
       "function": "Array.from",
       "key": "await exports.getLogs(2500)"
     },
@@ -14080,37 +14080,37 @@
     },
     {
       "file": "src/firebase.ts",
-      "line": 39,
+      "line": 38,
       "function": "localStorage.getItem",
       "key": "'bse_nexus_firebase_project'"
     },
     {
       "file": "src/firebase.ts",
-      "line": 43,
+      "line": 42,
       "function": "localStorage.removeItem",
       "key": "'bse_nexus_auth_session'"
     },
     {
       "file": "src/firebase.ts",
-      "line": 44,
+      "line": 43,
       "function": "localStorage.removeItem",
       "key": "'bse_nexus_fb_id_token'"
     },
     {
       "file": "src/firebase.ts",
-      "line": 46,
+      "line": 45,
       "function": "localStorage.setItem",
       "key": "'bse_nexus_firebase_project'"
     },
     {
       "file": "src/firebase.ts",
-      "line": 49,
+      "line": 48,
       "function": "localStorage.getItem",
       "key": "'bse_nexus_fb_id_token'"
     },
     {
       "file": "src/firebase.ts",
-      "line": 51,
+      "line": 50,
       "function": "localStorage.removeItem",
       "key": "'bse_nexus_fb_id_token'"
     },
@@ -14319,22 +14319,22 @@
     },
     {
       "file": "server.ts",
-      "line": 6557,
+      "line": 6562,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6562,
+      "line": 6567,
       "name": "DISABLE_HMR"
     },
     {
       "file": "server.ts",
-      "line": 6766,
+      "line": 6771,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6766,
+      "line": 6771,
       "name": "TEST_RUNNER"
     },
     {
@@ -14934,7 +14934,7 @@
     },
     {
       "file": "server/services/ai/aiGateway.ts",
-      "line": 189,
+      "line": 192,
       "name": "<computed>"
     },
     {
@@ -14959,7 +14959,7 @@
     },
     {
       "file": "server/services/indexNow.ts",
-      "line": 5,
+      "line": 4,
       "name": "INDEXNOW_KEY"
     },
     {
@@ -16242,7 +16242,7 @@
     },
     {
       "file": "src/firebase.ts",
-      "line": 60,
+      "line": 59,
       "target": "window",
       "kind": "listen",
       "name": "error",
@@ -16250,7 +16250,7 @@
     },
     {
       "file": "src/firebase.ts",
-      "line": 68,
+      "line": 67,
       "target": "window",
       "kind": "listen",
       "name": "unhandledrejection",
@@ -16258,7 +16258,7 @@
     },
     {
       "file": "src/firebase.ts",
-      "line": 127,
+      "line": 132,
       "target": "window",
       "kind": "remove",
       "name": "pointerdown",
@@ -16266,7 +16266,7 @@
     },
     {
       "file": "src/firebase.ts",
-      "line": 128,
+      "line": 133,
       "target": "window",
       "kind": "remove",
       "name": "keydown",
@@ -16274,7 +16274,7 @@
     },
     {
       "file": "src/firebase.ts",
-      "line": 131,
+      "line": 136,
       "target": "window",
       "kind": "listen",
       "name": "pointerdown",
@@ -16282,7 +16282,7 @@
     },
     {
       "file": "src/firebase.ts",
-      "line": 132,
+      "line": 137,
       "target": "window",
       "kind": "listen",
       "name": "keydown",

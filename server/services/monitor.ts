@@ -137,12 +137,15 @@ export async function processAnnouncements(): Promise<AnnouncementPollResult> {
       fetched,
       newFilingsCount: newCount,
       skipped: mode === 'busy',
-      error: mode !== 'success' && mode !== 'busy',
+      ...(mode !== 'success' && mode !== 'busy' ? { error: true } : {}),
       mode,
       ...(mode === 'busy' ? { reason: 'skipped: previous cycle running' } : {}),
     });
-    console.log(`[POLLER_CYCLE] ${message}`);
-    void addLog('INFO', 'POLLER_CYCLE', message).catch(() => {});
+    const level = mode === 'success' || mode === 'busy' ? 'INFO' : mode === 'error' ? 'ERROR' : 'WARNING';
+    if (level === 'ERROR') console.error(`[POLLER_CYCLE] ${message}`);
+    else if (level === 'WARNING') console.warn(`[POLLER_CYCLE] ${message}`);
+    else console.log(`[POLLER_CYCLE] ${message}`);
+    void addLog(level, 'POLLER_CYCLE', message).catch(() => {});
   };
   if (isPolling) {
     logSummary('busy');
@@ -262,8 +265,8 @@ export async function processAnnouncements(): Promise<AnnouncementPollResult> {
         if (itemTs > 0) {
           const ageHours = (now - itemTs) / (1000 * 60 * 60);
           
-          if (ingestLagSec > 180 && (now - PROCESS_BOOT_MS) > 3 * 60 * 1000) {
-            // Diagnostic logging for live filings that exceed the delay threshold after boot warmup
+          if (ingestLagSec > 90) {
+            // Diagnostic logging for filings that exceed the 90s delay threshold
             addLog('WARNING', 'DELAY_DIAGNOSTIC', `Filing latency alert: ${companyName} (${newsId}) took ${ingestLagSec}s to reach platform. BSE Time: ${bseTimeStr} | Source: ${sourceName} | Fetch Latency: ${item._fetchLatency || 0}ms.`);
           }
 

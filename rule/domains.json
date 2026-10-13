@@ -387,7 +387,8 @@
         "server/tests/preferenceSaveQueue.test.ts",
         "server/tests/recaptchaUiState.test.ts",
         "server/tests/apiCancellation.test.ts",
-        "server/tests/avatar.test.ts"
+        "server/tests/avatar.test.ts",
+        "server/tests/appCheckStartup.test.ts"
       ],
       "reason": "Guest, restoring, signed-in and expired states must stay distinct. Late requests and saved preferences must not overwrite newer edits or leak between accounts. A success message requires the appropriate confirmed result."
     },
@@ -616,7 +617,8 @@
       ],
       "tests": [
         "server/tests/responseHeaders.test.ts",
-        "server/tests/recaptchaSecurity.test.ts"
+        "server/tests/recaptchaSecurity.test.ts",
+        "server/tests/appCheckStartup.test.ts"
       ],
       "reason": "Canonical document headers preserve OAuth popups, AI Studio preview and public embeds. Deferred optional SDKs preserve authentication assessment, configured monitoring and explicit push requests without blocking public paint."
     }

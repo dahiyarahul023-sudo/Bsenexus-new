@@ -1,7 +1,6 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { initializeAppCheck, ReCaptchaEnterpriseProvider, type AppCheck } from 'firebase/app-check';
-import { loadRecaptchaScript } from './utils/recaptcha';
 
 const configModules = typeof (import.meta as any)?.glob === 'function'
   ? (import.meta as any).glob('../firebase-applet-config.json', { eager: true })
@@ -86,7 +85,7 @@ googleProvider.setCustomParameters({
 
 /**
  * Firebase App Check Integration Readiness:
- * Pre-configures reCAPTCHA Enterprise provider for client-side attestation.
+ * Uses Enterprise attestation in production and registered debug tokens in development.
  * NOTE: App Check tokens are automatically attached to outgoing Firestore & Cloud Storage calls.
  * Enforcement MUST be turned on explicitly in the Firebase Console (Firestore -> App Check tab).
  */
@@ -97,13 +96,19 @@ export function initAppCheck(): AppCheck | null {
     return appCheckInstance;
   }
 
-  try {
-       const recaptchaSiteKey = (import.meta as any).env?.VITE_RECAPTCHA_SITE_KEY; // single source of truth: App Check and login flow must use the same Enterprise key
+  const isDevelopment = (import.meta as any).env?.DEV === true;
+  // A production Enterprise key cannot attest an unregistered development preview.
+  // Debug tokens must be registered in Firebase Console; never use them in production.
+  const debugToken = isDevelopment ? String((import.meta as any).env?.VITE_APPCHECK_DEBUG_TOKEN || '').trim() : '';
+  if (isDevelopment && !debugToken) return null;
 
-    // Optional debug token support for local development
-    const debugToken = (import.meta as any).env?.VITE_APPCHECK_DEBUG_TOKEN;
+  try {
+    // An App Check registration may use a different key from login risk assessment.
+    const recaptchaSiteKey = (import.meta as any).env?.VITE_APPCHECK_SITE_KEY || (import.meta as any).env?.VITE_RECAPTCHA_SITE_KEY;
     if (debugToken) {
       (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN = debugToken;
+    } else {
+      delete (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN;
     }
 
     if (recaptchaSiteKey && recaptchaSiteKey.trim() !== '' && !recaptchaSiteKey.includes('placeholder')) {
@@ -126,7 +131,7 @@ if (typeof window !== 'undefined' && isFirebaseConfigured) {
   const arm = () => {
     window.removeEventListener('pointerdown', arm);
     window.removeEventListener('keydown', arm);
-    void loadRecaptchaScript().then(() => initAppCheck()).catch(() => {});
+    initAppCheck();
   };
   window.addEventListener('pointerdown', arm, { once: true, passive: true });
   window.addEventListener('keydown', arm, { once: true });

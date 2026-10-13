@@ -4,10 +4,12 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
 
-function harness(hanging?: string) {
+function harness(hanging?: string, failing?: string) {
   let now = 1_000_000;
   const timers = new Map<object, { at: number; callback: () => void }>();
   const logs: string[] = [];
+  const consoleEntries: { level: string; message: string }[] = [];
+  const logLevels: { level: string; message: string }[] = [];
   const calls: string[] = [];
   let release!: (value: any) => void;
   const pending = new Promise(resolve => { release = resolve; });
@@ -16,12 +18,13 @@ function harness(hanging?: string) {
   const rows = [{ NEWSID: 'filing-1', SLONGNAME: 'Test', NEWSSUB: 'Results', DT_TM: 'today' }];
   const invoke = async (name: string, value: any) => {
     calls.push(name);
+    if (failing === name) throw new Error('simulated provider failure');
     if (hanging === name && !held) { held = true; return pending; }
     return value;
   };
   class Clock extends Date { static now() { return now; } }
   const globals = {
-    Date: Clock, AbortController, console: { log() {}, warn() {}, error() {}, debug() {} },
+    Date: Clock, AbortController, console: Object.fromEntries(['log', 'warn', 'error', 'debug'].map(level => [level, (message: string) => consoleEntries.push({ level, message })])),
     setTimeout(callback: () => void, ms: number) {
       const id = {}; timers.set(id, { at: now + ms, callback }); return id;
     },
@@ -39,7 +42,7 @@ function harness(hanging?: string) {
   const settings = { isRunning: true, telegramAlertsEnabled: false };
   const monitor = load('../services/monitor.ts', {
     '../utils/pollCycle.js': cycle,
-    '../database/logDao.js': { addLog: async (_level: string, _module: string, message: string) => { logs.push(message); } },
+    '../database/logDao.js': { addLog: async (_level: string, _module: string, message: string) => { logs.push(message); logLevels.push({ level: _level, message }); } },
     '../database/settingsDao.js': { getSettings: () => invoke('settings', settings) },
     './bse.js': { fetchBSEAnnouncements: () => invoke('fetch', rows) },
     '../database/announcementDao.js': {
@@ -61,7 +64,7 @@ function harness(hanging?: string) {
   });
   const settle = async () => { for (let i = 0; i < 100; i++) await Promise.resolve(); };
   return {
-    poll: () => monitor.processAnnouncements(), failures: () => monitor.getConsecutiveFailures(), calls, logs, release, rows, settings, settle,
+    poll: () => monitor.processAnnouncements(), failures: () => monitor.getConsecutiveFailures(), calls, logs, consoleEntries, logLevels, release, rows, settings, settle,
     async advance(ms: number) {
       now += ms;
       for (const [id, timer] of [...timers]) if (timer.at <= now) { timers.delete(id); timer.callback(); }
@@ -101,6 +104,10 @@ test('healthy monitor saves the filing and recipient inbox in order', async () =
   assert.ok(h.calls.indexOf('fetch') < h.calls.indexOf('save'));
   assert.ok(h.calls.indexOf('save') < h.calls.indexOf('inbox'));
   assert.ok(h.logs.some(x => x.includes('outcome=success')));
+  const summary = h.consoleEntries.find(x => x.message.startsWith('[POLLER_CYCLE] {'))!;
+  assert.equal(summary.level, 'log');
+  assert.doesNotMatch(summary.message, /error/i);
+  assert.equal(h.logLevels.find(x => x.message.startsWith('{'))!.level, 'INFO');
 });
 
 test('all monitor attempts emit one numbered IST summary; overlapping attempts skip without a queue', async () => {
@@ -122,9 +129,11 @@ test('all monitor attempts emit one numbered IST summary; overlapping attempts s
   assert.ok(summaries.every(s => s.timestampIST.endsWith('+05:30') && s.durationMs >= 0));
   assert.equal(summaries[0].reason, 'skipped: previous cycle running');
   assert.equal(summaries[0].skipped, true);
-  assert.equal(summaries[0].error, false);
+  assert.equal('error' in summaries[0], false);
   assert.equal(summaries[1].error, true);
   assert.equal(summaries[1].mode, 'timeout');
+  assert.ok(h.consoleEntries.some(x => x.level === 'warn' && x.message.includes('\"mode\":\"timeout\"')));
+  assert.ok(h.logLevels.some(x => x.level === 'WARNING' && x.message.includes('\"mode\":\"timeout\"')));
   assert.equal(summaries[2].mode, 'success');
   assert.equal(summaries[2].newFilingsCount, 1);
 });
@@ -182,4 +191,15 @@ test('replaying the same NEWSID does not save or alert again and reports zero ne
   assert.equal(second.new, 0);
   assert.equal(h.calls.filter(x => x === 'save').length, saved);
   assert.equal(h.calls.filter(x => x === 'inbox').length, inbox);
+});
+
+
+test('actual poll failures retain ERROR severity and a failed summary', async () => {
+  const h = harness(undefined, 'fetch');
+  const result = await h.poll();
+  assert.equal(result.mode, 'error');
+  const summary = h.consoleEntries.find(x => x.message.startsWith('[POLLER_CYCLE] {'))!;
+  assert.equal(summary.level, 'error');
+  assert.equal(JSON.parse(summary.message.slice('[POLLER_CYCLE] '.length)).error, true);
+  assert.equal(h.logLevels.find(x => x.message.startsWith('{'))!.level, 'ERROR');
 });
