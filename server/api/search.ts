@@ -87,9 +87,9 @@ export async function searchCompany(q: string) {
 
     // Exact matches
     if (cleanSym === query) {
-      score = 200;
+      score = 1000;
     } else if (cleanSym.startsWith(query)) {
-      score = 150 - (cleanSym.length - query.length);
+      score = 500 - (cleanSym.length - query.length);
     } else if (cleanSym.includes(query)) {
       score = 110;
     }
@@ -115,9 +115,9 @@ export async function searchCompany(q: string) {
 
     // Scrip Code match
     if (scrip === rawQuery || scrip === query) {
-      score = Math.max(score, 190);
+      score = Math.max(score, 900);
     } else if (scrip.startsWith(query)) {
-      score = Math.max(score, 125);
+      score = Math.max(score, 250);
     }
 
     // Group Synonym bonus
@@ -140,11 +140,17 @@ export async function searchCompany(q: string) {
 
     let score = 0;
     if (cleanSym === query) {
-      score = 200;
+      score = 1000;
     } else if (cleanSym.startsWith(query)) {
-      score = 150 - (cleanSym.length - query.length);
+      score = 500 - (cleanSym.length - query.length);
     } else if (cleanSym.includes(query)) {
       score = 105;
+    }
+
+    if (scrip === rawQuery || scrip === query) {
+      score = Math.max(score, 900);
+    } else if (scrip.startsWith(query)) {
+      score = Math.max(score, 250);
     }
 
     if (cleanName.startsWith(rawQuery)) {

@@ -96,6 +96,11 @@ export function CommandPalette({
     }
   }, [isOpen]);
 
+  // Reset selection index to top whenever query changes
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [query]);
+
   // Load master stocks directory on mount / when opened
   useEffect(() => {
     if (!isOpen || masterStocks.length > 0) return;
@@ -301,16 +306,29 @@ export function CommandPalette({
     // 2. Build comprehensive company matches from API results and local master stocks
     const companyItemsMap = new Map<string, PaletteItem>();
 
-    // Add API results first (they are already ranked server-side with conglomerate search)
+    const doesMatchCurrentQuery = (sym: string, name: string, scrip: string, sector: string) => {
+      const symLower = sym.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const nameLower = name.toLowerCase();
+      const cleanScrip = scrip.replace(/[^a-z0-9]/g, '');
+      return (
+        symLower.includes(cleanQ) ||
+        nameLower.includes(q) ||
+        (cleanScrip && cleanScrip.includes(cleanQ)) ||
+        (sector && sector.toLowerCase().includes(q))
+      );
+    };
+
+    // Add API results that match the current query
     apiResults.forEach((stock) => {
       const sym = (stock.symbol || '').toUpperCase().trim();
       const scrip = stock.scripCode || '';
       const name = stock.name || sym;
-      if (sym && !companyItemsMap.has(sym)) {
+      const sector = stock.sector || '';
+      if (sym && doesMatchCurrentQuery(sym, name, scrip, sector) && !companyItemsMap.has(sym)) {
         companyItemsMap.set(sym, {
           id: `stock_api_${sym}`,
           title: `${name} (${sym})`,
-          subtitle: `BSE: ${scrip || 'Exchange Listed'} ${stock.sector ? `• ${stock.sector}` : ''}`,
+          subtitle: `BSE: ${scrip || 'Exchange Listed'} ${sector ? `• ${sector}` : ''}`,
           category: 'Companies & Stocks',
           icon: Building2,
           action: () => {
@@ -324,7 +342,7 @@ export function CommandPalette({
           badge: scrip || sym,
           symbol: sym,
           scripCode: scrip,
-          keywords: [name, sym, scrip, stock.sector || '']
+          keywords: [name, sym, scrip, sector]
         });
       }
     });
@@ -336,14 +354,15 @@ export function CommandPalette({
       const scrip = stock.scripCode || stock.scrip || '';
       const name = stock.name || sym;
       const sector = stock.sector || stock.industry || '';
-      const symLower = sym.toLowerCase();
+      const symLower = sym.toLowerCase().replace(/[^a-z0-9]/g, '');
       const nameLower = name.toLowerCase();
+      const cleanScrip = scrip.replace(/[^a-z0-9]/g, '');
       const kwLower = (stock.nameKeywords || []).map((k: string) => k.toLowerCase());
 
       const isMatch = 
         symLower.includes(cleanQ) || 
         nameLower.includes(q) || 
-        (scrip && scrip.includes(cleanQ)) ||
+        (cleanScrip && cleanScrip.includes(cleanQ)) ||
         kwLower.some((k: string) => k.includes(q));
 
       if (isMatch && !companyItemsMap.has(sym)) {
@@ -369,7 +388,38 @@ export function CommandPalette({
       }
     }
 
-    const companyResults = Array.from(companyItemsMap.values());
+    // Rank company matches: exact symbol match (query == company symbol) is #1,
+    // followed by exact scrip code, symbol prefix, name prefix, and substring matches.
+    const getCompanyScore = (item: PaletteItem): number => {
+      const sym = (item.symbol || '').toUpperCase().trim();
+      const cleanSym = sym.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const scrip = (item.scripCode || '').trim();
+      const name = item.title.toLowerCase();
+
+      // 1. Exact symbol match (e.g. RELIANCE == RELIANCE): highest priority
+      if (cleanSym === cleanQ) return 1000;
+      // 2. Exact scrip code match
+      if (cleanQ.length >= 3 && scrip === cleanQ) return 900;
+      // 3. Symbol starts with query (prefix match) - shorter symbol gets slightly higher rank
+      if (cleanSym.startsWith(cleanQ)) return 500 - (cleanSym.length - cleanQ.length);
+      // 4. Company name starts with query
+      if (name.startsWith(q)) return 400;
+      // 5. Word in company name starts with query
+      const words = name.split(/\s+/);
+      if (words.some(w => w === q)) return 350;
+      if (words.some(w => w.startsWith(q))) return 300;
+      // 6. Symbol contains query
+      if (cleanSym.includes(cleanQ)) return 200;
+      // 7. Scrip code starts with query
+      if (cleanQ.length >= 2 && scrip.startsWith(cleanQ)) return 180;
+      // 8. Name contains query
+      if (name.includes(q)) return 150;
+      return 100;
+    };
+
+    const companyResults = Array.from(companyItemsMap.values()).sort(
+      (a, b) => getCompanyScore(b) - getCompanyScore(a)
+    );
 
     // 3. Filter Navigation & Action commands
     const matchingBaseItems = baseItems.filter((item) => {
