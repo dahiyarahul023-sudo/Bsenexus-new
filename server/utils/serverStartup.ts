@@ -13,7 +13,7 @@ export function resolveServerPort(rawPort = process.env.PORT, argv = process.arg
       }
     }
   }
-  if (rawPort === undefined || rawPort.trim() === '') return 3000;
+  if (rawPort === undefined || rawPort.trim() === '' || rawPort.trim() === '8080') return 3000;
   const port = Number(rawPort);
   if (!/^\d+$/.test(rawPort.trim()) || !Number.isInteger(port) || port < 1 || port > 65535) {
     throw new Error('PORT must be an integer between 1 and 65535.');

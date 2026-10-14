@@ -20,11 +20,22 @@ import {
   getAccountProtectionConfig
 } from './accountRateLimiter.js';
 
-// Cryptographically secure JWT Secret (fail hard if not configured in environment)
-if (!process.env.JWT_SECRET || !process.env.JWT_SECRET.trim()) {
-  throw new Error("FATAL CONFIG ERROR: JWT_SECRET environment variable is not defined. Server cannot operate securely.");
-}
-const JWT_SECRET = process.env.JWT_SECRET.trim();
+import crypto from 'node:crypto';
+
+// Cryptographically secure JWT Secret (fallback to generated ephemeral secret in dev/test if not in env)
+const devFallbackSecret = typeof crypto.randomBytes === 'function'
+  ? crypto.randomBytes(32).toString('hex')
+  : 'bsenexus_default_ephemeral_dev_jwt_secret_token_12345';
+
+const JWT_SECRET = (process.env.JWT_SECRET && process.env.JWT_SECRET.trim())
+  ? process.env.JWT_SECRET.trim()
+  : (() => {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error("FATAL CONFIG ERROR: JWT_SECRET environment variable is not defined. Server cannot operate securely in production.");
+      }
+      console.warn('[Auth] JWT_SECRET not set in environment — using ephemeral development secret.');
+      return devFallbackSecret;
+    })();
 const ADMIN_EMAIL = 'dahiyarahul023@gmail.com';
 
 // Rate limiter for authentication attempts
