@@ -1,10 +1,16 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert';
-import { saveAnnouncementsBatch, getRecentAnnouncements, getAnnouncementById } from '../database/announcementDao.js';
+import { saveAnnouncementsBatch, getRecentAnnouncements, getAnnouncementById, flushSupabaseWriteQueue } from '../database/announcementDao.js';
 import { addNotificationsBatch, markNotificationsReadBatch, getAllNotifications } from '../database/notificationDao.js';
 import { addLogsBatch, getLogs } from '../database/logDao.js';
 
 describe('Batch Inserts and Updates Tests', () => {
+  test('flushSupabaseWriteQueue returns within maxWaitMs and does not block synchronously', async () => {
+    const start = Date.now();
+    await flushSupabaseWriteQueue(100);
+    const duration = Date.now() - start;
+    assert.strictEqual(duration < 500, true, 'flushSupabaseWriteQueue should return within timeout bound');
+  });
   test('saveAnnouncementsBatch inserts new items and skips identical duplicates', async () => {
     const testId1 = `batch_test_${Date.now()}_1`;
     const testId2 = `batch_test_${Date.now()}_2`;

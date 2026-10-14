@@ -15,11 +15,12 @@ import { createServer as createHttpServer } from 'node:http';
 import { listenForStartup, resolveServerPort } from './server/utils/serverStartup.js';
 
 import { authMiddleware, authRouter, apiRateLimiter, authRateLimiter } from "./server/security/auth.js";
+import { getSanitizedClientIp } from "./server/security/accountRateLimiter.js";
 import { apiRouter } from "./server/api/routes.js";
 import { createAnnouncementCronHandler } from "./server/api/announcementCron.js";
 import { processAnnouncements, getConsecutiveFailures, pruneAndCheckStorageCapacity } from "./server/services/monitor.js";
 import { fetchAndSyncResultsCalendar, getStockResultsHistory, getResultsCalendarData } from "./server/services/resultsCalendarService.js";
-import { syncWatchlistHistoricalData, backfillRecentAnnouncements } from "./server/services/bse.js";
+import { syncWatchlistHistoricalData, backfillRecentAnnouncements, getBseFeedStaleness } from "./server/services/bse.js";
 import { initWatchlists } from "./server/database/watchlistDao.js";
 import { updateTelegramHealth } from "./server/services/telegram.js";
 import { processAutomatedNewsAlerts } from "./server/services/stockNewsService.js";
@@ -5989,15 +5990,15 @@ app.get(['/disclaimer', '/disclaimer/'], (_req, res) => {
 });
 
 // Crawlable, server-rendered Privacy Policy page
-app.get(['/privacy', '/privacy/'], (_req, res) => {
+app.get(['/privacy-policy', '/privacy-policy/'], (_req, res) => {
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400');
   res.send(renderPrivacyPolicyPage());
 });
 
-// Intentional alias redirect: /privacy-policy -> /privacy
-app.get(['/privacy-policy', '/privacy-policy/'], (_req, res) => {
-  res.redirect(301, '/privacy');
+// Intentional alias redirect: /privacy -> /privacy-policy
+app.get(['/privacy', '/privacy/'], (_req, res) => {
+  res.redirect(301, '/privacy-policy');
 });
 
 // Crawlable, server-rendered Terms of Service page
@@ -6115,11 +6116,18 @@ app.get('/llms-full.txt', (_req, res) => {
   res.sendFile(path.join(process.cwd(), 'public', 'llms-full.txt'));
 });
 
-// Dynamic handler for Google Search Console HTML file verification (e.g. /google1234567890abcdef.html)
+// Secure handler for Google Search Console HTML file verification (Strict Whitelist)
+const ALLOWED_GOOGLE_VERIFICATION_HASHES = new Set([
+  'a1571e99ac9d4731',
+  ...(process.env.GOOGLE_SITE_VERIFICATION_HASH ? [process.env.GOOGLE_SITE_VERIFICATION_HASH.replace(/^google/, '').replace(/\.html$/, '')] : [])
+]);
 app.get(/^\/google([a-zA-Z0-9_-]+)\.html$/, (req, res) => {
   const hash = req.params[0];
-  res.type('text/html; charset=utf-8');
-  res.send(`google-site-verification: google${hash}.html`);
+  if (ALLOWED_GOOGLE_VERIFICATION_HASHES.has(hash)) {
+    res.type('text/html; charset=utf-8');
+    return res.send(`google-site-verification: google${hash}.html`);
+  }
+  res.status(404).send('Not Found');
 });
 
 // Serve static assets from public directory (favicons, apple-touch-icons, manifest, etc.)
@@ -6140,7 +6148,7 @@ app.post('/api/security/verify-recaptcha', authRateLimiter, async (req, res) => 
   try {
     const { token, action } = req.body || {};
     const context = {
-      ip: (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip,
+      ip: getSanitizedClientIp(req),
       userAgent: req.headers['user-agent'] as string,
       host: req.headers.host as string
     };
@@ -6217,6 +6225,21 @@ trackInterval(setInterval(async () => {
     console.warn("[PollerWatchdog] Notice:", err?.message || err);
   }
 }, 60 * 1000));
+
+// High-Frequency Real-Time Poller:
+// Continuous 15-second polling cycle delivers live filings and sub-15s Telegram push alerts.
+// Uses getBseFeedStaleness() to ensure requests are not fired if a cycle completed <14s ago
+// or if BSE is flagged blocked. The monitor's process-local mutex skips running cycles automatically.
+trackInterval(setInterval(async () => {
+  try {
+    const { blocked, lastSuccessfulFetchMs } = getBseFeedStaleness();
+    if (!blocked && (Date.now() - lastSuccessfulFetchMs >= 14_000)) {
+      await processAnnouncements();
+    }
+  } catch (err: any) {
+    console.warn("[FastPoller] Notice:", err?.message || err);
+  }
+}, 15 * 1000));
 
 // Independent Storage Capacity & Pruning (Every 15 minutes, completely decoupled from critical poller path)
 setTimeout(() => {

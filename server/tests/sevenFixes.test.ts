@@ -88,7 +88,8 @@ for (const [symbol, scrip] of targets) {
 }
 
 test('sitemap parses with a strict XML parser; alias URLs are excluded', () => {
-  const urls = JSON.parse(execFileSync('python', ['-c', 'import xml.etree.ElementTree as E,json; r=E.parse("public/sitemap.xml"); print(json.dumps([e.text for e in r.iter("{http://www.sitemaps.org/schemas/sitemap/0.9}loc")]))'], { encoding: 'utf8' }));
+  const pythonBin = process.platform === 'win32' ? 'python' : 'python3';
+  const urls = JSON.parse(execFileSync(pythonBin, ['-c', 'import xml.etree.ElementTree as E,json; r=E.parse("public/sitemap.xml"); print(json.dumps([e.text for e in r.iter("{http://www.sitemaps.org/schemas/sitemap/0.9}loc")]))'], { encoding: 'utf8' }));
   assert.ok(urls.includes('https://bsenexus.in/company/M&M'));
   assert.ok(!urls.includes('https://bsenexus.in/live'));
   assert.ok(!urls.includes('https://bsenexus.in/privacy'));

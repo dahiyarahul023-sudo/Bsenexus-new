@@ -758,7 +758,7 @@ export function Announcements({
     openIntelModal({ scripCode, symbol: symbol || companyName, companyName: companyName || symbol });
   };
 
-  // Efficient 30s background polling with visibility gating and immediate resume on active
+  // Real-time 12s background polling with visibility gating and immediate resume on active
   useEffect(() => {
     fetchData(true);
     return () => {
@@ -769,7 +769,7 @@ export function Announcements({
 
   useVisibilityInterval(() => {
     fetchData(false);
-  }, 30000);
+  }, 12000);
 
   // Prefetch an announcement's detail data on hover intent so the detail view
   // opens instantly. Skips ids already fresh/prefetched.

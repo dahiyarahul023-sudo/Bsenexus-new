@@ -414,11 +414,28 @@ export function queueAnnouncementsBatchWrite(tasks: { docId: string; data: any; 
   processSupabaseQueue().catch(() => {});
 }
 
-export async function flushSupabaseWriteQueue(): Promise<void> {
+export async function flushSupabaseWriteQueue(maxWaitMs: number = 3000): Promise<void> {
+  if (!isSupabaseConfigured() || supabaseWriteQueue.size === 0) return;
+  const start = Date.now();
   while (supabaseWriteQueue.size > 0 && isSupabaseConfigured()) {
+    // If Supabase is in backoff due to transient batch errors, release the foreground
+    // loop immediately so poller cycles are not delayed or timed out.
+    if (consecutiveBatchErrors > 0 || Date.now() < nextBatchRetryTime) {
+      break;
+    }
+
+    if (Date.now() - start >= maxWaitMs) {
+      break;
+    }
+
     await processSupabaseQueue();
+
     if (supabaseWriteQueue.size > 0) {
-      await new Promise(r => setTimeout(r, 100));
+      const elapsed = Date.now() - start;
+      if (elapsed >= maxWaitMs || consecutiveBatchErrors > 0) {
+        break;
+      }
+      await new Promise(r => setTimeout(r, Math.min(100, maxWaitMs - elapsed)));
     }
   }
 }

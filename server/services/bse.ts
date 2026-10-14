@@ -205,8 +205,8 @@ export async function fetchSingleBsePage(
     searchType = 'D';
   }
 
-  // Add cache-busting timestamp (_cb) to prevent stale edge cache responses from Akamai CDN
-  const url = `https://api.bseindia.com/BseIndiaAPI/api/${safeApiType}/w?pageno=${safePage}&strCat=-1&strPrevDate=${prevDate}&strScrip=${cleanScrip}&strSearch=${searchType}&strToDate=${toDate}&strType=C&_cb=${Date.now()}`;
+  // Note: BSE Akamai Edge WAF strictly rejects unexpected query parameters (like _cb) with HTTP 403.
+  const url = `https://api.bseindia.com/BseIndiaAPI/api/${safeApiType}/w?pageno=${safePage}&strCat=-1&strPrevDate=${prevDate}&strScrip=${cleanScrip}&strSearch=${searchType}&strToDate=${toDate}&strType=C`;
   
   return await bseCircuitBreaker.execute(
     async breakerSignal => {
@@ -248,7 +248,7 @@ export async function testBSEConnection() {
   let table = await fetchSingleBsePage(1, '', 'AnnSubCategoryGetData', 6000, todayDate);
   // Fallback 1: try strSearch=P for today
   if (table === null) {
-    const fallbackPUrl = `https://api.bseindia.com/BseIndiaAPI/api/AnnSubCategoryGetData/w?pageno=1&strCat=-1&strPrevDate=${todayDate}&strScrip=&strSearch=P&strToDate=${todayDate}&strType=C&_cb=${Date.now()}`;
+    const fallbackPUrl = `https://api.bseindia.com/BseIndiaAPI/api/AnnSubCategoryGetData/w?pageno=1&strCat=-1&strPrevDate=${todayDate}&strScrip=&strSearch=P&strToDate=${todayDate}&strType=C`;
     table = await fetchWithHardenedRetries(fallbackPUrl, 6000, 1);
   }
   // Fallback 2: try yesterday's filings
@@ -278,7 +278,7 @@ export async function testBSEConnection() {
 export async function fetchParallelBackupSource(signal?: AbortSignal): Promise<{ items: any[]; source: string; latestTs: number }> {
   const todayDate = getBseISTDate(0);
   // Real working backup: AnnSubCategoryGetData with strSearch=P
-  const backupUrl = `https://api.bseindia.com/BseIndiaAPI/api/AnnSubCategoryGetData/w?pageno=1&strCat=-1&strPrevDate=${todayDate}&strScrip=&strSearch=P&strToDate=${todayDate}&strType=C&_cb=${Date.now()}`;
+  const backupUrl = `https://api.bseindia.com/BseIndiaAPI/api/AnnSubCategoryGetData/w?pageno=1&strCat=-1&strPrevDate=${todayDate}&strScrip=&strSearch=P&strToDate=${todayDate}&strType=C`;
   const backupItems = await fetchWithHardenedRetries(backupUrl, 4000, 1, signal) || [];
   let latestTs = 0;
   for (const it of backupItems) {
@@ -290,9 +290,11 @@ export async function fetchParallelBackupSource(signal?: AbortSignal): Promise<{
 
 let nseSessionCookie = '';
 let nseSessionExpiry = 0;
+let nseCooldownUntil = 0;
 
 async function getNSECorporateCookie(signal?: AbortSignal): Promise<string> {
   const now = Date.now();
+  if (now < nseCooldownUntil) return '';
   if (nseSessionCookie && now < nseSessionExpiry) {
     return nseSessionCookie;
   }
@@ -303,19 +305,22 @@ async function getNSECorporateCookie(signal?: AbortSignal): Promise<string> {
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
       },
       signal: requestSignal
-    }), 5000, signal);
+    }), 2500, signal);
     const raw = (res.headers as any).getSetCookie ? (res.headers as any).getSetCookie() : [res.headers.get('set-cookie')];
     nseSessionCookie = (raw || []).map((c: any) => (c || '').split(';')[0]).filter(Boolean).join('; ');
     nseSessionExpiry = now + (10 * 60 * 1000);
     return nseSessionCookie;
   } catch (_e) {
     console.warn('[POLLER] NSE session timeout or network failure');
+    nseCooldownUntil = now + (5 * 60 * 1000);
     signal?.throwIfAborted();
     return nseSessionCookie;
   }
 }
 
 export async function fetchNSECorporateAnnouncements(signal?: AbortSignal): Promise<any[]> {
+  const now = Date.now();
+  if (now < nseCooldownUntil) return [];
   try {
     const cookie = await getNSECorporateCookie(signal);
     signal?.throwIfAborted();
@@ -330,8 +335,12 @@ export async function fetchNSECorporateAnnouncements(signal?: AbortSignal): Prom
       signal: requestSignal
       });
       return { res, items: res.ok ? await res.json() : [] };
-    }, 6000, signal);
-    if (!res.ok) { console.warn(`[POLLER] NSE request failed: HTTP ${res.status}`); return []; }
+    }, 3000, signal);
+    if (!res.ok) { 
+      console.warn(`[POLLER] NSE request failed: HTTP ${res.status}`); 
+      nseCooldownUntil = Date.now() + (5 * 60 * 1000);
+      return []; 
+    }
     if (!Array.isArray(items)) return [];
 
     return items.map((item: any) => {
@@ -363,6 +372,7 @@ export async function fetchNSECorporateAnnouncements(signal?: AbortSignal): Prom
     });
   } catch (_err) {
     console.warn('[POLLER] NSE request timeout or network failure');
+    nseCooldownUntil = Date.now() + (5 * 60 * 1000);
     signal?.throwIfAborted();
     return [];
   }
@@ -388,7 +398,7 @@ export async function fetchBSEAnnouncements(signal?: AbortSignal) {
     checkedAlternate = true;
     lastBackupCheckTime = Date.now();
     source = 'BSE_FALLBACK_SEARCH_P';
-    const fallbackPUrl = `https://api.bseindia.com/BseIndiaAPI/api/AnnSubCategoryGetData/w?pageno=1&strCat=-1&strPrevDate=${todayDate}&strScrip=&strSearch=P&strToDate=${todayDate}&strType=C&_cb=${Date.now()}`;
+    const fallbackPUrl = `https://api.bseindia.com/BseIndiaAPI/api/AnnSubCategoryGetData/w?pageno=1&strCat=-1&strPrevDate=${todayDate}&strScrip=&strSearch=P&strToDate=${todayDate}&strType=C`;
     const alternate = await fetchWithHardenedRetries(fallbackPUrl, 5000, 1, signal);
     if (alternate !== null) table = alternate;
     if (alternate && alternate.length > 0) {
@@ -396,10 +406,26 @@ export async function fetchBSEAnnouncements(signal?: AbortSignal) {
     }
   }
 
+  // If primary and search=P failed or returned empty, try live NSE corporate feed immediately
+  // to avoid waiting through yesterday's BSE timeouts when BSE is blocked or lagging.
+  if (table === null || table.length === 0) {
+    try {
+      const nseQuick = await fetchNSECorporateAnnouncements(signal);
+      if (nseQuick && nseQuick.length > 0) {
+        table = nseQuick;
+        source = 'NSE_LIVE_RECOVERY';
+        clearBseBlock();
+        await addLog('INFO', 'POLLER', `BSE endpoint unavailable/slow; seamlessly recovered with NSE_LIVE_RECOVERY (${nseQuick.length} filings) in ${Date.now() - start}ms`);
+      }
+    } catch (_nseErr) {
+      signal?.throwIfAborted();
+    }
+  }
+
   // If still null, attempt Fallback 2: yesterday's filings
   if (table === null) {
     source = 'BSE_FALLBACK_YESTERDAY';
-    table = await fetchSingleBsePage(1, '', 'AnnSubCategoryGetData', 5000, yesterdayDate, 1, signal);
+    table = await fetchSingleBsePage(1, '', 'AnnSubCategoryGetData', 4000, yesterdayDate, 1, signal);
     if (table) {
       await addLog('INFO', 'POLLER', `Today's BSE endpoint unreachable; recovered with BSE_FALLBACK_YESTERDAY in ${Date.now() - start}ms`);
     }

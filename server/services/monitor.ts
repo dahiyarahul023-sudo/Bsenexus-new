@@ -178,7 +178,7 @@ export async function processAnnouncements(): Promise<AnnouncementPollResult> {
       // transiently (Akamai rate-limit) without the feed being genuinely down.
       const pastStartupGrace = (Date.now() - PROCESS_BOOT_MS) > OUTAGE_ALERT_STARTUP_GRACE_MS;
       const canAlert = ((lastAlertTime === 0) || (Date.now() - lastAlertTime > ALERT_COOLDOWN_MS)) && pastStartupGrace;
-      if (consecutiveFailures >= 6 && !isBseOutageActive && canAlert) {
+      if (consecutiveFailures >= 12 && !isBseOutageActive && canAlert) {
         const settings = await cycle.step('outage-settings', () => getSettings());
         if (settings.botToken && settings.chatId) {
           isBseOutageActive = true;
@@ -621,7 +621,7 @@ export async function processAnnouncements(): Promise<AnnouncementPollResult> {
       }
     }
     // Keep the existing DAO writes on request CPU until drained (bounded stage).
-    await cycle.step('write-drain', () => flushSupabaseWriteQueue());
+    await cycle.step('write-drain', () => flushSupabaseWriteQueue(3000));
     flushLocalDiskSave();
   } catch (error) {
     outcome = error instanceof PollStageTimeout ? 'timeout' : 'error';

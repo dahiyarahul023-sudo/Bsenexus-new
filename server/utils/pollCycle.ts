@@ -21,7 +21,7 @@ export class PollCycle {
     this.heartbeat = setInterval(() => report(`heartbeat stage=${this.stage} elapsedMs=${Date.now() - this.startedAt}`), heartbeatMs);
   }
 
-  async step<T>(stage: string, action: () => Promise<T>, limitMs = 15_000): Promise<T> {
+  async step<T>(stage: string, action: () => Promise<T>, limitMs = 30_000): Promise<T> {
     this.stage = stage;
     const remaining = this.budgetMs - (Date.now() - this.startedAt);
     if (this.closed || remaining <= 0) throw new PollStageTimeout(stage);

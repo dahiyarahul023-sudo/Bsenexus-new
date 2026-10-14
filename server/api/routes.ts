@@ -507,9 +507,9 @@ apiRouter.post("/test-gemini", requireAdmin, aiRateLimiter, async (req, res) => 
 });
 
 apiRouter.get("/announcements", 
-  apiResponseCache.middleware({ ttlMs: 15 * 1000, publicCache: false }),
+  apiResponseCache.middleware({ ttlMs: 3 * 1000, publicCache: false }),
   async (req, res) => {
-    res.setHeader('Cache-Control', 'private, max-age=10, stale-while-revalidate=20');
+    res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
     // Surface BSE source-block state so the UI can show a subtle "feed delayed"
     // indicator instead of silently showing stale data. Header (not body) keeps
     // the array response shape unchanged for existing clients.
@@ -535,9 +535,9 @@ apiRouter.get("/announcements",
           res.setHeader('X-BSE-Feed-Updated-At', String(lastSuccessfulFetchMs));
         }
       }
-      // If feed has not refreshed in 75 seconds, opportunistically trigger background poll
+      // If feed has not refreshed in 15 seconds, opportunistically trigger background poll
       // so active user navigation automatically warms and keeps filings up to date
-      if (lastSuccessfulFetchMs === 0 || (nowMs - lastSuccessfulFetchMs) > 75 * 1000) {
+      if (lastSuccessfulFetchMs === 0 || (nowMs - lastSuccessfulFetchMs) > 15 * 1000) {
         processAnnouncements().catch(() => {});
       }
     } catch { /* non-fatal: staleness headers are best-effort */ }
