@@ -698,6 +698,93 @@ export const FALLBACK_MARKET_GUIDES: ServerMarketGuide[] = [
       }
     ]
   },
+  {
+    id: 'wipro-tech-mahindra-q2-fy27-results',
+    slug: 'wipro-tech-mahindra-q2-fy27-results',
+    title: 'Wipro & Tech Mahindra Q2 FY27 Results: TechM 1:1 Bonus and Rs 15 Dividend; Wipro Revenue Up 9.1% as PAT Slips',
+    category: 'Earnings',
+    readTime: '6 min read',
+    summary:
+      'Wipro and Tech Mahindra both declared Q2 FY27 results on Thursday, October 15, 2026, after market hours. Tech Mahindra reported PAT of Rs 1,585.6 crore (up 32.7% YoY) with an interim dividend of Rs 15 per share and a 1:1 bonus issue. Wipro reported revenue of Rs 24,752.7 crore (up 9.1% YoY) with PAT of Rs 3,200.6 crore (down 1.4% YoY) and soft Q3 guidance.',
+    excerpt:
+      'October 15 results: Tech Mahindra’s PAT jump, Rs 15 dividend and first bonus since 2015; Wipro’s flat IT services quarter, margin recovery and Q3 guidance.',
+    date: '2026-10-15',
+    publishedAt: '2026-10-15T19:30:00+05:30',
+    author: {
+      name: 'Bsenexus Intelligence Team',
+      role: 'Earnings & Results'
+    },
+    content: {
+      introduction:
+        'Thursday, October 15, 2026 closed the large-cap IT week with two very different reports. Tech Mahindra delivered the day’s headline: profit up by nearly a third year-on-year, plus an interim dividend and a bonus issue — its first bonus in more than a decade. Wipro, meanwhile, grew its rupee revenue on currency and acquisitions but saw profit slip, with IT services revenue essentially flat and bookings down sharply. Both sets of numbers landed after market hours; Tech Mahindra’s earnings call was scheduled for 6:00 PM IST and Wipro’s for 7:00 PM IST.',
+      sections: [
+        {
+          heading: 'Tech Mahindra: PAT up 32.7%, Rs 15 dividend, 1:1 bonus',
+          title: 'Tech Mahindra: PAT up 32.7%, Rs 15 dividend, 1:1 bonus',
+          content:
+            'Revenue from operations: Rs 16,180.2 crore, up 15.6% YoY (from Rs 13,994.9 crore in Q2 FY26). PAT: Rs 1,585.6 crore, up 32.7% YoY (from Rs 1,194.5 crore) and up 8.2% QoQ (from Rs 1,465.1 crore). PAT margin improved to 9.8%. EBIT margin expanded to 14.8% (from 14.4% in Q1), with EBIT reported at Rs 2,387 crore. Diluted EPS stood at Rs 17.84. Note on the revenue figure: one outlet reports revenue at Rs 15,711.9 crore, but that matches the Q1 figure and is inconsistent with the stated 9.8% PAT margin; Rs 16,180.2 crore is carried by the Economic Times and Reuters and is the headline this page uses. The board declared an interim dividend of Rs 15 per equity share (face value Rs 5, i.e. 300%) for FY27, with record date Friday, October 23, 2026, and payment scheduled by November 13, 2026. It also recommended a 1:1 bonus issue — one new fully paid-up share of Rs 5 for every existing share — subject to shareholder approval through a postal ballot, and proposed raising authorised share capital from Rs 924.3 crore to Rs 1,000 crore to facilitate the issue. The bonus record date will be announced separately. This is Tech Mahindra’s first bonus issue since March 2015.'
+        },
+        {
+          heading: 'Tech Mahindra: deal wins, headcount and dollar revenue (single-source)',
+          title: 'Tech Mahindra: deal wins, headcount and dollar revenue (single-source)',
+          content:
+            'The following three items come from a single outlet each and are attributed rather than asserted as confirmed: Business Today reports new deal wins with a total contract value of $1,023 million, up 25.4% YoY, headcount of 1,52,206, and trailing-twelve-month IT attrition of 11.7%. Dollar revenue was reported at $1,693 million, up about 2% QoQ from $1,660 million. Constant-currency revenue growth for the quarter could not be confirmed from a second independent source, so no CC figure is stated here.'
+        },
+        {
+          heading: 'Wipro: revenue up 9.1%, PAT down 1.4%, IT services flat',
+          title: 'Wipro: revenue up 9.1%, IT services flat',
+          content:
+            'Revenue from operations: Rs 24,752.7 crore, up 9.1% YoY (from Rs 22,697.3 crore) and up 1.1% QoQ (from Rs 24,478.6 crore). PAT attributable to owners: Rs 3,200.6 crore, down 1.4% YoY (from Rs 3,246.2 crore) and down 4.5% QoQ. Note: some coverage reports consolidated net income of Rs 3,199.7 crore (down 1.9% YoY from Rs 3,262.4 crore) on a total-income basis; the Rs 3,200.6 crore attributable figure is carried by Business Standard, Hindu BusinessLine and Moneycontrol and is the headline this page uses. IT services segment revenue: $2,611.5 million, down 0.1% QoQ and up 0.3% YoY; in constant currency it was flat QoQ and up 0.6% YoY. IT services operating margin: 16.5%, up 0.5 percentage points QoQ but down 0.2 points YoY. Total bookings fell to $2,595 million (down 22.9% QoQ in constant currency) and large-deal bookings to $674 million (down 58.6% QoQ). EPS rose to Rs 3.23 (up 4.2% YoY). Operating cash flow was Rs 5,300 crore, 165.8% of net income. Voluntary attrition stood at 13.8% on a trailing-twelve-month basis. No fresh dividend was announced with these results; Wipro had paid an interim dividend of Rs 2 per share in Q1 FY27.'
+        },
+        {
+          heading: 'Wipro Q3 guidance: $2,571–2,625 million',
+          title: 'Wipro Q3 guidance: $2,571–2,625 million',
+          content:
+            'For the quarter ending December 31, 2026, Wipro expects IT services revenue in the range of $2,571 million to $2,625 million, translating to sequential guidance of -1.5% to +0.5% in constant-currency terms. Management attributed the margin recovery to continued investment in growth and talent while expanding margins, and pointed to its consulting-led, AI-powered strategy and momentum in its AI Native Unit and AI offerings portfolio.'
+        },
+        {
+          heading: 'Against expectations: what beat and what missed',
+          title: 'Against expectations: what beat and what missed',
+          content:
+            'Wipro’s revenue of Rs 24,752.7 crore came in just above the Rs 24,710–24,733 crore consensus cluster, and flat constant-currency IT services growth was better than the roughly -0.75% to -1.0% sequential decline brokerages expected. The 16.5% margin also beat the ~16.0–16.26% expected range. But PAT of Rs 3,200.6 crore missed the Rs 3,248.6 crore CNBC-TV18 poll and Rs 3,306 crore Bloomberg consensus, and the bookings drop was the softest part of the print. Tech Mahindra beat across the board: PAT of Rs 1,585.6 crore topped the Rs 1,557.8–1,563 crore Kotak/Axis estimates, revenue of Rs 16,180.2 crore topped the Rs 15,948–16,111 crore estimates, and the 14.8% EBIT margin beat the ~14.5% expected. The dividend-plus-bonus decision was the day’s biggest surprise element — the bonus ratio and dividend amount had been undisclosed before the meeting.'
+        }
+      ],
+      conclusion:
+        'October 15 split the two IT majors cleanly: Tech Mahindra paired a 32.7% profit jump with a Rs 15 interim dividend and a 1:1 bonus — its first since 2015 — while Wipro grew rupee revenue 9.1% but saw profit slip 1.4%, IT services stay flat, and bookings fall sharply, with Q3 guidance pointing to another flat-to-soft quarter. For Tech Mahindra, the dates to track are the October 23 dividend record date and the separately announced bonus record date; for Wipro, whether bookings and organic growth recover in Q3. Nothing here is investment advice.'
+    },
+    faq: [
+      {
+        question: 'When did Wipro and Tech Mahindra declare Q2 FY27 results?',
+        answer:
+          'Both declared Q2 FY27 results (quarter ended September 30, 2026) on Thursday, October 15, 2026, after market hours. Tech Mahindra’s earnings call was scheduled for 6:00 PM IST and Wipro’s for 7:00 PM IST.'
+      },
+      {
+        question: 'What dividend and bonus did Tech Mahindra declare with Q2 FY27 results?',
+        answer:
+          'Tech Mahindra declared an interim dividend of Rs 15 per equity share (face value Rs 5, i.e. 300%) with record date Friday, October 23, 2026, and payment by November 13, 2026. It also recommended a 1:1 bonus issue — one new share for every existing share — subject to shareholder approval via postal ballot; the bonus record date will be announced separately. It is the company’s first bonus since March 2015.'
+      },
+      {
+        question: 'What was Tech Mahindra’s Q2 FY27 PAT and revenue?',
+        answer:
+          'Tech Mahindra reported Q2 FY27 revenue of Rs 16,180.2 crore (up 15.6% YoY) and PAT of Rs 1,585.6 crore (up 32.7% YoY, up 8.2% QoQ), with EBIT margin expanding to 14.8%. One outlet reports revenue at Rs 15,711.9 crore, but that matches the Q1 figure and conflicts with the stated 9.8% PAT margin; this page uses Rs 16,180.2 crore.'
+      },
+      {
+        question: 'What was Wipro’s Q2 FY27 PAT and revenue?',
+        answer:
+          'Wipro reported Q2 FY27 revenue from operations of Rs 24,752.7 crore (up 9.1% YoY, up 1.1% QoQ) and PAT attributable to owners of Rs 3,200.6 crore (down 1.4% YoY, down 4.5% QoQ). Some coverage reports consolidated net income of Rs 3,199.7 crore on a total-income basis; this page uses the Rs 3,200.6 crore attributable figure.'
+      },
+      {
+        question: 'What did Wipro guide for Q3 FY27?',
+        answer:
+          'Wipro guided Q3 FY27 IT services revenue of $2,571–2,625 million, implying a sequential constant-currency change of -1.5% to +0.5%. Q2 IT services revenue was $2,611.5 million (flat QoQ in constant currency, up 0.6% YoY) at a 16.5% operating margin.'
+      },
+      {
+        question: 'Did Wipro declare a dividend with its Q2 FY27 results?',
+        answer:
+          'No fresh dividend was announced with Wipro’s Q2 FY27 results. Wipro had paid an interim dividend of Rs 2 per share in Q1 FY27.'
+      }
+    ]
+  },
 ];
 
 export const MARKET_GUIDES: ServerMarketGuide[] = [...KEYWORD_GUIDES, ...FALLBACK_MARKET_GUIDES];
