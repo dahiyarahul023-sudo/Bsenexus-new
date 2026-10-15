@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "973e339c19f40e4f1c9ded7f7d886adae80d5a1cac3cc77561f20a3754b64326",
+  "sourceDigest": "fb9c4e8f87f4c7e8b83be4e927d8f53f9a39291e83947ba724a3e19f1892285f",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -2807,7 +2807,7 @@
     },
     {
       "path": "src/version.ts",
-      "sha256": "2d196eae032f1b6b604ddcd176eb7cca563550559234662101ff822ad87d81cf",
+      "sha256": "fa14bf65afcdfc65a6c0a27a6a99f87e32c4fb2e50451c25bae67b9d0812d61f",
       "importedBy": [
         "src/components/SettingsTab.tsx",
         "src/lib/sentry.ts"
