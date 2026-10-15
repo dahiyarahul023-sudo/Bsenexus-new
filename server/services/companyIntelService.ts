@@ -5,6 +5,14 @@ import { classifyMaterialEvent, MaterialEvent } from './timelineClassifier.js';
 import { getRecentAnnouncements, getAnnouncementsForScrip } from '../database/announcementDao.js';
 import { generateDirectSummary } from './gemini.js';
 import { parseBseDate } from '../utils/helpers.js';
+import { getAllStockEntries } from '../utils/stockResolver.js';
+
+// Known quote symbol aliases for Yahoo Finance / Indian exchanges
+const TICKER_QUOTE_ALIASES: Record<string, string[]> = {
+  'TATAMOTORS': ['TMCV.NS', 'TMCV.BO', 'TMPV.NS', 'TMPV.BO', '500570.BO'],
+  'ZOMATO': ['ZOMATO.NS', 'ZOMATO.BO', 'ETERNAL.NS', 'ETERNAL.BO', '543320.BO'],
+  'M&M': ['M&M.NS', 'M&M.BO', '500520.BO'],
+};
 
 let yfClient: any = null;
 function getYF() {
@@ -79,7 +87,8 @@ export async function fetchStockQuote(symbol: string): Promise<CompanyQuoteConte
 
   const yf = getYF();
   // Restrict ticker lookup strictly to Indian exchanges (NSE .NS and BSE .BO)
-  const tickerVariants = [`${cleanSym}.NS`, `${cleanSym}.BO`];
+  const aliases = TICKER_QUOTE_ALIASES[cleanSym] || [];
+  const tickerVariants = [...aliases, `${cleanSym}.NS`, `${cleanSym}.BO`];
 
   for (const ticker of tickerVariants) {
     try {
@@ -100,9 +109,13 @@ export async function fetchStockQuote(symbol: string): Promise<CompanyQuoteConte
           continue;
         }
 
+        const allEntries = getAllStockEntries();
+        const master = allEntries.find(e => e.symbol.toUpperCase() === cleanSym);
+        const preferredName = master?.name || q.longName || q.shortName || cleanSym;
+
         const quote: CompanyQuoteContext = {
           symbol: cleanSym,
-          name: q.shortName || q.longName || cleanSym,
+          name: preferredName,
           price: q.regularMarketPrice,
           change: q.regularMarketChange || 0,
           changePercent: q.regularMarketChangePercent || 0,
@@ -116,6 +129,8 @@ export async function fetchStockQuote(symbol: string): Promise<CompanyQuoteConte
           dayLow: q.regularMarketDayLow,
           volume: q.regularMarketVolume,
           avgVolume: q.averageDailyVolume3Month,
+          sector: q.industry || q.sector || master?.sector || undefined,
+          industry: q.industry || q.sector || master?.sector || undefined,
         };
         quoteCache.set(cleanSym, { data: quote, expiry: Date.now() + 300000 });
         return quote;
@@ -334,10 +349,16 @@ export async function getCompanyIntelligence(scripCode: string, symbol: string):
   // Deeper history is fetched on demand, not preloaded for every stock.
   const PER_STOCK_FILINGS = 25;
 
+  const allEntries = getAllStockEntries();
+  const masterEntry = allEntries.find(
+    e => e.symbol.toUpperCase() === targetSym || (targetScrip && e.scripCode === targetScrip)
+  );
+  const resolvedDisplayName = masterEntry?.name || quote?.name || targetSym || "BSE Listed Stock";
+
   return {
     symbol: targetSym || quote?.name || targetScrip,
-    scripCode: targetScrip,
-    companyName: quote?.name || targetSym || "BSE Listed Stock",
+    scripCode: targetScrip || masterEntry?.scripCode || '',
+    companyName: resolvedDisplayName,
     quote: quote || undefined,
     upcomingEvent,
     quarterlyResults,

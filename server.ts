@@ -787,8 +787,14 @@ ${JSON.stringify(jsonLd, null, 2)}
 </html>`;
 }
 
-function renderCompanyPage(data: any, symbol: string, scripCode: string): string {
-  const companyName = data.companyName || symbol;
+function renderCompanyPage(data: any, symbol: string, scripCode?: string): string {
+  const allStockEntries = getAllStockEntries();
+  const masterEntry = allStockEntries.find(
+    e => e.symbol.toUpperCase() === symbol.toUpperCase() || (scripCode && e.scripCode === scripCode)
+  );
+  const companyName = data.companyName && data.companyName !== symbol
+    ? data.companyName
+    : (masterEntry?.name || data.companyName || symbol);
   const quote = data.quote;
   const upcomingEvent = data.upcomingEvent;
   const quarterlyResults: any[] = Array.isArray(data.quarterlyResults) ? data.quarterlyResults.filter((filing: any) => hasExactScripCode(filing, scripCode)) : [];
@@ -910,7 +916,6 @@ function renderCompanyPage(data: any, symbol: string, scripCode: string): string
     : '';
 
   // Retrieve relevant sector/market peers for contextual internal linking
-  const allStockEntries = getAllStockEntries();
   const currentSector = quote?.sector || quote?.industry;
   let peerEntries = allStockEntries
     .filter(e => e.symbol !== symbol && e.scripCode !== scripCode)

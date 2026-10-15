@@ -61,6 +61,7 @@ for (const [symbol, scrip] of targets) {
         if (path.endsWith('/announcementDao.js')) return { getRecentAnnouncements: async () => [wrong, missing, good], getAnnouncementsForScrip: async () => [wrong] };
         if (path.endsWith('/timelineClassifier.js')) return { classifyMaterialEvent: () => null };
         if (path.endsWith('/helpers.js')) return { parseBseDate: () => 0 };
+        if (path.endsWith('/stockResolver.js')) return { getAllStockEntries: () => [] };
         return {};
       },
     });
