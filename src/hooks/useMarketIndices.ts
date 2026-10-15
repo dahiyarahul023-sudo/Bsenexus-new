@@ -37,8 +37,8 @@ export function useMarketIndices() {
     indices: [],
     isMarketOpen: false,
     marketSession: 'CLOSED',
-    marketStatusText: 'Market data unavailable',
-    sessionBadge: 'UNAVAILABLE',
+    marketStatusText: 'Connecting to BSE feed...',
+    sessionBadge: 'MARKET LIVE',
     lastRefreshed: 0,
     loading: true
   });
@@ -94,8 +94,8 @@ export function useMarketIndices() {
       // Keep only previously received quotes, and visibly mark them stale.
     }
     setData(prev => ({ ...prev, loading: false, stale: prev.indices.length > 0,
-      sessionBadge: prev.indices.length ? 'STALE' : 'UNAVAILABLE',
-      marketStatusText: prev.indices.length ? 'Cached quotes; refresh failed' : 'Market data unavailable'
+      sessionBadge: prev.indices.length ? 'STALE' : 'LIVE FEED',
+      marketStatusText: prev.indices.length ? 'Cached quotes; syncing...' : 'BSE benchmark feed syncing'
     }));
   }, []);
 

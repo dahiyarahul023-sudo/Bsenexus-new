@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { 
   X, ChevronLeft, ChevronRight, Pause, Play, 
-  ArrowUpRight, ArrowDownRight, RotateCw
+  ArrowUpRight, ArrowDownRight, RotateCw,
+  TrendingUp, CalendarDays, Building2, Sparkles
 } from 'lucide-react';
 import { springSnappy, buttonTap } from '../utils/motionTokens';
 import { 
@@ -15,12 +16,13 @@ import {
 } from './story/storyData';
 import { 
   CompanyBrandLogo, 
-  RealStoryHeroImage 
+  GrowwStoryCardHero 
 } from './story/StoryVisuals';
 
 interface TodayMarketStoryModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialChapterId?: string;
   onStoryViewed?: () => void;
   onOpenCompanyIntel?: (scripCode?: string, symbol?: string, companyName?: string) => void;
 }
@@ -30,6 +32,7 @@ const SLIDE_DURATION_MS = 6500;
 export function TodayMarketStoryModal({ 
   isOpen, 
   onClose, 
+  initialChapterId,
   onStoryViewed,
   onOpenCompanyIntel 
 }: TodayMarketStoryModalProps) {
@@ -39,6 +42,7 @@ export function TodayMarketStoryModal({
   const [isPaused, setIsPaused] = useState(false);
   const [progress, setProgress] = useState(0);
   const [tapFeedbackSide, setTapFeedbackSide] = useState<'left' | 'right' | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(Date.now());
@@ -48,6 +52,10 @@ export function TodayMarketStoryModal({
   const touchStartXRef = useRef<number>(0);
   const touchStartYRef = useRef<number>(0);
   const touchStartTimeRef = useRef<number>(0);
+
+  // Drag-to-dismiss motion value
+  const dragY = useMotionValue(0);
+  const modalOpacity = useTransform(dragY, [0, 200], [1, 0.4]);
 
   // Flattened slide list across all 4 chapters
   const allSlides = useMemo(() => getAllSlides(chapters), [chapters]);
@@ -62,6 +70,22 @@ export function TodayMarketStoryModal({
   // Current slide index relative to the current chapter
   const currentSlideInChapter = currentSlide?.slideIndexInChapter ?? 0;
   const chapterSlideCount = currentChapter?.slides?.length ?? 1;
+
+  // Jump to initial chapter if provided on open
+  useEffect(() => {
+    if (isOpen && initialChapterId && allSlides.length > 0) {
+      const targetIndex = allSlides.findIndex(s => s.chapterId === initialChapterId);
+      if (targetIndex !== -1) {
+        setCurrentSlideIndex(targetIndex);
+      } else {
+        setCurrentSlideIndex(0);
+      }
+      setProgress(0);
+    } else if (isOpen) {
+      setCurrentSlideIndex(0);
+      setProgress(0);
+    }
+  }, [isOpen, initialChapterId, allSlides]);
 
   // Mark story viewed when modal is opened
   useEffect(() => {
@@ -97,84 +121,51 @@ export function TodayMarketStoryModal({
     };
   }, [isOpen]);
 
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
-  // Hydrate dynamic live market data on mount & periodic 60s check
-  const loadFreshStory = useCallback(async (showIndicator = false) => {
-    if (showIndicator) setIsRefreshing(true);
+  // Fetch live chapters on open
+  const loadFreshStory = useCallback(async (force = false) => {
     try {
-      const liveChapters = await fetchLiveStoryChapters();
-      if (liveChapters?.length) {
-        setChapters(liveChapters);
+      setIsRefreshing(true);
+      const live = await fetchLiveStoryChapters(force);
+      if (live && live.length > 0) {
+        setChapters(live);
       }
     } catch (e) {
-      console.warn('Failed to refresh story feed:', e);
+      console.warn("Could not load fresh story chapters:", e);
     } finally {
-      if (showIndicator) {
-        setTimeout(() => setIsRefreshing(false), 500);
-      }
+      setIsRefreshing(false);
     }
   }, []);
 
   useEffect(() => {
-    if (!isOpen) return;
-    loadFreshStory(false);
-
-    // Auto-refresh every 60s while open so morning radar & closing moves transition seamlessly
-    const interval = setInterval(() => {
+    if (isOpen) {
       loadFreshStory(false);
-    }, 60000);
-
-    return () => clearInterval(interval);
+    }
   }, [isOpen, loadFreshStory]);
 
-  // Advance to next slide
+  // Navigation handlers
   const handleNext = useCallback(() => {
-    if (currentSlideIndex < allSlides.length - 1) {
-      setCurrentSlideIndex(prev => prev + 1);
-      setProgress(0);
-      elapsedBeforePauseRef.current = 0;
-      startTimeRef.current = Date.now();
-    } else {
-      // Completed last slide of story
+    setProgress(0);
+    elapsedBeforePauseRef.current = 0;
+    startTimeRef.current = Date.now();
+    setCurrentSlideIndex(prev => {
+      if (prev < allSlides.length - 1) {
+        return prev + 1;
+      }
       onClose();
-    }
-  }, [currentSlideIndex, allSlides.length, onClose]);
+      return prev;
+    });
+  }, [allSlides.length, onClose]);
 
-  // Go to previous slide
   const handlePrev = useCallback(() => {
-    if (currentSlideIndex > 0) {
-      setCurrentSlideIndex(prev => prev - 1);
-      setProgress(0);
-      elapsedBeforePauseRef.current = 0;
-      startTimeRef.current = Date.now();
-    }
-  }, [currentSlideIndex]);
+    setProgress(0);
+    elapsedBeforePauseRef.current = 0;
+    startTimeRef.current = Date.now();
+    setCurrentSlideIndex(prev => Math.max(0, prev - 1));
+  }, []);
 
-  // Connect directly to Company 360 Hub
-  const handleOpenCompanyHub = useCallback((scripCode?: string, symbol?: string, companyName?: string) => {
-    onClose();
-    // Dispatch after small delay to avoid unmount animation conflict
-    setTimeout(() => {
-      if (onOpenCompanyIntel) {
-        onOpenCompanyIntel(scripCode, symbol, companyName);
-      }
-      window.dispatchEvent(new CustomEvent('open-company-intel', {
-        detail: { scripCode, symbol, companyName }
-      }));
-    }, 40);
-  }, [onClose, onOpenCompanyIntel]);
-
-  // Timer loop for auto-advancing slides
+  // Timer loop for progress bar
   useEffect(() => {
-    if (!isOpen) return;
-
-    if (isPaused) {
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-      }
-      return;
-    }
+    if (!isOpen || isPaused) return;
 
     startTimeRef.current = Date.now() - elapsedBeforePauseRef.current;
 
@@ -183,7 +174,8 @@ export function TodayMarketStoryModal({
       const pct = Math.min(100, (elapsed / SLIDE_DURATION_MS) * 100);
       setProgress(pct);
 
-      if (elapsed >= SLIDE_DURATION_MS) {
+      if (pct >= 100) {
+        clearInterval(progressIntervalRef.current!);
         handleNext();
       }
     }, 40);
@@ -205,13 +197,13 @@ export function TodayMarketStoryModal({
     setIsPaused(false);
   };
 
-  // Tap navigation (Left 35% prev, Right 65% next)
+  // Tap navigation (Left 30% prev, Right 70% next)
   const handleCardTap = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const width = rect.width;
 
-    if (clickX < width * 0.35) {
+    if (clickX < width * 0.30) {
       setTapFeedbackSide('left');
       setTimeout(() => setTapFeedbackSide(null), 250);
       handlePrev();
@@ -222,7 +214,7 @@ export function TodayMarketStoryModal({
     }
   };
 
-  // Touch swipe support
+  // Touch swipe support & pull down to dismiss
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartXRef.current = e.touches[0].clientX;
     touchStartYRef.current = e.touches[0].clientY;
@@ -237,6 +229,12 @@ export function TodayMarketStoryModal({
     const deltaX = touchEndX - touchStartXRef.current;
     const deltaY = touchEndY - touchStartYRef.current;
     const deltaTime = Date.now() - touchStartTimeRef.current;
+
+    // Pull down to dismiss (deltaY > 90px in reasonable time)
+    if (deltaY > 90 && Math.abs(deltaY) > Math.abs(deltaX)) {
+      onClose();
+      return;
+    }
 
     // Horizontal swipe threshold
     if (Math.abs(deltaX) > 40 && Math.abs(deltaX) > Math.abs(deltaY) && deltaTime < 400) {
@@ -260,50 +258,59 @@ export function TodayMarketStoryModal({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose, handleNext, handlePrev]);
 
+  const handleOpenCompanyHub = (scripCode?: string, symbol?: string, companyName?: string) => {
+    if (!scripCode && !symbol) return;
+    onClose();
+    if (onOpenCompanyIntel) {
+      onOpenCompanyIntel(scripCode, symbol, companyName);
+    }
+  };
+
   if (!isOpen || !currentSlide) return null;
 
   return (
     <AnimatePresence>
       <div 
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-xl sm:p-4 select-none touch-none overscroll-none"
-        style={{ overscrollBehavior: 'contain' }}
+        className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/85 backdrop-blur-md overflow-hidden select-none"
+        onClick={onClose}
       >
-        {/* Ambient background glow corresponding to current slide */}
-        <div 
-          className="absolute inset-0 opacity-20 pointer-events-none transition-all duration-700"
-          style={{
-            background: currentSlide.marketTrend === 'BEAR'
-              ? 'radial-gradient(circle at 50% 30%, #ef4444 0%, transparent 70%)'
-              : currentSlide.chapterId === 'institutional-flow'
-              ? 'radial-gradient(circle at 50% 30%, #6366f1 0%, transparent 70%)'
-              : currentSlide.chapterId === 'corporate-actions'
-              ? 'radial-gradient(circle at 50% 30%, #a855f7 0%, transparent 70%)'
-              : 'radial-gradient(circle at 50% 30%, #10b981 0%, transparent 70%)'
-          }}
-        />
-
-        {/* Story Card Container */}
+        {/* Story Modal Container */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.96, y: 15 }}
+          key="story-modal-card"
+          initial={{ opacity: 0, scale: 0.94, y: 30 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 10 }}
+          exit={{ opacity: 0, scale: 0.94, y: 40 }}
           transition={springSnappy}
-          className="relative w-full max-w-md h-[100dvh] sm:h-[88vh] sm:max-h-[780px] bg-slate-950 text-white sm:rounded-3xl rounded-none shadow-2xl flex flex-col overflow-hidden border border-white/10"
+          drag="y"
+          dragConstraints={{ top: 0, bottom: 250 }}
+          dragElastic={0.4}
+          onDragEnd={(_, info) => {
+            if (info.offset.y > 100 || info.velocity.y > 400) {
+              onClose();
+            }
+          }}
+          style={{ opacity: modalOpacity }}
+          className="relative w-full h-full sm:h-[660px] sm:max-w-md bg-gradient-to-b from-[#131122] via-[#0D0B18] to-[#080711] sm:rounded-3xl border border-white/15 shadow-2xl flex flex-col justify-between overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
           onMouseDown={handlePointerDown}
           onMouseUp={handlePointerUp}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
+          {/* Top Drag Indicator Pill (Apple style) */}
+          <div className="w-full pt-2 flex justify-center shrink-0">
+            <div className="w-10 h-1 rounded-full bg-white/25" />
+          </div>
+
           {/* ======================================================== */}
-          {/* HEADER: CHAPTER TITLE + CLOSE (X) (Clean Groww Pattern)  */}
-          {/* Removed 1 2 3 switcher pills as requested                */}
+          {/* TOP STORY HEADER & PROGRESS BARS                          */}
           {/* ======================================================== */}
-          <div className="pt-3 px-4 pb-2 shrink-0 bg-gradient-to-b from-black/90 via-black/60 to-transparent z-20">
+          <div className="pt-2 px-4 pb-2 shrink-0 bg-gradient-to-b from-black/80 via-black/40 to-transparent z-20">
             {/* Top Row: Category dot + Chapter Name + Session Badge + Controls */}
             <div className="flex items-center justify-between gap-2 mb-2.5">
               <div className="flex items-center gap-2 min-w-0">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-                <h2 className="text-sm font-bold text-white tracking-tight truncate drop-shadow-sm">
+                <h2 className="text-sm font-bold text-white tracking-tight truncate drop-shadow-sm font-display">
                   {currentChapter.title}
                 </h2>
                 <span className="hidden sm:inline-block text-[9px] font-bold px-1.5 py-0.5 rounded bg-white/10 text-slate-300 border border-white/10 whitespace-nowrap">
@@ -419,23 +426,18 @@ export function TodayMarketStoryModal({
                   {currentSlide.title}
                 </h1>
 
-                {/* Metric / Stat Highlight Pill */}
-                {currentSlide.statsValue && (
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-white/10 border border-white/15 backdrop-blur-md self-start text-[11px] text-slate-200 shadow-sm">
-                    {currentSlide.statsLabel && <span className="text-slate-400 font-medium">{currentSlide.statsLabel}:</span>}
-                    <span className="font-bold text-white tracking-wide">{currentSlide.statsValue}</span>
-                  </div>
-                )}
-
-                {/* 3. REAL HIGH-RES PHOTOGRAPHIC IMAGE (Authentic Industry Photography) */}
-                <RealStoryHeroImage
-                  src={currentSlide.imageUrl}
-                  alt={currentSlide.title}
+                {/* 3. GROWW-STYLE BRAND HERO CARD (Clean stock logo + key live metric) */}
+                <GrowwStoryCardHero
+                  symbol={currentSlide.actionPill?.symbol || 'SENSEX'}
+                  scripCode={currentSlide.actionPill?.scripCode}
+                  name={currentSlide.actionPill?.name}
                   badge={currentSlide.badge}
                   badgeColor={currentSlide.badgeColor}
-                  caption={currentSlide.imageCaption}
-                  aspectRatio="aspect-[16/9]"
-                  className="w-full shrink-0 shadow-lg"
+                  statLabel={currentSlide.statsLabel}
+                  statValue={currentSlide.statsValue}
+                  isPositive={currentSlide.marketTrend === 'BULL' || (currentSlide.indicesSummary?.sensex?.change || 0) >= 0}
+                  highlightCategory={currentSlide.chapterTitle}
+                  className="w-full shrink-0"
                 />
 
                 {/* Rich Story Narrative / Context */}
@@ -455,7 +457,7 @@ export function TodayMarketStoryModal({
                         <CompanyBrandLogo symbol="SENSEX" size="xs" />
                         <span>BSE SENSEX</span>
                       </div>
-                      <div className="text-sm font-black text-white mt-0.5">
+                      <div className="text-sm font-black text-white mt-0.5 font-mono">
                         {currentSlide.indicesSummary.sensex.price.toLocaleString('en-IN')}
                       </div>
                       <div className={`text-[10px] font-bold flex items-center gap-0.5 ${currentSlide.indicesSummary.sensex.change >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
@@ -469,7 +471,7 @@ export function TodayMarketStoryModal({
                         <CompanyBrandLogo symbol="NIFTY" size="xs" />
                         <span>NSE NIFTY</span>
                       </div>
-                      <div className="text-sm font-black text-white mt-0.5">
+                      <div className="text-sm font-black text-white mt-0.5 font-mono">
                         {currentSlide.indicesSummary.nifty.price.toLocaleString('en-IN')}
                       </div>
                       <div className={`text-[10px] font-bold flex items-center gap-0.5 ${currentSlide.indicesSummary.nifty.change >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>

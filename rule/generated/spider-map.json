@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "fb9c4e8f87f4c7e8b83be4e927d8f53f9a39291e83947ba724a3e19f1892285f",
+  "sourceDigest": "7bc3102219ee2e330c059137f7527835e10810590b1de59bb22770be3e4f17e2",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -1384,7 +1384,7 @@
     },
     {
       "path": "src/components/HomeForYou.tsx",
-      "sha256": "37721a7ef9289f5953b622534582688194741727c0a7103929eb6367ff748be8",
+      "sha256": "0840ef2768615581dad371fba5b03b29f692c57786a4d1e3d4dbdf254ddc1ed0",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -1562,8 +1562,9 @@
     },
     {
       "path": "src/components/TodayMarketStoryModal.tsx",
-      "sha256": "f14e3f5100f62690e3d513d43b0100ef6450854d8c7f594355a039c515235a30",
+      "sha256": "65e67150a5adb1c7513cb0448f62a68da8e85a527a347c38af4eacec0855f11d",
       "importedBy": [
+        "src/components/HomeForYou.tsx",
         "src/components/Layout.tsx"
       ]
     },
@@ -1762,19 +1763,28 @@
       ]
     },
     {
-      "path": "src/components/story/StoryVisuals.tsx",
-      "sha256": "5bbd5ef770ce42080d429ca1a58a7e2dc4c3fd9eb0518df6f016a82f3f6012c0",
+      "path": "src/components/story/StoryCarouselBar.tsx",
+      "sha256": "3369d1c59e8a78dba6f492f75594a6750143c0df512beedc089c0e2d76025f9c",
       "importedBy": [
-        "src/components/TodayMarketStoryModal.tsx"
+        "src/components/HomeForYou.tsx"
+      ]
+    },
+    {
+      "path": "src/components/story/StoryVisuals.tsx",
+      "sha256": "a52f3233eac5b2c1f192aa68e1fbec4852db4bd8af017059b52b265af4b227c9",
+      "importedBy": [
+        "src/components/TodayMarketStoryModal.tsx",
+        "src/components/story/StoryCarouselBar.tsx"
       ]
     },
     {
       "path": "src/components/story/storyData.ts",
-      "sha256": "56f1af136f8b4788581e9cfc23098a2d3efadf66b2219c740848c6024d035769",
+      "sha256": "d12424468fd8d54b68d2ce44839056c38b357e3b5e409b4f25a86c9bb8c8778b",
       "importedBy": [
         "server/tests/followupAudit.test.ts",
         "src/components/Layout.tsx",
-        "src/components/TodayMarketStoryModal.tsx"
+        "src/components/TodayMarketStoryModal.tsx",
+        "src/components/story/StoryCarouselBar.tsx"
       ]
     },
     {
@@ -1929,7 +1939,7 @@
     },
     {
       "path": "src/components/ui/MarketTickerTape.tsx",
-      "sha256": "8ef3fb37e536573c57aba743b5cc5c747bfef273ce67e238ca629deb0111865c",
+      "sha256": "3157dfff1be2085b3a7fc2ebf6e5ef48d0acda048ab46af4a1478660be1f169c",
       "importedBy": [
         "src/components/LandingPage.tsx",
         "src/components/Layout.tsx"
@@ -2305,7 +2315,7 @@
     },
     {
       "path": "src/hooks/useMarketIndices.ts",
-      "sha256": "98a7adc5d9311c653c571d93d26977096f8b03f9210656ecd9e0c465cdda9788",
+      "sha256": "533ed2f6622e63ffa0f5c19bb6f2d1adfe6a7af36eae80224458d956c571f8fc",
       "importedBy": [
         "src/components/ui/MarketTickerTape.tsx"
       ]
@@ -2654,6 +2664,7 @@
         "src/components/TodayMarketStoryModal.tsx",
         "src/components/UserProfileModal.tsx",
         "src/components/WatchlistManager.tsx",
+        "src/components/story/StoryCarouselBar.tsx",
         "src/components/ui/AutosaveIndicator.tsx",
         "src/components/ui/BackToTop.tsx",
         "src/components/ui/CommandPalette.tsx",
@@ -2807,7 +2818,7 @@
     },
     {
       "path": "src/version.ts",
-      "sha256": "fa14bf65afcdfc65a6c0a27a6a99f87e32c4fb2e50451c25bae67b9d0812d61f",
+      "sha256": "f8e42dfab1b724ec2a69b1a1f4c59db0066f54cc78bafa5a50ccd71254dabdf9",
       "importedBy": [
         "src/components/SettingsTab.tsx",
         "src/lib/sentry.ts"
@@ -6017,81 +6028,93 @@
     },
     {
       "source": "src/components/HomeForYou.tsx",
+      "target": "src/components/story/StoryCarouselBar.tsx",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "src/components/HomeForYou.tsx",
+      "target": "src/components/TodayMarketStoryModal.tsx",
+      "kind": "import",
+      "line": 4
+    },
+    {
+      "source": "src/components/HomeForYou.tsx",
       "target": "src/api.ts",
-      "kind": "import",
-      "line": 20
-    },
-    {
-      "source": "src/components/HomeForYou.tsx",
-      "target": "src/context/AuthContext.tsx",
-      "kind": "import",
-      "line": 21
-    },
-    {
-      "source": "src/components/HomeForYou.tsx",
-      "target": "src/context/IntelModalContext.tsx",
       "kind": "import",
       "line": 22
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/utils/timeFormat.ts",
+      "target": "src/context/AuthContext.tsx",
       "kind": "import",
       "line": 23
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/utils/cleanBseSubject.ts",
+      "target": "src/context/IntelModalContext.tsx",
       "kind": "import",
       "line": 24
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/utils/pdfHelper.ts",
+      "target": "src/utils/timeFormat.ts",
       "kind": "import",
       "line": 25
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/utils/calendarDateTile.ts",
+      "target": "src/utils/cleanBseSubject.ts",
       "kind": "import",
       "line": 26
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/hooks/useBodyScrollLock.ts",
+      "target": "src/utils/pdfHelper.ts",
       "kind": "import",
       "line": 27
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/hooks/useFeedDensity.ts",
+      "target": "src/utils/calendarDateTile.ts",
       "kind": "import",
       "line": 28
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/components/ui/helios.tsx",
+      "target": "src/hooks/useBodyScrollLock.ts",
       "kind": "import",
       "line": 29
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/utils/motionTokens.ts",
+      "target": "src/hooks/useFeedDensity.ts",
       "kind": "import",
       "line": 30
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/components/ui/ActionButton.tsx",
+      "target": "src/components/ui/helios.tsx",
       "kind": "import",
       "line": 31
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/components/ui/CommonQuestionsFAQ.tsx",
+      "target": "src/utils/motionTokens.ts",
       "kind": "import",
       "line": 32
+    },
+    {
+      "source": "src/components/HomeForYou.tsx",
+      "target": "src/components/ui/ActionButton.tsx",
+      "kind": "import",
+      "line": 33
+    },
+    {
+      "source": "src/components/HomeForYou.tsx",
+      "target": "src/components/ui/CommonQuestionsFAQ.tsx",
+      "kind": "import",
+      "line": 34
     },
     {
       "source": "src/components/HomeMarketNews.tsx",
@@ -7327,19 +7350,19 @@
       "source": "src/components/TodayMarketStoryModal.tsx",
       "target": "src/utils/motionTokens.ts",
       "kind": "import",
-      "line": 7
+      "line": 8
     },
     {
       "source": "src/components/TodayMarketStoryModal.tsx",
       "target": "src/components/story/storyData.ts",
       "kind": "import",
-      "line": 8
+      "line": 9
     },
     {
       "source": "src/components/TodayMarketStoryModal.tsx",
       "target": "src/components/story/StoryVisuals.tsx",
       "kind": "import",
-      "line": 16
+      "line": 17
     },
     {
       "source": "src/components/TrustPages.tsx",
@@ -7886,6 +7909,24 @@
       "target": "src/components/seo/types.ts",
       "kind": "import",
       "line": 1
+    },
+    {
+      "source": "src/components/story/StoryCarouselBar.tsx",
+      "target": "src/components/story/storyData.ts",
+      "kind": "import",
+      "line": 14
+    },
+    {
+      "source": "src/components/story/StoryCarouselBar.tsx",
+      "target": "src/components/story/StoryVisuals.tsx",
+      "kind": "import",
+      "line": 21
+    },
+    {
+      "source": "src/components/story/StoryCarouselBar.tsx",
+      "target": "src/utils/motionTokens.ts",
+      "kind": "import",
+      "line": 22
     },
     {
       "source": "src/components/story/storyData.ts",
@@ -12093,31 +12134,31 @@
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 95,
+      "line": 101,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 96,
+      "line": 102,
       "function": "customFetch",
       "target": "'/api/results-calendar?filter=upcoming&limit=8'"
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 97,
+      "line": 103,
       "function": "customFetch",
       "target": "'/api/announcements?limit=50'"
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 160,
+      "line": 166,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 172,
+      "line": 178,
       "function": "customFetch",
       "target": "`/api/watchlists/${targetList.id}/symbols`"
     },
@@ -12651,9 +12692,9 @@
     },
     {
       "file": "src/components/story/storyData.ts",
-      "line": 772,
+      "line": 692,
       "function": "customFetch",
-      "target": "'/api/story/feed'"
+      "target": "`/api/story/feed${forceRefresh ? '?refresh=true' : ''}`"
     },
     {
       "file": "src/components/ui/AiFaqSection.tsx",
@@ -13838,6 +13879,18 @@
       "line": 17,
       "function": "Array.from",
       "key": "element?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), textarea:not(:disabled), [tabindex=\"0\"]') ?? []"
+    },
+    {
+      "file": "src/components/story/StoryCarouselBar.tsx",
+      "line": 85,
+      "function": "localStorage.getItem",
+      "key": "storageKey"
+    },
+    {
+      "file": "src/components/story/StoryCarouselBar.tsx",
+      "line": 132,
+      "function": "localStorage.setItem",
+      "key": "storageKey"
     },
     {
       "file": "src/components/ui/CommandPalette.tsx",
@@ -15764,15 +15817,7 @@
     },
     {
       "file": "src/components/TodayMarketStoryModal.tsx",
-      "line": 162,
-      "target": "window",
-      "kind": "dispatch",
-      "name": "open-company-intel",
-      "expression": "window.dispatchEvent(new CustomEvent('open-company-intel', { detail: { scripCode, symbol, companyName } }))"
-    },
-    {
-      "file": "src/components/TodayMarketStoryModal.tsx",
-      "line": 259,
+      "line": 257,
       "target": "window",
       "kind": "listen",
       "name": "keydown",
@@ -15780,7 +15825,7 @@
     },
     {
       "file": "src/components/TodayMarketStoryModal.tsx",
-      "line": 260,
+      "line": 258,
       "target": "window",
       "kind": "remove",
       "name": "keydown",

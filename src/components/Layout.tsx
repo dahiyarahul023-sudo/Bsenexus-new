@@ -1,7 +1,7 @@
 import { UserAvatar } from './ui/UserAvatar';
 import '../styles/mobile-repairs.css';
 import { RichIcon } from './ui/RichVisual';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Activity, Settings, List, Star,
@@ -122,7 +122,7 @@ export function Layout({
     return () => clearInterval(interval);
   }, []);
 
-  const handleStoryViewed = () => {
+  const handleStoryViewed = useCallback(() => {
     setHasSeenStory(true);
     try {
       const sessionKey = getStorySessionStorageKey();
@@ -130,7 +130,7 @@ export function Layout({
     } catch {
       // Ignore local storage error
     }
-  };
+  }, []);
 
   // Advanced Features State
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);

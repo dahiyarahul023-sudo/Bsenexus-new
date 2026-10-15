@@ -30,7 +30,7 @@ import {
   sanitizeUserId
 } from "../database/watchlistDao.js";
 import { getBseHealth, testBSEConnection, syncWatchlistHistoricalData, syncSingleStockHistoricalData, backfillRecentAnnouncements, getBackupStalenessMetrics, isBseSourceBlocked, getBseFeedStaleness } from "../services/bse.js";
-import { getAllStockEntries } from "../utils/stockResolver.js";
+import { getAllStockEntries, resolveStockDetails, getScripCode } from "../utils/stockResolver.js";
 import { invalidateMonitorConfigCache, processAnnouncements } from "../services/monitor.js";
 import { wantsTelegramEnable } from "../utils/alertDecision.js";
 import { getTelegramHealth, sendToTelegram, getBotUsername } from "../services/telegram.js";
@@ -903,6 +903,53 @@ apiRouter.get("/search-company", async (req, res) => {
     res.json(results);
   } catch (e) {
     res.json([]);
+  }
+});
+
+apiRouter.get("/stock/resolve", async (req, res) => {
+  try {
+    const rawQ = req.query.q || req.query.symbol;
+    const q = typeof rawQ === 'string' ? rawQ.slice(0, 100).trim() : '';
+    if (!q) {
+      return res.status(400).json({ error: "Missing query" });
+    }
+    const cleanSym = q.toUpperCase();
+    let scrip = getScripCode(cleanSym) || (/^\d{6}$/.test(cleanSym) ? cleanSym : '');
+    let name = cleanSym;
+    let symbol = cleanSym;
+
+    if (!scrip || !/^\d{6}$/.test(scrip)) {
+      const dynamic = await resolveStockDetails(q);
+      if (dynamic) {
+        scrip = dynamic.scripCode || scrip;
+        symbol = dynamic.symbol || symbol;
+        name = dynamic.name || name;
+      }
+    }
+
+    if (!scrip) {
+      const list = await searchCompany(q);
+      const match = list.find((it: any) => it.scripCode && /^\d{6}$/.test(it.scripCode)) || list[0];
+      if (match) {
+        scrip = match.scripCode || scrip;
+        symbol = match.symbol || symbol;
+        name = match.name || name;
+      }
+    }
+
+    const cdnUrl = scrip && /^\d{6}$/.test(scrip)
+      ? `https://assets-netstorage.groww.in/stock-assets/logos/GSTK${scrip}.png`
+      : `https://assets-netstorage.groww.in/stock-assets/logos/${symbol}.png`;
+
+    res.json({
+      success: true,
+      symbol,
+      scripCode: scrip,
+      name,
+      logoUrl: cdnUrl
+    });
+  } catch (e: any) {
+    res.status(500).json({ success: false, error: e.message });
   }
 });
 

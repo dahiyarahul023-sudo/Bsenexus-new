@@ -1,5 +1,7 @@
 import { HomeMarketNews } from './HomeMarketNews';
 import { HomeSkeleton } from './ui/PageSkeleton';
+import { StoryCarouselBar } from './story/StoryCarouselBar';
+import { TodayMarketStoryModal } from './TodayMarketStoryModal';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -74,6 +76,10 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
   // Detail sheets
   const [selectedFiling, setSelectedFiling] = useState<any | null>(null);
   const [selectedResult, setSelectedResult] = useState<any | null>(null);
+
+  // Story modal state
+  const [storyModalOpen, setStoryModalOpen] = useState<boolean>(false);
+  const [selectedStoryChapter, setSelectedStoryChapter] = useState<string | undefined>(undefined);
 
   // Prevent background scroll chaining when any modal or sheet is open
   useBodyScrollLock(Boolean(isAddModalOpen || selectedFiling || selectedResult));
@@ -236,6 +242,15 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
           <span>Add stocks</span>
         </motion.button>
       </div>
+
+      {/* Groww-Style Live Market Story Top Carousel Bar */}
+      <StoryCarouselBar 
+        onOpenStory={(chapterId) => {
+          setSelectedStoryChapter(chapterId);
+          setStoryModalOpen(true);
+        }}
+        className="pt-0 pb-1"
+      />
 
       <HomeMarketNews active={isActive} identity={user?.uid || profile?.uid || 'guest'}
         watched={sameIdentity ? [...watchlistSymbols, ...watchlists.flatMap(list => (list.items || []).flatMap((item: any) => typeof item === 'string' ? [] : [item.companyName, item.name].filter((name: unknown) => typeof name === 'string')))] : []} onNavigate={onNavigate} density={density} />
@@ -669,6 +684,21 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Groww-Style Market Story Viewer Modal */}
+      {storyModalOpen && (
+        <TodayMarketStoryModal
+          isOpen={storyModalOpen}
+          initialChapterId={selectedStoryChapter}
+          onClose={() => {
+            setStoryModalOpen(false);
+            setSelectedStoryChapter(undefined);
+          }}
+          onOpenCompanyIntel={(scripCode, symbol, companyName) => {
+            openIntelModal({ scripCode, symbol, companyName });
+          }}
+        />
+      )}
 
     </div>
   );

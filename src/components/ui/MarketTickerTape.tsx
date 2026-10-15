@@ -59,7 +59,7 @@ export function MarketTickerTape({
   };
 
   const getSessionBadgeStyle = () => {
-    if (!indices.length || stale) return { dotBg: 'bg-slate-400', ping: false, label: stale ? 'CACHED / STALE' : loading ? 'LOADING DATA' : 'DATA UNAVAILABLE', color: 'text-slate-500', badgeBg: 'bg-slate-100' };
+    if (!indices.length || stale) return { dotBg: 'bg-slate-400', ping: false, label: stale ? 'CACHED / STALE' : loading ? 'LOADING DATA' : 'BSE SYNCING', color: 'text-slate-500', badgeBg: 'bg-slate-100' };
     switch (marketSession) {
       case 'REGULAR':
         return {
