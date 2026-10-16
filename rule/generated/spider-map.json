@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "dec0ee989e1377ff4de057871ebf777058e55447369df3ae6f28809f2cc5fe2c",
+  "sourceDigest": "c817d03de626a6d7bdf36ad03d35d3bda3e9c73137fdb65498987f49119df309",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -36,6 +36,11 @@
     {
       "path": "metadata.json",
       "sha256": "8c118172c31ae3ec211f9286947f0b663e98244bb641ed8b7c2968ef64c2d8c7",
+      "importedBy": []
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "b52b45b11bc026f138cd209f72b60efd5d8bc42922c0c2a2a68105dc6a8d9101",
       "importedBy": []
     },
     {
@@ -162,7 +167,7 @@
     },
     {
       "path": "server.ts",
-      "sha256": "3c86397f16b0e0835de7a235fee9227e247c3b52b155f94e54d94191365c0816",
+      "sha256": "066d1830b2f064d8975c93a4c4b58f35bb51364b2f9ddcad51001e0cab1c6164",
       "importedBy": [
         "server/tests/routeResolution.test.ts"
       ]
@@ -267,6 +272,7 @@
         "server/services/gemini.ts",
         "server/services/monitor.ts",
         "server/services/resultsCalendarService.ts",
+        "server/services/seoPrerender.ts",
         "server/services/storageMonitor.ts",
         "server/services/storyFeedService.ts",
         "server/tests/auditSecurity.test.ts",
@@ -763,7 +769,7 @@
     },
     {
       "path": "server/services/seoPrerender.ts",
-      "sha256": "f9a446780f7cf1560cd610096304e4334ed73b00675d27569ea781a5fd1ca853",
+      "sha256": "a5beead8b5cff4d9ed6e9ac53047d35cef121670c77d3e3f45b2efa64ad479d6",
       "importedBy": [
         "server.ts",
         "server/tests/seoPrehydration.test.ts"
@@ -1136,6 +1142,7 @@
         "server/services/companyIntelService.ts",
         "server/services/monitor.ts",
         "server/services/resultsCalendarService.ts",
+        "server/services/seoPrerender.ts",
         "server/services/storyFeedService.ts",
         "server/tests/sevenFixes.test.ts"
       ]
@@ -1575,7 +1582,7 @@
     },
     {
       "path": "src/components/TodayMarketStoryModal.tsx",
-      "sha256": "65e67150a5adb1c7513cb0448f62a68da8e85a527a347c38af4eacec0855f11d",
+      "sha256": "6d69f030c31b6bef16f20df06255ece23c7d0cb5d9544034891badd1f12f455e",
       "importedBy": [
         "src/components/HomeForYou.tsx",
         "src/components/Layout.tsx"
@@ -4406,6 +4413,18 @@
       "target": "server/utils/circuitBreaker.ts",
       "kind": "import",
       "line": 20
+    },
+    {
+      "source": "server/services/seoPrerender.ts",
+      "target": "server/database/announcementDao.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "server/services/seoPrerender.ts",
+      "target": "server/utils/helpers.ts",
+      "kind": "import",
+      "line": 4
     },
     {
       "source": "server/services/seoService.ts",
@@ -9247,7 +9266,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5573,
+      "line": 5578,
       "receiver": "app",
       "method": "GET",
       "path": "/filing/:symbol",
@@ -9257,7 +9276,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5584,
+      "line": 5589,
       "receiver": "app",
       "method": "GET",
       "path": "['/filing', '/filing/']",
@@ -9267,7 +9286,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5590,
+      "line": 5595,
       "receiver": "app",
       "method": "GET",
       "path": "/announcement/:newsId",
@@ -9277,7 +9296,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5914,
+      "line": 5924,
       "receiver": "app",
       "method": "GET",
       "path": "/results/:symbol/:quarterKey",
@@ -9287,7 +9306,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5970,
+      "line": 5980,
       "receiver": "app",
       "method": "GET",
       "path": "['/company/:symbol', '/stock/:symbol']",
@@ -9297,7 +9316,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6039,
+      "line": 6049,
       "receiver": "app",
       "method": "GET",
       "path": "/guides/:slug",
@@ -9307,7 +9326,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6085,
+      "line": 6095,
       "receiver": "app",
       "method": "GET",
       "path": "['/faq', '/faqs']",
@@ -9317,7 +9336,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6092,
+      "line": 6102,
       "receiver": "app",
       "method": "GET",
       "path": "['/pricing', '/pricing/']",
@@ -9327,7 +9346,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6099,
+      "line": 6109,
       "receiver": "app",
       "method": "GET",
       "path": "['/plans', '/plans/']",
@@ -9337,7 +9356,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6104,
+      "line": 6114,
       "receiver": "app",
       "method": "GET",
       "path": "['/guides', '/guides/']",
@@ -9347,7 +9366,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6111,
+      "line": 6121,
       "receiver": "app",
       "method": "GET",
       "path": "['/market-guides', '/market-guides/']",
@@ -9357,7 +9376,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6116,
+      "line": 6126,
       "receiver": "app",
       "method": "GET",
       "path": "['/companies', '/companies/']",
@@ -9367,7 +9386,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6123,
+      "line": 6133,
       "receiver": "app",
       "method": "GET",
       "path": "['/company-directory', '/company-directory/']",
@@ -9377,7 +9396,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6128,
+      "line": 6138,
       "receiver": "app",
       "method": "GET",
       "path": "['/about', '/about/']",
@@ -9387,7 +9406,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6135,
+      "line": 6145,
       "receiver": "app",
       "method": "GET",
       "path": "['/contact', '/contact/']",
@@ -9397,7 +9416,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6142,
+      "line": 6152,
       "receiver": "app",
       "method": "GET",
       "path": "['/disclaimer', '/disclaimer/']",
@@ -9407,7 +9426,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6149,
+      "line": 6159,
       "receiver": "app",
       "method": "GET",
       "path": "['/privacy-policy', '/privacy-policy/']",
@@ -9417,7 +9436,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6156,
+      "line": 6166,
       "receiver": "app",
       "method": "GET",
       "path": "['/privacy', '/privacy/']",
@@ -9427,7 +9446,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6161,
+      "line": 6171,
       "receiver": "app",
       "method": "GET",
       "path": "['/terms', '/terms/']",
@@ -9437,7 +9456,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6168,
+      "line": 6178,
       "receiver": "app",
       "method": "GET",
       "path": "['/terms-of-service', '/terms-of-service/']",
@@ -9447,7 +9466,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6173,
+      "line": 6183,
       "receiver": "app",
       "method": "GET",
       "path": "/embed/widget",
@@ -9457,7 +9476,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6227,
+      "line": 6237,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-companies.xml",
@@ -9467,7 +9486,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6247,
+      "line": 6257,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-guides.xml",
@@ -9477,7 +9496,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6265,
+      "line": 6275,
       "receiver": "app",
       "method": "GET",
       "path": "/llms.txt",
@@ -9487,7 +9506,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6270,
+      "line": 6280,
       "receiver": "app",
       "method": "GET",
       "path": "/llms-full.txt",
@@ -9497,7 +9516,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6280,
+      "line": 6290,
       "receiver": "app",
       "method": "GET",
       "path": "/^\\/google([a-zA-Z0-9_-]+)\\.html$/",
@@ -9507,7 +9526,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6290,
+      "line": 6300,
       "receiver": "app",
       "method": "USE",
       "path": "express.static(path.join(process.cwd(), 'public'), { maxAge: '1d', immutable: false, setHeaders: (res, filePath) => { if (filePath.includes(`${path.sep}fonts${path.sep}`)) res.setHeader('Cache-Control', 'public, max-age=2592000'); if (fileP",
@@ -9515,7 +9534,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6300,
+      "line": 6310,
       "receiver": "app",
       "method": "USE",
       "path": "['/api', '/auth']",
@@ -9525,7 +9544,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6306,
+      "line": 6316,
       "receiver": "app",
       "method": "USE",
       "path": "/auth",
@@ -9535,7 +9554,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6309,
+      "line": 6319,
       "receiver": "app",
       "method": "POST",
       "path": "/api/security/verify-recaptcha",
@@ -9546,7 +9565,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6350,
+      "line": 6360,
       "receiver": "app",
       "method": "USE",
       "path": "/api",
@@ -9557,7 +9576,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6354,
+      "line": 6364,
       "receiver": "app",
       "method": "USE",
       "path": "['/api/*', '/auth/*']",
@@ -9567,7 +9586,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6359,
+      "line": 6369,
       "receiver": "app",
       "method": "USE",
       "path": "(err: any, req: express.Request, res: express.Response, next: express.NextFunction) => { if (req.path.startsWith('/api') || req.path.startsWith('/auth')) { console.error(\"API Error handler caught:\", err?.message || err); const isProd = proc",
@@ -9575,7 +9594,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6770,
+      "line": 6780,
       "receiver": "app",
       "method": "GET",
       "path": "[\"/\", \"/announcements\", \"/live\", \"/results-calendar\", \"/watchlist\", \"/watchlists\", \"/companies\", \"/about\", \"/contact\", \"/disclaimer\", \"/privacy\", \"/privacy-policy\", \"/terms\"]",
@@ -9585,7 +9604,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6800,
+      "line": 6810,
       "receiver": "app",
       "method": "USE",
       "path": "(req, res, next) => { if (req.method !== 'GET' && req.method !== 'HEAD') return next(); const p = req.path; if ( p === '/' || p === '/announcements' || p === '/results-calendar' || p === '/watchlist' || p === '/watchlists' || p === '/compan",
@@ -9593,7 +9612,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6835,
+      "line": 6845,
       "receiver": "app",
       "method": "USE",
       "path": "vite.middlewares",
@@ -9601,7 +9620,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6847,
+      "line": 6857,
       "receiver": "app",
       "method": "USE",
       "path": "express.static(distPath, { maxAge: '1y', immutable: true, index: false, setHeaders: (res, filePath) => { if (filePath.endsWith('.html')) { res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600'); } } }",
@@ -9609,7 +9628,17 @@
     },
     {
       "file": "server.ts",
-      "line": 6875,
+      "line": 6891,
+      "receiver": "app",
+      "method": "GET",
+      "path": "['/announcements', '/announcements/']",
+      "middleware": [
+        "<handler>"
+      ]
+    },
+    {
+      "file": "server.ts",
+      "line": 6932,
       "receiver": "app",
       "method": "GET",
       "path": "*",
@@ -11677,7 +11706,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6466,
+      "line": 6476,
       "function": "fetch",
       "target": "`http://127.0.0.1:${port}/api/health`"
     },
@@ -14517,37 +14546,37 @@
     },
     {
       "file": "server.ts",
-      "line": 6278,
+      "line": 6288,
       "name": "GOOGLE_SITE_VERIFICATION_HASH"
     },
     {
       "file": "server.ts",
-      "line": 6278,
+      "line": 6288,
       "name": "GOOGLE_SITE_VERIFICATION_HASH"
     },
     {
       "file": "server.ts",
-      "line": 6362,
+      "line": 6372,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6759,
+      "line": 6769,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6764,
+      "line": 6774,
       "name": "DISABLE_HMR"
     },
     {
       "file": "server.ts",
-      "line": 6978,
+      "line": 7035,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6978,
+      "line": 7035,
       "name": "TEST_RUNNER"
     },
     {
@@ -15948,7 +15977,7 @@
     },
     {
       "file": "src/components/TodayMarketStoryModal.tsx",
-      "line": 257,
+      "line": 437,
       "target": "window",
       "kind": "listen",
       "name": "keydown",
@@ -15956,7 +15985,7 @@
     },
     {
       "file": "src/components/TodayMarketStoryModal.tsx",
-      "line": 258,
+      "line": 438,
       "target": "window",
       "kind": "remove",
       "name": "keydown",
