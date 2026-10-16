@@ -1,5 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { getRecentAnnouncements } from '../database/announcementDao.js';
+import { parseBseDate } from '../utils/helpers.js';
 
 /**
  * Escapes characters for safe inclusion inside HTML text nodes.
@@ -490,4 +492,72 @@ export function buildSitemapIndexXml(todayStr: string = new Date().toISOString()
   </sitemap>
 </sitemapindex>
 `;
+}
+
+/**
+ * Matches ONLY the static placeholder filing cards inside .critical-preloader
+ * (dist/index.html) by their distinctive inline style. The hidden AEO <main> FAQ
+ * uses plain <article> tags and is intentionally NOT matched.
+ */
+export const PRELOADER_CARD_RE = /<article style="background: #181624;[\s\S]*?<\/article>/g;
+
+/**
+ * /announcements Soft-404 fix: builds real filing cards (latest live filings from
+ * Firestore) in the same visual style as the shell's placeholder cards.
+ *
+ * - Same data the React client renders (no cloaking): createRoot replaces this on mount.
+ * - All dynamic text is HTML-escaped (R08).
+ * - Any failure returns '' so the caller serves the normal shell unchanged.
+ */
+export async function buildAnnouncementsFeedCards(): Promise<string> {
+  try {
+    const recent = await getRecentAnnouncements(30);
+    const items = (recent || [])
+      .filter((a: any) => a && (a.newsId || a.id))
+      .slice(0, 24);
+    if (items.length === 0) return '';
+
+    const cards = items.map((a: any) => {
+      const newsId = String(a.newsId || a.id || '').trim();
+      if (!newsId) return '';
+      const companyName = String(a.companyName || a.SLONGNAME || 'BSE Listed Company');
+      const subject = String(a.subject || a.NEWSSUB || 'Corporate Announcement');
+      const symbol = String(a.symbol || a.scrip_id || '').trim().toUpperCase();
+      const scripCode = String(a.scripCode || a.scrip_cd || a.SCRIP_CD || '').trim();
+      const category = String(a.category || 'DISCLOSURE').toUpperCase().replace(/_/g, ' ');
+      // Same canonical rule as the /announcement/:newsId route: prefer /filing/:symbol/:newsId
+      const link = /^[A-Z0-9-]{2,20}$/.test(symbol)
+        ? `/filing/${encodeURIComponent(symbol)}/${encodeURIComponent(newsId)}`
+        : `/announcement/${encodeURIComponent(newsId)}`;
+
+      let ts: number = (typeof a.bseTimestamp === 'number' && !isNaN(a.bseTimestamp) && a.bseTimestamp > 0)
+        ? a.bseTimestamp
+        : (a.fetched_at || 0);
+      if ((!ts || ts <= 0) && a.bseTime) {
+        try { ts = parseBseDate(a.bseTime); } catch { ts = 0; }
+      }
+      const dateStr = ts && ts > 0
+        ? new Date(ts).toLocaleString('en-IN', {
+            timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short',
+            hour: '2-digit', minute: '2-digit', hour12: true,
+          })
+        : '';
+
+      return `<article style="background: #181624; border: 1px solid #2D283E; border-radius: 12px; padding: 14px;">`
+        + `<a href="${escapeHtmlAttr(link)}" style="text-decoration: none; display: block;">`
+        + `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 8px;">`
+        + `<span style="font-weight: 700; font-size: 13px; color: #FFFFFF;">${escapeHtmlText(companyName)}</span>`
+        + (scripCode ? `<span style="font-family: monospace; font-size: 11px; background: #221F30; color: #10B981; padding: 2px 6px; border-radius: 4px; border: 1px solid #342E46; white-space: nowrap;">BSE: ${escapeHtmlText(scripCode)}</span>` : '')
+        + `</div>`
+        + `<p style="font-size: 12px; color: #94A3B8; margin: 0 0 8px 0; line-height: 1.4;">${escapeHtmlText(subject)}</p>`
+        + `<div style="display: flex; justify-content: space-between; align-items: center;">`
+        + `<span style="font-size: 10px; font-weight: 700; background: rgba(16, 185, 129, 0.15); color: #10B981; padding: 2px 6px; border-radius: 4px;">${escapeHtmlText(category.slice(0, 24))}</span>`
+        + (dateStr ? `<span style="font-size: 10px; color: #64748B;">${escapeHtmlText(dateStr)}</span>` : '')
+        + `</div></a></article>`;
+    }).filter(Boolean);
+
+    return cards.length > 0 ? cards.join('\n') : '';
+  } catch {
+    return '';
+  }
 }
