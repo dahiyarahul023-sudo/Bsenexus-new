@@ -39,7 +39,7 @@ import { autoIndexNewGuides } from "./server/services/guideIndexNow.js";
 import { verifyRecaptchaToken } from "./server/security/recaptchaService.js";
 import { getBseBlockBackoffLevel } from "./server/services/bse.js";
 import { getAllFeedback } from "./server/database/feedbackDao.js";
-import { prerenderFilingHtml, prerenderCompanyHtml, buildSitemapIndexXml, cleanCanonicalUrl } from "./server/services/seoPrerender.js";
+import { prerenderFilingHtml, prerenderCompanyHtml, buildSitemapIndexXml, cleanCanonicalUrl, buildAnnouncementsFeedCards, PRELOADER_CARD_RE } from "./server/services/seoPrerender.js";
 
 // Global error handlers to prevent background quota/network exceptions from crashing the process
 process.on('unhandledRejection', (reason: any) => {
@@ -5536,6 +5536,11 @@ app.get('/filing/:symbol/:newsId', async (req, res) => {
     const isBatchTest = newsId.toLowerCase().includes('batch_test_');
     const announcement = await getAnnouncementById(newsId);
     if (!announcement) {
+      // Confirmed-dead test URLs can never become real content: 410 Gone so
+      // Google drops them from the index faster instead of retrying them as 404.
+      if (isBatchTest) {
+        return res.status(410).setHeader('Content-Type', 'text/html; charset=utf-8').send(renderAnnouncement404Page(true));
+      }
       return res.status(404).setHeader('Content-Type', 'text/html; charset=utf-8').send(renderAnnouncement404Page(isBatchTest));
     }
 
@@ -5605,6 +5610,11 @@ app.get('/announcement/:newsId', async (req, res) => {
     const isBatchTest = cleanId.toLowerCase().includes('batch_test_');
     const announcement = await getAnnouncementById(cleanId);
     if (!announcement) {
+      // Confirmed-dead test URLs can never become real content: 410 Gone so
+      // Google drops them from the index faster instead of retrying them as 404.
+      if (isBatchTest) {
+        return res.status(410).setHeader('Content-Type', 'text/html; charset=utf-8').send(renderAnnouncement404Page(true));
+      }
       return res.status(404).setHeader('Content-Type', 'text/html; charset=utf-8').send(renderAnnouncement404Page(isBatchTest));
     }
 
@@ -6872,6 +6882,53 @@ async function startServer() {
       '/terms'
     ]);
     const tabHtmlCache = new Map<string, { html: string; etag: string }>();
+
+    // /announcements Soft-404 fix (production): serve the SPA shell with REAL
+    // pre-rendered filing cards instead of static placeholders, so Googlebot sees
+    // real content in the first paint. Registered before the generic catch-all.
+    // React (createRoot) replaces the cards on mount — users get the normal feed.
+    // Any failure falls through to the standard shell via next().
+    app.get(['/announcements', '/announcements/'], async (req, res, next) => {
+      try {
+        const cacheKey = 'announcements-feed-v1';
+        const clientEtag = req.headers['if-none-match'];
+        const cached = pageRenderCache.get(cacheKey);
+        if (cached) {
+          res.setHeader('Content-Type', 'text/html; charset=utf-8');
+          res.setHeader('ETag', cached.etag);
+          res.setHeader('X-Cache', 'HIT');
+          res.setHeader('Cache-Control', getSpaRouteCacheControl(req.path));
+          if (clientEtag && clientEtag === cached.etag) {
+            return res.status(304).end();
+          }
+          return res.send(cached.body);
+        }
+
+        const rawHtml = getIndexHtml();
+        let html = injectTabSeoMetadata(rawHtml, 'announcements');
+        const cards = await buildAnnouncementsFeedCards();
+        if (cards) {
+          let replaced = false;
+          html = html.replace(PRELOADER_CARD_RE, () => {
+            if (!replaced) { replaced = true; return cards; }
+            return '';
+          });
+        }
+
+        const entry = pageRenderCache.set(cacheKey, html, 'text/html; charset=utf-8', { ttlMs: 5 * 60 * 1000 });
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.setHeader('ETag', entry.etag);
+        res.setHeader('X-Cache', 'MISS');
+        res.setHeader('Cache-Control', getSpaRouteCacheControl(req.path));
+        if (clientEtag && clientEtag === entry.etag) {
+          return res.status(304).end();
+        }
+        return res.send(html);
+      } catch (err) {
+        return next();
+      }
+    });
+
     app.get("*", (req, res) => {
       // If the path is not a valid SPA route, return a true 404 instead of silent homepage fallback!
       if (!VALID_SPA_ROUTES.has(req.path)) {
