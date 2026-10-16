@@ -9,7 +9,9 @@ import {
   buildPrehydratedHtml,
   prerenderFilingHtml,
   prerenderCompanyHtml,
-  buildSitemapIndexXml
+  buildSitemapIndexXml,
+  buildAnnouncementsFeedCards,
+  PRELOADER_CARD_RE
 } from '../services/seoPrerender.js';
 
 describe('Server-Side SEO Pre-Hydration & Validation Architecture', () => {
@@ -152,5 +154,46 @@ describe('Server-Side SEO Pre-Hydration & Validation Architecture', () => {
 
     assert.ok(serverSource.includes("app.use(['/api', '/auth']"), '/api and /auth middleware must exist');
     assert.ok(serverSource.includes("res.setHeader('X-Robots-Tag', 'noindex, nofollow')"), 'X-Robots-Tag header must be set');
+  });
+
+  // Test 7: PRELOADER_CARD_RE matches only styled preloader cards, never plain FAQ articles
+  test('PRELOADER_CARD_RE targets preloader placeholders without touching AEO FAQ', () => {
+    const preloaderCard = '<article style="background: #181624; border: 1px solid #2D283E;"><span>X</span></article>';
+    const faqArticle = '<article><h3>What is Bsenexus?</h3><p>...</p></article>';
+    assert.ok(PRELOADER_CARD_RE.test(preloaderCard), 'must match styled preloader card');
+    PRELOADER_CARD_RE.lastIndex = 0;
+    assert.ok(!PRELOADER_CARD_RE.test(faqArticle), 'must NOT match plain FAQ article');
+    PRELOADER_CARD_RE.lastIndex = 0;
+  });
+
+  // Test 8: buildAnnouncementsFeedCards never throws; returns '' gracefully when feed is empty
+  test('buildAnnouncementsFeedCards resolves to a string without throwing', async () => {
+    const result = await buildAnnouncementsFeedCards();
+    assert.strictEqual(typeof result, 'string', 'must always resolve to a string');
+    if (result) {
+      assert.ok(!result.includes('<script'), 'cards must not contain scripts');
+      assert.ok(result.includes('/filing/') || result.includes('/announcement/'), 'cards must link to filing pages');
+    }
+  });
+
+  // Test 9: /announcements serves pre-rendered feed (Soft-404 fix)
+  test('server.ts pre-renders /announcements feed with real filing cards', () => {
+    const serverPath = path.join(process.cwd(), 'server.ts');
+    const serverSource = fs.readFileSync(serverPath, 'utf8');
+
+    assert.ok(serverSource.includes("app.get(['/announcements', '/announcements/']"), '/announcements route must exist before the catch-all');
+    assert.ok(serverSource.includes('buildAnnouncementsFeedCards()'), 'route must build real filing cards');
+    assert.ok(serverSource.includes("announcements-feed-v1"), 'feed HTML must be cached with explicit key');
+    assert.ok(serverSource.includes('ttlMs: 5 * 60 * 1000'), 'feed cache must have a short 5-minute TTL');
+  });
+
+  // Test 10: confirmed-dead batch_test_ URLs return 410 Gone instead of 404
+  test('server.ts returns 410 Gone for dead batch_test_ announcement URLs', () => {
+    const serverPath = path.join(process.cwd(), 'server.ts');
+    const serverSource = fs.readFileSync(serverPath, 'utf8');
+
+    const gone410Count = (serverSource.match(/res\.status\(410\)/g) || []).length;
+    assert.ok(gone410Count >= 2, `expected 410 handlers in filing + announcement routes, found ${gone410Count}`);
+    assert.ok(serverSource.includes("includes('batch_test_')"), '410 must be gated on the batch_test_ pattern');
   });
 });
