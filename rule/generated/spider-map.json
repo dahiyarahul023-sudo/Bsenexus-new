@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "7bc3102219ee2e330c059137f7527835e10810590b1de59bb22770be3e4f17e2",
+  "sourceDigest": "dec0ee989e1377ff4de057871ebf777058e55447369df3ae6f28809f2cc5fe2c",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -162,7 +162,7 @@
     },
     {
       "path": "server.ts",
-      "sha256": "eb3f587829c027cd59f04f797b5b69a8dbbb41a0a277e29265966acfc6cfa958",
+      "sha256": "3c86397f16b0e0835de7a235fee9227e247c3b52b155f94e54d94191365c0816",
       "importedBy": [
         "server/tests/routeResolution.test.ts"
       ]
@@ -206,7 +206,7 @@
     },
     {
       "path": "server/api/routes.ts",
-      "sha256": "dca7ece7212e6d78cb47eb08f09427e725b6284b6b9fb4563cd72e839aee8e67",
+      "sha256": "2a4ce895834667c2febfffd8c613c8398d3ea51266069738fccc6365876c1c3d",
       "importedBy": [
         "server.ts",
         "server/tests/alertRulesApi.test.ts",
@@ -690,7 +690,7 @@
     },
     {
       "path": "server/services/marketGuidesService.ts",
-      "sha256": "dc9707be757c6961ed836331ee82656d52deeee1b32d2740e8992f1168984988",
+      "sha256": "948694a970b4037b6eb7a28c2a75d4fa93359f6840397b6a4df9a3ecdf6848de",
       "importedBy": [
         "server.ts",
         "server/api/routes.ts",
@@ -759,6 +759,14 @@
         "server/services/gemini.ts",
         "server/services/storyFeedService.ts",
         "server/tests/calendarScope.test.ts"
+      ]
+    },
+    {
+      "path": "server/services/seoPrerender.ts",
+      "sha256": "f9a446780f7cf1560cd610096304e4334ed73b00675d27569ea781a5fd1ca853",
+      "importedBy": [
+        "server.ts",
+        "server/tests/seoPrehydration.test.ts"
       ]
     },
     {
@@ -1033,6 +1041,11 @@
     {
       "path": "server/tests/searchEngineDiscovery.test.ts",
       "sha256": "4f6efcef52339f5803eba0abad754bac0a0d706206904bfc646255e72f998bff",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/seoPrehydration.test.ts",
+      "sha256": "7dbb6218e4e234edc1e8160a0ee98df9393c6b3fccb54a721e08bf625731c3c8",
       "importedBy": []
     },
     {
@@ -1405,7 +1418,7 @@
     },
     {
       "path": "src/components/Layout.tsx",
-      "sha256": "15974fcbfea028f700907c10cb9b21a7f27b8f6d20ca5c7e09a9def8ac7cfc46",
+      "sha256": "bc6c432618b133a9133cafdd4a03b5f7a99f8863d52433a746353c6bea762c67",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -1771,7 +1784,7 @@
     },
     {
       "path": "src/components/story/StoryVisuals.tsx",
-      "sha256": "a52f3233eac5b2c1f192aa68e1fbec4852db4bd8af017059b52b265af4b227c9",
+      "sha256": "7249f286b3a0c232096733d1756557fc7fe4368080ad0c74e34e51b2dcc7e278",
       "importedBy": [
         "src/components/TodayMarketStoryModal.tsx",
         "src/components/story/StoryCarouselBar.tsx"
@@ -2818,7 +2831,7 @@
     },
     {
       "path": "src/version.ts",
-      "sha256": "f8e42dfab1b724ec2a69b1a1f4c59db0066f54cc78bafa5a50ccd71254dabdf9",
+      "sha256": "b6fec586d450b6d499db0f5e2eca69f2fb8563ccdcb74e8c8670d10235344c34",
       "importedBy": [
         "src/components/SettingsTab.tsx",
         "src/lib/sentry.ts"
@@ -3067,6 +3080,12 @@
       "target": "server/database/feedbackDao.ts",
       "kind": "import",
       "line": 41
+    },
+    {
+      "source": "server.ts",
+      "target": "server/services/seoPrerender.ts",
+      "kind": "import",
+      "line": 42
     },
     {
       "source": "server/api/announcementCron.ts",
@@ -5123,6 +5142,12 @@
     {
       "source": "server/tests/searchEngineDiscovery.test.ts",
       "target": "server/services/indexNow.ts",
+      "kind": "import",
+      "line": 5
+    },
+    {
+      "source": "server/tests/seoPrehydration.test.ts",
+      "target": "server/services/seoPrerender.ts",
       "kind": "import",
       "line": 5
     },
@@ -8605,6 +8630,7 @@
         "src/api.ts",
         "public/sw.js",
         "server/services/marketGuidesService.ts",
+        "server/services/seoPrerender.ts",
         "src/shared/scripMatching.ts"
       ],
       "tests": [
@@ -8612,7 +8638,8 @@
         "server/tests/renderCache.test.ts",
         "server/tests/searchEngineDiscovery.test.ts",
         "server/tests/pwaOfflineSync.test.ts",
-        "server/tests/sevenFixes.test.ts"
+        "server/tests/sevenFixes.test.ts",
+        "server/tests/seoPrehydration.test.ts"
       ],
       "reason": "API responses, SSR routes, browser deep links, SEO and service-worker caching must remain compatible. User-specific responses must never enter shared public caches."
     },
@@ -8688,6 +8715,7 @@
         "server/api/seoRoutes.ts",
         "server/services/faqBank.ts",
         "server/services/seoService.ts",
+        "server/services/seoPrerender.ts",
         "server/services/marketGuidesService.ts",
         "server/services/guideIndexNow.ts",
         "server/services/indexNow.ts",
@@ -8705,7 +8733,8 @@
         "server/tests/searchEngineDiscovery.test.ts",
         "server/tests/routeResolution.test.ts",
         "server/tests/keywordGuides.test.ts",
-        "server/tests/sevenFixes.test.ts"
+        "server/tests/sevenFixes.test.ts",
+        "server/tests/seoPrehydration.test.ts"
       ],
       "reason": "Public copy and crawler metadata must agree with actual API/product contracts. Admin SEO mutations inherit mount guards; generated summaries are not evidence of source accuracy."
     },
@@ -9028,7 +9057,7 @@
   "routes": [
     {
       "file": "server.ts",
-      "line": 59,
+      "line": 60,
       "receiver": "app",
       "method": "USE",
       "path": "compression({ threshold: 1024, // Don't compress payloads under 1KB level: 6, // Optimal balance between CPU usage and compression ratio filter: (req, res) => { // 1. Honor client bypass header if requested if (req.headers['x-no-compression",
@@ -9036,7 +9065,7 @@
     },
     {
       "file": "server.ts",
-      "line": 90,
+      "line": 91,
       "receiver": "app",
       "method": "USE",
       "path": "responseHeaders()",
@@ -9044,7 +9073,7 @@
     },
     {
       "file": "server.ts",
-      "line": 91,
+      "line": 92,
       "receiver": "app",
       "method": "USE",
       "path": "/api/payments/webhook",
@@ -9054,7 +9083,7 @@
     },
     {
       "file": "server.ts",
-      "line": 92,
+      "line": 93,
       "receiver": "app",
       "method": "USE",
       "path": "express.json({ limit: '1mb' })",
@@ -9062,7 +9091,7 @@
     },
     {
       "file": "server.ts",
-      "line": 93,
+      "line": 94,
       "receiver": "app",
       "method": "USE",
       "path": "cookieParser()",
@@ -9070,7 +9099,7 @@
     },
     {
       "file": "server.ts",
-      "line": 95,
+      "line": 96,
       "receiver": "app",
       "method": "GET",
       "path": "/api/cron/poll-announcements",
@@ -9080,7 +9109,7 @@
     },
     {
       "file": "server.ts",
-      "line": 104,
+      "line": 105,
       "receiver": "app",
       "method": "USE",
       "path": "authMiddleware",
@@ -9088,7 +9117,7 @@
     },
     {
       "file": "server.ts",
-      "line": 107,
+      "line": 108,
       "receiver": "app",
       "method": "GET",
       "path": "/sw.js",
@@ -9098,7 +9127,7 @@
     },
     {
       "file": "server.ts",
-      "line": 128,
+      "line": 129,
       "receiver": "app",
       "method": "GET",
       "path": "/OneSignalSDKWorker.js",
@@ -9108,7 +9137,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5316,
+      "line": 5321,
       "receiver": "app",
       "method": "GET",
       "path": "['/health', '/healthz']",
@@ -9118,7 +9147,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5322,
+      "line": 5327,
       "receiver": "app",
       "method": "GET",
       "path": "/robots.txt",
@@ -9128,7 +9157,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5328,
+      "line": 5333,
       "receiver": "app",
       "method": "GET",
       "path": "['/sitemap.xml', '/sitemap', '/sitemap_index.xml', '/sitemap.txt']",
@@ -9138,7 +9167,27 @@
     },
     {
       "file": "server.ts",
-      "line": 5335,
+      "line": 5342,
+      "receiver": "app",
+      "method": "GET",
+      "path": "/sitemap-core.xml",
+      "middleware": [
+        "<handler>"
+      ]
+    },
+    {
+      "file": "server.ts",
+      "line": 5379,
+      "receiver": "app",
+      "method": "GET",
+      "path": "/sitemap-filings-hot.xml",
+      "middleware": [
+        "<handler>"
+      ]
+    },
+    {
+      "file": "server.ts",
+      "line": 5416,
       "receiver": "app",
       "method": "GET",
       "path": "['/rss.xml', '/rss', '/feed.xml', '/feed']",
@@ -9148,7 +9197,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5401,
+      "line": 5482,
       "receiver": "app",
       "method": "GET",
       "path": "[/^\\/https?:\\/?\\/?(?:www\\.)?bsenexus\\.in\\/sitemap(?:\\.xml)?$/i]",
@@ -9158,7 +9207,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5406,
+      "line": 5487,
       "receiver": "app",
       "method": "GET",
       "path": "[`/${INDEXNOW_KEY}.txt`, '/indexnow-key.txt']",
@@ -9168,7 +9217,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5413,
+      "line": 5494,
       "receiver": "app",
       "method": "GET",
       "path": "/opensearch.xml",
@@ -9178,7 +9227,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5431,
+      "line": 5512,
       "receiver": "app",
       "method": "GET",
       "path": "[sourcePath, sourcePath + '/']",
@@ -9188,17 +9237,37 @@
     },
     {
       "file": "server.ts",
-      "line": 5438,
+      "line": 5519,
       "receiver": "app",
       "method": "GET",
-      "path": "['/filing', '/filing/*']",
+      "path": "/filing/:symbol/:newsId",
       "middleware": [
         "<handler>"
       ]
     },
     {
       "file": "server.ts",
-      "line": 5444,
+      "line": 5573,
+      "receiver": "app",
+      "method": "GET",
+      "path": "/filing/:symbol",
+      "middleware": [
+        "<handler>"
+      ]
+    },
+    {
+      "file": "server.ts",
+      "line": 5584,
+      "receiver": "app",
+      "method": "GET",
+      "path": "['/filing', '/filing/']",
+      "middleware": [
+        "<handler>"
+      ]
+    },
+    {
+      "file": "server.ts",
+      "line": 5590,
       "receiver": "app",
       "method": "GET",
       "path": "/announcement/:newsId",
@@ -9208,7 +9277,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5763,
+      "line": 5914,
       "receiver": "app",
       "method": "GET",
       "path": "/results/:symbol/:quarterKey",
@@ -9218,7 +9287,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5819,
+      "line": 5970,
       "receiver": "app",
       "method": "GET",
       "path": "['/company/:symbol', '/stock/:symbol']",
@@ -9228,7 +9297,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5888,
+      "line": 6039,
       "receiver": "app",
       "method": "GET",
       "path": "/guides/:slug",
@@ -9238,7 +9307,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5934,
+      "line": 6085,
       "receiver": "app",
       "method": "GET",
       "path": "['/faq', '/faqs']",
@@ -9248,7 +9317,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5941,
+      "line": 6092,
       "receiver": "app",
       "method": "GET",
       "path": "['/pricing', '/pricing/']",
@@ -9258,7 +9327,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5948,
+      "line": 6099,
       "receiver": "app",
       "method": "GET",
       "path": "['/plans', '/plans/']",
@@ -9268,7 +9337,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5953,
+      "line": 6104,
       "receiver": "app",
       "method": "GET",
       "path": "['/guides', '/guides/']",
@@ -9278,7 +9347,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5960,
+      "line": 6111,
       "receiver": "app",
       "method": "GET",
       "path": "['/market-guides', '/market-guides/']",
@@ -9288,7 +9357,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5965,
+      "line": 6116,
       "receiver": "app",
       "method": "GET",
       "path": "['/companies', '/companies/']",
@@ -9298,7 +9367,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5972,
+      "line": 6123,
       "receiver": "app",
       "method": "GET",
       "path": "['/company-directory', '/company-directory/']",
@@ -9308,7 +9377,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5977,
+      "line": 6128,
       "receiver": "app",
       "method": "GET",
       "path": "['/about', '/about/']",
@@ -9318,7 +9387,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5984,
+      "line": 6135,
       "receiver": "app",
       "method": "GET",
       "path": "['/contact', '/contact/']",
@@ -9328,7 +9397,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5991,
+      "line": 6142,
       "receiver": "app",
       "method": "GET",
       "path": "['/disclaimer', '/disclaimer/']",
@@ -9338,7 +9407,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5998,
+      "line": 6149,
       "receiver": "app",
       "method": "GET",
       "path": "['/privacy-policy', '/privacy-policy/']",
@@ -9348,7 +9417,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6005,
+      "line": 6156,
       "receiver": "app",
       "method": "GET",
       "path": "['/privacy', '/privacy/']",
@@ -9358,7 +9427,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6010,
+      "line": 6161,
       "receiver": "app",
       "method": "GET",
       "path": "['/terms', '/terms/']",
@@ -9368,7 +9437,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6017,
+      "line": 6168,
       "receiver": "app",
       "method": "GET",
       "path": "['/terms-of-service', '/terms-of-service/']",
@@ -9378,7 +9447,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6022,
+      "line": 6173,
       "receiver": "app",
       "method": "GET",
       "path": "/embed/widget",
@@ -9388,7 +9457,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6076,
+      "line": 6227,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-companies.xml",
@@ -9398,7 +9467,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6096,
+      "line": 6247,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-guides.xml",
@@ -9408,7 +9477,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6114,
+      "line": 6265,
       "receiver": "app",
       "method": "GET",
       "path": "/llms.txt",
@@ -9418,7 +9487,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6119,
+      "line": 6270,
       "receiver": "app",
       "method": "GET",
       "path": "/llms-full.txt",
@@ -9428,7 +9497,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6129,
+      "line": 6280,
       "receiver": "app",
       "method": "GET",
       "path": "/^\\/google([a-zA-Z0-9_-]+)\\.html$/",
@@ -9438,7 +9507,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6139,
+      "line": 6290,
       "receiver": "app",
       "method": "USE",
       "path": "express.static(path.join(process.cwd(), 'public'), { maxAge: '1d', immutable: false, setHeaders: (res, filePath) => { if (filePath.includes(`${path.sep}fonts${path.sep}`)) res.setHeader('Cache-Control', 'public, max-age=2592000'); if (fileP",
@@ -9446,7 +9515,17 @@
     },
     {
       "file": "server.ts",
-      "line": 6149,
+      "line": 6300,
+      "receiver": "app",
+      "method": "USE",
+      "path": "['/api', '/auth']",
+      "middleware": [
+        "<handler>"
+      ]
+    },
+    {
+      "file": "server.ts",
+      "line": 6306,
       "receiver": "app",
       "method": "USE",
       "path": "/auth",
@@ -9456,7 +9535,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6152,
+      "line": 6309,
       "receiver": "app",
       "method": "POST",
       "path": "/api/security/verify-recaptcha",
@@ -9467,7 +9546,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6193,
+      "line": 6350,
       "receiver": "app",
       "method": "USE",
       "path": "/api",
@@ -9478,7 +9557,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6197,
+      "line": 6354,
       "receiver": "app",
       "method": "USE",
       "path": "['/api/*', '/auth/*']",
@@ -9488,7 +9567,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6202,
+      "line": 6359,
       "receiver": "app",
       "method": "USE",
       "path": "(err: any, req: express.Request, res: express.Response, next: express.NextFunction) => { if (req.path.startsWith('/api') || req.path.startsWith('/auth')) { console.error(\"API Error handler caught:\", err?.message || err); const isProd = proc",
@@ -9496,17 +9575,17 @@
     },
     {
       "file": "server.ts",
-      "line": 6601,
+      "line": 6770,
       "receiver": "app",
       "method": "GET",
-      "path": "[\"/\", \"/announcements\", \"/live\", \"/results-calendar\", \"/watchlist\", \"/watchlists\", \"/companies\", \"/about\", \"/contact\", \"/disclaimer\", \"/privacy\", \"/terms\"]",
+      "path": "[\"/\", \"/announcements\", \"/live\", \"/results-calendar\", \"/watchlist\", \"/watchlists\", \"/companies\", \"/about\", \"/contact\", \"/disclaimer\", \"/privacy\", \"/privacy-policy\", \"/terms\"]",
       "middleware": [
         "<handler>"
       ]
     },
     {
       "file": "server.ts",
-      "line": 6628,
+      "line": 6800,
       "receiver": "app",
       "method": "USE",
       "path": "(req, res, next) => { if (req.method !== 'GET' && req.method !== 'HEAD') return next(); const p = req.path; if ( p === '/' || p === '/announcements' || p === '/results-calendar' || p === '/watchlist' || p === '/watchlists' || p === '/compan",
@@ -9514,7 +9593,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6660,
+      "line": 6835,
       "receiver": "app",
       "method": "USE",
       "path": "vite.middlewares",
@@ -9522,7 +9601,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6672,
+      "line": 6847,
       "receiver": "app",
       "method": "USE",
       "path": "express.static(distPath, { maxAge: '1y', immutable: true, index: false, setHeaders: (res, filePath) => { if (filePath.endsWith('.html')) { res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600'); } } }",
@@ -9530,7 +9609,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6699,
+      "line": 6875,
       "receiver": "app",
       "method": "GET",
       "path": "*",
@@ -10345,6 +10424,16 @@
       "file": "server/api/routes.ts",
       "line": 909,
       "receiver": "apiRouter",
+      "method": "GET",
+      "path": "/stock/resolve",
+      "middleware": [
+        "<handler>"
+      ]
+    },
+    {
+      "file": "server/api/routes.ts",
+      "line": 956,
+      "receiver": "apiRouter",
       "method": "DELETE",
       "path": "/watchlists/:id/symbols/:symbol",
       "middleware": [
@@ -10354,7 +10443,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 916,
+      "line": 963,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/watchlists/:id/symbols/remove-batch",
@@ -10365,7 +10454,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 930,
+      "line": 977,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/watchlists/:id/symbols/priority-batch",
@@ -10376,7 +10465,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 960,
+      "line": 1007,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/toggle",
@@ -10387,7 +10476,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 961,
+      "line": 1008,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/toggle-engine",
@@ -10398,7 +10487,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 963,
+      "line": 1010,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/test-telegram",
@@ -10410,7 +10499,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 989,
+      "line": 1036,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/admin/push/broadcast",
@@ -10421,7 +10510,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1016,
+      "line": 1063,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/push/status",
@@ -10431,7 +10520,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1024,
+      "line": 1071,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/users/test-telegram",
@@ -10443,7 +10532,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1076,
+      "line": 1123,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/users/check-username",
@@ -10453,7 +10542,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1102,
+      "line": 1149,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/users/profile",
@@ -10464,7 +10553,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1163,
+      "line": 1210,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/users/profile",
@@ -10475,7 +10564,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1293,
+      "line": 1340,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/users/telegram/settings",
@@ -10486,7 +10575,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1390,
+      "line": 1437,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/test-bse",
@@ -10497,7 +10586,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1410,
+      "line": 1457,
       "receiver": "apiRouter",
       "method": "PATCH",
       "path": "/watchlists/:id/name",
@@ -10508,7 +10597,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1417,
+      "line": 1464,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/send-to-telegram-manual",
@@ -10520,7 +10609,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1472,
+      "line": 1519,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/send-holiday-telegram",
@@ -10532,7 +10621,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1512,
+      "line": 1559,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/results-calendar",
@@ -10542,7 +10631,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1526,
+      "line": 1573,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/results-calendar/refresh",
@@ -10554,7 +10643,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1556,
+      "line": 1603,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/results-calendar/telegram-broadcast",
@@ -10566,7 +10655,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1569,
+      "line": 1616,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/story/feed",
@@ -10576,7 +10665,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1582,
+      "line": 1629,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "[\"/news\", \"/news/general\"]",
@@ -10586,7 +10675,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1594,
+      "line": 1641,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/news/watchlist",
@@ -10596,7 +10685,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1605,
+      "line": 1652,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/news/sources",
@@ -10607,7 +10696,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1623,
+      "line": 1670,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/news/stock/:symbol",
@@ -10617,7 +10706,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1634,
+      "line": 1681,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/news/summarize",
@@ -10629,7 +10718,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1734,
+      "line": 1781,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/news/telegram/send",
@@ -10641,7 +10730,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1753,
+      "line": 1800,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/news/telegram/digest",
@@ -10653,7 +10742,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1771,
+      "line": 1818,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/news/telegram/preferences",
@@ -10663,7 +10752,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1799,
+      "line": 1846,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/news/telegram/toggle-auto",
@@ -10674,7 +10763,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1856,
+      "line": 1903,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/news/telegram/trigger-worker",
@@ -10685,7 +10774,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1866,
+      "line": 1913,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/storage/status",
@@ -10696,7 +10785,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1875,
+      "line": 1922,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/storage/cleanup",
@@ -10707,7 +10796,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1885,
+      "line": 1932,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/storage/test-alert",
@@ -10718,7 +10807,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1899,
+      "line": 1946,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/storage/quota-mode",
@@ -10729,7 +10818,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1911,
+      "line": 1958,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/storage/quota-mode",
@@ -10740,7 +10829,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1936,
+      "line": 1983,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/storage/reset-quota",
@@ -10751,7 +10840,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1949,
+      "line": 1996,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/storage/reset-permission",
@@ -10762,7 +10851,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1962,
+      "line": 2009,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/admin/announcements/prune-percentage",
@@ -10773,7 +10862,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1993,
+      "line": 2040,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/stock-results-history",
@@ -10783,7 +10872,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2030,
+      "line": 2077,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/stocks/:scripCode/fetch-deep-history",
@@ -10795,7 +10884,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2050,
+      "line": 2097,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/watchlist/fetch-deep-history",
@@ -10807,7 +10896,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2061,
+      "line": 2108,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/stocks/:scripCode/boost-runup-priority",
@@ -10818,7 +10907,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2073,
+      "line": 2120,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/stocks/:scripCode/runup-announcements",
@@ -10828,7 +10917,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2087,
+      "line": 2134,
       "receiver": "apiRouter",
       "method": "PATCH",
       "path": "/watchlists/symbols/:symbol/priority-sync",
@@ -10839,7 +10928,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2104,
+      "line": 2151,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/help/ask-ai",
@@ -10851,7 +10940,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2121,
+      "line": 2168,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/pdf-open",
@@ -10861,7 +10950,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2200,
+      "line": 2247,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/company-intel/:identifier",
@@ -10871,7 +10960,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2213,
+      "line": 2260,
       "receiver": "apiRouter",
       "method": "ALL",
       "path": "/company-intel/:identifier/ai-overview",
@@ -10883,7 +10972,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2277,
+      "line": 2324,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/stocks/:symbol/quote",
@@ -10893,7 +10982,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2293,
+      "line": 2340,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/material-events",
@@ -10903,7 +10992,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2331,
+      "line": 2378,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/notifications",
@@ -10913,7 +11002,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2361,
+      "line": 2408,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/notifications/unread-count",
@@ -10923,7 +11012,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2379,
+      "line": 2426,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/notifications/:id/read",
@@ -10934,7 +11023,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2389,
+      "line": 2436,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/notifications/read-batch",
@@ -10945,7 +11034,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2400,
+      "line": 2447,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/notifications/read-all",
@@ -10956,7 +11045,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2410,
+      "line": 2457,
       "receiver": "apiRouter",
       "method": "DELETE",
       "path": "/notifications",
@@ -10967,7 +11056,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2420,
+      "line": 2467,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/notifications/toggle-mute",
@@ -10978,7 +11067,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2479,
+      "line": 2526,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/alert-rules",
@@ -10989,7 +11078,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2490,
+      "line": 2537,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/alert-rules",
@@ -11000,7 +11089,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2500,
+      "line": 2547,
       "receiver": "apiRouter",
       "method": "PATCH",
       "path": "/alert-rules/:id/toggle",
@@ -11011,7 +11100,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2511,
+      "line": 2558,
       "receiver": "apiRouter",
       "method": "DELETE",
       "path": "/alert-rules/:id",
@@ -11022,7 +11111,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2521,
+      "line": 2568,
       "receiver": "apiRouter",
       "method": "PUT",
       "path": "/alert-rules/presets",
@@ -11033,7 +11122,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2530,
+      "line": 2577,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/market/indices",
@@ -11044,7 +11133,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2543,
+      "line": 2590,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/market/status",
@@ -11055,7 +11144,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2565,
+      "line": 2612,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/telemetry/event",
@@ -11066,7 +11155,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2600,
+      "line": 2647,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/admin/diagnostics",
@@ -11077,7 +11166,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2626,
+      "line": 2673,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/admin/diagnostics/clear",
@@ -11088,7 +11177,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2636,
+      "line": 2683,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/admin/diagnostics/test-alert",
@@ -11099,7 +11188,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2673,
+      "line": 2720,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/admin/diagnostics/approved-bugs",
@@ -11110,7 +11199,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2683,
+      "line": 2730,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/admin/diagnostics/approved-bugs",
@@ -11121,7 +11210,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2697,
+      "line": 2744,
       "receiver": "apiRouter",
       "method": "DELETE",
       "path": "/admin/diagnostics/approved-bugs/:id",
@@ -11132,7 +11221,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2707,
+      "line": 2754,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/admin/diagnostics/toggle-mute-alerts",
@@ -11143,7 +11232,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2724,
+      "line": 2771,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/security/audit",
@@ -11154,7 +11243,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2735,
+      "line": 2782,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/security/pen-test",
@@ -11165,7 +11254,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2746,
+      "line": 2793,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/admin/bloom-stats",
@@ -11176,7 +11265,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2756,
+      "line": 2803,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/admin/bloom-test",
@@ -11588,7 +11677,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6309,
+      "line": 6466,
       "function": "fetch",
       "target": "`http://127.0.0.1:${port}/api/health`"
     },
@@ -11600,7 +11689,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2159,
+      "line": 2206,
       "function": "fetchBseDocument",
       "target": "testUrl"
     },
@@ -12689,6 +12778,24 @@
       "line": 144,
       "function": "customFetch",
       "target": "endpoint"
+    },
+    {
+      "file": "src/components/story/StoryVisuals.tsx",
+      "line": 283,
+      "function": "fetch",
+      "target": "`/api/stock/resolve?q=${encodeURIComponent(clean)}`"
+    },
+    {
+      "file": "src/components/story/StoryVisuals.tsx",
+      "line": 294,
+      "function": "fetch",
+      "target": "`/api/search-company?q=${encodeURIComponent(clean)}`"
+    },
+    {
+      "file": "src/components/story/StoryVisuals.tsx",
+      "line": 310,
+      "function": "fetch",
+      "target": "`/api/stock/resolve?q=${encodeURIComponent(companyName.trim())}`"
     },
     {
       "file": "src/components/story/storyData.ts",
@@ -13893,6 +14000,30 @@
       "key": "storageKey"
     },
     {
+      "file": "src/components/story/StoryVisuals.tsx",
+      "line": 269,
+      "function": "localStorage.getItem",
+      "key": "`bse_dyn_scrip_${clean}`"
+    },
+    {
+      "file": "src/components/story/StoryVisuals.tsx",
+      "line": 288,
+      "function": "localStorage.setItem",
+      "key": "`bse_dyn_scrip_${clean}`"
+    },
+    {
+      "file": "src/components/story/StoryVisuals.tsx",
+      "line": 302,
+      "function": "localStorage.setItem",
+      "key": "`bse_dyn_scrip_${clean}`"
+    },
+    {
+      "file": "src/components/story/StoryVisuals.tsx",
+      "line": 315,
+      "function": "localStorage.setItem",
+      "key": "`bse_dyn_scrip_${clean}`"
+    },
+    {
       "file": "src/components/ui/CommandPalette.tsx",
       "line": 420,
       "function": "Array.from",
@@ -14381,42 +14512,42 @@
     },
     {
       "file": "server.ts",
-      "line": 110,
+      "line": 111,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6127,
+      "line": 6278,
       "name": "GOOGLE_SITE_VERIFICATION_HASH"
     },
     {
       "file": "server.ts",
-      "line": 6127,
+      "line": 6278,
       "name": "GOOGLE_SITE_VERIFICATION_HASH"
     },
     {
       "file": "server.ts",
-      "line": 6205,
+      "line": 6362,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6590,
+      "line": 6759,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6595,
+      "line": 6764,
       "name": "DISABLE_HMR"
     },
     {
       "file": "server.ts",
-      "line": 6799,
+      "line": 6978,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6799,
+      "line": 6978,
       "name": "TEST_RUNNER"
     },
     {
@@ -14586,22 +14717,22 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1036,
+      "line": 1083,
       "name": "TELEGRAM_BOT_TOKEN"
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1743,
+      "line": 1790,
       "name": "TELEGRAM_CHAT_ID"
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1760,
+      "line": 1807,
       "name": "TELEGRAM_CHAT_ID"
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2737,
+      "line": 2784,
       "name": "PORT"
     },
     {

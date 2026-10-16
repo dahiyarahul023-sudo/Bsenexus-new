@@ -39,6 +39,7 @@ import { autoIndexNewGuides } from "./server/services/guideIndexNow.js";
 import { verifyRecaptchaToken } from "./server/security/recaptchaService.js";
 import { getBseBlockBackoffLevel } from "./server/services/bse.js";
 import { getAllFeedback } from "./server/database/feedbackDao.js";
+import { prerenderFilingHtml, prerenderCompanyHtml, buildSitemapIndexXml, cleanCanonicalUrl } from "./server/services/seoPrerender.js";
 
 // Global error handlers to prevent background quota/network exceptions from crashing the process
 process.on('unhandledRejection', (reason: any) => {
@@ -706,6 +707,7 @@ ${JSON.stringify(jsonLd, null, 2)}
   </style>
 </head>
 <body>
+  <div id="root">
   <header class="top-banner">
     <a href="https://bsenexus.in/" class="top-brand">
       Bsenexus <span>Terminal</span>
@@ -783,6 +785,7 @@ ${JSON.stringify(jsonLd, null, 2)}
       Independent financial terminal for Indian equities (BSE). Disclosures sourced directly from BSE India public regulatory feeds.
     </footer>
   </main>
+  </div>
 </body>
 </html>`;
 }
@@ -1363,6 +1366,7 @@ ${jsonLd}
   </style>
 </head>
 <body>
+  <div id="root">
   <header class="top-banner">
     <a href="https://bsenexus.in/" class="top-brand">
       Bsenexus <span>Terminal</span>
@@ -1546,6 +1550,7 @@ ${jsonLd}
       Bsenexus Financial Intelligence &middot; Real-time regulatory filings, board meetings &amp; quarterly results direct from BSE India public feeds.
     </footer>
   </main>
+  </div>
 </body>
 </html>`;
 }
@@ -5324,11 +5329,87 @@ app.get('/robots.txt', (_req, res) => {
   res.sendFile(path.join(process.cwd(), 'public', 'robots.txt'));
 });
 
-// Canonical XML Sitemap with stable routes and 26 curated company pages
+// Tiered Sitemap Index (/sitemap.xml) linking to core, companies, and hot filings sitemaps (Step 4)
 app.get(['/sitemap.xml', '/sitemap', '/sitemap_index.xml', '/sitemap.txt'], (_req, res) => {
+  const todayStr = new Date().toISOString().split('T')[0];
+  const xml = buildSitemapIndexXml(todayStr);
   res.type('application/xml; charset=utf-8');
   res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=3600, stale-while-revalidate=3600');
-  res.sendFile(path.join(process.cwd(), 'public', 'sitemap.xml'));
+  res.send(xml);
+});
+
+// 1. Tiered Core Static Pages & Market Guides Sitemap (/sitemap-core.xml)
+app.get('/sitemap-core.xml', async (_req, res) => {
+  const todayStr = new Date().toISOString().split('T')[0];
+  let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+  const staticUrls = [
+    { loc: 'https://bsenexus.in/', priority: '1.0', changefreq: 'daily' },
+    { loc: 'https://bsenexus.in/announcements', priority: '0.9', changefreq: 'hourly' },
+    { loc: 'https://bsenexus.in/results-calendar', priority: '0.9', changefreq: 'daily' },
+    { loc: 'https://bsenexus.in/watchlist', priority: '0.8', changefreq: 'weekly' },
+    { loc: 'https://bsenexus.in/companies', priority: '0.8', changefreq: 'weekly' },
+    { loc: 'https://bsenexus.in/pricing', priority: '0.8', changefreq: 'weekly' },
+    { loc: 'https://bsenexus.in/guides', priority: '0.8', changefreq: 'weekly' },
+    { loc: 'https://bsenexus.in/faq', priority: '0.7', changefreq: 'monthly' },
+    { loc: 'https://bsenexus.in/about', priority: '0.8', changefreq: 'monthly' },
+    { loc: 'https://bsenexus.in/contact', priority: '0.8', changefreq: 'monthly' },
+    { loc: 'https://bsenexus.in/disclaimer', priority: '0.8', changefreq: 'monthly' },
+    { loc: 'https://bsenexus.in/privacy-policy', priority: '0.7', changefreq: 'monthly' },
+    { loc: 'https://bsenexus.in/terms', priority: '0.7', changefreq: 'monthly' },
+  ];
+  for (const page of staticUrls) {
+    xml += `  <url>\n    <loc>${page.loc}</loc>\n    <lastmod>${todayStr}</lastmod>\n    <changefreq>${page.changefreq}</changefreq>\n    <priority>${page.priority}</priority>\n  </url>\n`;
+  }
+  try {
+    for (const guide of getIndexableMarketGuides()) {
+      const slug = guide.slug || guide.id;
+      if (!slug) continue;
+      xml += `  <url>\n    <loc>https://bsenexus.in/guides/${escapeHtmlAttr(slug)}</loc>\n    <lastmod>${todayStr}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
+    }
+  } catch (err) {
+    console.warn('Error adding guides to core sitemap:', err);
+  }
+  xml += `</urlset>`;
+  res.type('application/xml; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=3600, stale-while-revalidate=3600');
+  res.send(xml);
+});
+
+// 3. High-impact SEBI Reg 30 Filings from the last 7 days (/sitemap-filings-hot.xml)
+app.get('/sitemap-filings-hot.xml', async (_req, res) => {
+  const now = Date.now();
+  const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
+  let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+
+  try {
+    const recent = await getRecentAnnouncements(500);
+    const seenIds = new Set<string>();
+    for (const ann of recent) {
+      const newsId = ann.id || ann.newsId;
+      if (!newsId || seenIds.has(newsId)) continue;
+      if (newsId.toLowerCase().includes('batch_test_')) continue;
+      seenIds.add(newsId);
+
+      let pubTs = ann.bseTimestamp || ann.fetched_at;
+      if (!pubTs && ann.bseTime) pubTs = parseBseDate(ann.bseTime);
+      if (!pubTs || isNaN(pubTs) || pubTs < sevenDaysAgo) continue;
+
+      const lastmod = new Date(pubTs).toISOString().split('T')[0];
+      const annSymbol = String(ann.symbol || ann.scrip_id || '').trim().toUpperCase();
+      const filingLoc = /^[A-Z0-9-]{2,20}$/.test(annSymbol)
+        ? `https://bsenexus.in/filing/${escapeHtmlAttr(annSymbol)}/${escapeHtmlAttr(newsId)}`
+        : `https://bsenexus.in/announcement/${escapeHtmlAttr(newsId)}`;
+
+      xml += `  <url>\n    <loc>${filingLoc}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>never</changefreq>\n    <priority>0.6</priority>\n  </url>\n`;
+    }
+  } catch (err) {
+    console.warn('Error generating hot filings sitemap:', err);
+  }
+
+  xml += `</urlset>`;
+  res.type('application/xml; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=1800, stale-while-revalidate=1800');
+  res.send(xml);
 });
 
 // Auto-generated RSS 2.0 Feed listing the latest 50 BSE corporate announcements
@@ -5434,8 +5515,73 @@ for (const [sourcePath, targetPath] of Object.entries(PERMANENT_301_REDIRECTS)) 
   });
 }
 
-// Pattern-based 301 Redirect for legacy /filing/* URLs (Fix 1)
-app.get(['/filing', '/filing/*'], (_req, res) => {
+// Canonical shareable filing detail pages: /filing/:symbol/:newsId (Step 1 & Step 2)
+app.get('/filing/:symbol/:newsId', async (req, res) => {
+  const rawSymbol = req.params.symbol;
+  const rawNewsId = req.params.newsId;
+  if (!rawSymbol || !rawNewsId || typeof rawSymbol !== 'string' || typeof rawNewsId !== 'string') {
+    return res.status(404).setHeader('Content-Type', 'text/html; charset=utf-8').send(renderAnnouncement404Page(false));
+  }
+
+  const symbol = rawSymbol.trim().toUpperCase();
+  const newsId = rawNewsId.trim();
+
+  // Pattern-based 301 Redirect for legacy /filing/nse_* URLs
+  if (newsId.startsWith('nse_')) {
+    res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800');
+    return res.redirect(301, '/announcements');
+  }
+
+  try {
+    const isBatchTest = newsId.toLowerCase().includes('batch_test_');
+    const announcement = await getAnnouncementById(newsId);
+    if (!announcement) {
+      return res.status(404).setHeader('Content-Type', 'text/html; charset=utf-8').send(renderAnnouncement404Page(isBatchTest));
+    }
+
+    const cacheKey = `filing:${symbol}:${newsId}`;
+    const clientEtag = req.headers['if-none-match'];
+    const cached = pageRenderCache.get(cacheKey);
+    if (cached) {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('ETag', cached.etag);
+      res.setHeader('X-Cache', 'HIT');
+      res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+      if (clientEtag && clientEtag === cached.etag) {
+        return res.status(304).end();
+      }
+      return res.send(cached.body);
+    }
+
+    const html = prerenderFilingHtml(announcement, symbol, newsId);
+    const entry = pageRenderCache.set(cacheKey, html, 'text/html; charset=utf-8', { ttlMs: 60 * 60 * 1000 });
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('ETag', entry.etag);
+    res.setHeader('X-Cache', 'MISS');
+    res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+    if (clientEtag && clientEtag === entry.etag) {
+      return res.status(304).end();
+    }
+    return res.send(html);
+  } catch (err: any) {
+    console.error("Error serving filing page:", err?.message || err);
+    return res.status(500).setHeader('Content-Type', 'text/html; charset=utf-8').send(renderAnnouncement404Page());
+  }
+});
+
+// Single-segment /filing/:symbol redirects to /company/:symbol
+app.get('/filing/:symbol', (req, res) => {
+  const sym = req.params.symbol?.trim().toUpperCase();
+  if (sym && /^[A-Z0-9-]{2,20}$/.test(sym)) {
+    res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800');
+    return res.redirect(301, `/company/${encodeURIComponent(sym)}`);
+  }
+  res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800');
+  return res.redirect(301, '/announcements');
+});
+
+// Base /filing root path 301 redirects to /announcements
+app.get(['/filing', '/filing/'], (_req, res) => {
   res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800');
   return res.redirect(301, '/announcements');
 });
@@ -5462,6 +5608,11 @@ app.get('/announcement/:newsId', async (req, res) => {
       return res.status(404).setHeader('Content-Type', 'text/html; charset=utf-8').send(renderAnnouncement404Page(isBatchTest));
     }
 
+    const annSymbol = String(announcement.symbol || announcement.scrip_id || '').trim().toUpperCase();
+    const canonicalUrl = /^[A-Z0-9-]{2,20}$/.test(annSymbol)
+      ? `https://bsenexus.in/filing/${encodeURIComponent(annSymbol)}/${encodeURIComponent(cleanId)}`
+      : `https://bsenexus.in/announcement/${encodeURIComponent(cleanId)}`;
+
     const cacheKey = `ann:${cleanId}`;
     const clientEtag = req.headers['if-none-match'];
     const cached = pageRenderCache.get(cacheKey);
@@ -5475,7 +5626,7 @@ app.get('/announcement/:newsId', async (req, res) => {
       }
       return res.send(cached.body);
     }
-    const html = await renderAnnouncementPage(announcement, cleanId);
+    const html = await renderAnnouncementPage(announcement, cleanId, canonicalUrl);
     const entry = pageRenderCache.set(cacheKey, html, 'text/html; charset=utf-8', { ttlMs: 60 * 60 * 1000 });
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('ETag', entry.etag);
@@ -6145,6 +6296,12 @@ app.use(express.static(path.join(process.cwd(), 'public'), {
   }
 }));
 
+// Enforce search engine privacy hygiene: prevent crawling/indexing of API & Auth endpoints (Step 5)
+app.use(['/api', '/auth'], (_req, res, next) => {
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+  next();
+});
+
 // Authentication Routes (Login/Logout/Status)
 app.use('/auth', authRouter);
 
@@ -6557,6 +6714,18 @@ function injectTabSeoMetadata(html: string, tabQuery?: string): string {
     );
   }
 
+  // 8. Enforce noindex on private or utility UI states (?tab=settings, ?tab=admin, etc.) (Step 5)
+  if (cleanTab === 'settings' || cleanTab === 'admin' || cleanTab === 'account' || cleanTab === 'auth') {
+    if (/<meta\s+name=["']robots["'][^>]*\/?>/i.test(transformed)) {
+      transformed = transformed.replace(
+        /<meta\s+name=["']robots["'][^>]*\/?>/i,
+        '<meta name="robots" content="noindex, nofollow" />'
+      );
+    } else {
+      transformed = transformed.replace('</head>', '  <meta name="robots" content="noindex, nofollow" />\n</head>');
+    }
+  }
+
   return transformed;
 }
 
@@ -6598,7 +6767,7 @@ async function startServer() {
     });
 
     // In development mode, allow verifying tab-specific SEO metadata in responses with proper headers
-    app.get(["/", "/announcements", "/live", "/results-calendar", "/watchlist", "/watchlists", "/companies", "/about", "/contact", "/disclaimer", "/privacy", "/terms"], async (req, res, next) => {
+    app.get(["/", "/announcements", "/live", "/results-calendar", "/watchlist", "/watchlists", "/companies", "/about", "/contact", "/disclaimer", "/privacy", "/privacy-policy", "/terms"], async (req, res, next) => {
       let tab = req.path === "/live" ? "live" : req.query.tab as string | undefined;
       if (!tab) {
         if (req.path === '/announcements') tab = 'announcements';
@@ -6609,7 +6778,7 @@ async function startServer() {
         else if (req.path === '/about') tab = 'about';
         else if (req.path === '/contact') tab = 'contact';
         else if (req.path === '/disclaimer') tab = 'disclaimer';
-        else if (req.path === '/privacy') tab = 'privacy';
+        else if (req.path === '/privacy' || req.path === '/privacy-policy') tab = 'privacy';
         else if (req.path === '/terms') tab = 'terms';
       }
       try {
@@ -6618,6 +6787,9 @@ async function startServer() {
         const finalHtml = injectTabSeoMetadata(transformedHtml, tab);
         res.setHeader("Content-Type", "text/html; charset=utf-8");
         res.setHeader("Cache-Control", getSpaRouteCacheControl(req.path));
+        if (tab === 'settings' || tab === 'admin' || tab === 'account') {
+          res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+        }
         return res.send(finalHtml);
       } catch (e) {
         next(e);
@@ -6639,6 +6811,7 @@ async function startServer() {
         p === '/contact' ||
         p === '/disclaimer' ||
         p === '/privacy' ||
+        p === '/privacy-policy' ||
         p === '/terms' ||
         p.startsWith('/@') ||
         p.startsWith('/src') ||
@@ -6647,6 +6820,8 @@ async function startServer() {
         p.startsWith('/auth') ||
         p.startsWith('/company/') ||
         p.startsWith('/stock/') ||
+        p.startsWith('/filing/') ||
+        p.startsWith('/results/') ||
         p.startsWith('/guides/') ||
         p.startsWith('/announcement/') ||
         p.startsWith('/embed/') ||
@@ -6693,6 +6868,7 @@ async function startServer() {
       '/contact',
       '/disclaimer',
       '/privacy',
+      '/privacy-policy',
       '/terms'
     ]);
     const tabHtmlCache = new Map<string, { html: string; etag: string }>();
@@ -6712,7 +6888,7 @@ async function startServer() {
         else if (req.path === '/about') tabParam = 'about';
         else if (req.path === '/contact') tabParam = 'contact';
         else if (req.path === '/disclaimer') tabParam = 'disclaimer';
-        else if (req.path === '/privacy') tabParam = 'privacy';
+        else if (req.path === '/privacy' || req.path === '/privacy-policy') tabParam = 'privacy';
         else if (req.path === '/terms') tabParam = 'terms';
         else tabParam = 'default';
       }
@@ -6735,6 +6911,9 @@ async function startServer() {
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       res.setHeader('ETag', cached.etag);
       res.setHeader('Cache-Control', getSpaRouteCacheControl(req.path));
+      if (tabParam === 'settings' || tabParam === 'admin' || tabParam === 'account') {
+        res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+      }
       if (clientEtag && clientEtag === cached.etag) {
         return res.status(304).end();
       }

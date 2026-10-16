@@ -203,6 +203,7 @@
         "src/api.ts",
         "public/sw.js",
         "server/services/marketGuidesService.ts",
+        "server/services/seoPrerender.ts",
         "src/shared/scripMatching.ts"
       ],
       "tests": [
@@ -210,7 +211,8 @@
         "server/tests/renderCache.test.ts",
         "server/tests/searchEngineDiscovery.test.ts",
         "server/tests/pwaOfflineSync.test.ts",
-        "server/tests/sevenFixes.test.ts"
+        "server/tests/sevenFixes.test.ts",
+        "server/tests/seoPrehydration.test.ts"
       ],
       "reason": "API responses, SSR routes, browser deep links, SEO and service-worker caching must remain compatible. User-specific responses must never enter shared public caches."
     },
@@ -286,6 +288,7 @@
         "server/api/seoRoutes.ts",
         "server/services/faqBank.ts",
         "server/services/seoService.ts",
+        "server/services/seoPrerender.ts",
         "server/services/marketGuidesService.ts",
         "server/services/guideIndexNow.ts",
         "server/services/indexNow.ts",
@@ -303,7 +306,8 @@
         "server/tests/searchEngineDiscovery.test.ts",
         "server/tests/routeResolution.test.ts",
         "server/tests/keywordGuides.test.ts",
-        "server/tests/sevenFixes.test.ts"
+        "server/tests/sevenFixes.test.ts",
+        "server/tests/seoPrehydration.test.ts"
       ],
       "reason": "Public copy and crawler metadata must agree with actual API/product contracts. Admin SEO mutations inherit mount guards; generated summaries are not evidence of source accuracy."
     },
