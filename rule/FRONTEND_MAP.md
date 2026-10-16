@@ -1,5 +1,7 @@
 # Frontend spider web: where changes travel
 
+2026-10-16 Impact Radar supersedes the Home Market News preview journey below. `HomeForYou` now mounts the account-keyed `ImpactRadar`; the full `NewsPortal` and the retained `HomeMarketNews` component remain compatible. `ImpactRadarFeed` owns confirmed following, pending feed acceptance and request generations. All/day/Live Radar/category/Tracking filters, card/detail buttons and tracking count read that owner. `/api/impact-radar` supplies sourced neutral facts; `/following` and `/:id/follow` use verified Firebase UID with durable server-only Supabase writes. Inline event detail fetches the source timeline and returns focus on Close; it introduces no modal scroll lock. Rich tokens, scoped CSS, density and reduced motion are preserved. Source publication, radar-check time and unresolved/past hearing dates are distinct. See `changes/impact-radar.md` for source/test evidence and unverified browser/hosting gates.
+
 2026-10-11 startup audit: App feed/home lazy imports, immediate main error boundary and dynamically configured Sentry. Shared nav/tab indicators avoid layout tracking; screen transitions animate direct children after paint scheduling. See changes/performance-security-audit.md for linked consumers and unverified browser gates.
 
 Source inspected at main `d1df67a462fc4ec4222b9c1944a6ebff93fabeb9` on 2026-10-07. This is a code-based navigation guide, not proof of live browser behavior. Update it with related source changes; use the generated map for exact current import/call-site locations.

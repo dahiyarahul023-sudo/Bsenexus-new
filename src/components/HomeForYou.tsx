@@ -1,4 +1,4 @@
-import { HomeMarketNews } from './HomeMarketNews';
+import { ImpactRadar } from './ImpactRadar';
 import { HomeSkeleton } from './ui/PageSkeleton';
 import { StoryCarouselBar } from './story/StoryCarouselBar';
 import { TodayMarketStoryModal } from './TodayMarketStoryModal';
@@ -252,8 +252,7 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
         className="pt-0 pb-1"
       />
 
-      <HomeMarketNews active={isActive} identity={user?.uid || profile?.uid || 'guest'}
-        watched={sameIdentity ? [...watchlistSymbols, ...watchlists.flatMap(list => (list.items || []).flatMap((item: any) => typeof item === 'string' ? [] : [item.companyName, item.name].filter((name: unknown) => typeof name === 'string')))] : []} onNavigate={onNavigate} density={density} />
+      <ImpactRadar key={identity} active={isActive} identity={identity} onNavigate={onNavigate} density={density} />
 
       {/* 2. Focused Sections or Calm Summary */}
       {!sameIdentity || (loading && !hasLoaded) ? <HomeSkeleton /> : (

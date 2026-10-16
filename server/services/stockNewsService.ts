@@ -72,6 +72,8 @@ const newsCache: MultiSourceNewsCache = {
   lastFetchTime: 0,
   sourceCounts: {}
 };
+let lastNewsFetchUnavailable = false;
+export function getNewsSourceState() { return { unavailable: lastNewsFetchUnavailable || !newsCache.lastFetchTime || Date.now() - newsCache.lastFetchTime > 5 * 60_000, checkedAt: newsCache.lastFetchTime }; }
 
 // Tracking sent news alerts per user (persisted in localStore + Firestore)
 const SENT_NEWS_ALERTS_FILE = 'sent_news_alerts.json';
@@ -329,6 +331,7 @@ export async function fetchAllMultiSourceNewsFeeds(forceRefresh = false): Promis
     'Business Standard': 0
   };
 
+  let successfulFeeds = 0;
   const feedPromises = NEWS_FEEDS.map(async (feed) => {
     try {
       const res = await externalFeedsCircuitBreaker.execute(
@@ -347,6 +350,7 @@ export async function fetchAllMultiSourceNewsFeeds(forceRefresh = false): Promis
 
       if (res && res.ok) {
         const xml = await res.text();
+        successfulFeeds++;
         const parsed = parseRssFeedXml(xml, feed);
 
         parsed.forEach(item => {
@@ -365,6 +369,7 @@ export async function fetchAllMultiSourceNewsFeeds(forceRefresh = false): Promis
   });
 
   await Promise.allSettled(feedPromises);
+  lastNewsFetchUnavailable = successfulFeeds === 0;
 
   const sorted = Array.from(resultsMap.values()).sort(
     (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()

@@ -95,6 +95,7 @@ import { paymentsRouter } from "./payments.js";
 import { referralsRouter } from "./referrals.js";
 import { faqRouter } from "./faq.js";
 import { notesRouter } from "./notes.js";
+import { impactRadarRouter } from "./impactRadar.js";
 import { pageRenderCache, staticGuideCache, apiResponseCache } from "../utils/renderCache.js";
 import { getMarketGuides, getMarketGuideBySlug } from "../services/marketGuidesService.js";
 
@@ -114,6 +115,7 @@ apiRouter.use("/faq", faqRouter);
 
 // Saved Notes (login-required, Firestore-first)
 apiRouter.use("/notes", notesRouter);
+apiRouter.use("/impact-radar", impactRadarRouter);
 
 // Educational Market Guides API (Fail-safe, cached)
 apiRouter.get("/market-guides", (_req, res) => {

@@ -1,5 +1,7 @@
 # Frontend strategy and evidence-based priorities
 
+2026-10-16 bounded Impact Radar implementation: the Home news slot now has compact sourced events, IST day filters with Live Radar, category selection, inline evidence timeline and account-owned durable tracking. Pre-event content is information only; no sentiment, price targets, outcome probabilities or return forecasts. Explicit case references may link source updates; ambiguous reports remain separate until editorial publication supplies the canonical event ID. Background refresh preserves the current cards until updates are accepted. Automated contract/controller/API/SQL/render checks and actual browser/device/hosting evidence are recorded separately in `changes/impact-radar.md`; no whole-app completion or legal-compliance certification is claimed.
+
 2026-10-11 performance follow-up: entry JavaScript 1,692,008→1,464,208 raw bytes; default CTA delay and recursive layout reads removed; decorative work bounded/paused and optional SDKs deferred. Clean install/tests/build pass. Browser acceptance, real INP/PageSpeed improvement and deployment remain separate gates. See docs/audit/PERFORMANCE_SECURITY_2026-10-11.md; P3 is not complete from bundle size alone.
 
 User clarification, 2026-10-07: apply the depth of backend planning to FRONTEND work. The backend-only restriction added in PR #9 was a misunderstanding. This strategy corrects scope and preserves existing backend safety controls. It does not claim a complete frontend redesign or a full browser audit.
