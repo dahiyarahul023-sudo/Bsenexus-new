@@ -30,65 +30,80 @@ interface TodayMarketStoryModalProps {
 const SLIDE_DURATION_MS = 6500;
 
 // Instagram / Groww Distinct Motion Transition Variants
-// 1. Chapter Change (3D Cube Flip & Card Swing with Perspective)
-const chapterFlipVariants: Variants = {
-  initial: (dir: number) => ({
-    opacity: 0,
-    rotateY: dir > 0 ? 42 : -42,
-    x: dir > 0 ? 80 : -80,
-    scale: 0.88,
-    transformPerspective: 1200,
-  }),
-  animate: {
+// 1. Chapter Change (3D Cube / Depth Perspective Flip across chapters)
+// 2. Intra-Chapter Slide (Smooth, lightweight horizontal lateral slide)
+export interface SlideMotionState {
+  type: 'intra-slide' | 'chapter-change';
+  dir: 1 | -1;
+  chapterTitle?: string;
+  chapterIndex?: number;
+}
+
+const storyMotionVariants: Variants = {
+  initial: (custom: SlideMotionState) => {
+    if (custom.type === 'chapter-change') {
+      return {
+        opacity: 0,
+        rotateY: custom.dir > 0 ? 55 : -55,
+        x: custom.dir > 0 ? 80 : -80,
+        scale: 0.84,
+        transformOrigin: custom.dir > 0 ? 'left center' : 'right center',
+        transformPerspective: 1200,
+      };
+    }
+    // Intra-chapter slide: smooth linear translate without 3D rotation
+    return {
+      opacity: 0,
+      rotateY: 0,
+      x: custom.dir > 0 ? 36 : -36,
+      scale: 0.99,
+      transformOrigin: 'center center',
+    };
+  },
+  animate: (custom: SlideMotionState) => ({
     opacity: 1,
     rotateY: 0,
     x: 0,
     scale: 1,
-    transition: {
-      type: "spring",
-      damping: 24,
-      stiffness: 210,
-      mass: 0.8
-    }
-  },
-  exit: (dir: number) => ({
-    opacity: 0,
-    rotateY: dir > 0 ? -42 : 42,
-    x: dir > 0 ? -80 : 80,
-    scale: 0.88,
-    transformPerspective: 1200,
-    transition: {
-      duration: 0.22,
-      ease: [0.32, 0, 0.67, 0] as const
-    }
-  })
-};
-
-// 2. Intra-Chapter Slides (Fluid Lateral Slide within the same chapter)
-const slideLateralVariants: Variants = {
-  initial: (dir: number) => ({
-    opacity: 0,
-    x: dir > 0 ? 36 : -36,
-    scale: 0.99,
+    transition: custom.type === 'chapter-change'
+      ? {
+          type: "spring",
+          damping: 24,
+          stiffness: 220,
+          mass: 0.8,
+        }
+      : {
+          duration: 0.2,
+          ease: [0.16, 1, 0.3, 1] as const,
+        }
   }),
-  animate: {
-    opacity: 1,
-    x: 0,
-    scale: 1,
-    transition: {
-      duration: 0.2,
-      ease: [0.16, 1, 0.3, 1] as const
+  exit: (custom: SlideMotionState) => {
+    if (custom.type === 'chapter-change') {
+      return {
+        opacity: 0,
+        rotateY: custom.dir > 0 ? -55 : 55,
+        x: custom.dir > 0 ? -80 : 80,
+        scale: 0.84,
+        transformOrigin: custom.dir > 0 ? 'right center' : 'left center',
+        transformPerspective: 1200,
+        transition: {
+          duration: 0.22,
+          ease: [0.32, 0, 0.67, 0] as const,
+        }
+      };
     }
-  },
-  exit: (dir: number) => ({
-    opacity: 0,
-    x: dir > 0 ? -36 : 36,
-    scale: 0.99,
-    transition: {
-      duration: 0.16,
-      ease: [0.32, 0, 0.67, 0] as const
-    }
-  })
+    // Intra-chapter exit
+    return {
+      opacity: 0,
+      rotateY: 0,
+      x: custom.dir > 0 ? -36 : 36,
+      scale: 0.99,
+      transition: {
+        duration: 0.16,
+        ease: [0.32, 0, 0.67, 0] as const,
+      }
+    };
+  }
 };
 
 export function TodayMarketStoryModal({ 
@@ -107,10 +122,10 @@ export function TodayMarketStoryModal({
   const [isRefreshing, setIsRefreshing] = useState(false);
   
   // Instagram / Groww Chapter vs Intra-Slide Motion Tracking
-  const [navDirection, setNavDirection] = useState<1 | -1>(1);
-  const [isChapterTransition, setIsChapterTransition] = useState<boolean>(false);
+  const [slideMotion, setSlideMotion] = useState<SlideMotionState>({ type: 'intra-slide', dir: 1 });
   const [showChapterToast, setShowChapterToast] = useState<boolean>(false);
   const chapterToastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const activeCapsuleRef = useRef<HTMLButtonElement | null>(null);
   
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(Date.now());
@@ -247,16 +262,31 @@ export function TodayMarketStoryModal({
   const triggerChapterToast = useCallback(() => {
     setShowChapterToast(true);
     if (chapterToastTimeoutRef.current) clearTimeout(chapterToastTimeoutRef.current);
-    chapterToastTimeoutRef.current = setTimeout(() => setShowChapterToast(false), 2200);
+    chapterToastTimeoutRef.current = setTimeout(() => setShowChapterToast(false), 2400);
   }, []);
+
+  // Auto-scroll active chapter capsule into view
+  useEffect(() => {
+    if (activeCapsuleRef.current) {
+      activeCapsuleRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center'
+      });
+    }
+  }, [currentChapter?.id]);
 
   // Jump directly to a specific chapter
   const handleJumpToChapter = useCallback((chapterId: string) => {
     const targetIdx = allSlides.findIndex(s => s.chapterId === chapterId);
     if (targetIdx !== -1 && targetIdx !== currentSlideIndex) {
-      const dir = targetIdx > currentSlideIndex ? 1 : -1;
-      setNavDirection(dir);
-      setIsChapterTransition(true);
+      const dir: 1 | -1 = targetIdx > currentSlideIndex ? 1 : -1;
+      setSlideMotion({
+        type: 'chapter-change',
+        dir,
+        chapterTitle: allSlides[targetIdx]?.chapterTitle,
+        chapterIndex: allSlides[targetIdx]?.chapterIndex,
+      });
       triggerChapterToast();
       setProgress(0);
       elapsedBeforePauseRef.current = 0;
@@ -274,8 +304,12 @@ export function TodayMarketStoryModal({
       if (prev < allSlides.length - 1) {
         const nextIdx = prev + 1;
         const willChangeChapter = allSlides[prev]?.chapterId !== allSlides[nextIdx]?.chapterId;
-        setNavDirection(1);
-        setIsChapterTransition(willChangeChapter);
+        setSlideMotion({
+          type: willChangeChapter ? 'chapter-change' : 'intra-slide',
+          dir: 1,
+          chapterTitle: willChangeChapter ? allSlides[nextIdx]?.chapterTitle : undefined,
+          chapterIndex: willChangeChapter ? allSlides[nextIdx]?.chapterIndex : undefined,
+        });
         if (willChangeChapter) {
           triggerChapterToast();
         }
@@ -294,8 +328,12 @@ export function TodayMarketStoryModal({
       if (prev > 0) {
         const nextIdx = prev - 1;
         const willChangeChapter = allSlides[prev]?.chapterId !== allSlides[nextIdx]?.chapterId;
-        setNavDirection(-1);
-        setIsChapterTransition(willChangeChapter);
+        setSlideMotion({
+          type: willChangeChapter ? 'chapter-change' : 'intra-slide',
+          dir: -1,
+          chapterTitle: willChangeChapter ? allSlides[nextIdx]?.chapterTitle : undefined,
+          chapterIndex: willChangeChapter ? allSlides[nextIdx]?.chapterIndex : undefined,
+        });
         if (willChangeChapter) {
           triggerChapterToast();
         }
@@ -451,19 +489,26 @@ export function TodayMarketStoryModal({
           <AnimatePresence>
             {showChapterToast && (
               <motion.div
-                initial={{ opacity: 0, y: -16, scale: 0.9 }}
+                initial={{ opacity: 0, y: -20, scale: 0.88 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                transition={{ type: "spring", damping: 20, stiffness: 280 }}
-                className="absolute top-28 left-1/2 -translate-x-1/2 z-40 px-3.5 py-1.5 rounded-full bg-black/85 backdrop-blur-xl border border-white/25 shadow-2xl flex items-center gap-2 pointer-events-none whitespace-nowrap"
+                exit={{ opacity: 0, y: -12, scale: 0.94 }}
+                transition={{ type: "spring", damping: 22, stiffness: 280 }}
+                className="absolute top-20 left-1/2 -translate-x-1/2 z-40 px-4 py-2 rounded-2xl bg-black/90 backdrop-blur-2xl border border-white/20 shadow-2xl flex items-center gap-2.5 pointer-events-none whitespace-nowrap"
               >
-                <span className={`w-2 h-2 rounded-full ${chapterTheme.accentDot} animate-ping`} />
-                <span className="text-[11px] font-black text-white tracking-wide uppercase">
-                  {currentChapter.title}
-                </span>
-                <span className="text-[10px] text-slate-300 font-mono font-bold">
-                  ({currentChapterIndex + 1}/{chapters.length})
-                </span>
+                <span className={`w-2.5 h-2.5 rounded-full ${chapterTheme.accentDot} animate-ping shrink-0`} />
+                <div className="flex flex-col text-left">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[9px] font-black tracking-widest uppercase text-emerald-400 bg-emerald-500/15 px-1.5 py-0.5 rounded">
+                      CHAPTER {currentChapterIndex + 1} OF {chapters.length}
+                    </span>
+                    <span className="text-[9px] font-bold text-slate-300">
+                      {marketSession.editionBadge}
+                    </span>
+                  </div>
+                  <span className="text-xs font-black text-white tracking-tight mt-0.5">
+                    {currentChapter.title}
+                  </span>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -533,6 +578,7 @@ export function TodayMarketStoryModal({
                 const isAct = ch.id === currentChapter?.id;
                 return (
                   <button
+                    ref={isAct ? activeCapsuleRef : null}
                     key={ch.id}
                     type="button"
                     onClick={(e) => {
@@ -595,17 +641,14 @@ export function TodayMarketStoryModal({
               </div>
             )}
 
-            <AnimatePresence mode="wait" custom={navDirection}>
+            <AnimatePresence mode="wait" custom={slideMotion}>
               <motion.div
                 key={currentSlide.id}
-                custom={navDirection}
-                variants={isChapterTransition ? chapterFlipVariants : slideLateralVariants}
+                custom={slideMotion}
+                variants={storyMotionVariants}
                 initial="initial"
                 animate="animate"
                 exit="exit"
-                onAnimationComplete={() => {
-                  setIsChapterTransition(false);
-                }}
                 style={{ transformStyle: 'preserve-3d' }}
                 className="flex flex-col gap-3 my-auto will-change-transform"
               >
