@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "84434d51c69f0f2d4dacf4b868c10e2a07106490d651f39903c5692e10214c65",
+  "sourceDigest": "eb118b21051b313d09e1bb7a5b6046a04bc1ddfa83e3d5397221a52b5f210035",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -36,6 +36,11 @@
     {
       "path": "metadata.json",
       "sha256": "8c118172c31ae3ec211f9286947f0b663e98244bb641ed8b7c2968ef64c2d8c7",
+      "importedBy": []
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "ba3ff8ccf57d9dd02c2b31f43c72c9efb9ce4b7ca23d206028866ea0106a7b59",
       "importedBy": []
     },
     {
@@ -1014,7 +1019,7 @@
     },
     {
       "path": "server/tests/pollerStall.test.ts",
-      "sha256": "bf485c22b384c9f65bd0ea2e308ce652181ca548661ad6aea95baafdc426675b",
+      "sha256": "b803fe9cf73c063461e321448e592b51e970c7f9edd0ff5f56ddae6cb8715c11",
       "importedBy": []
     },
     {
@@ -9017,7 +9022,9 @@
         "server/services/resendMailer.ts",
         "server/utils/retry.ts",
         "server/utils/circuitBreaker.ts",
-        "server/utils/pollCycle.ts"
+        "server/utils/pollCycle.ts",
+        "package.json",
+        "package-lock.json"
       ],
       "tests": [
         "server/tests/startupRecovery.test.ts",

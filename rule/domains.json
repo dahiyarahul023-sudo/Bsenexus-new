@@ -328,7 +328,9 @@
         "server/services/resendMailer.ts",
         "server/utils/retry.ts",
         "server/utils/circuitBreaker.ts",
-        "server/utils/pollCycle.ts"
+        "server/utils/pollCycle.ts",
+        "package.json",
+        "package-lock.json"
       ],
       "tests": [
         "server/tests/startupRecovery.test.ts",

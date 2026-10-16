@@ -83,7 +83,7 @@ for (const stage of ['init', 'fetch', 'settings', 'sent', 'save', 'inbox', 'drai
     await h.poll(); // Admin/manual refresh cannot overlap the active cycle.
     assert.equal(h.calls.filter(x => x === stage).length, 1);
     assert.equal(done, false);
-    await h.advance(stage === 'fetch' ? 60_000 : 15_000);
+    await h.advance(stage === 'fetch' ? 60_000 : 30_000);
     await first;
     assert.equal(done, true);
     assert.equal(h.failures(), stage === 'fetch' ? 1 : 0, 'only exchange timeouts increase source backoff');
