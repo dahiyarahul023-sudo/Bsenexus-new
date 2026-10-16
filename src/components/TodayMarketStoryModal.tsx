@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useTransform, Variants } from 'framer-motion';
 import { 
   X, ChevronLeft, ChevronRight, Pause, Play, 
   ArrowUpRight, ArrowDownRight, RotateCw,
@@ -29,6 +29,68 @@ interface TodayMarketStoryModalProps {
 
 const SLIDE_DURATION_MS = 6500;
 
+// Instagram / Groww Distinct Motion Transition Variants
+// 1. Chapter Change (3D Cube Flip & Card Swing with Perspective)
+const chapterFlipVariants: Variants = {
+  initial: (dir: number) => ({
+    opacity: 0,
+    rotateY: dir > 0 ? 42 : -42,
+    x: dir > 0 ? 80 : -80,
+    scale: 0.88,
+    transformPerspective: 1200,
+  }),
+  animate: {
+    opacity: 1,
+    rotateY: 0,
+    x: 0,
+    scale: 1,
+    transition: {
+      type: "spring",
+      damping: 24,
+      stiffness: 210,
+      mass: 0.8
+    }
+  },
+  exit: (dir: number) => ({
+    opacity: 0,
+    rotateY: dir > 0 ? -42 : 42,
+    x: dir > 0 ? -80 : 80,
+    scale: 0.88,
+    transformPerspective: 1200,
+    transition: {
+      duration: 0.22,
+      ease: [0.32, 0, 0.67, 0] as const
+    }
+  })
+};
+
+// 2. Intra-Chapter Slides (Fluid Lateral Slide within the same chapter)
+const slideLateralVariants: Variants = {
+  initial: (dir: number) => ({
+    opacity: 0,
+    x: dir > 0 ? 36 : -36,
+    scale: 0.99,
+  }),
+  animate: {
+    opacity: 1,
+    x: 0,
+    scale: 1,
+    transition: {
+      duration: 0.2,
+      ease: [0.16, 1, 0.3, 1] as const
+    }
+  },
+  exit: (dir: number) => ({
+    opacity: 0,
+    x: dir > 0 ? -36 : 36,
+    scale: 0.99,
+    transition: {
+      duration: 0.16,
+      ease: [0.32, 0, 0.67, 0] as const
+    }
+  })
+};
+
 export function TodayMarketStoryModal({ 
   isOpen, 
   onClose, 
@@ -43,6 +105,12 @@ export function TodayMarketStoryModal({
   const [progress, setProgress] = useState(0);
   const [tapFeedbackSide, setTapFeedbackSide] = useState<'left' | 'right' | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  // Instagram / Groww Chapter vs Intra-Slide Motion Tracking
+  const [navDirection, setNavDirection] = useState<1 | -1>(1);
+  const [isChapterTransition, setIsChapterTransition] = useState<boolean>(false);
+  const [showChapterToast, setShowChapterToast] = useState<boolean>(false);
+  const chapterToastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(Date.now());
@@ -66,6 +134,39 @@ export function TodayMarketStoryModal({
     if (!currentSlide) return chapters[0];
     return chapters.find(c => c.id === currentSlide.chapterId) || chapters[0];
   }, [chapters, currentSlide]);
+
+  const currentChapterIndex = useMemo(() => {
+    return chapters.findIndex(c => c.id === currentChapter?.id);
+  }, [chapters, currentChapter?.id]);
+
+  // Dynamic atmospheric themes for each chapter
+  const chapterTheme = useMemo(() => {
+    if (currentChapter?.id === 'chapter-market-moves') {
+      return {
+        bg: 'from-[#071B14] via-[#05110E] to-[#030806]',
+        glow: 'from-emerald-500/20 via-teal-500/10 to-transparent',
+        accentDot: 'bg-emerald-400',
+        activeTab: 'bg-emerald-500/25 text-emerald-300 border-emerald-400/50 shadow-emerald-500/10',
+        title: 'BSE Movers',
+      };
+    }
+    if (currentChapter?.id === 'chapter-results-radar') {
+      return {
+        bg: 'from-[#1B1207] via-[#100C04] to-[#070502]',
+        glow: 'from-amber-500/20 via-orange-500/10 to-transparent',
+        accentDot: 'bg-amber-400',
+        activeTab: 'bg-amber-500/25 text-amber-300 border-amber-400/50 shadow-amber-500/10',
+        title: 'Earnings Radar',
+      };
+    }
+    return {
+      bg: 'from-[#141029] via-[#0B0917] to-[#05040B]',
+      glow: 'from-indigo-500/20 via-violet-500/10 to-transparent',
+      accentDot: 'bg-indigo-400',
+      activeTab: 'bg-indigo-500/25 text-indigo-300 border-indigo-400/50 shadow-indigo-500/10',
+      title: 'Market Pulse',
+    };
+  }, [currentChapter?.id]);
 
   // Current slide index relative to the current chapter
   const currentSlideInChapter = currentSlide?.slideIndexInChapter ?? 0;
@@ -142,6 +243,28 @@ export function TodayMarketStoryModal({
     }
   }, [isOpen, loadFreshStory]);
 
+  // Trigger floating Instagram/Groww chapter indicator toast
+  const triggerChapterToast = useCallback(() => {
+    setShowChapterToast(true);
+    if (chapterToastTimeoutRef.current) clearTimeout(chapterToastTimeoutRef.current);
+    chapterToastTimeoutRef.current = setTimeout(() => setShowChapterToast(false), 2200);
+  }, []);
+
+  // Jump directly to a specific chapter
+  const handleJumpToChapter = useCallback((chapterId: string) => {
+    const targetIdx = allSlides.findIndex(s => s.chapterId === chapterId);
+    if (targetIdx !== -1 && targetIdx !== currentSlideIndex) {
+      const dir = targetIdx > currentSlideIndex ? 1 : -1;
+      setNavDirection(dir);
+      setIsChapterTransition(true);
+      triggerChapterToast();
+      setProgress(0);
+      elapsedBeforePauseRef.current = 0;
+      startTimeRef.current = Date.now();
+      setCurrentSlideIndex(targetIdx);
+    }
+  }, [allSlides, currentSlideIndex, triggerChapterToast]);
+
   // Navigation handlers
   const handleNext = useCallback(() => {
     setProgress(0);
@@ -149,19 +272,38 @@ export function TodayMarketStoryModal({
     startTimeRef.current = Date.now();
     setCurrentSlideIndex(prev => {
       if (prev < allSlides.length - 1) {
-        return prev + 1;
+        const nextIdx = prev + 1;
+        const willChangeChapter = allSlides[prev]?.chapterId !== allSlides[nextIdx]?.chapterId;
+        setNavDirection(1);
+        setIsChapterTransition(willChangeChapter);
+        if (willChangeChapter) {
+          triggerChapterToast();
+        }
+        return nextIdx;
       }
       onClose();
       return prev;
     });
-  }, [allSlides.length, onClose]);
+  }, [allSlides, onClose, triggerChapterToast]);
 
   const handlePrev = useCallback(() => {
     setProgress(0);
     elapsedBeforePauseRef.current = 0;
     startTimeRef.current = Date.now();
-    setCurrentSlideIndex(prev => Math.max(0, prev - 1));
-  }, []);
+    setCurrentSlideIndex(prev => {
+      if (prev > 0) {
+        const nextIdx = prev - 1;
+        const willChangeChapter = allSlides[prev]?.chapterId !== allSlides[nextIdx]?.chapterId;
+        setNavDirection(-1);
+        setIsChapterTransition(willChangeChapter);
+        if (willChangeChapter) {
+          triggerChapterToast();
+        }
+        return nextIdx;
+      }
+      return 0;
+    });
+  }, [allSlides, triggerChapterToast]);
 
   // Timer loop for progress bar
   useEffect(() => {
@@ -290,26 +432,50 @@ export function TodayMarketStoryModal({
             }
           }}
           style={{ opacity: modalOpacity }}
-          className="relative w-full h-full sm:h-[660px] sm:max-w-md bg-gradient-to-b from-[#131122] via-[#0D0B18] to-[#080711] sm:rounded-3xl border border-white/15 shadow-2xl flex flex-col justify-between overflow-hidden"
+          className={`relative w-full h-full sm:h-[660px] sm:max-w-md bg-gradient-to-b ${chapterTheme.bg} sm:rounded-3xl border border-white/15 shadow-2xl flex flex-col justify-between overflow-hidden transition-colors duration-500`}
           onClick={(e) => e.stopPropagation()}
           onMouseDown={handlePointerDown}
           onMouseUp={handlePointerUp}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
+          {/* Ambient Chapter Radial Glow */}
+          <div className={`absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-80 rounded-full bg-radial ${chapterTheme.glow} blur-2xl pointer-events-none z-0 transition-all duration-700`} />
+
           {/* Top Drag Indicator Pill (Apple style) */}
-          <div className="w-full pt-2 flex justify-center shrink-0">
+          <div className="w-full pt-2 flex justify-center shrink-0 relative z-20">
             <div className="w-10 h-1 rounded-full bg-white/25" />
           </div>
+
+          {/* Floating Instagram / Groww Chapter Toast on Chapter Boundaries */}
+          <AnimatePresence>
+            {showChapterToast && (
+              <motion.div
+                initial={{ opacity: 0, y: -16, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                transition={{ type: "spring", damping: 20, stiffness: 280 }}
+                className="absolute top-28 left-1/2 -translate-x-1/2 z-40 px-3.5 py-1.5 rounded-full bg-black/85 backdrop-blur-xl border border-white/25 shadow-2xl flex items-center gap-2 pointer-events-none whitespace-nowrap"
+              >
+                <span className={`w-2 h-2 rounded-full ${chapterTheme.accentDot} animate-ping`} />
+                <span className="text-[11px] font-black text-white tracking-wide uppercase">
+                  {currentChapter.title}
+                </span>
+                <span className="text-[10px] text-slate-300 font-mono font-bold">
+                  ({currentChapterIndex + 1}/{chapters.length})
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* ======================================================== */}
           {/* TOP STORY HEADER & PROGRESS BARS                          */}
           {/* ======================================================== */}
           <div className="pt-2 px-4 pb-2 shrink-0 bg-gradient-to-b from-black/80 via-black/40 to-transparent z-20">
             {/* Top Row: Category dot + Chapter Name + Session Badge + Controls */}
-            <div className="flex items-center justify-between gap-2 mb-2.5">
+            <div className="flex items-center justify-between gap-2 mb-2">
               <div className="flex items-center gap-2 min-w-0">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                <span className={`w-2 h-2 rounded-full ${chapterTheme.accentDot} animate-pulse shrink-0`} />
                 <h2 className="text-sm font-bold text-white tracking-tight truncate drop-shadow-sm font-display">
                   {currentChapter.title}
                 </h2>
@@ -361,6 +527,32 @@ export function TodayMarketStoryModal({
               </div>
             </div>
 
+            {/* Interactive Chapter Indicator Capsules (Instagram / Groww style) */}
+            <div className="flex items-center gap-1.5 w-full mb-2 overflow-x-auto no-scrollbar py-0.5">
+              {chapters.map((ch, idx) => {
+                const isAct = ch.id === currentChapter?.id;
+                return (
+                  <button
+                    key={ch.id}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleJumpToChapter(ch.id);
+                    }}
+                    className={`px-2.5 py-1 rounded-full text-[10px] font-bold tracking-tight transition-all duration-200 cursor-pointer flex items-center gap-1.5 border shrink-0 ${
+                      isAct 
+                        ? `${chapterTheme.activeTab} font-black scale-102` 
+                        : 'bg-white/5 hover:bg-white/10 text-slate-400 border-white/10'
+                    }`}
+                    title={`Switch to Chapter ${idx + 1}: ${ch.title}`}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full ${isAct ? chapterTheme.accentDot + ' animate-pulse' : 'bg-slate-500'}`} />
+                    <span>{idx + 1}. {ch.title.split('&')[0].trim()}</span>
+                  </button>
+                );
+              })}
+            </div>
+
             {/* Segmented Progress Bars: ONLY FOR THE CURRENT CHAPTER SLIDES */}
             <div className="grid gap-1.5 w-full" style={{ gridTemplateColumns: `repeat(${chapterSlideCount}, 1fr)` }}>
               {currentChapter.slides.map((_, idx) => {
@@ -389,6 +581,7 @@ export function TodayMarketStoryModal({
           <div 
             className="flex-1 px-4 pt-1 pb-20 flex flex-col justify-between overflow-y-auto overscroll-contain relative z-10"
             onClick={handleCardTap}
+            style={{ perspective: 1200 }}
           >
             {/* Visual Tap Feedback Ripple Chevrons */}
             {tapFeedbackSide === 'left' && (
@@ -402,14 +595,19 @@ export function TodayMarketStoryModal({
               </div>
             )}
 
-            <AnimatePresence mode="wait">
+            <AnimatePresence mode="wait" custom={navDirection}>
               <motion.div
                 key={currentSlide.id}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={springSnappy}
-                className="flex flex-col gap-3 my-auto"
+                custom={navDirection}
+                variants={isChapterTransition ? chapterFlipVariants : slideLateralVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                onAnimationComplete={() => {
+                  setIsChapterTransition(false);
+                }}
+                style={{ transformStyle: 'preserve-3d' }}
+                className="flex flex-col gap-3 my-auto will-change-transform"
               >
                 {/* 1. Tagline & Badges */}
                 <div className="flex items-center justify-between gap-2">
