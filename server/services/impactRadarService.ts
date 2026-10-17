@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { PNC_REVIEW } from './radarReviewedEvidence.js';
-import { refreshRadarCompanyIdentity } from './radarCompanyIdentity.js';
+import { refreshRadarCompanyIdentity, radarCompanyFromFiling } from './radarCompanyIdentity.js';
 import { getRecentAnnouncements } from '../database/announcementDao.js';
 import { getAllStockEntries, resolveStockDetailsStrict } from '../utils/stockResolver.js';
 import { fetchGeneralMarketNews, getNewsSourceState, type StockNewsItem } from './stockNewsService.js';
@@ -145,7 +145,7 @@ export async function refreshRadarIntake(): Promise<void> {
         const classified = classifyRadarEvent(`${subject} ${evidence}`, rules);
         if (!classified) continue;
         const scrip = String(f.scrip_cd || f.SCRIP_CD || '');
-        const entry = resolveStockDetailsStrict(scrip);
+        const entry = radarCompanyFromFiling({ ...f, scrip_cd: scrip, subject });
         const ts = typeof f.bseTimestamp === 'number' ? f.bseTimestamp : NaN;
         const url = radarUrl(f.pdfLink);
         if (!entry || !url || !/(^|\.)(?:bseindia|nseindia)\.com$/i.test(new URL(url).hostname) || !Number.isFinite(ts)) continue;

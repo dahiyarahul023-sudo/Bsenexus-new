@@ -42,7 +42,7 @@ export function RadarCard({ event, tracked, saving, disabled, now, selected, onO
   </article>;
 }
 
-function RadarDetail({ event, now, tracked, saving, disabled, onTrack, onRefreshKey, onRelated }: {
+export function RadarDetail({ event, now, tracked, saving, disabled, onTrack, onRefreshKey, onRelated }: {
   event: RadarEvent; now: number; tracked: boolean; saving: boolean; disabled: boolean; onTrack: () => void; onRefreshKey: number | null; onRelated: (event: RadarEvent) => void;
 }) {
   const [updates, setUpdates] = useState<RadarUpdate[]>([]), [error, setError] = useState(false), [loading, setLoading] = useState(true), [retry, setRetry] = useState(0);
@@ -67,39 +67,38 @@ function RadarDetail({ event, now, tracked, saving, disabled, onTrack, onRefresh
   return <section id="impact-radar-detail" className="impact-radar-detail" aria-labelledby="impact-radar-detail-title" aria-busy={loading}>
     <div className="impact-radar-detail-top"><span className="impact-radar-eyebrow">Event brief</span></div>
     <h3 id="impact-radar-detail-title" ref={heading} tabIndex={-1}>{radarHeadline(current)}</h3>
-    <p className="impact-radar-detail-companies">{current.companies.map(c => `${c.name} (${c.symbol})`).join(' · ')}</p>
+    <p className="impact-radar-detail-companies">{current.companies.map(c => /^\d+$/.test(c.symbol) ? `BSE ${c.scripCode}` : c.symbol).join(' · ')}</p>
     <div className="impact-radar-detail-facts"><span>{current.authority}</span><span>{radarStatus(current, now)}</span><span>{dayLabel(current, now)}</span></div>
     <div className="impact-radar-provenance">
-      <p><strong>Report published:</strong> {time(current.publishedAt)} · {current.source.name} · {radarSourceLabel(current.source)}{isReportedRadarSource(current.source) ? '; official confirmation not recorded in this source' : ''}</p>
-      <p><strong>Event date:</strong> {current.occurredDate || 'Not independently verified; the publication date is not the hearing or order date.'}{current.occurredSource && <a href={radarUrl(current.occurredSource.url)!} target="_blank" rel="noopener noreferrer">Date evidence ↗</a>}</p>
-      {firstUpdate && <p><strong>Earliest recorded source:</strong> {time(firstUpdate.publishedAt)} <a href={radarUrl(firstUpdate.source.url)!} target="_blank" rel="noopener noreferrer">{firstUpdate.source.name} ↗</a></p>}
+      <p><strong>Published:</strong> {time(current.publishedAt)} · {current.source.name}{isReportedRadarSource(current.source) ? ' · News-reported' : ''}</p>
+      {current.occurredDate && <p><strong>Event date:</strong> {current.occurredDate} {current.occurredSource && <a href={radarUrl(current.occurredSource.url)!} target="_blank" rel="noopener noreferrer">Date evidence ↗</a>}</p>}
+      {firstUpdate && (firstUpdate.source.url !== current.source.url || Date.parse(firstUpdate.publishedAt) !== Date.parse(current.publishedAt)) && <p><strong>First recorded:</strong> {time(firstUpdate.publishedAt)} <a href={radarUrl(firstUpdate.source.url)!} target="_blank" rel="noopener noreferrer">{firstUpdate.source.name} ↗</a></p>}
       {current.supportingSources?.map(s => <p key={s.url}><strong>Supporting source:</strong> <a href={radarUrl(s.url)!} target="_blank" rel="noopener noreferrer">{s.name} ↗</a></p>)}
       {current.scheduleSource && <p><strong>Next date evidence:</strong> <a href={radarUrl(current.scheduleSource.url)!} target="_blank" rel="noopener noreferrer">{current.scheduleSource.name} ↗</a></p>}
     </div>
     <RadarMovementPanel eventId={current.id} refreshKey={current.updatedAt} companyCount={current.companies.length} />
     <div className="impact-radar-answers">
-      <div><h4>What is this event?</h4><p>{current.information}</p></div>
-      <div><h4>What happens next?</h4><p>{current.nextTrigger || 'The next confirmed development has not been announced. Follow the original source for further information.'}</p></div>
-      <div><h4>What does the date mean?</h4><p>{current.scheduledDate ? 'This is a reported event date, not a confirmed outcome. A hearing may be deferred; an order or judgment is not guaranteed on that date.' : 'No confirmed future event date is recorded. A publication timestamp is not a hearing date.'}</p></div>
-      <div><h4>How long will it continue?</h4><p>{current.status === 'closed' ? 'This matter is marked closed in the recorded timeline. See the source for the scope of closure.' : 'The duration is not confirmed. Tracking keeps this matter available as further sourced developments are added.'}</p></div>
+      {!/^The company has published a legal or regulatory disclosure|^A news source has reported this development/i.test(current.information) && <div><h4>Event summary</h4><p>{current.information}</p></div>}
+      {current.nextTrigger && <div><h4>Next development</h4><p>{current.nextTrigger}</p></div>}
+      {current.scheduledDate && <div><h4>Next scheduled date</h4><p>{current.scheduledDate}{current.scheduleConfirmed ? '' : ' · Reported, confirmation pending'}. The schedule may change.</p></div>}
+      {current.status === 'closed' && <div><h4>Recorded status</h4><p>Marked closed. See the original source for the scope of closure.</p></div>}
     </div>
-    <div className="impact-radar-verification"><h4>Where can I check further developments?</h4><p>Read the original report and later company or authority updates. Court matters may also have an order, case status or cause list. A reported event is shown even when no exchange filing is recorded.</p>
+    {(radarVerificationSources(current).length > 0 || lookup.reference) && <details className="impact-radar-verification"><summary>Verify with original sources</summary>
       {/court|tribunal|NCLT|NCLAT|APTEL|SAT/i.test(current.authority) && <>
-      <p><strong>Party to search:</strong> {lookup.party}</p><p><strong>Case reference:</strong> {lookup.reference || 'Not available in the recorded sources'}</p><p>{lookup.instructions}</p>
+      {/[a-z]/i.test(lookup.party) && <p><strong>Party:</strong> {lookup.party}</p>}{lookup.reference && <p><strong>Case reference:</strong> {lookup.reference}</p>}
+      {!lookup.reference && /[a-z]/i.test(lookup.party) && <p>Use party-name search and match the parties and order date with the original filing.</p>}
       </>}
       {radarVerificationSources(current).map(source => <a key={source.url} href={source.url} target="_blank" rel="noopener noreferrer">{source.name}<ArrowUpRight size={13} aria-hidden="true" /><span className="sr-only"> (opens a new tab)</span></a>)}
-      {!radarVerificationSources(current).length && <p>The exact authority registry has not been identified for this report. Check the original announcement and company investor updates.</p>}
-    </div>
+    </details>}
     <div className="impact-radar-detail-actions">
       <ActionButton type="button" variant="secondary" size="sm" disabled={disabled} isLoading={saving} loadingText="Saving" aria-pressed={tracked} onClick={onTrack} icon={tracked ? <BookmarkCheck size={16} /> : <BookmarkPlus size={16} />}>{tracked ? 'Tracking event' : 'Track event'}</ActionButton>
       {sourceHref && <a href={sourceHref} target="_blank" rel="noopener noreferrer">{current.source.name}<ArrowUpRight size={15} aria-hidden="true" /><span className="sr-only"> (opens a new tab)</span></a>}
     </div>
-    <div className="impact-radar-timeline-heading"><h4>Event timeline</h4><span>Latest source updates</span></div>
     {error && <div className="impact-radar-status" role="status">Timeline could not be refreshed. Previously loaded details may be out of date. <button type="button" onClick={() => setRetry(v => v + 1)}>Retry</button></div>}
-    {loading && !updates.length ? <p role="status" className="impact-radar-muted">Loading source updates…</p> : updates.length ? <ol className="impact-radar-timeline">{updates.map(u => <li key={u.id}>
+    {loading && !updates.length ? <p role="status" className="impact-radar-muted">Loading source updates…</p> : updates.length ? <details className="impact-radar-source-history"><summary>Source history ({updates.length})</summary><ol className="impact-radar-timeline">{updates.map(u => <li key={u.id}>
       <time dateTime={u.publishedAt}>{time(u.publishedAt)}</time><strong>{u.title}</strong><p>{u.information}</p>
       <a href={radarUrl(u.source.url)!} target="_blank" rel="noopener noreferrer">{radarSourceLabel(u.source)} · {u.source.name}<ArrowUpRight size={13} aria-hidden="true" /><span className="sr-only"> (opens a new tab)</span></a>
-    </li>)}</ol> : !error && <p className="impact-radar-muted">No additional source updates are recorded.</p>}
+    </li>)}</ol></details> : null}
     {updates.length === 50 && <p className="impact-radar-muted">Showing the latest 50 source updates.</p>}
     {related.length > 0 && <div className="impact-radar-related"><h4>Related company reports</h4><p>Same company and related topic; these are not confirmed as the same proceeding. News and later official disclosures can appear here separately.</p>{related.map(e => <button key={e.id} type="button" onClick={() => onRelated(e)}>{radarHeadline(e)}<span>{radarSourceLabel(e.source)} · {time(e.publishedAt)}</span></button>)}</div>}
     <p className="impact-radar-disclaimer">{RADAR_NOTICE} This is not an investment recommendation.</p>

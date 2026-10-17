@@ -1,7 +1,7 @@
 import { getSupabase } from './supabase.js';
 import { isRadarEvent, isRadarEventInScope, isRadarUpdate, isRadarCategoryOption, publicRadarEvent, publicRadarUpdate, type RadarCategoryOption, type RadarEvent, type RadarUpdate } from '../../src/shared/impactRadar.js';
-import { resolveStockDetailsStrict } from '../utils/stockResolver.js';
 import { isRadarIntakeRule, type RadarIntakeRule } from '../services/radarIntakePolicy.js';
+import { resolveRadarCompany, radarCompanyFromFiling } from '../services/radarCompanyIdentity.js';
 
 export class RadarStorageError extends Error { constructor() { super('Impact Radar storage is unavailable. Please retry.'); } }
 const checked = <T>(result: { data: T; error: unknown }): T => { if (result.error) throw new RadarStorageError(); return result.data; };
@@ -40,21 +40,36 @@ export async function getRadarCategories(): Promise<RadarCategoryOption[]> {
 }
 /** Correct legacy numeric identities in the read projection without rewriting immutable evidence. */
 export function resolvedRadarEvent(e: RadarEvent): RadarEvent {
-  return publicRadarEvent({ ...e, companies: e.companies.map(c => {
-    const real = resolveStockDetailsStrict(c.scripCode);
-    return real ? { symbol: real.symbol, name: real.name, scripCode: real.scripCode } : c;
-  }) });
+  return publicRadarEvent({ ...e, companies: e.companies.map(c => resolveRadarCompany(c, e.title, e.source)) });
+}
+/** One bounded durable lookup repairs legacy headings that omitted the filing's company name. */
+async function repairRadarIdentities(events: RadarEvent[]): Promise<RadarEvent[]> {
+  const projected = events.map(resolvedRadarEvent);
+  const codes = [...new Set(projected.flatMap(e => e.companies.filter(c => !/[a-z]/i.test(c.name)).map(c => c.scripCode)))];
+  if (!codes.length) return projected;
+  try {
+    const { data, error } = await getSupabase().from('announcements').select('scrip_cd,data').in('scrip_cd', codes).order('fetched_at', {ascending:false}).limit(500).abortSignal(AbortSignal.timeout(2000));
+    if (!error) {
+      const seen = new Set<string>();
+      for (const row of data || []) {
+        const code = String(row.scrip_cd || '');
+        if (seen.has(code) || !codes.includes(code)) continue;
+        if (radarCompanyFromFiling({...row.data,scrip_cd:code})) seen.add(code);
+      }
+    }
+  } catch { /* Keep sourced events readable during an identity-store outage. */ }
+  return projected.map(resolvedRadarEvent);
 }
 export async function listRadarEvents(): Promise<RadarEvent[]> {
   try {
     const rows = checked(await getSupabase().from('impact_radar_events').select('data').order('updated_at', { ascending: false }).limit(200).abortSignal(AbortSignal.timeout(6000)));
-    return (rows || []).map(r => r.data).filter(e => isRadarEvent(e) && isRadarEventInScope(e)).map(resolvedRadarEvent);
+    return repairRadarIdentities((rows || []).map(r => r.data).filter(e => isRadarEvent(e) && isRadarEventInScope(e)));
   } catch { throw new RadarStorageError(); }
 }
 export async function getRadarEvent(id: string): Promise<RadarEvent | null> {
   try {
     const row = checked(await getSupabase().from('impact_radar_events').select('data').eq('id', id).abortSignal(AbortSignal.timeout(6000)).maybeSingle());
-    return isRadarEvent(row?.data) && isRadarEventInScope(row.data) ? resolvedRadarEvent(row.data) : null;
+    return isRadarEvent(row?.data) && isRadarEventInScope(row.data) ? (await repairRadarIdentities([row.data]))[0] : null;
   } catch { throw new RadarStorageError(); }
 }
 export async function listRadarUpdates(id: string): Promise<RadarUpdate[]> {
@@ -84,7 +99,7 @@ export async function getRadarFollowing(uid: string): Promise<{ ids: string[]; e
       const e = r.impact_radar_events?.data;
       return isRadarEvent(e) && isRadarEventInScope(e) ? [resolvedRadarEvent(e)] : [];
     });
-    return { ids: events.map(e => e.id), events };
+    return { ids: events.map(e => e.id), events: await repairRadarIdentities(events) };
   } catch { throw new RadarStorageError(); }
 }
 export async function setRadarFollowing(uid: string, id: string, followed: boolean): Promise<void> {
