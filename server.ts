@@ -23,6 +23,7 @@ import { fetchAndSyncResultsCalendar, getStockResultsHistory, getResultsCalendar
 import { syncWatchlistHistoricalData, backfillRecentAnnouncements, getBseFeedStaleness } from "./server/services/bse.js";
 import { initWatchlists } from "./server/database/watchlistDao.js";
 import { updateTelegramHealth } from "./server/services/telegram.js";
+import { refreshRadarIntake } from "./server/services/impactRadarService.js";
 import { processAutomatedNewsAlerts } from "./server/services/stockNewsService.js";
 import { addLog } from "./server/database/logDao.js";
 import { getPollingIntervalMs, parseBseDate } from "./server/utils/helpers.js";
@@ -6391,6 +6392,8 @@ function trackInterval(handle: NodeJS.Timeout): NodeJS.Timeout {
 // Attempt every 60s while the container has CPU. The monitor skips running cycles;
 // Cloud Scheduler is still required when request-based Cloud Run is idle.
 trackInterval(setInterval(async () => {
+  // Reuse the watchdog; intake has its own 60s single-flight guard and never dispatches alerts.
+  void refreshRadarIntake();
   try {
     await processAnnouncements();
   } catch (err: any) {
@@ -6447,6 +6450,7 @@ trackInterval(setInterval(() => {
 
 // 24/7 Background Multi-Source RSS News Worker (Runs every 3 minutes to auto-dispatch watchlist stock news to Telegram)
 setTimeout(() => {
+  void refreshRadarIntake();
   processAutomatedNewsAlerts().catch(e => console.warn("[StockNewsWorker] Initial pass notice:", e.message));
 }, 8000);
 trackInterval(setInterval(() => {

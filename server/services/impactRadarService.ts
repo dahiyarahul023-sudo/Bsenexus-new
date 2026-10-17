@@ -1,9 +1,11 @@
 import { createHash } from 'node:crypto';
+import { PNC_REVIEW } from './radarReviewedEvidence.js';
+import { refreshRadarCompanyIdentity } from './radarCompanyIdentity.js';
 import { getRecentAnnouncements } from '../database/announcementDao.js';
-import { getAllStockEntries, resolveStockDetailsSync } from '../utils/stockResolver.js';
-import { fetchGeneralMarketNews, getNewsSourceState } from './stockNewsService.js';
+import { getAllStockEntries, resolveStockDetailsStrict } from '../utils/stockResolver.js';
+import { fetchGeneralMarketNews, getNewsSourceState, type StockNewsItem } from './stockNewsService.js';
 import { publishRadarRecords, type RadarRecord } from '../database/impactRadarDao.js';
-import { isNeutralRadarText, isRadarEvent, radarUrl, radarDay, validRadarDate, type RadarCategory, type RadarEvent, type RadarSource } from '../../src/shared/impactRadar.js';
+import { isNeutralRadarText, isRadarEvent, radarUrl, radarDay, validRadarDate, validRadarTime, type RadarCategory, type RadarEvent, type RadarSource } from '../../src/shared/impactRadar.js';
 
 const digest = (s: string) => createHash('sha256').update(s).digest('hex').slice(0, 32);
 const text = (s: unknown) => typeof s === 'string' ? s.replace(/<[^>]*>/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim() : '';
@@ -37,14 +39,16 @@ function explicitDate(value: string): string | null {
   return validRadarDate(date) ? date : null;
 }
 export function matchRadarCompany(title: string, entries: { symbol: string; name: string; scripCode: string }[]) {
+  entries = [...new Map(entries.filter(e => /^\d{6}$/.test(e.scripCode) && /[a-z]/i.test(e.name)).map(e => [e.scripCode, e])).values()];
   const normalized = ` ${title.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()} `;
   const named = entries.filter(e => {
     const name = e.name.replace(/\s+(?:limited|ltd\.?)$/i, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
     return name.length >= 7 && normalized.includes(` ${name} `);
   });
-  if (named.length === 1) return named[0];
+  if (named.length > 1) return null;
   const symbols = entries.filter(e => e.symbol.length >= 3 && new RegExp(`(?:^|[^A-Za-z0-9])${e.symbol.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:$|[^A-Za-z0-9])`).test(title));
-  return symbols.length === 1 ? symbols[0] : null;
+  const matches = [...new Map([...named, ...symbols].map(e => [e.scripCode, e])).values()];
+  return matches.length === 1 ? matches[0] : null;
 }
 /** Conservative discovery only: dates, outcomes and price effects are never inferred. */
 export function radarRecordFromSource(input: {
@@ -54,15 +58,16 @@ export function radarRecordFromSource(input: {
   const title = text(input.title);
   const classified = classifyRadarEvent(title);
   const ts = Date.parse(input.publishedAt);
-  if (!classified || !isNeutralRadarText(title, 200) || !radarUrl(input.source.url) || !Number.isFinite(ts) || ts > now || ts < now - 7 * 86_400_000) return null;
+  if (!classified || !isNeutralRadarText(title, 200) || !radarUrl(input.source.url) || !validRadarTime(input.publishedAt) || ts > now || ts < now - 7 * 86_400_000) return null;
   if (!/^\d{6}$/.test(input.company.scripCode)) return null;
   // Group only an explicit case reference within the same company and authority.
   // Missing references remain separate source reports rather than guessing a shared case.
-  const reference = title.match(/\b(?:case|appeal|petition)\s*(?:no\.?|number|#)\s*([a-z0-9][a-z0-9./-]{1,40}(?:\s+of\s+\d{4})?)/i)?.[1].toUpperCase().replace(/\s+/g, '');
+  const proceeding = title.match(/\b(case|appeal|petition)\s*(?:no\.?|number|#)\s*([a-z0-9][a-z0-9./-]{1,40}(?:\s+of\s+\d{4})?)/i);
+  const reference = proceeding?.[2].toUpperCase().replace(/\s+/g, '');
   const unambiguousReference = reference && /(?:^|[/.\-]|OF)20\d{2}(?:$|[/.\-])/.test(reference) &&
     ['Supreme Court', 'SEBI', 'RBI', 'APTEL', 'CERC', 'NCLAT'].includes(classified.authority);
   const sourceKey = sourceIdentity(input.source);
-  const id = `radar_${digest(unambiguousReference ? `${input.company.scripCode}:${classified.authority}:${reference}` : `${input.company.scripCode}:${sourceKey}`)}`;
+  const id = `radar_${digest(unambiguousReference ? `${input.company.scripCode}:${classified.authority}:${proceeding![1].toLowerCase()}:${reference}` : `${input.company.scripCode}:${sourceKey}`)}`;
   const information = input.evidence && isNeutralRadarText(text(input.evidence), 1200) ? text(input.evidence) : input.source.kind === 'news'
     ? 'A news source has reported this development. Read the original report for details; an official outcome has not been independently confirmed here.'
     : 'The company has published a legal or regulatory disclosure. Read the original filing for the scope and current position.';
@@ -82,11 +87,38 @@ export function radarRecordFromSource(input: {
   if (!isRadarEvent(event)) return null;
   return { event, update: { id: `update_${digest(`${sourceKey}:${event.publishedAt}:${title}`)}`, eventId: id, title, information, source: input.source, publishedAt: event.publishedAt }, origin: 'intake' };
 }
+export function radarRecordFromNews(n: StockNewsItem, entries: { symbol: string; name: string; scripCode: string }[], now = Date.now()): RadarRecord | null {
+  if (n.publicationTimeKnown !== true || n.hasArticleLink !== true) return null;
+  const title = text(n.title), entry = matchRadarCompany(title, entries);
+  return entry ? radarRecordFromSource({ sourceId: `news:${n.id || n.link}`, title, publishedAt: n.publishedAt,
+    source: { name: n.source, url: n.link, kind: 'news' }, company: entry }, now) : null;
+}
 let running: Promise<void> | null = null;
 let lastCheckedAt: number | null = null;
 let lastAttempt = 0;
 let lastError = false;
-export function radarIntakeStatus() { return { checkedAt: lastCheckedAt, unavailable: lastError }; }
+/** Explicitly reviewed historical evidence; automatic discovery keeps its seven-day bound. */
+export function reviewedRadarRecords(now = Date.now()): RadarRecord[] {
+  const p = PNC_REVIEW, company = resolveStockDetailsStrict(p.scripCode);
+  if (!company || Date.parse(p.filingAt) > now) return [];
+  const base = radarRecordFromSource({ sourceId: 'reviewed-pnc-filing', title: p.title, publishedAt: p.filingAt, company,
+    source: { name: 'BSE company disclosure', url: p.filingUrl, kind: 'disclosure' }, evidence: p.information }, Date.parse(p.filingAt));
+  if (!base) return [];
+  base.origin = 'editorial';
+  base.event.occurredDate = p.orderDate;
+  base.event.occurredSource = { name: 'PNC Infratech · original investor disclosure', url: p.investorUrl, kind: 'company' };
+  base.event.supportingSources = [base.event.occurredSource, { name: 'CNBC TV18 syndication · publication timestamp', url: 'https://www.tradingview.com/news/cnbctv:c90dfbcd4094b:0/', kind: 'news' }];
+  const records = [base];
+  for (const n of p.news) {
+    if (Date.parse(n.publishedAt) > now) continue;
+    records.push({ origin: 'editorial', event: { ...base.event, updatedAt: n.publishedAt, ...('nextHearing' in n ? { status: 'scheduled', scheduledDate: n.nextHearing, scheduleConfirmed: false, scheduleSource: { name: n.name, url: n.url, kind: 'news' }, nextTrigger: 'A news report lists a hearing on 26 November 2026. Confirmation from the court case record is pending.' } as const : {}) }, update: {
+      id: `update_${digest(`${n.url}:${n.publishedAt}:reviewed-v1`)}`, eventId: base.event.id, title: n.title,
+      information: n.information, publishedAt: n.publishedAt, source: { name: n.name, url: n.url, kind: 'news' },
+    } });
+  }
+  return records;
+}
+export function radarIntakeStatus() { const news = getNewsSourceState(); return { checkedAt: lastCheckedAt, unavailable: lastError || news.unavailable, stale: !lastError && (!lastCheckedAt || Date.now() - lastCheckedAt > 5 * 60_000 || news.stale) }; }
 export async function refreshRadarIntake(): Promise<void> {
   if (running) return running;
   if (Date.now() - lastAttempt < 60_000) return;
@@ -95,13 +127,15 @@ export async function refreshRadarIntake(): Promise<void> {
     try {
       const [filingResult, newsResult] = await Promise.allSettled([getRecentAnnouncements(1500), fetchGeneralMarketNews(false)]);
       const filings = filingResult.status === 'fulfilled' ? filingResult.value : [];
-      const records: RadarRecord[] = [];
+      const unknown = [...new Set(filings.filter(f => classifyRadarEvent(`${text(f.subject || f.NEWSSUB)} ${text(f.details || f.HEADLINE)}`)).map(f => String(f.scrip_cd || f.SCRIP_CD || '')))].filter(code => !resolveStockDetailsStrict(code)).slice(0, 8);
+      for (let i = 0; i < unknown.length; i += 4) await Promise.allSettled(unknown.slice(i, i + 4).map(refreshRadarCompanyIdentity));
+      const records: RadarRecord[] = reviewedRadarRecords();
       for (const f of filings) {
         const subject = text(f.subject || f.NEWSSUB), evidence = text(f.details || f.HEADLINE);
         const classified = classifyRadarEvent(`${subject} ${evidence}`);
         if (!classified) continue;
         const scrip = String(f.scrip_cd || f.SCRIP_CD || '');
-        const entry = resolveStockDetailsSync(scrip);
+        const entry = resolveStockDetailsStrict(scrip);
         const ts = typeof f.bseTimestamp === 'number' ? f.bseTimestamp : NaN;
         const url = radarUrl(f.pdfLink);
         if (!entry || !url || !/(^|\.)(?:bseindia|nseindia)\.com$/i.test(new URL(url).hostname) || !Number.isFinite(ts)) continue;
@@ -117,12 +151,7 @@ export async function refreshRadarIntake(): Promise<void> {
       const entries = getAllStockEntries();
       for (const n of stories) {
         if (records.length >= 60) break;
-        if (n.publicationTimeKnown === false || n.hasArticleLink === false || !classifyRadarEvent(text(n.title))) continue;
-        const title = text(n.title);
-        const entry = matchRadarCompany(title, entries);
-        if (!entry) continue;
-        const r = radarRecordFromSource({ sourceId: `news:${n.id || n.link}`, title, publishedAt: n.publishedAt,
-          source: { name: n.source, url: n.link, kind: 'news' }, company: { symbol: entry.symbol, name: entry.name, scripCode: entry.scripCode } });
+        const r = radarRecordFromNews(n, entries);
         if (r) records.push(r);
       }
       await publishRadarRecords(records);

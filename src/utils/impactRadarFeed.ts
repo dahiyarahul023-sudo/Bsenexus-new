@@ -5,7 +5,7 @@ export interface RadarFeedState {
   items: RadarEvent[]; pending: RadarEvent[] | null; following: string[];
   followingReady: boolean; followingError: boolean; saving: string[];
   loading: boolean; checkedAt: number | null; error: string | null; sourceUnavailable: boolean;
-  actionError: string | null;
+  actionError: string | null; sourceStale: boolean;
 }
 const merge = (items: RadarEvent[], followed: RadarEvent[]) => [...new Map([...followed, ...items].map(e => [e.id, e])).values()];
 export class ImpactRadarFeed {
@@ -17,7 +17,7 @@ export class ImpactRadarFeed {
   private followingRevision = 0;
   constructor(private identity: string, private request: Request) {
     this.state = { items: [], pending: null, following: [], followingReady: identity === 'guest', followingError: false,
-      saving: [], loading: false, checkedAt: null, error: null, sourceUnavailable: false, actionError: null };
+      saving: [], loading: false, checkedAt: null, error: null, sourceUnavailable: false, sourceStale: false, actionError: null };
   }
   subscribe = (fn: () => void) => { this.listeners.add(fn); return () => this.listeners.delete(fn); };
   getSnapshot = () => this.state;
@@ -39,15 +39,16 @@ export class ImpactRadarFeed {
       ]);
       if (controller.signal.aborted || revision !== this.revision) return;
       if (followed.status === 'fulfilled' && followed.value.success !== false && Array.isArray(followed.value.ids) && Array.isArray(followed.value.events)) {
-        if (followRevision === this.followingRevision && !this.writes.size) this.set({ following: followed.value.ids.filter((x: unknown) => typeof x === 'string'), followingReady: true, followingError: false });
+        if (followRevision === this.followingRevision && !this.writes.size) this.set({ following: followed.value.ids.filter((x: unknown) => typeof x === 'string'), followingReady: true, followingError: false, actionError: null });
       } else this.set({ followingError: true });
       if (result.status !== 'fulfilled' || result.value.success !== true || !Array.isArray(result.value.items)) throw new Error('Could not check Impact Radar. Please retry.');
       if (result.value.items.some((e: unknown) => !isRadarEvent(e))) throw new Error('The radar response could not be verified. Please retry.');
-      const extra = followed.status === 'fulfilled' && Array.isArray(followed.value.events) ? followed.value.events.filter(isRadarEvent) : [];
+      const extra = followed.status === 'fulfilled' && followed.value.success !== false && Array.isArray(followed.value.events) ? followed.value.events.filter(e => isRadarEvent(e)) :
+        [...this.state.items, ...(this.state.pending || [])].filter(e => this.state.following.includes(e.id));
       const items = merge(result.value.items.map(publicRadarEvent), extra);
       const changed = JSON.stringify(items) !== JSON.stringify(this.state.items);
       this.set({ ...(this.state.checkedAt !== null && this.state.items.length && changed ? { pending: items } : { items, pending: null }),
-        checkedAt: Date.now(), error: null, sourceUnavailable: result.value.intake?.unavailable === true });
+        checkedAt: Date.now(), error: null, sourceUnavailable: result.value.intake?.unavailable === true, sourceStale: result.value.intake?.stale === true });
     } catch (e) {
       if (revision === this.revision) this.set({ error: controller.signal.aborted ? 'Radar check timed out. Please retry.' : (e as Error).message });
     } finally {
@@ -68,7 +69,7 @@ export class ImpactRadarFeed {
       if (!r.ok || data.success !== true || data.id !== id || data.followed !== followed) throw new Error('Tracking was not confirmed. Refresh or retry.');
       if (controller.signal.aborted || this.writes.get(id) !== controller) return;
       const ids = new Set(this.state.following); followed ? ids.add(id) : ids.delete(id);
-      this.set({ following: [...ids] });
+      this.set({ following: [...ids], actionError: null });
     } catch {
       if (this.writes.get(id) === controller) this.set({ actionError: 'Tracking could not be confirmed. Refresh to check its status, then retry.' });
     } finally {

@@ -101,6 +101,8 @@ export function registerStockEntry(entry: StockMasterEntry, saveToDisk = false) 
 
 // Initial Core Indian Stocks (Comprehensive Nifty 500 & Popular Equities)
 const INITIAL_STOCKS: StockMasterEntry[] = [
+  // Identity verified in the company's exchange-addressed disclosure dated 13 Oct 2026.
+  { symbol: 'PNCINFRA', scripCode: '539150', name: 'PNC Infratech Ltd', nameKeywords: ['PNC INFRATECH'] },
   // Nifty 50 & Heavyweights
   { symbol: "RELIANCE", scripCode: "500325", name: "Reliance Industries Ltd", nameKeywords: ["RELIANCE INDUSTRIES", "RELIANCE IND", "RIL"] },
   { symbol: "TCS", scripCode: "532540", name: "Tata Consultancy Services Ltd", nameKeywords: ["TATA CONSULTANCY", "TCS"] },
@@ -331,7 +333,7 @@ loadDiskCache();
 /**
  * Synchronous in-memory lookup for Scrip Code and Details for any known symbol or code.
  */
-export function resolveStockDetailsSync(query: string): StockMasterEntry | null {
+function lookupStockEntry(query: string): StockMasterEntry | null {
   if (!query) return null;
   const clean = query.trim().toUpperCase();
   if (!clean) return null;
@@ -361,6 +363,19 @@ export function resolveStockDetailsSync(query: string): StockMasterEntry | null 
     return nameToEntry.get(noSpace)!;
   }
 
+  return null;
+}
+
+export function resolveStockDetailsStrict(query: string): StockMasterEntry | null {
+  const entry = lookupStockEntry(query);
+  return entry && /^\d{6}$/.test(entry.scripCode) && /[a-z]/i.test(entry.name) && entry.name !== entry.scripCode ? entry : null;
+}
+
+/** Legacy permissive lookup; Radar publishing must use the strict master lookup. */
+export function resolveStockDetailsSync(query: string): StockMasterEntry | null {
+  const real = lookupStockEntry(query);
+  if (real) return real;
+  const clean = query?.trim().toUpperCase() || '';
   if (/^[A-Z0-9-]{2,15}$/.test(clean)) {
     return {
       symbol: clean,

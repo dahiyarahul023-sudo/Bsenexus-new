@@ -7,7 +7,9 @@ const sql = fs.readFileSync('supabase/migrations/20261016180236_impact_radar.sql
 const event = { id: 'matter-1', status: 'scheduled', scheduledDate: '2026-10-17', publishedAt: '2026-10-15T10:00:00Z', updatedAt: '2026-10-15T10:00:00Z' };
 const update = { id: 'source-1', eventId: 'matter-1', publishedAt: event.publishedAt };
 const publish = (records: any) => db.query('select public.publish_impact_radar_records($1::jsonb)', [JSON.stringify(records)]);
-before(async () => { await db.exec('create role anon; create role authenticated; create role service_role bypassrls;'); await db.exec(sql); });
+before(async () => { await db.exec('create role anon; create role authenticated; create role service_role bypassrls;'); await db.exec(sql);
+ const upgrade = fs.readdirSync('supabase/migrations').find(n => n.endsWith('_impact_radar_integrity_categories.sql'));
+ if (upgrade) await db.exec(fs.readFileSync('supabase/migrations/' + upgrade, 'utf8')); });
 after(() => db.close());
 test('migration installs private RLS tables, one timeline, and durable duplicate-safe follows', async () => {
   await publish([{ event, update }]); await publish([{ event, update }]);
@@ -50,4 +52,31 @@ test('later source intake adds evidence without erasing reviewed dates or editor
   await publish([{ event: later, update: { id: 'later-source', eventId: reviewed.id, publishedAt: later.updatedAt }, origin: 'intake' }]);
   const row = (await db.query<any>("select status,scheduled_date,data from impact_radar_events where id='reviewed-case'")).rows[0];
   assert.equal(row.status, 'scheduled'); assert.equal(row.data.scheduledDate, reviewed.scheduledDate); assert.equal(row.data.information, reviewed.information); assert.equal(row.data.updatedAt, later.updatedAt);
+});
+
+test('F5: categories are seeded, RLS-protected, service writable, and extensible without a code union', async () => {
+ const rows = await db.query<any>('select * from impact_categories order by sort_order');
+ assert.equal(rows.rows.length, 7);
+ assert.equal((await db.query<any>("select relrowsecurity from pg_class where relname='impact_categories'")).rows[0].relrowsecurity, true);
+ for (const role of ['anon', 'authenticated']) {
+  await db.exec(`set role ${role}`);
+  try {
+   await assert.rejects(db.query('select * from impact_categories'), /permission denied/);
+   await assert.rejects(db.query("insert into impact_categories values('injected','Injected',1,true)"), /permission denied/);
+  } finally { await db.exec('reset role'); }
+ }
+ await db.exec("set role service_role; insert into impact_categories values('court_extra','Court updates',80,true); reset role;");
+ const { isRadarEvent } = await import('../../src/shared/impactRadar.js');
+ const c = new Set((await db.query<any>('select id from impact_categories')).rows.map(r => r.id));
+ const sample = { ...event, id: 'dynamic', category: 'court_extra', title: 'Court hearing listed', authority: 'High Court', companies: [{ name: 'PNC Infratech Ltd', symbol: 'PNCINFRA', scripCode: '539150' }], scheduleConfirmed: true, information: 'A sourced listing.', nextTrigger: null, source: { name: 'BSE', kind: 'disclosure', url: 'https://www.bseindia.com/report.pdf' } };
+ assert.equal(isRadarEvent(sample, c), true);
+});
+test('F9: older event payload with newer evidence advances row and JSON timestamps without rewinding facts', async () => {
+ const id = 'monotonic';
+ await publish([{ event: { ...event, id, status: 'active', updatedAt: '2026-10-16T10:00:00Z' }, update: { ...update, id: 'monotonic-a', eventId: id } }]);
+ await publish([{ event: { ...event, id }, update: { ...update, id: 'monotonic-b', eventId: id, publishedAt: '2026-10-17T10:00:00Z' }, origin: 'intake' }]);
+ const row = (await db.query<any>("select status,updated_at,data from impact_radar_events where id='monotonic'")).rows[0];
+ assert.equal(row.status, 'active');
+ assert.equal(new Date(row.updated_at).toISOString(), '2026-10-17T10:00:00.000Z');
+ assert.equal(Date.parse(row.data.updatedAt), Date.parse('2026-10-17T10:00:00Z'));
 });

@@ -1,6 +1,7 @@
 import { inflateRawSync } from 'node:zlib';
 import { radarDay, validRadarDate, type RadarEvent } from '../../src/shared/impactRadar.js';
 import type { RadarMovement, RadarSessionMove } from '../../src/shared/radarMovement.js';
+import { resolveStockDetailsStrict } from '../utils/stockResolver.js';
 
 const MAX_ZIP = 6_000_000, MAX_CSV = 25_000_000;
 export function nseBhavcopyUrl(day: string): string {
@@ -49,7 +50,9 @@ export function parseBhavcopy(csv: string, day: string): Map<string, RadarSessio
     const close = Number(get('ClsPric')), previousClose = Number(get('PrvsClsgPric')), volume = Number(get('TtlTradgVol'));
     if (!(close > 0 && previousClose > 0 && volume > 0) || ![close, previousClose, volume].every(Number.isFinite)) continue;
     if (rows.has(symbol) && series !== 'EQ') continue;
-    rows.set(symbol, { date: day, symbol, series, close, previousClose, changePercent: (close / previousClose - 1) * 100, sourceUrl: nseBhavcopyUrl(day) });
+    const high = Number(get('HghPric')), low = Number(get('LwPric'));
+    rows.set(symbol, { date: day, symbol, series, close, previousClose, changePercent: (close / previousClose - 1) * 100, sourceUrl: nseBhavcopyUrl(day),
+      ...(Number.isFinite(high) && Number.isFinite(low) && high >= close && low > 0 && low <= close ? { high, low } : {}) });
   }
   return rows;
 }
@@ -80,9 +83,10 @@ async function report(day: string): Promise<Map<string, RadarSessionMove> | null
   pending.set(day, work); return work;
 }
 export async function getRadarMovement(event: RadarEvent, now = Date.now(), loadReport = report): Promise<RadarMovement> {
+  event = { ...event, companies: event.companies.map(c => resolveStockDetailsStrict(c.scripCode) || c) };
   const anchorDate = event.occurredDate || radarDay(Date.parse(event.publishedAt));
   const local = new Date(Date.parse(event.publishedAt) + 330 * 60_000);
-  const afterClose = !event.occurredDate && local.getUTCHours() * 60 + local.getUTCMinutes() >= 15 * 60 + 30;
+  const afterClose = local.getUTCHours() * 60 + local.getUTCMinutes() >= 15 * 60 + 30;
   const result: RadarMovement = { basis: event.occurredDate ? 'event-date' : 'report-date', anchorDate, afterClose, checkedAt: new Date(now).toISOString(), status: 'unavailable', companies: event.companies.slice(0, 3).map(c => ({ symbol: c.symbol, sessions: [] })) };
   if (anchorDate > radarDay(now) || (event.status === 'scheduled' && !event.occurredDate)) return { ...result, status: 'upcoming' };
   const dates: string[] = [];

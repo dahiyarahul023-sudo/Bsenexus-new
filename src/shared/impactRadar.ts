@@ -5,10 +5,14 @@ export const RADAR_CATEGORIES = {
   deals: 'Deals & insolvency', operations: 'Licences & operations',
   legal: 'Legal & regulatory matters',
 } as const;
-export type RadarCategory = keyof typeof RADAR_CATEGORIES;
+export type RadarCategory = string;
+export interface RadarCategoryOption { id: string; label: string; sort_order: number; active: boolean }
+export function isRadarCategoryOption(c: any): c is RadarCategoryOption {
+  return c && typeof c.id === 'string' && /^[a-z][a-z0-9_-]{0,63}$/.test(c.id) && isNeutralRadarText(c.label, 100) && Number.isInteger(c.sort_order) && typeof c.active === 'boolean';
+}
 export type RadarStatus = 'scheduled' | 'active' | 'monitoring' | 'closed';
 export type RadarFilter = 'all' | 'live' | 'today' | 'tomorrow' | 'week' | 'past' | 'tracking';
-export interface RadarSource { name: string; url: string; kind: 'disclosure' | 'official' | 'news' }
+export interface RadarSource { name: string; url: string; kind: 'disclosure' | 'official' | 'news' | 'company' }
 export interface RadarCompany { symbol: string; name: string; scripCode: string }
 export interface RadarEvent {
   id: string; title: string; companies: RadarCompany[]; category: RadarCategory;
@@ -16,6 +20,7 @@ export interface RadarEvent {
   scheduleConfirmed: boolean; information: string; nextTrigger: string | null;
   source: RadarSource; publishedAt: string; updatedAt: string;
   occurredDate?: string | null; occurredSource?: RadarSource | null; scheduleSource?: RadarSource | null;
+  supportingSources?: RadarSource[];
 }
 export interface RadarUpdate {
   id: string; eventId: string; title: string; information: string;
@@ -34,6 +39,7 @@ export function radarUrl(value: unknown): string | null {
     const u = new URL(value);
     if (u.protocol !== 'https:' || u.username || u.password || u.port) return null;
     if (!u.hostname.includes('.') || /^(?:localhost|127\.|10\.|192\.168\.|169\.254\.|\[)/.test(u.hostname)) return null;
+    if (/(^|\.)(?:google\.[a-z.]+|bing\.com|yahoo\.com|duckduckgo\.com|search\.brave\.com)$/i.test(u.hostname)) return null;
     return u.href;
   } catch { return null; }
 }
@@ -44,29 +50,39 @@ export function validRadarDate(value: unknown): value is string {
 export function radarDay(time: number): string {
   return new Date(time + 330 * 60_000).toISOString().slice(0, 10);
 }
-function validTime(value: unknown): value is string {
-  return typeof value === 'string' && /^\d{4}-\d\d-\d\dT/.test(value) && Number.isFinite(Date.parse(value));
+export function validRadarTime(value: unknown): value is string {
+  if (typeof value !== 'string') return false;
+  const m = value.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,9})?(Z|[+-](\d{2}):(\d{2}))$/);
+  return Boolean(m && validRadarDate(m[1]) && +m[2] < 24 && +m[3] < 60 && +m[4] < 60 && (!m[6] || (+m[6] <= 23 && +m[7] < 60)) && Number.isFinite(Date.parse(value)));
 }
-function sourceValid(s: any): s is RadarSource {
-  return Boolean(s && typeof s.name === 'string' && s.name.length > 0 && s.name.length <= 100 && radarUrl(s.url) !== null && ['disclosure', 'official', 'news'].includes(s.kind));
+export function sourceValid(s: any): s is RadarSource {
+  if (!s || typeof s.name !== 'string' || !s.name.trim() || s.name.length > 100 || !radarUrl(s.url)) return false;
+  const host = new URL(s.url).hostname.toLowerCase();
+  if (s.kind === 'disclosure') return /(^|\.)(?:bseindia|nseindia)\.com$/.test(host);
+  // Courts and Indian government agencies, RBI, plus the named overseas regulators in intake.
+  if (s.kind === 'official') return /(^|\.)(?:gov\.in|nic\.in|rbi\.org\.in|cercind\.gov\.in|fda\.gov|sec\.gov|justice\.gov)$/.test(host);
+  // Reviewed investor originals; extend only with verified company/domain evidence.
+  if (s.kind === 'company') return /(^|\.)pncinfratech\.com$/.test(host);
+  return s.kind === 'news';
 }
-export function isRadarEvent(e: any): e is RadarEvent {
+export function isRadarEvent(e: any, categories?: ReadonlySet<string>): e is RadarEvent {
   return e && typeof e.id === 'string' && RADAR_ID.test(e.id) && isNeutralRadarText(e.title, 200) &&
     Array.isArray(e.companies) && e.companies.length > 0 && e.companies.length <= 20 &&
     e.companies.every((c: any) => c && typeof c.symbol === 'string' && /^[A-Z0-9&._-]{1,30}$/.test(c.symbol) && typeof c.name === 'string' && c.name.length > 0 && c.name.length <= 160 && /^\d{6}$/.test(c.scripCode)) &&
-    Object.hasOwn(RADAR_CATEGORIES, e.category) && isNeutralRadarText(e.authority, 100) &&
+    typeof e.category === 'string' && /^[a-z][a-z0-9_-]{0,63}$/.test(e.category) && (!categories || categories.has(e.category)) && isNeutralRadarText(e.authority, 100) &&
     ['scheduled', 'active', 'monitoring', 'closed'].includes(e.status) &&
     (e.scheduledDate === null || validRadarDate(e.scheduledDate)) && typeof e.scheduleConfirmed === 'boolean' &&
     !(e.scheduleConfirmed && !e.scheduledDate) &&
     isNeutralRadarText(e.information, 1200) && (e.nextTrigger === null || isNeutralRadarText(e.nextTrigger, 400)) &&
-    sourceValid(e.source) && validTime(e.publishedAt) && validTime(e.updatedAt) &&
+    sourceValid(e.source) && validRadarTime(e.publishedAt) && validRadarTime(e.updatedAt) &&
     (e.occurredDate == null || (validRadarDate(e.occurredDate) && e.occurredDate <= radarDay(Date.parse(e.publishedAt)) && sourceValid(e.occurredSource))) &&
     (e.scheduleSource == null || sourceValid(e.scheduleSource)) &&
+    (e.supportingSources == null || (Array.isArray(e.supportingSources) && e.supportingSources.length <= 10 && e.supportingSources.every(sourceValid))) &&
     Date.parse(e.updatedAt) >= Date.parse(e.publishedAt);
 }
 export function isRadarUpdate(u: any): u is RadarUpdate {
   return u && typeof u.id === 'string' && typeof u.eventId === 'string' && RADAR_ID.test(u.id) && RADAR_ID.test(u.eventId) && isNeutralRadarText(u.title, 200) &&
-    isNeutralRadarText(u.information, 1200) && sourceValid(u.source) && validTime(u.publishedAt);
+    isNeutralRadarText(u.information, 1200) && sourceValid(u.source) && validRadarTime(u.publishedAt);
 }
 /** Whitelist the public projection, so an upstream object cannot expose added prediction fields. */
 export function publicRadarEvent(e: RadarEvent): RadarEvent {
@@ -78,6 +94,7 @@ export function publicRadarEvent(e: RadarEvent): RadarEvent {
     publishedAt: e.publishedAt, updatedAt: e.updatedAt,
     ...(e.occurredDate && e.occurredSource ? { occurredDate: e.occurredDate, occurredSource: { name: e.occurredSource.name, url: radarUrl(e.occurredSource.url)!, kind: e.occurredSource.kind } } : {}),
     ...(e.scheduleSource ? { scheduleSource: { name: e.scheduleSource.name, url: radarUrl(e.scheduleSource.url)!, kind: e.scheduleSource.kind } } : {}),
+    ...(e.supportingSources ? { supportingSources: e.supportingSources.map(s => ({ name: s.name, url: radarUrl(s.url)!, kind: s.kind })) } : {}),
   };
 }
 export function publicRadarUpdate(u: RadarUpdate): RadarUpdate {
@@ -95,10 +112,29 @@ export function radarTiming(e: RadarEvent, now: number): 'live' | 'upcoming' | '
   return radarDay(Date.parse(e.updatedAt)) === radarDay(now) ? 'live' : 'past';
 }
 export const RADAR_TIMING_LABELS = { live: 'Live / today', upcoming: 'Upcoming', past: 'Past development', undated: 'Date pending' };
+export function radarCompanyName(c: RadarCompany): string {
+  return /[a-z]/i.test(c.name) ? c.name : `BSE ${c.scripCode} · company name pending`;
+}
+/** A readable company-first label. Original publisher headings remain in the source timeline. */
+export function radarHeadline(e: RadarEvent): string {
+  const company = radarCompanyName(e.companies[0]);
+  if (/intimation under|this is in continuation|regulation 30|disclosure requirements/i.test(e.title)) {
+    const topic = /\border\b/i.test(e.title) ? 'order' : /\bhearing\b/i.test(e.title) ? 'hearing' : 'legal matter';
+    return `${company}: ${e.authority} ${topic} update`;
+  }
+  const name = company.replace(/\s+(?:limited|ltd\.?)$/i, '');
+  return e.title.toLowerCase().startsWith(name.toLowerCase()) ? e.title : `${company}: ${e.title}`;
+}
+export function radarCaseLookup(e: RadarEvent): { reference: string | null; party: string; instructions: string } {
+  const reference = `${e.title} ${e.information}`.match(/\b(?:case|appeal|petition)\s*(?:no\.?|number|#)\s*[a-z0-9][a-z0-9./-]{1,40}(?:\s+of\s+\d{4})?/i)?.[0] || null;
+  return { reference, party: e.companies[0].name.replace(/\s+ltd\.?$/i, ' Limited'), instructions: reference
+    ? 'Choose the case type, number and year shown above in the official case-status form. Verify the parties against the original source.'
+    : 'Case number is not recorded in the available evidence. Open party-name search, enter the company name above, then verify the parties, order date and case type. A matching name alone does not confirm the same proceeding.' };
+}
 export function radarVerificationSources(e: RadarEvent): RadarSource[] {
   const name = `${e.authority} ${e.title}`;
   if (/Delhi.*(?:High Court|HC)|(?:High Court|HC).*Delhi/i.test(name)) return [
-    { name: 'Delhi High Court · cause lists', url: 'https://delhihighcourt.nic.in/web/cause-lists', kind: 'official' },
+    { name: 'Delhi High Court · party-name search', url: 'https://delhihighcourt.nic.in/app/party-name-wise-status', kind: 'official' },
     { name: 'Delhi High Court · case status', url: 'https://delhihighcourt.nic.in/app/get-case-type-status', kind: 'official' },
   ];
   const authorities: [RegExp, string, string][] = [

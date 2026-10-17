@@ -6,20 +6,20 @@ process.env.JWT_SECRET = 'test-only-impact-radar-api-secret';
 process.env.SUPABASE_URL = 'https://radar-test.invalid';
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-only-service-role';
 const originalFetch = globalThis.fetch;
-let fail = false, calls: { url: string; method: string; body: any }[] = [];
+let fail = false, externalCalls = 0, calls: { url: string; method: string; body: any }[] = [];
 const event = { id: 'matter-1', title: 'Supreme Court hearing listed', companies: [{ symbol: 'TCS', name: 'Tata Consultancy Services', scripCode: '532540' }], category: 'liability', authority: 'Supreme Court', status: 'scheduled', scheduledDate: '2026-10-17', scheduleConfirmed: true, information: 'The company reported a listed hearing.', nextTrigger: null, source: { name: 'BSE', url: 'https://www.bseindia.com/report.pdf', kind: 'disclosure' }, publishedAt: '2026-10-15T10:00:00Z', updatedAt: '2026-10-15T10:00:00Z' };
 globalThis.fetch = (async (input: any, init: any) => {
   const url = String(input?.url || input), method = init?.method || 'GET';
-  if (!url.startsWith('https://radar-test.invalid')) return originalFetch(input, init);
+  if (!url.startsWith('https://radar-test.invalid')) { externalCalls++; return new Response('<rss><channel></channel></rss>', { status: 200 }); }
   const body = init?.body ? JSON.parse(String(init.body)) : null;
   calls.push({ url, method, body });
-  const data = fail ? { message: 'unavailable' } : new URL(url).pathname.endsWith('/impact_radar_events') ? new URL(url).searchParams.has('id') ? { data: event } : [{ data: event }] : [];
+  const data = new URL(url).pathname.endsWith('/impact_categories') ? Object.entries((await import('../../src/shared/impactRadar.js')).RADAR_CATEGORIES).map(([id, label], i) => ({ id, label, sort_order: (i+1)*10, active: true })) : fail ? { message: 'unavailable' } : new URL(url).pathname.endsWith('/impact_radar_events') ? new URL(url).searchParams.has('id') ? { data: event } : [{ data: event }] : [];
   return new Response(JSON.stringify(data), { status: fail ? 503 : 200, headers: { 'Content-Type': 'application/json' } });
 }) as typeof fetch;
 const { impactRadarRouter } = await import('../api/impactRadar.js');
 const { radarRecordFromSource, classifyRadarEvent } = await import('../services/impactRadarService.js');
 const app = express(); app.use(express.json());
-app.use((req, _res, next) => { if (req.headers.authorization === 'Bearer alice') (req as any).user = { uid: 'alice', isAnonymous: false }; next(); });
+app.use((req, _res, next) => { if (req.headers.authorization === 'Bearer alice') (req as any).user = { uid: 'alice', isAnonymous: false }; if (req.headers.authorization === 'Bearer admin') (req as any).user = { uid: 'admin', isAnonymous: false, isAdmin: true }; next(); });
 app.use('/api/impact-radar', impactRadarRouter);
 const server = app.listen(0, '127.0.0.1'); await once(server, 'listening');
 const url = `http://127.0.0.1:${(server.address() as any).port}/api/impact-radar`;
@@ -76,4 +76,31 @@ test('explicit case references link source updates without merging unrelated cas
   assert.equal(movement.status, 200); const prices = await movement.json();
   assert.equal(prices.movement.status, 'upcoming'); assert.deepEqual(prices.movement.companies[0].sessions, []);
   const invalid = await originalFetch(url + '/%3Cbad%3E/movement'); assert.equal(invalid.status, 400);
+});
+
+test('F5/F13: category registry returns seven seeded options and the list is a database-only read', async () => {
+ calls = []; externalCalls = 0;
+ const result = await originalFetch(url);
+ assert.equal(result.status, 200); assert.equal((await result.json()).items[0].id, event.id);
+ assert.equal(externalCalls, 0);
+ assert.ok(calls.every(c => new URL(c.url).pathname.endsWith('/impact_radar_events')));
+ const categories = await originalFetch(url + '/categories');
+ assert.equal(categories.status, 200); const rows = (await categories.json()).categories;
+ assert.equal(rows.length, 7); assert.equal(rows[0].id, 'restriction');
+});
+test('F4/F9: admin rejects fake identity, wrong names and evidence newer than the event; real identity publishes', async () => {
+ const master = (await import('../utils/stockResolver.js')).resolveStockDetailsStrict('532540')!;
+ const valid = { ...event, companies: [{ symbol: master.symbol, scripCode: master.scripCode, name: master.name }] };
+ const update = { id: 'admin-evidence', eventId: event.id, title: 'Supreme Court hearing listed', information: 'A sourced court listing.', source: event.source, publishedAt: event.publishedAt };
+ const send = (e: any, u = update) => originalFetch(url + '/admin/publish', { method: 'POST', headers: { authorization: 'Bearer admin', 'Content-Type': 'application/json' }, body: JSON.stringify({ event: e, update: u }) });
+ assert.equal((await send({ ...valid, companies: [{ ...valid.companies[0], name: 'Wrong company name' }] })).status, 400);
+ assert.equal((await send({ ...valid, companies: [{ name: '999999', symbol: '999999', scripCode: '999999' }] })).status, 400);
+ assert.equal((await send(valid, { ...update, publishedAt: '2026-10-16T10:00:00Z' })).status, 400);
+ assert.equal((await send({ ...valid, category: 'unregistered-category' })).status, 400);
+ assert.equal((await send(valid)).status, 200);
+});
+test('F12: event detail uses the shared API rate limiter before its database handler', async () => {
+ const { apiRateLimiter } = await import('../security/auth.js');
+ const route = (impactRadarRouter as any).stack.find((l: any) => l.route?.path === '/:id').route;
+ assert.equal(route.stack[0].handle, apiRateLimiter);
 });

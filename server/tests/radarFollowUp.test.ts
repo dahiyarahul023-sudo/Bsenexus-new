@@ -94,3 +94,18 @@ test('movement download path reads bounded exchange archives and coalesces concu
     assert.deepEqual(a, b); assert.equal(isRadarMovement(a), true);
   } finally { globalThis.fetch = previous; }
 });
+
+test('PNC legacy numeric identity resolves to NSE and preserves the 13/14 October close versus intraday range', async () => {
+ const fs = await import('node:fs');
+ const [header, ...lines] = fs.readFileSync('server/tests/fixtures/radar-pnc-nse-20261013-14.csv', 'utf8').trim().split(/\r?\n/);
+ const reports = new Map(lines.map(line => { const date = line.split(',')[0]; return [date, parseBhavcopy(header + '\n' + line, date)] as const; }));
+ const legacy = { ...event, companies: [{ symbol: '539150', name: '539150', scripCode: '539150' }] };
+ const result = await getRadarMovement(legacy, Date.parse('2026-10-17T05:00:00Z'), async date => reports.get(date) || null);
+ assert.equal(result.companies[0].symbol, 'PNCINFRA');
+ const sessions = result.companies[0].sessions;
+ assert.deepEqual(sessions.map(s => s.date), ['2026-10-13','2026-10-14']);
+ assert.equal(sessions[0].close, 155.44); assert.equal(sessions[1].close, 148.62);
+ assert.equal(sessions[0].changePercent.toFixed(2), '12.43'); assert.equal(sessions[1].changePercent.toFixed(2), '-4.39');
+ assert.equal(sessions[1].high, 172); assert.equal(sessions[1].low, 145.05);
+ assert.equal(isRadarMovement(result), true); assert.equal(result.afterClose, true);
+});
