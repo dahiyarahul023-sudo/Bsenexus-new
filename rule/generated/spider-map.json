@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "98bcdd237036d8076229bff87330a2e60be51a92d2b1af980c4bda7e5db2eb4c",
+  "sourceDigest": "27ffc2c9647fd92703ca3c2d05735fa8d7958851b7fc6480f22cd2f85eb15ef6",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -791,7 +791,7 @@
     },
     {
       "path": "server/services/radarIntakePolicy.ts",
-      "sha256": "414e8c40646389e6bf34cbb9fb614eee135d30e1a08879da86d464ebce15e629",
+      "sha256": "19daa9788c67089ad874960114c43ef2157886d82e9e1380cd4e753d45f4b73a",
       "importedBy": [
         "server/database/impactRadarDao.ts",
         "server/services/impactRadarService.ts",
@@ -1111,7 +1111,7 @@
     },
     {
       "path": "server/tests/radarMaterialIntake.test.ts",
-      "sha256": "76540812da7c1c84cb39d39e8eea0ab0586aadd944df5e11c9bcc71b3f849d94",
+      "sha256": "c464a38a2989130eb133e8f95a0dd09ba25b05e0aacc3e78fae6cacbee5f06e1",
       "importedBy": []
     },
     {

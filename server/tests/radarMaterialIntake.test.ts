@@ -21,6 +21,8 @@ test('material policy changes are literal, bounded and respect disabled rules an
  assert.equal(matchRadarIntakeRule('Company reports factory evacuations',[custom]),null);
  assert.equal(matchRadarIntakeRule('Company reports factory evacuation',[{...custom,active:false}]),null);
  assert.equal(isRadarIntakeRule({...custom,terms:['(a+)+$']}),false);
+ assert.equal(isRadarIntakeRule({...custom,id:undefined}),false);
+ assert.equal(isRadarIntakeRule({...custom,category:null}),false);
 });
 test('three verified saved sessions survive an exchange outage without downloading report files', async () => {
  const record = radarRecordFromNews({...story,publishedAt:'2026-10-13T04:00:00Z'},[company],now)!;

@@ -12,7 +12,7 @@ export const DEFAULT_RADAR_INTAKE_RULES: RadarIntakeRule[] = [
 export const radarWords = (value: string) => ` ${value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()} `;
 export function isRadarIntakeRule(r: any): r is RadarIntakeRule {
   const terms = (a: any, min: number) => Array.isArray(a) && a.length >= min && a.length <= 100 && a.every(t => typeof t === 'string' && t.length >= 3 && t.length <= 100 && /^[a-zA-Z0-9][a-zA-Z0-9 &'-]*$/.test(t));
-  return r && /^[a-z][a-z0-9_-]{0,63}$/.test(r.id) && /^[a-z][a-z0-9_-]{0,63}$/.test(r.category) && isNeutralRadarText(r.label, 100) && terms(r.terms, 1) && terms(r.exclude_terms, 0) && Number.isInteger(r.priority) && typeof r.active === 'boolean';
+  return r && typeof r.id === 'string' && /^[a-z][a-z0-9_-]{0,63}$/.test(r.id) && typeof r.category === 'string' && /^[a-z][a-z0-9_-]{0,63}$/.test(r.category) && isNeutralRadarText(r.label, 100) && terms(r.terms, 1) && terms(r.exclude_terms, 0) && Number.isInteger(r.priority) && typeof r.active === 'boolean';
 }
 /** Literal bounded phrases only. Configuration cannot execute code or introduce expensive regexes. */
 export function matchRadarIntakeRule(value: string, rules: readonly RadarIntakeRule[]) {
