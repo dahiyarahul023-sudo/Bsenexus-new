@@ -157,6 +157,8 @@ const NewsCardItem: React.FC<NewsCardProps> = React.memo(({
     navigator.clipboard.writeText(aiSummary).then(() => {
       setCopiedSummary(true);
       setTimeout(() => setCopiedSummary(false), 2000);
+    }).catch(() => {
+      // Clipboard unavailable (permissions / non-secure context): stay silent.
     });
   };
 
