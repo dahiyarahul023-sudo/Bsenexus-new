@@ -39,7 +39,7 @@ import { autoIndexNewGuides } from "./server/services/guideIndexNow.js";
 import { verifyRecaptchaToken } from "./server/security/recaptchaService.js";
 import { getBseBlockBackoffLevel } from "./server/services/bse.js";
 import { getAllFeedback } from "./server/database/feedbackDao.js";
-import { prerenderFilingHtml, prerenderCompanyHtml, buildSitemapIndexXml, cleanCanonicalUrl, buildAnnouncementsFeedCards, PRELOADER_CARD_RE } from "./server/services/seoPrerender.js";
+import { prerenderFilingHtml, prerenderCompanyHtml, buildSitemapIndexXml, cleanCanonicalUrl, buildAnnouncementsFeedCards, buildAnnouncementsCollectionJsonLd, PRELOADER_CARD_RE } from "./server/services/seoPrerender.js";
 
 // Global error handlers to prevent background quota/network exceptions from crashing the process
 process.on('unhandledRejection', (reason: any) => {
@@ -6678,49 +6678,23 @@ function injectTabSeoMetadata(html: string, tabQuery?: string): string {
       `  <script type="application/ld+json">\n${faqSchema}\n  </script>\n</head>`
     );
   } else if (normalizedKey === "announcements" || normalizedKey === "live") {
+    // Neutral CollectionPage without ItemList: the dedicated /announcements
+    // route handler swaps this marker block for a dynamic ItemList built from
+    // the same real latest filings as the pre-rendered cards (see
+    // buildAnnouncementsCollectionJsonLd). Hardcoded sample entries were
+    // removed — structured data must reflect actual page content.
     const announcementsSchema = JSON.stringify({
       "@context": "https://schema.org",
       "@type": "CollectionPage",
       "@id": "https://bsenexus.in/announcements#feed",
       "name": "Live BSE Corporate Announcements & Disclosures Feed",
       "url": "https://bsenexus.in/announcements",
-      "description": "Live real-time stream of Bombay Stock Exchange (BSE India) corporate announcements, SEBI LODR Regulation 30/33 disclosures, board meeting intimations, quarterly financial results, and AI-powered earnings metric summaries.",
-      "mainEntity": {
-        "@type": "ItemList",
-        "name": "Latest BSE Corporate Filings",
-        "numberOfItems": 4,
-        "itemListElement": [
-          {
-            "@type": "ListItem",
-            "position": 1,
-            "name": "RELIANCE INDUSTRIES LTD. - Financial Results (SEBI LODR 33)",
-            "url": "https://bsenexus.in/company/RELIANCE"
-          },
-          {
-            "@type": "ListItem",
-            "position": 2,
-            "name": "TATA CONSULTANCY SERVICES LTD. - Audited Results & Dividend Declaration",
-            "url": "https://bsenexus.in/company/TCS"
-          },
-          {
-            "@type": "ListItem",
-            "position": 3,
-            "name": "LARSEN & TOUBRO LTD. - Order Win Disclosure under Regulation 30",
-            "url": "https://bsenexus.in/company/LT"
-          },
-          {
-            "@type": "ListItem",
-            "position": 4,
-            "name": "INFOSYS LTD. - Schedule of Earnings Conference Call",
-            "url": "https://bsenexus.in/company/INFY"
-          }
-        ]
-      }
+      "description": "Live real-time stream of Bombay Stock Exchange (BSE India) corporate announcements, SEBI LODR Regulation 30/33 disclosures, board meeting intimations, quarterly financial results, and AI-powered earnings metric summaries."
     }, null, 2);
 
     transformed = transformed.replace(
       '</head>',
-      `  <script type="application/ld+json">\n${announcementsSchema}\n  </script>\n</head>`
+      `  <!--announcements-jsonld-->\n  <script type="application/ld+json">\n${announcementsSchema}\n  </script>\n  <!--/announcements-jsonld-->\n</head>`
     );
   }
 
@@ -6913,6 +6887,16 @@ async function startServer() {
             if (!replaced) { replaced = true; return cards; }
             return '';
           });
+        }
+        // Swap the neutral CollectionPage marker for the dynamic ItemList built
+        // from the same real filings as the cards. No-op if the feed is empty
+        // (neutral block stays) or the marker is missing (safe fallback).
+        const collectionJsonLd = await buildAnnouncementsCollectionJsonLd();
+        if (collectionJsonLd) {
+          html = html.replace(
+            /  <!--announcements-jsonld-->[\s\S]*?<!--\/announcements-jsonld-->/,
+            () => collectionJsonLd
+          );
         }
 
         const entry = pageRenderCache.set(cacheKey, html, 'text/html; charset=utf-8', { ttlMs: 5 * 60 * 1000 });
