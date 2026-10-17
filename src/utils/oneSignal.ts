@@ -55,7 +55,6 @@ export function initOneSignal(): void {
         serviceWorkerPath: 'OneSignalSDKWorker.js',
       });
       isInitialized = true;
-      console.log('[OneSignal] Client push SDK initialized.');
     } catch (err) {
       console.warn('[OneSignal] Client init notice:', err);
     }
