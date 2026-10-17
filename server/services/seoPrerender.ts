@@ -502,6 +502,100 @@ export function buildSitemapIndexXml(todayStr: string = new Date().toISOString()
 export const PRELOADER_CARD_RE = /<article style="background: #181624;[\s\S]*?<\/article>/g;
 
 /**
+ * Normalized feed items shared by the pre-rendered cards and the dynamic
+ * CollectionPage JSON-LD: same real filings, same canonical /filing link rule
+ * as the /announcement/:newsId route. No cloaking — both consumers see the
+ * same data the React client renders.
+ */
+export interface AnnouncementsFeedItem {
+  newsId: string;
+  companyName: string;
+  subject: string;
+  symbol: string;
+  scripCode: string;
+  category: string;
+  link: string;
+  dateStr: string;
+}
+
+export async function getAnnouncementsFeedItems(limit: number): Promise<AnnouncementsFeedItem[]> {
+  const recent = await getRecentAnnouncements(30);
+  const items: AnnouncementsFeedItem[] = [];
+  for (const a of (recent || [])) {
+    if (!a || !(a.newsId || a.id)) continue;
+    const newsId = String(a.newsId || a.id || '').trim();
+    if (!newsId) continue;
+    const symbol = String(a.symbol || a.scrip_id || '').trim().toUpperCase();
+    // Same canonical rule as the /announcement/:newsId route: prefer /filing/:symbol/:newsId
+    const link = /^[A-Z0-9-]{2,20}$/.test(symbol)
+      ? `/filing/${encodeURIComponent(symbol)}/${encodeURIComponent(newsId)}`
+      : `/announcement/${encodeURIComponent(newsId)}`;
+    let ts: number = (typeof a.bseTimestamp === 'number' && !isNaN(a.bseTimestamp) && a.bseTimestamp > 0)
+      ? a.bseTimestamp
+      : (a.fetched_at || 0);
+    if ((!ts || ts <= 0) && a.bseTime) {
+      try { ts = parseBseDate(a.bseTime); } catch { ts = 0; }
+    }
+    const dateStr = ts && ts > 0
+      ? new Date(ts).toLocaleString('en-IN', {
+          timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short',
+          hour: '2-digit', minute: '2-digit', hour12: true,
+        })
+      : '';
+    items.push({
+      newsId,
+      companyName: String(a.companyName || a.SLONGNAME || 'BSE Listed Company'),
+      subject: String(a.subject || a.NEWSSUB || 'Corporate Announcement'),
+      symbol,
+      scripCode: String(a.scripCode || a.scrip_cd || a.SCRIP_CD || '').trim(),
+      category: String(a.category || 'DISCLOSURE').toUpperCase().replace(/_/g, ' '),
+      link,
+      dateStr,
+    });
+    if (items.length >= limit) break;
+  }
+  return items;
+}
+
+/**
+ * Dynamic CollectionPage JSON-LD for /announcements: ItemList built from the
+ * same real latest filings as the pre-rendered cards (accurate numberOfItems,
+ * real /filing URLs). Replaces the previous hardcoded sample entries.
+ * Returns the full <script> block, or '' when the feed is empty/failed so the
+ * caller keeps the neutral CollectionPage fallback.
+ */
+export async function buildAnnouncementsCollectionJsonLd(): Promise<string> {
+  try {
+    const items = await getAnnouncementsFeedItems(10);
+    if (items.length === 0) return '';
+    const schema = {
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      '@id': 'https://bsenexus.in/announcements#feed',
+      name: 'Live BSE Corporate Announcements & Disclosures Feed',
+      url: 'https://bsenexus.in/announcements',
+      description: 'Live real-time stream of Bombay Stock Exchange (BSE India) corporate announcements, SEBI LODR Regulation 30/33 disclosures, board meeting intimations, quarterly financial results, and AI-powered earnings metric summaries.',
+      mainEntity: {
+        '@type': 'ItemList',
+        name: 'Latest BSE Corporate Filings',
+        numberOfItems: items.length,
+        itemListElement: items.map((it, i) => ({
+          '@type': 'ListItem',
+          position: i + 1,
+          name: `${it.companyName} — ${it.subject}`.slice(0, 220),
+          url: `https://bsenexus.in${it.link}`,
+        })),
+      },
+    };
+    // JSON.stringify escapes the payload; neutralize any stray </script in data.
+    const json = JSON.stringify(schema, null, 2).replace(/<\/(script)/gi, '<\\/$1');
+    return `  <script type="application/ld+json">\n${json}\n  </script>`;
+  } catch {
+    return '';
+  }
+}
+
+/**
  * /announcements Soft-404 fix: builds real filing cards (latest live filings from
  * Firestore) in the same visual style as the shell's placeholder cards.
  *
@@ -511,37 +605,16 @@ export const PRELOADER_CARD_RE = /<article style="background: #181624;[\s\S]*?<\
  */
 export async function buildAnnouncementsFeedCards(): Promise<string> {
   try {
-    const recent = await getRecentAnnouncements(30);
-    const items = (recent || [])
-      .filter((a: any) => a && (a.newsId || a.id))
-      .slice(0, 24);
+    const items = await getAnnouncementsFeedItems(24);
     if (items.length === 0) return '';
 
-    const cards = items.map((a: any) => {
-      const newsId = String(a.newsId || a.id || '').trim();
-      if (!newsId) return '';
-      const companyName = String(a.companyName || a.SLONGNAME || 'BSE Listed Company');
-      const subject = String(a.subject || a.NEWSSUB || 'Corporate Announcement');
-      const symbol = String(a.symbol || a.scrip_id || '').trim().toUpperCase();
-      const scripCode = String(a.scripCode || a.scrip_cd || a.SCRIP_CD || '').trim();
-      const category = String(a.category || 'DISCLOSURE').toUpperCase().replace(/_/g, ' ');
-      // Same canonical rule as the /announcement/:newsId route: prefer /filing/:symbol/:newsId
-      const link = /^[A-Z0-9-]{2,20}$/.test(symbol)
-        ? `/filing/${encodeURIComponent(symbol)}/${encodeURIComponent(newsId)}`
-        : `/announcement/${encodeURIComponent(newsId)}`;
-
-      let ts: number = (typeof a.bseTimestamp === 'number' && !isNaN(a.bseTimestamp) && a.bseTimestamp > 0)
-        ? a.bseTimestamp
-        : (a.fetched_at || 0);
-      if ((!ts || ts <= 0) && a.bseTime) {
-        try { ts = parseBseDate(a.bseTime); } catch { ts = 0; }
-      }
-      const dateStr = ts && ts > 0
-        ? new Date(ts).toLocaleString('en-IN', {
-            timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short',
-            hour: '2-digit', minute: '2-digit', hour12: true,
-          })
-        : '';
+    const cards = items.map((a) => {
+      const companyName = a.companyName;
+      const subject = a.subject;
+      const scripCode = a.scripCode;
+      const link = a.link;
+      const dateStr = a.dateStr;
+      const category = a.category;
 
       return `<article style="background: #181624; border: 1px solid #2D283E; border-radius: 12px; padding: 14px;">`
         + `<a href="${escapeHtmlAttr(link)}" style="text-decoration: none; display: block;">`
