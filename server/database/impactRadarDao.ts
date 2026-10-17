@@ -1,5 +1,5 @@
 import { getSupabase } from './supabase.js';
-import { isRadarEvent, isRadarUpdate, isRadarCategoryOption, publicRadarEvent, publicRadarUpdate, type RadarCategoryOption, type RadarEvent, type RadarUpdate } from '../../src/shared/impactRadar.js';
+import { isRadarEvent, isRadarEventInScope, isRadarUpdate, isRadarCategoryOption, publicRadarEvent, publicRadarUpdate, type RadarCategoryOption, type RadarEvent, type RadarUpdate } from '../../src/shared/impactRadar.js';
 import { resolveStockDetailsStrict } from '../utils/stockResolver.js';
 import { isRadarIntakeRule, type RadarIntakeRule } from '../services/radarIntakePolicy.js';
 
@@ -48,13 +48,13 @@ export function resolvedRadarEvent(e: RadarEvent): RadarEvent {
 export async function listRadarEvents(): Promise<RadarEvent[]> {
   try {
     const rows = checked(await getSupabase().from('impact_radar_events').select('data').order('updated_at', { ascending: false }).limit(200).abortSignal(AbortSignal.timeout(6000)));
-    return (rows || []).map(r => r.data).filter(e => isRadarEvent(e)).map(resolvedRadarEvent);
+    return (rows || []).map(r => r.data).filter(e => isRadarEvent(e) && isRadarEventInScope(e)).map(resolvedRadarEvent);
   } catch { throw new RadarStorageError(); }
 }
 export async function getRadarEvent(id: string): Promise<RadarEvent | null> {
   try {
     const row = checked(await getSupabase().from('impact_radar_events').select('data').eq('id', id).abortSignal(AbortSignal.timeout(6000)).maybeSingle());
-    return isRadarEvent(row?.data) ? resolvedRadarEvent(row.data) : null;
+    return isRadarEvent(row?.data) && isRadarEventInScope(row.data) ? resolvedRadarEvent(row.data) : null;
   } catch { throw new RadarStorageError(); }
 }
 export async function listRadarUpdates(id: string): Promise<RadarUpdate[]> {
@@ -72,7 +72,7 @@ export async function firstRadarUpdate(id: string): Promise<RadarUpdate | null> 
 export async function publishRadarRecords(records: RadarRecord[]): Promise<void> {
   if (!records.length) return;
   const categories = new Set((await getRadarCategories()).map(c => c.id));
-  if (records.length > 60 || records.some(r => !isRadarEvent(r.event, categories) || !isRadarUpdate(r.update) || r.update.eventId !== r.event.id)) throw new Error('Invalid radar records');
+  if (records.length > 60 || records.some(r => !isRadarEvent(r.event, categories) || !isRadarEventInScope(r.event) || !isRadarUpdate(r.update) || r.update.eventId !== r.event.id)) throw new Error('Invalid radar records');
   const safeRecords = records.map(r => ({ event: publicRadarEvent(r.event), update: publicRadarUpdate(r.update), origin: r.origin === 'intake' ? 'intake' : 'editorial' }));
   try { checked(await getSupabase().rpc('publish_impact_radar_records', { p_records: safeRecords }).abortSignal(AbortSignal.timeout(6000))); }
   catch { throw new RadarStorageError(); }
@@ -82,9 +82,9 @@ export async function getRadarFollowing(uid: string): Promise<{ ids: string[]; e
     const rows = checked(await getSupabase().from('impact_radar_follows').select('event_id, impact_radar_events(data)').eq('user_id', uid).order('created_at', { ascending: false }).limit(500).abortSignal(AbortSignal.timeout(6000)));
     const events = (rows || []).flatMap((r: any) => {
       const e = r.impact_radar_events?.data;
-      return isRadarEvent(e) ? [resolvedRadarEvent(e)] : [];
+      return isRadarEvent(e) && isRadarEventInScope(e) ? [resolvedRadarEvent(e)] : [];
     });
-    return { ids: (rows || []).map(r => r.event_id), events };
+    return { ids: events.map(e => e.id), events };
   } catch { throw new RadarStorageError(); }
 }
 export async function setRadarFollowing(uid: string, id: string, followed: boolean): Promise<void> {

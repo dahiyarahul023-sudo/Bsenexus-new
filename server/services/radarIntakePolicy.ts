@@ -7,7 +7,7 @@ export const DEFAULT_RADAR_INTAKE_RULES: RadarIntakeRule[] = [
   { id: 'operational_incident', category: 'operations', label: 'Operational development', terms: ['plant fire','factory fire','explosion','production halted','halts production','production suspended','plant shutdown','factory shutdown','cyberattack','cyber attack','data breach','product recall','licence revoked','license revoked','licence suspended','license suspended'], exclude_terms: [], priority: 20, active: true },
   { id: 'financial_liability', category: 'liability', label: 'Financial liability', terms: ['loan default','debt default','payment default','tax demand','demand notice','credit rating downgrade'], exclude_terms: [], priority: 30, active: true },
   { id: 'business_restriction', category: 'restriction', label: 'Business restriction', terms: ['debarment','business ban','trading suspension','operations suspended','business restriction'], exclude_terms: [], priority: 40, active: true },
-  { id: 'corporate_transaction', category: 'deals', label: 'Corporate transaction', terms: ['insolvency','bankruptcy','acquisition','merger','demerger','takeover','arbitration'], exclude_terms: [], priority: 50, active: true },
+  { id: 'corporate_transaction', category: 'deals', label: 'Insolvency & disputes', terms: ['insolvency','bankruptcy','CIRP','arbitration','arbitral'], exclude_terms: [], priority: 50, active: true },
 ];
 export const radarWords = (value: string) => ` ${value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()} `;
 export function isRadarIntakeRule(r: any): r is RadarIntakeRule {
