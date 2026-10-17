@@ -84,7 +84,7 @@ export async function getRadarMovement(event: RadarEvent, now = Date.now(), load
   const local = new Date(Date.parse(event.publishedAt) + 330 * 60_000);
   const afterClose = !event.occurredDate && local.getUTCHours() * 60 + local.getUTCMinutes() >= 15 * 60 + 30;
   const result: RadarMovement = { basis: event.occurredDate ? 'event-date' : 'report-date', anchorDate, afterClose, checkedAt: new Date(now).toISOString(), status: 'unavailable', companies: event.companies.slice(0, 3).map(c => ({ symbol: c.symbol, sessions: [] })) };
-  if (anchorDate > radarDay(now) || event.status === 'scheduled') return { ...result, status: 'upcoming' };
+  if (anchorDate > radarDay(now) || (event.status === 'scheduled' && !event.occurredDate)) return { ...result, status: 'upcoming' };
   const dates: string[] = [];
   for (let i = 0; i < 8; i++) {
     const day = new Date(Date.parse(anchorDate) + i * 86400000).toISOString().slice(0, 10);

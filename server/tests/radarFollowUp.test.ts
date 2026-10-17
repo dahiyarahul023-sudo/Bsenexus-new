@@ -7,7 +7,7 @@ import { isRadarEvent, publicRadarEvent, radarTiming, matchesRadarFilter, radarV
 import { isRadarMovement } from '../../src/shared/radarMovement.js';
 const day = '2026-10-13';
 const header = 'TradDt,Sgmt,Src,FinInstrmTp,TckrSymb,SctySrs,ClsPric,PrvsClsgPric,TtlTradgVol';
-const csv = `${header}\n${day},CM,NSE,STK,PNCINFRA,EQ,110,100,500\n${day},CM,NSE,STK,OTHER,EQ,80,100,500\n${day},CM,NSE,STK,ZERO,EQ,0,100,0`;
+const csv = `${header}\n${day},CM,NSE,STK,PNCINFRA,EQ,110,100,500\n${day},CM,NSE,STK,OTHER,EQ,80,100,500\n${day},CM,NSE,STK,ZERO,EQ,0,100,0\n${day},CM,NSE,STK,UNCHANGED,EQ,100,100,500`;
 const source = { name: 'BSE', url: 'https://www.bseindia.com/report.pdf', kind: 'disclosure' as const };
 const company = { symbol: 'PNCINFRA', name: 'PNC Infratech Ltd.', scripCode: '539150' };
 const event: RadarEvent = { id: 'pnc-test', title: 'Delhi High Court stays debarment order', category: 'restriction', authority: 'Delhi High Court', companies: [company], status: 'monitoring', scheduledDate: null, scheduleConfirmed: false, information: 'The company disclosed a court order.', nextTrigger: null, source, publishedAt: '2026-10-13T14:30:19Z', updatedAt: '2026-10-13T14:30:19Z' };
@@ -23,7 +23,7 @@ test('official daily report parser calculates observed returns, keeps symbols se
   const rows = parseBhavcopy(csv, day);
   assert.ok(Math.abs(rows.get('PNCINFRA')!.changePercent - 10) < 1e-10);
   assert.ok(Math.abs(rows.get('OTHER')!.changePercent + 20) < 1e-10);
-  assert.equal(rows.has('ZERO'), false);
+  assert.equal(rows.has('ZERO'), false); assert.equal(rows.get('UNCHANGED')!.changePercent, 0, 'a verified unchanged close is 0%, unlike a missing report');
   assert.throws(() => parseBhavcopy(csv.replaceAll(day, '2026-10-12'), day), /date mismatch/);
   assert.throws(() => parseBhavcopy('<html>Denied</html>', day), /format/);
   assert.throws(() => readBhavcopyZip(archive(csv, '2026-10-12'), day), /Unexpected report/);
@@ -43,6 +43,8 @@ test('after-close publication, missing reports and unavailable prices never beco
   let fetched = false;
   const future = await getRadarMovement({ ...event, status: 'scheduled', scheduledDate: '2026-10-20' }, Date.parse('2026-10-17T05:00:00Z'), async () => { fetched = true; return rows; });
   assert.equal(future.status, 'upcoming'); assert.equal(fetched, false);
+  const ongoing = await getRadarMovement({ ...event, status: 'scheduled', scheduledDate: '2026-10-20', occurredDate: day, occurredSource: source }, Date.parse('2026-10-17T05:00:00Z'), async date => date === day ? rows : null);
+  assert.equal(ongoing.basis, 'event-date'); assert.equal(ongoing.status, 'partial'); assert.equal(ongoing.companies[0].sessions.length, 1, 'a later hearing must not hide the sourced previous event history');
 });
 test('exact sourced event dates and explicit next dates survive projection without guessing dates from publication', () => {
   const input = { sourceId: 'pnc', title: event.title, company, source, publishedAt: event.publishedAt };
