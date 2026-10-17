@@ -1,8 +1,9 @@
+import { isRoutineRadarTransaction, radarSourceSummary } from './radarScope.js';
 /** Shared facts-only contract. No prediction, sentiment, target or return estimate fields. */
 export const RADAR_CATEGORIES = {
   restriction: 'Business restrictions', rules: 'Rules & business model',
   liability: 'Financial liabilities', governance: 'Governance & enforcement',
-  deals: 'Deals & insolvency', operations: 'Licences & operations',
+  deals: 'Insolvency & disputes', operations: 'Licences & operations',
   legal: 'Legal & regulatory matters',
 } as const;
 export type RadarCategory = string;
@@ -122,12 +123,13 @@ export function radarCompanyName(c: RadarCompany): string {
 /** A readable company-first label. Original publisher headings remain in the source timeline. */
 export function radarHeadline(e: RadarEvent): string {
   const company = radarCompanyName(e.companies[0]);
-  if (/intimation under|^this is\b|^we wish to inform\b|regulation 30|disclosure requirements/i.test(e.title)) {
-    const topic = /\border\b/i.test(e.title) ? 'order' : /\bhearing\b/i.test(e.title) ? 'hearing' : 'legal matter';
-    return `${company}: ${e.authority} ${e.category === 'legal' ? topic : 'development'} update`;
-  }
+  const title = radarSourceSummary(e.title, e.information) || e.title;
   const name = company.replace(/\s+(?:limited|ltd\.?)$/i, '');
-  return e.title.toLowerCase().startsWith(name.toLowerCase()) ? e.title : `${company}: ${e.title}`;
+  return title.toLowerCase().startsWith(name.toLowerCase()) ? title : `${company}: ${title}`;
+}
+/** Read projection hides old routine cards without destroying their evidence or user follow records. */
+export function isRadarEventInScope(e: RadarEvent): boolean {
+  return !isRoutineRadarTransaction(`${e.title} ${e.information}`) && radarSourceSummary(e.title, e.information) !== null;
 }
 export function radarCaseLookup(e: RadarEvent): { reference: string | null; party: string; instructions: string } {
   const match = `${e.title} ${e.information}`.match(/\b(?:case|appeal|petition)\s+(?:number\b|no\.?(?=\s|\d)|#)\s*([a-z0-9][a-z0-9./-]{1,40}(?:\s+of\s+20\d{2})?)/i);

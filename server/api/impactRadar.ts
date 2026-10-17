@@ -3,7 +3,7 @@ import { requireAuth, requireAdmin, apiRateLimiter } from '../security/auth.js';
 import { listRadarEvents, getRadarEvent, listRadarUpdates, firstRadarUpdate, getRadarFollowing, setRadarFollowing, publishRadarRecords, getRadarCategories } from '../database/impactRadarDao.js';
 import { getRadarMovement } from '../services/radarMovementService.js';
 import { radarIntakeStatus } from '../services/impactRadarService.js';
-import { RADAR_ID, isRadarEvent, isRadarUpdate, publicRadarEvent } from '../../src/shared/impactRadar.js';
+import { RADAR_ID, isRadarEvent, isRadarEventInScope, isRadarUpdate, publicRadarEvent } from '../../src/shared/impactRadar.js';
 
 export const impactRadarRouter = express.Router();
 impactRadarRouter.use((_req, res, next) => { res.setHeader('Cache-Control', 'private, no-store'); next(); });
@@ -33,7 +33,7 @@ impactRadarRouter.put('/:id/follow', requireAuth, apiRateLimiter, async (req, re
 // Explicit source-backed publishing also links later developments to an existing event ID.
 impactRadarRouter.post('/admin/publish', requireAuth, requireAdmin, apiRateLimiter, async (req, res) => {
   const { event, update } = req.body || {};
-  if (!isRadarEvent(event) || !isRadarUpdate(update) || update.eventId !== event.id || Date.parse(update.publishedAt) > Date.parse(event.updatedAt) || Date.parse(event.updatedAt) > Date.now() || Date.parse(update.publishedAt) > Date.now()) return res.status(400).json({ success: false, error: 'Use sourced facts, a listed Indian company and valid dates. The event timestamp must include its latest evidence.' });
+  if (!isRadarEvent(event) || !isRadarEventInScope(event) || !isRadarUpdate(update) || update.eventId !== event.id || Date.parse(update.publishedAt) > Date.parse(event.updatedAt) || Date.parse(event.updatedAt) > Date.now() || Date.parse(update.publishedAt) > Date.now()) return res.status(400).json({ success: false, error: 'Use a specific sourced Radar development, a listed Indian company and valid dates. Routine corporate transactions belong in ordinary news. The event timestamp must include its latest evidence.' });
   try {
     const companies = await import('../utils/stockResolver.js');
     if (event.companies.some(c => {

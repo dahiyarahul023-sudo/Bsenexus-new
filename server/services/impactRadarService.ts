@@ -7,6 +7,7 @@ import { fetchGeneralMarketNews, getNewsSourceState, type StockNewsItem } from '
 import { publishRadarRecords, getRadarIntakeRules, type RadarRecord } from '../database/impactRadarDao.js';
 import { newsPublicationTime } from '../utils/newsPublicationTime.js';
 import { DEFAULT_RADAR_INTAKE_RULES, matchRadarIntakeRule, radarWords, type RadarIntakeRule } from './radarIntakePolicy.js';
+import { isRoutineRadarTransaction, radarScopeText, radarSourceSummary } from '../../src/shared/radarScope.js';
 import { isNeutralRadarText, isRadarEvent, radarUrl, radarDay, validRadarDate, validRadarTime, type RadarCategory, type RadarEvent, type RadarSource } from '../../src/shared/impactRadar.js';
 
 const digest = (s: string) => createHash('sha256').update(s).digest('hex').slice(0, 32);
@@ -16,21 +17,23 @@ function sourceIdentity(source: RadarSource): string {
   for (const key of [...url.searchParams.keys()]) if (/^utm_|^fbclid$|^gclid$/i.test(key)) url.searchParams.delete(key);
   return url.href;
 }
-const MATERIAL = /\b(?:order|orders|hearing|judgment|judgement|petition|appeal|litigation|tribunal|penalty|demand|restriction|restricted|ban|debarment|stays?|quashes|relief|licen[cs]e|investigation|indictment|insolvency|injunction|market coupling|show.?cause|warning letter|settlement)\b/i;
+const MATERIAL = /\b(?:order|orders|hearing|judgment|judgement|petition|appeal|litigation|tribunal|penalty|demand|restriction|restricted|ban|debarment|stays?|quashes|relief|licen[cs]e|investigat\w*|indictment|insolvency|injunction|blocks?|rejects?|prohibits?|revokes?|market coupling|show.?cause|warning letter|settlement)\b/i;
 export function classifyRadarEvent(title: string, rules: readonly RadarIntakeRule[] = DEFAULT_RADAR_INTAKE_RULES): { category: RadarCategory; authority: string } | null {
+  if (isRoutineRadarTransaction(title)) return null;
+  title = radarScopeText(title);
   const authority = /\bsupreme court\b/i.test(title) ? 'Supreme Court' : /\bDelhi\s+(?:High Court|HC)\b|\bHigh Court\s+of\s+Delhi\b/i.test(title) ? 'Delhi High Court' : /\bhigh court\b/i.test(title) ? 'High Court' :
     /\bNCLAT\b/i.test(title) ? 'NCLAT' : /\bNCLT\b/i.test(title) ? 'NCLT' : /\bAPTEL\b/i.test(title) ? 'APTEL' :
     /\bCERC\b/i.test(title) ? 'CERC' : /\bSEBI\b/i.test(title) ? 'SEBI' : /\bRBI\b/i.test(title) ? 'RBI' :
-    /\b(?:USFDA|FDA)\b/i.test(title) ? 'USFDA' : /\b(?:IRDAI|CCI|NGT|DGGI|SAT|ED|SFIO|DOJ|SEC)\b/.exec(title)?.[0];
+    /\b(?:USFDA|FDA)\b/i.test(title) ? 'USFDA' : /\b(?:Commissioner of Customs|Customs)\b/i.test(title) ? 'Customs' : /\bGST Department\b/i.test(title) ? 'GST Department' : /\b(?:IRDAI|CCI|NGT|DGGI|SAT|ED|SFIO|DOJ|SEC)\b/.exec(title)?.[0];
   // A generic "SEBI Regulation 30" disclosure alone is not a legal event.
   const rule = matchRadarIntakeRule(title, rules);
   if (!authority || !MATERIAL.test(title)) return rule ? { category: rule.category, authority: authority || rule.label } : null;
-  const category: RadarCategory = /\b(?:insolvency|merger|arbitration|deal|acquisition)\b/i.test(title) ? 'deals' :
+  const category: RadarCategory = /\b(?:insolvency|bankruptcy|CIRP|arbitration|arbitral)\b/i.test(title) ? 'deals' :
     /\b(?:market coupling|pricing rules|tariff|regulatory framework)\b/i.test(title) ? 'rules' :
     /\b(?:tax|demand|liability|penalty|compensation|AT.?1)\b/i.test(title) ? 'liability' :
-    /\b(?:fraud|investigation|indictment|promoter|bribery)\b/i.test(title) ? 'governance' :
+    /\b(?:fraud|investigat\w*|indictment|promoter|bribery)\b/i.test(title) ? 'governance' :
     /\b(?:plant|licen[cs]e|environment|warning letter|inspection)\b/i.test(title) ? 'operations' :
-    /\b(?:restriction|restricted|ban|debarment|halt|stop)\b/i.test(title) ? 'restriction' : 'legal';
+    /\b(?:restriction|restricted|ban|debarment|halt|stop|blocks?|prohibits?)\b/i.test(title) ? 'restriction' : 'legal';
   return { category, authority };
 }
 function explicitDate(value: string): string | null {
@@ -60,8 +63,9 @@ export function radarRecordFromSource(input: {
 }, now = Date.now()): RadarRecord | null {
   const title = text(input.title);
   const classified = classifyRadarEvent(`${title} ${text(input.evidence)}`, input.rules);
+  const summary = radarSourceSummary(title, text(input.evidence));
   const ts = Date.parse(input.publishedAt);
-  if (!classified || !isNeutralRadarText(title, 200) || !radarUrl(input.source.url) || !validRadarTime(input.publishedAt) || ts > now || ts < now - 7 * 86_400_000) return null;
+  if (!classified || !summary || !isNeutralRadarText(title, 200) || !isNeutralRadarText(summary, 200) || !radarUrl(input.source.url) || !validRadarTime(input.publishedAt) || ts > now || ts < now - 7 * 86_400_000) return null;
   if (!/^\d{6}$/.test(input.company.scripCode)) return null;
   // Group only an explicit case reference within the same company and authority.
   // Missing references remain separate source reports rather than guessing a shared case.
@@ -77,7 +81,7 @@ export function radarRecordFromSource(input: {
     ? 'A news source has reported this development. Read the original report for details; an official outcome has not been independently confirmed here.'
     : 'The company has published a legal or regulatory disclosure. Read the original filing for the scope and current position.';
   const scheduled = /\b(?:to hear|will hear|scheduled|listed for|hearing on|hearing scheduled)\b/i.test(title);
-  const event: RadarEvent = { id, title, companies: [input.company], ...classified, status: scheduled ? 'scheduled' : 'monitoring', scheduledDate: null,
+  const event: RadarEvent = { id, title: summary, companies: [input.company], ...classified, status: scheduled ? 'scheduled' : 'monitoring', scheduledDate: null,
     scheduleConfirmed: false, information, nextTrigger: null, source: input.source,
     publishedAt: new Date(ts).toISOString(), updatedAt: new Date(ts).toISOString() };
   const evidence = `${title} ${text(input.evidence)}`;
@@ -145,7 +149,8 @@ export async function refreshRadarIntake(): Promise<void> {
         const ts = typeof f.bseTimestamp === 'number' ? f.bseTimestamp : NaN;
         const url = radarUrl(f.pdfLink);
         if (!entry || !url || !/(^|\.)(?:bseindia|nseindia)\.com$/i.test(new URL(url).hostname) || !Number.isFinite(ts)) continue;
-        const title = classifyRadarEvent(subject, rules) && subject.length <= 200 ? subject : evidence.length <= 200 && classifyRadarEvent(evidence, rules) ? evidence : `${entry.name}: ${classified.authority} development disclosed`.slice(0, 200);
+        const title = classifyRadarEvent(subject, rules) && subject.length <= 200 ? subject : evidence.length <= 200 && classifyRadarEvent(evidence, rules) ? evidence : '';
+        if (!title) continue;
         const record = radarRecordFromSource({ sourceId: `filing:${f.id || url}`, title, publishedAt: new Date(ts).toISOString(),
           source: { name: /nseindia/.test(url) ? 'NSE company disclosure' : 'BSE company disclosure', url, kind: 'disclosure' },
           company: { symbol: entry.symbol, name: entry.name, scripCode: entry.scripCode }, evidence: evidence || undefined, rules });

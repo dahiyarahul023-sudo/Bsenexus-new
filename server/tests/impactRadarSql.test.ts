@@ -11,7 +11,9 @@ before(async () => { await db.exec('create role anon; create role authenticated;
  const upgrade = fs.readdirSync('supabase/migrations').find(n => n.endsWith('_impact_radar_integrity_categories.sql'));
  if (upgrade) await db.exec(fs.readFileSync('supabase/migrations/' + upgrade, 'utf8'));
  const material = fs.readdirSync('supabase/migrations').find(n => n.endsWith('_impact_radar_material_intake.sql'));
- if (material) await db.exec(fs.readFileSync('supabase/migrations/' + material, 'utf8')); });
+ if (material) await db.exec(fs.readFileSync('supabase/migrations/' + material, 'utf8'));
+ const focused = fs.readdirSync('supabase/migrations').find(n => n.endsWith('_impact_radar_focused_events.sql'));
+ if (focused) await db.exec(fs.readFileSync('supabase/migrations/' + focused, 'utf8')); });
 after(() => db.close());
 test('migration installs private RLS tables, one timeline, and durable duplicate-safe follows', async () => {
   await publish([{ event, update }]); await publish([{ event, update }]);
@@ -100,6 +102,19 @@ test('material intake rules are private, category-bound and editable without cod
    finally { await db.exec('reset role'); }
   }
  }
+});
+test('focused scope upgrade is repeatable, narrows only routine terms and preserves saved evidence/follows', async () => {
+ const migration = fs.readdirSync('supabase/migrations').find(n => n.endsWith('_impact_radar_focused_events.sql'))!;
+ await db.exec("update impact_intake_rules set terms=terms || array['custom dispute'] where id='corporate_transaction'");
+ const before = (await db.query<any>('select (select count(*) from impact_radar_events)::int events, (select count(*) from impact_radar_updates)::int updates, (select count(*) from impact_radar_follows)::int follows')).rows[0];
+ await db.exec(fs.readFileSync('supabase/migrations/' + migration, 'utf8'));
+ await db.exec(fs.readFileSync('supabase/migrations/' + migration, 'utf8'));
+ const row = (await db.query<any>("select * from impact_intake_rules where id='corporate_transaction'")).rows[0];
+ assert.ok(row.terms.includes('custom dispute')); assert.ok(row.terms.includes('CIRP')); assert.ok(row.terms.includes('arbitration'));
+ for (const term of ['acquisition','merger','demerger','takeover']) assert.ok(!row.terms.includes(term));
+ assert.equal((await db.query<any>("select label from impact_categories where id='deals'")).rows[0].label,'Insolvency & disputes');
+ const after = (await db.query<any>('select (select count(*) from impact_radar_events)::int events, (select count(*) from impact_radar_updates)::int updates, (select count(*) from impact_radar_follows)::int follows')).rows[0];
+ assert.deepEqual(after,before);
 });
 test('daily price snapshots are duplicate-safe and service role cannot rewrite recorded prices', async () => {
  const row = { symbol:'PNCINFRA', date:'2026-10-13', close:155.44, previousClose:138.25 };
