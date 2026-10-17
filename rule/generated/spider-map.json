@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "2894f5af5e2898e46099cb5013f12fbdc4e1ae1f456556a439eea6f2ab529496",
+  "sourceDigest": "745e7a047546a3c8ba36c7099be6f26187e33b09f7dd5b598a323a3cdcc0700c",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -704,7 +704,7 @@
     },
     {
       "path": "server/services/impactRadarService.ts",
-      "sha256": "ca931762d741f243367946aa27658eb573ca78de8470b4226a050e58a46f3c60",
+      "sha256": "26d166aa6e9c4dc5e89abaed645b068ab34c091a24142732bd0821f81b096c8c",
       "importedBy": [
         "server.ts",
         "server/api/impactRadar.ts",
@@ -1078,7 +1078,7 @@
     },
     {
       "path": "server/tests/radarIntegrity.test.ts",
-      "sha256": "74d1883caf9fa94d5263df08b67cd0a806cba7d1edd1b6766e8c3ee47bc99666",
+      "sha256": "1203d27a6e13b43111c9507f5ea154c4d52469328b506cae16c37b58ddd068b9",
       "importedBy": []
     },
     {
@@ -1309,7 +1309,7 @@
     },
     {
       "path": "server/utils/stockResolver.ts",
-      "sha256": "70c18de1c2649b6e565ee7ce0270e55400b6fc295dbcda8e04279e33828262e0",
+      "sha256": "cef8a9d781e720ee126af7d8d906b08c30ee3c850b7fba4610c624d82bac442e",
       "importedBy": [
         "server.ts",
         "server/api/impactRadar.ts",
@@ -2571,7 +2571,7 @@
     },
     {
       "path": "src/shared/impactRadar.ts",
-      "sha256": "02e545e8df2408b0a9d08f34c354f764e5d0c5c57937e5c453026487c4fd7825",
+      "sha256": "7449579b5455913bb5c0be89ea819242a0e0de0b2c3ec0628b9f49631245d2a4",
       "importedBy": [
         "server/api/impactRadar.ts",
         "server/database/impactRadarDao.ts",
@@ -5493,13 +5493,13 @@
       "source": "server/tests/radarIntegrity.test.ts",
       "target": "server/services/impactRadarService.ts",
       "kind": "dynamic",
-      "line": 77
+      "line": 81
     },
     {
       "source": "server/tests/radarIntegrity.test.ts",
       "target": "server/services/radarCompanyIdentity.ts",
       "kind": "dynamic",
-      "line": 91
+      "line": 96
     },
     {
       "source": "server/tests/radarNewsState.test.ts",
@@ -12717,13 +12717,13 @@
     },
     {
       "file": "server/utils/stockResolver.ts",
-      "line": 428,
+      "line": 431,
       "function": "fetch",
       "target": "screenerUrl"
     },
     {
       "file": "server/utils/stockResolver.ts",
-      "line": 445,
+      "line": 448,
       "function": "fetch",
       "target": "`https://www.screener.in/company/${extractedSymbol}/`"
     },
@@ -14435,7 +14435,7 @@
     },
     {
       "file": "server/utils/stockResolver.ts",
-      "line": 501,
+      "line": 504,
       "function": "Array.from",
       "key": "symbolToEntry.values()"
     },

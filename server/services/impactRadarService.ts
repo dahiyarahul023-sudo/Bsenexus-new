@@ -62,7 +62,7 @@ export function radarRecordFromSource(input: {
   if (!/^\d{6}$/.test(input.company.scripCode)) return null;
   // Group only an explicit case reference within the same company and authority.
   // Missing references remain separate source reports rather than guessing a shared case.
-  const proceeding = title.match(/\b(case|appeal|petition)\s*(?:no\.?|number|#)\s*([a-z0-9][a-z0-9./-]{1,40}(?:\s+of\s+\d{4})?)/i);
+  const proceeding = title.match(/\b(case|appeal|petition)\s+(?:number\b|no\.?(?=\s|\d)|#)\s*([a-z0-9][a-z0-9./-]{1,40}(?:\s+of\s+20\d{2})?)/i);
   const reference = proceeding?.[2].toUpperCase().replace(/\s+/g, '');
   const unambiguousReference = reference && /(?:^|[/.\-]|OF)20\d{2}(?:$|[/.\-])/.test(reference) &&
     ['Supreme Court', 'SEBI', 'RBI', 'APTEL', 'CERC', 'NCLAT'].includes(classified.authority);

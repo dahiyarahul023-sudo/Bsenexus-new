@@ -34,12 +34,16 @@ test('F3: proceeding type participates in identity, while repeated same-type ref
  const a = radarRecordFromSource(input, now)!;
  const b = radarRecordFromSource({ ...input, title: input.title.replace('appeal', 'petition') }, now)!;
  const c = radarRecordFromSource({ ...input, source: { ...source, url: 'https://www.bseindia.com/second.pdf' } }, now)!;
- assert.notEqual(a.event.id, b.event.id); assert.equal(a.event.id, c.event.id); assert.notEqual(a.update.id, c.update.id);
+ assert.notEqual(a.event.id, b.event.id); assert.equal(a.event.id, c.event.id);
+ assert.equal(a.event.id, radarRecordFromSource({ ...input, title: input.title.replace('appeal no', 'appeal number') }, now)!.event.id); assert.notEqual(a.update.id, c.update.id);
 });
 test('F4: strict identity rejects synthetic entries and resolves PNC code to its genuine NSE symbol', () => {
  assert.ok(resolveStockDetailsSync('999999'));
  assert.equal(resolveStockDetailsStrict('999999'), null);
  assert.deepEqual(resolveStockDetailsStrict('539150')?.symbol, company.symbol);
+ registerStockEntry({ symbol: '539150', name: '539150', scripCode: '539150', nameKeywords: [] }, false);
+ assert.equal(resolveStockDetailsStrict('539150')?.symbol, 'PNCINFRA', 'a legacy numeric cache overlay must not hide verified PNC identity');
+ registerStockEntry({ ...company, nameKeywords: [] }, false);
  registerStockEntry({ symbol: 'PENDINGONLY', name: 'Pending Company Ltd', scripCode: '', nameKeywords: [] }, false);
  assert.equal(resolveStockDetailsSync('PENDINGONLY')?.name, 'Pending Company Ltd', 'legacy consumers keep existing incomplete lookup behavior');
  assert.equal(resolveStockDetailsStrict('PENDINGONLY'), null);
@@ -80,6 +84,7 @@ test('reviewed PNC backfill preserves original disclosure time, order date, inve
  assert.ok(records.every(r => isRadarEvent(r.event)));
  assert.equal(new Set(records.map(r => r.event.id)).size, 1);
  assert.equal(records[0].event.occurredDate, '2026-10-12');
+ assert.equal(radarCaseLookup(records[0].event).reference, null, 'the words case number in a missing-reference statement are not a case identifier');
  assert.equal(records[0].event.publishedAt, '2026-10-13T14:30:19.000Z');
  assert.equal(records[0].event.occurredSource?.kind, 'company');
  assert.equal(records.filter(r => r.update.source.kind === 'news').length, 2);

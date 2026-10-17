@@ -368,7 +368,10 @@ function lookupStockEntry(query: string): StockMasterEntry | null {
 
 export function resolveStockDetailsStrict(query: string): StockMasterEntry | null {
   const entry = lookupStockEntry(query);
-  return entry && /^\d{6}$/.test(entry.scripCode) && /[a-z]/i.test(entry.name) && entry.name !== entry.scripCode ? entry : null;
+  if (entry && /^\d{6}$/.test(entry.scripCode) && /[a-z]/i.test(entry.name) && entry.name !== entry.scripCode) return entry;
+  // An old numeric disk/session fallback must not hide a verified core identity.
+  const clean = query?.trim().toUpperCase();
+  return INITIAL_STOCKS.find(e => e.scripCode === clean || e.symbol === clean) || null;
 }
 
 /** Legacy permissive lookup; Radar publishing must use the strict master lookup. */

@@ -126,7 +126,8 @@ export function radarHeadline(e: RadarEvent): string {
   return e.title.toLowerCase().startsWith(name.toLowerCase()) ? e.title : `${company}: ${e.title}`;
 }
 export function radarCaseLookup(e: RadarEvent): { reference: string | null; party: string; instructions: string } {
-  const reference = `${e.title} ${e.information}`.match(/\b(?:case|appeal|petition)\s*(?:no\.?|number|#)\s*[a-z0-9][a-z0-9./-]{1,40}(?:\s+of\s+\d{4})?/i)?.[0] || null;
+  const match = `${e.title} ${e.information}`.match(/\b(?:case|appeal|petition)\s+(?:number\b|no\.?(?=\s|\d)|#)\s*([a-z0-9][a-z0-9./-]{1,40}(?:\s+of\s+20\d{2})?)/i);
+  const reference = match && /\d/.test(match[1]) && /20\d{2}/.test(match[1]) ? match[0] : null;
   return { reference, party: e.companies[0].name.replace(/\s+ltd\.?$/i, ' Limited'), instructions: reference
     ? 'Choose the case type, number and year shown above in the official case-status form. Verify the parties against the original source.'
     : 'Case number is not recorded in the available evidence. Open party-name search, enter the company name above, then verify the parties, order date and case type. A matching name alone does not confirm the same proceeding.' };
