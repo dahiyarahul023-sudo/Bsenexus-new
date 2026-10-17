@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "436c642a9c16d0daa35fe978d0fa46a1215404953cf0b09a41e387eaacc0c409",
+  "sourceDigest": "82cafd086870fc28d4e578d4adc30550e111aac769cbc368ba37402a533224b4",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -869,7 +869,7 @@
     },
     {
       "path": "server/tests/accountProtection.test.ts",
-      "sha256": "1797e6f3458c9a272a06e32a0501be290cddb0117a7cd80525dc5f979ccb902d",
+      "sha256": "84085521d72fd0661a75cb6e9ebbf1ad4a6ad081dd4515323069b6a48d54ebf1",
       "importedBy": []
     },
     {
@@ -4825,7 +4825,7 @@
       "source": "server/tests/accountProtection.test.ts",
       "target": "server/security/accountRateLimiter.ts",
       "kind": "dynamic",
-      "line": 17
+      "line": 18
     },
     {
       "source": "server/tests/aiGateway.test.ts",
@@ -15888,12 +15888,12 @@
     },
     {
       "file": "server/tests/accountProtection.test.ts",
-      "line": 7,
+      "line": 8,
       "name": "SUPABASE_URL"
     },
     {
       "file": "server/tests/accountProtection.test.ts",
-      "line": 8,
+      "line": 9,
       "name": "SUPABASE_SERVICE_ROLE_KEY"
     },
     {

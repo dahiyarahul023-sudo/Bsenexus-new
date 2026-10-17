@@ -3,6 +3,7 @@ import assert from 'node:assert';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import bcrypt from 'bcryptjs';
 process.chdir(fs.mkdtempSync(path.join(os.tmpdir(), 'bsenexus-account-test-')));
 delete process.env.SUPABASE_URL;
 delete process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -161,8 +162,8 @@ describe('Per-Account Rate Limiting & Protection Suite', () => {
     assert.strictEqual(expiredStatus.remainingLockoutSec, 0);
   });
 
-  // Test 6: Nonexistent account enumeration resistance & constant-time delay simulation
-  test('Nonexistent account does not disclose presence and executes timing normalization', async () => {
+  // Test 6: Enumeration resistance and awaited, cost-matched bcrypt work
+  test('Nonexistent account does not disclose presence and awaits cost-matched bcrypt normalization', async (t) => {
     const nonexistentEmail = `does_not_exist_${Date.now()}@ghostdomain.invalid`;
     const existingEmail = 'dahiyarahul023@gmail.com';
 
@@ -180,13 +181,19 @@ describe('Per-Account Rate Limiting & Protection Suite', () => {
     assert.strictEqual(nonExistentStatus.allowed, true);
     assert.strictEqual(existingStatus.allowed, true);
 
-    // Timing delay simulation runs within bounded window (80ms - 250ms)
-    const startTime = Date.now();
+    // Real cryptographic work is the contract; elapsed time varies by runner CPU.
+    // Match the cost-10 PIN hashes used in auth.ts and verify the work is awaited.
+    const originalCompare = bcrypt.compare;
+    let comparisons = 0, completed = false;
+    t.mock.method(bcrypt, 'compare', ((probe: string, hash: string) => {
+      comparisons++;
+      assert.strictEqual(typeof probe, 'string');
+      assert.strictEqual(bcrypt.getRounds(hash), 10, 'normalization must match the credential hash cost');
+      return originalCompare(probe, hash).then(result => { completed = true; return result; });
+    }) as typeof bcrypt.compare);
     await simulateCredentialVerificationDelay();
-    const elapsed = Date.now() - startTime;
-
-    assert.ok(elapsed >= 70, `Timing simulation should take at least ~70ms, was ${elapsed}ms`);
-    assert.ok(elapsed <= 400, `Timing simulation should not exceed 400ms, was ${elapsed}ms`);
+    assert.strictEqual(comparisons, 1, 'one real bcrypt comparison must run');
+    assert.strictEqual(completed, true, 'credential normalization must await the comparison');
   });
 
   // Test 7: Client IP sanitization and proxy header safety
