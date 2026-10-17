@@ -79,8 +79,8 @@
 .impact-radar-skeleton>span:first-child { width:40%; }.impact-radar-skeleton>span:nth-child(2) { height:38px; width:95%; }.impact-radar-skeleton>span:last-child { width:60%; }
 .impact-radar :is(button,a,select):focus-visible { outline:3px solid var(--rich-focus,#047857); outline-offset:3px; }
 @media (hover:hover) { .impact-radar-card:hover { border-color:var(--rich-selected-border,#67cdb0); }.impact-radar-close:hover,.impact-radar-more:hover { background:var(--rich-soft,#f4f7f8); } }
-@media(min-width:640px) { .impact-radar-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }.impact-radar-answers { grid-template-columns:repeat(2,minmax(0,1fr)); gap:22px; } }
-@media(min-width:1100px) { .impact-radar-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@media(min-width:768px) { .impact-radar-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }.impact-radar-answers { grid-template-columns:repeat(2,minmax(0,1fr)); gap:22px; } }
+@media(min-width:1280px) { .impact-radar-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
 @media(max-width:479px) { .impact-radar-heading { gap:6px; }.impact-radar-heading p { display:none; }.impact-radar h2 { font-size:18px; }.impact-radar-mark { width:35px; height:35px; border-radius:11px; }.impact-radar-brand { gap:8px; }.impact-radar-heading-actions>button:first-child { padding:0 6px; font-size:11px; }.impact-radar-category-filter { flex-basis:100%; }.impact-radar-detail { padding:15px; }.impact-radar-card { border-radius:16px; } }
 @media(prefers-reduced-motion:reduce) { .impact-radar * { animation:none!important; transition:none!important; scroll-behavior:auto!important; }.impact-radar-filters button:active { transform:none; } }
 /* Home stays compact. The native dialog owns the full Radar workspace. */

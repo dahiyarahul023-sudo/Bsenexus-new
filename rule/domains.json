@@ -428,7 +428,6 @@
         "src/components/ui/RichVisual.tsx",
         "src/components/ui/helios.tsx",
         "src/components/ui/PlanCard.tsx",
-        "src/components/ui/motion/SlidingTabList.tsx",
         "src/config/avatars.ts",
         "src/utils/avatarSave.ts",
         "src/components/AvatarPicker.tsx",
@@ -656,16 +655,22 @@
         "src/components/RadarMovementPanel.tsx",
         "src/components/HomeMarketNews.tsx",
         "src/hooks/useBodyScrollLock.ts",
-        "server/services/radarMovementService.ts"
+        "server/services/radarMovementService.ts",
+        "server/services/radarCompanyIdentity.ts",
+        "server/services/radarReviewedEvidence.ts",
+        "supabase/migrations/20261017100545_impact_radar_integrity_categories.sql",
+        "server.ts"
       ],
       "tests": [
         "server/tests/impactRadar.test.ts",
         "server/tests/impactRadarApi.test.ts",
         "server/tests/impactRadarRender.test.ts",
         "server/tests/impactRadarSql.test.ts",
-        "server/tests/radarFollowUp.test.ts"
+        "server/tests/radarFollowUp.test.ts",
+        "server/tests/radarIntegrity.test.ts",
+        "server/tests/radarNewsState.test.ts"
       ],
-      "reason": "Two Home previews open a native modal Radar dashboard and immediate detail. Watchlist scope stays separate from durable event follows. Both exchange disclosures and shared RSS intake carry source/date provenance; explicit jurisdiction/case references alone may join evidence. Future events have no predictions. Observed NSE final daily closes are a separate bounded, cached read with per-session source, missing-data states and no causal attribution. Account cancellation, modal focus/scroll, themes and reduced motion remain explicit contracts."
+      "reason": "Two Home previews open a native modal Radar dashboard and immediate detail. Watchlist scope stays separate from durable event follows. Both exchange disclosures and shared RSS intake carry source/date provenance; explicit jurisdiction/case references alone may join evidence. Future events have no predictions. Observed NSE final daily closes are a separate bounded, cached read with per-session source, missing-data states and no causal attribution. Account cancellation, modal focus/scroll, themes and reduced motion remain explicit contracts. The list is read-only; existing watchdog drives bounded intake. Server-only DB categories, strict real company identity, typed proceedings, source-domain rules and offset timestamps gate publishing. Reviewed PNC source backfill retains explicit news timestamps and separately sourced NSE daily ranges. Following outages preserve closed records."
     }
   ]
 }

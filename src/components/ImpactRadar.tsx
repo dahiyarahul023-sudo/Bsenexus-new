@@ -8,7 +8,7 @@ import { RadarWindow } from './RadarWindow';
 import { RadarMovementPanel } from './RadarMovementPanel';
 import { ActionButton } from './ui/ActionButton';
 import { ImpactRadarFeed } from '../utils/impactRadarFeed';
-import { RADAR_CATEGORIES, RADAR_NOTICE, RADAR_STALE_MS, isRadarEvent, isRadarUpdate, matchesRadarFilter, radarStatus, radarDay, radarUrl, radarTiming, RADAR_TIMING_LABELS, radarVerificationSources,
+import { RADAR_CATEGORIES, RADAR_NOTICE, RADAR_STALE_MS, isRadarEvent, isRadarUpdate, matchesRadarFilter, radarStatus, radarDay, radarUrl, radarTiming, RADAR_TIMING_LABELS, radarVerificationSources, radarHeadline, radarCompanyName, radarCaseLookup, isRadarCategoryOption,
   type RadarEvent, type RadarFilter, type RadarUpdate } from '../shared/impactRadar';
 import '../styles/impact-radar.css';
 
@@ -25,17 +25,17 @@ const dayLabel = (event: RadarEvent, now: number) => {
   return `${label}${event.scheduleConfirmed ? '' : ' · tentative'}`;
 };
 
-export function RadarCard({ event, tracked, saving, disabled, now, selected, onOpen, onTrack }: {
-  event: RadarEvent; tracked: boolean; saving: boolean; disabled: boolean; now: number; selected: boolean;
+export function RadarCard({ event, tracked, saving, disabled, now, selected, onOpen, onTrack, categoryLabel }: {
+  categoryLabel?: string; event: RadarEvent; tracked: boolean; saving: boolean; disabled: boolean; now: number; selected: boolean;
   onOpen: (event: RadarEvent, button: HTMLButtonElement) => void; onTrack: () => void;
 }) {
   return <article data-timing={radarTiming(event, now)} className={`impact-radar-card${selected ? ' is-open' : ''}`}>
-    <div className="impact-radar-card-top"><span className="impact-radar-category">{RADAR_CATEGORIES[event.category]}</span>
+    <div className="impact-radar-card-top"><span className="impact-radar-category">{categoryLabel || RADAR_CATEGORIES[event.category as keyof typeof RADAR_CATEGORIES] || event.category}</span>
       <span className="impact-radar-date"><CalendarDays size={12} aria-hidden="true" />{dayLabel(event, now)}</span></div>
-    <div className="impact-radar-company">{event.companies.slice(0, 2).map(c => c.name).join(' · ')}{event.companies.length > 2 ? ` +${event.companies.length - 2}` : ''}</div>
-    <h3><button type="button" className="impact-radar-card-open" aria-haspopup="dialog" aria-expanded={selected} onClick={e => onOpen(event, e.currentTarget)}><span className="impact-radar-card-title">{event.title}<ArrowUpRight size={16} aria-hidden="true" /></span></button></h3>
+    <div className="impact-radar-company">{event.companies.slice(0, 2).map(radarCompanyName).join(' · ')}{event.companies.length > 2 ? ` +${event.companies.length - 2}` : ''}</div>
+    <h3><button type="button" className="impact-radar-card-open" aria-haspopup="dialog" aria-expanded={selected} onClick={e => onOpen(event, e.currentTarget)}><span className="impact-radar-card-title">{radarHeadline(event)}<ArrowUpRight size={16} aria-hidden="true" /></span></button></h3>
     <div className="impact-radar-card-meta"><span>{event.authority}</span><span className="impact-radar-stage"><i aria-hidden="true" />{RADAR_TIMING_LABELS[radarTiming(event, now)]}</span></div>
-    <div className="impact-radar-card-foot"><span className="impact-radar-source">{event.source.kind === 'news' ? 'News report' : event.source.kind === 'disclosure' ? 'Company disclosure' : 'Official source'}<time dateTime={event.publishedAt}>{time(event.publishedAt)}</time></span>
+    <div className="impact-radar-card-foot"><span className="impact-radar-source">{event.source.kind === 'news' ? 'News report' : event.source.kind === 'disclosure' ? 'Company disclosure' : event.source.kind === 'company' ? 'Company investor disclosure' : 'Official source'}<time dateTime={event.publishedAt}>{time(event.publishedAt)}</time></span>
       <ActionButton type="button" size="sm" variant={tracked ? 'secondary' : 'ghost'} className="impact-radar-track" disabled={disabled} isLoading={saving} loadingText="Saving"
         aria-pressed={tracked} aria-label={`${tracked ? 'Stop tracking' : 'Track'} ${event.title}`} onClick={onTrack}
         icon={tracked ? <BookmarkCheck size={15} aria-hidden="true" /> : <BookmarkPlus size={15} aria-hidden="true" />}>{tracked ? 'Tracking' : 'Track event'}</ActionButton></div>
@@ -58,20 +58,22 @@ function RadarDetail({ event, now, tracked, saving, disabled, onTrack, onRefresh
     void customFetch(`/api/impact-radar/${encodeURIComponent(event.id)}`, { signal: controller.signal }).then(async r => {
       const data = await r.json();
       if (!r.ok || data.success !== true || !isRadarEvent(data.event) || data.event.id !== event.id || !Array.isArray(data.updates) || data.updates.some((u: any) => !isRadarUpdate(u) || u.eventId !== event.id)) throw new Error('Unavailable');
-      if (alive && !controller.signal.aborted) { setCurrent(data.event); setUpdates(data.updates); setFirstUpdate(isRadarUpdate(data.firstUpdate) && data.firstUpdate.eventId === event.id ? data.firstUpdate : null); setRelated(Array.isArray(data.related) ? data.related.filter(isRadarEvent).slice(0, 8) : []); }
+      if (alive && !controller.signal.aborted) { setCurrent(data.event); setUpdates(data.updates); setFirstUpdate(isRadarUpdate(data.firstUpdate) && data.firstUpdate.eventId === event.id ? data.firstUpdate : null); setRelated(Array.isArray(data.related) ? data.related.filter((e: unknown) => isRadarEvent(e)).slice(0, 8) : []); }
     }).catch(() => { if (alive) setError(true); }).finally(() => { clearTimeout(timer); if (alive) setLoading(false); });
     return () => { alive = false; controller.abort(); clearTimeout(timer); };
   }, [event.id, event.updatedAt, retry, onRefreshKey]);
   const sourceHref = radarUrl(current.source.url);
+  const lookup = radarCaseLookup(current);
   return <section id="impact-radar-detail" className="impact-radar-detail" aria-labelledby="impact-radar-detail-title" aria-busy={loading}>
     <div className="impact-radar-detail-top"><span className="impact-radar-eyebrow">Event brief</span></div>
-    <h3 id="impact-radar-detail-title" ref={heading} tabIndex={-1}>{current.title}</h3>
+    <h3 id="impact-radar-detail-title" ref={heading} tabIndex={-1}>{radarHeadline(current)}</h3>
     <p className="impact-radar-detail-companies">{current.companies.map(c => `${c.name} (${c.symbol})`).join(' · ')}</p>
     <div className="impact-radar-detail-facts"><span>{current.authority}</span><span>{radarStatus(current, now)}</span><span>{dayLabel(current, now)}</span></div>
     <div className="impact-radar-provenance">
       <p><strong>Report published:</strong> {time(current.publishedAt)} · {current.source.name} · {current.source.kind === 'news' ? 'News report; official confirmation not recorded in this source' : current.source.kind === 'disclosure' ? 'Company exchange disclosure' : 'Official source'}</p>
       <p><strong>Event date:</strong> {current.occurredDate || 'Not independently verified; the publication date is not the hearing or order date.'}{current.occurredSource && <a href={radarUrl(current.occurredSource.url)!} target="_blank" rel="noopener noreferrer">Date evidence ↗</a>}</p>
-      {firstUpdate && <p><strong>Earliest recorded announcement:</strong> {time(firstUpdate.publishedAt)} <a href={radarUrl(firstUpdate.source.url)!} target="_blank" rel="noopener noreferrer">{firstUpdate.source.name} ↗</a></p>}
+      {firstUpdate && <p><strong>Earliest recorded source:</strong> {time(firstUpdate.publishedAt)} <a href={radarUrl(firstUpdate.source.url)!} target="_blank" rel="noopener noreferrer">{firstUpdate.source.name} ↗</a></p>}
+      {current.supportingSources?.map(s => <p key={s.url}><strong>Supporting source:</strong> <a href={radarUrl(s.url)!} target="_blank" rel="noopener noreferrer">{s.name} ↗</a></p>)}
       {current.scheduleSource && <p><strong>Next date evidence:</strong> <a href={radarUrl(current.scheduleSource.url)!} target="_blank" rel="noopener noreferrer">{current.scheduleSource.name} ↗</a></p>}
     </div>
     <RadarMovementPanel eventId={current.id} refreshKey={current.updatedAt} companyCount={current.companies.length} />
@@ -82,6 +84,7 @@ function RadarDetail({ event, now, tracked, saving, disabled, onTrack, onRefresh
       <div><h4>How long will it continue?</h4><p>{current.status === 'closed' ? 'This matter is marked closed in the recorded timeline. See the source for the scope of closure.' : 'The duration is not confirmed. Tracking keeps this matter available as further sourced developments are added.'}</p></div>
     </div>
     <div className="impact-radar-verification"><h4>Where will the next date be confirmed?</h4><p>A later company filing, the authority’s order, case status or cause list may give the next date. These links are verification routes; a new date is shown only when source evidence records it.</p>
+      <p><strong>Party to search:</strong> {lookup.party}</p><p><strong>Case reference:</strong> {lookup.reference || 'Not available in the recorded sources'}</p><p>{lookup.instructions}</p>
       {radarVerificationSources(current).map(source => <a key={source.url} href={source.url} target="_blank" rel="noopener noreferrer">{source.name}<ArrowUpRight size={13} aria-hidden="true" /><span className="sr-only"> (opens a new tab)</span></a>)}
       {!radarVerificationSources(current).length && <p>The exact authority registry has not been identified for this report. Check the original announcement and company investor updates.</p>}
     </div>
@@ -93,7 +96,7 @@ function RadarDetail({ event, now, tracked, saving, disabled, onTrack, onRefresh
     {error && <div className="impact-radar-status" role="status">Timeline could not be refreshed. Previously loaded details may be out of date. <button type="button" onClick={() => setRetry(v => v + 1)}>Retry</button></div>}
     {loading && !updates.length ? <p role="status" className="impact-radar-muted">Loading source updates…</p> : updates.length ? <ol className="impact-radar-timeline">{updates.map(u => <li key={u.id}>
       <time dateTime={u.publishedAt}>{time(u.publishedAt)}</time><strong>{u.title}</strong><p>{u.information}</p>
-      <a href={radarUrl(u.source.url)!} target="_blank" rel="noopener noreferrer">{u.source.name}<ArrowUpRight size={13} aria-hidden="true" /><span className="sr-only"> (opens a new tab)</span></a>
+      <a href={radarUrl(u.source.url)!} target="_blank" rel="noopener noreferrer">{u.source.kind === 'news' ? 'News report · ' : u.source.kind === 'company' ? 'Company investor disclosure · ' : 'Official disclosure · '}{u.source.name}<ArrowUpRight size={13} aria-hidden="true" /><span className="sr-only"> (opens a new tab)</span></a>
     </li>)}</ol> : !error && <p className="impact-radar-muted">No additional source updates are recorded.</p>}
     {updates.length === 50 && <p className="impact-radar-muted">Showing the latest 50 source updates.</p>}
     {related.length > 0 && <div className="impact-radar-related"><h4>Related company reports</h4><p>Same company and authority; these are not confirmed as the same case. News and later official disclosures can appear here separately.</p>{related.map(e => <button key={e.id} type="button" onClick={() => onRelated(e)}>{e.title}<span>{e.source.kind === 'news' ? 'News' : 'Official disclosure'} · {time(e.publishedAt)}</span></button>)}</div>}
@@ -112,6 +115,18 @@ export function ImpactRadar({ active, identity, onNavigate, density, watched = [
   const [selected, setSelected] = useState<RadarEvent | null>(null), [now, setNow] = useState(Date.now());
   const opener = useRef<HTMLButtonElement | null>(null);
   const reduce = useReducedMotion();
+  const [categories, setCategories] = useState<Record<string, string>>({});
+  useEffect(() => {
+    if (!active) return;
+    const controller = new AbortController(), timeout = setTimeout(() => controller.abort(), 8000);
+    let alive = true;
+    void customFetch('/api/impact-radar/categories', { signal: controller.signal }).then(async r => {
+      const body = await r.json();
+      if (!r.ok || body.success !== true || !Array.isArray(body.categories) || body.categories.some((c: unknown) => !isRadarCategoryOption(c))) throw new Error('Categories unavailable');
+      if (alive) setCategories(Object.fromEntries(body.categories.filter((c: any) => c.active).map((c: any) => [c.id, c.label])));
+    }).catch(() => { if (alive) setCategories(RADAR_CATEGORIES); }).finally(() => clearTimeout(timeout));
+    return () => { alive = false; controller.abort(); clearTimeout(timeout); };
+  }, [active]);
   const refresh = useCallback(() => feed.refresh(), [feed]);
   useEffect(() => { setSelected(null); setOpened(false); setScope('all'); setFilter('all'); setLimit(12); }, [identity]);
   useEffect(() => { if (!active) { setOpened(false); setSelected(null); } }, [active]);
@@ -130,7 +145,7 @@ export function ImpactRadar({ active, identity, onNavigate, density, watched = [
   const items = useMemo(() => state.items.filter(e => matchesRadarFilter(e, filter, tracked, now) && (category === 'all' || e.category === category) &&
     (scope === 'all' || e.companies.some(c => watchedSet.has(c.symbol) || watchedSet.has(c.scripCode)))), [state.items, filter, tracked, now, category, scope, watchedSet]);
   const preview = state.items.filter(e => e.status !== 'closed').slice(0, 2);
-  const stale = !!state.error || state.sourceUnavailable || (state.checkedAt !== null && now - state.checkedAt > RADAR_STALE_MS);
+  const stale = !!state.error || state.sourceUnavailable || state.sourceStale || (state.checkedAt !== null && now - state.checkedAt > RADAR_STALE_MS);
   const close = () => { setOpened(false); setSelected(null); };
   const signIn = () => { close(); setIsAuthModalOpen(true); };
   const track = (event: RadarEvent) => { if (identity === 'guest') signIn(); else void feed.toggle(event.id); };
@@ -140,11 +155,12 @@ export function ImpactRadar({ active, identity, onNavigate, density, watched = [
   const statusText = state.loading ? 'Checking updates' : state.error ? 'Check unavailable' : stale ? 'Update delayed' : state.checkedAt ? 'Radar checked' : 'Not checked yet';
   const markTone = state.items.some(e => radarTiming(e, now) === 'live') ? 'live' : state.items.some(e => radarTiming(e, now) === 'upcoming') ? 'upcoming' : 'past';
   const cards = (events: RadarEvent[]) => <div className="impact-radar-grid">{events.map((event, i) => <motion.div key={event.id} initial={reduce ? false : { opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: reduce ? 0 : 0.18, delay: reduce ? 0 : Math.min(i, 3) * 0.035 }}>
-    <RadarCard event={event} tracked={tracked.has(event.id)} saving={state.saving.includes(event.id)} disabled={identity !== 'guest' && !state.followingReady} now={now} selected={selected?.id === event.id} onOpen={open} onTrack={() => track(event)} />
+    <RadarCard categoryLabel={categories[event.category]} event={event} tracked={tracked.has(event.id)} saving={state.saving.includes(event.id)} disabled={identity !== 'guest' && !state.followingReady} now={now} selected={selected?.id === event.id} onOpen={open} onTrack={() => track(event)} />
   </motion.div>)}</div>;
   const skeleton = (count: number) => <div className="impact-radar-grid" role="status"><span className="sr-only">Loading Impact Radar…</span>{Array.from({ length: count }, (_, i) => <div key={i} className="impact-radar-card impact-radar-skeleton" aria-hidden="true"><span /><span /><span /><span /></div>)}</div>;
   const feedback = <>
     {(state.error || state.sourceUnavailable) && <div className="impact-radar-status" role="status">{state.error || 'Some sources could not be refreshed. Saved events remain available.'}</div>}
+    {state.sourceStale && !state.sourceUnavailable && <div className="impact-radar-status" role="status">Source updates are delayed. Saved events remain available; the last fetch is not marked failed.</div>}
     {state.followingError && <div className="impact-radar-status" role="status">Your tracking list could not be checked. Refresh to retry.</div>}
     {state.actionError && <div className="impact-radar-status" role="alert">{state.actionError}</div>}
     {state.pending && <div className="impact-radar-new" role="status"><span><Check size={14} aria-hidden="true" />Event updates available</span><ActionButton type="button" size="sm" variant="ghost" onClick={feed.accept}>Show updates<ArrowRight size={14} aria-hidden="true" /></ActionButton></div>}
@@ -162,7 +178,7 @@ export function ImpactRadar({ active, identity, onNavigate, density, watched = [
         <div className="impact-radar-heading"><div className="impact-radar-brand"><span className="impact-radar-mark" data-timing={markTone}><Radar size={23} aria-hidden="true" /></span><div><h2 id="impact-radar-dashboard-title" tabIndex={-1}>Impact Radar</h2><p>News reports, official disclosures and event history</p></div></div>{refreshButton}</div>
         <div className="impact-radar-scope" role="group" aria-label="Radar scope"><button type="button" aria-pressed={scope === 'all'} onClick={() => { setScope('all'); setLimit(12); }}>All events</button><button type="button" aria-pressed={scope === 'watchlist'} onClick={() => { setScope('watchlist'); setLimit(12); }}>Watchlist Radar</button></div>
         <div className="impact-radar-controls"><div className="impact-radar-filters" role="group" aria-label="Event period">{FILTERS.map(f => <button type="button" key={f.id} aria-pressed={filter === f.id} className={filter === f.id ? 'is-selected' : ''} onClick={() => { setFilter(f.id); setLimit(12); }}>{f.id === 'live' ? <Radio size={14} aria-hidden="true" /> : f.id === 'tracking' ? <BookmarkCheck size={14} aria-hidden="true" /> : null}{f.label}{f.id === 'tracking' && <span>{identity !== 'guest' && state.followingReady ? state.following.length : '—'}</span>}</button>)}</div>
-          <label className="impact-radar-category-filter"><span className="sr-only">Event category</span><select value={category} onChange={e => { setCategory(e.target.value); setLimit(12); }}><option value="all">All categories</option>{Object.entries(RADAR_CATEGORIES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label></div>
+          <label className="impact-radar-category-filter"><span className="sr-only">Event category</span><select value={category} onChange={e => { setCategory(e.target.value); setLimit(12); }}><option value="all">All categories</option>{Object.entries(categories).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label></div>
         {check}{feedback}
         <div className="impact-radar-legend"><span data-timing="live">Live / today</span><span data-timing="upcoming">Upcoming</span><span data-timing="past">Past</span></div>
         {identity === 'guest' && (scope === 'watchlist' || filter === 'tracking') ? <div className="impact-radar-empty"><h3>Your personal radar</h3><p>Sign in to see watchlist companies or followed events.</p><ActionButton type="button" size="sm" variant="secondary" onClick={signIn}>Sign in</ActionButton></div>
