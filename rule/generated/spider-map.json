@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "59fae948967630db732bb93e7ac9871014dbcafcce8a9d9336c893976b994cf3",
+  "sourceDigest": "5b947884042863008d8ab55fe972d239d4d14f09776910ab076f718af264b290",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -741,7 +741,7 @@
     },
     {
       "path": "server/services/marketGuidesService.ts",
-      "sha256": "948694a970b4037b6eb7a28c2a75d4fa93359f6840397b6a4df9a3ecdf6848de",
+      "sha256": "34e495756c5f07b4fdf52dc330bf0e7caafcd8e6246cee53499df1bddbef7049",
       "importedBy": [
         "server.ts",
         "server/api/routes.ts",

@@ -785,6 +785,102 @@ export const FALLBACK_MARKET_GUIDES: ServerMarketGuide[] = [
       }
     ]
   },
+  {
+    id: 'bank-q2-fy27-results-preview',
+    slug: 'bank-q2-fy27-results-preview',
+    title: 'Bank Q2 FY27 Results: HDFC PAT Rs 19,510 Cr, ICICI Up 20%, Axis Up 38% as NIMs Compress',
+    category: 'Earnings',
+    readTime: '7 min read',
+    summary:
+      'HDFC Bank, Axis Bank and ICICI Bank all declared Q2 FY27 results on Saturday, October 17, 2026 — the first sector-wide read after the RBI’s October 7 rate hike. ICICI beat consensus (PAT Rs 14,843 crore, up 20.1% YoY); HDFC (Rs 19,510 crore, up 4.7%) and Axis (Rs 7,003 crore, up 38%) came in just below consensus. All three saw NIMs compress on FCNR(B) deposit drag, and all three improved asset quality.',
+    excerpt:
+      'October 17 triple-header results: reported PAT, NII, NIM, asset quality, loan/deposit growth and CASA for HDFC Bank, Axis Bank and ICICI Bank, plus actuals vs consensus and the FCNR(B) margin story.',
+    date: '2026-10-17',
+    publishedAt: '2026-10-17T19:30:00+05:30',
+    author: {
+      name: 'Bsenexus Intelligence Team',
+      role: 'Earnings & Results'
+    },
+    content: {
+      introduction:
+        'Saturday, October 17, 2026 was the busiest single day of this earnings season: HDFC Bank, Axis Bank and ICICI Bank — three of India’s four largest private lenders — all declared Q2 FY27 results the same day. It was also the first full quarterly read on the banking sector since the RBI restarted its rate-hike cycle on October 7, raising the repo rate to 5.50% and shifting its stance to “calibrated tightening.” The verdict: profits rose at all three, asset quality improved at all three, and margins compressed at all three as a flood of FCNR(B) deposits temporarily diluted net interest margins. ICICI was the only one of the three to beat the Street’s profit consensus; HDFC and Axis landed just below theirs.',
+      sections: [
+        {
+          heading: 'The headline scorecard: actuals vs consensus',
+          title: 'The headline scorecard: actuals vs consensus',
+          content:
+            'HDFC Bank: PAT Rs 19,510 crore, up 4.7% YoY (from Rs 18,641 crore) and up 2.8% QoQ — about 2.0% below the Rs 19,918 crore Business Standard consensus (October 9). NII Rs 34,620 crore, up 9.7% YoY. NIM 3.16% on total assets (3.32% on interest-earning assets), down 10 bps QoQ from 3.26%. ICICI Bank: PAT Rs 14,843 crore, up 20.1% YoY (from Rs 12,359 crore) — about 3.6% above the Rs 14,323 crore consensus, and also above the CNBC-TV18 poll of Rs 14,280 crore. NII Rs 25,339 crore, up 17.7% YoY. NIM 4.18%, down 18 bps QoQ from 4.36% (down 10 bps on the underlying 4.28% ex-tax-refund Q1 base). Axis Bank: PAT Rs 7,003 crore, up 38% YoY (from Rs 5,089 crore) — about 2.2% below the Rs 7,160 crore consensus. NII Rs 15,371 crore, up 12% YoY. NIM 3.36%, down 10 bps QoQ from 3.46% and down from 3.55% a year ago; excluding FCNR(B) deposits, NIM was 3.47%. Note on the HDFC figure: one wire item reports PAT at Rs 19,610 crore, but Rs 19,510 crore is carried by Business Standard, Business Today, LiveMint and TradingView/Moneycontrol coverage and is the headline this page uses.'
+        },
+        {
+          heading: 'HDFC Bank: profit up 4.7%, margin down 10 bps, last quarter under Jagdishan',
+          title: 'HDFC Bank: profit up 4.7%, margin down 10 bps, last quarter under Jagdishan',
+          content:
+            'NII rose 9.7% YoY to Rs 34,620 crore (from Rs 31,550 crore), while other income fell 3.6% YoY to Rs 13,830 crore as treasury trading gains dropped to Rs 780 crore from Rs 2,390 crore a year ago. Fees and commissions grew to Rs 9,690 crore (from Rs 8,840 crore). Provisions and contingencies were about Rs 3,570 crore with a total credit cost ratio of 0.44%. Asset quality improved: GNPA 1.11% (from 1.17% in Q1 and 1.24% a year ago), net NPA 0.37%. Gross advances grew 16.3% YoY to Rs 32.20 lakh crore; average advances under management rose 14.1% to Rs 31.87 lakh crore. End-period deposits grew 18.8% YoY to Rs 33.27 lakh crore; average deposits rose 16.8% to Rs 31.66 lakh crore; average CASA deposits grew 10.7% to Rs 9.71 lakh crore, with the period-end CASA ratio at 31.6% as time deposits (+22.8%) outgrew CASA (+10.8%). The quarter is the last earnings report under MD & CEO Sashidhar Jagdishan, whose tenure ends October 26; Anup Bagchi is set to take over. No dividend was announced alongside these results in the coverage reviewed.'
+        },
+        {
+          heading: 'Axis Bank: profit up 38% as provisions halve, NIM 3.36%',
+          title: 'Axis Bank: profit up 38% as provisions halve, NIM 3.36%',
+          content:
+            'Axis Bank’s 38% profit jump was powered by NII growth and a sharp fall in provisions: provisions and contingencies dropped 52% YoY to Rs 1,694 crore (including specific loan-loss provisions of Rs 1,564 crore), with annualised credit cost down to 0.45%. Operating profit rose 6% to Rs 11,083 crore and core operating profit 11% to Rs 10,998 crore. Other income slipped 1% to Rs 6,531 crore as trading income fell to Rs 85 crore from Rs 498 crore, while fee income rose 6% to Rs 6,381 crore. Asset quality improved: GNPA 1.16% (from 1.28% in Q1 and 1.46% a year ago), net NPA 0.35% (from 0.39% in Q1 and 0.44% a year ago), gross slippages down to Rs 4,762 crore (from Rs 5,566 crore in Q1). Advances grew 23% YoY and 9% QoQ to Rs 13.74 lakh crore — retail +16% to Rs 7.40 lakh crore (54% of net advances), SME +25%, corporate +34%. Deposits rose 21% YoY to Rs 14.52 lakh crore; term deposits +27%, current account +7%, savings +12%, with the CASA ratio at 36% (from 40% a year ago). FCNR(B) deposits stood at Rs 1.018 lakh crore. Business Standard reports the board also appointed former SEBI whole-time member Ananth Narayanan as an additional independent director effective October 19, 2026. For H1 FY27, PAT rose 30% YoY to Rs 14,117 crore.'
+        },
+        {
+          heading: 'ICICI Bank: profit up 20.1%, core operating profit up 21.8%, NIM 4.18%',
+          title: 'ICICI Bank: profit up 20.1%, core operating profit up 21.8%, NIM 4.18%',
+          content:
+            'ICICI delivered the strongest beat of the three. Core operating profit grew 21.8% YoY to Rs 20,805 crore; excluding dividend income from subsidiaries it rose 25.0% to Rs 20,342 crore. Fee income rose 20.1% to Rs 7,795 crore, non-interest income excluding treasury rose 12.5% to Rs 8,277 crore, and operating expenses grew a controlled 8.5% to Rs 12,811 crore. The bank booked a treasury loss of Rs 230 crore versus a Rs 220 crore gain a year ago. Provisions fell to Rs 851 crore (from Rs 914 crore), while the bank continued to hold contingency provisions of Rs 13,100 crore plus Rs 1,283 crore of additional standard-asset provisions on its agricultural priority-sector portfolio. Asset quality improved: GNPA 1.20% (from 1.38% in Q1 and 1.58% a year ago), net NPA 0.30% (from 0.35% in Q1 and 0.39% a year ago), gross NPA additions Rs 4,833 crore. Total advances grew 30% YoY to Rs 18.32 lakh crore (24.1% excluding loans against FCNR(B) deposits); domestic advances +22.8%, business banking +33.8%, domestic corporate +30.6%. Period-end deposits grew 27.1% YoY to Rs 20.50 lakh crore (17% excluding FCNR(B)); average deposits rose 21.2% to Rs 18.88 lakh crore with an average CASA ratio of 35.8%. On the earnings call, per NDTV Profit’s live blog, management said margins should start improving after Q3 (with a marginal decline likely in Q3), FCNR(B) deposits should be deployed over the next two quarters, it expects two more RBI repo hikes in the current cycle, and agri-portfolio provisions could reverse over the next two quarters subject to RBI approval. The board also approved seeking RBI approval for the continuation of Pradeep Kumar Sinha as Non-executive Part-time Chairperson until February 2029.'
+        },
+        {
+          heading: 'The NIM question: FCNR(B) drag confirmed, RBI hike still to flow through',
+          title: 'The NIM question: FCNR(B) drag confirmed, RBI hike still to flow through',
+          content:
+            'All three banks confirmed the margin story brokerages had flagged. HDFC’s NIM fell 10 bps QoQ (3.26% to 3.16% on total assets) — deeper than the 2-5 bps Nomura/JM Financial range. Axis fell 10 bps QoQ (3.46% to 3.36%), inside the expected 7-17 bps range, with 11 bps of the gap explained by FCNR(B) (3.47% ex-FCNR(B)). ICICI fell 18 bps QoQ on the headline (4.36% to 4.18%), at the top of the expected 10-18 bps range — but Q1’s 4.36% included an 8 bps benefit from interest on a tax refund, so the underlying move was 10 bps (4.28% to 4.18%). The pattern matches Nomura’s “dilution of a ratio and not of earnings” framing: NII still grew 9.7-17.7% YoY at all three. The other side of the story is still ahead — the RBI’s October 7 hike restarts the rate cycle, and floating-rate loans reprice with a lag, which should widen spreads over coming quarters. ICICI’s call guides to margin improvement after Q3; HDFC and Axis commentary on NIM trajectory, deposit-cost lag and repricing speed is the thing to track into Q3.',
+          callout: {
+            type: 'info',
+            text: 'This page was prepared from the preview draft’s brokerage estimates and updated on the evening of October 17 with the reported numbers. Forecasts (HDFC PAT ~Rs 19,918 crore, ICICI ~Rs 14,323 crore, Axis ~Rs 7,160 crore; NIM compression ranges) are kept here only for comparison — they were estimates, not facts.'
+          }
+        }
+      ],
+      conclusion:
+        'October 17 answered the quarter’s two questions. On profits: ICICI beat consensus with a 20.1% jump, while HDFC (+4.7%) and Axis (+38%) landed just below theirs — Axis’s miss flattered by nothing, since its 38% rise came off a weak year-ago base exactly as expected. On margins: FCNR(B) money squeezed NIMs by 10-18 bps across the three, roughly as brokerages predicted, while NII still grew at every bank and asset quality improved at every bank. With the RBI’s hike cycle restarted, the next checkpoint is Q3: whether repricing lifts margins back, as ICICI’s management guides, and whether deposit costs follow. Nothing here is investment advice.'
+    },
+    faq: [
+      {
+        question: 'When did HDFC Bank, Axis Bank and ICICI Bank declare Q2 FY27 results?',
+        answer:
+          'All three declared Q2 FY27 results (quarter ended September 30, 2026) on Saturday, October 17, 2026. HDFC Bank’s results landed in the early afternoon; Axis and ICICI followed the same day.'
+      },
+      {
+        question: 'What were the Q2 FY27 profits of HDFC Bank, Axis Bank and ICICI Bank?',
+        answer:
+          'HDFC Bank: PAT Rs 19,510 crore, up 4.7% YoY. ICICI Bank: PAT Rs 14,843 crore, up 20.1% YoY. Axis Bank: PAT Rs 7,003 crore, up 38% YoY. Against the Business Standard consensus (October 9), ICICI beat (Rs 14,323 crore expected), while HDFC (Rs 19,918 crore expected) and Axis (Rs 7,160 crore expected) came in modestly below.'
+      },
+      {
+        question: 'What happened to NIMs in Q2 FY27?',
+        answer:
+          'All three NIMs compressed sequentially: HDFC 3.26% to 3.16% on total assets (-10 bps), Axis 3.46% to 3.36% (-10 bps; 3.47% excluding FCNR(B) deposits), ICICI 4.36% to 4.18% (-18 bps headline, -10 bps against the 4.28% ex-tax-refund Q1 base). Brokerages attribute the drag mainly to FCNR(B) deposit mobilisation.'
+      },
+      {
+        question: 'How did asset quality change in Q2 FY27?',
+        answer:
+          'Asset quality improved at all three banks. GNPA: HDFC 1.17% to 1.11%, Axis 1.28% to 1.16%, ICICI 1.38% to 1.20%. Net NPA: HDFC 0.37%, Axis 0.35%, ICICI 0.30%. Provisions fell sharply at Axis (-52% YoY to Rs 1,694 crore) and eased at ICICI (Rs 851 crore vs Rs 914 crore); HDFC provisions were about Rs 3,570 crore.'
+      },
+      {
+        question: 'How fast did loans and deposits grow in Q2 FY27?',
+        answer:
+          'HDFC: advances +16.3% YoY to Rs 32.20 lakh crore, deposits +18.8% YoY to Rs 33.27 lakh crore, CASA ratio 31.6%. Axis: advances +23% YoY to Rs 13.74 lakh crore, deposits +21% YoY to Rs 14.52 lakh crore, CASA ratio 36%. ICICI: advances +30% YoY to Rs 18.32 lakh crore (24.1% ex-FCNR(B)), deposits +27.1% YoY to Rs 20.50 lakh crore (17% ex-FCNR(B)), average CASA ratio 35.8%.'
+      },
+      {
+        question: 'Were any dividends or leadership changes announced with the Q2 FY27 results?',
+        answer:
+          'No dividend was announced alongside these results in the coverage reviewed. Leadership/governance items: HDFC’s was the last quarter under MD & CEO Sashidhar Jagdishan (tenure ends October 26), with Anup Bagchi set to take over; Axis appointed Ananth Narayanan as an additional independent director effective October 19, 2026 (per Business Standard); ICICI sought RBI approval to continue Pradeep Kumar Sinha as Non-executive Part-time Chairperson until February 2029.'
+      },
+      {
+        question: 'How does the RBI’s October 7 rate hike affect the banks?',
+        answer:
+          'The RBI raised the repo rate 25 bps to 5.50% and shifted its stance to “calibrated tightening” — the first hike since February 2023. A restarting rate cycle lets floating-rate loans reprice with a lag, which should widen spreads over coming quarters; ICICI’s management guides to margin improvement after Q3, with FCNR(B) deposits deployed over the next two quarters.'
+      }
+    ]
+  },
 ];
 
 export const MARKET_GUIDES: ServerMarketGuide[] = [...KEYWORD_GUIDES, ...FALLBACK_MARKET_GUIDES];
