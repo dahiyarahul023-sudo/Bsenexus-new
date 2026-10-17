@@ -27,3 +27,31 @@ test('actual card renders an accessible neutral event with independent detail an
   const tracked = renderToStaticMarkup(React.createElement(exports.RadarCard, { ...props, tracked: true, saving: true }));
   assert.ok(tracked.includes('Saving')); assert.ok(tracked.includes('disabled=""')); assert.ok(tracked.includes('aria-pressed="true"'));
 });
+
+test('Home Radar renders only two previews and keeps the full dashboard out of the document until opened', () => {
+  const source = fs.readFileSync('src/components/ImpactRadar.tsx', 'utf8');
+  const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText;
+  const actualRequire = createRequire(new URL('../../src/components/ImpactRadar.tsx', import.meta.url));
+  const events = Array.from({ length: 10 }, (_, i) => ({ id: `event-${i}`, title: `Supreme Court matter ${i}`, companies: [{ symbol: 'TCS', name: 'Tata Consultancy Services', scripCode: '532540' }], category: 'legal', authority: 'Supreme Court', status: 'monitoring', scheduledDate: null, scheduleConfirmed: false, information: 'Sourced court development.', nextTrigger: null, source: { name: 'BSE', url: 'https://www.bseindia.com/test.pdf', kind: 'disclosure' }, publishedAt: '2026-10-15T10:00:00Z', updatedAt: '2026-10-15T10:00:00Z' }));
+  class Feed {
+    getSnapshot = () => ({ items: events, following: [], followingReady: true, saving: [], loading: false, checkedAt: Date.now(), error: null });
+    subscribe = () => () => {};
+  }
+  const exports: any = {};
+  vm.runInNewContext(code, { exports, console, require(path: string) {
+    if (path.endsWith('/impactRadar')) return contract;
+    if (path.endsWith('/impactRadarFeed')) return { ImpactRadarFeed: Feed };
+    if (path.endsWith('/AuthContext')) return { useAuth: () => ({ setIsAuthModalOpen() {} }) };
+    if (path.endsWith('/useVisibilityInterval')) return { useVisibilityInterval() {} };
+    if (path === './ui/ActionButton') return actualRequire(path);
+    if (path.startsWith('.')) return {};
+    return actualRequire(path);
+  } });
+  const html = renderToStaticMarkup(React.createElement(exports.ImpactRadar, { active: true, identity: 'guest', onNavigate() {}, density: 'standard' }));
+  assert.equal((html.match(/<article/g) || []).length, 2);
+  assert.ok(html.includes('See more'));
+  assert.ok(html.includes('impact-radar-card-open'));
+  assert.ok(html.includes('aria-haspopup="dialog"'));
+  assert.ok(!html.includes('impact-radar-dashboard-title'));
+  assert.ok(!html.includes('Event period'));
+});

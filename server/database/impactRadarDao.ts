@@ -6,7 +6,7 @@ const checked = <T>(result: { data: T; error: unknown }): T => { if (result.erro
 export interface RadarRecord { event: RadarEvent; update: RadarUpdate; origin?: 'intake' | 'editorial' }
 export async function listRadarEvents(): Promise<RadarEvent[]> {
   try {
-    const rows = checked(await getSupabase().from('impact_radar_events').select('data').neq('status', 'closed').order('updated_at', { ascending: false }).limit(200).abortSignal(AbortSignal.timeout(6000)));
+    const rows = checked(await getSupabase().from('impact_radar_events').select('data').order('updated_at', { ascending: false }).limit(200).abortSignal(AbortSignal.timeout(6000)));
     return (rows || []).map(r => r.data).filter(isRadarEvent).map(publicRadarEvent);
   } catch { throw new RadarStorageError(); }
 }
@@ -20,6 +20,12 @@ export async function listRadarUpdates(id: string): Promise<RadarUpdate[]> {
   try {
     const rows = checked(await getSupabase().from('impact_radar_updates').select('data').eq('event_id', id).order('published_at', { ascending: false }).limit(50).abortSignal(AbortSignal.timeout(6000)));
     return (rows || []).map(r => r.data).filter(isRadarUpdate).map(publicRadarUpdate);
+  } catch { throw new RadarStorageError(); }
+}
+export async function firstRadarUpdate(id: string): Promise<RadarUpdate | null> {
+  try {
+    const rows = checked(await getSupabase().from('impact_radar_updates').select('data').eq('event_id', id).order('published_at', { ascending: true }).limit(1).abortSignal(AbortSignal.timeout(6000)));
+    return isRadarUpdate(rows?.[0]?.data) ? publicRadarUpdate(rows[0].data) : null;
   } catch { throw new RadarStorageError(); }
 }
 export async function publishRadarRecords(records: RadarRecord[]): Promise<void> {

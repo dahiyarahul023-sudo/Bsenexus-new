@@ -1,3 +1,4 @@
+import { HomeMarketNews } from './HomeMarketNews';
 import { ImpactRadar } from './ImpactRadar';
 import { HomeSkeleton } from './ui/PageSkeleton';
 import { StoryCarouselBar } from './story/StoryCarouselBar';
@@ -64,6 +65,8 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
   const { openIntelModal } = useIntelModal();
 
   const [watchlists, setWatchlists] = useState<any[]>([]);
+  const [homeRefresh, setHomeRefresh] = useState(0);
+  const [watchlistStatus, setWatchlistStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [watchlistSymbols, setWatchlistSymbols] = useState<Set<string>>(new Set());
   const [upcomingResults, setUpcomingResults] = useState<any[]>([]);
   const [allAnnouncements, setAllAnnouncements] = useState<any[]>([]);
@@ -87,16 +90,21 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
   const identity = user?.uid || profile?.uid || 'guest';
   const loadedIdentity = useRef(identity);
   useEffect(() => {
+    const refresh = (event: Event) => { if (isActive && (event as CustomEvent).detail?.tab === 'home') setHomeRefresh(v => v + 1); };
+    window.addEventListener('bse_nav_tab_refresh', refresh);
+    return () => window.removeEventListener('bse_nav_tab_refresh', refresh);
+  }, [isActive]);
+  useEffect(() => {
     if (!isActive) return;
     const controller = new AbortController();
     const signal = controller.signal;
     if (loadedIdentity.current !== identity) {
       loadedIdentity.current = identity;
-      setWatchlists([]); setWatchlistSymbols(new Set()); setUpcomingResults([]); setAllAnnouncements([]); setHasLoaded(false);
+      setWatchlistStatus('loading'); setWatchlists([]); setWatchlistSymbols(new Set()); setUpcomingResults([]); setAllAnnouncements([]); setHasLoaded(false);
     }
     const fetchHomeData = async () => {
       try {
-        setLoading(true);
+        setLoading(true); setWatchlistStatus('loading');
         const [wlRes, calRes, filRes] = await Promise.all([
           (user || profile) ? customFetch('/api/watchlists', { signal }).catch(() => null) : Promise.resolve(null),
           customFetch('/api/results-calendar?filter=upcoming&limit=8', { signal }).catch(() => null),
@@ -108,8 +116,9 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
         if (wlRes && wlRes.ok) {
           const wlData = await wlRes.json();
           if (signal.aborted) return;
-          const list = Array.isArray(wlData) ? wlData : [];
-          setWatchlists(list);
+          if (!Array.isArray(wlData)) throw new Error('Invalid watchlist response');
+          const list = wlData;
+          setWatchlists(list); setWatchlistStatus('ready');
           list.forEach((w: any) => {
             (w.items || []).forEach((it: any) => {
               const s = typeof it === 'string' ? it.trim().toUpperCase() : it?.symbol?.trim()?.toUpperCase();
@@ -117,6 +126,7 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
             });
           });
         }
+        if (!wlRes || !wlRes.ok) setWatchlistStatus((user || profile) ? 'error' : 'ready');
         setWatchlistSymbols(syms);
 
         if (calRes && calRes.ok) {
@@ -140,6 +150,7 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
         }
 
       } catch (e) {
+        if (!signal.aborted) setWatchlistStatus('error');
         console.warn("Error loading Home For You data:", e);
       } finally {
         if (!signal.aborted) { setLoading(false); setHasLoaded(true); }
@@ -148,7 +159,7 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
 
     void fetchHomeData();
     return () => controller.abort();
-  }, [identity, isActive]);
+  }, [identity, isActive, homeRefresh]);
 
   const handleAddStock = async (symbol: string, scripCode?: string, name?: string) => {
     if (!user && !profile) {
@@ -252,7 +263,8 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
         className="pt-0 pb-1"
       />
 
-      <ImpactRadar key={identity} active={isActive} identity={identity} onNavigate={onNavigate} density={density} />
+      <ImpactRadar key={identity} active={isActive} identity={identity} onNavigate={onNavigate} density={density} watched={sameIdentity ? [...watchlistSymbols] : []} watchlistStatus={sameIdentity ? watchlistStatus : 'loading'} onRefreshWatchlist={() => setHomeRefresh(v => v + 1)} />
+      <HomeMarketNews key={`news-${identity}`} active={isActive} identity={identity} watched={sameIdentity ? [...watchlistSymbols] : []} onNavigate={onNavigate} density={density} />
 
       {/* 2. Focused Sections or Calm Summary */}
       {!sameIdentity || (loading && !hasLoaded) ? <HomeSkeleton /> : (

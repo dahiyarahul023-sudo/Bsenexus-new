@@ -7,7 +7,7 @@ export const RADAR_CATEGORIES = {
 } as const;
 export type RadarCategory = keyof typeof RADAR_CATEGORIES;
 export type RadarStatus = 'scheduled' | 'active' | 'monitoring' | 'closed';
-export type RadarFilter = 'all' | 'live' | 'today' | 'tomorrow' | 'week' | 'tracking';
+export type RadarFilter = 'all' | 'live' | 'today' | 'tomorrow' | 'week' | 'past' | 'tracking';
 export interface RadarSource { name: string; url: string; kind: 'disclosure' | 'official' | 'news' }
 export interface RadarCompany { symbol: string; name: string; scripCode: string }
 export interface RadarEvent {
@@ -15,6 +15,7 @@ export interface RadarEvent {
   authority: string; status: RadarStatus; scheduledDate: string | null;
   scheduleConfirmed: boolean; information: string; nextTrigger: string | null;
   source: RadarSource; publishedAt: string; updatedAt: string;
+  occurredDate?: string | null; occurredSource?: RadarSource | null; scheduleSource?: RadarSource | null;
 }
 export interface RadarUpdate {
   id: string; eventId: string; title: string; information: string;
@@ -47,7 +48,7 @@ function validTime(value: unknown): value is string {
   return typeof value === 'string' && /^\d{4}-\d\d-\d\dT/.test(value) && Number.isFinite(Date.parse(value));
 }
 function sourceValid(s: any): s is RadarSource {
-  return s && typeof s.name === 'string' && s.name.length > 0 && s.name.length <= 100 && radarUrl(s.url) !== null && ['disclosure', 'official', 'news'].includes(s.kind);
+  return Boolean(s && typeof s.name === 'string' && s.name.length > 0 && s.name.length <= 100 && radarUrl(s.url) !== null && ['disclosure', 'official', 'news'].includes(s.kind));
 }
 export function isRadarEvent(e: any): e is RadarEvent {
   return e && typeof e.id === 'string' && RADAR_ID.test(e.id) && isNeutralRadarText(e.title, 200) &&
@@ -59,6 +60,8 @@ export function isRadarEvent(e: any): e is RadarEvent {
     !(e.scheduleConfirmed && !e.scheduledDate) &&
     isNeutralRadarText(e.information, 1200) && (e.nextTrigger === null || isNeutralRadarText(e.nextTrigger, 400)) &&
     sourceValid(e.source) && validTime(e.publishedAt) && validTime(e.updatedAt) &&
+    (e.occurredDate == null || (validRadarDate(e.occurredDate) && e.occurredDate <= radarDay(Date.parse(e.publishedAt)) && sourceValid(e.occurredSource))) &&
+    (e.scheduleSource == null || sourceValid(e.scheduleSource)) &&
     Date.parse(e.updatedAt) >= Date.parse(e.publishedAt);
 }
 export function isRadarUpdate(u: any): u is RadarUpdate {
@@ -73,6 +76,8 @@ export function publicRadarEvent(e: RadarEvent): RadarEvent {
     scheduleConfirmed: e.scheduleConfirmed, information: e.information, nextTrigger: e.nextTrigger,
     source: { name: e.source.name, url: radarUrl(e.source.url)!, kind: e.source.kind },
     publishedAt: e.publishedAt, updatedAt: e.updatedAt,
+    ...(e.occurredDate && e.occurredSource ? { occurredDate: e.occurredDate, occurredSource: { name: e.occurredSource.name, url: radarUrl(e.occurredSource.url)!, kind: e.occurredSource.kind } } : {}),
+    ...(e.scheduleSource ? { scheduleSource: { name: e.scheduleSource.name, url: radarUrl(e.scheduleSource.url)!, kind: e.scheduleSource.kind } } : {}),
   };
 }
 export function publicRadarUpdate(u: RadarUpdate): RadarUpdate {
@@ -80,7 +85,30 @@ export function publicRadarUpdate(u: RadarUpdate): RadarUpdate {
     source: { name: u.source.name, url: radarUrl(u.source.url)!, kind: u.source.kind }, publishedAt: u.publishedAt };
 }
 export function isLiveRadarEvent(e: RadarEvent, now: number): boolean {
-  return (e.status === 'active' || e.status === 'monitoring') && Date.parse(e.publishedAt) <= now;
+  return (e.status === 'active' || e.status === 'monitoring') && radarTiming(e, now) === 'live';
+}
+export function radarTiming(e: RadarEvent, now: number): 'live' | 'upcoming' | 'past' | 'undated' {
+  if (e.status === 'closed') return 'past';
+  if (e.scheduledDate && e.scheduledDate > radarDay(now)) return 'upcoming';
+  if (e.status === 'active') return 'live';
+  if (e.status === 'scheduled') return e.scheduledDate ? e.scheduledDate === radarDay(now) ? 'live' : 'past' : 'undated';
+  return radarDay(Date.parse(e.updatedAt)) === radarDay(now) ? 'live' : 'past';
+}
+export const RADAR_TIMING_LABELS = { live: 'Live / today', upcoming: 'Upcoming', past: 'Past development', undated: 'Date pending' };
+export function radarVerificationSources(e: RadarEvent): RadarSource[] {
+  const name = `${e.authority} ${e.title}`;
+  if (/Delhi.*(?:High Court|HC)|(?:High Court|HC).*Delhi/i.test(name)) return [
+    { name: 'Delhi High Court · cause lists', url: 'https://delhihighcourt.nic.in/web/cause-lists', kind: 'official' },
+    { name: 'Delhi High Court · case status', url: 'https://delhihighcourt.nic.in/app/get-case-type-status', kind: 'official' },
+  ];
+  const authorities: [RegExp, string, string][] = [
+    [/Supreme Court/i, 'Supreme Court', 'https://www.sci.gov.in/'], [/SEBI/i, 'SEBI orders and updates', 'https://www.sebi.gov.in/'],
+    [/RBI/i, 'RBI notifications', 'https://www.rbi.org.in/'], [/CERC/i, 'CERC orders', 'https://cercind.gov.in/'],
+    [/APTEL/i, 'APTEL case information', 'https://aptel.gov.in/'], [/NCLAT/i, 'NCLAT case information', 'https://nclat.nic.in/'],
+    [/NCLT/i, 'NCLT case information', 'https://nclt.gov.in/'],
+  ];
+  const a = authorities.find(([pattern]) => pattern.test(e.authority));
+  return a ? [{ name: a[1], url: a[2], kind: 'official' }] : [];
 }
 export function radarStatus(e: RadarEvent, now: number): string {
   if (e.status === 'closed') return 'Closed';
@@ -93,10 +121,11 @@ export function radarStatus(e: RadarEvent, now: number): string {
 export function matchesRadarFilter(e: RadarEvent, filter: RadarFilter, tracked: Set<string>, now: number): boolean {
   if (filter === 'tracking') return tracked.has(e.id);
   if (filter === 'live') return isLiveRadarEvent(e, now);
-  if (filter === 'all') return e.status !== 'closed';
+  if (filter === 'all') return true;
+  if (filter === 'past') return radarTiming(e, now) === 'past';
+  if (filter === 'today') return (e.scheduledDate || e.occurredDate || radarDay(Date.parse(e.publishedAt))) === radarDay(now);
   if (e.status === 'closed' || !e.scheduledDate) return false;
   const today = radarDay(now), tomorrow = radarDay(now + 86_400_000);
-  if (filter === 'today') return e.scheduledDate === today;
   if (filter === 'tomorrow') return e.scheduledDate === tomorrow;
   return e.scheduledDate >= today && e.scheduledDate <= radarDay(now + 6 * 86_400_000);
 }

@@ -1,6 +1,7 @@
 import express from 'express';
 import { requireAuth, requireAdmin, apiRateLimiter } from '../security/auth.js';
-import { listRadarEvents, getRadarEvent, listRadarUpdates, getRadarFollowing, setRadarFollowing, publishRadarRecords } from '../database/impactRadarDao.js';
+import { listRadarEvents, getRadarEvent, listRadarUpdates, firstRadarUpdate, getRadarFollowing, setRadarFollowing, publishRadarRecords } from '../database/impactRadarDao.js';
+import { getRadarMovement } from '../services/radarMovementService.js';
 import { refreshRadarIntake, radarIntakeStatus } from '../services/impactRadarService.js';
 import { RADAR_ID, isRadarEvent, isRadarUpdate, publicRadarEvent } from '../../src/shared/impactRadar.js';
 
@@ -38,11 +39,21 @@ impactRadarRouter.post('/admin/publish', requireAuth, requireAdmin, apiRateLimit
     res.json({ success: true, id: event.id });
   } catch { unavailable(res); }
 });
-impactRadarRouter.get('/:id', async (req, res) => {
+impactRadarRouter.get('/:id/movement', apiRateLimiter, async (req, res) => {
   if (!RADAR_ID.test(String(req.params.id))) return res.status(400).json({ success: false, error: 'Invalid event.' });
   try {
     const event = await getRadarEvent(String(req.params.id));
     if (!event) return res.status(404).json({ success: false, error: 'Event not found.' });
-    res.json({ success: true, event, updates: await listRadarUpdates(event.id), timelineLimit: 50 });
+    res.json({ success: true, id: event.id, movement: await getRadarMovement(event) });
+  } catch { unavailable(res); }
+});
+impactRadarRouter.get('/:id', apiRateLimiter, async (req, res) => {
+  if (!RADAR_ID.test(String(req.params.id))) return res.status(400).json({ success: false, error: 'Invalid event.' });
+  try {
+    const event = await getRadarEvent(String(req.params.id));
+    if (!event) return res.status(404).json({ success: false, error: 'Event not found.' });
+    const [updates, firstUpdate, all] = await Promise.all([listRadarUpdates(event.id), firstRadarUpdate(event.id), listRadarEvents()]);
+    const related = all.filter(e => e.id !== event.id && e.authority === event.authority && e.companies.some(c => event.companies.some(x => x.scripCode === c.scripCode))).slice(0, 8);
+    res.json({ success: true, event, updates, firstUpdate, related, timelineLimit: 50 });
   } catch { unavailable(res); }
 });

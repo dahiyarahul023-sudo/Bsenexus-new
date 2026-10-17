@@ -13,7 +13,7 @@ globalThis.fetch = (async (input: any, init: any) => {
   if (!url.startsWith('https://radar-test.invalid')) return originalFetch(input, init);
   const body = init?.body ? JSON.parse(String(init.body)) : null;
   calls.push({ url, method, body });
-  const data = fail ? { message: 'unavailable' } : new URL(url).pathname.endsWith('/impact_radar_events') ? { data: event } : [];
+  const data = fail ? { message: 'unavailable' } : new URL(url).pathname.endsWith('/impact_radar_events') ? new URL(url).searchParams.has('id') ? { data: event } : [{ data: event }] : [];
   return new Response(JSON.stringify(data), { status: fail ? 503 : 200, headers: { 'Content-Type': 'application/json' } });
 }) as typeof fetch;
 const { impactRadarRouter } = await import('../api/impactRadar.js');
@@ -65,4 +65,15 @@ test('explicit case references link source updates without merging unrelated cas
   assert.notEqual(a.event.id, radarRecordFromSource({ ...input, company: { ...input.company, symbol: 'INFY', scripCode: '500209' } })!.event.id);
   const highCourt = { ...input, title: 'High Court appeal no 123/2026 hearing listed' };
   assert.notEqual(radarRecordFromSource(highCourt)!.event.id, radarRecordFromSource({ ...highCourt, source: { ...input.source, url: 'https://www.bseindia.com/different-court.pdf' } })!.event.id, 'A generic High Court reference does not identify its jurisdiction');
+});
+
+ test('public event detail separates source history and scheduled events have no observed future movement', async () => {
+  const detail = await originalFetch(url + '/matter-1');
+  assert.equal(detail.status, 200); const body = await detail.json();
+  assert.equal(body.event.id, event.id); assert.deepEqual(body.updates, []); assert.equal(body.firstUpdate, null); assert.deepEqual(body.related, []);
+  assert.match(detail.headers.get('cache-control') || '', /no-store/);
+  const movement = await originalFetch(url + '/matter-1/movement');
+  assert.equal(movement.status, 200); const prices = await movement.json();
+  assert.equal(prices.movement.status, 'upcoming'); assert.deepEqual(prices.movement.companies[0].sessions, []);
+  const invalid = await originalFetch(url + '/%3Cbad%3E/movement'); assert.equal(invalid.status, 400);
 });

@@ -25,7 +25,7 @@ test('IST day boundaries and scheduled dates never imply an outcome or live hear
   const overdue = { ...event, scheduledDate: '2026-10-15' };
   assert.equal(radarStatus(overdue, now), 'Awaiting update');
   assert.equal(matchesRadarFilter(overdue, 'live', new Set(), now), false);
-  assert.equal(matchesRadarFilter({ ...event, status: 'monitoring' }, 'live', new Set(), now), true);
+  assert.equal(matchesRadarFilter({ ...event, status: 'monitoring' }, 'live', new Set(), now), false, 'a future event is not live');
   assert.equal(matchesRadarFilter({ ...event, status: 'closed' }, 'tracking', new Set([event.id]), now), true);
 });
 test('failed refresh preserves displayed events; new arrivals wait for acceptance', async () => {
