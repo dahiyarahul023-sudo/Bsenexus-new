@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "82cafd086870fc28d4e578d4adc30550e111aac769cbc368ba37402a533224b4",
+  "sourceDigest": "4756705d2bebd1b0473bf000c6f2a06752a43b8e045d4ea16a8ad132a99fb599",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -167,7 +167,7 @@
     },
     {
       "path": "server.ts",
-      "sha256": "066d1830b2f064d8975c93a4c4b58f35bb51364b2f9ddcad51001e0cab1c6164",
+      "sha256": "5ba09163fbd2266b2cbe34eace1b8cadf7eac57830064d12187f6e4ae555fcbe",
       "importedBy": [
         "server/tests/routeResolution.test.ts"
       ]
@@ -805,7 +805,7 @@
     },
     {
       "path": "server/services/seoPrerender.ts",
-      "sha256": "a5beead8b5cff4d9ed6e9ac53047d35cef121670c77d3e3f45b2efa64ad479d6",
+      "sha256": "532a0308dc26768cf9cd381ec7765d3a1828f4b345f9a4eaca398286112c3e17",
       "importedBy": [
         "server.ts",
         "server/tests/seoPrehydration.test.ts"
@@ -10018,7 +10018,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6780,
+      "line": 6754,
       "receiver": "app",
       "method": "GET",
       "path": "[\"/\", \"/announcements\", \"/live\", \"/results-calendar\", \"/watchlist\", \"/watchlists\", \"/companies\", \"/about\", \"/contact\", \"/disclaimer\", \"/privacy\", \"/privacy-policy\", \"/terms\"]",
@@ -10028,7 +10028,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6810,
+      "line": 6784,
       "receiver": "app",
       "method": "USE",
       "path": "(req, res, next) => { if (req.method !== 'GET' && req.method !== 'HEAD') return next(); const p = req.path; if ( p === '/' || p === '/announcements' || p === '/results-calendar' || p === '/watchlist' || p === '/watchlists' || p === '/compan",
@@ -10036,7 +10036,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6845,
+      "line": 6819,
       "receiver": "app",
       "method": "USE",
       "path": "vite.middlewares",
@@ -10044,7 +10044,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6857,
+      "line": 6831,
       "receiver": "app",
       "method": "USE",
       "path": "express.static(distPath, { maxAge: '1y', immutable: true, index: false, setHeaders: (res, filePath) => { if (filePath.endsWith('.html')) { res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600'); } } }",
@@ -10052,7 +10052,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6891,
+      "line": 6865,
       "receiver": "app",
       "method": "GET",
       "path": "['/announcements', '/announcements/']",
@@ -10062,7 +10062,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6932,
+      "line": 6916,
       "receiver": "app",
       "method": "GET",
       "path": "*",
@@ -15188,22 +15188,22 @@
     },
     {
       "file": "server.ts",
-      "line": 6769,
+      "line": 6743,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6774,
+      "line": 6748,
       "name": "DISABLE_HMR"
     },
     {
       "file": "server.ts",
-      "line": 7035,
+      "line": 7019,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 7035,
+      "line": 7019,
       "name": "TEST_RUNNER"
     },
     {
