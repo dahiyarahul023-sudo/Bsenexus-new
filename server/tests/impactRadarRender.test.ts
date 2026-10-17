@@ -26,6 +26,10 @@ test('actual card renders an accessible neutral event with independent detail an
   assert.ok(!/bullish|bearish|price target|expected return/i.test(html));
   const tracked = renderToStaticMarkup(React.createElement(exports.RadarCard, { ...props, tracked: true, saving: true }));
   assert.ok(tracked.includes('Saving')); assert.ok(tracked.includes('disabled=""')); assert.ok(tracked.includes('aria-pressed="true"'));
+  const reported = renderToStaticMarkup(React.createElement(exports.RadarCard, { ...props, event: { ...event, title: 'Independent report alleges accounting irregularities', source: {kind:'report',name:'Original research publisher'} } }));
+  assert.ok(reported.includes('Independent report')); assert.ok(reported.includes('Original research publisher'));
+  assert.ok(reported.includes('Tata Consultancy Services: Independent report'));
+  assert.ok(!reported.includes('Official source'));
 });
 
 test('Home Radar renders only two previews and keeps the full dashboard out of the document until opened', () => {

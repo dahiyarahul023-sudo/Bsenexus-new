@@ -87,7 +87,8 @@ test('empty successful initial load and unchanged snapshot do not create a false
   assert.equal(feed.getSnapshot().pending, null);
 });
 
-test('RSS provenance distinguishes missing publication date and search fallback from original article', () => {
+test('RSS provenance distinguishes missing publication date and search fallback from original article', async () => {
+  const { newsPublicationTime } = await import('../utils/newsPublicationTime.js');
   const source = readFileSync(new URL('../services/stockNewsService.ts', import.meta.url), 'utf8');
   const code = ts.transpileModule(source + '\nexports.testParse = parseRssFeedXml;', { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
   const exports: any = {};
@@ -95,6 +96,7 @@ test('RSS provenance distinguishes missing publication date and search fallback 
     if (path === 'crypto') return { createHash };
     if (path.endsWith('localStore.js')) return { readLocalJson: () => ({}) };
     if (path.endsWith('supabase.js')) return { isSupabaseConfigured: () => false };
+    if (path.endsWith('newsPublicationTime.js')) return { newsPublicationTime };
     return {};
   } });
   const rows = exports.testParse('<rss><item><title>Company announces significant results</title><link>https://publisher.example/a</link></item><item><title>A second headline without a link</title><pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate></item></rss>', { name: 'Publisher', slug: 'test', category: 'market' });

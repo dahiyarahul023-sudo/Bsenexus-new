@@ -2,6 +2,7 @@ import { inflateRawSync } from 'node:zlib';
 import { radarDay, validRadarDate, type RadarEvent } from '../../src/shared/impactRadar.js';
 import type { RadarMovement, RadarSessionMove } from '../../src/shared/radarMovement.js';
 import { resolveStockDetailsStrict } from '../utils/stockResolver.js';
+import { readRadarPriceSessions, saveRadarPriceSessions } from '../database/radarPriceDao.js';
 
 const MAX_ZIP = 6_000_000, MAX_CSV = 25_000_000;
 export function nseBhavcopyUrl(day: string): string {
@@ -82,7 +83,7 @@ async function report(day: string): Promise<Map<string, RadarSessionMove> | null
   })();
   pending.set(day, work); return work;
 }
-export async function getRadarMovement(event: RadarEvent, now = Date.now(), loadReport = report): Promise<RadarMovement> {
+export async function getRadarMovement(event: RadarEvent, now = Date.now(), loadReport = report, store = { read: readRadarPriceSessions, save: saveRadarPriceSessions }): Promise<RadarMovement> {
   event = { ...event, companies: event.companies.map(c => resolveStockDetailsStrict(c.scripCode) || c) };
   const anchorDate = event.occurredDate || radarDay(Date.parse(event.publishedAt));
   const local = new Date(Date.parse(event.publishedAt) + 330 * 60_000);
@@ -96,15 +97,25 @@ export async function getRadarMovement(event: RadarEvent, now = Date.now(), load
     if (Date.parse(`${day}T10:30:00Z`) > now) break;
     dates.push(day);
   }
+  const saved = loadReport === report ? await store.read(result.companies.map(c => c.symbol), dates) : [];
+  const savedForDay = (day: string) => new Map(saved.filter(s => s.date === day).map(s => [s.symbol, s]));
+  const load = async (day: string) => {
+    const recorded = savedForDay(day);
+    if (result.companies.every(c => recorded.has(c.symbol))) return recorded;
+    const fresh = await loadReport(day).catch(() => null);
+    for (const [symbol, row] of fresh || []) recorded.set(symbol, row);
+    return recorded;
+  };
   // Two bounded batches, shared per-date cache across every company and case.
   for (let i = 0; i < dates.length; i += 4) {
-    const reports = await Promise.all(dates.slice(i, i + 4).map(day => loadReport(day).catch(() => null)));
+    const reports = await Promise.all(dates.slice(i, i + 4).map(load));
     for (const rows of reports) for (const company of result.companies) {
       const row = rows?.get(company.symbol); if (row && company.sessions.length < 3) company.sessions.push(row);
     }
     if (result.companies.every(c => c.sessions.length === 3)) break;
   }
   const count = result.companies.reduce((n, c) => n + c.sessions.length, 0);
+  if (loadReport === report && count) await store.save(result.companies.flatMap(c => c.sessions));
   result.status = count ? result.companies.every(c => c.sessions.length === 3) ? 'available' : 'partial' : 'unavailable';
   return result;
 }

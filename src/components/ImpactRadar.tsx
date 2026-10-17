@@ -9,7 +9,7 @@ import { RadarMovementPanel } from './RadarMovementPanel';
 import { ActionButton } from './ui/ActionButton';
 import { ImpactRadarFeed } from '../utils/impactRadarFeed';
 import { RADAR_CATEGORIES, RADAR_NOTICE, RADAR_STALE_MS, isRadarEvent, isRadarUpdate, matchesRadarFilter, radarStatus, radarDay, radarUrl, radarTiming, RADAR_TIMING_LABELS, radarVerificationSources, radarHeadline, radarCompanyName, radarCaseLookup, isRadarCategoryOption,
-  type RadarEvent, type RadarFilter, type RadarUpdate } from '../shared/impactRadar';
+  radarSourceLabel, isReportedRadarSource, type RadarEvent, type RadarFilter, type RadarUpdate } from '../shared/impactRadar';
 import '../styles/impact-radar.css';
 
 const FILTERS: { id: RadarFilter; label: string }[] = [
@@ -35,7 +35,7 @@ export function RadarCard({ event, tracked, saving, disabled, now, selected, onO
     <div className="impact-radar-company">{event.companies.slice(0, 2).map(radarCompanyName).join(' · ')}{event.companies.length > 2 ? ` +${event.companies.length - 2}` : ''}</div>
     <h3><button type="button" className="impact-radar-card-open" aria-haspopup="dialog" aria-expanded={selected} onClick={e => onOpen(event, e.currentTarget)}><span className="impact-radar-card-title">{radarHeadline(event)}<ArrowUpRight size={16} aria-hidden="true" /></span></button></h3>
     <div className="impact-radar-card-meta"><span>{event.authority}</span><span className="impact-radar-stage"><i aria-hidden="true" />{RADAR_TIMING_LABELS[radarTiming(event, now)]}</span></div>
-    <div className="impact-radar-card-foot"><span className="impact-radar-source">{event.source.kind === 'news' ? 'News report' : event.source.kind === 'disclosure' ? 'Company disclosure' : event.source.kind === 'company' ? 'Company investor disclosure' : 'Official source'}<time dateTime={event.publishedAt}>{time(event.publishedAt)}</time></span>
+    <div className="impact-radar-card-foot"><span className="impact-radar-source">{radarSourceLabel(event.source)} · {event.source.name}<time dateTime={event.publishedAt}>{time(event.publishedAt)}</time></span>
       <ActionButton type="button" size="sm" variant={tracked ? 'secondary' : 'ghost'} className="impact-radar-track" disabled={disabled} isLoading={saving} loadingText="Saving"
         aria-pressed={tracked} aria-label={`${tracked ? 'Stop tracking' : 'Track'} ${event.title}`} onClick={onTrack}
         icon={tracked ? <BookmarkCheck size={15} aria-hidden="true" /> : <BookmarkPlus size={15} aria-hidden="true" />}>{tracked ? 'Tracking' : 'Track event'}</ActionButton></div>
@@ -70,7 +70,7 @@ function RadarDetail({ event, now, tracked, saving, disabled, onTrack, onRefresh
     <p className="impact-radar-detail-companies">{current.companies.map(c => `${c.name} (${c.symbol})`).join(' · ')}</p>
     <div className="impact-radar-detail-facts"><span>{current.authority}</span><span>{radarStatus(current, now)}</span><span>{dayLabel(current, now)}</span></div>
     <div className="impact-radar-provenance">
-      <p><strong>Report published:</strong> {time(current.publishedAt)} · {current.source.name} · {current.source.kind === 'news' ? 'News report; official confirmation not recorded in this source' : current.source.kind === 'disclosure' ? 'Company exchange disclosure' : 'Official source'}</p>
+      <p><strong>Report published:</strong> {time(current.publishedAt)} · {current.source.name} · {radarSourceLabel(current.source)}{isReportedRadarSource(current.source) ? '; official confirmation not recorded in this source' : ''}</p>
       <p><strong>Event date:</strong> {current.occurredDate || 'Not independently verified; the publication date is not the hearing or order date.'}{current.occurredSource && <a href={radarUrl(current.occurredSource.url)!} target="_blank" rel="noopener noreferrer">Date evidence ↗</a>}</p>
       {firstUpdate && <p><strong>Earliest recorded source:</strong> {time(firstUpdate.publishedAt)} <a href={radarUrl(firstUpdate.source.url)!} target="_blank" rel="noopener noreferrer">{firstUpdate.source.name} ↗</a></p>}
       {current.supportingSources?.map(s => <p key={s.url}><strong>Supporting source:</strong> <a href={radarUrl(s.url)!} target="_blank" rel="noopener noreferrer">{s.name} ↗</a></p>)}
@@ -83,8 +83,10 @@ function RadarDetail({ event, now, tracked, saving, disabled, onTrack, onRefresh
       <div><h4>What does the date mean?</h4><p>{current.scheduledDate ? 'This is a reported event date, not a confirmed outcome. A hearing may be deferred; an order or judgment is not guaranteed on that date.' : 'No confirmed future event date is recorded. A publication timestamp is not a hearing date.'}</p></div>
       <div><h4>How long will it continue?</h4><p>{current.status === 'closed' ? 'This matter is marked closed in the recorded timeline. See the source for the scope of closure.' : 'The duration is not confirmed. Tracking keeps this matter available as further sourced developments are added.'}</p></div>
     </div>
-    <div className="impact-radar-verification"><h4>Where will the next date be confirmed?</h4><p>A later company filing, the authority’s order, case status or cause list may give the next date. These links are verification routes; a new date is shown only when source evidence records it.</p>
+    <div className="impact-radar-verification"><h4>Where can I check further developments?</h4><p>Read the original report and later company or authority updates. Court matters may also have an order, case status or cause list. A reported event is shown even when no exchange filing is recorded.</p>
+      {/court|tribunal|NCLT|NCLAT|APTEL|SAT/i.test(current.authority) && <>
       <p><strong>Party to search:</strong> {lookup.party}</p><p><strong>Case reference:</strong> {lookup.reference || 'Not available in the recorded sources'}</p><p>{lookup.instructions}</p>
+      </>}
       {radarVerificationSources(current).map(source => <a key={source.url} href={source.url} target="_blank" rel="noopener noreferrer">{source.name}<ArrowUpRight size={13} aria-hidden="true" /><span className="sr-only"> (opens a new tab)</span></a>)}
       {!radarVerificationSources(current).length && <p>The exact authority registry has not been identified for this report. Check the original announcement and company investor updates.</p>}
     </div>
@@ -96,10 +98,10 @@ function RadarDetail({ event, now, tracked, saving, disabled, onTrack, onRefresh
     {error && <div className="impact-radar-status" role="status">Timeline could not be refreshed. Previously loaded details may be out of date. <button type="button" onClick={() => setRetry(v => v + 1)}>Retry</button></div>}
     {loading && !updates.length ? <p role="status" className="impact-radar-muted">Loading source updates…</p> : updates.length ? <ol className="impact-radar-timeline">{updates.map(u => <li key={u.id}>
       <time dateTime={u.publishedAt}>{time(u.publishedAt)}</time><strong>{u.title}</strong><p>{u.information}</p>
-      <a href={radarUrl(u.source.url)!} target="_blank" rel="noopener noreferrer">{u.source.kind === 'news' ? 'News report · ' : u.source.kind === 'company' ? 'Company investor disclosure · ' : 'Official disclosure · '}{u.source.name}<ArrowUpRight size={13} aria-hidden="true" /><span className="sr-only"> (opens a new tab)</span></a>
+      <a href={radarUrl(u.source.url)!} target="_blank" rel="noopener noreferrer">{radarSourceLabel(u.source)} · {u.source.name}<ArrowUpRight size={13} aria-hidden="true" /><span className="sr-only"> (opens a new tab)</span></a>
     </li>)}</ol> : !error && <p className="impact-radar-muted">No additional source updates are recorded.</p>}
     {updates.length === 50 && <p className="impact-radar-muted">Showing the latest 50 source updates.</p>}
-    {related.length > 0 && <div className="impact-radar-related"><h4>Related company reports</h4><p>Same company and authority; these are not confirmed as the same case. News and later official disclosures can appear here separately.</p>{related.map(e => <button key={e.id} type="button" onClick={() => onRelated(e)}>{e.title}<span>{e.source.kind === 'news' ? 'News' : 'Official disclosure'} · {time(e.publishedAt)}</span></button>)}</div>}
+    {related.length > 0 && <div className="impact-radar-related"><h4>Related company reports</h4><p>Same company and related topic; these are not confirmed as the same proceeding. News and later official disclosures can appear here separately.</p>{related.map(e => <button key={e.id} type="button" onClick={() => onRelated(e)}>{radarHeadline(e)}<span>{radarSourceLabel(e.source)} · {time(e.publishedAt)}</span></button>)}</div>}
     <p className="impact-radar-disclaimer">{RADAR_NOTICE} This is not an investment recommendation.</p>
   </section>;
 }

@@ -9,7 +9,9 @@ const update = { id: 'source-1', eventId: 'matter-1', publishedAt: event.publish
 const publish = (records: any) => db.query('select public.publish_impact_radar_records($1::jsonb)', [JSON.stringify(records)]);
 before(async () => { await db.exec('create role anon; create role authenticated; create role service_role bypassrls;'); await db.exec(sql);
  const upgrade = fs.readdirSync('supabase/migrations').find(n => n.endsWith('_impact_radar_integrity_categories.sql'));
- if (upgrade) await db.exec(fs.readFileSync('supabase/migrations/' + upgrade, 'utf8')); });
+ if (upgrade) await db.exec(fs.readFileSync('supabase/migrations/' + upgrade, 'utf8'));
+ const material = fs.readdirSync('supabase/migrations').find(n => n.endsWith('_impact_radar_material_intake.sql'));
+ if (material) await db.exec(fs.readFileSync('supabase/migrations/' + material, 'utf8')); });
 after(() => db.close());
 test('migration installs private RLS tables, one timeline, and durable duplicate-safe follows', async () => {
   await publish([{ event, update }]); await publish([{ event, update }]);
@@ -79,4 +81,33 @@ test('F9: older event payload with newer evidence advances row and JSON timestam
  assert.equal(row.status, 'active');
  assert.equal(new Date(row.updated_at).toISOString(), '2026-10-17T10:00:00.000Z');
  assert.equal(Date.parse(row.data.updatedAt), Date.parse('2026-10-17T10:00:00Z'));
+});
+test('material intake rules are private, category-bound and editable without code deployment', async () => {
+ const { classifyRadarEvent } = await import('../services/impactRadarService.js');
+ const rows = (await db.query<any>('select * from impact_intake_rules order by priority')).rows;
+ assert.equal(rows.length, 5);
+ assert.equal(classifyRadarEvent('PNC Infratech faces accounting irregularities', rows)?.category, 'governance');
+ await db.exec("set role service_role; update impact_intake_rules set terms=array['factory evacuation'] where id='operational_incident'; reset role;");
+ const changed = (await db.query<any>('select * from impact_intake_rules')).rows;
+ assert.equal(classifyRadarEvent('PNC Infratech reports factory evacuation', changed)?.category, 'operations');
+ assert.equal(classifyRadarEvent('PNC Infratech reports factory fire', changed), null);
+ await assert.rejects(db.query("insert into impact_intake_rules values('bad','missing','Bad',array['fraud'],'{}',1,true)"), /foreign key/);
+ for (const table of ['impact_intake_rules','impact_price_sessions']) {
+  assert.equal((await db.query<any>('select relrowsecurity from pg_class where relname=$1', [table])).rows[0].relrowsecurity, true);
+  for (const role of ['anon','authenticated']) {
+   await db.exec(`set role ${role}`);
+   try { await assert.rejects(db.query(`select * from ${table}`), /permission denied/); }
+   finally { await db.exec('reset role'); }
+  }
+ }
+});
+test('daily price snapshots are duplicate-safe and service role cannot rewrite recorded prices', async () => {
+ const row = { symbol:'PNCINFRA', date:'2026-10-13', close:155.44, previousClose:138.25 };
+ const insert = "insert into impact_price_sessions(symbol,session_date,data) values('PNCINFRA','2026-10-13',$1) on conflict do nothing";
+ await db.exec('set role service_role');
+ try {
+  await db.query(insert, [JSON.stringify(row)]); await db.query(insert, [JSON.stringify({...row,close:999})]);
+  assert.equal((await db.query<any>('select data from impact_price_sessions')).rows[0].data.close, 155.44);
+  await assert.rejects(db.query('update impact_price_sessions set data=data'), /permission denied/);
+ } finally { await db.exec('reset role'); }
 });

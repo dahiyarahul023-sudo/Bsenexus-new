@@ -50,7 +50,10 @@ impactRadarRouter.get('/:id/movement', apiRateLimiter, async (req, res) => {
   try {
     const event = await getRadarEvent(String(req.params.id));
     if (!event) return res.status(404).json({ success: false, error: 'Event not found.' });
-    res.json({ success: true, id: event.id, movement: await getRadarMovement(event) });
+    const first = await firstRadarUpdate(event.id);
+    // Keep the first recorded report's session visible when a later disclosure joins its timeline.
+    const anchor = !event.occurredDate && first && Date.parse(first.publishedAt) < Date.parse(event.publishedAt) ? { ...event, publishedAt: first.publishedAt } : event;
+    res.json({ success: true, id: event.id, movement: await getRadarMovement(anchor) });
   } catch { unavailable(res); }
 });
 impactRadarRouter.get('/:id', apiRateLimiter, async (req, res) => {
@@ -59,7 +62,7 @@ impactRadarRouter.get('/:id', apiRateLimiter, async (req, res) => {
     const event = await getRadarEvent(String(req.params.id));
     if (!event) return res.status(404).json({ success: false, error: 'Event not found.' });
     const [updates, firstUpdate, all] = await Promise.all([listRadarUpdates(event.id), firstRadarUpdate(event.id), listRadarEvents()]);
-    const related = all.filter(e => e.id !== event.id && e.authority === event.authority && e.companies.some(c => event.companies.some(x => x.scripCode === c.scripCode))).slice(0, 8);
+    const related = all.filter(e => e.id !== event.id && (e.authority === event.authority || e.category === event.category) && Math.abs(Date.parse(e.updatedAt) - Date.parse(event.updatedAt)) <= 7 * 86400000 && e.companies.some(c => event.companies.some(x => x.scripCode === c.scripCode))).slice(0, 8);
     res.json({ success: true, event, updates, firstUpdate, related, timelineLimit: 50 });
   } catch { unavailable(res); }
 });
