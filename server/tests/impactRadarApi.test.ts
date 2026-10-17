@@ -6,14 +6,14 @@ process.env.JWT_SECRET = 'test-only-impact-radar-api-secret';
 process.env.SUPABASE_URL = 'https://radar-test.invalid';
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-only-service-role';
 const originalFetch = globalThis.fetch;
-let fail = false, externalCalls = 0, calls: { url: string; method: string; body: any }[] = [];
+let fail = false, externalCalls = 0, firstEvidence: any = null, relatedEvents: any[] | null = null, calls: { url: string; method: string; body: any }[] = [];
 const event = { id: 'matter-1', title: 'Supreme Court hearing listed', companies: [{ symbol: 'TCS', name: 'Tata Consultancy Services', scripCode: '532540' }], category: 'liability', authority: 'Supreme Court', status: 'scheduled', scheduledDate: '2026-10-17', scheduleConfirmed: true, information: 'The company reported a listed hearing.', nextTrigger: null, source: { name: 'BSE', url: 'https://www.bseindia.com/report.pdf', kind: 'disclosure' }, publishedAt: '2026-10-15T10:00:00Z', updatedAt: '2026-10-15T10:00:00Z' };
 globalThis.fetch = (async (input: any, init: any) => {
   const url = String(input?.url || input), method = init?.method || 'GET';
   if (!url.startsWith('https://radar-test.invalid')) { externalCalls++; return new Response('<rss><channel></channel></rss>', { status: 200 }); }
   const body = init?.body ? JSON.parse(String(init.body)) : null;
   calls.push({ url, method, body });
-  const data = new URL(url).pathname.endsWith('/impact_categories') ? Object.entries((await import('../../src/shared/impactRadar.js')).RADAR_CATEGORIES).map(([id, label], i) => ({ id, label, sort_order: (i+1)*10, active: true })) : fail ? { message: 'unavailable' } : new URL(url).pathname.endsWith('/impact_radar_events') ? new URL(url).searchParams.has('id') ? { data: event } : [{ data: event }] : [];
+  const data = new URL(url).pathname.endsWith('/impact_categories') ? Object.entries((await import('../../src/shared/impactRadar.js')).RADAR_CATEGORIES).map(([id, label], i) => ({ id, label, sort_order: (i+1)*10, active: true })) : fail ? { message: 'unavailable' } : new URL(url).pathname.endsWith('/impact_radar_updates') && firstEvidence ? [{data:firstEvidence}] : new URL(url).pathname.endsWith('/impact_radar_events') ? new URL(url).searchParams.has('id') ? { data: event } : (relatedEvents || [event]).map(data=>({data})) : [];
   return new Response(JSON.stringify(data), { status: fail ? 503 : 200, headers: { 'Content-Type': 'application/json' } });
 }) as typeof fetch;
 const { impactRadarRouter } = await import('../api/impactRadar.js');
@@ -103,4 +103,14 @@ test('F12: event detail uses the shared API rate limiter before its database han
  const { apiRateLimiter } = await import('../security/auth.js');
  const route = (impactRadarRouter as any).stack.find((l: any) => l.route?.path === '/:id').route;
  assert.equal(route.stack[0].handle, apiRateLimiter);
+});
+test('earlier news remains the price anchor and related reports can connect a later official topic', async () => {
+ firstEvidence = {id:'earlier-news',eventId:event.id,title:'TCS: reported court development',information:'Publisher reported this development.',source:{name:'Publisher',kind:'news',url:'https://publisher.example/story'},publishedAt:'2026-10-13T04:00:00Z'};
+ const related = {...event,id:'news-separate',authority:'Independent report',source:firstEvidence.source};
+ relatedEvents=[event,related,{...related,id:'different-company',companies:[{name:'PNC Infratech Ltd',symbol:'PNCINFRA',scripCode:'539150'}]},{...related,id:'old-report',updatedAt:'2026-09-01T10:00:00Z'}];
+ try {
+  const movement=await originalFetch(url+'/matter-1/movement'); assert.equal(movement.status,200);
+  assert.equal((await movement.json()).movement.anchorDate,'2026-10-13');
+  const detail=await (await originalFetch(url+'/matter-1')).json(); assert.deepEqual(detail.related.map((e:any)=>e.id),['news-separate']);
+ } finally {firstEvidence=null;relatedEvents=null;}
 });

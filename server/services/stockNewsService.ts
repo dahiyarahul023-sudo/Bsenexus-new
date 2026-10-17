@@ -7,6 +7,7 @@ import { getAllUserProfiles } from '../database/usersDao.js';
 import { readLocalJson, writeLocalJson } from '../database/localStore.js';
 import { getSupabase, isSupabaseConfigured } from '../database/supabase.js';
 import { externalFeedsCircuitBreaker } from '../utils/circuitBreaker.js';
+import { newsPublicationTime } from '../utils/newsPublicationTime.js';
 
 export interface StockNewsItem {
   id: string;
@@ -291,9 +292,9 @@ function parseRssFeedXml(
       id,
       title,
       link: link || 'https://www.google.com/search?q=' + encodeURIComponent(title),
-      publishedAt: pubDate,
+      publishedAt: newsPublicationTime(pubDate) || pubDate,
       hasArticleLink: Boolean(link && /^https?:\/\//i.test(link)),
-      publicationTimeKnown: Boolean(pubDateMatch && Number.isFinite(Date.parse(pubDate))),
+      publicationTimeKnown: Boolean(pubDateMatch && newsPublicationTime(pubDate)),
       timeAgo: calculateTimeAgo(pubDate),
       source: sourceConfig.name,
       sourceSlug: sourceConfig.slug,
@@ -378,6 +379,7 @@ export async function fetchAllMultiSourceNewsFeeds(forceRefresh = false): Promis
     (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
   );
 
+  if (successfulFeeds === 0) return newsCache.allNews;
   newsCache.allNews = sorted;
   newsCache.lastFetchTime = now;
   newsCache.sourceCounts = sourceCountMap;

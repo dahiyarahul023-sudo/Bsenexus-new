@@ -87,3 +87,5 @@ UserAvatar shares 96/256/512 transparent WebP sources across header, profile and
 
 
 2026-10-10 avatar follow-up: Settings index Account & Identity and its Profile row now render the selected shared UserAvatar. Account section exposes direct Change avatar with the existing inline picker; Edit Profile keeps its picker. Avatar/photo/character search terms discover profile controls. Section/sheet/account changes dismiss draft UI. Persistence and other consumers remain unchanged; browser/device acceptance is unverified. See changes/settings-avatar-entry.md.
+
+2026-10-17 source-independent Radar intake: explicit RSS times normalize to UTC; private DB terms admit material news-only and independent reports without a named authority. Cards/timelines carry publisher and source type, related-topic reports remain distinct without an exact proceeding reference. Earliest news preserves price anchor; selected final NSE sessions persist as private duplicate-safe numeric snapshots. Existing Home/dashboard/follow/modal behavior is retained. See changes/radar-material-intake.md for actual validation and release limits.

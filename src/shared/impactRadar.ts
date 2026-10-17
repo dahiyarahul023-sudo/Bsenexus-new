@@ -12,7 +12,11 @@ export function isRadarCategoryOption(c: any): c is RadarCategoryOption {
 }
 export type RadarStatus = 'scheduled' | 'active' | 'monitoring' | 'closed';
 export type RadarFilter = 'all' | 'live' | 'today' | 'tomorrow' | 'week' | 'past' | 'tracking';
-export interface RadarSource { name: string; url: string; kind: 'disclosure' | 'official' | 'news' | 'company' }
+export interface RadarSource { name: string; url: string; kind: 'disclosure' | 'official' | 'news' | 'report' | 'company' }
+export function radarSourceLabel(s: RadarSource): string {
+  return s.kind === 'news' ? 'News report' : s.kind === 'report' ? 'Independent report' : s.kind === 'disclosure' ? 'Company disclosure' : s.kind === 'company' ? 'Company investor disclosure' : 'Official source';
+}
+export const isReportedRadarSource = (s: RadarSource) => s.kind === 'news' || s.kind === 'report';
 export interface RadarCompany { symbol: string; name: string; scripCode: string }
 export interface RadarEvent {
   id: string; title: string; companies: RadarCompany[]; category: RadarCategory;
@@ -63,7 +67,7 @@ export function sourceValid(s: any): s is RadarSource {
   if (s.kind === 'official') return /(^|\.)(?:gov\.in|nic\.in|rbi\.org\.in|cercind\.gov\.in|fda\.gov|sec\.gov|justice\.gov)$/.test(host);
   // Reviewed investor originals; extend only with verified company/domain evidence.
   if (s.kind === 'company') return /(^|\.)pncinfratech\.com$/.test(host);
-  return s.kind === 'news';
+  return s.kind === 'news' || s.kind === 'report';
 }
 export function isRadarEvent(e: any, categories?: ReadonlySet<string>): e is RadarEvent {
   return e && typeof e.id === 'string' && RADAR_ID.test(e.id) && isNeutralRadarText(e.title, 200) &&
@@ -118,9 +122,9 @@ export function radarCompanyName(c: RadarCompany): string {
 /** A readable company-first label. Original publisher headings remain in the source timeline. */
 export function radarHeadline(e: RadarEvent): string {
   const company = radarCompanyName(e.companies[0]);
-  if (/intimation under|this is in continuation|regulation 30|disclosure requirements/i.test(e.title)) {
+  if (/intimation under|^this is\b|^we wish to inform\b|regulation 30|disclosure requirements/i.test(e.title)) {
     const topic = /\border\b/i.test(e.title) ? 'order' : /\bhearing\b/i.test(e.title) ? 'hearing' : 'legal matter';
-    return `${company}: ${e.authority} ${topic} update`;
+    return `${company}: ${e.authority} ${e.category === 'legal' ? topic : 'development'} update`;
   }
   const name = company.replace(/\s+(?:limited|ltd\.?)$/i, '');
   return e.title.toLowerCase().startsWith(name.toLowerCase()) ? e.title : `${company}: ${e.title}`;

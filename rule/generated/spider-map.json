@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "745e7a047546a3c8ba36c7099be6f26187e33b09f7dd5b598a323a3cdcc0700c",
+  "sourceDigest": "27ffc2c9647fd92703ca3c2d05735fa8d7958851b7fc6480f22cd2f85eb15ef6",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -189,7 +189,7 @@
     },
     {
       "path": "server/api/impactRadar.ts",
-      "sha256": "488fa61d8c4c6ee2b325baa5d98527ce1611464e38ffab9311b6d2ebde97f6a5",
+      "sha256": "57353d6daeeceb5eac55f6986467210dcae965de14da08280f696a57e23d819a",
       "importedBy": [
         "server/api/routes.ts",
         "server/tests/impactRadarApi.test.ts"
@@ -314,7 +314,7 @@
     },
     {
       "path": "server/database/impactRadarDao.ts",
-      "sha256": "462097b352d2f5f2acb713e5f33aa751bed8c433202c73302e0c0d5aac95f75a",
+      "sha256": "6321a29c36b24750289243f384b42181d2cd95d11a5ca97a6047e0c099ade699",
       "importedBy": [
         "server/api/impactRadar.ts",
         "server/services/impactRadarService.ts"
@@ -430,6 +430,13 @@
       ]
     },
     {
+      "path": "server/database/radarPriceDao.ts",
+      "sha256": "52e7538aaa2fb42cd80b107d5058026e911bc1d62f91f69dc496ac2b6359aed0",
+      "importedBy": [
+        "server/services/radarMovementService.ts"
+      ]
+    },
+    {
       "path": "server/database/referralsDao.ts",
       "sha256": "3a312ef4814a08d1615d3ffb4920e2fd1cb5a507dfe47a818d508ae4a90e9ab3",
       "importedBy": [
@@ -467,6 +474,7 @@
         "server/database/paymentEntitlementsDao.ts",
         "server/database/paymentOrdersDao.ts",
         "server/database/paymentStore.ts",
+        "server/database/radarPriceDao.ts",
         "server/database/referralsDao.ts",
         "server/database/settingsDao.ts",
         "server/database/usersDao.ts",
@@ -704,13 +712,16 @@
     },
     {
       "path": "server/services/impactRadarService.ts",
-      "sha256": "26d166aa6e9c4dc5e89abaed645b068ab34c091a24142732bd0821f81b096c8c",
+      "sha256": "3c8f48ce1551f8d1a853394972b6d50f2046d79d5fc6aecf622c38ac015eb933",
       "importedBy": [
         "server.ts",
         "server/api/impactRadar.ts",
         "server/tests/impactRadarApi.test.ts",
+        "server/tests/impactRadarSql.test.ts",
         "server/tests/radarFollowUp.test.ts",
-        "server/tests/radarIntegrity.test.ts"
+        "server/tests/radarIntakeIntegration.test.ts",
+        "server/tests/radarIntegrity.test.ts",
+        "server/tests/radarMaterialIntake.test.ts"
       ]
     },
     {
@@ -779,11 +790,22 @@
       ]
     },
     {
+      "path": "server/services/radarIntakePolicy.ts",
+      "sha256": "19daa9788c67089ad874960114c43ef2157886d82e9e1380cd4e753d45f4b73a",
+      "importedBy": [
+        "server/database/impactRadarDao.ts",
+        "server/services/impactRadarService.ts",
+        "server/tests/radarIntakeIntegration.test.ts",
+        "server/tests/radarMaterialIntake.test.ts"
+      ]
+    },
+    {
       "path": "server/services/radarMovementService.ts",
-      "sha256": "bd47bfa44f6295b1545c19d8acb322fe5570e23bcb1d14e21682bdb17e828827",
+      "sha256": "6a959e88c2f036377c2c5d1793caa24674a6a2271f8d7ddde9f868cb98e2419a",
       "importedBy": [
         "server/api/impactRadar.ts",
-        "server/tests/radarFollowUp.test.ts"
+        "server/tests/radarFollowUp.test.ts",
+        "server/tests/radarMaterialIntake.test.ts"
       ]
     },
     {
@@ -838,13 +860,14 @@
     },
     {
       "path": "server/services/stockNewsService.ts",
-      "sha256": "5283a5ed89cda07ca23b733d75bbebec42b5f689a69f19feecd54650bb9fbc9e",
+      "sha256": "0e30042e88ea4ca63b32e65deb1b381fdce5a57c7daf1026dc94615290baa364",
       "importedBy": [
         "server.ts",
         "server/api/routes.ts",
         "server/services/impactRadarService.ts",
         "server/services/storyFeedService.ts",
         "server/tests/radarFollowUp.test.ts",
+        "server/tests/radarMaterialIntake.test.ts",
         "server/tests/radarNewsState.test.ts"
       ]
     },
@@ -1003,7 +1026,7 @@
     },
     {
       "path": "server/tests/homeNews.test.ts",
-      "sha256": "205ff64582d64443de5d374e372885a5601530fa9334af8da555d0967ff8c5b6",
+      "sha256": "ab91efd702c2ad1baa579605d92f8dac3e6058f58f6c544a5b0a985063c9abdd",
       "importedBy": []
     },
     {
@@ -1013,17 +1036,17 @@
     },
     {
       "path": "server/tests/impactRadarApi.test.ts",
-      "sha256": "ad66bd53c5f9d56e9338251f28629669025b408096b6b6853d2ba8e07f75462f",
+      "sha256": "80f67f7cee35192c765de618f632364bf5e9da3156454c17089a5a8842641dda",
       "importedBy": []
     },
     {
       "path": "server/tests/impactRadarRender.test.ts",
-      "sha256": "2ec29dc2f7c7f5bc4bf185c1e2497de8fc35f447a528407692798c268a3fe648",
+      "sha256": "244f876252753ff58013bff668d81c94abf7e7525d09ce4b22d955721606106e",
       "importedBy": []
     },
     {
       "path": "server/tests/impactRadarSql.test.ts",
-      "sha256": "a3398ad690dcba352eec97d0d8f8e22388d735c50a3e8f59da53fbeadc58c26a",
+      "sha256": "5e282e3c3a9852ca96f72ed9562393c717c5b043fe8b74749164f9eaa269f6f6",
       "importedBy": []
     },
     {
@@ -1077,8 +1100,18 @@
       "importedBy": []
     },
     {
+      "path": "server/tests/radarIntakeIntegration.test.ts",
+      "sha256": "ad3c1690d02731e06a3d26131f112a1585963480d91afcc543bee4482348eb4a",
+      "importedBy": []
+    },
+    {
       "path": "server/tests/radarIntegrity.test.ts",
       "sha256": "1203d27a6e13b43111c9507f5ea154c4d52469328b506cae16c37b58ddd068b9",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/radarMaterialIntake.test.ts",
+      "sha256": "c464a38a2989130eb133e8f95a0dd09ba25b05e0aacc3e78fae6cacbee5f06e1",
       "importedBy": []
     },
     {
@@ -1253,6 +1286,15 @@
       "sha256": "4220a0cd43b500217fdadf8bee286b51d0da2fa9519912802715aaca615a896a",
       "importedBy": [
         "server/services/aiQuotaService.ts"
+      ]
+    },
+    {
+      "path": "server/utils/newsPublicationTime.ts",
+      "sha256": "d7a5e1c652de8d7ac930e2d8efea8cef7e5f7c6503499478e7bffe59a84b2954",
+      "importedBy": [
+        "server/services/impactRadarService.ts",
+        "server/services/stockNewsService.ts",
+        "server/tests/homeNews.test.ts"
       ]
     },
     {
@@ -1519,7 +1561,7 @@
     },
     {
       "path": "src/components/ImpactRadar.tsx",
-      "sha256": "1a7380380efbae4ddca89789f4fcd57a373215f5b9ca473022575b79c22e582e",
+      "sha256": "6a37ce66ed33e874620dc70bf9cb64b2107b9f50f59a624b25726ef2d92b809c",
       "importedBy": [
         "src/components/HomeForYou.tsx"
       ]
@@ -2571,18 +2613,22 @@
     },
     {
       "path": "src/shared/impactRadar.ts",
-      "sha256": "7449579b5455913bb5c0be89ea819242a0e0de0b2c3ec0628b9f49631245d2a4",
+      "sha256": "d62fc034959a553fcec7b799a7a8c4e5e577c5f9b41fd0f721accbb5621c181a",
       "importedBy": [
         "server/api/impactRadar.ts",
         "server/database/impactRadarDao.ts",
         "server/services/impactRadarService.ts",
+        "server/services/radarIntakePolicy.ts",
         "server/services/radarMovementService.ts",
         "server/tests/impactRadar.test.ts",
         "server/tests/impactRadarApi.test.ts",
         "server/tests/impactRadarRender.test.ts",
         "server/tests/impactRadarSql.test.ts",
         "server/tests/radarFollowUp.test.ts",
+        "server/tests/radarIntakeIntegration.test.ts",
         "server/tests/radarIntegrity.test.ts",
+        "server/tests/radarMaterialIntake.test.ts",
+        "server/utils/newsPublicationTime.ts",
         "src/components/ImpactRadar.tsx",
         "src/shared/radarMovement.ts",
         "src/utils/impactRadarFeed.ts"
@@ -2590,8 +2636,9 @@
     },
     {
       "path": "src/shared/radarMovement.ts",
-      "sha256": "05ac318a5e1660b52c76e29fcfd2f0c8736cffb8b96bb9a69797e992f7e32f69",
+      "sha256": "2394d8555df1ac909ac643db7b0829d70d32b9fb17afa1d53f5769ca5d3addf2",
       "importedBy": [
+        "server/database/radarPriceDao.ts",
         "server/services/radarMovementService.ts",
         "server/tests/radarFollowUp.test.ts",
         "src/components/RadarMovementPanel.tsx"
@@ -3051,6 +3098,11 @@
     {
       "path": "supabase/migrations/20261017100545_impact_radar_integrity_categories.sql",
       "sha256": "a8cc59c6791339b75fe606f9886361c9f36bae2acf3c01c9ee54336542f6d68b",
+      "importedBy": []
+    },
+    {
+      "path": "supabase/migrations/20261017111332_impact_radar_material_intake.sql",
+      "sha256": "7bf0618181a10fd20ac044e742409ea255f7ed9d11bd522b997d15d4954ea6e8",
       "importedBy": []
     },
     {
@@ -3924,6 +3976,12 @@
       "line": 3
     },
     {
+      "source": "server/database/impactRadarDao.ts",
+      "target": "server/services/radarIntakePolicy.ts",
+      "kind": "import",
+      "line": 4
+    },
+    {
       "source": "server/database/logDao.ts",
       "target": "server/database/supabase.ts",
       "kind": "import",
@@ -4030,6 +4088,18 @@
       "target": "server/database/supabase.ts",
       "kind": "import",
       "line": 53
+    },
+    {
+      "source": "server/database/radarPriceDao.ts",
+      "target": "server/database/supabase.ts",
+      "kind": "import",
+      "line": 1
+    },
+    {
+      "source": "server/database/radarPriceDao.ts",
+      "target": "src/shared/radarMovement.ts",
+      "kind": "import",
+      "line": 2
     },
     {
       "source": "server/database/referralsDao.ts",
@@ -4513,9 +4583,21 @@
     },
     {
       "source": "server/services/impactRadarService.ts",
-      "target": "src/shared/impactRadar.ts",
+      "target": "server/utils/newsPublicationTime.ts",
       "kind": "import",
       "line": 8
+    },
+    {
+      "source": "server/services/impactRadarService.ts",
+      "target": "server/services/radarIntakePolicy.ts",
+      "kind": "import",
+      "line": 9
+    },
+    {
+      "source": "server/services/impactRadarService.ts",
+      "target": "src/shared/impactRadar.ts",
+      "kind": "import",
+      "line": 10
     },
     {
       "source": "server/services/indexNow.ts",
@@ -4632,6 +4714,12 @@
       "line": 1
     },
     {
+      "source": "server/services/radarIntakePolicy.ts",
+      "target": "src/shared/impactRadar.ts",
+      "kind": "import",
+      "line": 1
+    },
+    {
       "source": "server/services/radarMovementService.ts",
       "target": "src/shared/impactRadar.ts",
       "kind": "import",
@@ -4648,6 +4736,12 @@
       "target": "server/utils/stockResolver.ts",
       "kind": "import",
       "line": 4
+    },
+    {
+      "source": "server/services/radarMovementService.ts",
+      "target": "server/database/radarPriceDao.ts",
+      "kind": "import",
+      "line": 5
     },
     {
       "source": "server/services/resultsCalendarService.ts",
@@ -4798,6 +4892,12 @@
       "target": "server/utils/circuitBreaker.ts",
       "kind": "import",
       "line": 9
+    },
+    {
+      "source": "server/services/stockNewsService.ts",
+      "target": "server/utils/newsPublicationTime.ts",
+      "kind": "import",
+      "line": 10
     },
     {
       "source": "server/services/storageMonitor.ts",
@@ -5310,6 +5410,12 @@
       "line": 6
     },
     {
+      "source": "server/tests/homeNews.test.ts",
+      "target": "server/utils/newsPublicationTime.ts",
+      "kind": "dynamic",
+      "line": 91
+    },
+    {
       "source": "server/tests/impactRadar.test.ts",
       "target": "src/shared/impactRadar.ts",
       "kind": "import",
@@ -5361,7 +5467,13 @@
       "source": "server/tests/impactRadarSql.test.ts",
       "target": "src/shared/impactRadar.ts",
       "kind": "dynamic",
-      "line": 69
+      "line": 71
+    },
+    {
+      "source": "server/tests/impactRadarSql.test.ts",
+      "target": "server/services/impactRadarService.ts",
+      "kind": "dynamic",
+      "line": 86
     },
     {
       "source": "server/tests/keywordGuides.test.ts",
@@ -5466,6 +5578,24 @@
       "line": 78
     },
     {
+      "source": "server/tests/radarIntakeIntegration.test.ts",
+      "target": "server/services/radarIntakePolicy.ts",
+      "kind": "dynamic",
+      "line": 6
+    },
+    {
+      "source": "server/tests/radarIntakeIntegration.test.ts",
+      "target": "src/shared/impactRadar.ts",
+      "kind": "dynamic",
+      "line": 7
+    },
+    {
+      "source": "server/tests/radarIntakeIntegration.test.ts",
+      "target": "server/services/impactRadarService.ts",
+      "kind": "dynamic",
+      "line": 17
+    },
+    {
       "source": "server/tests/radarIntegrity.test.ts",
       "target": "server/services/impactRadarService.ts",
       "kind": "import",
@@ -5500,6 +5630,42 @@
       "target": "server/services/radarCompanyIdentity.ts",
       "kind": "dynamic",
       "line": 96
+    },
+    {
+      "source": "server/tests/radarMaterialIntake.test.ts",
+      "target": "server/services/impactRadarService.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "server/tests/radarMaterialIntake.test.ts",
+      "target": "src/shared/impactRadar.ts",
+      "kind": "import",
+      "line": 4
+    },
+    {
+      "source": "server/tests/radarMaterialIntake.test.ts",
+      "target": "server/services/stockNewsService.ts",
+      "kind": "import",
+      "line": 5
+    },
+    {
+      "source": "server/tests/radarMaterialIntake.test.ts",
+      "target": "server/services/radarIntakePolicy.ts",
+      "kind": "import",
+      "line": 6
+    },
+    {
+      "source": "server/tests/radarMaterialIntake.test.ts",
+      "target": "server/services/radarMovementService.ts",
+      "kind": "import",
+      "line": 7
+    },
+    {
+      "source": "server/tests/radarMaterialIntake.test.ts",
+      "target": "server/services/radarMovementService.ts",
+      "kind": "import",
+      "line": 8
     },
     {
       "source": "server/tests/radarNewsState.test.ts",
@@ -5668,6 +5834,12 @@
       "target": "server/utils/stockResolver.ts",
       "kind": "import",
       "line": 9
+    },
+    {
+      "source": "server/utils/newsPublicationTime.ts",
+      "target": "src/shared/impactRadar.ts",
+      "kind": "import",
+      "line": 1
     },
     {
       "source": "server/utils/retry.ts",
@@ -9616,7 +9788,11 @@
         "server/services/radarCompanyIdentity.ts",
         "server/services/radarReviewedEvidence.ts",
         "supabase/migrations/20261017100545_impact_radar_integrity_categories.sql",
-        "server.ts"
+        "server.ts",
+        "server/services/radarIntakePolicy.ts",
+        "server/utils/newsPublicationTime.ts",
+        "server/database/radarPriceDao.ts",
+        "supabase/migrations/20261017111332_impact_radar_material_intake.sql"
       ],
       "tests": [
         "server/tests/impactRadar.test.ts",
@@ -9625,9 +9801,11 @@
         "server/tests/impactRadarSql.test.ts",
         "server/tests/radarFollowUp.test.ts",
         "server/tests/radarIntegrity.test.ts",
-        "server/tests/radarNewsState.test.ts"
+        "server/tests/radarNewsState.test.ts",
+        "server/tests/radarMaterialIntake.test.ts",
+        "server/tests/radarIntakeIntegration.test.ts"
       ],
-      "reason": "Two Home previews open a native modal Radar dashboard and immediate detail. Watchlist scope stays separate from durable event follows. Both exchange disclosures and shared RSS intake carry source/date provenance; explicit jurisdiction/case references alone may join evidence. Future events have no predictions. Observed NSE final daily closes are a separate bounded, cached read with per-session source, missing-data states and no causal attribution. Account cancellation, modal focus/scroll, themes and reduced motion remain explicit contracts. The list is read-only; existing watchdog drives bounded intake. Server-only DB categories, strict real company identity, typed proceedings, source-domain rules and offset timestamps gate publishing. Reviewed PNC source backfill retains explicit news timestamps and separately sourced NSE daily ranges. Following outages preserve closed records."
+      "reason": "Two Home previews open a native modal Radar dashboard and immediate detail. Watchlist scope stays separate from durable event follows. Both exchange disclosures and shared RSS intake carry source/date provenance; explicit jurisdiction/case references alone may join evidence. Future events have no predictions. Observed NSE final daily closes are a separate bounded, cached read with per-session source, missing-data states and no causal attribution. Account cancellation, modal focus/scroll, themes and reduced motion remain explicit contracts. The list is read-only; existing watchdog drives bounded intake. Server-only DB categories, strict real company identity, typed proceedings, source-domain rules and offset timestamps gate publishing. Reviewed PNC source backfill retains explicit news timestamps and separately sourced NSE daily ranges. Following outages preserve closed records. Additional material event terms come from private DB rules and match bounded literal phrases independently of source type or authority. Explicit RSS timestamps normalize to UTC. Publisher/report attribution and related-topic links preserve uncertainty. Selected company final NSE session values persist as small, private, duplicate-safe snapshots and can survive upstream outages."
     }
   ],
   "routes": [
@@ -10304,7 +10482,7 @@
     },
     {
       "file": "server/api/impactRadar.ts",
-      "line": 56,
+      "line": 59,
       "receiver": "impactRadarRouter",
       "method": "GET",
       "path": "/:id",
@@ -12501,7 +12679,7 @@
     },
     {
       "file": "server/services/radarMovementService.ts",
-      "line": 71,
+      "line": 72,
       "function": "fetch",
       "target": "nseBhavcopyUrl(day)"
     },
@@ -12561,7 +12739,7 @@
     },
     {
       "file": "server/services/stockNewsService.ts",
-      "line": 342,
+      "line": 343,
       "function": "fetch",
       "target": "feed.url"
     },
@@ -12993,7 +13171,7 @@
     },
     {
       "file": "src/components/ImpactRadar.tsx",
-      "line": 123,
+      "line": 125,
       "function": "customFetch",
       "target": "'/api/impact-radar/categories'"
     },
@@ -13919,49 +14097,55 @@
     },
     {
       "file": "server/database/impactRadarDao.ts",
-      "line": 15,
+      "line": 18,
+      "function": "getSupabase().from",
+      "key": "'impact_intake_rules'"
+    },
+    {
+      "file": "server/database/impactRadarDao.ts",
+      "line": 33,
       "function": "getSupabase().from",
       "key": "'impact_categories'"
     },
     {
       "file": "server/database/impactRadarDao.ts",
-      "line": 32,
-      "function": "getSupabase().from",
-      "key": "'impact_radar_events'"
-    },
-    {
-      "file": "server/database/impactRadarDao.ts",
-      "line": 38,
-      "function": "getSupabase().from",
-      "key": "'impact_radar_events'"
-    },
-    {
-      "file": "server/database/impactRadarDao.ts",
-      "line": 44,
-      "function": "getSupabase().from",
-      "key": "'impact_radar_updates'"
-    },
-    {
-      "file": "server/database/impactRadarDao.ts",
       "line": 50,
       "function": "getSupabase().from",
+      "key": "'impact_radar_events'"
+    },
+    {
+      "file": "server/database/impactRadarDao.ts",
+      "line": 56,
+      "function": "getSupabase().from",
+      "key": "'impact_radar_events'"
+    },
+    {
+      "file": "server/database/impactRadarDao.ts",
+      "line": 62,
+      "function": "getSupabase().from",
       "key": "'impact_radar_updates'"
     },
     {
       "file": "server/database/impactRadarDao.ts",
-      "line": 59,
+      "line": 68,
+      "function": "getSupabase().from",
+      "key": "'impact_radar_updates'"
+    },
+    {
+      "file": "server/database/impactRadarDao.ts",
+      "line": 77,
       "function": "getSupabase().rpc",
       "key": "'publish_impact_radar_records'"
     },
     {
       "file": "server/database/impactRadarDao.ts",
-      "line": 64,
+      "line": 82,
       "function": "getSupabase().from",
       "key": "'impact_radar_follows'"
     },
     {
       "file": "server/database/impactRadarDao.ts",
-      "line": 74,
+      "line": 92,
       "function": "getSupabase().from",
       "key": "'impact_radar_follows'"
     },
@@ -14102,6 +14286,18 @@
       "line": 266,
       "function": "getSupabase().from",
       "key": "ORDERS_TABLE"
+    },
+    {
+      "file": "server/database/radarPriceDao.ts",
+      "line": 7,
+      "function": "getSupabase().from",
+      "key": "'impact_price_sessions'"
+    },
+    {
+      "file": "server/database/radarPriceDao.ts",
+      "line": 16,
+      "function": "getSupabase().from",
+      "key": "'impact_price_sessions'"
     },
     {
       "file": "server/database/referralsDao.ts",
@@ -14303,25 +14499,25 @@
     },
     {
       "file": "server/services/stockNewsService.ts",
-      "line": 97,
+      "line": 98,
       "function": "getSupabase()\n        .from",
       "key": "'sent_news_alerts'"
     },
     {
       "file": "server/services/stockNewsService.ts",
-      "line": 143,
+      "line": 144,
       "function": "getSupabase().from",
       "key": "'sent_news_alerts'"
     },
     {
       "file": "server/services/stockNewsService.ts",
-      "line": 377,
+      "line": 378,
       "function": "Array.from",
       "key": "resultsMap.values()"
     },
     {
       "file": "server/services/stockNewsService.ts",
-      "line": 496,
+      "line": 498,
       "function": "Array.from",
       "key": "symbolSet"
     },
@@ -14345,7 +14541,7 @@
     },
     {
       "file": "server/tests/impactRadarRender.test.ts",
-      "line": 35,
+      "line": 39,
       "function": "Array.from",
       "key": "{ length: 10 }"
     },
@@ -14597,7 +14793,7 @@
     },
     {
       "file": "src/components/ImpactRadar.tsx",
-      "line": 160,
+      "line": 162,
       "function": "Array.from",
       "key": "{ length: count }"
     },
@@ -16295,6 +16491,21 @@
       "name": "SUPABASE_SERVICE_ROLE_KEY"
     },
     {
+      "file": "server/tests/radarIntakeIntegration.test.ts",
+      "line": 3,
+      "name": "SUPABASE_URL"
+    },
+    {
+      "file": "server/tests/radarIntakeIntegration.test.ts",
+      "line": 4,
+      "name": "SUPABASE_SERVICE_ROLE_KEY"
+    },
+    {
+      "file": "server/tests/radarIntakeIntegration.test.ts",
+      "line": 11,
+      "name": "SUPABASE_URL"
+    },
+    {
       "file": "server/tests/recaptchaSecurity.test.ts",
       "line": 14,
       "name": "RECAPTCHA_API_KEY"
@@ -16603,7 +16814,7 @@
     },
     {
       "file": "src/components/ImpactRadar.tsx",
-      "line": 138,
+      "line": 140,
       "target": "document",
       "kind": "listen",
       "name": "visibilitychange",
@@ -16611,7 +16822,7 @@
     },
     {
       "file": "src/components/ImpactRadar.tsx",
-      "line": 138,
+      "line": 140,
       "target": "window",
       "kind": "listen",
       "name": "bse_nav_tab_refresh",
@@ -16619,7 +16830,7 @@
     },
     {
       "file": "src/components/ImpactRadar.tsx",
-      "line": 139,
+      "line": 141,
       "target": "document",
       "kind": "remove",
       "name": "visibilitychange",
@@ -16627,7 +16838,7 @@
     },
     {
       "file": "src/components/ImpactRadar.tsx",
-      "line": 139,
+      "line": 141,
       "target": "window",
       "kind": "remove",
       "name": "bse_nav_tab_refresh",

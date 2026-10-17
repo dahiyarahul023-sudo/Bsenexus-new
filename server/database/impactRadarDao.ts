@@ -1,12 +1,30 @@
 import { getSupabase } from './supabase.js';
 import { isRadarEvent, isRadarUpdate, isRadarCategoryOption, publicRadarEvent, publicRadarUpdate, type RadarCategoryOption, type RadarEvent, type RadarUpdate } from '../../src/shared/impactRadar.js';
 import { resolveStockDetailsStrict } from '../utils/stockResolver.js';
+import { isRadarIntakeRule, type RadarIntakeRule } from '../services/radarIntakePolicy.js';
 
 export class RadarStorageError extends Error { constructor() { super('Impact Radar storage is unavailable. Please retry.'); } }
 const checked = <T>(result: { data: T; error: unknown }): T => { if (result.error) throw new RadarStorageError(); return result.data; };
 export interface RadarRecord { event: RadarEvent; update: RadarUpdate; origin?: 'intake' | 'editorial' }
 let categoryCache: { until: number; rows: RadarCategoryOption[] } | null = null;
 let categoryRead: Promise<RadarCategoryOption[]> | null = null;
+let rulesCache: { until: number; rows: RadarIntakeRule[] } | null = null;
+let rulesRead: Promise<RadarIntakeRule[]> | null = null;
+export async function getRadarIntakeRules(): Promise<RadarIntakeRule[]> {
+  if (rulesCache && rulesCache.until > Date.now()) return rulesCache.rows;
+  if (rulesRead) return rulesRead;
+  rulesRead = (async () => {
+    try {
+      const rows = checked(await getSupabase().from('impact_intake_rules').select('id,category,label,terms,exclude_terms,priority,active').order('priority').limit(200).abortSignal(AbortSignal.timeout(6000)));
+      const categories = new Set((await getRadarCategories()).filter(c => c.active).map(c => c.id));
+      if (!Array.isArray(rows) || rows.some(r => !isRadarIntakeRule(r))) throw new RadarStorageError();
+      const active = rows.filter(r => r.active && categories.has(r.category));
+      rulesCache = { until: Date.now() + 60_000, rows: active }; return active;
+    } catch { throw new RadarStorageError(); }
+    finally { rulesRead = null; }
+  })();
+  return rulesRead;
+}
 export async function getRadarCategories(): Promise<RadarCategoryOption[]> {
   if (categoryCache && categoryCache.until > Date.now()) return categoryCache.rows;
   if (categoryRead) return categoryRead;
