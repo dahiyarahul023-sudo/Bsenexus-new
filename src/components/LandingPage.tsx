@@ -2234,7 +2234,7 @@ export function LandingPage({
                 Bsenexus continuously tracks live regulatory feeds under SEBI LODR Regulation 30 &amp; 33. Announcements from 5,000+ BSE-listed companies are ingested, parsed, and categorized within minutes of filing.
               </p>
               <div className="pt-2">
-                <a href="/guides/sebi-lodr-reg-30-disclosures" className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline">
+                <a href="/guides/sebi-lodr-regulation-30" className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline">
                   <span>SEBI Regulation 30 Guide</span>
                   <ArrowRight className="w-3 h-3" />
                 </a>
@@ -2252,7 +2252,7 @@ export function LandingPage({
                 Our neural parsing pipeline extracts YoY &amp; QoQ Revenue, Operating EBITDA, and Net Profit directly from unformatted corporate PDF filings, allowing investors to digest financial results in seconds.
               </p>
               <div className="pt-2">
-                <a href="/guides/reading-quarterly-financial-results" className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline">
+                <a href="/guides/board-meeting-results-guide" className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline">
                   <span>Guide to Reading Results</span>
                   <ArrowRight className="w-3 h-3" />
                 </a>
