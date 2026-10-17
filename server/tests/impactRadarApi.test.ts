@@ -67,14 +67,14 @@ test('explicit case references link source updates without merging unrelated cas
   assert.notEqual(radarRecordFromSource(highCourt)!.event.id, radarRecordFromSource({ ...highCourt, source: { ...input.source, url: 'https://www.bseindia.com/different-court.pdf' } })!.event.id, 'A generic High Court reference does not identify its jurisdiction');
 });
 
- test('public event detail separates source history and scheduled events have no observed future movement', async () => {
+ test('public event detail separates source history and future hearings preserve the historical report anchor', async () => {
   const detail = await originalFetch(url + '/matter-1');
   assert.equal(detail.status, 200); const body = await detail.json();
   assert.equal(body.event.id, event.id); assert.deepEqual(body.updates, []); assert.equal(body.firstUpdate, null); assert.deepEqual(body.related, []);
   assert.match(detail.headers.get('cache-control') || '', /no-store/);
   const movement = await originalFetch(url + '/matter-1/movement');
   assert.equal(movement.status, 200); const prices = await movement.json();
-  assert.equal(prices.movement.status, 'upcoming'); assert.deepEqual(prices.movement.companies[0].sessions, []);
+  assert.equal(prices.movement.basis, 'report-date'); assert.equal(prices.movement.anchorDate, event.publishedAt.slice(0,10)); assert.equal(prices.movement.status, 'unavailable'); assert.deepEqual(prices.movement.companies[0].sessions, []);
   const invalid = await originalFetch(url + '/%3Cbad%3E/movement'); assert.equal(invalid.status, 400);
 });
 

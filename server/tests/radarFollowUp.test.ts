@@ -41,7 +41,7 @@ test('after-close publication, missing reports and unavailable prices never beco
   const empty = await getRadarMovement(event, Date.parse('2026-10-17T05:00:00Z'), async () => { throw new Error('Blocked'); });
   assert.equal(empty.status, 'unavailable'); assert.deepEqual(empty.companies[0].sessions, []);
   let fetched = false;
-  const future = await getRadarMovement({ ...event, status: 'scheduled', scheduledDate: '2026-10-20' }, Date.parse('2026-10-17T05:00:00Z'), async () => { fetched = true; return rows; });
+  const future = await getRadarMovement({ ...event, publishedAt: '2026-10-20T05:00:00Z', status: 'scheduled', scheduledDate: '2026-10-20' }, Date.parse('2026-10-17T05:00:00Z'), async () => { fetched = true; return rows; });
   assert.equal(future.status, 'upcoming'); assert.equal(fetched, false);
   const ongoing = await getRadarMovement({ ...event, status: 'scheduled', scheduledDate: '2026-10-20', occurredDate: day, occurredSource: source }, Date.parse('2026-10-17T05:00:00Z'), async date => date === day ? rows : null);
   assert.equal(ongoing.basis, 'event-date'); assert.equal(ongoing.status, 'partial'); assert.equal(ongoing.companies[0].sessions.length, 1, 'a later hearing must not hide the sourced previous event history');
@@ -90,7 +90,7 @@ test('movement download path reads bounded exchange archives and coalesces concu
   try {
     const now = Date.parse('2026-10-17T05:00:00Z');
     const [a, b] = await Promise.all([getRadarMovement(event, now), getRadarMovement(event, now)]);
-    assert.equal(calls, 4); assert.equal(a.companies[0].sessions.length, 1);
+    assert.equal(calls, 7, 'four NSE dates plus three missing-date BSE fallbacks, shared across both concurrent views'); assert.equal(a.companies[0].sessions.length, 1);
     assert.deepEqual(a, b); assert.equal(isRadarMovement(a), true);
   } finally { globalThis.fetch = previous; }
 });

@@ -28,3 +28,13 @@ test('saved routine events disappear from list/detail/tracking consistently with
   assert.deepEqual(writes,[],'projection must preserve evidence and follows');
  } finally {globalThis.fetch=previous;}
 });
+test('legacy headings without a company prefix use the stored official filing name',async()=>{
+ const prior=globalThis.fetch;
+ const legacy={...base.event,id:'legacy-no-prefix',title:'NCLT hearing listed',companies:[{symbol:'544999',name:'544999',scripCode:'544999'}]};
+ globalThis.fetch=(async(input:any)=>{
+  const path=new URL(String(input?.url||input)).pathname;
+  return Response.json(path.endsWith('/announcements') ? [{scrip_cd:'544999',data:{companyName:'Verified Filing Company Ltd',pdfLink:'https://www.bseindia.com/original.pdf'}}] : [{data:legacy}]);
+ }) as typeof fetch;
+ try{assert.equal((await getRadarEvent('legacy-no-prefix'))?.companies[0].name,'Verified Filing Company Ltd');}
+ finally{globalThis.fetch=prior;}
+});

@@ -136,3 +136,11 @@
 .impact-radar-movement button { min-height:44px; text-decoration:underline; }
 @media(max-width:639px) { .impact-radar-preview>.impact-radar-grid { grid-template-columns:minmax(0,1fr); }.impact-radar-window { width:100%; height:100dvh; border:0; border-radius:0; }.impact-radar-window-bar { padding-top:max(5px,env(safe-area-inset-top)); }.impact-radar-window-body { padding:17px 13px max(20px,env(safe-area-inset-bottom)); }.impact-radar-window .impact-radar-detail h3 { font-size:19px; }.impact-radar-provenance,.impact-radar-movement,.impact-radar-verification,.impact-radar-related { padding:13px; }.impact-radar-preview>.impact-radar-grid .impact-radar-card { min-height:214px; } }
 @media(prefers-reduced-motion:reduce) { .impact-radar *,.impact-radar-window,.impact-radar-mark::after,.impact-radar-stage i { animation:none!important; transition:none!important; } }
+.impact-radar-movement.is-compact { padding-block:10px; }
+.impact-radar-price-status { display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:12px; margin:0; }
+.impact-radar-price-status button,.impact-radar-price-retry { flex-shrink:0; font-size:12px; }
+.impact-radar-price-context { font-size:12px; color:var(--rich-muted,#586578); }
+.impact-radar-method>summary,.impact-radar-source-history>summary,.impact-radar-verification>summary { cursor:pointer; min-height:44px; display:list-item; align-content:center; font-size:12px; font-weight:650; }
+.impact-radar-method>summary:focus-visible,.impact-radar-source-history>summary:focus-visible,.impact-radar-verification>summary:focus-visible { outline:2px solid var(--rich-selected-ink,#047857); outline-offset:3px; }
+.impact-radar-source-history { margin-top:16px; }
+.impact-radar-answers:empty { display:none; }
