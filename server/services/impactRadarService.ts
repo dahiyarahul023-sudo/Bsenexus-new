@@ -74,7 +74,7 @@ export function radarRecordFromSource(input: {
   const nextText = evidence.match(/\b(?:hearing\s+(?:scheduled\s+)?(?:on|for)|listed\s+for|next\s+(?:hearing|listing)\s+(?:is\s+)?(?:on|date[:\s]+))\s+(.{8,30})/i)?.[1];
   const nextDate = nextText ? explicitDate(nextText) : null;
   if (nextDate && nextDate >= radarDay(ts) && Date.parse(nextDate) - ts < 730 * 86400000) {
-    event.status = 'scheduled'; event.scheduledDate = nextDate; event.scheduleConfirmed = input.source.kind !== 'news' && !/\b(?:tentative|proposed|subject to|expected|may|could)\b/i.test(evidence); event.scheduleSource = input.source;
+    event.status = 'scheduled'; event.scheduledDate = nextDate; event.scheduleConfirmed = input.source.kind !== 'news' && !/\b(?:tentative|proposed|subject to|expected|could)\b|\bmay\s+(?:be|take|occur|hear|list)\b/i.test(evidence); event.scheduleSource = input.source;
   }
   const happened = evidence.match(/\b(?:court(?:\s+of\s+delhi)?|tribunal|SEBI|RBI|APTEL|CERC|NCLAT|NCLT)\s+(?:order|judgment|judgement)\s+(?:dated|passed\s+on)\s+(.{8,30})/i)?.[1];
   const occurredDate = happened ? explicitDate(happened) : null;

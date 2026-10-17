@@ -54,6 +54,8 @@ test('exact sourced event dates and explicit next dates survive projection witho
   assert.equal(isRadarEvent({ ...record.event, occurredSource: undefined }), false);
   const report = radarRecordFromSource({ ...input, source: { ...source, kind: 'news' }, evidence: 'Next hearing on 20 October 2026.' }, Date.parse('2026-10-17T05:00:00Z'))!;
   assert.equal(report.event.scheduleConfirmed, false); assert.equal(report.event.occurredDate, undefined);
+  const may = radarRecordFromSource({ ...input, evidence: 'Next hearing on 20 May 2027.' }, Date.parse('2026-10-17T05:00:00Z'))!;
+  assert.equal(may.event.scheduledDate, '2027-05-20'); assert.equal(may.event.scheduleConfirmed, true, 'the calendar month May is not tentative language');
   assert.equal(radarRecordFromSource(input, Date.parse('2026-10-17T05:00:00Z'))!.event.scheduledDate, null);
   assert.equal(radarRecordFromSource({ ...input, evidence: 'NHAI order dated 3 September 2026 was challenged.' }, Date.parse('2026-10-17T05:00:00Z'))!.event.occurredDate, undefined);
 });

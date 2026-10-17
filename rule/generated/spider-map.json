@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "6d43fd1154c8a494dad92fbf5a598766d27be95f427391bb2b15be5d85d45ac9",
+  "sourceDigest": "d9a1517a70f0de41f9b6406918cd64ed528741eb2621625651d679c5ead7af89",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -703,7 +703,7 @@
     },
     {
       "path": "server/services/impactRadarService.ts",
-      "sha256": "1ee7369c6054dc2e43a2c2a6049225dd4188413b14cf3b4c2bb48e048ec0014a",
+      "sha256": "c215f0611e565c4c2a9459b1384e4fa608cbdf410aa800272b59bdd77a2f2cea",
       "importedBy": [
         "server/api/impactRadar.ts",
         "server/tests/impactRadarApi.test.ts",
@@ -1054,7 +1054,7 @@
     },
     {
       "path": "server/tests/radarFollowUp.test.ts",
-      "sha256": "275bca28ea391e587a21bb3b8a002318e15316318928c5806ce87649059ca778",
+      "sha256": "5faacc709d34eb629a6a1e7d06b542073eb2e8f2de752f6f8ef150de4c0b7a95",
       "importedBy": []
     },
     {
@@ -5371,7 +5371,7 @@
       "source": "server/tests/radarFollowUp.test.ts",
       "target": "server/services/stockNewsService.ts",
       "kind": "dynamic",
-      "line": 74
+      "line": 76
     },
     {
       "source": "server/tests/recaptchaSecurity.test.ts",
