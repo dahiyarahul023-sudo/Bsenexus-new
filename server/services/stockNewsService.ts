@@ -307,6 +307,7 @@ function parseRssFeedXml(
   return items;
 }
 
+let newsFetchRunning: Promise<StockNewsItem[]> | null = null;
 // Fetch all multi-source financial RSS feeds with parallel requests & caching
 export async function fetchAllMultiSourceNewsFeeds(forceRefresh = false): Promise<StockNewsItem[]> {
   const now = Date.now();
@@ -322,6 +323,8 @@ export async function fetchAllMultiSourceNewsFeeds(forceRefresh = false): Promis
     }
   }
 
+  if (newsFetchRunning) return newsFetchRunning;
+  newsFetchRunning = (async () => {
   const resultsMap = new Map<string, StockNewsItem>();
   const normalizedTitleMap = new Map<string, string>(); // Cross-publisher deduplication
   const sourceCountMap: Record<string, number> = {
@@ -380,6 +383,8 @@ export async function fetchAllMultiSourceNewsFeeds(forceRefresh = false): Promis
   newsCache.sourceCounts = sourceCountMap;
 
   return sorted;
+  })();
+  try { return await newsFetchRunning; } finally { newsFetchRunning = null; }
 }
 
 // Fetch General Market & Corporate News with optional source filter

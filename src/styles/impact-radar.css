@@ -83,3 +83,56 @@
 @media(min-width:1100px) { .impact-radar-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
 @media(max-width:479px) { .impact-radar-heading { gap:6px; }.impact-radar-heading p { display:none; }.impact-radar h2 { font-size:18px; }.impact-radar-mark { width:35px; height:35px; border-radius:11px; }.impact-radar-brand { gap:8px; }.impact-radar-heading-actions>button:first-child { padding:0 6px; font-size:11px; }.impact-radar-category-filter { flex-basis:100%; }.impact-radar-detail { padding:15px; }.impact-radar-card { border-radius:16px; } }
 @media(prefers-reduced-motion:reduce) { .impact-radar * { animation:none!important; transition:none!important; scroll-behavior:auto!important; }.impact-radar-filters button:active { transform:none; } }
+/* Home stays compact. The native dialog owns the full Radar workspace. */
+.impact-radar-preview>.impact-radar-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.impact-radar-preview>.impact-radar-grid .impact-radar-card { min-height:230px; }
+.impact-radar-preview>.impact-radar-grid .impact-radar-skeleton { min-height:230px; }
+.impact-radar-card { position:relative; isolation:isolate; border-top:2px solid var(--radar-tone,var(--rich-border,#dce4e9)); }
+[data-timing="live"] { --radar-tone:#0d9488; --radar-tint:#0d94881a; }
+[data-timing="upcoming"] { --radar-tone:#b7791f; --radar-tint:#d59b221a; }
+[data-timing="past"] { --radar-tone:#738096; --radar-tint:#73809615; }
+[data-timing="undated"] { --radar-tone:#7c6db0; --radar-tint:#7c6db015; }
+.impact-radar-stage { display:inline-flex; align-items:center; gap:5px; border-color:var(--radar-tone); background:var(--radar-tint); color:var(--rich-ink,#162333); }
+.impact-radar-stage i { width:6px; height:6px; border-radius:50%; background:var(--radar-tone); }
+.impact-radar-card[data-timing="live"] .impact-radar-stage i { animation:impact-radar-pulse 2.8s ease-out infinite; }
+.impact-radar-card h3>.impact-radar-card-open { display:block; overflow:visible; position:static; }
+.impact-radar-card-open::after { content:''; position:absolute; inset:0; border-radius:inherit; z-index:1; cursor:pointer; }
+.impact-radar-card-title { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.impact-radar-track { position:relative; z-index:2; }
+.impact-radar-card:has(.impact-radar-card-open:focus-visible) { outline:3px solid var(--rich-focus,#047857); outline-offset:3px; }
+.impact-radar-mark { position:relative; isolation:isolate; color:var(--radar-tone); background:var(--radar-tint); border-color:var(--radar-tone); overflow:hidden; }
+.impact-radar-mark>svg { z-index:1; }
+.impact-radar-mark[data-timing="live"]::after { content:''; position:absolute; inset:-20%; background:conic-gradient(from 0deg,transparent 65%,#0d948845 100%); animation:impact-radar-sweep 5s linear infinite; }
+@keyframes impact-radar-sweep { to { transform:rotate(360deg); } }
+@keyframes impact-radar-pulse { 0%,100% { box-shadow:0 0 0 0 #0d948800; } 50% { box-shadow:0 0 0 4px #0d948826; } }
+.impact-radar-window { --radar-pad:17px; color:var(--rich-ink,#162333); background:var(--rich-soft,#f4f7f8); border:1px solid var(--rich-border,#dce4e9); border-radius:24px; width:min(1120px,calc(100vw - 48px)); max-width:none; height:min(860px,calc(100dvh - 48px)); max-height:none; margin:auto; padding:0; box-shadow:0 24px 100px #0005; overflow:hidden; }
+.impact-radar-window[open] { display:flex; flex-direction:column; animation:impact-radar-reveal .18s ease-out; }
+.impact-radar-window::backdrop { background:#10202d99; backdrop-filter:blur(5px); }
+.impact-radar-window-bar { display:flex; align-items:center; justify-content:space-between; flex:none; min-height:57px; padding:5px 17px; background:var(--rich-surface,#fff); border-bottom:1px solid var(--rich-border,#dce4e9); }
+.impact-radar-window-bar button { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:44px; font-size:12px; color:var(--rich-muted,#586578); }
+.impact-radar-window-body { flex:1; min-height:0; overflow:auto; overscroll-behavior:contain; padding:24px; scroll-behavior:auto; }
+.impact-radar-window .impact-radar-detail { margin:0; padding:0; border:none; box-shadow:none; background:transparent; animation:none; }
+.impact-radar-window .impact-radar-detail h3 { max-width:900px; font-size:22px; }
+.impact-radar-scope { display:flex; gap:7px; flex-wrap:wrap; margin:0 0 14px; }
+.impact-radar-scope button { padding:9px 16px; min-height:44px; font-size:12px; font-weight:700; border:1px solid var(--rich-border,#dce4e9); border-radius:13px; background:var(--rich-surface,#fff); }
+.impact-radar-scope button[aria-pressed="true"] { color:var(--rich-selected-ink,#065f46); border-color:var(--rich-selected-border,#67cdb0); background:var(--rich-selected,#d4f6ee); }
+.impact-radar-legend { display:flex; gap:14px; flex-wrap:wrap; margin:7px 0 16px; font-size:10px; color:var(--rich-muted,#586578); }
+.impact-radar-legend span::before { content:''; display:inline-block; width:6px; height:6px; background:var(--radar-tone); border-radius:50%; margin-right:5px; }
+.impact-radar-provenance,.impact-radar-movement,.impact-radar-verification,.impact-radar-related { margin:18px 0; padding:17px; border:1px solid var(--rich-border,#dce4e9); background:var(--rich-surface,#fff); border-radius:16px; }
+.impact-radar-provenance p,.impact-radar-movement p,.impact-radar-verification p,.impact-radar-related p { font-size:12px; line-height:1.8; color:var(--rich-muted,#586578); }
+.impact-radar-provenance p+p { margin-top:7px; }
+.impact-radar-verification>a { margin-right:18px; }
+.impact-radar-price-company { margin:16px 0; }
+.impact-radar-price-company h5 { font-size:12px; font-weight:750; margin-bottom:8px; }
+.impact-radar-price-table { overflow-x:auto; }
+.impact-radar-price-table table { width:100%; min-width:330px; font-size:12px; border-collapse:collapse; text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
+.impact-radar-price-table th,.impact-radar-price-table td { padding:8px; border-bottom:1px solid var(--rich-border,#dce4e9); }
+.impact-radar-price-table th { font-size:10px; color:var(--rich-muted,#586578); }
+.impact-radar-price-table :is(th,td):first-child { text-align:left; }
+.impact-radar-price-table .is-up { color:var(--rich-selected-ink,#047857); }.impact-radar-price-table .is-down { color:var(--rich-danger,#d0444b); }
+.impact-radar-movement .impact-radar-price-note { font-size:10px; margin-top:8px; }
+.impact-radar-related button { width:100%; display:flex; flex-direction:column; text-align:left; gap:5px; padding:12px 0; min-height:44px; font-size:12px; line-height:1.7; border-bottom:1px solid var(--rich-border,#dce4e9); }
+.impact-radar-related button span { font-size:10px; color:var(--rich-muted,#586578); }
+.impact-radar-movement button { min-height:44px; text-decoration:underline; }
+@media(max-width:639px) { .impact-radar-preview>.impact-radar-grid { grid-template-columns:minmax(0,1fr); }.impact-radar-window { width:100%; height:100dvh; border:0; border-radius:0; }.impact-radar-window-bar { padding-top:max(5px,env(safe-area-inset-top)); }.impact-radar-window-body { padding:17px 13px max(20px,env(safe-area-inset-bottom)); }.impact-radar-window .impact-radar-detail h3 { font-size:19px; }.impact-radar-provenance,.impact-radar-movement,.impact-radar-verification,.impact-radar-related { padding:13px; }.impact-radar-preview>.impact-radar-grid .impact-radar-card { min-height:214px; } }
+@media(prefers-reduced-motion:reduce) { .impact-radar *,.impact-radar-window,.impact-radar-mark::after,.impact-radar-stage i { animation:none!important; transition:none!important; } }
