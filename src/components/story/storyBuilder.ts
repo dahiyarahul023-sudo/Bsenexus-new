@@ -1,6 +1,8 @@
 import type { StoryArtworkKind, StoryChapter, StoryCompany, StorySlide, StorySource, StoryTopic } from './storyTypes';
 
 export const MAX_MAJOR_STORY_AGE_MS = 18 * 60 * 60 * 1000;
+export const MAX_COMPANY_NEWS_SCREENS = 7;
+export const MAX_SCREENS_PER_COMPANY = 2;
 const record = (v: unknown): Record<string, any> => v && typeof v === 'object' && !Array.isArray(v) ? v as Record<string, any> : {};
 const array = (v: unknown): any[] => Array.isArray(v) ? v : [];
 const text = (v: unknown) => typeof v === 'string' ? v.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim() : '';
@@ -59,8 +61,74 @@ export function storyArtworkFor(value: string): StoryArtworkKind {
   if (/\b(bank|banking|deposit|credit|lending|finance|insurance)\b/i.test(value)) return 'banking';
   if (/\b(power|energy|solar|electric|gas|renewable|oil)\b/i.test(value)) return 'energy';
   if (/\b(pharma|health|hospital|drug|medicine)\b/i.test(value)) return 'healthcare';
-  if (/\b(mining|steel|plant|factory|manufactur|cement|order|contract|epc)\w*/i.test(value)) return 'industry';
+  if (/\b(mining|steel|plant|factory|manufactur|cement|epc)\w*/i.test(value)) return 'industry';
   return 'markets';
+}
+
+/** Use an order figure only when one explicit, qualified rupee amount belongs to it. */
+function orderMetric(headline: string): { title: string; value: string } | undefined {
+  if (!/\b(?:wins?|secures?|receives?|awarded|bags?|obtains?)\b/i.test(headline) || !/\b(?:orders?|contracts?)\b/i.test(headline)) return;
+  if (/\b(?:targets?|seeks?|bids?|plans?|may|could|expects?|not|no|denies|denied|cancelled|canceled|withdrawn)\b/i.test(headline)) return;
+  // Multiple amounts or a second currency can describe a comparison, not an order value.
+  if ((headline.match(/₹/g) || []).length !== 1 || /\$|\b(?:USD|EUR|Rs\.?|INR)\b/i.test(headline)) return;
+  const amount = /(?:(?:up to|about|approximately|around|over|more than|at least)\s+)?₹\s*\d[\d,]*(?:\.\d+)?\s*(?:lakh\s+crore|crores?|cr)\b/i.exec(headline);
+  if (!amount) return;
+  const before = headline.slice(0, amount.index);
+  const after = headline.slice(amount.index + amount[0].length);
+  const related = /\b(?:orders?|contracts?)(?:\s+(?:worth|valued at|of|for))?\s*$/i.test(before)
+    || /^\s+(?:(?:EPC|supply|construction|equipment)\s+)?(?:orders?|contracts?)\b/i.test(after);
+  if (!related) return;
+  const title = `${before.replace(/\s+(?:worth|valued at|of|for)\s*$/i, ' ')}${after}`.replace(/\s+/g, ' ').replace(/\s+([,.!?])/g, '$1').trim();
+  return { title, value: amount[0] };
+}
+
+interface NewsCandidate { companyKey: string; publishedAt: number; slides: StorySlide[] }
+
+/** Allocate complete explanations first, then extra updates; never split a company group. */
+function boundedCompanyNews(candidates: NewsCandidate[]): StorySlide[] {
+  const exactNames = new Map<string, string | null>();
+  for (const candidate of candidates) {
+    const subject = candidate.slides[0].subject;
+    if (subject.kind !== 'company') continue;
+    const name = `name:${subject.company.name.toLowerCase()}`;
+    const previous = exactNames.get(name);
+    exactNames.set(name, previous === undefined || previous === subject.company.scripCode ? subject.company.scripCode : null);
+  }
+  const companies = new Map<string, NewsCandidate[]>();
+  for (const candidate of candidates.sort((a, b) => b.publishedAt - a.publishedAt)) {
+    // Exact unambiguous names may share a budget, but never gain a guessed logo/action.
+    const companyKey = exactNames.get(candidate.companyKey) || candidate.companyKey;
+    const group = companies.get(companyKey) || [];
+    group.push(candidate);
+    companies.set(companyKey, group);
+  }
+  const selected: { candidates: NewsCandidate[]; screens: number; remaining: NewsCandidate[] }[] = [];
+  let total = 0;
+  for (const [first, ...remaining] of companies.values()) {
+    if (total + first.slides.length > MAX_COMPANY_NEWS_SCREENS) continue;
+    selected.push({ candidates: [first], screens: first.slides.length, remaining });
+    total += first.slides.length;
+  }
+  for (const group of selected) {
+    for (const candidate of group.remaining) {
+      const size = candidate.slides.length;
+      if (group.screens + size > MAX_SCREENS_PER_COMPANY || total + size > MAX_COMPANY_NEWS_SCREENS) continue;
+      group.candidates.push(candidate); group.screens += size; total += size;
+    }
+  }
+  const slides = selected.flatMap(group => group.candidates.flatMap(candidate => candidate.slides));
+  const artworkUsed = new Set<StoryArtworkKind>();
+  let previousArtwork = false;
+  for (const slide of slides) {
+    if (slide.layout !== 'news') { previousArtwork = false; continue; }
+    const artwork = slide.artwork;
+    if (!artwork || artwork === 'markets' || previousArtwork || artworkUsed.has(artwork) || artworkUsed.size >= 3) {
+      delete slide.artwork; previousArtwork = false;
+    } else {
+      artworkUsed.add(artwork); previousArtwork = true;
+    }
+  }
+  return slides;
 }
 
 export function getStoryDuration(slide: StorySlide): number {
@@ -147,7 +215,7 @@ export function buildStoryChapters(payload: unknown, now = Date.now(), showMarke
   groups(rows).forEach((items, i) => calendar.push({ ...base(`calendar-${items[0].id}`, 'earnings-radar', i ? 'Next on the calendar' : 'Dates to keep in view', { name: 'BSE / NSE board meeting calendar' }), layout: 'list', items }));
   add('earnings-radar', 'Results calendar', calendar);
 
-  const news: StorySlide[] = []; const newsIds = new Set<string>();
+  const news: NewsCandidate[] = []; const newsIds = new Set<string>();
   const appendNews = (item: Record<string, any>, kind: 'filing' | 'news') => {
     const publishedAt = timestamp(kind === 'filing' ? item.timestamp : item.publishedAt);
     const headline = text(kind === 'filing' ? item.headline : item.title);
@@ -165,20 +233,24 @@ export function buildStoryChapters(payload: unknown, now = Date.now(), showMarke
     const copy = [shortHeadline ? '' : headline, uniqueSnippet].filter(Boolean).join(' ');
     const pages = storyTextPages(copy);
     if (!pages.length) pages.push('');
-    // At most three useful story screens; the original source retains all further detail.
+    // Keep complete two-page explanations; longer linked reports continue at the source.
+    if (!link && pages.length > MAX_SCREENS_PER_COMPANY) return;
     const key = `${kind}-${text(String(item.id || '')) || identity}`;
-    (link ? pages.slice(0, 3) : pages).forEach((summary, page) => news.push({
+    const metric = shortHeadline && pages.length === 1 ? orderMetric(headline) : undefined;
+    const slides: StorySlide[] = pages.slice(0, MAX_SCREENS_PER_COMPANY).map((summary, page) => ({
       ...base(`${key}-${page}`, 'corporate-actions', page ? `${company?.name || 'Market update'}: more context` : title, {
         name: kind === 'filing' ? 'BSE filing' : text(item.source) || 'Original report', url: link, publishedAt,
       }),
       subject: company ? { kind: 'company', company } : { kind: 'topic', topic: 'corporate-actions' },
       sequenceId: key,
-      layout: 'news', summary: summary || undefined, artwork: storyArtworkFor(`${company?.name || ''} ${headline}`),
+      summary: summary || undefined,
+      ...(metric ? { layout: 'metric' as const, title: metric.title, metric: { label: 'Reported order value', value: metric.value } }
+        : { layout: 'news' as const, artwork: page ? undefined : storyArtworkFor(`${company?.name || ''} ${headline}`) }),
     }));
+    news.push({ companyKey: company?.scripCode || (text(item.companyName) ? `name:${text(item.companyName).toLowerCase()}` : key), publishedAt, slides });
   };
   array(feed.fresh18hAnnouncements).forEach(v => appendNews(record(v), 'filing'));
   array(feed.fresh18hNewsStories).forEach(v => appendNews(record(v), 'news'));
-  news.sort((a, b) => (b.source.publishedAt || 0) - (a.source.publishedAt || 0));
-  add('corporate-actions', 'Company news', news);
+  add('corporate-actions', 'Company news', boundedCompanyNews(news));
   return chapters;
 }

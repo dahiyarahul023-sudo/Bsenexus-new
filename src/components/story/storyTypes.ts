@@ -21,7 +21,7 @@ export interface StoryListItem {
 }
 interface StoryBase {
   id: string;
-  /** Several screens can explain one news item without crowding the chapter progress strip. */
+  /** Related pages stay together; progress always covers the entire chapter. */
   sequenceId?: string;
   chapterId: StoryTopic;
   title: string;
@@ -33,7 +33,7 @@ interface StoryBase {
   checkedAt: number;
 }
 export type StorySlide = StoryBase & (
-  | { layout: 'news'; artwork: StoryArtworkKind }
+  | { layout: 'news'; artwork?: StoryArtworkKind }
   | { layout: 'metric'; metric: { label: string; value: string; detail?: string } }
   | { layout: 'comparison'; blocks: { label: string; value: string; detail?: string; tone?: 'positive' | 'negative' | 'neutral' }[] }
   | { layout: 'chart'; chart: StoryChartData }

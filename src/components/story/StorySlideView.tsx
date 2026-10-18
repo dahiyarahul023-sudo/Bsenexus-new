@@ -16,7 +16,7 @@ export const StorySlideView = React.memo(function StorySlideView({ slide, onOpen
   return <article className={`story-slide story-slide-${slide.layout}`} data-layout={slide.layout}>
     <Heading slide={slide} />
     {slide.summary && <p className="story-summary">{slide.summary}</p>}
-    {slide.layout === 'news' && <StoryArtwork kind={slide.artwork} />}
+    {slide.layout === 'news' && slide.artwork && <StoryArtwork kind={slide.artwork} />}
     {slide.layout === 'metric' && <div className="story-metric"><span>{slide.metric.label}</span><strong>{slide.metric.value}</strong>{slide.metric.detail && <p>{slide.metric.detail}</p>}</div>}
     {slide.layout === 'comparison' && <div className="story-comparison">{slide.blocks.map(block => <div className="story-bubble" key={block.label}><span>{block.label}</span><strong>{block.value}</strong>{block.detail && <p className={`story-tone-${block.tone || 'neutral'}`}>{block.detail}</p>}</div>)}</div>}
     {slide.layout === 'chart' && <StoryChart chart={slide.chart} onInspectChange={onInspectChange} />}
