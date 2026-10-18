@@ -45,7 +45,7 @@ interface NotificationInboxProps {
   onClose: () => void;
   onOpenCompanyIntel: (scripCode?: string, symbol?: string, companyName?: string) => void;
   onOpenAlertRules: () => void;
-  unreadCount: number;
+  unreadCount: number | null;
   onRefreshCount: () => void;
 }
 
@@ -195,14 +195,12 @@ export function NotificationInbox({
     const prevNotifications = notifications;
     // Optimistic UI update: mark read immediately
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
-    onRefreshCount();
-
     try {
       const res = await customFetch(`/api/notifications/${id}/read`, { method: 'POST' });
       if (!res.ok) {
         setNotifications(prevNotifications); // Rollback on error
-        onRefreshCount();
       }
+      onRefreshCount();
     } catch (err) {
       console.error(err);
       setNotifications(prevNotifications); // Rollback on network failure
@@ -214,14 +212,12 @@ export function NotificationInbox({
     const prevNotifications = notifications;
     // Optimistic UI update: mark all read immediately
     setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-    onRefreshCount();
-
     try {
       const res = await customFetch('/api/notifications/read-all', { method: 'POST' });
       if (!res.ok) {
         setNotifications(prevNotifications); // Rollback on error
-        onRefreshCount();
       }
+      onRefreshCount();
     } catch (err) {
       console.error(err);
       setNotifications(prevNotifications); // Rollback on network failure
@@ -298,7 +294,7 @@ export function NotificationInbox({
                 <h2 id="notification-inbox-title" className="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
                   Watchlist alerts
                 </h2>
-                {unreadCount > 0 && !isMuted && (
+                {unreadCount !== null && unreadCount > 0 && !isMuted && (
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white">
                     {unreadCount} new
                   </span>
@@ -371,7 +367,7 @@ export function NotificationInbox({
               { id: 'WATCHLIST' as const, label: '⭐ My Watchlist' },
               { id: 'RESULTS' as const, label: '📊 Results' },
               { id: 'ACTIONS' as const, label: '🎁 Actions' },
-              { id: 'UNREAD' as const, label: `Unread (${unreadCount})` },
+              { id: 'UNREAD' as const, label: unreadCount === null ? 'Unread' : `Unread (${unreadCount})` },
               { id: 'ALL' as const, label: 'All' },
             ].map(f => (
               <motion.button
@@ -400,7 +396,7 @@ export function NotificationInbox({
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
-            {unreadCount > 0 && (
+            {unreadCount !== null && unreadCount > 0 && (
               <button
                 onClick={handleMarkAllRead}
                 disabled={isClearing}
