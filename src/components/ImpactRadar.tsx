@@ -100,7 +100,7 @@ export function RadarDetail({ event, now, tracked, saving, disabled, onTrack, on
       <a href={radarUrl(u.source.url)!} target="_blank" rel="noopener noreferrer">{radarSourceLabel(u.source)} · {u.source.name}<ArrowUpRight size={13} aria-hidden="true" /><span className="sr-only"> (opens a new tab)</span></a>
     </li>)}</ol></details> : null}
     {updates.length === 50 && <p className="impact-radar-muted">Showing the latest 50 source updates.</p>}
-    {related.length > 0 && <div className="impact-radar-related"><h4>Related company reports</h4><p>Same company and related topic; these are not confirmed as the same proceeding. News and later official disclosures can appear here separately.</p>{related.map(e => <button key={e.id} type="button" onClick={() => onRelated(e)}>{radarHeadline(e)}<span>{radarSourceLabel(e.source)} · {time(e.publishedAt)}</span></button>)}</div>}
+    {related.length > 0 && <div className="impact-radar-related"><h4>Related company reports</h4><p>Earlier and newer Radar reports for this company, newest first. Separate reports may concern different proceedings.</p>{related.map(e => <button key={e.id} type="button" onClick={() => onRelated(e)}>{radarHeadline(e)}<span>{radarSourceLabel(e.source)} · {time(e.publishedAt)}</span></button>)}</div>}
     <p className="impact-radar-disclaimer">{RADAR_NOTICE} This is not an investment recommendation.</p>
   </section>;
 }

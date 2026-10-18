@@ -1,6 +1,6 @@
 import express from 'express';
 import { requireAuth, requireAdmin, apiRateLimiter } from '../security/auth.js';
-import { listRadarEvents, getRadarEvent, listRadarUpdates, firstRadarUpdate, getRadarFollowing, setRadarFollowing, publishRadarRecords, getRadarCategories } from '../database/impactRadarDao.js';
+import { listRadarEvents, listRadarCompanyReports, getRadarEvent, listRadarUpdates, firstRadarUpdate, getRadarFollowing, setRadarFollowing, publishRadarRecords, getRadarCategories } from '../database/impactRadarDao.js';
 import { getRadarMovement } from '../services/radarMovementService.js';
 import { radarIntakeStatus } from '../services/impactRadarService.js';
 import { RADAR_ID, isRadarEvent, isRadarEventInScope, isRadarUpdate, publicRadarEvent } from '../../src/shared/impactRadar.js';
@@ -48,9 +48,8 @@ impactRadarRouter.post('/admin/publish', requireAuth, requireAdmin, apiRateLimit
 impactRadarRouter.get('/:id/movement', apiRateLimiter, async (req, res) => {
   if (!RADAR_ID.test(String(req.params.id))) return res.status(400).json({ success: false, error: 'Invalid event.' });
   try {
-    const event = await getRadarEvent(String(req.params.id));
+    const [event, first] = await Promise.all([getRadarEvent(String(req.params.id)), firstRadarUpdate(String(req.params.id))]);
     if (!event) return res.status(404).json({ success: false, error: 'Event not found.' });
-    const first = await firstRadarUpdate(event.id);
     // Keep the first recorded report's session visible when a later disclosure joins its timeline.
     const anchor = !event.occurredDate && first && Date.parse(first.publishedAt) < Date.parse(event.publishedAt) ? { ...event, publishedAt: first.publishedAt } : event;
     res.json({ success: true, id: event.id, movement: await getRadarMovement(anchor) });
@@ -61,8 +60,7 @@ impactRadarRouter.get('/:id', apiRateLimiter, async (req, res) => {
   try {
     const event = await getRadarEvent(String(req.params.id));
     if (!event) return res.status(404).json({ success: false, error: 'Event not found.' });
-    const [updates, firstUpdate, all] = await Promise.all([listRadarUpdates(event.id), firstRadarUpdate(event.id), listRadarEvents()]);
-    const related = all.filter(e => e.id !== event.id && (e.authority === event.authority || e.category === event.category) && Math.abs(Date.parse(e.updatedAt) - Date.parse(event.updatedAt)) <= 7 * 86400000 && e.companies.some(c => event.companies.some(x => x.scripCode === c.scripCode))).slice(0, 8);
+    const [updates, firstUpdate, related] = await Promise.all([listRadarUpdates(event.id), firstRadarUpdate(event.id), listRadarCompanyReports(event)]);
     res.json({ success: true, event, updates, firstUpdate, related, timelineLimit: 50 });
   } catch { unavailable(res); }
 });

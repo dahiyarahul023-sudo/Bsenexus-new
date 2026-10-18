@@ -8,6 +8,7 @@ interface Dependencies {
   secret?: () => string | undefined;
   now?: () => number;
   log?: (line: string) => void;
+  afterPoll?: () => Promise<void>;
 }
 
 export function createAnnouncementCronHandler(deps: Dependencies): RequestHandler {
@@ -46,7 +47,12 @@ export function createAnnouncementCronHandler(deps: Dependencies): RequestHandle
       }
       running = true;
       try {
-        const result = await deps.poll();
+        let result: AnnouncementPollResult;
+        try { result = await deps.poll(); }
+        finally {
+          // Keep request-based hosting CPU through maintenance even when announcements throw or are blocked.
+          try { await deps.afterPoll?.(); } catch { log('[POLLER] Radar maintenance failed'); }
+        }
         fetched = result.fetched;
         added = result.new;
         mode = result.mode;

@@ -28,7 +28,7 @@ test('three verified saved sessions survive an exchange outage without downloadi
  const record = radarRecordFromNews({...story,publishedAt:'2026-10-13T04:00:00Z'},[company],now)!;
  const sessions = ['2026-10-13','2026-10-14','2026-10-15'].map(date => ({date,symbol:'PNCINFRA',series:'EQ',close:100,previousClose:100,changePercent:0,sourceUrl:nseBhavcopyUrl(date)}));
  let saved = false;
- const result = await getRadarMovement(record.event,Date.parse('2026-10-15T12:00:00Z'),undefined,{read:async()=>sessions,save:async rows=>{saved=rows.length===3;return true;}});
+ const result = await getRadarMovement(record.event,Date.parse('2026-10-15T12:00:00Z'),async()=>null,{read:async()=>sessions,save:async rows=>{saved=rows.some(r=>r.symbol==='539150');return true;}});
  assert.equal(result.status,'available'); assert.deepEqual(result.companies[0].sessions,sessions); assert.equal(saved,true);
 });
 test('independent allegations and operational incidents qualify without a court or regulator name', () => {

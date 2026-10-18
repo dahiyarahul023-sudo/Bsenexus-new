@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "343538db0ae02c036e5793b4e0bd0c62f8c4d49cb15b23d47a76ceb9d460220f",
+  "sourceDigest": "b996d8af26a7a9fb8a0671fef0e6dd783bd44151080cbc4770fd48cc3f06fb36",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -167,14 +167,14 @@
     },
     {
       "path": "server.ts",
-      "sha256": "21863c0e4107a19b54ab94bd0eb3589a0c65bbf51cb86200eae92fecc25101a1",
+      "sha256": "7bf4ada1f21d5ae5852ff97300c5257e15e60ab85fa8b1ebbb22837fb24ec002",
       "importedBy": [
         "server/tests/routeResolution.test.ts"
       ]
     },
     {
       "path": "server/api/announcementCron.ts",
-      "sha256": "fe670332d7d486ce11f3cd43d054aa14d7a5f4a274c594b2dc23eef41b645e60",
+      "sha256": "d3b47bae9489d6687144acc8ca18910d3cf774c193bc2bc481acd8f9b74d6339",
       "importedBy": [
         "server.ts",
         "server/tests/announcementCron.test.ts"
@@ -189,7 +189,7 @@
     },
     {
       "path": "server/api/impactRadar.ts",
-      "sha256": "f055f69355bea078815ac5881cdd0dde1f3c183e5e3ec748d3100e845f033bb7",
+      "sha256": "a6231b61b71d14f500743fd2093e250a3086f795680fdc08359618d6c73fc501",
       "importedBy": [
         "server/api/routes.ts",
         "server/tests/impactRadarApi.test.ts"
@@ -314,10 +314,11 @@
     },
     {
       "path": "server/database/impactRadarDao.ts",
-      "sha256": "a5d6135a50a97ab75c821094df1ac7883803930d9bbc23b1127ab9f15252fad6",
+      "sha256": "a6d017258766fd4945777d66b65360286ab708d5d46d061df0c4c32377032e31",
       "importedBy": [
         "server/api/impactRadar.ts",
         "server/services/impactRadarService.ts",
+        "server/services/radarPriceSync.ts",
         "server/tests/radarCoverage.test.ts",
         "server/tests/radarScopeRead.test.ts"
       ]
@@ -433,9 +434,10 @@
     },
     {
       "path": "server/database/radarPriceDao.ts",
-      "sha256": "52e7538aaa2fb42cd80b107d5058026e911bc1d62f91f69dc496ac2b6359aed0",
+      "sha256": "562640723e773aff886335e25a63ed2016619326084542f6ac436c7f8cf4cca7",
       "importedBy": [
-        "server/services/radarMovementService.ts"
+        "server/services/radarMovementService.ts",
+        "server/tests/radarPriceStorage.test.ts"
       ]
     },
     {
@@ -809,13 +811,23 @@
     },
     {
       "path": "server/services/radarMovementService.ts",
-      "sha256": "42158d61bd98af73af5b5724fb3fff78ef512341b3ea3ebceffbd1963b31e6bc",
+      "sha256": "93079d062c44db23a7b7ae87e295c0724e51db6bb5927c7722a4546febba7317",
       "importedBy": [
         "server/api/impactRadar.ts",
+        "server/services/radarPriceSync.ts",
         "server/tests/radarCoverage.test.ts",
         "server/tests/radarFollowUp.test.ts",
         "server/tests/radarMaterialIntake.test.ts",
+        "server/tests/radarPriceContext.test.ts",
         "server/tests/radarReportQueue.test.ts"
+      ]
+    },
+    {
+      "path": "server/services/radarPriceSync.ts",
+      "sha256": "7892711fe67684914c87978a9269166c820cc0a6bd46a8fa44ddb935e254f6e1",
+      "importedBy": [
+        "server.ts",
+        "server/tests/radarPriceContext.test.ts"
       ]
     },
     {
@@ -951,12 +963,12 @@
     },
     {
       "path": "server/tests/announcementCadence.test.ts",
-      "sha256": "3255ae43a24f86b84d435e70c696d320850f7f4f6f297696e6dccc198fc59376",
+      "sha256": "4de7d762c8650e5aa4893f36182fab491f34c915b80045b7cfc566d4c4506561",
       "importedBy": []
     },
     {
       "path": "server/tests/announcementCron.test.ts",
-      "sha256": "2b21a1545d4a1b21bd039b2cca17bccc61f4d1f345e1fbd192ae909edd343b4a",
+      "sha256": "2a6900144c3ea4721605b1f4dd351f3021e744b84bf0b43eb1991f6121b7673f",
       "importedBy": []
     },
     {
@@ -1051,7 +1063,7 @@
     },
     {
       "path": "server/tests/impactRadarApi.test.ts",
-      "sha256": "8e307bdd54dcc75e9e6ce055c4bcac9f3e3eb8515a483539bad331327ef46dd3",
+      "sha256": "6294d55ba304fd52938c251bec2d5fc0958540d33a8657b62ebdd055770e7d6b",
       "importedBy": []
     },
     {
@@ -1116,7 +1128,7 @@
     },
     {
       "path": "server/tests/radarCompactRender.test.ts",
-      "sha256": "ec3e27689086a13f6a36362f8b05f7bfa91feff2588fc850c0d094dcff27ebcc",
+      "sha256": "e640ba04b7b0c2b0f34dae22b0deef0dbdd5642bf869c11d1ad9374601b28358",
       "importedBy": []
     },
     {
@@ -1131,7 +1143,7 @@
     },
     {
       "path": "server/tests/radarFollowUp.test.ts",
-      "sha256": "cd739d03786155c17dfb8224ab62949ff9626dcea49955659c3728b5f045836c",
+      "sha256": "69cd8cf5cb885fc721adc80742c687e97982671ae984a27078cd4fe2dc34d53c",
       "importedBy": []
     },
     {
@@ -1146,7 +1158,7 @@
     },
     {
       "path": "server/tests/radarMaterialIntake.test.ts",
-      "sha256": "c464a38a2989130eb133e8f95a0dd09ba25b05e0aacc3e78fae6cacbee5f06e1",
+      "sha256": "773647245a506f3d2452c07a7ef7c2848ee70ae1760138a3ae3e1392c38ed5e6",
       "importedBy": []
     },
     {
@@ -1155,8 +1167,18 @@
       "importedBy": []
     },
     {
+      "path": "server/tests/radarPriceContext.test.ts",
+      "sha256": "fec95c101f69ec12e8a0c82815a3cf8bb4fa88db40fb20d8a80400d5886ff33d",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/radarPriceStorage.test.ts",
+      "sha256": "4ee61dd075e16a7d2286e7af34ecd730bf01017bed53dd38fafc7324946eefd5",
+      "importedBy": []
+    },
+    {
       "path": "server/tests/radarReportQueue.test.ts",
-      "sha256": "89215afe28c0ad2eed6ffa24e5730527614694d87a5870760b1b2a8637155b95",
+      "sha256": "5bc577b452d5b425284fba82b903618fe93af8685c875bbe84fc9122accf0bb4",
       "importedBy": []
     },
     {
@@ -1604,7 +1626,7 @@
     },
     {
       "path": "src/components/ImpactRadar.tsx",
-      "sha256": "04c5395c258957954def26d83c94155f908b3d697cb34fd217a6cc6ba5276dc9",
+      "sha256": "ce60b4caae307d5c4a44258a9db535abc75a40020a016bbeb867c0b107fabdb0",
       "importedBy": [
         "src/components/HomeForYou.tsx"
       ]
@@ -1717,7 +1739,7 @@
     },
     {
       "path": "src/components/RadarMovementPanel.tsx",
-      "sha256": "2364e9622976f5c2ecb7ecdcd8ed6834faafb10919231af63269915cf55820c8",
+      "sha256": "25f0cd3ec98a2acb71870d926836f47080da36dbe80dedb368cb70a41285f33f",
       "importedBy": [
         "src/components/ImpactRadar.tsx"
       ]
@@ -2733,10 +2755,12 @@
       "importedBy": [
         "server/api/impactRadar.ts",
         "server/database/impactRadarDao.ts",
+        "server/database/radarPriceDao.ts",
         "server/services/impactRadarService.ts",
         "server/services/radarCompanyIdentity.ts",
         "server/services/radarIntakePolicy.ts",
         "server/services/radarMovementService.ts",
+        "server/services/radarPriceSync.ts",
         "server/tests/impactRadar.test.ts",
         "server/tests/impactRadarApi.test.ts",
         "server/tests/impactRadarRender.test.ts",
@@ -2747,6 +2771,7 @@
         "server/tests/radarIntakeIntegration.test.ts",
         "server/tests/radarIntegrity.test.ts",
         "server/tests/radarMaterialIntake.test.ts",
+        "server/tests/radarPriceContext.test.ts",
         "server/utils/newsPublicationTime.ts",
         "src/components/ImpactRadar.tsx",
         "src/shared/radarMovement.ts",
@@ -2755,13 +2780,15 @@
     },
     {
       "path": "src/shared/radarMovement.ts",
-      "sha256": "3fa202ba3e2c9a43467e7ae6cf22d2c768774eb6e8a765e522f01b3e27c2c2b6",
+      "sha256": "9a042804e4244e6530583cc6857c830b33b24a47f5c5cd65787c398bc8ed3bc9",
       "importedBy": [
         "server/database/radarPriceDao.ts",
         "server/services/radarMovementService.ts",
+        "server/services/radarPriceSync.ts",
         "server/tests/radarCompactRender.test.ts",
         "server/tests/radarCoverage.test.ts",
         "server/tests/radarFollowUp.test.ts",
+        "server/tests/radarPriceContext.test.ts",
         "src/components/RadarMovementPanel.tsx"
       ]
     },
@@ -2801,7 +2828,7 @@
     },
     {
       "path": "src/styles/impact-radar.css",
-      "sha256": "07077f8d9d5eb4ade221d1d66200a8a11bd27abc1554948902534875e308cb58",
+      "sha256": "0bb92338eda8231a4bd8c9dfa45afe076c21b4ecf6a54ef821a67ccef21b49fc",
       "importedBy": [
         "src/components/ImpactRadar.tsx"
       ]
@@ -3361,43 +3388,43 @@
     },
     {
       "source": "server.ts",
-      "target": "server/services/stockNewsService.ts",
+      "target": "server/services/radarPriceSync.ts",
       "kind": "import",
       "line": 27
     },
     {
       "source": "server.ts",
-      "target": "server/database/logDao.ts",
+      "target": "server/services/stockNewsService.ts",
       "kind": "import",
       "line": 28
     },
     {
       "source": "server.ts",
-      "target": "server/utils/helpers.ts",
+      "target": "server/database/logDao.ts",
       "kind": "import",
       "line": 29
     },
     {
       "source": "server.ts",
-      "target": "server/database/announcementDao.ts",
+      "target": "server/utils/helpers.ts",
       "kind": "import",
       "line": 30
     },
     {
       "source": "server.ts",
-      "target": "server/utils/stockResolver.ts",
+      "target": "server/database/announcementDao.ts",
       "kind": "import",
       "line": 31
     },
     {
       "source": "server.ts",
-      "target": "server/services/companyIntelService.ts",
+      "target": "server/utils/stockResolver.ts",
       "kind": "import",
       "line": 32
     },
     {
       "source": "server.ts",
-      "target": "server/services/marketGuidesService.ts",
+      "target": "server/services/companyIntelService.ts",
       "kind": "import",
       "line": 33
     },
@@ -3409,57 +3436,63 @@
     },
     {
       "source": "server.ts",
-      "target": "server/database/firebase.ts",
+      "target": "server/services/marketGuidesService.ts",
       "kind": "import",
       "line": 35
     },
     {
       "source": "server.ts",
-      "target": "server/database/localStore.ts",
+      "target": "server/database/firebase.ts",
       "kind": "import",
       "line": 36
     },
     {
       "source": "server.ts",
-      "target": "server/utils/renderCache.ts",
+      "target": "server/database/localStore.ts",
       "kind": "import",
       "line": 37
     },
     {
       "source": "server.ts",
-      "target": "server/services/indexNow.ts",
+      "target": "server/utils/renderCache.ts",
       "kind": "import",
       "line": 38
     },
     {
       "source": "server.ts",
-      "target": "server/services/guideIndexNow.ts",
+      "target": "server/services/indexNow.ts",
       "kind": "import",
       "line": 39
     },
     {
       "source": "server.ts",
-      "target": "server/security/recaptchaService.ts",
+      "target": "server/services/guideIndexNow.ts",
       "kind": "import",
       "line": 40
     },
     {
       "source": "server.ts",
-      "target": "server/services/bse.ts",
+      "target": "server/security/recaptchaService.ts",
       "kind": "import",
       "line": 41
     },
     {
       "source": "server.ts",
-      "target": "server/database/feedbackDao.ts",
+      "target": "server/services/bse.ts",
       "kind": "import",
       "line": 42
     },
     {
       "source": "server.ts",
-      "target": "server/services/seoPrerender.ts",
+      "target": "server/database/feedbackDao.ts",
       "kind": "import",
       "line": 43
+    },
+    {
+      "source": "server.ts",
+      "target": "server/services/seoPrerender.ts",
+      "kind": "import",
+      "line": 44
     },
     {
       "source": "server/api/announcementCron.ts",
@@ -4242,6 +4275,12 @@
       "line": 2
     },
     {
+      "source": "server/database/radarPriceDao.ts",
+      "target": "src/shared/impactRadar.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
       "source": "server/database/referralsDao.ts",
       "target": "server/database/supabase.ts",
       "kind": "import",
@@ -4894,6 +4933,30 @@
       "target": "server/database/radarPriceDao.ts",
       "kind": "import",
       "line": 5
+    },
+    {
+      "source": "server/services/radarPriceSync.ts",
+      "target": "server/database/impactRadarDao.ts",
+      "kind": "import",
+      "line": 1
+    },
+    {
+      "source": "server/services/radarPriceSync.ts",
+      "target": "src/shared/impactRadar.ts",
+      "kind": "import",
+      "line": 2
+    },
+    {
+      "source": "server/services/radarPriceSync.ts",
+      "target": "src/shared/radarMovement.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "server/services/radarPriceSync.ts",
+      "target": "server/services/radarMovementService.ts",
+      "kind": "import",
+      "line": 4
     },
     {
       "source": "server/services/resultsCalendarService.ts",
@@ -5926,6 +5989,36 @@
       "target": "server/services/stockNewsService.ts",
       "kind": "import",
       "line": 3
+    },
+    {
+      "source": "server/tests/radarPriceContext.test.ts",
+      "target": "server/services/radarMovementService.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "server/tests/radarPriceContext.test.ts",
+      "target": "server/services/radarPriceSync.ts",
+      "kind": "import",
+      "line": 4
+    },
+    {
+      "source": "server/tests/radarPriceContext.test.ts",
+      "target": "src/shared/radarMovement.ts",
+      "kind": "import",
+      "line": 5
+    },
+    {
+      "source": "server/tests/radarPriceContext.test.ts",
+      "target": "src/shared/impactRadar.ts",
+      "kind": "import",
+      "line": 6
+    },
+    {
+      "source": "server/tests/radarPriceStorage.test.ts",
+      "target": "server/database/radarPriceDao.ts",
+      "kind": "dynamic",
+      "line": 12
     },
     {
       "source": "server/tests/radarReportQueue.test.ts",
@@ -10228,7 +10321,9 @@
         "server/database/radarPriceDao.ts",
         "supabase/migrations/20261017111332_impact_radar_material_intake.sql",
         "src/shared/radarScope.ts",
-        "supabase/migrations/20261017120454_impact_radar_focused_events.sql"
+        "supabase/migrations/20261017120454_impact_radar_focused_events.sql",
+        "server/services/radarPriceSync.ts",
+        "server/api/announcementCron.ts"
       ],
       "tests": [
         "server/tests/impactRadar.test.ts",
@@ -10244,9 +10339,13 @@
         "server/tests/radarScopeRead.test.ts",
         "server/tests/radarCoverage.test.ts",
         "server/tests/radarCompactRender.test.ts",
-        "server/tests/radarReportQueue.test.ts"
+        "server/tests/radarReportQueue.test.ts",
+        "server/tests/radarPriceContext.test.ts",
+        "server/tests/radarPriceStorage.test.ts",
+        "server/tests/announcementCadence.test.ts",
+        "server/tests/announcementCron.test.ts"
       ],
-      "reason": "Two Home previews open a native modal Radar dashboard and immediate detail. Watchlist scope stays separate from durable event follows. Both exchange disclosures and shared RSS intake carry source/date provenance; explicit jurisdiction/case references alone may join evidence. Future events have no predictions. Observed NSE final daily closes are a separate bounded, cached read with per-session source, missing-data states and no causal attribution. Account cancellation, modal focus/scroll, themes and reduced motion remain explicit contracts. The list is read-only; existing watchdog drives bounded intake. Server-only DB categories, strict real company identity, typed proceedings, source-domain rules and offset timestamps gate publishing. Reviewed PNC source backfill retains explicit news timestamps and separately sourced NSE daily ranges. Following outages preserve closed records. Additional material event terms come from private DB rules and match bounded literal phrases independently of source type or authority. Explicit RSS timestamps normalize to UTC. Publisher/report attribution and related-topic links preserve uncertainty. Selected company final NSE session values persist as small, private, duplicate-safe snapshots and can survive upstream outages. Routine corporate transactions and statutory takeover boilerplate are excluded independently of configured discovery terms. Insolvency/disputes retain the stable deals category ID with a focused label. Read projections hide legacy routine/vague cards while retaining immutable evidence and follows; all headings use source wording and original timeline titles remain intact. Official filing names and exact-code title prefixes repair numeric identities without assigning a guessed NSE symbol. Exchange daily rows may match one exact full company name; NSE SME and BSE scrip-keyed reports retain explicit source identity. Future hearing dates do not suppress prior publication-day history. Sparse details render known facts and collapsed source/method sections. Report requests use a private proxy-aware dispatcher and a bounded concurrency queue with an overall response budget."
+      "reason": "Two Home previews open a native modal Radar dashboard and immediate detail. Watchlist scope stays separate from durable event follows. Both exchange disclosures and shared RSS intake carry source/date provenance; explicit jurisdiction/case references alone may join evidence. Future events have no predictions. Observed NSE final daily closes are a separate bounded, cached read with per-session source, missing-data states and no causal attribution. Account cancellation, modal focus/scroll, themes and reduced motion remain explicit contracts. The list is read-only; existing watchdog drives bounded intake. Server-only DB categories, strict real company identity, typed proceedings, source-domain rules and offset timestamps gate publishing. Reviewed PNC source backfill retains explicit news timestamps and separately sourced NSE daily ranges. Following outages preserve closed records. Additional material event terms come from private DB rules and match bounded literal phrases independently of source type or authority. Explicit RSS timestamps normalize to UTC. Publisher/report attribution and related-topic links preserve uncertainty. Selected company final NSE session values persist as small, private, duplicate-safe snapshots and can survive upstream outages. Routine corporate transactions and statutory takeover boilerplate are excluded independently of configured discovery terms. Insolvency/disputes retain the stable deals category ID with a focused label. Read projections hide legacy routine/vague cards while retaining immutable evidence and follows; all headings use source wording and original timeline titles remain intact. Official filing names and exact-code title prefixes repair numeric identities without assigning a guessed NSE symbol. Exchange daily rows may match one exact full company name; NSE SME and BSE scrip-keyed reports retain explicit source identity. Future hearing dates do not suppress prior publication-day history. Sparse details render known facts and collapsed source/method sections. Report requests use a private proxy-aware dispatcher and a bounded concurrency queue with an overall response budget. Security-code/ticker aliases share immutable prices across reports. Previous-session, event-window and latest-company context remain separately labelled. A bounded rotating worker captures the last eight dates on boot/watchdog and authenticated cron, with explicit read/write/source diagnostics and retry; request-based hosting still requires its external Scheduler. Related reports query the company directly, independently of feed caps or selected report age. Compact selectable daily bars retain exact source/price details and reduced-motion support. Latest persisted company context remains visible even beyond the eight-day event lookback, with its original date and source."
     },
     {
       "id": "frontend-stories",
@@ -10282,7 +10381,7 @@
   "routes": [
     {
       "file": "server.ts",
-      "line": 61,
+      "line": 62,
       "receiver": "app",
       "method": "USE",
       "path": "compression({ threshold: 1024, // Don't compress payloads under 1KB level: 6, // Optimal balance between CPU usage and compression ratio filter: (req, res) => { // 1. Honor client bypass header if requested if (req.headers['x-no-compression",
@@ -10290,7 +10389,7 @@
     },
     {
       "file": "server.ts",
-      "line": 92,
+      "line": 93,
       "receiver": "app",
       "method": "USE",
       "path": "responseHeaders()",
@@ -10298,7 +10397,7 @@
     },
     {
       "file": "server.ts",
-      "line": 93,
+      "line": 94,
       "receiver": "app",
       "method": "USE",
       "path": "/api/payments/webhook",
@@ -10308,7 +10407,7 @@
     },
     {
       "file": "server.ts",
-      "line": 94,
+      "line": 95,
       "receiver": "app",
       "method": "USE",
       "path": "express.json({ limit: '1mb' })",
@@ -10316,7 +10415,7 @@
     },
     {
       "file": "server.ts",
-      "line": 95,
+      "line": 96,
       "receiver": "app",
       "method": "USE",
       "path": "cookieParser()",
@@ -10324,17 +10423,17 @@
     },
     {
       "file": "server.ts",
-      "line": 97,
+      "line": 98,
       "receiver": "app",
       "method": "GET",
       "path": "/api/cron/poll-announcements",
       "middleware": [
-        "createAnnouncementCronHandler({ poll: processAnnouncements, backoffMs: () => { const failures = getConsecutiveFailures(); const blockLevel = getBseBlockBackoffLevel(); // A source failure must not suppress the next scheduled minute. return "
+        "createAnnouncementCronHandler({ poll: processAnnouncements, afterPoll: async () => { await refreshRadarIntake(); await refreshRadarPriceSnapshots(); }, backoffMs: () => { const failures = getConsecutiveFailures(); const blockLevel = getBseB"
       ]
     },
     {
       "file": "server.ts",
-      "line": 106,
+      "line": 108,
       "receiver": "app",
       "method": "USE",
       "path": "authMiddleware",
@@ -10342,7 +10441,7 @@
     },
     {
       "file": "server.ts",
-      "line": 109,
+      "line": 111,
       "receiver": "app",
       "method": "GET",
       "path": "/sw.js",
@@ -10352,7 +10451,7 @@
     },
     {
       "file": "server.ts",
-      "line": 130,
+      "line": 132,
       "receiver": "app",
       "method": "GET",
       "path": "/OneSignalSDKWorker.js",
@@ -10362,7 +10461,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5322,
+      "line": 5324,
       "receiver": "app",
       "method": "GET",
       "path": "['/health', '/healthz']",
@@ -10372,7 +10471,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5328,
+      "line": 5330,
       "receiver": "app",
       "method": "GET",
       "path": "/robots.txt",
@@ -10382,7 +10481,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5334,
+      "line": 5336,
       "receiver": "app",
       "method": "GET",
       "path": "['/sitemap.xml', '/sitemap', '/sitemap_index.xml', '/sitemap.txt']",
@@ -10392,7 +10491,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5343,
+      "line": 5345,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-core.xml",
@@ -10402,7 +10501,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5380,
+      "line": 5382,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-filings-hot.xml",
@@ -10412,7 +10511,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5417,
+      "line": 5419,
       "receiver": "app",
       "method": "GET",
       "path": "['/rss.xml', '/rss', '/feed.xml', '/feed']",
@@ -10422,7 +10521,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5483,
+      "line": 5485,
       "receiver": "app",
       "method": "GET",
       "path": "[/^\\/https?:\\/?\\/?(?:www\\.)?bsenexus\\.in\\/sitemap(?:\\.xml)?$/i]",
@@ -10432,7 +10531,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5488,
+      "line": 5490,
       "receiver": "app",
       "method": "GET",
       "path": "[`/${INDEXNOW_KEY}.txt`, '/indexnow-key.txt']",
@@ -10442,7 +10541,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5495,
+      "line": 5497,
       "receiver": "app",
       "method": "GET",
       "path": "/opensearch.xml",
@@ -10452,7 +10551,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5513,
+      "line": 5515,
       "receiver": "app",
       "method": "GET",
       "path": "[sourcePath, sourcePath + '/']",
@@ -10462,7 +10561,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5520,
+      "line": 5522,
       "receiver": "app",
       "method": "GET",
       "path": "/filing/:symbol/:newsId",
@@ -10472,7 +10571,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5579,
+      "line": 5581,
       "receiver": "app",
       "method": "GET",
       "path": "/filing/:symbol",
@@ -10482,7 +10581,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5590,
+      "line": 5592,
       "receiver": "app",
       "method": "GET",
       "path": "['/filing', '/filing/']",
@@ -10492,7 +10591,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5596,
+      "line": 5598,
       "receiver": "app",
       "method": "GET",
       "path": "/announcement/:newsId",
@@ -10502,7 +10601,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5925,
+      "line": 5927,
       "receiver": "app",
       "method": "GET",
       "path": "/results/:symbol/:quarterKey",
@@ -10512,7 +10611,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5981,
+      "line": 5983,
       "receiver": "app",
       "method": "GET",
       "path": "['/company/:symbol', '/stock/:symbol']",
@@ -10522,7 +10621,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6050,
+      "line": 6052,
       "receiver": "app",
       "method": "GET",
       "path": "/guides/:slug",
@@ -10532,7 +10631,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6096,
+      "line": 6098,
       "receiver": "app",
       "method": "GET",
       "path": "['/faq', '/faqs']",
@@ -10542,7 +10641,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6103,
+      "line": 6105,
       "receiver": "app",
       "method": "GET",
       "path": "['/pricing', '/pricing/']",
@@ -10552,7 +10651,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6110,
+      "line": 6112,
       "receiver": "app",
       "method": "GET",
       "path": "['/plans', '/plans/']",
@@ -10562,7 +10661,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6115,
+      "line": 6117,
       "receiver": "app",
       "method": "GET",
       "path": "['/guides', '/guides/']",
@@ -10572,7 +10671,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6122,
+      "line": 6124,
       "receiver": "app",
       "method": "GET",
       "path": "['/market-guides', '/market-guides/']",
@@ -10582,7 +10681,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6127,
+      "line": 6129,
       "receiver": "app",
       "method": "GET",
       "path": "['/companies', '/companies/']",
@@ -10592,7 +10691,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6134,
+      "line": 6136,
       "receiver": "app",
       "method": "GET",
       "path": "['/company-directory', '/company-directory/']",
@@ -10602,7 +10701,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6139,
+      "line": 6141,
       "receiver": "app",
       "method": "GET",
       "path": "['/about', '/about/']",
@@ -10612,7 +10711,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6146,
+      "line": 6148,
       "receiver": "app",
       "method": "GET",
       "path": "['/contact', '/contact/']",
@@ -10622,7 +10721,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6153,
+      "line": 6155,
       "receiver": "app",
       "method": "GET",
       "path": "['/disclaimer', '/disclaimer/']",
@@ -10632,7 +10731,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6160,
+      "line": 6162,
       "receiver": "app",
       "method": "GET",
       "path": "['/privacy-policy', '/privacy-policy/']",
@@ -10642,7 +10741,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6167,
+      "line": 6169,
       "receiver": "app",
       "method": "GET",
       "path": "['/privacy', '/privacy/']",
@@ -10652,7 +10751,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6172,
+      "line": 6174,
       "receiver": "app",
       "method": "GET",
       "path": "['/terms', '/terms/']",
@@ -10662,7 +10761,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6179,
+      "line": 6181,
       "receiver": "app",
       "method": "GET",
       "path": "['/terms-of-service', '/terms-of-service/']",
@@ -10672,7 +10771,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6184,
+      "line": 6186,
       "receiver": "app",
       "method": "GET",
       "path": "/embed/widget",
@@ -10682,7 +10781,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6238,
+      "line": 6240,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-companies.xml",
@@ -10692,7 +10791,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6258,
+      "line": 6260,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-guides.xml",
@@ -10702,7 +10801,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6276,
+      "line": 6278,
       "receiver": "app",
       "method": "GET",
       "path": "/llms.txt",
@@ -10712,7 +10811,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6281,
+      "line": 6283,
       "receiver": "app",
       "method": "GET",
       "path": "/llms-full.txt",
@@ -10722,7 +10821,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6291,
+      "line": 6293,
       "receiver": "app",
       "method": "GET",
       "path": "/^\\/google([a-zA-Z0-9_-]+)\\.html$/",
@@ -10732,7 +10831,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6301,
+      "line": 6303,
       "receiver": "app",
       "method": "USE",
       "path": "express.static(path.join(process.cwd(), 'public'), { maxAge: '1d', immutable: false, setHeaders: (res, filePath) => { if (filePath.includes(`${path.sep}fonts${path.sep}`)) res.setHeader('Cache-Control', 'public, max-age=2592000'); if (fileP",
@@ -10740,7 +10839,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6311,
+      "line": 6313,
       "receiver": "app",
       "method": "USE",
       "path": "['/api', '/auth']",
@@ -10750,7 +10849,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6317,
+      "line": 6319,
       "receiver": "app",
       "method": "USE",
       "path": "/auth",
@@ -10760,7 +10859,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6320,
+      "line": 6322,
       "receiver": "app",
       "method": "POST",
       "path": "/api/security/verify-recaptcha",
@@ -10771,7 +10870,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6361,
+      "line": 6363,
       "receiver": "app",
       "method": "USE",
       "path": "/api",
@@ -10782,7 +10881,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6365,
+      "line": 6367,
       "receiver": "app",
       "method": "USE",
       "path": "['/api/*', '/auth/*']",
@@ -10792,7 +10891,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6370,
+      "line": 6372,
       "receiver": "app",
       "method": "USE",
       "path": "(err: any, req: express.Request, res: express.Response, next: express.NextFunction) => { if (req.path.startsWith('/api') || req.path.startsWith('/auth')) { console.error(\"API Error handler caught:\", err?.message || err); const isProd = proc",
@@ -10800,7 +10899,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6758,
+      "line": 6762,
       "receiver": "app",
       "method": "GET",
       "path": "[\"/\", \"/announcements\", \"/live\", \"/results-calendar\", \"/watchlist\", \"/watchlists\", \"/companies\", \"/about\", \"/contact\", \"/disclaimer\", \"/privacy\", \"/privacy-policy\", \"/terms\"]",
@@ -10810,7 +10909,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6788,
+      "line": 6792,
       "receiver": "app",
       "method": "USE",
       "path": "(req, res, next) => { if (req.method !== 'GET' && req.method !== 'HEAD') return next(); const p = req.path; if ( p === '/' || p === '/announcements' || p === '/results-calendar' || p === '/watchlist' || p === '/watchlists' || p === '/compan",
@@ -10818,7 +10917,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6823,
+      "line": 6827,
       "receiver": "app",
       "method": "USE",
       "path": "vite.middlewares",
@@ -10826,7 +10925,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6835,
+      "line": 6839,
       "receiver": "app",
       "method": "USE",
       "path": "express.static(distPath, { maxAge: '1y', immutable: true, index: false, setHeaders: (res, filePath) => { if (filePath.endsWith('.html')) { res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600'); } } }",
@@ -10834,7 +10933,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6869,
+      "line": 6873,
       "receiver": "app",
       "method": "GET",
       "path": "['/announcements', '/announcements/']",
@@ -10844,7 +10943,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6920,
+      "line": 6924,
       "receiver": "app",
       "method": "GET",
       "path": "*",
@@ -10953,7 +11052,7 @@
     },
     {
       "file": "server/api/impactRadar.ts",
-      "line": 59,
+      "line": 58,
       "receiver": "impactRadarRouter",
       "method": "GET",
       "path": "/:id",
@@ -12833,7 +12932,7 @@
       "method": "GET",
       "path": "/api/cron/poll-announcements",
       "middleware": [
-        "createAnnouncementCronHandler({ poll, backoffMs, secret: () => secret, now: () => now, log: line => logs.push(line) })"
+        "createAnnouncementCronHandler({ poll, backoffMs, secret: () => secret, now: () => now, log: line => logs.push(line), afterPoll })"
       ]
     },
     {
@@ -13036,7 +13135,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6480,
+      "line": 6484,
       "function": "fetch",
       "target": "`http://127.0.0.1:${port}/api/health`"
     },
@@ -13150,7 +13249,7 @@
     },
     {
       "file": "server/services/radarMovementService.ts",
-      "line": 93,
+      "line": 94,
       "function": "fetch",
       "target": "exchange === 'NSE' ? nseBhavcopyUrl(day) : bseBhavcopyUrl(day)"
     },
@@ -13780,7 +13879,7 @@
     },
     {
       "file": "src/components/RadarMovementPanel.tsx",
-      "line": 31,
+      "line": 52,
       "function": "customFetch",
       "target": "`/api/impact-radar/${encodeURIComponent(eventId)}/movement`"
     },
@@ -14598,31 +14697,37 @@
     },
     {
       "file": "server/database/impactRadarDao.ts",
-      "line": 77,
+      "line": 79,
+      "function": "getSupabase().from",
+      "key": "'impact_radar_events'"
+    },
+    {
+      "file": "server/database/impactRadarDao.ts",
+      "line": 87,
       "function": "getSupabase().from",
       "key": "'impact_radar_updates'"
     },
     {
       "file": "server/database/impactRadarDao.ts",
-      "line": 83,
+      "line": 93,
       "function": "getSupabase().from",
       "key": "'impact_radar_updates'"
     },
     {
       "file": "server/database/impactRadarDao.ts",
-      "line": 92,
+      "line": 102,
       "function": "getSupabase().rpc",
       "key": "'publish_impact_radar_records'"
     },
     {
       "file": "server/database/impactRadarDao.ts",
-      "line": 97,
+      "line": 107,
       "function": "getSupabase().from",
       "key": "'impact_radar_follows'"
     },
     {
       "file": "server/database/impactRadarDao.ts",
-      "line": 107,
+      "line": 117,
       "function": "getSupabase().from",
       "key": "'impact_radar_follows'"
     },
@@ -14766,13 +14871,19 @@
     },
     {
       "file": "server/database/radarPriceDao.ts",
-      "line": 7,
+      "line": 9,
       "function": "getSupabase().from",
       "key": "'impact_price_sessions'"
     },
     {
       "file": "server/database/radarPriceDao.ts",
-      "line": 16,
+      "line": 19,
+      "function": "getSupabase().from",
+      "key": "'impact_price_sessions'"
+    },
+    {
+      "file": "server/database/radarPriceDao.ts",
+      "line": 30,
       "function": "getSupabase().from",
       "key": "'impact_price_sessions'"
     },
@@ -14925,6 +15036,18 @@
       "line": 68,
       "function": "Array.from",
       "key": "this.queue"
+    },
+    {
+      "file": "server/services/radarMovementService.ts",
+      "line": 118,
+      "function": "Array.from",
+      "key": "{length:count}"
+    },
+    {
+      "file": "server/services/radarPriceSync.ts",
+      "line": 27,
+      "function": "Array.from",
+      "key": "{length:Math.min(30,unique.length)}"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
@@ -16063,47 +16186,47 @@
     },
     {
       "file": "server.ts",
-      "line": 112,
+      "line": 114,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6289,
+      "line": 6291,
       "name": "GOOGLE_SITE_VERIFICATION_HASH"
     },
     {
       "file": "server.ts",
-      "line": 6289,
+      "line": 6291,
       "name": "GOOGLE_SITE_VERIFICATION_HASH"
     },
     {
       "file": "server.ts",
-      "line": 6373,
+      "line": 6375,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6747,
+      "line": 6751,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6752,
+      "line": 6756,
       "name": "DISABLE_HMR"
     },
     {
       "file": "server.ts",
-      "line": 7023,
+      "line": 7027,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 7023,
+      "line": 7027,
       "name": "TEST_RUNNER"
     },
     {
       "file": "server/api/announcementCron.ts",
-      "line": 28,
+      "line": 29,
       "name": "CRON_SECRET"
     },
     {
@@ -17055,6 +17178,16 @@
       "file": "server/tests/radarIntakeIntegration.test.ts",
       "line": 11,
       "name": "SUPABASE_URL"
+    },
+    {
+      "file": "server/tests/radarPriceStorage.test.ts",
+      "line": 3,
+      "name": "SUPABASE_URL"
+    },
+    {
+      "file": "server/tests/radarPriceStorage.test.ts",
+      "line": 4,
+      "name": "SUPABASE_SERVICE_ROLE_KEY"
     },
     {
       "file": "server/tests/radarScopeRead.test.ts",

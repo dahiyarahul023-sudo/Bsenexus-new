@@ -13,7 +13,7 @@ globalThis.fetch = (async (input: any, init: any) => {
   if (!url.startsWith('https://radar-test.invalid')) { externalCalls++; return new Response('<rss><channel></channel></rss>', { status: 200 }); }
   const body = init?.body ? JSON.parse(String(init.body)) : null;
   calls.push({ url, method, body });
-  const data = new URL(url).pathname.endsWith('/impact_categories') ? Object.entries((await import('../../src/shared/impactRadar.js')).RADAR_CATEGORIES).map(([id, label], i) => ({ id, label, sort_order: (i+1)*10, active: true })) : fail ? { message: 'unavailable' } : new URL(url).pathname.endsWith('/impact_radar_updates') && firstEvidence ? [{data:firstEvidence}] : new URL(url).pathname.endsWith('/impact_radar_events') ? new URL(url).searchParams.has('id') ? { data: event } : (relatedEvents || [event]).map(data=>({data})) : [];
+  const data = new URL(url).pathname.endsWith('/impact_categories') ? Object.entries((await import('../../src/shared/impactRadar.js')).RADAR_CATEGORIES).map(([id, label], i) => ({ id, label, sort_order: (i+1)*10, active: true })) : fail ? { message: 'unavailable' } : new URL(url).pathname.endsWith('/impact_radar_updates') && firstEvidence ? [{data:firstEvidence}] : new URL(url).pathname.endsWith('/impact_radar_events') ? new URL(url).searchParams.get('id')?.startsWith('eq.') ? { data: event } : (relatedEvents || [event]).map(data=>({data})) : [];
   return new Response(JSON.stringify(data), { status: fail ? 503 : 200, headers: { 'Content-Type': 'application/json' } });
 }) as typeof fetch;
 const { impactRadarRouter } = await import('../api/impactRadar.js');
@@ -107,10 +107,19 @@ test('F12: event detail uses the shared API rate limiter before its database han
 test('earlier news remains the price anchor and related reports can connect a later official topic', async () => {
  firstEvidence = {id:'earlier-news',eventId:event.id,title:'TCS: reported court development',information:'Publisher reported this development.',source:{name:'Publisher',kind:'news',url:'https://publisher.example/story'},publishedAt:'2026-10-13T04:00:00Z'};
  const related = {...event,id:'news-separate',authority:'Independent report',source:firstEvidence.source};
- relatedEvents=[event,related,{...related,id:'different-company',companies:[{name:'PNC Infratech Ltd',symbol:'PNCINFRA',scripCode:'539150'}]},{...related,id:'old-report',updatedAt:'2026-09-01T10:00:00Z'}];
+ relatedEvents=[event,related,{...related,id:'different-company',companies:[{name:'PNC Infratech Ltd',symbol:'PNCINFRA',scripCode:'539150'}]},{...related,id:'old-report',publishedAt:'2026-09-01T10:00:00Z',updatedAt:'2026-09-01T10:00:00Z'}];
  try {
   const movement=await originalFetch(url+'/matter-1/movement'); assert.equal(movement.status,200);
   assert.equal((await movement.json()).movement.anchorDate,'2026-10-13');
-  const detail=await (await originalFetch(url+'/matter-1')).json(); assert.deepEqual(detail.related.map((e:any)=>e.id),['news-separate']);
+  const detail=await (await originalFetch(url+'/matter-1')).json(); assert.deepEqual(detail.related.map((e:any)=>e.id),['news-separate','old-report']);
+  assert.ok(calls.some(c=>c.url.includes('data=cs.')&&c.url.includes('532540')), 'company lookup is independent of the global feed window');
  } finally {firstEvidence=null;relatedEvents=null;}
+});
+
+test('a past report exposes newer company reports beyond seven days and independent of authority/category',async()=>{
+ const original={publishedAt:event.publishedAt,updatedAt:event.updatedAt};
+ const latest={...event,id:'latest-report',category:'legal',authority:'NCLT',publishedAt:'2026-10-18T04:00:00Z',updatedAt:'2026-10-18T04:00:00Z'};
+ event.publishedAt='2026-09-01T04:00:00Z';event.updatedAt=event.publishedAt;relatedEvents=[latest,event];
+ try{const r=await originalFetch(url+'/matter-1');assert.equal(r.status,200);const d=await r.json();assert.deepEqual(d.related.map((e:any)=>e.id),['latest-report']);assert.equal(d.event.publishedAt,event.publishedAt);}
+ finally{Object.assign(event,original);relatedEvents=null;}
 });
