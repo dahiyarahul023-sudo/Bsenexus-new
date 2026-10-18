@@ -71,7 +71,7 @@ test('long copy spans screens without losing decimal financial facts or words', 
   assert.equal(pages.join(' '), copy.trim());
   assert.ok(pages.every(page => page.split(/\s+/).length <= 38));
   const chapter = buildStoryChapters(feed({ fresh18hAnnouncements: [filing('long', { headline: copy })] }), now)[0];
-  assert.equal(chapter.slides.length, 3);
+  assert.equal(chapter.slides.length, 2);
   assert.match(chapter.slides[0].summary!, /12\.5%.*1,234\.56/);
   assert.ok(chapter.slides.every(slide => slide.source.url));
 });

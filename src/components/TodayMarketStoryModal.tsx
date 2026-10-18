@@ -8,6 +8,7 @@ import { getStoryDuration, resolveStorySelection, safeStoryUrl } from './story/s
 import type { StoryChapter, StoryCompany } from './story/storyTypes';
 import { STORY_TOPICS } from './story/storyTypes';
 import { StorySlideView } from './story/StorySlideView';
+import { StoryChapterProgress } from './story/StoryChapterProgress';
 import { StoryTopicMark } from './story/StoryArtwork';
 import { CompanyBrandLogo } from './story/StoryVisuals';
 import { BseNexusLogo } from './ui/BseNexusLogo';
@@ -58,8 +59,6 @@ export function TodayMarketStoryModal({ isOpen, onClose, initialChapterId, onSto
   const index = Math.max(0, slides.findIndex(slide => slide.id === activeId));
   const slide = missingTopic ? undefined : slides[index];
   const chapter = chapters.find(chapter => chapter.id === slide?.chapterId);
-  const progressSlides = slide?.sequenceId ? chapter?.slides.filter(item => item.sequenceId === slide.sequenceId) : chapter?.slides;
-  const chapterIndex = progressSlides?.findIndex(item => item.id === slide?.id) ?? 0;
 
   const load = useCallback(async (force = false) => {
     const version = ++loadVersion.current;
@@ -228,7 +227,7 @@ export function TodayMarketStoryModal({ isOpen, onClose, initialChapterId, onSto
     <div className="story-panel" ref={panelRef} role="dialog" aria-modal="true" aria-label="Market stories" aria-describedby="story-instructions" style={{ transform: dragY ? `translateY(${dragY}px)` : undefined }}>
       <p id="story-instructions" className="story-sr-only">Tap the left or right side to navigate, hold to pause, or use the story controls. With content focused, use arrow keys to navigate and Space to pause. Escape closes stories.</p>
       <header className="story-header">
-        <div className="story-progress" aria-hidden="true">{(progressSlides || [null]).map((item, i) => <span key={item?.id || 'loading'}><i style={{ transform: `scaleX(${i < chapterIndex ? 1 : i === chapterIndex ? progress / 100 : 0})` }} /></span>)}</div>
+        <StoryChapterProgress chapter={chapter} activeId={slide?.id} progress={progress} />
         <div className="story-topline">
           <span className="story-wordmark" aria-label="BSE Nexus"><BseNexusLogo className="w-7 h-7" /></span>
           <p>{missingTopic ? selectedTopic?.label : chapter?.title || 'Market stories'}</p>

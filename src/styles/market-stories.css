@@ -14,7 +14,9 @@
   box-shadow: 0 28px 100px #0006; transition: transform 180ms ease-out;
 }
 .story-header { flex: none; padding: 14px 18px 0; padding-top: max(14px, env(safe-area-inset-top)); z-index: 3; }
-.story-progress { display: flex; gap: 4px; height: 2px; margin-bottom: 16px; }
+.story-progress-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; min-height: 14px; }
+.story-progress { display: flex; flex: 1; gap: 4px; height: 2px; min-width: 0; }
+.story-progress-count { flex: none; color: var(--story-muted); font-size: 10px; font-variant-numeric: tabular-nums; }
 .story-progress > span { flex: 1; min-width: 0; overflow: hidden; background: #ffffff24; }
 .story-progress i { display: block; width: 100%; height: 100%; background: #edf0f5; transform-origin: left; transition: transform 100ms linear; }
 .story-topline { display: flex; align-items: center; gap: 12px; min-height: 42px; }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "9bddee1113a1d5865ff0f6d47c8424fff3074ec496865bf72a6a3913e16c1c5d",
+  "sourceDigest": "343538db0ae02c036e5793b4e0bd0c62f8c4d49cb15b23d47a76ceb9d460220f",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -1015,6 +1015,11 @@
       "importedBy": []
     },
     {
+      "path": "server/tests/companyStoryBudget.test.ts",
+      "sha256": "5964133ba7787ab7e1d76c9420f40e74c799a80e727e408e1fdf5d91f4e8e87e",
+      "importedBy": []
+    },
+    {
       "path": "server/tests/core.test.ts",
       "sha256": "0c4a3b7ab6407e01bd338c1fbf96b2fad3f3fd73872b0cc296bc87ca30772d2c",
       "importedBy": []
@@ -1066,7 +1071,7 @@
     },
     {
       "path": "server/tests/marketStories.test.ts",
-      "sha256": "0f3769e67f17c080cb16a9c9dc137bd96085c9cf3e8388f2dfd7650ba4d70ff6",
+      "sha256": "31eb60b3c6cb8dc5cca17254e6bd16cff8ece46884940242c6a5184a7cf3acde",
       "importedBy": []
     },
     {
@@ -1784,7 +1789,7 @@
     },
     {
       "path": "src/components/TodayMarketStoryModal.tsx",
-      "sha256": "e4c6ec798c8dbb38f2c107f56373f9b750baf7dfe60cd36cc1e9506aaa3a46a9",
+      "sha256": "5dd0fdba9194fd9133ff098660de7a4438543c2a4d89b92e6b0ab97de209465a",
       "importedBy": [
         "src/components/HomeForYou.tsx",
         "src/components/Layout.tsx"
@@ -2001,6 +2006,14 @@
       ]
     },
     {
+      "path": "src/components/story/StoryChapterProgress.tsx",
+      "sha256": "9a9166b26adcae2af5d526d31e519a3323a0957df40b00fc2506fe7687295fc9",
+      "importedBy": [
+        "server/tests/companyStoryBudget.test.ts",
+        "src/components/TodayMarketStoryModal.tsx"
+      ]
+    },
+    {
       "path": "src/components/story/StoryChart.tsx",
       "sha256": "813720bd99eb6470a37a2540220c91cdff21098a89d707d75e3a3b551ea24ef7",
       "importedBy": [
@@ -2010,8 +2023,9 @@
     },
     {
       "path": "src/components/story/StorySlideView.tsx",
-      "sha256": "bb24ca258d87fe5a64d4ad739159a2138c0c8624e04f3803afb1e7dd2a15b0aa",
+      "sha256": "e7286c4ffb67972dcd09638d2d1fb52439047a9628499650c70f3ff6574e1a7a",
       "importedBy": [
+        "server/tests/companyStoryBudget.test.ts",
         "server/tests/marketStories.test.ts",
         "src/components/TodayMarketStoryModal.tsx"
       ]
@@ -2026,8 +2040,9 @@
     },
     {
       "path": "src/components/story/storyBuilder.ts",
-      "sha256": "9079685351b9f9ccf618278a1bd0caff0cbd45682012c3cbe64004258a3ee610",
+      "sha256": "5cf0ea6972ba58325e3ca21c050d15797c2e56308d19d348f0bd40c266968eff",
       "importedBy": [
+        "server/tests/companyStoryBudget.test.ts",
         "server/tests/marketStories.test.ts",
         "src/components/TodayMarketStoryModal.tsx",
         "src/components/story/StoryCarouselBar.tsx",
@@ -2056,12 +2071,13 @@
     },
     {
       "path": "src/components/story/storyTypes.ts",
-      "sha256": "033c267da8dd4c35211006371b79b887fab8502b6b9c2c5ee69426e85cc01c36",
+      "sha256": "3e672a98269d5851f43f6290d59e53c5b1ba8ca7bc99fa932b340de805d4f451",
       "importedBy": [
         "server/tests/marketStories.test.ts",
         "src/components/TodayMarketStoryModal.tsx",
         "src/components/story/StoryArtwork.tsx",
         "src/components/story/StoryCarouselBar.tsx",
+        "src/components/story/StoryChapterProgress.tsx",
         "src/components/story/StoryChart.tsx",
         "src/components/story/StorySlideView.tsx",
         "src/components/story/storyBuilder.ts",
@@ -2792,7 +2808,7 @@
     },
     {
       "path": "src/styles/market-stories.css",
-      "sha256": "f8589a907dc6f2f1c4d68e5c0dbb9582864bf363a6d65e8a309ed73e16dc570c",
+      "sha256": "90dd03019c2fbbddda81c71edea07369a9c5cb1978428def67eac48810509c92",
       "importedBy": [
         "src/components/TodayMarketStoryModal.tsx",
         "src/components/story/StoryCarouselBar.tsx"
@@ -5412,6 +5428,24 @@
       "target": "server/utils/circuitBreaker.ts",
       "kind": "import",
       "line": 3
+    },
+    {
+      "source": "server/tests/companyStoryBudget.test.ts",
+      "target": "src/components/story/storyBuilder.ts",
+      "kind": "import",
+      "line": 5
+    },
+    {
+      "source": "server/tests/companyStoryBudget.test.ts",
+      "target": "src/components/story/StoryChapterProgress.tsx",
+      "kind": "import",
+      "line": 6
+    },
+    {
+      "source": "server/tests/companyStoryBudget.test.ts",
+      "target": "src/components/story/StorySlideView.tsx",
+      "kind": "import",
+      "line": 7
     },
     {
       "source": "server/tests/faqBank.test.ts",
@@ -8343,27 +8377,33 @@
     },
     {
       "source": "src/components/TodayMarketStoryModal.tsx",
-      "target": "src/components/story/StoryArtwork.tsx",
+      "target": "src/components/story/StoryChapterProgress.tsx",
       "kind": "import",
       "line": 11
     },
     {
       "source": "src/components/TodayMarketStoryModal.tsx",
-      "target": "src/components/story/StoryVisuals.tsx",
+      "target": "src/components/story/StoryArtwork.tsx",
       "kind": "import",
       "line": 12
     },
     {
       "source": "src/components/TodayMarketStoryModal.tsx",
-      "target": "src/components/ui/BseNexusLogo.tsx",
+      "target": "src/components/story/StoryVisuals.tsx",
       "kind": "import",
       "line": 13
     },
     {
       "source": "src/components/TodayMarketStoryModal.tsx",
-      "target": "src/styles/market-stories.css",
+      "target": "src/components/ui/BseNexusLogo.tsx",
       "kind": "import",
       "line": 14
+    },
+    {
+      "source": "src/components/TodayMarketStoryModal.tsx",
+      "target": "src/styles/market-stories.css",
+      "kind": "import",
+      "line": 15
     },
     {
       "source": "src/components/TrustPages.tsx",
@@ -8952,6 +8992,12 @@
       "target": "src/styles/market-stories.css",
       "kind": "import",
       "line": 8
+    },
+    {
+      "source": "src/components/story/StoryChapterProgress.tsx",
+      "target": "src/components/story/storyTypes.ts",
+      "kind": "import",
+      "line": 2
     },
     {
       "source": "src/components/story/StoryChart.tsx",
@@ -10215,6 +10261,7 @@
         "src/components/story/StoryArtwork.tsx",
         "src/components/story/StoryChart.tsx",
         "src/components/story/StorySlideView.tsx",
+        "src/components/story/StoryChapterProgress.tsx",
         "src/components/story/StoryVisuals.tsx",
         "src/styles/market-stories.css",
         "src/components/HomeForYou.tsx",
@@ -10226,9 +10273,10 @@
       ],
       "tests": [
         "server/tests/marketStories.test.ts",
+        "server/tests/companyStoryBudget.test.ts",
         "server/tests/followupAudit.test.ts"
       ],
-      "reason": "Public feed → validated content-led chapter adapter → Home carousel and both shared viewer entry points. Chapter selection uses stable IDs. Aggregate topics, especially FII/DII, have neutral symbols and no company CTA; only exact per-company records use the existing official-logo resolver and Company Intelligence callbacks. No sample facts on loading/error. News is bounded by sourced publication time and the existing 18-hour/session policy. Newer refreshes win cache races; stale/empty/error states remain distinct. The scoped reading canvas, proportional signed charts, native illustrations, pause clock, portal focus/inertness, scroll and reduced motion are one interaction contract. Browser/device verification and live deployment are separate from source/render/build evidence."
+      "reason": "Public feed → validated content-led chapter adapter → Home carousel and both shared viewer entry points. Chapter selection uses stable IDs. Aggregate topics, especially FII/DII, have neutral symbols and no company CTA; only exact per-company records use the existing official-logo resolver and Company Intelligence callbacks. No sample facts on loading/error. News is bounded by sourced publication time and the existing 18-hour/session policy. Newer refreshes win cache races; stale/empty/error states remain distinct. The scoped reading canvas, proportional signed charts, native illustrations, pause clock, portal focus/inertness, scroll and reduced motion are one interaction contract. Browser/device verification and live deployment are separate from source/render/build evidence. Company news is one finite chapter: at most seven screens, two per company, complete explanations and adjacent company groups. Chapter-wide progress/count never reset per news sequence. Optional restrained sector art, clean text and unambiguous source-backed order metrics avoid a compulsory repeated illustration."
     }
   ],
   "routes": [
@@ -14969,6 +15017,36 @@
       "key": "{ length: 10 }"
     },
     {
+      "file": "server/tests/companyStoryBudget.test.ts",
+      "line": 16,
+      "function": "Array.from",
+      "key": "{ length: 25 }"
+    },
+    {
+      "file": "server/tests/companyStoryBudget.test.ts",
+      "line": 22,
+      "function": "Array.from",
+      "key": "{ length: 25 }"
+    },
+    {
+      "file": "server/tests/companyStoryBudget.test.ts",
+      "line": 45,
+      "function": "Array.from",
+      "key": "{ length: 4 }"
+    },
+    {
+      "file": "server/tests/companyStoryBudget.test.ts",
+      "line": 86,
+      "function": "Array.from",
+      "key": "{ length: 7 }"
+    },
+    {
+      "file": "server/tests/companyStoryBudget.test.ts",
+      "line": 121,
+      "function": "Array.from",
+      "key": "{ length: 3 }"
+    },
+    {
       "file": "server/tests/impactRadarRender.test.ts",
       "line": 39,
       "function": "Array.from",
@@ -15384,7 +15462,7 @@
     },
     {
       "file": "src/components/TodayMarketStoryModal.tsx",
-      "line": 96,
+      "line": 95,
       "function": "localStorage.setItem",
       "key": "getStorySessionStorageKey()"
     },
@@ -15492,7 +15570,7 @@
     },
     {
       "file": "src/components/story/storyBuilder.ts",
-      "line": 35,
+      "line": 37,
       "function": "Array.from",
       "key": "{ length: Math.ceil(items.length / size) }"
     },
@@ -17529,7 +17607,7 @@
     },
     {
       "file": "src/components/TodayMarketStoryModal.tsx",
-      "line": 112,
+      "line": 111,
       "target": "document",
       "kind": "listen",
       "name": "visibilitychange",
@@ -17537,7 +17615,7 @@
     },
     {
       "file": "src/components/TodayMarketStoryModal.tsx",
-      "line": 114,
+      "line": 113,
       "target": "document",
       "kind": "remove",
       "name": "visibilitychange",
@@ -17545,7 +17623,7 @@
     },
     {
       "file": "src/components/TodayMarketStoryModal.tsx",
-      "line": 178,
+      "line": 177,
       "target": "document",
       "kind": "listen",
       "name": "keydown",
@@ -17553,7 +17631,7 @@
     },
     {
       "file": "src/components/TodayMarketStoryModal.tsx",
-      "line": 179,
+      "line": 178,
       "target": "document",
       "kind": "remove",
       "name": "keydown",
