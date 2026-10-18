@@ -4,11 +4,11 @@ import express from 'express';
 import { createAnnouncementCronHandler } from '../api/announcementCron.js';
 import { withHttpDeadline } from '../utils/httpDeadline.js';
 
-async function harness(poll: () => Promise<any>, backoffMs = () => 0, secret: string | undefined = 'test-secret') {
+async function harness(poll: () => Promise<any>, backoffMs = () => 0, secret: string | undefined = 'test-secret', afterPoll?: () => Promise<void>) {
   let now = 1_000_000;
   const logs: string[] = [];
   const app = express();
-  app.get('/api/cron/poll-announcements', createAnnouncementCronHandler({ poll, backoffMs, secret: () => secret, now: () => now, log: line => logs.push(line) }));
+  app.get('/api/cron/poll-announcements', createAnnouncementCronHandler({ poll, backoffMs, secret: () => secret, now: () => now, log: line => logs.push(line), afterPoll }));
   const server = app.listen(0, '127.0.0.1');
   await new Promise<void>(resolve => server.once('listening', resolve));
   const address = server.address() as { port: number };
@@ -143,4 +143,24 @@ test('parent cancellation aborts an in-flight HTTP operation and denies already 
   await assert.rejects(work, /cancelled/);
   await assert.rejects(withHttpDeadline(action, 1000, parent.signal), /cancelled/);
   assert.equal(invoked, 1);
+});
+
+test('authorized cron awaits Radar capture on a source-blocked cycle; unauthorized requests cannot trigger it', async()=>{
+ let maintenance=0,release!:()=>void,entered!:()=>void;
+ const entering=new Promise<void>(r=>{entered=r;});
+ const h=await harness(async()=>({mode:'source-unavailable',fetched:0,new:0}),()=>0,'test-secret',async()=>{maintenance++;entered();await new Promise<void>(r=>{release=r;});});
+ try{
+  assert.equal((await h.request('wrong')).status,401);assert.equal(maintenance,0);
+  let finished=false;const response=h.request().then(r=>{finished=true;return r;});await entering;
+  assert.equal(finished,false,'hosting request remains alive until bounded capture completes');
+  assert.equal((await h.request()).status,409);assert.equal(maintenance,1);release();assert.equal((await response).status,503);
+ }finally{await h.close();}
+});
+test('Radar maintenance failure does not relabel a successful announcements cycle',async()=>{
+ const h=await harness(async()=>({mode:'success',fetched:1,new:1}),()=>0,'test-secret',async()=>{throw Error('private failure detail');});
+ try{assert.equal((await h.request()).status,200);assert.ok(h.logs.includes('[POLLER] Radar maintenance failed'));assert.ok(h.logs.every(l=>!l.includes('private failure')));}finally{await h.close();}
+});
+test('an announcement exception still allows independent Radar capture before the request ends',async()=>{
+ let captured=0;const h=await harness(async()=>{throw Error('announcement outage');},()=>0,'test-secret',async()=>{captured++;});
+ try{assert.equal((await h.request()).status,503);assert.equal(captured,1);}finally{await h.close();}
 });

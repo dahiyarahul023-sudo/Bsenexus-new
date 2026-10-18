@@ -24,6 +24,7 @@ import { syncWatchlistHistoricalData, backfillRecentAnnouncements, getBseFeedSta
 import { initWatchlists } from "./server/database/watchlistDao.js";
 import { updateTelegramHealth } from "./server/services/telegram.js";
 import { refreshRadarIntake } from "./server/services/impactRadarService.js";
+import { refreshRadarPriceSnapshots } from "./server/services/radarPriceSync.js";
 import { processAutomatedNewsAlerts } from "./server/services/stockNewsService.js";
 import { addLog } from "./server/database/logDao.js";
 import { getPollingIntervalMs, parseBseDate } from "./server/utils/helpers.js";
@@ -96,6 +97,7 @@ app.use(cookieParser());
 // The scheduler uses its own server-only secret, never a user session token.
 app.get('/api/cron/poll-announcements', createAnnouncementCronHandler({
   poll: processAnnouncements,
+  afterPoll: async () => { await refreshRadarIntake(); await refreshRadarPriceSnapshots(); },
   backoffMs: () => {
     const failures = getConsecutiveFailures();
     const blockLevel = getBseBlockBackoffLevel();
@@ -6394,6 +6396,7 @@ function trackInterval(handle: NodeJS.Timeout): NodeJS.Timeout {
 trackInterval(setInterval(async () => {
   // Reuse the watchdog; intake has its own 60s single-flight guard and never dispatches alerts.
   void refreshRadarIntake();
+  void refreshRadarPriceSnapshots();
   try {
     await processAnnouncements();
   } catch (err: any) {
@@ -6451,6 +6454,7 @@ trackInterval(setInterval(() => {
 // 24/7 Background Multi-Source RSS News Worker (Runs every 3 minutes to auto-dispatch watchlist stock news to Telegram)
 setTimeout(() => {
   void refreshRadarIntake();
+  void refreshRadarPriceSnapshots();
   processAutomatedNewsAlerts().catch(e => console.warn("[StockNewsWorker] Initial pass notice:", e.message));
 }, 8000);
 trackInterval(setInterval(() => {

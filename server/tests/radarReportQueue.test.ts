@@ -10,18 +10,18 @@ function archive(csv:string,day:string){
  return Buffer.concat([local,name,compressed,central,name,end]);
 }
 test('concurrent different history windows wait for bounded report slots rather than dropping valid prices',async()=>{
- const previous=globalThis.fetch;let active=0,peak=0,calls=0;
+ const previous=globalThis.fetch;let active=0,peak=0;const downloads=new Map<string,number>();
  globalThis.fetch=(async(input:any)=>{
-  calls++;active++;peak=Math.max(peak,active);
+  downloads.set(String(input),(downloads.get(String(input))||0)+1);active++;peak=Math.max(peak,active);
   await new Promise<void>(resolve=>setImmediate(resolve));
   active--;
-  const match=String(input).match(/_(2026)(10)(\d{2})_F/)!;const day=`${match[1]}-${match[2]}-${match[3]}`;
+  const match=String(input).match(/_(\d{4})(\d{2})(\d{2})_F/)!;const day=`${match[1]}-${match[2]}-${match[3]}`;
   return new Response(new Uint8Array(archive(`TradDt,Sgmt,Src,FinInstrmTp,TckrSymb,SctySrs,ClsPric,PrvsClsgPric,TtlTradgVol\n${day},CM,NSE,STK,PNCINFRA,EQ,100,100,500`,day)));
  }) as typeof fetch;
  const store={read:async()=>[],save:async()=>true};
  try{
   const events=[1,4,7,10,13].map(n=>({id:'queue-'+n,title:'PNC Infratech court order',companies:[{symbol:'PNCINFRA',name:'PNC Infratech Ltd',scripCode:'539150'}],source:{name:'BSE',kind:'disclosure' as const,url:'https://www.bseindia.com/source.pdf'},category:'legal',authority:'High Court',status:'monitoring' as const,scheduledDate:null,scheduleConfirmed:false,information:'A sourced order.',nextTrigger:null,publishedAt:`2026-10-${String(n).padStart(2,'0')}T10:00:00Z`,updatedAt:`2026-10-${String(n).padStart(2,'0')}T10:00:00Z`}));
   const results=await Promise.all(events.map(e=>getRadarMovement(e,Date.parse('2026-10-18T12:00:00Z'),undefined,store)));
-  assert.ok(peak<=4);assert.equal(calls,15);assert.ok(results.every(r=>r.status==='available'&&r.companies[0].sessions.length===3));
+  assert.ok(peak<=4);assert.ok(downloads.size>=15);assert.ok([...downloads.values()].every(n=>n===1),'overlapping context windows coalesce each report download');assert.ok(results.every(r=>r.status==='available'&&r.companies[0].sessions.length===3));
  }finally{globalThis.fetch=previous;}
 });

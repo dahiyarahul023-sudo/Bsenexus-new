@@ -72,6 +72,16 @@ export async function getRadarEvent(id: string): Promise<RadarEvent | null> {
     return isRadarEvent(row?.data) && isRadarEventInScope(row.data) ? (await repairRadarIdentities([row.data]))[0] : null;
   } catch { throw new RadarStorageError(); }
 }
+/** Target the company itself, independent of the global feed cap or the selected report's age. */
+export async function listRadarCompanyReports(event: RadarEvent): Promise<RadarEvent[]> {
+  try {
+    const groups=await Promise.all([...new Set(event.companies.slice(0,3).map(c=>c.scripCode))].map(async scripCode=>{
+      const rows=checked(await getSupabase().from('impact_radar_events').select('data').contains('data',{companies:[{scripCode}]}).neq('id',event.id).order('updated_at',{ascending:false}).limit(24).abortSignal(AbortSignal.timeout(6000)));
+      return (rows||[]).map(r=>r.data).filter(e=>isRadarEvent(e)&&isRadarEventInScope(e)&&e.id!==event.id&&e.companies.some(c=>c.scripCode===scripCode));
+    }));
+    return repairRadarIdentities([...new Map(groups.flat().map(e=>[e.id,e])).values()].sort((a,b)=>Date.parse(b.publishedAt)-Date.parse(a.publishedAt)).slice(0,8));
+  }catch{throw new RadarStorageError();}
+}
 export async function listRadarUpdates(id: string): Promise<RadarUpdate[]> {
   try {
     const rows = checked(await getSupabase().from('impact_radar_updates').select('data').eq('event_id', id).order('published_at', { ascending: false }).limit(50).abortSignal(AbortSignal.timeout(6000)));

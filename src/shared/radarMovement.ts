@@ -8,7 +8,8 @@ export interface RadarSessionMove {
 export interface RadarMovement {
   basis: 'event-date' | 'report-date'; anchorDate: string; afterClose: boolean;
   status: 'available' | 'partial' | 'unavailable' | 'upcoming'; checkedAt: string;
-  companies: { symbol: string; name?: string; sessions: RadarSessionMove[] }[];
+  companies: { symbol: string; name?: string; sessions: RadarSessionMove[]; previousSession?: RadarSessionMove; latestSession?: RadarSessionMove }[];
+  persistence?: { read: 'ok' | 'failed'; write: 'ok' | 'failed' | 'not-needed' };
 }
 export const radarPriceExchange = (s: RadarSessionMove): 'NSE' | 'BSE' => s.sourceUrl.startsWith('https://www.bseindia.com/') ? 'BSE' : 'NSE';
 export function isRadarSessionMove(s: any): s is RadarSessionMove {
@@ -25,6 +26,16 @@ export function isRadarSessionMove(s: any): s is RadarSessionMove {
 export function isRadarMovement(v: any): v is RadarMovement {
   return v && ['event-date', 'report-date'].includes(v.basis) && validRadarDate(v.anchorDate) && typeof v.afterClose === 'boolean' &&
     ['available', 'partial', 'unavailable', 'upcoming'].includes(v.status) && validRadarTime(v.checkedAt) &&
+    (v.persistence == null || (['ok','failed'].includes(v.persistence.read) && ['ok','failed','not-needed'].includes(v.persistence.write))) &&
     Array.isArray(v.companies) && v.companies.length <= 3 && v.companies.every((c: any) => /^[A-Z0-9&._-]{1,30}$/.test(c.symbol) && (c.name == null || (typeof c.name === 'string' && c.name.length <= 160 && !/[<>]/.test(c.name))) &&
-      Array.isArray(c.sessions) && c.sessions.length <= 3 && c.sessions.every((s: any) => isRadarSessionMove(s) && s.symbol === c.symbol));
+      Array.isArray(c.sessions) && c.sessions.length <= 3 && c.sessions.every((s: any) => isRadarSessionMove(s) && s.symbol === c.symbol && s.date >= v.anchorDate) &&
+      (c.previousSession == null || (isRadarSessionMove(c.previousSession) && c.previousSession.symbol === c.symbol && c.previousSession.date < v.anchorDate)) &&
+      (c.latestSession == null || (isRadarSessionMove(c.latestSession) && c.latestSession.symbol === c.symbol)));
+}
+export const hasRadarPrices = (v: RadarMovement | null) => !!v?.companies.some(c => c.sessions.length || c.previousSession || c.latestSession);
+/** A daily close on publication day overlaps intraday reporting; never imply causation. */
+export function radarSessionTiming(v: Pick<RadarMovement,'basis'|'anchorDate'|'afterClose'>, s: RadarSessionMove): string {
+  const subject = v.basis === 'event-date' ? 'event' : 'report';
+  if (s.date < v.anchorDate || (s.date === v.anchorDate && v.basis === 'report-date' && v.afterClose)) return `Before ${subject}`;
+  return s.date === v.anchorDate ? `${subject === 'event' ? 'Event' : 'Report'} day` : `After ${subject}`;
 }

@@ -144,3 +144,23 @@
 .impact-radar-method>summary:focus-visible,.impact-radar-source-history>summary:focus-visible,.impact-radar-verification>summary:focus-visible { outline:2px solid var(--rich-selected-ink,#047857); outline-offset:3px; }
 .impact-radar-source-history { margin-top:16px; }
 .impact-radar-answers:empty { display:none; }
+
+/* Small, labelled movements: previous context has its own colour; arrows retain direction. */
+.impact-radar-move-bars { display:grid; grid-template-columns:repeat(auto-fit,minmax(48px,1fr)); gap:5px; margin:8px 0; }
+.impact-radar-movement .impact-radar-move-bar { display:flex; min-width:0; min-height:44px; padding:5px 2px; flex-direction:column; align-items:center; border:1px solid transparent; border-radius:8px; text-decoration:none; color:var(--rich-muted,#586578); background:transparent; cursor:pointer; font-variant-numeric:tabular-nums; }
+.impact-radar-move-bar.is-up { color:var(--rich-selected-ink,#047857); }
+.impact-radar-move-bar.is-down { color:var(--rich-danger,#d0444b); }
+.impact-radar-move-bar.is-before { color:var(--rich-info-ink,#3568ae); }
+.impact-radar-move-bar[aria-pressed="true"] { border-color:currentColor; background:var(--rich-surface,#f2f6f7); }
+.impact-radar-move-bar:focus-visible { outline:2px solid currentColor; outline-offset:2px; }
+.impact-radar-move-bar strong { font-size:11px; max-width:100%; overflow-wrap:anywhere; }
+.impact-radar-move-bar>span:not(.impact-radar-mini-plot) { font-size:10px; }
+.impact-radar-move-bar small { font-size:9px; line-height:1.25; text-align:center; overflow-wrap:anywhere; margin-top:2px; }
+.impact-radar-mini-plot { height:26px; width:100%; position:relative; display:block; }
+.impact-radar-mini-plot::before { content:''; position:absolute; top:50%; left:12%; right:12%; border-top:1px solid var(--rich-border,#dce4e9); }
+.impact-radar-mini-fill { position:absolute; left:calc(50% - 5px); width:10px; background:currentColor; border-radius:2px; animation:radar-move-grow 220ms ease-out; }
+.impact-radar-mini-fill.points-up { bottom:50%; transform-origin:bottom; }
+.impact-radar-mini-fill.points-down { top:50%; transform-origin:top; }
+.impact-radar-movement .impact-radar-selected-price { font-size:11px; line-height:1.7; margin:7px 0; overflow-wrap:anywhere; }
+@keyframes radar-move-grow { from {transform:scaleY(0);} to {transform:scaleY(1);} }
+@media(prefers-reduced-motion:reduce) { .impact-radar-mini-fill { animation:none; } }

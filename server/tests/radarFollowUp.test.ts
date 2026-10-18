@@ -85,12 +85,12 @@ test('PNC short-name/Delhi HC discovery is unambiguous; timing is separate from 
 });
 
 test('movement download path reads bounded exchange archives and coalesces concurrent views by report date', async () => {
-  const previous = globalThis.fetch; let calls = 0;
-  globalThis.fetch = (async input => { calls++; return String(input).includes('20261013') ? new Response(new Uint8Array(archive(csv)), { status: 200 }) : new Response('Report unavailable', { status: 404 }); }) as typeof fetch;
+  const previous = globalThis.fetch; const downloads=new Map<string,number>();
+  globalThis.fetch = (async input => { downloads.set(String(input),(downloads.get(String(input))||0)+1); return String(input).includes('20261013') ? new Response(new Uint8Array(archive(csv)), { status: 200 }) : new Response('Report unavailable', { status: 404 }); }) as typeof fetch;
   try {
     const now = Date.parse('2026-10-17T05:00:00Z');
     const [a, b] = await Promise.all([getRadarMovement(event, now), getRadarMovement(event, now)]);
-    assert.equal(calls, 7, 'four NSE dates plus three missing-date BSE fallbacks, shared across both concurrent views'); assert.equal(a.companies[0].sessions.length, 1);
+    assert.ok(downloads.size>=7); assert.ok([...downloads.values()].every(n=>n===1),'each event/context source report is shared across concurrent views'); assert.equal(a.companies[0].sessions.length, 1);
     assert.deepEqual(a, b); assert.equal(isRadarMovement(a), true);
   } finally { globalThis.fetch = previous; }
 });
