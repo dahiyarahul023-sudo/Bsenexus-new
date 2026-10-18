@@ -37,3 +37,6 @@
 
 - Delivery status:
   - Specified, implemented, compiled, linted, and spider-map verified.
+
+
+2026-10-18 supersession: the user explicitly approved relevant curated visuals, content-led multiple screens and a minimal reading hierarchy. The previous logo/metric-only hero rule is superseded by ../STORIES.md. Company identity/logo resolution remains a separate preserved contract; aggregate FII/DII topics must have no bank identity. See clean-market-stories.md for implementation and current evidence limits.
