@@ -15,3 +15,5 @@
 - Status:
   - Tested: Yes, compiled cleanly and verified via TSX script.
   - Browser-verified: Yes, all 22 official local logo assets verified on filesystem, API responses confirmed via curl/node.
+
+2026-10-18 presentation supersession: `../STORIES.md` replaces compulsory four-slide/default-data population with validated content-led pages and neutral aggregate identities. Official company assets/resolution remain unchanged. Missing data is never populated from template financial examples; see `clean-market-stories.md` for actual verification and release limits.

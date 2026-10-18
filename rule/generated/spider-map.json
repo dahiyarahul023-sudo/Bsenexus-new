@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "650a6a08e6b51f6937598bb515ad3ddcb45f107ef7bb83ccf1796f0afb9bd5f7",
+  "sourceDigest": "9bddee1113a1d5865ff0f6d47c8424fff3074ec496865bf72a6a3913e16c1c5d",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -1065,6 +1065,11 @@
       "importedBy": []
     },
     {
+      "path": "server/tests/marketStories.test.ts",
+      "sha256": "0f3769e67f17c080cb16a9c9dc137bd96085c9cf3e8388f2dfd7650ba4d70ff6",
+      "importedBy": []
+    },
+    {
       "path": "server/tests/notes.test.ts",
       "sha256": "43f6dbd96eb874458d4c91218fb9c2f37ec8ae03353e32ad45591d304bc4aa44",
       "importedBy": []
@@ -1779,7 +1784,7 @@
     },
     {
       "path": "src/components/TodayMarketStoryModal.tsx",
-      "sha256": "6d69f030c31b6bef16f20df06255ece23c7d0cb5d9544034891badd1f12f455e",
+      "sha256": "e4c6ec798c8dbb38f2c107f56373f9b750baf7dfe60cd36cc1e9506aaa3a46a9",
       "importedBy": [
         "src/components/HomeForYou.tsx",
         "src/components/Layout.tsx"
@@ -1980,10 +1985,35 @@
       ]
     },
     {
+      "path": "src/components/story/StoryArtwork.tsx",
+      "sha256": "ae95079f1d3cea84168be222c3838b72b747904daf1f408976695811f47fc612",
+      "importedBy": [
+        "src/components/TodayMarketStoryModal.tsx",
+        "src/components/story/StoryCarouselBar.tsx",
+        "src/components/story/StorySlideView.tsx"
+      ]
+    },
+    {
       "path": "src/components/story/StoryCarouselBar.tsx",
-      "sha256": "3369d1c59e8a78dba6f492f75594a6750143c0df512beedc089c0e2d76025f9c",
+      "sha256": "d27e0b9d98d2a4846137ff8e8bf2a35787c14758147e20fe1ec96bf85b308c57",
       "importedBy": [
         "src/components/HomeForYou.tsx"
+      ]
+    },
+    {
+      "path": "src/components/story/StoryChart.tsx",
+      "sha256": "813720bd99eb6470a37a2540220c91cdff21098a89d707d75e3a3b551ea24ef7",
+      "importedBy": [
+        "server/tests/marketStories.test.ts",
+        "src/components/story/StorySlideView.tsx"
+      ]
+    },
+    {
+      "path": "src/components/story/StorySlideView.tsx",
+      "sha256": "bb24ca258d87fe5a64d4ad739159a2138c0c8624e04f3803afb1e7dd2a15b0aa",
+      "importedBy": [
+        "server/tests/marketStories.test.ts",
+        "src/components/TodayMarketStoryModal.tsx"
       ]
     },
     {
@@ -1991,17 +2021,52 @@
       "sha256": "7249f286b3a0c232096733d1756557fc7fe4368080ad0c74e34e51b2dcc7e278",
       "importedBy": [
         "src/components/TodayMarketStoryModal.tsx",
-        "src/components/story/StoryCarouselBar.tsx"
+        "src/components/story/StorySlideView.tsx"
+      ]
+    },
+    {
+      "path": "src/components/story/storyBuilder.ts",
+      "sha256": "9079685351b9f9ccf618278a1bd0caff0cbd45682012c3cbe64004258a3ee610",
+      "importedBy": [
+        "server/tests/marketStories.test.ts",
+        "src/components/TodayMarketStoryModal.tsx",
+        "src/components/story/StoryCarouselBar.tsx",
+        "src/components/story/StoryChart.tsx",
+        "src/components/story/storyData.ts",
+        "src/components/story/storyFeedClient.ts"
       ]
     },
     {
       "path": "src/components/story/storyData.ts",
-      "sha256": "d12424468fd8d54b68d2ce44839056c38b357e3b5e409b4f25a86c9bb8c8778b",
+      "sha256": "9d74fdae5c73f94b1780355a8174e70d878ebfc792cd8c7ec84d8ab77e761b22",
       "importedBy": [
         "server/tests/followupAudit.test.ts",
         "src/components/Layout.tsx",
         "src/components/TodayMarketStoryModal.tsx",
         "src/components/story/StoryCarouselBar.tsx"
+      ]
+    },
+    {
+      "path": "src/components/story/storyFeedClient.ts",
+      "sha256": "c6bba4773ac8d93d27cbbd6d062167a5add6b5908d4f4cc6ecf65446fea43b91",
+      "importedBy": [
+        "server/tests/marketStories.test.ts",
+        "src/components/story/storyData.ts"
+      ]
+    },
+    {
+      "path": "src/components/story/storyTypes.ts",
+      "sha256": "033c267da8dd4c35211006371b79b887fab8502b6b9c2c5ee69426e85cc01c36",
+      "importedBy": [
+        "server/tests/marketStories.test.ts",
+        "src/components/TodayMarketStoryModal.tsx",
+        "src/components/story/StoryArtwork.tsx",
+        "src/components/story/StoryCarouselBar.tsx",
+        "src/components/story/StoryChart.tsx",
+        "src/components/story/StorySlideView.tsx",
+        "src/components/story/storyBuilder.ts",
+        "src/components/story/storyData.ts",
+        "src/components/story/storyFeedClient.ts"
       ]
     },
     {
@@ -2058,6 +2123,7 @@
         "src/components/LandingPage.tsx",
         "src/components/Layout.tsx",
         "src/components/ProCheckoutView.tsx",
+        "src/components/TodayMarketStoryModal.tsx",
         "src/components/TrustPages.tsx",
         "src/components/landing/CreativeHero.tsx",
         "src/components/ui/ModernAuthCard.tsx"
@@ -2498,6 +2564,7 @@
         "src/components/ResultsCalendar.tsx",
         "src/components/SettingsTab.tsx",
         "src/components/TermsModal.tsx",
+        "src/components/TodayMarketStoryModal.tsx",
         "src/components/UserProfileModal.tsx",
         "src/components/WatchlistManager.tsx",
         "src/components/notes/useNoteDialog.ts",
@@ -2724,6 +2791,14 @@
       ]
     },
     {
+      "path": "src/styles/market-stories.css",
+      "sha256": "f8589a907dc6f2f1c4d68e5c0dbb9582864bf363a6d65e8a309ed73e16dc570c",
+      "importedBy": [
+        "src/components/TodayMarketStoryModal.tsx",
+        "src/components/story/StoryCarouselBar.tsx"
+      ]
+    },
+    {
       "path": "src/styles/mobile-repairs.css",
       "sha256": "b3eb0f6bc4b5dad05532f063e911f60cda9eb776caaa358c8a72d9d49c188c18",
       "importedBy": [
@@ -2933,10 +3008,8 @@
         "src/components/QuarterlyResultsLedger.tsx",
         "src/components/ResultsCalendar.tsx",
         "src/components/SettingsTab.tsx",
-        "src/components/TodayMarketStoryModal.tsx",
         "src/components/UserProfileModal.tsx",
         "src/components/WatchlistManager.tsx",
-        "src/components/story/StoryCarouselBar.tsx",
         "src/components/ui/AutosaveIndicator.tsx",
         "src/components/ui/BackToTop.tsx",
         "src/components/ui/CommandPalette.tsx",
@@ -5549,6 +5622,36 @@
       "target": "server/services/marketGuidesService.ts",
       "kind": "import",
       "line": 7
+    },
+    {
+      "source": "server/tests/marketStories.test.ts",
+      "target": "src/components/story/storyBuilder.ts",
+      "kind": "import",
+      "line": 5
+    },
+    {
+      "source": "server/tests/marketStories.test.ts",
+      "target": "src/components/story/storyFeedClient.ts",
+      "kind": "import",
+      "line": 6
+    },
+    {
+      "source": "server/tests/marketStories.test.ts",
+      "target": "src/components/story/StorySlideView.tsx",
+      "kind": "import",
+      "line": 7
+    },
+    {
+      "source": "server/tests/marketStories.test.ts",
+      "target": "src/components/story/StoryChart.tsx",
+      "kind": "import",
+      "line": 8
+    },
+    {
+      "source": "server/tests/marketStories.test.ts",
+      "target": "src/components/story/storyTypes.ts",
+      "kind": "import",
+      "line": 9
     },
     {
       "source": "server/tests/notes.test.ts",
@@ -8204,21 +8307,63 @@
     },
     {
       "source": "src/components/TodayMarketStoryModal.tsx",
-      "target": "src/utils/motionTokens.ts",
+      "target": "src/hooks/useBodyScrollLock.ts",
       "kind": "import",
-      "line": 8
+      "line": 5
     },
     {
       "source": "src/components/TodayMarketStoryModal.tsx",
       "target": "src/components/story/storyData.ts",
       "kind": "import",
+      "line": 6
+    },
+    {
+      "source": "src/components/TodayMarketStoryModal.tsx",
+      "target": "src/components/story/storyBuilder.ts",
+      "kind": "import",
+      "line": 7
+    },
+    {
+      "source": "src/components/TodayMarketStoryModal.tsx",
+      "target": "src/components/story/storyTypes.ts",
+      "kind": "import",
+      "line": 8
+    },
+    {
+      "source": "src/components/TodayMarketStoryModal.tsx",
+      "target": "src/components/story/storyTypes.ts",
+      "kind": "import",
       "line": 9
+    },
+    {
+      "source": "src/components/TodayMarketStoryModal.tsx",
+      "target": "src/components/story/StorySlideView.tsx",
+      "kind": "import",
+      "line": 10
+    },
+    {
+      "source": "src/components/TodayMarketStoryModal.tsx",
+      "target": "src/components/story/StoryArtwork.tsx",
+      "kind": "import",
+      "line": 11
     },
     {
       "source": "src/components/TodayMarketStoryModal.tsx",
       "target": "src/components/story/StoryVisuals.tsx",
       "kind": "import",
-      "line": 17
+      "line": 12
+    },
+    {
+      "source": "src/components/TodayMarketStoryModal.tsx",
+      "target": "src/components/ui/BseNexusLogo.tsx",
+      "kind": "import",
+      "line": 13
+    },
+    {
+      "source": "src/components/TodayMarketStoryModal.tsx",
+      "target": "src/styles/market-stories.css",
+      "kind": "import",
+      "line": 14
     },
     {
       "source": "src/components/TrustPages.tsx",
@@ -8767,32 +8912,134 @@
       "line": 1
     },
     {
+      "source": "src/components/story/StoryArtwork.tsx",
+      "target": "src/components/story/storyTypes.ts",
+      "kind": "import",
+      "line": 2
+    },
+    {
       "source": "src/components/story/StoryCarouselBar.tsx",
       "target": "src/components/story/storyData.ts",
       "kind": "import",
-      "line": 14
+      "line": 3
     },
     {
       "source": "src/components/story/StoryCarouselBar.tsx",
+      "target": "src/components/story/storyTypes.ts",
+      "kind": "import",
+      "line": 4
+    },
+    {
+      "source": "src/components/story/StoryCarouselBar.tsx",
+      "target": "src/components/story/storyTypes.ts",
+      "kind": "import",
+      "line": 5
+    },
+    {
+      "source": "src/components/story/StoryCarouselBar.tsx",
+      "target": "src/components/story/storyBuilder.ts",
+      "kind": "import",
+      "line": 6
+    },
+    {
+      "source": "src/components/story/StoryCarouselBar.tsx",
+      "target": "src/components/story/StoryArtwork.tsx",
+      "kind": "import",
+      "line": 7
+    },
+    {
+      "source": "src/components/story/StoryCarouselBar.tsx",
+      "target": "src/styles/market-stories.css",
+      "kind": "import",
+      "line": 8
+    },
+    {
+      "source": "src/components/story/StoryChart.tsx",
+      "target": "src/components/story/storyTypes.ts",
+      "kind": "import",
+      "line": 2
+    },
+    {
+      "source": "src/components/story/StoryChart.tsx",
+      "target": "src/components/story/storyBuilder.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "src/components/story/StorySlideView.tsx",
+      "target": "src/components/story/storyTypes.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "src/components/story/StorySlideView.tsx",
       "target": "src/components/story/StoryVisuals.tsx",
       "kind": "import",
-      "line": 21
+      "line": 4
     },
     {
-      "source": "src/components/story/StoryCarouselBar.tsx",
-      "target": "src/utils/motionTokens.ts",
+      "source": "src/components/story/StorySlideView.tsx",
+      "target": "src/components/story/StoryArtwork.tsx",
       "kind": "import",
-      "line": 22
+      "line": 5
     },
     {
-      "source": "src/components/story/storyData.ts",
-      "target": "src/api.ts",
+      "source": "src/components/story/StorySlideView.tsx",
+      "target": "src/components/story/StoryChart.tsx",
+      "kind": "import",
+      "line": 6
+    },
+    {
+      "source": "src/components/story/storyBuilder.ts",
+      "target": "src/components/story/storyTypes.ts",
       "kind": "import",
       "line": 1
     },
     {
       "source": "src/components/story/storyData.ts",
       "target": "src/utils/marketHolidays.ts",
+      "kind": "import",
+      "line": 1
+    },
+    {
+      "source": "src/components/story/storyData.ts",
+      "target": "src/components/story/storyFeedClient.ts",
+      "kind": "import",
+      "line": 2
+    },
+    {
+      "source": "src/components/story/storyData.ts",
+      "target": "src/components/story/storyTypes.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "src/components/story/storyData.ts",
+      "target": "src/components/story/storyTypes.ts",
+      "kind": "reexport",
+      "line": 4
+    },
+    {
+      "source": "src/components/story/storyData.ts",
+      "target": "src/components/story/storyBuilder.ts",
+      "kind": "reexport",
+      "line": 5
+    },
+    {
+      "source": "src/components/story/storyData.ts",
+      "target": "src/api.ts",
+      "kind": "dynamic",
+      "line": 166
+    },
+    {
+      "source": "src/components/story/storyFeedClient.ts",
+      "target": "src/components/story/storyBuilder.ts",
+      "kind": "import",
+      "line": 1
+    },
+    {
+      "source": "src/components/story/storyFeedClient.ts",
+      "target": "src/components/story/storyTypes.ts",
       "kind": "import",
       "line": 2
     },
@@ -9954,6 +10201,34 @@
         "server/tests/radarReportQueue.test.ts"
       ],
       "reason": "Two Home previews open a native modal Radar dashboard and immediate detail. Watchlist scope stays separate from durable event follows. Both exchange disclosures and shared RSS intake carry source/date provenance; explicit jurisdiction/case references alone may join evidence. Future events have no predictions. Observed NSE final daily closes are a separate bounded, cached read with per-session source, missing-data states and no causal attribution. Account cancellation, modal focus/scroll, themes and reduced motion remain explicit contracts. The list is read-only; existing watchdog drives bounded intake. Server-only DB categories, strict real company identity, typed proceedings, source-domain rules and offset timestamps gate publishing. Reviewed PNC source backfill retains explicit news timestamps and separately sourced NSE daily ranges. Following outages preserve closed records. Additional material event terms come from private DB rules and match bounded literal phrases independently of source type or authority. Explicit RSS timestamps normalize to UTC. Publisher/report attribution and related-topic links preserve uncertainty. Selected company final NSE session values persist as small, private, duplicate-safe snapshots and can survive upstream outages. Routine corporate transactions and statutory takeover boilerplate are excluded independently of configured discovery terms. Insolvency/disputes retain the stable deals category ID with a focused label. Read projections hide legacy routine/vague cards while retaining immutable evidence and follows; all headings use source wording and original timeline titles remain intact. Official filing names and exact-code title prefixes repair numeric identities without assigning a guessed NSE symbol. Exchange daily rows may match one exact full company name; NSE SME and BSE scrip-keyed reports retain explicit source identity. Future hearing dates do not suppress prior publication-day history. Sparse details render known facts and collapsed source/method sections. Report requests use a private proxy-aware dispatcher and a bounded concurrency queue with an overall response budget."
+    },
+    {
+      "id": "frontend-stories",
+      "label": "Frontend: market stories and institutional identity",
+      "files": [
+        "src/components/TodayMarketStoryModal.tsx",
+        "src/components/story/storyTypes.ts",
+        "src/components/story/storyBuilder.ts",
+        "src/components/story/storyFeedClient.ts",
+        "src/components/story/storyData.ts",
+        "src/components/story/StoryCarouselBar.tsx",
+        "src/components/story/StoryArtwork.tsx",
+        "src/components/story/StoryChart.tsx",
+        "src/components/story/StorySlideView.tsx",
+        "src/components/story/StoryVisuals.tsx",
+        "src/styles/market-stories.css",
+        "src/components/HomeForYou.tsx",
+        "src/components/Layout.tsx",
+        "src/components/ui/BseNexusLogo.tsx",
+        "src/hooks/useBodyScrollLock.ts",
+        "src/api.ts",
+        "server/services/storyFeedService.ts"
+      ],
+      "tests": [
+        "server/tests/marketStories.test.ts",
+        "server/tests/followupAudit.test.ts"
+      ],
+      "reason": "Public feed → validated content-led chapter adapter → Home carousel and both shared viewer entry points. Chapter selection uses stable IDs. Aggregate topics, especially FII/DII, have neutral symbols and no company CTA; only exact per-company records use the existing official-logo resolver and Company Intelligence callbacks. No sample facts on loading/error. News is bounded by sourced publication time and the existing 18-hour/session policy. Newer refreshes win cache races; stale/empty/error states remain distinct. The scoped reading canvas, proportional signed charts, native illustrations, pause clock, portal focus/inertness, scroll and reduced motion are one interaction contract. Browser/device verification and live deployment are separate from source/render/build evidence."
     }
   ],
   "routes": [
@@ -13871,9 +14146,9 @@
     },
     {
       "file": "src/components/story/storyData.ts",
-      "line": 692,
+      "line": 170,
       "function": "customFetch",
-      "target": "`/api/story/feed${forceRefresh ? '?refresh=true' : ''}`"
+      "target": "`/api/story/feed${force ? '?refresh=true' : ''}`"
     },
     {
       "file": "src/components/ui/AiFaqSection.tsx",
@@ -14700,6 +14975,12 @@
       "key": "{ length: 10 }"
     },
     {
+      "file": "server/tests/marketStories.test.ts",
+      "line": 52,
+      "function": "Array.from",
+      "key": "{ length: 8 }"
+    },
+    {
       "file": "server/tests/pollerStall.test.ts",
       "line": 173,
       "function": "Array.from",
@@ -15102,6 +15383,12 @@
       "key": "k"
     },
     {
+      "file": "src/components/TodayMarketStoryModal.tsx",
+      "line": 96,
+      "function": "localStorage.setItem",
+      "key": "getStorySessionStorageKey()"
+    },
+    {
       "file": "src/components/WatchlistManager.tsx",
       "line": 508,
       "function": "localStorage.getItem",
@@ -15175,15 +15462,9 @@
     },
     {
       "file": "src/components/story/StoryCarouselBar.tsx",
-      "line": 85,
+      "line": 25,
       "function": "localStorage.getItem",
-      "key": "storageKey"
-    },
-    {
-      "file": "src/components/story/StoryCarouselBar.tsx",
-      "line": 132,
-      "function": "localStorage.setItem",
-      "key": "storageKey"
+      "key": "getStorySessionStorageKey()"
     },
     {
       "file": "src/components/story/StoryVisuals.tsx",
@@ -15208,6 +15489,12 @@
       "line": 315,
       "function": "localStorage.setItem",
       "key": "`bse_dyn_scrip_${clean}`"
+    },
+    {
+      "file": "src/components/story/storyBuilder.ts",
+      "line": 35,
+      "function": "Array.from",
+      "key": "{ length: Math.ceil(items.length / size) }"
     },
     {
       "file": "src/components/ui/CommandPalette.tsx",
@@ -17242,19 +17529,35 @@
     },
     {
       "file": "src/components/TodayMarketStoryModal.tsx",
-      "line": 437,
-      "target": "window",
+      "line": 112,
+      "target": "document",
       "kind": "listen",
-      "name": "keydown",
-      "expression": "window.addEventListener('keydown', handleKeyDown)"
+      "name": "visibilitychange",
+      "expression": "document.addEventListener('visibilitychange', visibility)"
     },
     {
       "file": "src/components/TodayMarketStoryModal.tsx",
-      "line": 438,
-      "target": "window",
+      "line": 114,
+      "target": "document",
+      "kind": "remove",
+      "name": "visibilitychange",
+      "expression": "document.removeEventListener('visibilitychange', visibility)"
+    },
+    {
+      "file": "src/components/TodayMarketStoryModal.tsx",
+      "line": 178,
+      "target": "document",
+      "kind": "listen",
+      "name": "keydown",
+      "expression": "document.addEventListener('keydown', keydown)"
+    },
+    {
+      "file": "src/components/TodayMarketStoryModal.tsx",
+      "line": 179,
+      "target": "document",
       "kind": "remove",
       "name": "keydown",
-      "expression": "window.removeEventListener('keydown', handleKeyDown)"
+      "expression": "document.removeEventListener('keydown', keydown)"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
@@ -17367,6 +17670,22 @@
       "kind": "remove",
       "name": "resize",
       "expression": "window.removeEventListener('resize', resize)"
+    },
+    {
+      "file": "src/components/story/StoryCarouselBar.tsx",
+      "line": 34,
+      "target": "document",
+      "kind": "listen",
+      "name": "visibilitychange",
+      "expression": "document.addEventListener('visibilitychange', visibility)"
+    },
+    {
+      "file": "src/components/story/StoryCarouselBar.tsx",
+      "line": 35,
+      "target": "document",
+      "kind": "remove",
+      "name": "visibilitychange",
+      "expression": "document.removeEventListener('visibilitychange', visibility)"
     },
     {
       "file": "src/components/ui/AutosaveIndicator.tsx",

@@ -684,6 +684,34 @@
         "server/tests/radarReportQueue.test.ts"
       ],
       "reason": "Two Home previews open a native modal Radar dashboard and immediate detail. Watchlist scope stays separate from durable event follows. Both exchange disclosures and shared RSS intake carry source/date provenance; explicit jurisdiction/case references alone may join evidence. Future events have no predictions. Observed NSE final daily closes are a separate bounded, cached read with per-session source, missing-data states and no causal attribution. Account cancellation, modal focus/scroll, themes and reduced motion remain explicit contracts. The list is read-only; existing watchdog drives bounded intake. Server-only DB categories, strict real company identity, typed proceedings, source-domain rules and offset timestamps gate publishing. Reviewed PNC source backfill retains explicit news timestamps and separately sourced NSE daily ranges. Following outages preserve closed records. Additional material event terms come from private DB rules and match bounded literal phrases independently of source type or authority. Explicit RSS timestamps normalize to UTC. Publisher/report attribution and related-topic links preserve uncertainty. Selected company final NSE session values persist as small, private, duplicate-safe snapshots and can survive upstream outages. Routine corporate transactions and statutory takeover boilerplate are excluded independently of configured discovery terms. Insolvency/disputes retain the stable deals category ID with a focused label. Read projections hide legacy routine/vague cards while retaining immutable evidence and follows; all headings use source wording and original timeline titles remain intact. Official filing names and exact-code title prefixes repair numeric identities without assigning a guessed NSE symbol. Exchange daily rows may match one exact full company name; NSE SME and BSE scrip-keyed reports retain explicit source identity. Future hearing dates do not suppress prior publication-day history. Sparse details render known facts and collapsed source/method sections. Report requests use a private proxy-aware dispatcher and a bounded concurrency queue with an overall response budget."
+    },
+    {
+      "id": "frontend-stories",
+      "label": "Frontend: market stories and institutional identity",
+      "files": [
+        "src/components/TodayMarketStoryModal.tsx",
+        "src/components/story/storyTypes.ts",
+        "src/components/story/storyBuilder.ts",
+        "src/components/story/storyFeedClient.ts",
+        "src/components/story/storyData.ts",
+        "src/components/story/StoryCarouselBar.tsx",
+        "src/components/story/StoryArtwork.tsx",
+        "src/components/story/StoryChart.tsx",
+        "src/components/story/StorySlideView.tsx",
+        "src/components/story/StoryVisuals.tsx",
+        "src/styles/market-stories.css",
+        "src/components/HomeForYou.tsx",
+        "src/components/Layout.tsx",
+        "src/components/ui/BseNexusLogo.tsx",
+        "src/hooks/useBodyScrollLock.ts",
+        "src/api.ts",
+        "server/services/storyFeedService.ts"
+      ],
+      "tests": [
+        "server/tests/marketStories.test.ts",
+        "server/tests/followupAudit.test.ts"
+      ],
+      "reason": "Public feed \u2192 validated content-led chapter adapter \u2192 Home carousel and both shared viewer entry points. Chapter selection uses stable IDs. Aggregate topics, especially FII/DII, have neutral symbols and no company CTA; only exact per-company records use the existing official-logo resolver and Company Intelligence callbacks. No sample facts on loading/error. News is bounded by sourced publication time and the existing 18-hour/session policy. Newer refreshes win cache races; stale/empty/error states remain distinct. The scoped reading canvas, proportional signed charts, native illustrations, pause clock, portal focus/inertness, scroll and reduced motion are one interaction contract. Browser/device verification and live deployment are separate from source/render/build evidence."
     }
   ]
 }
