@@ -26,6 +26,7 @@ interface UserProfileModalProps {
   onOpenAlertRules?: () => void;
   onOpenHelp?: () => void;
   onOpenTerms?: () => void;
+  unreadCount?: number | null;
 }
 
 export function UserProfileModal({ 
@@ -35,7 +36,8 @@ export function UserProfileModal({
   onOpenWatchlist,
   onOpenAlertRules,
   onOpenHelp,
-  onOpenTerms 
+  onOpenTerms,
+  unreadCount = null
 }: UserProfileModalProps) {
   const { 
     user, 
@@ -56,22 +58,21 @@ export function UserProfileModal({
 
   // Real-time research stats
   const [watchlistCount, setWatchlistCount] = useState<number>(0);
-  const [unreadCount, setUnreadCount] = useState<number>(0);
   const [nextEarningsInfo, setNextEarningsInfo] = useState<string>('Upcoming');
 
   useEffect(() => {
     if (!isOpen) return;
+    const controller = new AbortController();
 
     // Fetch live research summary
     const loadSummary = async () => {
       try {
-        const [wRes, nRes] = await Promise.all([
-          customFetch('/api/watchlists').catch(() => null),
-          customFetch('/api/notifications/unread-count').catch(() => null)
-        ]);
+        const wRes = await customFetch('/api/watchlists', { signal: controller.signal }).catch(() => null);
+        if (controller.signal.aborted) return;
 
         if (wRes && wRes.ok) {
           const wData = await wRes.json();
+          if (controller.signal.aborted) return;
           if (Array.isArray(wData)) {
             const totalSymbols = new Set<string>();
             wData.forEach((list: any) => {
@@ -83,17 +84,14 @@ export function UserProfileModal({
           }
         }
 
-        if (nRes && nRes.ok) {
-          const nData = await nRes.json();
-          setUnreadCount(nData.unreadCount || 0);
-        }
       } catch (e) {
         // Soft fallback
       }
     };
 
     loadSummary();
-  }, [isOpen]);
+    return () => controller.abort();
+  }, [isOpen, user?.uid]);
 
   if (!isOpen) return null;
 
@@ -239,7 +237,7 @@ export function UserProfileModal({
 
               <div className="p-2 rounded-xl bg-white dark:bg-[#151421] border border-slate-200/60 dark:border-[#272439]">
                 <div className="text-base font-black text-emerald-600 dark:text-emerald-400">
-                  {unreadCount}
+                  {unreadCount ?? '—'}
                 </div>
                 <div className="text-[10px] font-medium text-slate-500 dark:text-slate-400 truncate">
                   Unread

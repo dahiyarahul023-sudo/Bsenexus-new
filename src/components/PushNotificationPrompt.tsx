@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, BellRing, Check, X, Share2, Info, AlertCircle } from 'lucide-react';
-import { requestPushPermission, isPushSubscribed, isIOS, isStandalonePWA } from '../utils/oneSignal';
+import { X, Share2, AlertCircle } from 'lucide-react';
+import { requestPushPermission, getPushState, subscribePushState, initOneSignal, isIOS, isStandalonePWA } from '../utils/oneSignal';
 import { RichIllustration } from './ui/RichVisual';
 
 const DISMISS_KEY = 'bsenexus_push_prompt_dismissed_until';
 
 export function PushNotificationBanner() {
-  const [subscribed, setSubscribed] = useState(false);
+  const [pushState, setPushState] = useState(getPushState);
   const [dismissed, setDismissed] = useState(true);
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -14,18 +14,36 @@ export function PushNotificationBanner() {
 
   useEffect(() => {
     // Check if dismissed recently
-    const dismissedUntil = localStorage.getItem(DISMISS_KEY);
+    let dismissedUntil: string | null = null;
+    try { dismissedUntil = localStorage.getItem(DISMISS_KEY); } catch {}
     if (dismissedUntil && Number(dismissedUntil) > Date.now()) {
       setDismissed(true);
     } else {
       setDismissed(false);
     }
 
-    // Check subscription status
-    isPushSubscribed().then((isSub) => {
-      setSubscribed(isSub);
-      if (isSub) setDismissed(true); // Don't show banner if already subscribed
-    });
+    const unsubscribe = subscribePushState(setPushState);
+    const refresh = () => { setPushState(getPushState()); initOneSignal(); };
+    const onVisible = () => { if (!document.hidden) refresh(); };
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('online', refresh);
+    let active = true;
+    let permissionStatus: PermissionStatus | null = null;
+    // Not all browsers support the notifications Permissions query.
+    navigator.permissions?.query({ name: 'notifications' as PermissionName }).then(status => {
+      if (!active) return;
+      permissionStatus = status;
+      status.addEventListener('change', refresh);
+    }).catch(() => {});
+    return () => {
+      active = false;
+      unsubscribe();
+      window.removeEventListener('focus', refresh);
+      window.removeEventListener('online', refresh);
+      document.removeEventListener('visibilitychange', onVisible);
+      permissionStatus?.removeEventListener('change', refresh);
+    };
   }, []);
 
   const handleEnable = async () => {
@@ -42,9 +60,9 @@ export function PushNotificationBanner() {
     try {
       const res = await requestPushPermission();
       if (res.granted) {
-        setSubscribed(true);
-        setNotice('Push notifications enabled successfully!');
-        setTimeout(() => setDismissed(true), 3000);
+        setPushState(getPushState());
+        setShowIosGuide(false);
+        setDismissed(true);
       } else {
         if (res.reason === 'ios_requires_pwa') {
           setShowIosGuide(true);
@@ -62,21 +80,22 @@ export function PushNotificationBanner() {
   const handleDismiss = () => {
     setDismissed(true);
     // Dismiss for 7 days
-    localStorage.setItem(DISMISS_KEY, String(Date.now() + 7 * 24 * 60 * 60 * 1000));
+    try { localStorage.setItem(DISMISS_KEY, String(Date.now() + 7 * 24 * 60 * 60 * 1000)); } catch {}
   };
 
-  if (dismissed) return null;
+  // Check native permission even before the optional SDK has loaded, including
+  // on reload/login. No local "enabled" flag can override browser permission.
+  if (dismissed || pushState.permission === 'granted' || getPushState().permission === 'granted' || pushState.subscribed === true) return null;
 
   return (
     <>
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-2 mb-3">
         <div className="rich-push-banner">
           <div className="rich-push-copy">
-            <RichIllustration kind={subscribed ? "success" : "bell"} className="rich-illustration-compact" />
+            <RichIllustration kind="bell" className="rich-illustration-compact" />
             <div>
               <h4 className="rich-push-title text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                 <span>Instant filing alerts</span>
-                <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-blue-500/20 text-blue-600 dark:text-blue-300">Free for All</span>
               </h4>
               <p className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-400 mt-0.5">
                 Get important filing updates, even when the tab is closed.
@@ -91,19 +110,13 @@ export function PushNotificationBanner() {
           </div>
 
           <div className="rich-push-actions">
-            {subscribed ? (
-              <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
-                <Check className="w-3.5 h-3.5" /> Alerts Active
-              </span>
-            ) : (
-              <button
-                onClick={handleEnable}
-                disabled={loading}
-                className="rich-action rich-action-primary px-4 py-2 rounded-xl text-xs font-bold disabled:opacity-60 cursor-pointer"
-              >
-                {loading ? 'Requesting…' : 'Allow alerts'}
-              </button>
-            )}
+            <button
+              onClick={handleEnable}
+              disabled={loading}
+              className="rich-action rich-action-primary px-4 py-2 rounded-xl text-xs font-bold disabled:opacity-60 cursor-pointer"
+            >
+              {loading ? 'Requesting…' : 'Allow alerts'}
+            </button>
             <button
               onClick={handleDismiss}
               aria-label="Dismiss banner"

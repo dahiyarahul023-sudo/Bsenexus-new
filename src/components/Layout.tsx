@@ -25,6 +25,8 @@ import { useAuth } from '../context/AuthContext';
 import { useIntelModal } from '../context/IntelModalContext';
 import { customFetch } from '../api';
 import { useVisibilityInterval } from '../hooks/useVisibilityInterval';
+import { useUnreadNotificationCount } from '../hooks/useUnreadNotificationCount';
+import { notificationCountOwner } from '../utils/unreadNotificationCount';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { 
@@ -136,7 +138,6 @@ export function Layout({
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [notificationInboxOpen, setNotificationInboxOpen] = useState(false);
   const [alertRulesModalOpen, setAlertRulesModalOpen] = useState(false);
-  const [unreadNotifCount, setUnreadNotifCount] = useState<number>(0);
   const [networkDisrupted, setNetworkDisrupted] = useState<boolean>(false);
   const [quotaExceeded, setQuotaExceeded] = useState<boolean>(false);
   const [quotaBannerDismissed, setQuotaBannerDismissed] = useState<boolean>(false);
@@ -146,6 +147,8 @@ export function Layout({
   const { 
     user, 
     profile, 
+    loading: sessionLoading,
+    authLoading,
     isAdmin, 
     isPro, 
     isPaidProActive,
@@ -157,6 +160,11 @@ export function Layout({
     isProModalOpen,
     isAdminPinModalOpen,
   } = useAuth();
+
+  // Cached profile paint is not a verified session. Wait for the Firebase user
+  // before reading a private count; anonymous visitors have no private inbox.
+  const notificationOwner = notificationCountOwner(user, sessionLoading || authLoading);
+  const { count: unreadNotifCount, refresh: fetchUnreadCount } = useUnreadNotificationCount(notificationOwner);
 
   // Listen to network disruptions
   useEffect(() => {
@@ -196,24 +204,6 @@ export function Layout({
   }, []);
 
   useVisibilityInterval(checkQuotaStatus, 30000);
-
-  const fetchUnreadCount = async () => {
-    try {
-      const res = await customFetch('/api/notifications/unread-count');
-      if (res.ok) {
-        const data = await res.json();
-        setUnreadNotifCount(data.unreadCount || 0);
-      }
-    } catch {
-      // Ignore background errors
-    }
-  };
-
-  useEffect(() => {
-    fetchUnreadCount();
-  }, []);
-
-  useVisibilityInterval(fetchUnreadCount, 15000);
 
   const handleOpenCompanyIntel = (scripCode?: string, symbol?: string, companyName?: string) => {
     openIntelModal({ scripCode, symbol, companyName });
@@ -473,7 +463,7 @@ export function Layout({
               >
                 <Bell size={15} className="text-slate-600 dark:text-slate-300 shrink-0" />
                 <span className="hidden sm:inline text-xs font-semibold">Alerts</span>
-                {unreadNotifCount > 0 && (
+                {unreadNotifCount !== null && unreadNotifCount > 0 && (
                   <span className="absolute -top-1 -right-1 sm:static sm:top-auto sm:right-auto flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-slate-900 dark:bg-white text-[9px] font-bold text-white dark:text-slate-900 leading-none">
                     {unreadNotifCount > 99 ? '99+' : unreadNotifCount}
                   </span>
@@ -796,6 +786,7 @@ export function Layout({
       {isAdminPinModalOpen && <AdminPinModal />}
       {profileModalOpen && (
         <UserProfileModal 
+          unreadCount={unreadNotifCount}
           isOpen={profileModalOpen} 
           onClose={() => setProfileModalOpen(false)}
           onOpenSettings={() => onTabChange('settings')}

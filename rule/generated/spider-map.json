@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "b996d8af26a7a9fb8a0671fef0e6dd783bd44151080cbc4770fd48cc3f06fb36",
+  "sourceDigest": "f5732a9cbdcf1f32b449cf595051bd379781e0b84388dd19f86768870b96efe5",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -30,7 +30,7 @@
     },
     {
       "path": "index.html",
-      "sha256": "7ee0e8b2f16aae7640625e558e767a2b78d08a2bed665b5de840fe1f8095c14a",
+      "sha256": "0a25fe9d61569ffbacf36841c7a69eee0857dfbbc173ba747cf863258a8425ba",
       "importedBy": []
     },
     {
@@ -219,11 +219,12 @@
     },
     {
       "path": "server/api/routes.ts",
-      "sha256": "2629f5ea8fe85fec7d3344afcd63a945eb6c476d890836e2b78dc560108f7997",
+      "sha256": "238135d9a98bfd1392b313036a8354d8cd000e9abd1535251d3d03dd14f0702c",
       "importedBy": [
         "server.ts",
         "server/tests/alertRulesApi.test.ts",
-        "server/tests/auditSecurity.test.ts"
+        "server/tests/auditSecurity.test.ts",
+        "server/tests/notificationCountApi.test.ts"
       ]
     },
     {
@@ -397,7 +398,8 @@
         "server/api/routes.ts",
         "server/services/monitor.ts",
         "server/tests/batchOperations.test.ts",
-        "server/tests/followupAudit.test.ts"
+        "server/tests/followupAudit.test.ts",
+        "server/tests/notificationCountApi.test.ts"
       ]
     },
     {
@@ -1092,6 +1094,16 @@
       "importedBy": []
     },
     {
+      "path": "server/tests/notificationCountApi.test.ts",
+      "sha256": "48825b3873103231f5bdb762a5bb28445f85b1413d6f66172cd7af901e895f9d",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/notificationStartup.test.ts",
+      "sha256": "b9b8f9ae2e6428594e018ceb5d3249260dc792bad8e118532f8c43064dad4e4b",
+      "importedBy": []
+    },
+    {
       "path": "server/tests/oneSignal.test.ts",
       "sha256": "0049ec20143c5262e70f3a57e28f6c19b3ffe78bc58da022a77cee9cc905f865",
       "importedBy": []
@@ -1491,6 +1503,7 @@
         "src/components/ui/SupportFloat.tsx",
         "src/context/AuthContext.tsx",
         "src/hooks/useMarketIndices.ts",
+        "src/hooks/useUnreadNotificationCount.ts",
         "src/utils/aiQuota.ts",
         "src/utils/cashfree.ts"
       ]
@@ -1640,7 +1653,7 @@
     },
     {
       "path": "src/components/Layout.tsx",
-      "sha256": "bc6c432618b133a9133cafdd4a03b5f7a99f8863d52433a746353c6bea762c67",
+      "sha256": "761761f69453295ed921259979b4734b3c213a4f1d32f2ed210bec64e965f6a3",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -1681,7 +1694,7 @@
     },
     {
       "path": "src/components/NotificationInbox.tsx",
-      "sha256": "9b4155da9b91fc1f28c9dbf49ed15c7532685b1b71200aaaa3052c5219ad752a",
+      "sha256": "dc7df7679ca23ca8d80b9a106a676bb9382aa953e1643ce5badac63829e522ca",
       "importedBy": [
         "src/components/Layout.tsx"
       ]
@@ -1724,7 +1737,7 @@
     },
     {
       "path": "src/components/PushNotificationPrompt.tsx",
-      "sha256": "9151043147eef38a136de4899fb6653deb71cf517ccd8664593c666c78b7faef",
+      "sha256": "1a054521c346c1c5c9fc738b56c8c3c076aab4d918d26ecc9ebff8ab547663ef",
       "importedBy": [
         "src/components/Layout.tsx"
       ]
@@ -1826,7 +1839,7 @@
     },
     {
       "path": "src/components/UserProfileModal.tsx",
-      "sha256": "669ef8b99c6d10d6b8212838b75bf7ec2d53c083d9405dd7afa92255cc9305e7",
+      "sha256": "80854df2675a9501ec9916daf7457945ba1665e30debd8bead6cf0963d5ae605",
       "importedBy": [
         "src/components/Layout.tsx"
       ]
@@ -2684,6 +2697,13 @@
       ]
     },
     {
+      "path": "src/hooks/useUnreadNotificationCount.ts",
+      "sha256": "fe96d0ae62c6e40e23c4594c9f10d55f58feae3a42f49aeacb22edddb198299a",
+      "importedBy": [
+        "src/components/Layout.tsx"
+      ]
+    },
+    {
       "path": "src/hooks/useVisibilityInterval.ts",
       "sha256": "3df9b4e022d529bcd7657725f92d05e8b5f6c0070f0b6b3c1d828017cf65537c",
       "importedBy": [
@@ -2695,7 +2715,8 @@
         "src/components/Layout.tsx",
         "src/components/NewsPortal.tsx",
         "src/components/WatchlistManager.tsx",
-        "src/hooks/useMarketIndices.ts"
+        "src/hooks/useMarketIndices.ts",
+        "src/hooks/useUnreadNotificationCount.ts"
       ]
     },
     {
@@ -3076,7 +3097,7 @@
     },
     {
       "path": "src/utils/oneSignal.ts",
-      "sha256": "e018a5accb1f0e73062c930ddbab6296b0b45f699656c3087e683fa1883bcfea",
+      "sha256": "1081142b992a3dc8f7d662304172ccec7755a3586f201682df995fbc6717d315",
       "importedBy": [
         "src/components/PushNotificationPrompt.tsx",
         "src/main.tsx"
@@ -3202,6 +3223,15 @@
         "src/components/WatchlistManager.tsx",
         "src/components/results/ResultsPage.tsx",
         "src/utils/announcementFeed.ts"
+      ]
+    },
+    {
+      "path": "src/utils/unreadNotificationCount.ts",
+      "sha256": "bac82afdbb236858cdfde01cfa7ee79bc3d64f5003e0a3f7d3753d9f1c960e17",
+      "importedBy": [
+        "server/tests/notificationStartup.test.ts",
+        "src/components/Layout.tsx",
+        "src/hooks/useUnreadNotificationCount.ts"
       ]
     },
     {
@@ -5757,6 +5787,24 @@
       "line": 3
     },
     {
+      "source": "server/tests/notificationCountApi.test.ts",
+      "target": "server/api/routes.ts",
+      "kind": "dynamic",
+      "line": 14
+    },
+    {
+      "source": "server/tests/notificationCountApi.test.ts",
+      "target": "server/database/notificationDao.ts",
+      "kind": "dynamic",
+      "line": 15
+    },
+    {
+      "source": "server/tests/notificationStartup.test.ts",
+      "target": "src/utils/unreadNotificationCount.ts",
+      "kind": "import",
+      "line": 6
+    },
+    {
       "source": "server/tests/oneSignal.test.ts",
       "target": "server/services/oneSignal.ts",
       "kind": "import",
@@ -7468,111 +7516,123 @@
     },
     {
       "source": "src/components/Layout.tsx",
+      "target": "src/hooks/useUnreadNotificationCount.ts",
+      "kind": "import",
+      "line": 28
+    },
+    {
+      "source": "src/components/Layout.tsx",
+      "target": "src/utils/unreadNotificationCount.ts",
+      "kind": "import",
+      "line": 29
+    },
+    {
+      "source": "src/components/Layout.tsx",
       "target": "src/utils/motionTokens.ts",
       "kind": "import",
-      "line": 30
+      "line": 32
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/UserProfileModal.tsx",
       "kind": "import",
-      "line": 40
+      "line": 42
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/AuthModal.tsx",
       "kind": "import",
-      "line": 41
+      "line": 43
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/ProUpgradeModal.tsx",
       "kind": "import",
-      "line": 42
+      "line": 44
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/ui/SocialLinks.tsx",
       "kind": "import",
-      "line": 43
+      "line": 45
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/AdminPinModal.tsx",
       "kind": "import",
-      "line": 44
+      "line": 46
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/HelpModal.tsx",
       "kind": "import",
-      "line": 45
+      "line": 47
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/TermsModal.tsx",
       "kind": "import",
-      "line": 46
+      "line": 48
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/SecurityAuditModal.tsx",
       "kind": "import",
-      "line": 47
+      "line": 49
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/CookieConsentBanner.tsx",
       "kind": "import",
-      "line": 48
+      "line": 50
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/NotificationInbox.tsx",
       "kind": "import",
-      "line": 49
+      "line": 51
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/AlertRulesModal.tsx",
       "kind": "import",
-      "line": 50
+      "line": 52
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/CompanyIntelligenceModal.tsx",
       "kind": "import",
-      "line": 51
+      "line": 53
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/notes/NoteEditor.tsx",
       "kind": "import",
-      "line": 52
+      "line": 54
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/TodayMarketStoryModal.tsx",
       "kind": "import",
-      "line": 53
+      "line": 55
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/PushNotificationPrompt.tsx",
       "kind": "import",
-      "line": 54
+      "line": 56
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/ReferralDashboardModal.tsx",
       "kind": "import",
-      "line": 55
+      "line": 57
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/story/storyData.ts",
       "kind": "import",
-      "line": 56
+      "line": 58
     },
     {
       "source": "src/components/Login.tsx",
@@ -9549,6 +9609,24 @@
       "line": 2
     },
     {
+      "source": "src/hooks/useUnreadNotificationCount.ts",
+      "target": "src/api.ts",
+      "kind": "import",
+      "line": 2
+    },
+    {
+      "source": "src/hooks/useUnreadNotificationCount.ts",
+      "target": "src/utils/unreadNotificationCount.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "src/hooks/useUnreadNotificationCount.ts",
+      "target": "src/hooks/useVisibilityInterval.ts",
+      "kind": "import",
+      "line": 4
+    },
+    {
       "source": "src/lib/sentry.ts",
       "target": "src/version.ts",
       "kind": "import",
@@ -9809,14 +9887,21 @@
         "src/context/AuthContext.tsx",
         "src/utils/preferenceSaveQueue.ts",
         "supabase/migrations/004_notification_inbox_receipts.sql",
-        "supabase/migrations/005_user_notification_inbox_clear.sql"
+        "supabase/migrations/005_user_notification_inbox_clear.sql",
+        "src/components/Layout.tsx",
+        "src/components/NotificationInbox.tsx",
+        "src/components/UserProfileModal.tsx",
+        "src/hooks/useUnreadNotificationCount.ts",
+        "src/utils/unreadNotificationCount.ts"
       ],
       "tests": [
         "server/tests/notes.test.ts",
         "server/tests/preferenceSaveQueue.test.ts",
-        "server/tests/followupAudit.test.ts"
+        "server/tests/followupAudit.test.ts",
+        "server/tests/notificationStartup.test.ts",
+        "server/tests/notificationCountApi.test.ts"
       ],
-      "reason": "Verified UID must constrain every read/write/delete. Delayed saves must not resurrect deleted data or overwrite newer preferences; inbox clear/read must be durable."
+      "reason": "Verified UID must constrain every read/write/delete. Delayed saves must not resurrect deleted data or overwrite newer preferences; inbox clear/read must be durable. Unread counts require verified server authentication; Layout owns one account-scoped snapshot shared by header, inbox and profile. Cached login paint and guest reads never supply a private badge."
     },
     {
       "id": "storage",
@@ -10123,7 +10208,9 @@
         "src/styles/home-news.css",
         "src/components/ui/motion/ShareActionMenu.tsx",
         "src/components/notes/SaveNoteButton.tsx",
-        "src/shared/scripMatching.ts"
+        "src/shared/scripMatching.ts",
+        "src/hooks/useUnreadNotificationCount.ts",
+        "src/utils/unreadNotificationCount.ts"
       ],
       "tests": [
         "server/tests/core.test.ts",
@@ -10132,7 +10219,9 @@
         "server/tests/alertRulesApi.test.ts",
         "server/tests/homeNews.test.ts",
         "server/tests/announcementFeed.test.ts",
-        "server/tests/sevenFixes.test.ts"
+        "server/tests/sevenFixes.test.ts",
+        "server/tests/notificationStartup.test.ts",
+        "server/tests/notificationCountApi.test.ts"
       ],
       "reason": "List/detail identity, filters, watchlist membership, badge counts and timestamps must agree. Background refresh preserves content, density, selection and scroll. Rapid filter changes must not render older responses."
     },
@@ -10224,13 +10313,16 @@
         "src/utils/telemetry.ts",
         "src/utils/oneSignal.ts",
         "src/components/PushNotificationPrompt.tsx",
-        "src/components/ui/SyncStatusBadge.tsx"
+        "src/components/ui/SyncStatusBadge.tsx",
+        "index.html",
+        "public/OneSignalSDKWorker.js"
       ],
       "tests": [
         "server/tests/pwaOfflineSync.test.ts",
-        "server/tests/apiCancellation.test.ts"
+        "server/tests/apiCancellation.test.ts",
+        "server/tests/notificationStartup.test.ts"
       ],
-      "reason": "Network events affect banners and retry state; service-worker cache differs from request success. Consent and push permission have separate lifecycles. Review cached user data on logout/account switch and avoid duplicate listeners or delivery."
+      "reason": "Network events affect banners and retry state; service-worker cache differs from request success. Consent and push permission have separate lifecycles. Review cached user data on logout/account switch and avoid duplicate listeners or delivery. Native granted permission suppresses the Allow banner independently of SDK readiness; push keeps its legacy URL at /push/onesignal/ scope, distinct from the root PWA. Preview cleanup unregisters only sw.js."
     },
     {
       "id": "frontend-public",
@@ -12439,12 +12531,13 @@
       "method": "GET",
       "path": "/notifications/unread-count",
       "middleware": [
+        "requireAuth",
         "<handler>"
       ]
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2428,
+      "line": 2429,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/notifications/:id/read",
@@ -12455,7 +12548,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2438,
+      "line": 2439,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/notifications/read-batch",
@@ -12466,7 +12559,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2449,
+      "line": 2450,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/notifications/read-all",
@@ -12477,7 +12570,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2459,
+      "line": 2460,
       "receiver": "apiRouter",
       "method": "DELETE",
       "path": "/notifications",
@@ -12488,7 +12581,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2469,
+      "line": 2470,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/notifications/toggle-mute",
@@ -12499,7 +12592,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2528,
+      "line": 2529,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/alert-rules",
@@ -12510,7 +12603,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2539,
+      "line": 2540,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/alert-rules",
@@ -12521,7 +12614,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2549,
+      "line": 2550,
       "receiver": "apiRouter",
       "method": "PATCH",
       "path": "/alert-rules/:id/toggle",
@@ -12532,7 +12625,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2560,
+      "line": 2561,
       "receiver": "apiRouter",
       "method": "DELETE",
       "path": "/alert-rules/:id",
@@ -12543,7 +12636,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2570,
+      "line": 2571,
       "receiver": "apiRouter",
       "method": "PUT",
       "path": "/alert-rules/presets",
@@ -12554,7 +12647,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2579,
+      "line": 2580,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/market/indices",
@@ -12565,7 +12658,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2592,
+      "line": 2593,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/market/status",
@@ -12576,7 +12669,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2614,
+      "line": 2615,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/telemetry/event",
@@ -12587,7 +12680,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2649,
+      "line": 2650,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/admin/diagnostics",
@@ -12598,7 +12691,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2675,
+      "line": 2676,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/admin/diagnostics/clear",
@@ -12609,7 +12702,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2685,
+      "line": 2686,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/admin/diagnostics/test-alert",
@@ -12620,7 +12713,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2722,
+      "line": 2723,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/admin/diagnostics/approved-bugs",
@@ -12631,7 +12724,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2732,
+      "line": 2733,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/admin/diagnostics/approved-bugs",
@@ -12642,7 +12735,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2746,
+      "line": 2747,
       "receiver": "apiRouter",
       "method": "DELETE",
       "path": "/admin/diagnostics/approved-bugs/:id",
@@ -12653,7 +12746,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2756,
+      "line": 2757,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/admin/diagnostics/toggle-mute-alerts",
@@ -12664,7 +12757,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2773,
+      "line": 2774,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/security/audit",
@@ -12675,7 +12768,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2784,
+      "line": 2785,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/security/pen-test",
@@ -12686,7 +12779,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2795,
+      "line": 2796,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/admin/bloom-stats",
@@ -12697,7 +12790,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2805,
+      "line": 2806,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/admin/bloom-test",
@@ -13043,6 +13136,32 @@
       "path": "/api/impact-radar",
       "middleware": [
         "impactRadarRouter"
+      ]
+    },
+    {
+      "file": "server/tests/notificationCountApi.test.ts",
+      "line": 17,
+      "receiver": "app",
+      "method": "USE",
+      "path": "express.json()",
+      "middleware": []
+    },
+    {
+      "file": "server/tests/notificationCountApi.test.ts",
+      "line": 20,
+      "receiver": "app",
+      "method": "USE",
+      "path": "(req, _res, next) => { const uid = req.headers.authorization; (req as any).user = uid === 'alice' || uid === 'bob' ? { uid, isAnonymous: false } : { uid: 'guest', isAnonymous: true }; next(); }",
+      "middleware": []
+    },
+    {
+      "file": "server/tests/notificationCountApi.test.ts",
+      "line": 26,
+      "receiver": "app",
+      "method": "USE",
+      "path": "/api",
+      "middleware": [
+        "apiRouter"
       ]
     },
     {
@@ -13446,6 +13565,12 @@
       "target": "base+'/feed?symbol=A'"
     },
     {
+      "file": "server/tests/notificationCountApi.test.ts",
+      "line": 31,
+      "function": "fetch",
+      "target": "base + suffix"
+    },
+    {
       "file": "server/tests/startupRecovery.test.ts",
       "line": 28,
       "function": "fetch",
@@ -13747,19 +13872,13 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 182,
+      "line": 190,
       "function": "customFetch",
       "target": "'/api/storage/quota-mode'"
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 202,
-      "function": "customFetch",
-      "target": "'/api/notifications/unread-count'"
-    },
-    {
-      "file": "src/components/Layout.tsx",
-      "line": 691,
+      "line": 681,
       "function": "customFetch",
       "target": "'/api/health'"
     },
@@ -13831,19 +13950,19 @@
     },
     {
       "file": "src/components/NotificationInbox.tsx",
-      "line": 201,
+      "line": 199,
       "function": "customFetch",
       "target": "`/api/notifications/${id}/read`"
     },
     {
       "file": "src/components/NotificationInbox.tsx",
-      "line": 220,
+      "line": 216,
       "function": "customFetch",
       "target": "'/api/notifications/read-all'"
     },
     {
       "file": "src/components/NotificationInbox.tsx",
-      "line": 240,
+      "line": 236,
       "function": "customFetch",
       "target": "'/api/notifications'"
     },
@@ -14113,15 +14232,9 @@
     },
     {
       "file": "src/components/UserProfileModal.tsx",
-      "line": 69,
-      "function": "customFetch",
-      "target": "'/api/watchlists'"
-    },
-    {
-      "file": "src/components/UserProfileModal.tsx",
       "line": 70,
       "function": "customFetch",
-      "target": "'/api/notifications/unread-count'"
+      "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
@@ -14434,6 +14547,12 @@
       "line": 53,
       "function": "customFetch",
       "target": "'/api/market/indices'"
+    },
+    {
+      "file": "src/hooks/useUnreadNotificationCount.ts",
+      "line": 11,
+      "function": "customFetch",
+      "target": "'/api/notifications/unread-count'"
     },
     {
       "file": "src/lib/sentry.ts",
@@ -15447,19 +15566,19 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 109,
+      "line": 111,
       "function": "localStorage.getItem",
       "key": "sessionKey"
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 116,
+      "line": 118,
       "function": "localStorage.getItem",
       "key": "sessionKey"
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 129,
+      "line": 131,
       "function": "localStorage.setItem",
       "key": "sessionKey"
     },
@@ -15519,13 +15638,13 @@
     },
     {
       "file": "src/components/PushNotificationPrompt.tsx",
-      "line": 17,
+      "line": 18,
       "function": "localStorage.getItem",
       "key": "DISMISS_KEY"
     },
     {
       "file": "src/components/PushNotificationPrompt.tsx",
-      "line": 65,
+      "line": 83,
       "function": "localStorage.setItem",
       "key": "DISMISS_KEY"
     },
@@ -16406,7 +16525,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2786,
+      "line": 2787,
       "name": "PORT"
     },
     {
@@ -17165,6 +17284,26 @@
       "name": "SUPABASE_SERVICE_ROLE_KEY"
     },
     {
+      "file": "server/tests/notificationCountApi.test.ts",
+      "line": 10,
+      "name": "NODE_ENV"
+    },
+    {
+      "file": "server/tests/notificationCountApi.test.ts",
+      "line": 11,
+      "name": "JWT_SECRET"
+    },
+    {
+      "file": "server/tests/notificationCountApi.test.ts",
+      "line": 12,
+      "name": "SUPABASE_URL"
+    },
+    {
+      "file": "server/tests/notificationCountApi.test.ts",
+      "line": 13,
+      "name": "SUPABASE_SERVICE_ROLE_KEY"
+    },
+    {
       "file": "server/tests/radarIntakeIntegration.test.ts",
       "line": 3,
       "name": "SUPABASE_URL"
@@ -17540,7 +17679,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 96,
+      "line": 98,
       "target": "window",
       "kind": "listen",
       "name": "open-referral-modal",
@@ -17548,7 +17687,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 97,
+      "line": 99,
       "target": "window",
       "kind": "remove",
       "name": "open-referral-modal",
@@ -17556,7 +17695,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 168,
+      "line": 176,
       "target": "window",
       "kind": "listen",
       "name": "network-status",
@@ -17564,7 +17703,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 171,
+      "line": 179,
       "target": "window",
       "kind": "listen",
       "name": "online",
@@ -17572,7 +17711,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 172,
+      "line": 180,
       "target": "window",
       "kind": "listen",
       "name": "offline",
@@ -17580,7 +17719,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 174,
+      "line": 182,
       "target": "window",
       "kind": "remove",
       "name": "network-status",
@@ -17588,7 +17727,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 175,
+      "line": 183,
       "target": "window",
       "kind": "remove",
       "name": "online",
@@ -17596,7 +17735,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 176,
+      "line": 184,
       "target": "window",
       "kind": "remove",
       "name": "offline",
@@ -17604,7 +17743,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 227,
+      "line": 217,
       "target": "window",
       "kind": "dispatch",
       "name": "bse_nav_tab_refresh",
@@ -17625,6 +17764,54 @@
       "kind": "remove",
       "name": "keydown",
       "expression": "document.removeEventListener('keydown',onKeyDown)"
+    },
+    {
+      "file": "src/components/PushNotificationPrompt.tsx",
+      "line": 28,
+      "target": "window",
+      "kind": "listen",
+      "name": "focus",
+      "expression": "window.addEventListener('focus', refresh)"
+    },
+    {
+      "file": "src/components/PushNotificationPrompt.tsx",
+      "line": 29,
+      "target": "document",
+      "kind": "listen",
+      "name": "visibilitychange",
+      "expression": "document.addEventListener('visibilitychange', onVisible)"
+    },
+    {
+      "file": "src/components/PushNotificationPrompt.tsx",
+      "line": 30,
+      "target": "window",
+      "kind": "listen",
+      "name": "online",
+      "expression": "window.addEventListener('online', refresh)"
+    },
+    {
+      "file": "src/components/PushNotificationPrompt.tsx",
+      "line": 42,
+      "target": "window",
+      "kind": "remove",
+      "name": "focus",
+      "expression": "window.removeEventListener('focus', refresh)"
+    },
+    {
+      "file": "src/components/PushNotificationPrompt.tsx",
+      "line": 43,
+      "target": "window",
+      "kind": "remove",
+      "name": "online",
+      "expression": "window.removeEventListener('online', refresh)"
+    },
+    {
+      "file": "src/components/PushNotificationPrompt.tsx",
+      "line": 44,
+      "target": "document",
+      "kind": "remove",
+      "name": "visibilitychange",
+      "expression": "document.removeEventListener('visibilitychange', onVisible)"
     },
     {
       "file": "src/components/ReferralDashboardModal.tsx",

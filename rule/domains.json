@@ -153,14 +153,21 @@
         "src/context/AuthContext.tsx",
         "src/utils/preferenceSaveQueue.ts",
         "supabase/migrations/004_notification_inbox_receipts.sql",
-        "supabase/migrations/005_user_notification_inbox_clear.sql"
+        "supabase/migrations/005_user_notification_inbox_clear.sql",
+        "src/components/Layout.tsx",
+        "src/components/NotificationInbox.tsx",
+        "src/components/UserProfileModal.tsx",
+        "src/hooks/useUnreadNotificationCount.ts",
+        "src/utils/unreadNotificationCount.ts"
       ],
       "tests": [
         "server/tests/notes.test.ts",
         "server/tests/preferenceSaveQueue.test.ts",
-        "server/tests/followupAudit.test.ts"
+        "server/tests/followupAudit.test.ts",
+        "server/tests/notificationStartup.test.ts",
+        "server/tests/notificationCountApi.test.ts"
       ],
-      "reason": "Verified UID must constrain every read/write/delete. Delayed saves must not resurrect deleted data or overwrite newer preferences; inbox clear/read must be durable."
+      "reason": "Verified UID must constrain every read/write/delete. Delayed saves must not resurrect deleted data or overwrite newer preferences; inbox clear/read must be durable. Unread counts require verified server authentication; Layout owns one account-scoped snapshot shared by header, inbox and profile. Cached login paint and guest reads never supply a private badge."
     },
     {
       "id": "storage",
@@ -467,7 +474,9 @@
         "src/styles/home-news.css",
         "src/components/ui/motion/ShareActionMenu.tsx",
         "src/components/notes/SaveNoteButton.tsx",
-        "src/shared/scripMatching.ts"
+        "src/shared/scripMatching.ts",
+        "src/hooks/useUnreadNotificationCount.ts",
+        "src/utils/unreadNotificationCount.ts"
       ],
       "tests": [
         "server/tests/core.test.ts",
@@ -476,7 +485,9 @@
         "server/tests/alertRulesApi.test.ts",
         "server/tests/homeNews.test.ts",
         "server/tests/announcementFeed.test.ts",
-        "server/tests/sevenFixes.test.ts"
+        "server/tests/sevenFixes.test.ts",
+        "server/tests/notificationStartup.test.ts",
+        "server/tests/notificationCountApi.test.ts"
       ],
       "reason": "List/detail identity, filters, watchlist membership, badge counts and timestamps must agree. Background refresh preserves content, density, selection and scroll. Rapid filter changes must not render older responses."
     },
@@ -568,13 +579,16 @@
         "src/utils/telemetry.ts",
         "src/utils/oneSignal.ts",
         "src/components/PushNotificationPrompt.tsx",
-        "src/components/ui/SyncStatusBadge.tsx"
+        "src/components/ui/SyncStatusBadge.tsx",
+        "index.html",
+        "public/OneSignalSDKWorker.js"
       ],
       "tests": [
         "server/tests/pwaOfflineSync.test.ts",
-        "server/tests/apiCancellation.test.ts"
+        "server/tests/apiCancellation.test.ts",
+        "server/tests/notificationStartup.test.ts"
       ],
-      "reason": "Network events affect banners and retry state; service-worker cache differs from request success. Consent and push permission have separate lifecycles. Review cached user data on logout/account switch and avoid duplicate listeners or delivery."
+      "reason": "Network events affect banners and retry state; service-worker cache differs from request success. Consent and push permission have separate lifecycles. Review cached user data on logout/account switch and avoid duplicate listeners or delivery. Native granted permission suppresses the Allow banner independently of SDK readiness; push keeps its legacy URL at /push/onesignal/ scope, distinct from the root PWA. Preview cleanup unregisters only sw.js."
     },
     {
       "id": "frontend-public",

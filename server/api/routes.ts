@@ -2407,7 +2407,8 @@ apiRouter.get("/notifications", async (req, res) => {
   }
 });
 
-apiRouter.get("/notifications/unread-count", async (req, res) => {
+apiRouter.get("/notifications/unread-count", requireAuth, async (req, res) => {
+  res.setHeader('Cache-Control', 'private, no-store');
   try {
     const uid = getReqUserId(req);
     const watchlistOnly = req.query.watchlistOnly === 'true';
