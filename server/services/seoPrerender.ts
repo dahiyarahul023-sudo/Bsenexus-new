@@ -476,6 +476,146 @@ export function prerenderFilingHtml(
 }
 
 /**
+ * Generates pre-hydrated semantic HTML and metadata for the /announcements feed page.
+ * Eliminates Google Search Console Soft 404 by rendering the latest 20-30 corporate filings
+ * directly inside the HTML body (#root), enabling seamless client-side React hydration without cloaking.
+ */
+export function prerenderAnnouncementsHtml(
+  filings: any[] = [],
+  customTemplate?: string
+): string {
+  const canonicalUrl = 'https://bsenexus.in/announcements';
+  const pageTitle = 'BSE Corporate Announcements & Financial Results Feed | Bsenexus';
+  const description = 'Track BSE corporate announcements, board meetings, financial disclosures, and regulatory filings with AI-powered financial summaries on Bsenexus.';
+
+  const recentItems = Array.isArray(filings) ? filings.slice(0, 30) : [];
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'CollectionPage',
+        '@id': `${canonicalUrl}#feed`,
+        url: canonicalUrl,
+        name: pageTitle,
+        description,
+        mainEntity: {
+          '@type': 'ItemList',
+          name: 'Latest BSE Corporate Filings',
+          numberOfItems: recentItems.length,
+          itemListElement: recentItems.map((f: any, idx: number) => {
+            const cleanId = String(f.id || f.newsId || '').trim();
+            const comp = f.companyName || f.SLONGNAME || f.symbol || 'BSE Listed Company';
+            const subj = f.subject || f.headline || f.NEWSSUB || 'Corporate Filing';
+            return {
+              '@type': 'ListItem',
+              position: idx + 1,
+              url: `https://bsenexus.in/announcement/${encodeURIComponent(cleanId)}`,
+              name: `${comp}: ${subj}`.slice(0, 110)
+            };
+          })
+        }
+      },
+      {
+        '@type': 'BreadcrumbList',
+        '@id': `${canonicalUrl}#breadcrumb`,
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://bsenexus.in/' },
+          { '@type': 'ListItem', position: 2, name: 'Announcements', item: canonicalUrl }
+        ]
+      }
+    ]
+  };
+
+  const rootInnerHtml = `
+    <div class="ssr-prehydration-wrapper ssr-announcements-feed" style="max-width:960px;margin:24px auto;padding:0 20px;font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif;">
+      <header class="ssr-announcements-header" style="margin-bottom:24px;border-bottom:1px solid #E2E8F0;padding-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-weight:700;font-size:0.75rem;padding:3px 8px;background:#ECFDF5;color:#065F46;border-radius:4px;text-transform:uppercase;letter-spacing:0.04em;">Live Feed</span>
+          <span style="font-size:0.75rem;color:#64748B;">Automated 15s BSE Regulatory Stream</span>
+        </div>
+        <h1 style="font-size:1.875rem;font-weight:800;color:#0F172A;line-height:1.25;margin:0 0 8px 0;">BSE Corporate Announcements &amp; Regulatory Filings</h1>
+        <p style="color:#64748B;font-size:0.95rem;line-height:1.5;margin:0;">Track real-time Bombay Stock Exchange disclosures, board meeting intimations, quarterly financial results, and SEBI LODR Regulation 30/33 announcements with instant summaries.</p>
+      </header>
+      <main class="ssr-announcements-content">
+        <section style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px;padding:24px;margin-bottom:24px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;border-bottom:1px solid #F1F5F9;padding-bottom:12px;">
+            <h2 style="font-size:1.125rem;font-weight:700;color:#0F172A;margin:0;">Latest Corporate Disclosures (${recentItems.length})</h2>
+            <span style="font-size:0.75rem;font-weight:600;color:#059669;background:#ECFDF5;padding:3px 8px;border-radius:4px;">Real-Time</span>
+          </div>
+          ${recentItems.length > 0 ? `
+            <div style="display:flex;flex-direction:column;gap:16px;">
+              ${recentItems.map((item: any) => {
+                const cleanId = String(item.id || item.newsId || '').trim();
+                const symbol = String(item.symbol || item.scrip_id || '').toUpperCase();
+                const scripCode = item.scripCode || item.scrip_cd || item.SCRIP_CD || '';
+                const companyName = item.companyName || item.SLONGNAME || symbol || 'BSE Listed Company';
+                const headline = item.headline || item.subject || item.NEWSSUB || 'BSE Corporate Announcement';
+                const category = item.category || 'CORPORATE_ACTION';
+                const snippet = (item.aiSummary || item.details || item.ATTACHMENTNAME || '').trim();
+
+                let pubTs = item.bseTimestamp || item.fetched_at || item.timestamp;
+                if (!pubTs || isNaN(pubTs) || pubTs <= 0) pubTs = Date.now();
+                const pubIso = new Date(pubTs).toISOString();
+                const displayDate = item.bseTime || new Date(pubTs).toLocaleString('en-IN', {
+                  timeZone: 'Asia/Kolkata',
+                  day: '2-digit',
+                  month: 'short',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: true
+                }) + ' IST';
+
+                return `
+                  <article style="border-bottom:1px solid #F1F5F9;padding-bottom:14px;">
+                    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:6px;">
+                      ${symbol ? `<span style="font-weight:700;font-size:0.75rem;padding:2px 6px;background:#F1F5F9;color:#334155;border-radius:4px;">${escapeHtmlText(symbol)}</span>` : ''}
+                      ${scripCode ? `<span style="font-size:0.75rem;color:#64748B;">BSE: ${escapeHtmlText(String(scripCode))}</span>` : ''}
+                      <span style="font-size:0.7rem;font-weight:600;padding:2px 6px;background:#ECFDF5;color:#065F46;border-radius:4px;text-transform:uppercase;">${escapeHtmlText(category)}</span>
+                      <time datetime="${escapeHtmlAttr(pubIso)}" style="font-size:0.75rem;color:#94A3B8;margin-left:auto;">${escapeHtmlText(displayDate)}</time>
+                    </div>
+                    <div style="font-size:0.8125rem;color:#475569;margin-bottom:4px;">
+                      <strong>${escapeHtmlText(companyName)}</strong>
+                    </div>
+                    <h3 style="font-size:0.95rem;font-weight:600;margin:0 0 6px 0;line-height:1.4;">
+                      <a href="/announcement/${escapeHtmlAttr(cleanId)}" style="color:#0F172A;text-decoration:none;">${escapeHtmlText(headline)}</a>
+                    </h3>
+                    ${snippet && snippet !== headline ? `
+                      <p style="font-size:0.8125rem;color:#64748B;line-height:1.4;margin:0;">${escapeHtmlText(snippet.slice(0, 180))}${snippet.length > 180 ? '...' : ''}</p>
+                    ` : ''}
+                  </article>
+                `;
+              }).join('\n')}
+            </div>
+          ` : '<p style="color:#64748B;">Monitoring BSE feed for live corporate filings...</p>'}
+        </section>
+        <section style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:20px;text-align:center;">
+          <h3 style="font-size:1rem;font-weight:700;color:#1C362A;margin:0 0 8px 0;">Looking for company intelligence or scheduled earnings?</h3>
+          <p style="color:#64748B;font-size:0.875rem;margin:0 0 14px 0;">Explore upcoming board meetings on the Results Calendar or explore detailed corporate hubs.</p>
+          <div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap;">
+            <a href="/results-calendar" style="display:inline-block;background:#1C362A;color:#34D399;font-weight:600;font-size:0.8125rem;padding:8px 16px;border-radius:6px;text-decoration:none;">Results Calendar &rarr;</a>
+            <a href="/companies" style="display:inline-block;background:#FFFFFF;border:1px solid #CBD5E1;color:#334155;font-weight:600;font-size:0.8125rem;padding:8px 16px;border-radius:6px;text-decoration:none;">Company Directory</a>
+          </div>
+        </section>
+      </main>
+    </div>
+  `;
+
+  return buildPrehydratedHtml(
+    {
+      title: pageTitle,
+      description,
+      canonical: canonicalUrl,
+      ogType: 'website',
+      jsonLd,
+      rootInnerHtml
+    },
+    customTemplate
+  );
+}
+
+/**
  * Builds the tiered sitemap index linking to core, companies, and hot filings sitemaps.
  */
 export function buildSitemapIndexXml(todayStr: string = new Date().toISOString().split('T')[0]): string {

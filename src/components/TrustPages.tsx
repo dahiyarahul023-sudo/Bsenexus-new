@@ -25,6 +25,32 @@ interface TrustPageProps {
 export const TrustPage: React.FC<TrustPageProps> = ({ type, onEnterTerminal }) => {
   useEffect(() => {
     window.scrollTo(0, 0);
+    const titles: Record<string, string> = {
+      about: 'About Bsenexus — Independent BSE Corporate Disclosures Aggregator',
+      contact: 'Contact Us | Bsenexus',
+      privacy: 'Privacy Policy | BSE Nexus',
+      terms: 'Terms of Service | Bsenexus',
+      disclaimer: 'Disclaimer & Entity Clarity | Bsenexus'
+    };
+    if (titles[type]) {
+      document.title = titles[type];
+    }
+    const canonicals: Record<string, string> = {
+      about: 'https://bsenexus.in/about',
+      contact: 'https://bsenexus.in/contact',
+      privacy: 'https://bsenexus.in/privacy-policy',
+      terms: 'https://bsenexus.in/terms',
+      disclaimer: 'https://bsenexus.in/disclaimer'
+    };
+    if (canonicals[type]) {
+      let canonicalLink = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+      if (!canonicalLink) {
+        canonicalLink = document.createElement('link');
+        canonicalLink.setAttribute('rel', 'canonical');
+        document.head.appendChild(canonicalLink);
+      }
+      canonicalLink.setAttribute('href', canonicals[type]);
+    }
   }, [type]);
 
   const renderContent = () => {

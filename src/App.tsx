@@ -100,9 +100,13 @@ function getAppPathRoute(): 'home' | 'pricing' | 'guides' | 'companies' | 'about
   if (path === '/companies' || path === '/company-directory') return 'companies';
   if (path === '/about') return 'about';
   if (path === '/contact') return 'contact';
-  if (path === '/disclaimer') return 'disclaimer';
-  if (path === '/privacy' || path === '/privacy-policy') return 'privacy';
-  if (path === '/terms' || path === '/terms-of-service') return 'terms';
+  if (path === '/privacy-policy') return 'privacy';
+  if (path === '/privacy') {
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', '/privacy-policy' + window.location.search);
+    }
+    return 'privacy';
+  }
   if (
     path.startsWith('/faq') ||
     path.startsWith('/company/') ||

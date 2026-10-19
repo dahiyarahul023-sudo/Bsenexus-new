@@ -355,8 +355,7 @@
         "server/utils/retry.ts",
         "server/utils/circuitBreaker.ts",
         "server/utils/pollCycle.ts",
-        "package.json",
-        "package-lock.json"
+        "package.json"
       ],
       "tests": [
         "server/tests/startupRecovery.test.ts",

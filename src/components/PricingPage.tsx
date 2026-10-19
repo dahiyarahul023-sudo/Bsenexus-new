@@ -156,7 +156,7 @@ export function PricingPage({ onChoosePlan }: { onChoosePlan: (planId: string) =
         </p>
         <div className="flex gap-4 flex-wrap mt-6">
           <a href="/terms" className="underline min-h-11 inline-flex items-center">Terms</a>
-          <a href="/privacy" className="underline min-h-11 inline-flex items-center">Privacy</a>
+          <a href="/privacy-policy" className="underline min-h-11 inline-flex items-center">Privacy</a>
           <a href="/contact" className="underline min-h-11 inline-flex items-center">Payment support</a>
         </div>
       </main>
