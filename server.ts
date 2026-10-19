@@ -806,34 +806,37 @@ function renderCompanyPage(data: any, symbol: string, scripCode?: string): strin
   const masterEntry = allStockEntries.find(
     e => e.symbol.toUpperCase() === symbol.toUpperCase() || (scripCode && e.scripCode === scripCode)
   );
-  const companyName = data.companyName && data.companyName !== symbol
+  const rawCompanyName = data.companyName && data.companyName !== symbol
     ? data.companyName
     : (masterEntry?.name || data.companyName || symbol);
+  const cleanCompanyName = rawCompanyName.replace(/\s+(Limited|Ltd\.?)$/i, '').trim();
+  const companyName = cleanCompanyName;
   const quote = data.quote;
   const upcomingEvent = data.upcomingEvent;
   const quarterlyResults: any[] = Array.isArray(data.quarterlyResults) ? data.quarterlyResults.filter((filing: any) => hasExactScripCode(filing, scripCode)) : [];
   const recentFilings: any[] = Array.isArray(data.recentFilings) ? data.recentFilings.filter((filing: any) => hasExactScripCode(filing, scripCode)) : [];
   const aiSnapshot = (data.aiSnapshot || '').trim();
 
-  // Programmatic Stock Page Title formula: <Company Name> (<SYMBOL>) — BSE Announcements, Results & Corporate Actions | Bsenexus
-  const pageTitle = `${companyName} (${symbol}) — BSE Announcements, Results & Corporate Actions | Bsenexus`;
+  // High-CTR Stock Page Title formula:
+  // <Clean Company Name> (<SYMBOL>) BSE Announcements & Filings Live | Bsenexus
+  const pageTitle = `${cleanCompanyName} (${symbol}) BSE Announcements & Filings Live | Bsenexus`;
   const canonicalUrl = `https://bsenexus.in/company/${encodeURIComponent(symbol)}`;
 
   const latestFiling = recentFilings[0];
   const latestAnnouncementText = latestFiling ? (latestFiling.headline || latestFiling.subject || latestFiling.NEWSSUB || latestFiling.MORE || '').trim() : '';
 
-  let description = latestAnnouncementText
-    ? `Track ${companyName} (${symbol} / BSE:${scripCode || ''}) announcements, results & corporate actions. Latest disclosure: ${latestAnnouncementText}`.trim()
-    : `Track ${companyName} (${symbol} / BSE:${scripCode || ''}) announcements, quarterly results, board meetings, and corporate actions live on Bsenexus.`.trim();
-  if (description.length > 155) {
-    description = description.slice(0, 152).trim() + '...';
-  }
+  const safeHeadline = latestAnnouncementText.replace(/`/g, "'").replace(/\$\{/g, '$ {').replace(/\s+/g, ' ').trim();
+  const scripTag = scripCode ? ` | BSE: ${scripCode}` : '';
+  const currentYear = new Date().getFullYear();
+
+  let description = safeHeadline
+    ? `Get live BSE announcements & PDF filings for ${cleanCompanyName} (${symbol}${scripTag}). Latest disclosure: "${safeHeadline.slice(0, 48)}...". Track in real-time.`.slice(0, 155)
+    : `Get live BSE announcements, ${currentYear} results & official PDF filings for ${cleanCompanyName} (${symbol}${scripTag}). Track board meetings & corporate actions.`.slice(0, 155);
 
   // FAQ — query-matched, data-driven Q&A (AI-search playbook: answer the exact
   // questions ChatGPT/Google AI Overviews search for, using the company's live
   // filing data). One source renders both the visible HTML and the JSON-LD
   // FAQPage so schema and page content always stay in sync.
-  const safeHeadline = latestAnnouncementText.replace(/`/g, "'").replace(/\$\{/g, '$ {');
   const latestFilingDate = latestFiling
     ? (latestFiling.bseTime || (latestFiling.timestamp ? new Date(latestFiling.timestamp).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' }) : ''))
     : '';
@@ -6503,18 +6506,18 @@ interface TabSeoMeta {
 
 const TAB_SEO_CONFIG: Record<string, TabSeoMeta> = {
   default: {
-    title: "Bsenexus — BSE Corporate Announcements & Disclosures",
-    description: "Track latest BSE corporate announcements, board meeting outcomes, financial results, and regulatory filings on Bsenexus.",
+    title: "BSE Corporate Announcements & Filings Live | Bsenexus",
+    description: "Track live BSE corporate announcements, board meetings, Q2/Q3 results calendar & SEBI LODR filings for 5,000+ Indian stocks with AI summaries on Bsenexus.",
     canonical: "https://bsenexus.in/",
   },
   announcements: {
-    title: "Live BSE Announcements & Corporate Filings | Bsenexus",
-    description: "Track BSE corporate announcements, board meetings, financial disclosures, and regulatory filings with AI-powered financial summaries on Bsenexus.",
+    title: "BSE Corporate Announcements & Filings Live Today | Bsenexus",
+    description: "Real-time BSE corporate announcements & regulatory filings today. Search 5,000+ BSE companies, download official PDF disclosures & get instant AI summaries.",
     canonical: "https://bsenexus.in/announcements",
   },
   live: {
-    title: "Live BSE Feed | BSE Nexus",
-    description: "Track BSE corporate announcements, board meetings, financial disclosures, and regulatory filings with AI-powered financial summaries on Bsenexus.",
+    title: "Live BSE Feed & Corporate Filings Streaming | Bsenexus",
+    description: "Streaming BSE corporate announcements, board meetings, financial disclosures & regulatory filings with AI summaries live on Bsenexus.",
     canonical: "https://bsenexus.in/announcements",
   },
   "results-calendar": {

@@ -13,23 +13,60 @@ import type { DesignTheme } from './types';
 
 import { LandingPage } from './components/LandingPage';
 import { Layout } from './components/Layout';
-const Announcements = lazy(() => import('./components/Announcements'));
 import { AuthModal } from './components/AuthModal';
 import { ProUpgradeModal } from './components/ProUpgradeModal';
 import { ProCheckoutView } from './components/ProCheckoutView';
 import { ProReceiptView } from './components/ProReceiptView';
 import { AdminPinModal } from './components/AdminPinModal';
-const HomeForYou = lazy(() => import('./components/HomeForYou').then(m => ({ default: m.HomeForYou })));
+
+/**
+ * Wraps dynamic React.lazy imports with automated retry logic to seamlessly recover
+ * from transient network dropouts, Vite dev-server restarts, or stale module caches.
+ */
+function lazyWithRetry<T extends React.ComponentType<any>>(
+  factory: () => Promise<{ default: T }>,
+  retries = 3,
+  interval = 800
+): React.LazyExoticComponent<T> {
+  return lazy(() =>
+    new Promise<{ default: T }>((resolve, reject) => {
+      const attempt = (remaining: number) => {
+        factory()
+          .then(resolve)
+          .catch((error: any) => {
+            const isFetchError =
+              !error ||
+              error?.name === 'TypeError' ||
+              error?.message?.includes('Failed to fetch dynamically imported module') ||
+              error?.message?.includes('error loading dynamically imported module') ||
+              error?.message?.includes('Importing a module script failed');
+
+            if (remaining > 0 && isFetchError) {
+              setTimeout(() => {
+                attempt(remaining - 1);
+              }, interval);
+            } else {
+              reject(error);
+            }
+          });
+      };
+      attempt(retries);
+    })
+  );
+}
+
+const Announcements = lazyWithRetry(() => import('./components/Announcements'));
+const HomeForYou = lazyWithRetry(() => import('./components/HomeForYou').then(m => ({ default: m.HomeForYou })));
 // Route-level code splitting: heavy tab/route panels load on first visit,
 // keeping feed and home code out of the landing page's initial download.
-const WatchlistManager = lazy(() => import('./components/WatchlistManager').then(m => ({ default: m.WatchlistManager })));
-const ResultsCalendar = lazy(() => import('./components/ResultsCalendar').then(m => ({ default: m.ResultsCalendar })));
-const NewsPortal = lazy(() => import('./components/NewsPortal').then(m => ({ default: m.NewsPortal })));
-const StorageManager = lazy(() => import('./components/StorageManager').then(m => ({ default: m.StorageManager })));
-const AdminDiagnostics = lazy(() => import('./components/AdminDiagnostics').then(m => ({ default: m.AdminDiagnostics })));
-const LogsTab = lazy(() => import('./components/LogsTab').then(m => ({ default: m.LogsTab })));
-const SettingsTab = lazy(() => import('./components/SettingsTab').then(m => ({ default: m.SettingsTab })));
-const SeoStudio = lazy(() => import('./components/seo/SeoStudio').then(m => ({ default: m.SeoStudio })));
+const WatchlistManager = lazyWithRetry(() => import('./components/WatchlistManager').then(m => ({ default: m.WatchlistManager })));
+const ResultsCalendar = lazyWithRetry(() => import('./components/ResultsCalendar').then(m => ({ default: m.ResultsCalendar })));
+const NewsPortal = lazyWithRetry(() => import('./components/NewsPortal').then(m => ({ default: m.NewsPortal })));
+const StorageManager = lazyWithRetry(() => import('./components/StorageManager').then(m => ({ default: m.StorageManager })));
+const AdminDiagnostics = lazyWithRetry(() => import('./components/AdminDiagnostics').then(m => ({ default: m.AdminDiagnostics })));
+const LogsTab = lazyWithRetry(() => import('./components/LogsTab').then(m => ({ default: m.LogsTab })));
+const SettingsTab = lazyWithRetry(() => import('./components/SettingsTab').then(m => ({ default: m.SettingsTab })));
+const SeoStudio = lazyWithRetry(() => import('./components/seo/SeoStudio').then(m => ({ default: m.SeoStudio })));
 
 // Minimal route-level suspense fallback: matches the app's existing loading
 // language; visible only while a tab's chunk loads on first visit.

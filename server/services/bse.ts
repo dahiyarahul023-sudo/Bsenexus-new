@@ -30,6 +30,14 @@ export function getBseBlockBackoffLevel(): number {
   return bseSourceBlocked ? bseBlockBackoffLevel : 0;
 }
 
+export function getBseCooldownRemainingMs(): number {
+  if (!bseSourceBlocked) return 0;
+  const durations = [0, 20_000, 60_000, 300_000];
+  const cooldownMs = durations[Math.min(3, bseBlockBackoffLevel)] || 20_000;
+  const elapsed = Date.now() - bseBlockedAtMs;
+  return Math.max(0, cooldownMs - elapsed);
+}
+
 function markBseBlocked(reason: string) {
   const now = Date.now();
   if (!bseSourceBlocked) {
@@ -38,6 +46,7 @@ function markBseBlocked(reason: string) {
     bseLastEscalationMs = now;
     bseBlockBackoffLevel = 1;
   } else if (now - bseLastEscalationMs > 15000) {
+    bseBlockedAtMs = now;
     bseLastEscalationMs = now;
     bseBlockBackoffLevel = Math.min(3, bseBlockBackoffLevel + 1);
   }
@@ -141,6 +150,11 @@ async function fetchWithHardenedRetries(url: string, timeoutMs: number = 5000, m
         }
 
         console.warn(`[POLLER] BSE request failed: HTTP ${res.status}`);
+        if (res.status === 403) {
+          // If BSE Akamai Edge WAF returned 403 Forbidden, retrying immediately
+          // escalates the rate-limit block. Fail fast to allow backoff to cool down.
+          return null;
+        }
         if (attempt < maxRetries) {
           const delay = RETRY_BACKOFF_DELAYS[attempt] || 500;
           await new Promise(r => setTimeout(r, delay));
@@ -241,6 +255,16 @@ export async function testBSEConnection() {
     return { 
       success: false, 
       error: "BSE API circuit breaker is currently OPEN (cooling down to protect server resources). Will retry automatically." 
+    };
+  }
+
+  // Check if source is in active rate-limit cooldown
+  const cooldownMs = getBseCooldownRemainingMs();
+  if (cooldownMs > 0) {
+    bseHealth = { status: 'down', latency: -1 };
+    return {
+      success: false,
+      error: `BSE API rate-limited (HTTP 403). Cooldown active (${Math.ceil(cooldownMs / 1000)}s remaining) to clear Akamai WAF block.`
     };
   }
 
@@ -387,6 +411,23 @@ export async function fetchBSEAnnouncements(signal?: AbortSignal) {
 
   const isBootCycle = !bootBackfillDone;
   const maxDeepPages = 3; // Bound restart bursts to the same window as normal polling.
+
+  // If BSE is in an active WAF rate-limit cooldown, DO NOT hammer BSE with repeated requests.
+  // Directly attempt live NSE recovery feed to give BSE's Akamai edge block time to clear.
+  const cooldownRemaining = getBseCooldownRemainingMs();
+  if (cooldownRemaining > 0) {
+    try {
+      const nseQuick = await fetchNSECorporateAnnouncements(signal);
+      if (nseQuick && nseQuick.length > 0) {
+        bseHealth = { status: 'degraded', latency: 450 };
+        return nseQuick;
+      }
+    } catch (_nseErr) {
+      signal?.throwIfAborted();
+    }
+    bseHealth = { status: 'down', latency: -1 };
+    return null;
+  }
   
   // Primary live endpoint: AnnSubCategoryGetData page 1 returns ~50 latest filings
   let table = await fetchSingleBsePage(1, '', 'AnnSubCategoryGetData', 5000, todayDate, 1, signal);

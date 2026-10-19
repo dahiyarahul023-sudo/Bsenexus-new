@@ -359,6 +359,46 @@ export const CompanyBrandLogo: React.FC<CompanyBrandLogoProps> = ({
   // cdnStage: 0 = GSTK${scripCode}.png, 1 = ${sym}.png, 2 = GSTK${sym}.png, 3 = Smart Corporate Crest
   const [cdnStage, setCdnStage] = useState<number>(0);
 
+  const isBseOfficial = sym === 'BSE' || 
+    sym === 'SENSEX' || 
+    sym === 'BSESN' || 
+    sym === 'BSE30' || 
+    scripCode === '999901' ||
+    (name && name.toUpperCase().includes('BSE SENSEX'));
+
+  const isNseOfficial = sym === 'NSE' || 
+    sym === 'NIFTY' || 
+    sym === 'NIFTY50' || 
+    sym === 'BANKNIFTY' ||
+    (name && name.toUpperCase().includes('NIFTY'));
+
+  const localLogo = LOCAL_OFFICIAL_LOGOS[sym];
+
+  // Dynamic background lookup for unmapped stocks (e.g. IPOs, new mid/small-caps)
+  // Must execute unconditionally at the top of the component
+  useEffect(() => {
+    if (!sym || isBseOfficial || isNseOfficial || localLogo) return;
+    if (scripCode && /^\d{6}$/.test(scripCode)) {
+      setDynScripCode(scripCode);
+      return;
+    }
+    if (!dynScripCode) {
+      lookupScripCodeDynamically(sym, name).then(resolved => {
+        if (resolved) {
+          setDynScripCode(resolved);
+          setCdnStage(0);
+        }
+      });
+    }
+  }, [sym, scripCode, name, dynScripCode, isBseOfficial, isNseOfficial, localLogo]);
+
+  // Reset stage when symbol or scripCode changes
+  useEffect(() => {
+    setCdnStage(0);
+    const cleanSym = (symbol || '').trim().toUpperCase();
+    setDynScripCode(scripCode || SYMBOL_TO_SCRIP[cleanSym] || dynamicScripCache[cleanSym] || '');
+  }, [symbol, scripCode]);
+
   const sizeClasses = {
     xs: 'w-5 h-5 min-w-[20px] max-w-[20px] text-[8px] p-0.5',
     sm: 'w-7 h-7 min-w-[28px] max-w-[28px] text-[10px] p-1',
@@ -368,13 +408,6 @@ export const CompanyBrandLogo: React.FC<CompanyBrandLogoProps> = ({
   }[size];
 
   // 1. OFFICIAL BSE INDIA LOGO (Direct from bseindia.com)
-  const isBseOfficial = sym === 'BSE' || 
-    sym === 'SENSEX' || 
-    sym === 'BSESN' || 
-    sym === 'BSE30' || 
-    scripCode === '999901' ||
-    (name && name.toUpperCase().includes('BSE SENSEX'));
-
   if (isBseOfficial) {
     return (
       <div 
@@ -392,12 +425,6 @@ export const CompanyBrandLogo: React.FC<CompanyBrandLogoProps> = ({
   }
 
   // 2. OFFICIAL NSE LOGO
-  const isNseOfficial = sym === 'NSE' || 
-    sym === 'NIFTY' || 
-    sym === 'NIFTY50' || 
-    sym === 'BANKNIFTY' ||
-    (name && name.toUpperCase().includes('NIFTY'));
-
   if (isNseOfficial) {
     return (
       <div 
@@ -415,7 +442,6 @@ export const CompanyBrandLogo: React.FC<CompanyBrandLogoProps> = ({
   }
 
   // 3. LOCAL VERIFIED OFFICIAL VECTOR / HIGH-RES LOGO
-  const localLogo = LOCAL_OFFICIAL_LOGOS[sym];
   if (localLogo && cdnStage === 0) {
     return (
       <div 
@@ -432,23 +458,6 @@ export const CompanyBrandLogo: React.FC<CompanyBrandLogoProps> = ({
       </div>
     );
   }
-
-  // Dynamic background lookup for unmapped stocks (e.g. IPOs, new mid/small-caps)
-  useEffect(() => {
-    if (!sym || isBseOfficial || isNseOfficial || localLogo) return;
-    if (scripCode && /^\d{6}$/.test(scripCode)) {
-      setDynScripCode(scripCode);
-      return;
-    }
-    if (!dynScripCode) {
-      lookupScripCodeDynamically(sym, name).then(resolved => {
-        if (resolved) {
-          setDynScripCode(resolved);
-          setCdnStage(0);
-        }
-      });
-    }
-  }, [sym, scripCode, name, dynScripCode, isBseOfficial, isNseOfficial, localLogo]);
 
   // 4. MULTI-TIER OFFICIAL GROWW CDN LOGO CASCADE
   const effectiveScripCode = dynScripCode || scripCode || SYMBOL_TO_SCRIP[sym] || '';

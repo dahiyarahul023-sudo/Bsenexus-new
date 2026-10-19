@@ -525,7 +525,7 @@ apiRouter.get("/announcements",
     // (Skipped for the first 5 min after boot: the poller may not have completed
     // its first cycle yet, and "delayed" would be a lie.)
     try {
-      const { lastSuccessfulFetchMs, bootMs } = getBseFeedStaleness();
+      const { lastSuccessfulFetchMs, bootMs, blocked } = getBseFeedStaleness();
       const nowMs = Date.now();
       const bootedAgoMs = nowMs - bootMs;
       const STALE_AFTER_MS = 15 * 60 * 1000;
@@ -537,9 +537,9 @@ apiRouter.get("/announcements",
           res.setHeader('X-BSE-Feed-Updated-At', String(lastSuccessfulFetchMs));
         }
       }
-      // If feed has not refreshed in 15 seconds, opportunistically trigger background poll
-      // so active user navigation automatically warms and keeps filings up to date
-      if (lastSuccessfulFetchMs === 0 || (nowMs - lastSuccessfulFetchMs) > 15 * 1000) {
+      // If feed has not refreshed in 15 seconds and source is healthy (not blocked/cooling down),
+      // opportunistically trigger background poll so active user navigation keeps filings up to date.
+      if (!blocked && (lastSuccessfulFetchMs === 0 || (nowMs - lastSuccessfulFetchMs) > 15 * 1000)) {
         processAnnouncements().catch(() => {});
       }
     } catch { /* non-fatal: staleness headers are best-effort */ }

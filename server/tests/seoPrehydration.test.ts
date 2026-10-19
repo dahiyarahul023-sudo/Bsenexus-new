@@ -93,7 +93,7 @@ describe('Server-Side SEO Pre-Hydration & Validation Architecture', () => {
     const html = prerenderCompanyHtml(mockIntel, 'TCS', '532540', mockTemplate);
 
     // Title & Canonical
-    assert.ok(html.includes('<title>Tata Consultancy Services Limited (TCS) — BSE Announcements, Results &amp; Corporate Actions | Bsenexus</title>'));
+    assert.ok(html.includes('<title>Tata Consultancy Services (TCS) BSE Announcements &amp; Filings Live | Bsenexus</title>'));
     assert.ok(html.includes('<link rel="canonical" href="https://bsenexus.in/company/TCS"'));
 
     // Semantic content inside #root

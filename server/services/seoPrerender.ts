@@ -222,18 +222,21 @@ export function prerenderCompanyHtml(
   customTemplate?: string
 ): string {
   const companyName = data?.companyName || symbol;
+  const cleanCompanyName = companyName.replace(/\s+(Limited|Ltd\.?)$/i, '').trim();
   const canonicalUrl = `https://bsenexus.in/company/${encodeURIComponent(symbol)}`;
-  const pageTitle = `${companyName} (${symbol}) — BSE Announcements, Results & Corporate Actions | Bsenexus`;
+  const pageTitle = `${cleanCompanyName} (${symbol}) BSE Announcements & Filings Live | Bsenexus`;
 
   const recentFilings = Array.isArray(data?.recentFilings) ? data.recentFilings : [];
   const latestFiling = recentFilings[0];
   const latestHeadline = latestFiling?.headline || latestFiling?.subject || latestFiling?.NEWSSUB || '';
+  const safeHeadline = latestHeadline.replace(/`/g, "'").replace(/\$\{/g, '$ {').replace(/\s+/g, ' ').trim();
+  const scripTag = scripCode ? ` | BSE: ${scripCode}` : '';
+  const currentYear = new Date().getFullYear();
 
-  const description = latestHeadline
-    ? `Track ${companyName} (${symbol} / BSE:${scripCode || ''}) announcements, results & corporate actions. Latest disclosure: ${latestHeadline}`.slice(0, 155)
-    : `Track ${companyName} (${symbol} / BSE:${scripCode || ''}) announcements, quarterly results, board meetings, and corporate actions live on Bsenexus.`.slice(0, 155);
+  const description = safeHeadline
+    ? `Get live BSE announcements & PDF filings for ${cleanCompanyName} (${symbol}${scripTag}). Latest disclosure: "${safeHeadline.slice(0, 48)}...". Track in real-time.`.slice(0, 155)
+    : `Get live BSE announcements, ${currentYear} results & official PDF filings for ${cleanCompanyName} (${symbol}${scripTag}). Track board meetings & corporate actions.`.slice(0, 155);
 
-  const safeHeadline = latestHeadline.replace(/`/g, "'").replace(/\$\{/g, '$ {');
   const latestFilingDate = latestFiling?.bseTime || (latestFiling?.timestamp ? new Date(latestFiling.timestamp).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' }) : '');
 
   const faqItems = [

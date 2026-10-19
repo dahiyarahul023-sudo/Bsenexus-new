@@ -1,6 +1,6 @@
 {
   "name": "Bsenexus",
-  "description": "Track latest BSE corporate announcements, board meeting outcomes, financial results, and regulatory filings in real time on Bsenexus.",
+  "description": "Track live BSE corporate announcements, board meetings, Q2/Q3 results calendar & SEBI LODR filings for 5,000+ Indian stocks with AI summaries on Bsenexus.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

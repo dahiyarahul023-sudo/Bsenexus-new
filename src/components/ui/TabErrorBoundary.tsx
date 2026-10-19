@@ -73,6 +73,10 @@ export class TabErrorBoundary extends React.Component<TabErrorBoundaryProps, Tab
     window.location.reload();
   };
 
+  handleRetry = () => {
+    this.setState({ hasError: false, reloading: false });
+  };
+
   handleBack = () => {
     this.setState({ hasError: false, reloading: false });
     this.props.onBack?.();
@@ -95,9 +99,18 @@ export class TabErrorBoundary extends React.Component<TabErrorBoundaryProps, Tab
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
           <button
             type="button"
+            onClick={this.handleRetry}
+            disabled={this.state.reloading}
+            className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-60 shadow-sm cursor-pointer"
+          >
+            <RefreshCw className="h-4 w-4" aria-hidden="true" />
+            Try again
+          </button>
+          <button
+            type="button"
             onClick={this.handleManualReload}
             disabled={this.state.reloading}
-            className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:opacity-60 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
+            className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:opacity-60 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 cursor-pointer"
           >
             <RefreshCw className={`h-4 w-4 ${this.state.reloading ? 'animate-spin' : ''}`} aria-hidden="true" />
             {this.state.reloading ? 'Reloading…' : 'Reload app'}
