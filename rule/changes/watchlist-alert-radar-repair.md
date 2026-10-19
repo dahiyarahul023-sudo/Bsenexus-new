@@ -46,12 +46,14 @@ Action evidence: specified, source-traced, implemented and automatically tested 
 
 ## Final verification — 2026-10-19
 
-- `node --test --test-concurrency=4 --import tsx server/tests/*.test.ts`: **538 passed, 0 failed, 0 skipped**.
+- `node --test --test-concurrency=4 --import tsx server/tests/*.test.ts`: **539 passed, 0 failed, 0 skipped**.
 - `npm run build`: passed (TypeScript, Vite and server bundle). Existing large-entry-chunk warning remains; no performance improvement is claimed. The build's automatic local version bump was restored before commit as `src/version.ts` instructs.
-- `npm run lint`: passed. `npm run test:map`: **6 passed**. Regeneration/freshness check passed with 419 files, 1,107 import edges and 24 semantic domains.
+- `npm run lint`: passed. `npm run test:map`: **6 passed**. Regeneration/freshness check passed with 419 files, 1,108 import edges and 24 semantic domains.
 - Production and staging: additive `radar_source_checks` migration applied successfully. Production query confirms RLS enabled, anon read denied, authenticated write denied, service-role write allowed and zero seeded checks.
 - Security advisor: the new private table has the expected informational [RLS-with-no-browser-policy notice](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy); browser grants are revoked, and only the server writes it. Four pre-existing mutable-function-search-path warnings concern unrelated functions and were not modified.
 - Browser/device/provider testing remains unavailable as described above. No real push, Telegram message or synthetic scan success was sent as a test. Hosting release and subsequent real scan/phone delivery remain separate from this code and schema handoff.
 - Delivery target: tested source pushed to the existing GitHub `main` after checking its expected head; application hosting deployment is not performed by this task.
 
 Migration identity: the script was created with the CLI, then its local filename was aligned to the actual production-applied version `20261019143927` before commit. Staging records the same SQL under its native application version `20261019143034`; no applied history or schema was rewritten.
+
+First-read follow-through: `createDefaultWatchlists` now resolves its stock metadata at creation time. A new-account regression confirms that the very first Home request can exactly match TCS by BSE code without waiting for a cached list to expire. The complete suite was rerun: 539 passed; the application build passed again. GitHub checks for the main repair commit `317468e2e752da682188542cbed469a19f2b0397` all passed before this follow-through.

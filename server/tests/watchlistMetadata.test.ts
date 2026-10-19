@@ -1,6 +1,14 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {addWatchlist,addSymbolToWatchlist,getAllWatchlists,updateSymbolPriorityAcrossAllWatchlists} from '../database/watchlistDao.js';
+import {matchesWatchlistIdentity} from '../../src/shared/watchlistIdentity';
+
+test('a new account receives resolved default identities on its first read, without waiting for cache expiry', async () => {
+  const lists=await getAllWatchlists(`new-default-identity-${Date.now()}`);
+  const tcs=lists.flatMap(list=>list.items).find(item=>item.symbol==='TCS');
+  assert.ok(tcs);assert.equal(tcs.scripCode,'532540');assert.match(tcs.companyName,/Tata Consultancy/i);
+  assert.equal(matchesWatchlistIdentity({scrip_cd:'532540',companyName:'Tata Consultancy Services Ltd'},tcs),true);
+});
 
 test('a searched BSE-only company keeps its name and code after save and priority change', async () => {
   const owner=`watchlist-metadata-${Date.now()}`;

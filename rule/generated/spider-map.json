@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "b5b6291eadf5072fb6be7578811c6698832cceac87a38bdfe770888e336b13b8",
+  "sourceDigest": "8d662f449c7b1f9ace0f41dfa5cd4861af97852c1ce887f5fe16e7adadc961fe",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -530,7 +530,7 @@
     },
     {
       "path": "server/database/watchlistDao.ts",
-      "sha256": "1ba018e8a18531731f52a75cd85c5ebe325a032d81c96138b61b5ceef28edc98",
+      "sha256": "1c2c4c9447e311ee6978cc3ebf38c4b9c29b3ca7c64be3e9919d9f3d65f50f85",
       "importedBy": [
         "server.ts",
         "server/api/payments.ts",
@@ -1355,7 +1355,7 @@
     },
     {
       "path": "server/tests/watchlistMetadata.test.ts",
-      "sha256": "fb0e78584fbfc20336f198f4328d720cef3ce1bec8f15c4b4887255bf6f38f40",
+      "sha256": "1298054997acc6314613a2de81c88fb22d81b0f080df0381c882c89577da1b8b",
       "importedBy": []
     },
     {
@@ -2947,6 +2947,7 @@
       "sha256": "66605c234ebd1e587f46f0a1afe0d564602eb27d457eb84c3e00c2a9ddd80b55",
       "importedBy": [
         "server/tests/watchlistIdentity.test.ts",
+        "server/tests/watchlistMetadata.test.ts",
         "src/components/HomeForYou.tsx",
         "src/components/WatchlistEditor.tsx"
       ]
@@ -6508,6 +6509,12 @@
       "target": "server/database/watchlistDao.ts",
       "kind": "import",
       "line": 3
+    },
+    {
+      "source": "server/tests/watchlistMetadata.test.ts",
+      "target": "src/shared/watchlistIdentity.ts",
+      "kind": "import",
+      "line": 4
     },
     {
       "source": "server/utils/circuitBreaker.ts",

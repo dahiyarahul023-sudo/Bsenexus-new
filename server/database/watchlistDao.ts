@@ -152,7 +152,7 @@ function createDefaultWatchlists() {
       id: 'dhan-fo-top25',
       name: 'Futures & Options',
       is_active: 1,
-      items: JSON.parse(JSON.stringify(FO_TOP25_STOCKS))
+      items: FO_TOP25_STOCKS.map(sanitizeStockItem)
     }
   ];
 }
