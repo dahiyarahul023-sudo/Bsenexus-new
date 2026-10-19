@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "9d4e21e538f077fa4d29bd05dafc54ab31f1b5d9f9e31c1f87bf369bb087c3ab",
+  "sourceDigest": "428caa67773e03665d942f92b289f6d18af26cc73bc3cdf5c4878ac187fcd25d",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -169,7 +169,7 @@
     },
     {
       "path": "server/api/aiPlugin.ts",
-      "sha256": "ffb6ebbd11920bd911780a8bd5afec0948182de77a3b20c2310df077394320fa",
+      "sha256": "23ed5a6375d35fdd92e2e219b59e76d66d54059d6917cb1d53369d8b5f161775",
       "importedBy": [
         "server.ts",
         "server/api/routes.ts",
@@ -981,7 +981,7 @@
     },
     {
       "path": "server/tests/aiPlugin.test.ts",
-      "sha256": "71385363b52b2a6ca916e9063b1a170c3e08e457aa52af1542ac015cd519b80d",
+      "sha256": "30de1a1511371aedadf12752678aad3546db59e993dbf594207cda3c684668e5",
       "importedBy": []
     },
     {
@@ -1754,14 +1754,14 @@
     },
     {
       "path": "src/components/LandingPage.tsx",
-      "sha256": "2f1b971e8058bdefa912a2e763ed1e84d32e622bcb5e40d19bffd05154b11f37",
+      "sha256": "3ab4268962e4a847aee6f90d8b25a082ba3e7bcf74cc7d67660039cdd068558a",
       "importedBy": [
         "src/App.tsx"
       ]
     },
     {
       "path": "src/components/Layout.tsx",
-      "sha256": "761761f69453295ed921259979b4734b3c213a4f1d32f2ed210bec64e965f6a3",
+      "sha256": "2f05619169906fe4c85ca84b54785f56eeccc11845f52875e4b3f4c5e55d2587",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -1896,7 +1896,7 @@
     },
     {
       "path": "src/components/SettingsTab.tsx",
-      "sha256": "3d9b9174b7bd4063a89b7397059712073fd82143f192f2ff8abe2a483a50318e",
+      "sha256": "3d66c9b85f4005451fdb911d688a098084290caf79fe28d1de1b621d9ea6174e",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -2299,7 +2299,7 @@
     },
     {
       "path": "src/components/ui/CommandPalette.tsx",
-      "sha256": "958327ccf394ab5570215fe3407f83107caf0ac15dd5305ed95cf038ae7e5beb",
+      "sha256": "d86749c1da1889f70946b2b436e18388240b8db7516c3feca7e27fe208bd7164",
       "importedBy": [
         "src/components/Layout.tsx"
       ]
@@ -3400,7 +3400,7 @@
     },
     {
       "path": "src/version.ts",
-      "sha256": "abdeaea3c49b5df1596e7faa74539f6d1ee888baaa753635923219e46379ee5d",
+      "sha256": "974f6173316a7e6ec1e4c4d6b3c8f2ea4c1cb52151d61de531be58f1376f436d",
       "importedBy": [
         "src/components/SettingsTab.tsx",
         "src/lib/sentry.ts"
@@ -3714,19 +3714,19 @@
       "source": "server/api/aiPlugin.ts",
       "target": "server/database/announcementDao.ts",
       "kind": "import",
-      "line": 2
+      "line": 3
     },
     {
       "source": "server/api/aiPlugin.ts",
       "target": "server/services/resultsCalendarService.ts",
       "kind": "import",
-      "line": 3
+      "line": 4
     },
     {
       "source": "server/api/aiPlugin.ts",
       "target": "server/utils/stockResolver.ts",
       "kind": "import",
-      "line": 4
+      "line": 5
     },
     {
       "source": "server/api/announcementCron.ts",
@@ -8814,7 +8814,7 @@
       "source": "src/components/SettingsTab.tsx",
       "target": "src/api/notesApi.ts",
       "kind": "dynamic",
-      "line": 141
+      "line": 142
     },
     {
       "source": "src/components/StorageManager.tsx",
@@ -11542,15 +11542,31 @@
     },
     {
       "file": "server/api/aiPlugin.ts",
-      "line": 9,
+      "line": 46,
       "receiver": "aiPluginRouter",
       "method": "USE",
-      "path": "(_req, res, next) => { res.setHeader('Access-Control-Allow-Origin', '*'); res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS'); res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With'); res.set",
+      "path": "(req, res, next) => { if (req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS') { return res.status(405).json({ success: false, error: 'Method Not Allowed. BSE Nexus AI Gateway strictly permits GET and HEAD operations o",
       "middleware": []
     },
     {
       "file": "server/api/aiPlugin.ts",
-      "line": 332,
+      "line": 81,
+      "receiver": "aiPluginRouter",
+      "method": "USE",
+      "path": "aiPluginRateLimiter",
+      "middleware": []
+    },
+    {
+      "file": "server/api/aiPlugin.ts",
+      "line": 84,
+      "receiver": "aiPluginRouter",
+      "method": "USE",
+      "path": "(_req, res, next) => { res.setHeader('Access-Control-Allow-Origin', '*'); res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS'); res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With'); r",
+      "middleware": []
+    },
+    {
+      "file": "server/api/aiPlugin.ts",
+      "line": 407,
       "receiver": "aiPluginRouter",
       "method": "GET",
       "path": "/openapi.json",
@@ -11560,7 +11576,7 @@
     },
     {
       "file": "server/api/aiPlugin.ts",
-      "line": 337,
+      "line": 412,
       "receiver": "aiPluginRouter",
       "method": "GET",
       "path": "['/ai-plugin.json', '/.well-known/ai-plugin.json']",
@@ -11570,7 +11586,7 @@
     },
     {
       "file": "server/api/aiPlugin.ts",
-      "line": 342,
+      "line": 417,
       "receiver": "aiPluginRouter",
       "method": "GET",
       "path": "/gemini-tools.json",
@@ -11580,7 +11596,7 @@
     },
     {
       "file": "server/api/aiPlugin.ts",
-      "line": 347,
+      "line": 422,
       "receiver": "aiPluginRouter",
       "method": "GET",
       "path": "/v1/filings",
@@ -11590,7 +11606,7 @@
     },
     {
       "file": "server/api/aiPlugin.ts",
-      "line": 429,
+      "line": 515,
       "receiver": "aiPluginRouter",
       "method": "GET",
       "path": "/v1/results",
@@ -11600,7 +11616,7 @@
     },
     {
       "file": "server/api/aiPlugin.ts",
-      "line": 482,
+      "line": 579,
       "receiver": "aiPluginRouter",
       "method": "GET",
       "path": "/v1/board-meetings",
@@ -11610,7 +11626,7 @@
     },
     {
       "file": "server/api/aiPlugin.ts",
-      "line": 527,
+      "line": 635,
       "receiver": "aiPluginRouter",
       "method": "GET",
       "path": "/v1/company",
@@ -14463,7 +14479,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 681,
+      "line": 721,
       "function": "customFetch",
       "target": "'/api/health'"
     },
@@ -14709,49 +14725,49 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 340,
+      "line": 341,
       "function": "customFetch",
       "target": "'/api/settings'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 385,
+      "line": 386,
       "function": "customFetch",
       "target": "'/api/settings'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 618,
+      "line": 619,
       "function": "customFetch",
       "target": "'/api/users/test-telegram'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 647,
+      "line": 648,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 786,
+      "line": 787,
       "function": "customFetch",
       "target": "'/api/toggle'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 823,
+      "line": 824,
       "function": "customFetch",
       "target": "'/api/settings'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 848,
+      "line": 849,
       "function": "customFetch",
       "target": "'/api/test-telegram'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 867,
+      "line": 868,
       "function": "customFetch",
       "target": "'/api/test-gemini'"
     },
@@ -15236,6 +15252,12 @@
       "line": 311,
       "function": "Buffer.from",
       "key": "getMobileSvg()"
+    },
+    {
+      "file": "server/api/aiPlugin.ts",
+      "line": 32,
+      "function": "Array.from",
+      "key": "this.store.keys()"
     },
     {
       "file": "server/api/search.ts",
@@ -16331,25 +16353,25 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 218,
+      "line": 219,
       "function": "localStorage.getItem",
       "key": "'bse_sound_enabled'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 328,
+      "line": 329,
       "function": "localStorage.setItem",
       "key": "'bse_sound_enabled'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 375,
+      "line": 376,
       "function": "localStorage.setItem",
       "key": "'bse_sound_enabled'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 716,
+      "line": 717,
       "function": "localStorage.removeItem",
       "key": "k"
     },
@@ -16469,7 +16491,7 @@
     },
     {
       "file": "src/components/ui/CommandPalette.tsx",
-      "line": 420,
+      "line": 430,
       "function": "Array.from",
       "key": "companyItemsMap.values()"
     },
@@ -18563,7 +18585,7 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 148,
+      "line": 149,
       "target": "window",
       "kind": "listen",
       "name": "notes-changed",
@@ -18571,7 +18593,7 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 149,
+      "line": 150,
       "target": "window",
       "kind": "remove",
       "name": "notes-changed",
@@ -18579,7 +18601,7 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 311,
+      "line": 312,
       "target": "window",
       "kind": "listen",
       "name": "keydown",
@@ -18587,7 +18609,7 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 312,
+      "line": 313,
       "target": "window",
       "kind": "remove",
       "name": "keydown",
@@ -18595,7 +18617,7 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 1841,
+      "line": 1849,
       "target": "window",
       "kind": "dispatch",
       "name": "open-referral-modal",
@@ -18875,7 +18897,7 @@
     },
     {
       "file": "src/components/ui/CommandPalette.tsx",
-      "line": 253,
+      "line": 263,
       "target": "window",
       "kind": "dispatch",
       "name": "bse-filter-topic",
@@ -18883,7 +18905,7 @@
     },
     {
       "file": "src/components/ui/CommandPalette.tsx",
-      "line": 266,
+      "line": 276,
       "target": "window",
       "kind": "dispatch",
       "name": "bse-filter-topic",

@@ -185,4 +185,66 @@ describe('BSE Nexus Universal AI Plugin & Action Gateway', () => {
     assert.strictEqual(jsonBody.success, true);
     assert.ok(Array.isArray(jsonBody.meetings));
   });
+
+  test('Security: Anti-exploit method lockdown rejects POST requests with 405', async () => {
+    let statusCode = 200;
+    let jsonBody: any = null;
+
+    const mockReq = { method: 'POST', originalUrl: '/api/ai/v1/filings' } as any;
+    const mockRes = {
+      status(code: number) {
+        statusCode = code;
+        return this;
+      },
+      json(data: any) {
+        jsonBody = data;
+        return this;
+      }
+    } as any;
+
+    const routes = (aiPluginRouter as any).stack;
+    const methodGuardLayer = routes.find((r: any) => !r.route && r.handle.length === 3);
+    assert.ok(methodGuardLayer, 'Method guard middleware should exist');
+
+    let nextCalled = false;
+    await methodGuardLayer.handle(mockReq, mockRes, () => { nextCalled = true; });
+
+    assert.strictEqual(statusCode, 405);
+    assert.strictEqual(jsonBody.success, false);
+    assert.strictEqual(nextCalled, false);
+    assert.ok(jsonBody.error.includes('Method Not Allowed'));
+  });
+
+  test('Security: In-memory cache returns X-Cache HIT on duplicate filings request', async () => {
+    let headers: Record<string, string> = {};
+    let jsonBody: any = null;
+
+    const mockReq = { query: { symbol: 'INFY', limit: '2' } } as any;
+    const mockRes = {
+      setHeader(name: string, val: string) {
+        headers[name] = val;
+      },
+      status() { return this; },
+      json(data: any) {
+        jsonBody = data;
+        return this;
+      }
+    } as any;
+
+    const routes = (aiPluginRouter as any).stack;
+    const routeLayer = routes.find((r: any) => r.route?.path === '/v1/filings');
+
+    // First request: MISS
+    headers = {};
+    await routeLayer.route.stack[0].handle(mockReq, mockRes, () => {});
+    assert.strictEqual(jsonBody.success, true);
+    assert.strictEqual(headers['X-Cache'], 'MISS');
+
+    // Second request: HIT
+    headers = {};
+    await routeLayer.route.stack[0].handle(mockReq, mockRes, () => {});
+    assert.strictEqual(jsonBody.success, true);
+    assert.strictEqual(headers['X-Cache'], 'HIT');
+  });
 });
+

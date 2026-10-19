@@ -78,6 +78,7 @@ const SETTINGS_REGISTRY = [
   { id: 'delete-account', title: 'Delete Account & All Personal Data', description: 'Permanently wipe your account, stored watchlists, and all cloud preferences', category: 'Danger Zone', keywords: ['delete account', 'delete my data', 'erase', 'wipe account', 'remove profile', 'gdpr', 'dpdp', 'danger'] },
   { id: 'sign-out', title: 'Sign out of account', description: 'Log out of current investor session on this device', category: 'Danger Zone', keywords: ['sign out', 'logout', 'log out', 'exit', 'session'] },
   { id: 'alerts-triggers', title: 'Alerts & Triggers', description: 'Keyword and filing-based alert rules', category: 'Tools', keywords: ['alerts', 'triggers', 'keyword', 'filters', 'rules', 'notifications'] },
+  { id: 'ai-plugin', title: 'Universal AI Plugin & Action Schema', description: 'ChatGPT Custom Actions, Google Gemini Tools & OpenAPI Gateway', category: 'Tools', keywords: ['ai', 'plugin', 'chatgpt', 'gemini', 'bot', 'api', 'openapi', 'telegram', 'actions'] },
   { id: 'companies-dir', title: 'BSE Listed Companies', description: 'Company profiles, filings and disclosures', category: 'Tools', keywords: ['companies', 'directory', 'listed', 'profiles', 'bse'] },
   { id: 'guides', title: 'User Guides & Tutorials', description: 'SEBI LODR and disclosure guides', category: 'Help & Support', keywords: ['guides', 'tutorials', 'help', 'how to', 'learn', 'user guide'] },
   { id: 'sebi', title: 'SEBI & Legal Disclaimer', description: 'Investment risks and regulatory disclosures', category: 'About & Legal', keywords: ['sebi', 'disclaimer', 'legal', 'risk', 'regulatory'] },
@@ -1025,6 +1026,13 @@ export function SettingsTab({
       icon: Bell, iconClass: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
       registryIds: ['alerts-triggers'],
       action: () => setAlertRulesOpen(true),
+    },
+    {
+      id: 'ai-plugin', title: 'Universal AI Plugin & Bot API',
+      subtitle: 'ChatGPT, Gemini & bot integrations',
+      icon: Bot, iconClass: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+      registryIds: ['ai-plugin'],
+      action: () => { if (typeof window !== 'undefined') window.location.href = '/plugin'; },
     },
     {
       id: 'companies', title: 'BSE Listed Companies',

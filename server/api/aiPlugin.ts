@@ -1,14 +1,89 @@
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 import { getRecentAnnouncements } from '../database/announcementDao.js';
 import { getStockResultsHistory, getResultsCalendarData } from '../services/resultsCalendarService.js';
 import { resolveStockDetails, getAllStockEntries } from '../utils/stockResolver.js';
 
 export const aiPluginRouter = express.Router();
 
-// CORS & Caching middleware for AI agent consumers
+// 1. High-Performance In-Memory TTL Cache to eliminate DB/CPU exhaustion attacks
+interface CacheEntry<T> {
+  data: T;
+  expiresAt: number;
+}
+
+class FastMemoryCache {
+  private store = new Map<string, CacheEntry<any>>();
+  private readonly maxEntries = 500;
+
+  get<T>(key: string): T | null {
+    const entry = this.store.get(key);
+    if (!entry) return null;
+    if (Date.now() > entry.expiresAt) {
+      this.store.delete(key);
+      return null;
+    }
+    return entry.data as T;
+  }
+
+  set<T>(key: string, data: T, ttlMs: number): void {
+    if (this.store.size >= this.maxEntries) {
+      // Prune oldest 20% to prevent heap exhaustion
+      const keysToDelete = Array.from(this.store.keys()).slice(0, 100);
+      for (const k of keysToDelete) this.store.delete(k);
+    }
+    this.store.set(key, { data, expiresAt: Date.now() + ttlMs });
+  }
+
+  clear(): void {
+    this.store.clear();
+  }
+}
+
+export const aiCache = new FastMemoryCache();
+
+// 2. Exploit Protection: HTTP Method Lockdown (strictly GET, HEAD, OPTIONS)
+aiPluginRouter.use((req, res, next) => {
+  if (req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS') {
+    return res.status(405).json({
+      success: false,
+      error: 'Method Not Allowed. BSE Nexus AI Gateway strictly permits GET and HEAD operations only.'
+    });
+  }
+  // URI Length Guard to prevent buffer overflow / ReDoS attempts
+  if (req.originalUrl && req.originalUrl.length > 512) {
+    return res.status(414).json({
+      success: false,
+      error: 'URI Too Long. Query parameters exceed maximum permitted length of 512 characters.'
+    });
+  }
+  next();
+});
+
+// 3. Strict Anti-Abuse Rate Limiter for AI Agent & Bot consumers (40 req/min per IP)
+const aiPluginRateLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute sliding window
+  max: 40, // Max 40 requests per minute per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: {
+    xForwardedForHeader: false,
+    forwardedHeader: false,
+    default: true,
+  },
+  message: {
+    success: false,
+    error: "Rate limit exceeded (40 requests per minute per IP). BSE Nexus protects system resources from automated scraping. Please retry in 60 seconds."
+  }
+});
+
+// Apply rate limiter first
+aiPluginRouter.use(aiPluginRateLimiter);
+
+// 4. CORS & Caching headers for AI agent consumers
 aiPluginRouter.use((_req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
   res.setHeader('Cache-Control', 'public, max-age=30, s-maxage=60, stale-while-revalidate=120');
   next();
@@ -343,12 +418,19 @@ aiPluginRouter.get('/gemini-tools.json', (_req, res) => {
   res.json(getGeminiToolsSpec());
 });
 
-// 4. Filings endpoint
+// 4. Filings endpoint (15s in-memory TTL cache)
 aiPluginRouter.get('/v1/filings', async (req, res) => {
   try {
-    const rawSymbol = String(req.query.symbol || '').trim();
-    const rawCategory = String(req.query.category || '').trim();
+    const rawSymbol = String(req.query.symbol || '').trim().replace(/[^a-zA-Z0-9._\-]/g, '').slice(0, 20);
+    const rawCategory = String(req.query.category || '').trim().slice(0, 50);
     const limitNum = Math.min(Math.max(parseInt(String(req.query.limit || '10'), 10) || 10, 1), 25);
+
+    const cacheKey = `filings:${rawSymbol}:${rawCategory}:${limitNum}`;
+    const cached = aiCache.get<any>(cacheKey);
+    if (cached) {
+      res.setHeader('X-Cache', 'HIT');
+      return res.json(cached);
+    }
 
     let targetSym = '';
     let targetScrip = '';
@@ -410,25 +492,29 @@ aiPluginRouter.get('/v1/filings', async (req, res) => {
       };
     });
 
-    res.json({
+    const payload = {
       success: true,
       count: filings.length,
       symbol: rawSymbol || undefined,
       category: rawCategory || undefined,
       filings
-    });
-  } catch (error: any) {
+    };
+
+    aiCache.set(cacheKey, payload, 15 * 1000);
+    res.setHeader('X-Cache', 'MISS');
+    res.json(payload);
+  } catch (_error: any) {
     res.status(500).json({
       success: false,
-      error: error?.message || 'Failed to fetch BSE filings'
+      error: 'Unable to retrieve corporate filings at this moment. Please retry shortly.'
     });
   }
 });
 
-// 5. Results endpoint
+// 5. Results endpoint (60s in-memory TTL cache)
 aiPluginRouter.get('/v1/results', async (req, res) => {
   try {
-    const rawSymbol = String(req.query.symbol || '').trim();
+    const rawSymbol = String(req.query.symbol || '').trim().replace(/[^a-zA-Z0-9._\-]/g, '').slice(0, 20);
     if (!rawSymbol) {
       return res.status(400).json({
         success: false,
@@ -449,6 +535,13 @@ aiPluginRouter.get('/v1/results', async (req, res) => {
       if (resolved.scripCode) scrip = resolved.scripCode;
     }
 
+    const cacheKey = `results:${sym}:${scrip}`;
+    const cached = aiCache.get<any>(cacheKey);
+    if (cached) {
+      res.setHeader('X-Cache', 'HIT');
+      return res.json(cached);
+    }
+
     const history = await getStockResultsHistory(sym, scrip);
 
     const formatted = history.slice(0, 8).map(h => ({
@@ -462,27 +555,38 @@ aiPluginRouter.get('/v1/results', async (req, res) => {
       nexusResultsUrl: sym && h.quarterKey ? `https://bsenexus.in/results/${encodeURIComponent(sym)}/${encodeURIComponent(h.quarterKey)}` : undefined
     }));
 
-    res.json({
+    const payload = {
       success: true,
       symbol: sym || rawSymbol,
       scripCode: scrip,
       companyName: resolved?.name || sym,
       resultsCount: formatted.length,
       results: formatted
-    });
-  } catch (error: any) {
+    };
+
+    aiCache.set(cacheKey, payload, 60 * 1000);
+    res.setHeader('X-Cache', 'MISS');
+    res.json(payload);
+  } catch (_error: any) {
     res.status(500).json({
       success: false,
-      error: error?.message || 'Failed to fetch quarterly results'
+      error: 'Unable to retrieve financial results at this moment. Please retry shortly.'
     });
   }
 });
 
-// 6. Board meetings endpoint
+// 6. Board meetings endpoint (60s in-memory TTL cache)
 aiPluginRouter.get('/v1/board-meetings', async (req, res) => {
   try {
-    const rawSymbol = String(req.query.symbol || '').trim().toUpperCase();
+    const rawSymbol = String(req.query.symbol || '').trim().toUpperCase().replace(/[^a-zA-Z0-9._\-]/g, '').slice(0, 20);
     const daysAhead = Math.min(Math.max(parseInt(String(req.query.daysAhead || '14'), 10) || 14, 1), 60);
+
+    const cacheKey = `meetings:${rawSymbol}:${daysAhead}`;
+    const cached = aiCache.get<any>(cacheKey);
+    if (cached) {
+      res.setHeader('X-Cache', 'HIT');
+      return res.json(cached);
+    }
 
     const calendarData = await getResultsCalendarData('upcoming', undefined, undefined, 'market');
     let meetings = Array.isArray(calendarData?.items) ? calendarData.items : [];
@@ -508,30 +612,41 @@ aiPluginRouter.get('/v1/board-meetings', async (req, res) => {
       daysLeft: m.daysLeft ?? null
     }));
 
-    res.json({
+    const payload = {
       success: true,
       count: formatted.length,
       symbol: rawSymbol || undefined,
       daysAhead,
       meetings: formatted
-    });
-  } catch (error: any) {
+    };
+
+    aiCache.set(cacheKey, payload, 60 * 1000);
+    res.setHeader('X-Cache', 'MISS');
+    res.json(payload);
+  } catch (_error: any) {
     res.status(500).json({
       success: false,
-      error: error?.message || 'Failed to fetch board meetings'
+      error: 'Unable to retrieve board meetings schedule at this moment. Please retry shortly.'
     });
   }
 });
 
-// 7. Company lookup endpoint
+// 7. Company lookup endpoint (10m in-memory TTL cache)
 aiPluginRouter.get('/v1/company', async (req, res) => {
   try {
-    const query = String(req.query.query || '').trim();
+    const query = String(req.query.query || '').trim().replace(/[^a-zA-Z0-9._\-\s]/g, '').slice(0, 60);
     if (!query) {
       return res.status(400).json({
         success: false,
         error: "Missing required query parameter: 'query' (e.g. 'Reliance', '500325', 'INFY')"
       });
+    }
+
+    const cacheKey = `company:${query.toUpperCase()}`;
+    const cached = aiCache.get<any>(cacheKey);
+    if (cached) {
+      res.setHeader('X-Cache', 'HIT');
+      return res.json(cached);
     }
 
     let resolved = await resolveStockDetails(query);
@@ -548,15 +663,18 @@ aiPluginRouter.get('/v1/company', async (req, res) => {
     }
 
     if (!resolved) {
-      return res.json({
+      const notFoundPayload = {
         success: true,
         found: false,
         query,
         message: `Company '${query}' not found in BSE curated directory.`
-      });
+      };
+      aiCache.set(cacheKey, notFoundPayload, 60 * 1000);
+      res.setHeader('X-Cache', 'MISS');
+      return res.json(notFoundPayload);
     }
 
-    res.json({
+    const payload = {
       success: true,
       found: true,
       company: {
@@ -566,11 +684,15 @@ aiPluginRouter.get('/v1/company', async (req, res) => {
         sector: resolved.sector || 'Listed Equity',
         nexusCompanyUrl: `https://bsenexus.in/company/${encodeURIComponent(resolved.symbol)}`
       }
-    });
-  } catch (error: any) {
+    };
+
+    aiCache.set(cacheKey, payload, 10 * 60 * 1000);
+    res.setHeader('X-Cache', 'MISS');
+    res.json(payload);
+  } catch (_error: any) {
     res.status(500).json({
       success: false,
-      error: error?.message || 'Failed to look up company'
+      error: 'Unable to look up company directory at this moment.'
     });
   }
 });
