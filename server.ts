@@ -43,6 +43,7 @@ import { verifyRecaptchaToken } from "./server/security/recaptchaService.js";
 import { getBseBlockBackoffLevel } from "./server/services/bse.js";
 import { getAllFeedback } from "./server/database/feedbackDao.js";
 import { prerenderFilingHtml, prerenderCompanyHtml, buildSitemapIndexXml, cleanCanonicalUrl, buildAnnouncementsFeedCards, buildAnnouncementsCollectionJsonLd, PRELOADER_CARD_RE } from "./server/services/seoPrerender.js";
+import { getAiPluginManifest } from "./server/api/aiPlugin.js";
 
 // Global error handlers to prevent background quota/network exceptions from crashing the process
 process.on('unhandledRejection', (reason: any) => {
@@ -5370,6 +5371,7 @@ app.get('/sitemap-core.xml', async (_req, res) => {
     { loc: 'https://bsenexus.in/disclaimer', priority: '0.8', changefreq: 'monthly' },
     { loc: 'https://bsenexus.in/privacy-policy', priority: '0.7', changefreq: 'monthly' },
     { loc: 'https://bsenexus.in/terms', priority: '0.7', changefreq: 'monthly' },
+    { loc: 'https://bsenexus.in/plugin', priority: '0.8', changefreq: 'weekly' },
   ];
   for (const page of staticUrls) {
     xml += `  <url>\n    <loc>${page.loc}</loc>\n    <lastmod>${todayStr}</lastmod>\n    <changefreq>${page.changefreq}</changefreq>\n    <priority>${page.priority}</priority>\n  </url>\n`;
@@ -5509,6 +5511,14 @@ app.get('/opensearch.xml', (_req, res) => {
   res.setHeader('Content-Type', 'application/opensearchdescription+xml; charset=utf-8');
   res.setHeader('Cache-Control', 'public, max-age=86400');
   res.sendFile(path.join(process.cwd(), 'public', 'opensearch.xml'));
+});
+
+// AI Plugin manifest for ChatGPT & external AI crawlers
+app.get(['/.well-known/ai-plugin.json', '/ai-plugin.json'], (_req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=86400');
+  res.json(getAiPluginManifest());
 });
 
 // Permanent 301 Redirects for Legacy / Unindexed URLs (Fix 2)
@@ -6582,6 +6592,16 @@ const TAB_SEO_CONFIG: Record<string, TabSeoMeta> = {
     description: "Complete schedule of BSE and NSE stock market trading holidays, clearing dates, and special trading sessions for the calendar year 2026 on Bsenexus.",
     canonical: "https://bsenexus.in/",
   },
+  plugin: {
+    title: "Universal AI Plugin & Action Gateway | BSE Nexus",
+    description: "Connect ChatGPT, Google Gemini, Claude, and Telegram bots directly to live BSE corporate disclosures, quarterly results, and board meetings with zero friction.",
+    canonical: "https://bsenexus.in/plugin",
+  },
+  "ai-plugin": {
+    title: "Universal AI Plugin & Action Gateway | BSE Nexus",
+    description: "Connect ChatGPT, Google Gemini, Claude, and Telegram bots directly to live BSE corporate disclosures, quarterly results, and board meetings with zero friction.",
+    canonical: "https://bsenexus.in/plugin",
+  },
 };
 
 const TAB_ALIASES: Record<string, string> = {
@@ -6602,6 +6622,8 @@ const TAB_ALIASES: Record<string, string> = {
   "privacy-policy": "privacy-policy",
   terms: "terms",
   "terms-of-service": "terms",
+  plugin: "plugin",
+  "ai-plugin": "plugin",
 };
 
 function injectTabSeoMetadata(html: string, tabQuery?: string): string {
@@ -6777,7 +6799,7 @@ async function startServer() {
     });
 
     // In development mode, allow verifying tab-specific SEO metadata in responses with proper headers
-    app.get(["/", "/announcements", "/live", "/results-calendar", "/watchlist", "/watchlists", "/companies", "/about", "/contact", "/disclaimer", "/privacy-policy", "/terms"], async (req, res, next) => {
+    app.get(["/", "/announcements", "/live", "/results-calendar", "/watchlist", "/watchlists", "/companies", "/about", "/contact", "/disclaimer", "/privacy-policy", "/terms", "/plugin", "/ai-plugin"], async (req, res, next) => {
       let tab = req.path === "/live" ? "live" : req.query.tab as string | undefined;
       if (!tab) {
         if (req.path === '/announcements') tab = 'announcements';
@@ -6791,6 +6813,7 @@ async function startServer() {
         else if (req.path === '/privacy-policy') tab = 'privacy-policy';
         else if (req.path === '/privacy') tab = 'privacy';
         else if (req.path === '/terms') tab = 'terms';
+        else if (req.path === '/plugin' || req.path === '/ai-plugin') tab = 'plugin';
       }
       try {
         const rawIndexHtml = fs.readFileSync(path.join(process.cwd(), "index.html"), "utf-8");
@@ -6823,6 +6846,8 @@ async function startServer() {
         p === '/disclaimer' ||
         p === '/privacy-policy' ||
         p === '/terms' ||
+        p === '/plugin' ||
+        p === '/ai-plugin' ||
         p.startsWith('/@') ||
         p.startsWith('/src') ||
         p.startsWith('/node_modules') ||
@@ -6878,7 +6903,9 @@ async function startServer() {
       '/contact',
       '/disclaimer',
       '/privacy-policy',
-      '/terms'
+      '/terms',
+      '/plugin',
+      '/ai-plugin'
     ]);
     const tabHtmlCache = new Map<string, { html: string; etag: string }>();
 
@@ -6957,6 +6984,7 @@ async function startServer() {
         else if (req.path === '/privacy-policy') tabParam = 'privacy-policy';
         else if (req.path === '/privacy') tabParam = 'privacy';
         else if (req.path === '/terms') tabParam = 'terms';
+        else if (req.path === '/plugin' || req.path === '/ai-plugin') tabParam = 'plugin';
         else tabParam = 'default';
       }
       const clientEtag = req.headers['if-none-match'];

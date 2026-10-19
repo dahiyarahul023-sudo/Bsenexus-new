@@ -495,6 +495,7 @@ export const TrustPage: React.FC<TrustPageProps> = ({ type, onEnterTerminal }) =
               <a href="/terms" className="hover:text-emerald-400 transition-colors">Terms</a>
               <a href="/companies" className="hover:text-emerald-400 transition-colors">Companies</a>
               <a href="/guides" className="hover:text-emerald-400 transition-colors">Guides</a>
+              <a href="/plugin" className="hover:text-emerald-400 transition-colors text-emerald-400/90 font-medium">AI Plugin</a>
               <a href="/sitemap.xml" target="_blank" rel="noopener noreferrer" className="hover:text-emerald-400 transition-colors">Sitemap</a>
             </div>
           </div>

@@ -89,9 +89,10 @@ const PricingPage = lazy(() => import('./components/PricingPage').then(m => ({ d
 const GuidesPage = lazy(() => import('./components/GuidesPage').then(m => ({ default: m.GuidesPage })));
 const CompaniesPage = lazy(() => import('./components/CompaniesPage').then(m => ({ default: m.CompaniesPage })));
 const TrustPage = lazy(() => import('./components/TrustPages').then(m => ({ default: m.TrustPage })));
+const AiPluginPage = lazy(() => import('./components/AiPluginPage').then(m => ({ default: m.AiPluginPage })));
 const NotFoundPage = lazy(() => import('./components/NotFoundPage').then(m => ({ default: m.NotFoundPage })));
 
-function getAppPathRoute(): 'home' | 'pricing' | 'guides' | 'companies' | 'about' | 'contact' | 'privacy' | 'terms' | 'disclaimer' | '404' {
+function getAppPathRoute(): 'home' | 'pricing' | 'guides' | 'companies' | 'about' | 'contact' | 'privacy' | 'terms' | 'disclaimer' | 'plugin' | '404' {
   if (typeof window === 'undefined') return 'home';
   const path = window.location.pathname.toLowerCase().replace(/\/+$/, '') || '/';
   if (path === '/' || path === '') return 'home';
@@ -100,6 +101,7 @@ function getAppPathRoute(): 'home' | 'pricing' | 'guides' | 'companies' | 'about
   if (path === '/companies' || path === '/company-directory') return 'companies';
   if (path === '/about') return 'about';
   if (path === '/contact') return 'contact';
+  if (path === '/plugin' || path === '/ai-plugin') return 'plugin';
   if (path === '/privacy-policy') return 'privacy';
   if (path === '/privacy') {
     if (typeof window !== 'undefined') {
@@ -273,7 +275,7 @@ function CashfreeReturnHandler() {
 }
 
 function AppContent() {
-  const [currentRoute, setCurrentRoute] = useState<'home' | 'pricing' | 'guides' | 'companies' | 'about' | 'contact' | 'privacy' | 'terms' | 'disclaimer' | '404'>(() => getAppPathRoute());
+  const [currentRoute, setCurrentRoute] = useState<'home' | 'pricing' | 'guides' | 'companies' | 'about' | 'contact' | 'privacy' | 'terms' | 'disclaimer' | 'plugin' | '404'>(() => getAppPathRoute());
   // Shareable deep-link route (/filing/:symbol/:newsId, /results/:symbol/:quarterKey).
   // Rendered as standalone public pages; must survive the tab-sync pushState logic.
   // Legacy /announcement/:newsId URLs 301-redirect server-side, so only the two
@@ -939,6 +941,26 @@ function AppContent() {
             }}
           />
         </Suspense>
+        </TabErrorBoundary>
+        {isAuthModalOpen && <AuthModal />}
+        {isProModalOpen && <ProUpgradeModal />}
+      </>
+    );
+  }
+
+  if (currentRoute === 'plugin') {
+    return (
+      <>
+        <TabErrorBoundary label="ai-plugin-page">
+          <Suspense fallback={<TabFallback />}>
+            <AiPluginPage
+              onEnterTerminal={(tab) => {
+                setCurrentRoute('home');
+                if (tab) handleTabChange(tab);
+                else setIsAuthModalOpen(true);
+              }}
+            />
+          </Suspense>
         </TabErrorBoundary>
         {isAuthModalOpen && <AuthModal />}
         {isProModalOpen && <ProUpgradeModal />}

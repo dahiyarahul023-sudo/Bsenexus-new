@@ -98,8 +98,12 @@ import { notesRouter } from "./notes.js";
 import { impactRadarRouter } from "./impactRadar.js";
 import { pageRenderCache, staticGuideCache, apiResponseCache } from "../utils/renderCache.js";
 import { getMarketGuides, getMarketGuideBySlug } from "../services/marketGuidesService.js";
+import { aiPluginRouter } from "./aiPlugin.js";
 
 export const apiRouter = express.Router();
+
+// Universal AI Plugin & OpenAPI Action Gateway (ChatGPT, Gemini, Agents)
+apiRouter.use("/ai", aiPluginRouter);
 
 // Mount Super SEO Suite (11 Verified Skills Engine)
 apiRouter.use("/seo", requireAdmin, aiRateLimiter, seoRouter);
