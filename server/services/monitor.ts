@@ -13,6 +13,7 @@ import { evaluateAlertRulesForUser, initAlertRulesFromCloud } from '../database/
 import { classifyMaterialEvent } from './timelineClassifier.js';
 import { doesAnnouncementMatchUserPrefs, personalAlertChannels } from '../utils/alertDecision.js';
 import { sendOneSignalPush, isOneSignalConfigured } from './oneSignal.js';
+import { recordFilingDeliveryTiming } from '../database/telegramResultDao.js';
 
 export { pruneAndCheckStorageCapacity };
 
@@ -243,6 +244,7 @@ export async function processAnnouncements(): Promise<AnnouncementPollResult> {
     });
 
     // Pass 2: Process them with Watchlist items at the top of the queue
+    const pendingDeliveries: Promise<void>[] = [];
     for (const item of prioritizedPending) {
       try {
         const newsId = item.NEWSID;
@@ -406,7 +408,7 @@ export async function processAnnouncements(): Promise<AnnouncementPollResult> {
           ? pdfLink.trim().replace(/"/g, '%22') 
           : null;
         if (safePdfUrl) {
-          message += `\n📎 <a href="${safePdfUrl}">Original BSE Filing</a>`;
+          message += `\n📎 <a href="${safePdfUrl}">Original ${sourceName.startsWith('NSE') ? 'NSE' : 'BSE'} Filing</a>`;
         }
 
         // 1. Dispatch to Admin Telegram & Individual Pro/Registered Users (Asynchronous dispatch)
@@ -424,13 +426,22 @@ export async function processAnnouncements(): Promise<AnnouncementPollResult> {
             try {
               const result = await sendToTelegram(message, adminChatId);
               if (result.success) {
+                void addLog('INFO', 'FILING_DELIVERY', JSON.stringify({ newsId, source: sourceName,
+                  exchangeAt: itemTs, observedAt: item._sourceObservedAt || null,
+                  processedAt: now, acceptedAt: result.acceptedAtMs || Date.now(),
+                  ingestLagMs: itemTs > 0 ? now - itemTs : null }));
+                if (result.messageId) await recordFilingDeliveryTiming({ news_id: newsId,
+                  telegram_message_id: result.messageId, source: sourceName,
+                  exchange_at: itemTs > 0 ? itemTs : null, observed_at: item._sourceObservedAt || null,
+                  processed_at: now, accepted_at: result.acceptedAtMs || Date.now(),
+                }).catch(() => addLog('WARNING', 'FILING_DELIVERY', `Timing persistence unavailable for ${newsId}`));
                 if (result.messageId) {
                   markAnnouncementSent(newsId, result.messageId);
                 }
                 addLog('SUCCESS', 'TELEGRAM', `Dispatched Admin ${priority.level} alert for ${companyName} (${priority.category})`);
                 
-                if (result.messageId && settings.telegramAiSummaryEnabled !== false) {
-                  generateAndSendSummary(result.messageId, companyName, subject, details, priority.category, pdfLink, newsId, adminChatId)
+                if (priority.category === 'RESULTS' && result.messageId && settings.telegramAiSummaryEnabled !== false) {
+                  generateAndSendSummary(result.messageId, companyName, subject, details, priority.category, pdfLink, newsId, adminChatId, 'english', scrip_cd)
                     .catch(e => addLog('ERROR', 'GEMINI', `[${companyName}] Summary dispatch exception: ${e.message}`));
                 }
               } else {
@@ -590,9 +601,9 @@ export async function processAnnouncements(): Promise<AnnouncementPollResult> {
                       const viaRule = !prefsMatch && userRuleEval.shouldSendTelegram;
                       await addLog('SUCCESS', 'TELEGRAM', `Personal alert -> user ${u.uid}: ${companyName} [${priority.category}] via ${viaRule ? 'alert-rule(telegram-on)' : 'watchlist-prefs'}`);
                       const userWantsAiSummary = uPrefs?.telegramAiSummaryEnabled !== false;
-                      if (userWantsAiSummary) {
+                      if (priority.category === 'RESULTS' && userWantsAiSummary) {
                         const userSummaryLang = (uPrefs as any)?.aiSummaryLang === 'hinglish' ? 'hinglish' : 'english';
-                        generateAndSendSummary(userRes.messageId, companyName, subject, details, priority.category, pdfLink, newsId, rawUserChatId, userSummaryLang)
+                        generateAndSendSummary(userRes.messageId, companyName, subject, details, priority.category, pdfLink, newsId, rawUserChatId, userSummaryLang, scrip_cd)
                           .catch(() => {});
                       }
                     }
@@ -611,7 +622,7 @@ export async function processAnnouncements(): Promise<AnnouncementPollResult> {
 
         // Execute dispatches concurrently without stalling the loop
         if (dispatchPromises.length > 0) {
-          Promise.allSettled(dispatchPromises).catch(() => {});
+          pendingDeliveries.push(...dispatchPromises);
         }
 
       } catch (itemErr: any) {
@@ -620,6 +631,9 @@ export async function processAnnouncements(): Promise<AnnouncementPollResult> {
         addLog('ERROR', 'MONITOR', `Error processing item ${item?.NEWSID || 'unknown'} (${item?.SLONGNAME || 'unknown'}): ${itemErr.message}`);
       }
     }
+    // Retain request-based hosting CPU through plain filing delivery. AI work is
+    // tracked separately and never holds the poller's ingestion mutex.
+    if (pendingDeliveries.length) await cycle.step('delivery-drain', () => Promise.allSettled(pendingDeliveries), 12_000);
     // Keep the existing DAO writes on request CPU until drained (bounded stage).
     await cycle.step('write-drain', () => flushSupabaseWriteQueue(3000));
     flushLocalDiskSave();

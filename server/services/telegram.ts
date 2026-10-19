@@ -48,6 +48,7 @@ export interface TelegramSendResult {
   success: boolean;
   messageId?: number;
   error?: string;
+  acceptedAtMs?: number;
 }
 
 export async function pingTelegram() {
@@ -98,7 +99,7 @@ export async function sendToTelegram(text: string, customChatId?: string | null)
       
       const latency = Date.now() - start;
       telegramHealth = { status: latency > 1500 ? 'degraded' : 'stable', latency };
-      return { success: true, messageId: responseData.result.message_id };
+      return { success: true, messageId: responseData.result.message_id, acceptedAtMs: Number(responseData.result.date) * 1000 || Date.now() };
     },
     async (err) => {
       await addLog('ERROR', 'TELEGRAM', `Send failure: ${err.message}`);

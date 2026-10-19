@@ -18,6 +18,7 @@ import { authMiddleware, authRouter, apiRateLimiter, authRateLimiter } from "./s
 import { getSanitizedClientIp } from "./server/security/accountRateLimiter.js";
 import { apiRouter } from "./server/api/routes.js";
 import { createAnnouncementCronHandler } from "./server/api/announcementCron.js";
+import { drainTelegramSummaries } from './server/services/gemini.js';
 import { processAnnouncements, getConsecutiveFailures, pruneAndCheckStorageCapacity } from "./server/services/monitor.js";
 import { fetchAndSyncResultsCalendar, getStockResultsHistory, getResultsCalendarData } from "./server/services/resultsCalendarService.js";
 import { syncWatchlistHistoricalData, backfillRecentAnnouncements, getBseFeedStaleness } from "./server/services/bse.js";
@@ -97,7 +98,14 @@ app.use(cookieParser());
 // The scheduler uses its own server-only secret, never a user session token.
 app.get('/api/cron/poll-announcements', createAnnouncementCronHandler({
   poll: processAnnouncements,
-  afterPoll: async () => { await refreshRadarIntake(); await refreshRadarPriceSnapshots(); },
+  afterPoll: async () => {
+    // Raw delivery is complete; result AI keeps request CPU after releasing
+    // ingestion, so the independent fast poller can continue handling filings.
+    await Promise.allSettled([
+      (async () => { await refreshRadarIntake(); await refreshRadarPriceSnapshots(); })(),
+      drainTelegramSummaries(),
+    ]);
+  },
   backoffMs: () => {
     const failures = getConsecutiveFailures();
     const blockLevel = getBseBlockBackoffLevel();

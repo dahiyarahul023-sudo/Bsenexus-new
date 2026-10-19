@@ -1506,8 +1506,8 @@ apiRouter.post("/send-to-telegram-manual", requireAdmin, telegramRateLimiter, as
 
     // Trigger AI summary generation & send as reply automatically if requested
     const shouldSendAi = req.body.includeAiSummary !== undefined ? Boolean(req.body.includeAiSummary) : true;
-    if (shouldSendAi) {
-      generateAndSendSummary(messageId, companyName, subject, details || '', category || 'OTHER', effectivePdf || '', newsId)
+    if (shouldSendAi && category === 'RESULTS') {
+      generateAndSendSummary(messageId, companyName, subject, details || '', category || 'OTHER', effectivePdf || '', newsId, undefined, 'english', scripCode)
         .catch(err => addLog('ERROR', 'GEMINI', `Manual AI summary send error: ${err.message}`));
     }
 

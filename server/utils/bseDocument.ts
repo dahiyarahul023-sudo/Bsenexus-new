@@ -9,12 +9,30 @@ export function isAllowedBseDocumentUrl(value: string): boolean {
 }
 
 export async function fetchBseDocument(url: string, options: RequestInit = {}): Promise<Response> {
+  return fetchAllowedDocument(url, options, isAllowedBseDocumentUrl);
+}
+
+export function isAllowedExchangeDocumentUrl(value: string): boolean {
+  if (isAllowedBseDocumentUrl(value)) return true;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && !url.username && !url.password && (!url.port || url.port === '443') &&
+      ['nsearchives.nseindia.com', 'archives.nseindia.com'].includes(url.hostname.toLowerCase()) &&
+      url.pathname.startsWith('/corporate/') && /\.pdf$/i.test(url.pathname);
+  } catch { return false; }
+}
+
+export async function fetchExchangeDocument(url: string, options: RequestInit = {}): Promise<Response> {
+  return fetchAllowedDocument(url, options, isAllowedExchangeDocumentUrl);
+}
+
+async function fetchAllowedDocument(url: string, options: RequestInit, allowed: (url: string) => boolean): Promise<Response> {
   // Validate EVERY redirect before issuing its request. Native fetch's default
   // redirect-following would let an allowed host redirect to cloud metadata.
   let current = url;
   const signal = options.signal || AbortSignal.timeout(25_000);
   for (let hop = 0; hop <= 3; hop++) {
-    if (!isAllowedBseDocumentUrl(current)) throw new Error('Only official HTTPS BSE document URLs are allowed');
+    if (!allowed(current)) throw new Error('Only official HTTPS exchange document URLs are allowed');
     const response = await fetch(current, { ...options, signal, redirect: 'manual' });
     if (![301, 302, 303, 307, 308].includes(response.status)) return response;
     const location = response.headers.get('location');

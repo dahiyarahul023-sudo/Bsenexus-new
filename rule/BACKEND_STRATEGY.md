@@ -48,6 +48,12 @@ A deployed database may contain additional manual schema. Its actual state has N
 
 Repeat the rule workflow for each bounded change. Update this strategy with evidence, not optimistic status labels. No synthetic performance targets, guessed traffic levels or unspecified infrastructure choices have been imposed.
 
+## Telegram result incident — 2026-10-19
+
+The Union Bank incident separates exchange publication from ingestion: earliest NSE broadcast 12:03:22 IST, BSE broadcast 12:05:49 and first saved filing 12:06:53.967. Exact historic Telegram acceptance seconds are unavailable. Rahul deferred the new NSE/BSE earliest-source mechanism on 2026-10-19. Exchange polling, retries, recovery/history and the existing NSE merge/fallback stay at the main baseline. The current release is limited to Telegram result analysis, durable receipts, delivery timing and the verified user-skeleton permission repair; no sub-minute production SLA is claimed.
+
+Automatic Telegram analysis is now results-only, keyed by security code and explicit period, with private durable summary/delivery claims. One valid analysis is shared per language and one reply is reserved per chat across exchange copies and restarts. Missing PDFs, obsolete-parser failures, template output and uncertain external acceptance have explicit suppression/retry behavior. Raw alerts and user-requested site AI remain independent. The additive Telegram migration has been rehearsed with rolled-back service-role calls on staging and installed on staging/production; permissions and incident suppression were checked separately from app deployment. The existing narrow user-skeleton migration is the separate permission repair; its actual installation and verification are recorded in the change evidence. See `changes/telegram-results-delivery.md` for checks, consumer dispositions, rollout limits and rollback. Runtime behavior still requires the new app release and a real subsequent filing; no test notifications were sent.
+
 
 ## Phase 5 — keep the strategy trustworthy
 

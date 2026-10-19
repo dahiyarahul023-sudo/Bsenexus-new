@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "f5732a9cbdcf1f32b449cf595051bd379781e0b84388dd19f86768870b96efe5",
+  "sourceDigest": "282a28d3a50b65e939a1fc6519a5d17ad0894bfa5591929f5b3fb70d0cc58142",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -167,7 +167,7 @@
     },
     {
       "path": "server.ts",
-      "sha256": "7bf4ada1f21d5ae5852ff97300c5257e15e60ab85fa8b1ebbb22837fb24ec002",
+      "sha256": "707eeed31f507c21eda51d64c9cdf7e654b6f58fe70fa8a100048ebb04787c60",
       "importedBy": [
         "server/tests/routeResolution.test.ts"
       ]
@@ -219,7 +219,7 @@
     },
     {
       "path": "server/api/routes.ts",
-      "sha256": "238135d9a98bfd1392b313036a8354d8cd000e9abd1535251d3d03dd14f0702c",
+      "sha256": "88d490cdb26b1a5cf2ab3b6e08480725c382f5e0390c774c66f7bf38f9af60a4",
       "importedBy": [
         "server.ts",
         "server/tests/alertRulesApi.test.ts",
@@ -458,6 +458,7 @@
         "server/api/routes.ts",
         "server/database/diagnosticsDao.ts",
         "server/security/auth.ts",
+        "server/services/gemini.ts",
         "server/services/monitor.ts",
         "server/services/resultsCalendarService.ts",
         "server/services/stockNewsService.ts",
@@ -483,12 +484,22 @@
         "server/database/radarPriceDao.ts",
         "server/database/referralsDao.ts",
         "server/database/settingsDao.ts",
+        "server/database/telegramResultDao.ts",
         "server/database/usersDao.ts",
         "server/database/watchlistDao.ts",
         "server/security/accountRateLimiter.ts",
         "server/services/resultsCalendarService.ts",
         "server/services/stockNewsService.ts",
         "server/tests/followupAudit.test.ts"
+      ]
+    },
+    {
+      "path": "server/database/telegramResultDao.ts",
+      "sha256": "d9b62308ac0502acf5d9e35f4c454a1d6ce15fe08fa0fddfdff02cce941657c1",
+      "importedBy": [
+        "server/services/gemini.ts",
+        "server/services/monitor.ts",
+        "server/services/telegramResultSummary.ts"
       ]
     },
     {
@@ -700,8 +711,9 @@
     },
     {
       "path": "server/services/gemini.ts",
-      "sha256": "a01a824e2ec507b2f5eea27dda885e0ca52f32b31f6e9e1700a79a033d9a0fd6",
+      "sha256": "442c2f6eeab28add3148b962604ee9031925d886d413211c4ee9c2663bcbe98d",
       "importedBy": [
+        "server.ts",
         "server/api/faq.ts",
         "server/api/routes.ts",
         "server/services/companyIntelService.ts",
@@ -765,7 +777,7 @@
     },
     {
       "path": "server/services/monitor.ts",
-      "sha256": "9c761d2f31ca000e673a9e76632d7ce4a55615448ee3fcc8445541a4db333b60",
+      "sha256": "320689222959a5116a6acb56aa5f70f93d25cc8fda59513c192ef3f46c81dadd",
       "importedBy": [
         "server.ts",
         "server/api/announcementCron.ts",
@@ -912,7 +924,7 @@
     },
     {
       "path": "server/services/telegram.ts",
-      "sha256": "715066fcb1a97a9be6eafb464604cc25a1de07a8ec0aede109f628b592aea9ce",
+      "sha256": "30e89406e4986320d88240ccc079766714b00556fa90078ac2ea22a14c21d85f",
       "importedBy": [
         "server.ts",
         "server/api/routes.ts",
@@ -922,6 +934,14 @@
         "server/services/resultsCalendarService.ts",
         "server/services/stockNewsService.ts",
         "server/services/storageMonitor.ts"
+      ]
+    },
+    {
+      "path": "server/services/telegramResultSummary.ts",
+      "sha256": "ccc8fbf22f74187cde8f16f26fe84482867bbd5ca96eeb33d741c727bbc98e96",
+      "importedBy": [
+        "server/services/gemini.ts",
+        "server/tests/telegramResults.test.ts"
       ]
     },
     {
@@ -1284,6 +1304,21 @@
       "importedBy": []
     },
     {
+      "path": "server/tests/telegramResultDocument.test.ts",
+      "sha256": "984b976bdc44fc61c00b00a251006935eb107a778e915a6d5319bb42db063d8c",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/telegramResultSql.test.ts",
+      "sha256": "b6148eae23bc3f5e8b02e9297662af1cffef66aa81f50b284d242ff7cf174a3f",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/telegramResults.test.ts",
+      "sha256": "8c82c54f934db7f0c14f89b81c8c9e73215fa12c20ec0455d9435ee63ec1aba7",
+      "importedBy": []
+    },
+    {
       "path": "server/tests/userSkeletonPrivileges.test.ts",
       "sha256": "015a81b2ec16e20a79b43ea40409b3619204968268fba0edd69b05d98048586d",
       "importedBy": []
@@ -1306,11 +1341,12 @@
     },
     {
       "path": "server/utils/bseDocument.ts",
-      "sha256": "c48cd320e1134cbd3fa0ae22a8d76a9d01902840cff042f5133ff1cebb38f59f",
+      "sha256": "aba44e87aa203d380510e8b611423af7b4cd5532d636e09002a2c5298156eb46",
       "importedBy": [
         "server/api/routes.ts",
         "server/services/gemini.ts",
-        "server/tests/auditSecurity.test.ts"
+        "server/tests/auditSecurity.test.ts",
+        "server/tests/telegramResults.test.ts"
       ]
     },
     {
@@ -1447,6 +1483,16 @@
         "server/tests/radarIntegrity.test.ts",
         "server/tests/sevenFixes.test.ts",
         "server/utils/helpers.ts"
+      ]
+    },
+    {
+      "path": "server/utils/telegramResultPolicy.ts",
+      "sha256": "bd49f6f3943554b329cfab59d04eefa6ce8c2c9829efc38b6e7010e4c7074a09",
+      "importedBy": [
+        "server/services/gemini.ts",
+        "server/services/telegramResultSummary.ts",
+        "server/tests/telegramResultDocument.test.ts",
+        "server/tests/telegramResults.test.ts"
       ]
     },
     {
@@ -1788,7 +1834,7 @@
     },
     {
       "path": "src/components/SettingsTab.tsx",
-      "sha256": "660979fd6e0e9e10df6c236d23e29a4704ab64282b6bff28c90fc91ac8a5c383",
+      "sha256": "c65a287a39f4d13dc5137f8c0776e954b0189b237e0d0e3b0607c12d6ee449b9",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -3303,6 +3349,11 @@
       "importedBy": []
     },
     {
+      "path": "supabase/migrations/20261019065115_telegram_result_delivery.sql",
+      "sha256": "5801b998081d42716a57e8978be4f313931831301383e7e6d69d54bb1a6bb38c",
+      "importedBy": []
+    },
+    {
       "path": "tsconfig.json",
       "sha256": "e93e15c3794e43a117964ea191ae985cbedea70c41d3d82b2e20aa8d07374fe4",
       "importedBy": []
@@ -3382,85 +3433,85 @@
     },
     {
       "source": "server.ts",
-      "target": "server/services/monitor.ts",
+      "target": "server/services/gemini.ts",
       "kind": "import",
       "line": 21
     },
     {
       "source": "server.ts",
-      "target": "server/services/resultsCalendarService.ts",
+      "target": "server/services/monitor.ts",
       "kind": "import",
       "line": 22
     },
     {
       "source": "server.ts",
-      "target": "server/services/bse.ts",
+      "target": "server/services/resultsCalendarService.ts",
       "kind": "import",
       "line": 23
     },
     {
       "source": "server.ts",
-      "target": "server/database/watchlistDao.ts",
+      "target": "server/services/bse.ts",
       "kind": "import",
       "line": 24
     },
     {
       "source": "server.ts",
-      "target": "server/services/telegram.ts",
+      "target": "server/database/watchlistDao.ts",
       "kind": "import",
       "line": 25
     },
     {
       "source": "server.ts",
-      "target": "server/services/impactRadarService.ts",
+      "target": "server/services/telegram.ts",
       "kind": "import",
       "line": 26
     },
     {
       "source": "server.ts",
-      "target": "server/services/radarPriceSync.ts",
+      "target": "server/services/impactRadarService.ts",
       "kind": "import",
       "line": 27
     },
     {
       "source": "server.ts",
-      "target": "server/services/stockNewsService.ts",
+      "target": "server/services/radarPriceSync.ts",
       "kind": "import",
       "line": 28
     },
     {
       "source": "server.ts",
-      "target": "server/database/logDao.ts",
+      "target": "server/services/stockNewsService.ts",
       "kind": "import",
       "line": 29
     },
     {
       "source": "server.ts",
-      "target": "server/utils/helpers.ts",
+      "target": "server/database/logDao.ts",
       "kind": "import",
       "line": 30
     },
     {
       "source": "server.ts",
-      "target": "server/database/announcementDao.ts",
+      "target": "server/utils/helpers.ts",
       "kind": "import",
       "line": 31
     },
     {
       "source": "server.ts",
-      "target": "server/utils/stockResolver.ts",
+      "target": "server/database/announcementDao.ts",
       "kind": "import",
       "line": 32
     },
     {
       "source": "server.ts",
-      "target": "server/services/companyIntelService.ts",
+      "target": "server/utils/stockResolver.ts",
       "kind": "import",
       "line": 33
     },
     {
       "source": "server.ts",
-      "target": "server/services/marketGuidesService.ts",
+      "target": "server/services/companyIntelService.ts",
       "kind": "import",
       "line": 34
     },
@@ -3472,57 +3523,63 @@
     },
     {
       "source": "server.ts",
-      "target": "server/database/firebase.ts",
+      "target": "server/services/marketGuidesService.ts",
       "kind": "import",
       "line": 36
     },
     {
       "source": "server.ts",
-      "target": "server/database/localStore.ts",
+      "target": "server/database/firebase.ts",
       "kind": "import",
       "line": 37
     },
     {
       "source": "server.ts",
-      "target": "server/utils/renderCache.ts",
+      "target": "server/database/localStore.ts",
       "kind": "import",
       "line": 38
     },
     {
       "source": "server.ts",
-      "target": "server/services/indexNow.ts",
+      "target": "server/utils/renderCache.ts",
       "kind": "import",
       "line": 39
     },
     {
       "source": "server.ts",
-      "target": "server/services/guideIndexNow.ts",
+      "target": "server/services/indexNow.ts",
       "kind": "import",
       "line": 40
     },
     {
       "source": "server.ts",
-      "target": "server/security/recaptchaService.ts",
+      "target": "server/services/guideIndexNow.ts",
       "kind": "import",
       "line": 41
     },
     {
       "source": "server.ts",
-      "target": "server/services/bse.ts",
+      "target": "server/security/recaptchaService.ts",
       "kind": "import",
       "line": 42
     },
     {
       "source": "server.ts",
-      "target": "server/database/feedbackDao.ts",
+      "target": "server/services/bse.ts",
       "kind": "import",
       "line": 43
     },
     {
       "source": "server.ts",
-      "target": "server/services/seoPrerender.ts",
+      "target": "server/database/feedbackDao.ts",
       "kind": "import",
       "line": 44
+    },
+    {
+      "source": "server.ts",
+      "target": "server/services/seoPrerender.ts",
+      "kind": "import",
+      "line": 45
     },
     {
       "source": "server/api/announcementCron.ts",
@@ -4335,6 +4392,12 @@
       "line": 2
     },
     {
+      "source": "server/database/telegramResultDao.ts",
+      "target": "server/database/supabase.ts",
+      "kind": "import",
+      "line": 1
+    },
+    {
       "source": "server/database/usersDao.ts",
       "target": "server/database/supabase.ts",
       "kind": "import",
@@ -4690,51 +4753,75 @@
     },
     {
       "source": "server/services/gemini.ts",
-      "target": "server/services/telegram.ts",
+      "target": "server/utils/telegramResultPolicy.ts",
       "kind": "import",
       "line": 2
     },
     {
       "source": "server/services/gemini.ts",
-      "target": "server/database/logDao.ts",
+      "target": "server/services/telegramResultSummary.ts",
       "kind": "import",
       "line": 3
     },
     {
       "source": "server/services/gemini.ts",
-      "target": "server/database/announcementDao.ts",
+      "target": "server/database/telegramResultDao.ts",
       "kind": "import",
       "line": 4
     },
     {
       "source": "server/services/gemini.ts",
-      "target": "server/utils/circuitBreaker.ts",
+      "target": "server/database/settingsDao.ts",
       "kind": "import",
       "line": 5
     },
     {
       "source": "server/services/gemini.ts",
-      "target": "server/services/ai/aiGateway.ts",
+      "target": "server/services/telegram.ts",
       "kind": "import",
       "line": 6
     },
     {
       "source": "server/services/gemini.ts",
-      "target": "server/services/ai/modelRegistry.ts",
+      "target": "server/database/logDao.ts",
       "kind": "import",
       "line": 7
     },
     {
       "source": "server/services/gemini.ts",
-      "target": "server/database/watchlistDao.ts",
+      "target": "server/database/announcementDao.ts",
       "kind": "import",
       "line": 8
     },
     {
       "source": "server/services/gemini.ts",
-      "target": "server/services/resultsCalendarService.ts",
+      "target": "server/utils/circuitBreaker.ts",
       "kind": "import",
       "line": 9
+    },
+    {
+      "source": "server/services/gemini.ts",
+      "target": "server/services/ai/aiGateway.ts",
+      "kind": "import",
+      "line": 10
+    },
+    {
+      "source": "server/services/gemini.ts",
+      "target": "server/services/ai/modelRegistry.ts",
+      "kind": "import",
+      "line": 11
+    },
+    {
+      "source": "server/services/gemini.ts",
+      "target": "server/database/watchlistDao.ts",
+      "kind": "import",
+      "line": 12
+    },
+    {
+      "source": "server/services/gemini.ts",
+      "target": "server/services/resultsCalendarService.ts",
+      "kind": "import",
+      "line": 13
     },
     {
       "source": "server/services/guideIndexNow.ts",
@@ -4921,6 +5008,12 @@
       "target": "server/services/oneSignal.ts",
       "kind": "import",
       "line": 15
+    },
+    {
+      "source": "server/services/monitor.ts",
+      "target": "server/database/telegramResultDao.ts",
+      "kind": "import",
+      "line": 16
     },
     {
       "source": "server/services/radarCompanyIdentity.ts",
@@ -5231,6 +5324,18 @@
     {
       "source": "server/services/telegram.ts",
       "target": "server/utils/circuitBreaker.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "server/services/telegramResultSummary.ts",
+      "target": "server/utils/telegramResultPolicy.ts",
+      "kind": "import",
+      "line": 2
+    },
+    {
+      "source": "server/services/telegramResultSummary.ts",
+      "target": "server/database/telegramResultDao.ts",
       "kind": "import",
       "line": 3
     },
@@ -6229,6 +6334,30 @@
       "target": "src/utils/subscriptionProgress.ts",
       "kind": "import",
       "line": 3
+    },
+    {
+      "source": "server/tests/telegramResultDocument.test.ts",
+      "target": "server/utils/telegramResultPolicy.ts",
+      "kind": "import",
+      "line": 7
+    },
+    {
+      "source": "server/tests/telegramResults.test.ts",
+      "target": "server/utils/telegramResultPolicy.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "server/tests/telegramResults.test.ts",
+      "target": "server/services/telegramResultSummary.ts",
+      "kind": "import",
+      "line": 4
+    },
+    {
+      "source": "server/tests/telegramResults.test.ts",
+      "target": "server/utils/bseDocument.ts",
+      "kind": "import",
+      "line": 5
     },
     {
       "source": "server/utils/circuitBreaker.ts",
@@ -9760,7 +9889,7 @@
         "server/tests/avatar.test.ts",
         "server/tests/userSkeletonPrivileges.test.ts"
       ],
-      "reason": "Verified token → server session → current durable profile → route authorization. Browser roles are display state; never authority."
+      "reason": "Verified token → server session → current durable profile → route authorization. Browser roles are display state; never authority. The server-only ensure_user_skeleton RPC denies browser EXECUTE, uses SECURITY INVOKER and a fixed empty search path with a qualified users relation. Its narrow production permission repair preserves existing paid rows on retry."
     },
     {
       "id": "payments",
@@ -9831,13 +9960,20 @@
         "server/services/ai/providers/openaiCompat.ts",
         "server/utils/bseDocument.ts",
         "server/services/aiQuotaService.ts",
-        "server/api/routes.ts"
+        "server/api/routes.ts",
+        "server/database/telegramResultDao.ts",
+        "server/services/telegramResultSummary.ts",
+        "server/utils/telegramResultPolicy.ts",
+        "supabase/migrations/20261019065115_telegram_result_delivery.sql"
       ],
       "tests": [
         "server/tests/aiGateway.test.ts",
-        "server/tests/auditSecurity.test.ts"
+        "server/tests/auditSecurity.test.ts",
+        "server/tests/telegramResults.test.ts",
+        "server/tests/telegramResultSql.test.ts",
+        "server/tests/telegramResultDocument.test.ts"
       ],
-      "reason": "Authenticated request → quota → allowlisted document fetch → provider budget/fallback → response/cache. Retrieved documents are untrusted content, not instructions."
+      "reason": "Authenticated request → quota → allowlisted document fetch → provider budget/fallback → response/cache. Retrieved documents are untrusted content, not instructions. Telegram results require an official BSE/NSE PDF, supported v2 extraction for large files and numeric output validation before caching/sending; placeholders or missing-document responses are suppressed. Site-requested AI remains independent. The public BSE proxy retains its original BSE-only allowlist."
     },
     {
       "id": "feed-alerts",
@@ -9860,7 +9996,12 @@
         "server/api/routes.ts",
         "server/utils/pollCycle.ts",
         "server/api/announcementCron.ts",
-        "server/utils/httpDeadline.ts"
+        "server/utils/httpDeadline.ts",
+        "server/database/telegramResultDao.ts",
+        "server/services/telegramResultSummary.ts",
+        "server/utils/telegramResultPolicy.ts",
+        "supabase/migrations/20261019065115_telegram_result_delivery.sql",
+        "src/components/SettingsTab.tsx"
       ],
       "tests": [
         "server/tests/bseBackfill.test.ts",
@@ -9871,9 +10012,12 @@
         "server/tests/alertRulesApi.test.ts",
         "server/tests/pollerStall.test.ts",
         "server/tests/announcementCron.test.ts",
-        "server/tests/announcementCadence.test.ts"
+        "server/tests/announcementCadence.test.ts",
+        "server/tests/telegramResults.test.ts",
+        "server/tests/telegramResultSql.test.ts",
+        "server/tests/telegramResultDocument.test.ts"
       ],
-      "reason": "Poll → normalize/dedupe → persistence → feed and alert decisions → recipient-specific delivery/inbox. Global and personal recipients must remain distinct. Preset saves replace stable per-owner IDs atomically; confirmed cloud settings feed every poll. Personal channels supersede inherited defaults once presets are saved. Live polling has a CRON_SECRET bearer-protected HTTP trigger, a 60-second in-container watchdog timer, a continuous 15-second active poller, and a 15-second-stale traffic trigger. The shared process-local monitor lock skips running cycles without queueing. Request lifetime covers bounded ingestion/write drain; cron source failure eligibility is capped at 60 seconds. External Scheduler remains necessary for idle request-based Cloud Run; legacy cron returns 410. Numbered IST worker summaries and cron request summaries have distinct event fields."
+      "reason": "Poll → normalize/dedupe → persistence → feed and alert decisions → recipient-specific delivery/inbox. Global and personal recipients must remain distinct. Preset saves replace stable per-owner IDs atomically; confirmed cloud settings feed every poll. Personal channels supersede inherited defaults once presets are saved. Live polling has a CRON_SECRET bearer-protected HTTP trigger, a 60-second in-container watchdog timer, a continuous 15-second active poller, and a 15-second-stale traffic trigger. The shared process-local monitor lock skips running cycles without queueing. Request lifetime covers bounded ingestion, raw delivery/write drain and then result AI after releasing the ingestion lock; cron source failure eligibility is capped at 60 seconds. External Scheduler remains necessary for idle request-based Cloud Run; legacy cron returns 410. Numbered IST worker summaries and cron request summaries have distinct event fields. Automatic Telegram AI applies only to actual financial results with a stable security-code/period identity. Private durable claims share one valid analysis per period/language and reserve one reply per chat across exchange copies, languages and restart. Failed evidence uses a bounded newer-source retry; uncertain send acceptance never replays. Private admin delivery timings retain exchange, observed, processed and Telegram acceptance dates without recipient identity. Migration must precede runtime release."
     },
     {
       "id": "user-data",
@@ -10473,7 +10617,7 @@
   "routes": [
     {
       "file": "server.ts",
-      "line": 62,
+      "line": 63,
       "receiver": "app",
       "method": "USE",
       "path": "compression({ threshold: 1024, // Don't compress payloads under 1KB level: 6, // Optimal balance between CPU usage and compression ratio filter: (req, res) => { // 1. Honor client bypass header if requested if (req.headers['x-no-compression",
@@ -10481,7 +10625,7 @@
     },
     {
       "file": "server.ts",
-      "line": 93,
+      "line": 94,
       "receiver": "app",
       "method": "USE",
       "path": "responseHeaders()",
@@ -10489,7 +10633,7 @@
     },
     {
       "file": "server.ts",
-      "line": 94,
+      "line": 95,
       "receiver": "app",
       "method": "USE",
       "path": "/api/payments/webhook",
@@ -10499,7 +10643,7 @@
     },
     {
       "file": "server.ts",
-      "line": 95,
+      "line": 96,
       "receiver": "app",
       "method": "USE",
       "path": "express.json({ limit: '1mb' })",
@@ -10507,7 +10651,7 @@
     },
     {
       "file": "server.ts",
-      "line": 96,
+      "line": 97,
       "receiver": "app",
       "method": "USE",
       "path": "cookieParser()",
@@ -10515,17 +10659,17 @@
     },
     {
       "file": "server.ts",
-      "line": 98,
+      "line": 99,
       "receiver": "app",
       "method": "GET",
       "path": "/api/cron/poll-announcements",
       "middleware": [
-        "createAnnouncementCronHandler({ poll: processAnnouncements, afterPoll: async () => { await refreshRadarIntake(); await refreshRadarPriceSnapshots(); }, backoffMs: () => { const failures = getConsecutiveFailures(); const blockLevel = getBseB"
+        "createAnnouncementCronHandler({ poll: processAnnouncements, afterPoll: async () => { // Raw delivery is complete; result AI keeps request CPU after releasing // ingestion, so the independent fast poller can continue handling filings. await "
       ]
     },
     {
       "file": "server.ts",
-      "line": 108,
+      "line": 116,
       "receiver": "app",
       "method": "USE",
       "path": "authMiddleware",
@@ -10533,7 +10677,7 @@
     },
     {
       "file": "server.ts",
-      "line": 111,
+      "line": 119,
       "receiver": "app",
       "method": "GET",
       "path": "/sw.js",
@@ -10543,7 +10687,7 @@
     },
     {
       "file": "server.ts",
-      "line": 132,
+      "line": 140,
       "receiver": "app",
       "method": "GET",
       "path": "/OneSignalSDKWorker.js",
@@ -10553,7 +10697,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5324,
+      "line": 5332,
       "receiver": "app",
       "method": "GET",
       "path": "['/health', '/healthz']",
@@ -10563,7 +10707,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5330,
+      "line": 5338,
       "receiver": "app",
       "method": "GET",
       "path": "/robots.txt",
@@ -10573,7 +10717,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5336,
+      "line": 5344,
       "receiver": "app",
       "method": "GET",
       "path": "['/sitemap.xml', '/sitemap', '/sitemap_index.xml', '/sitemap.txt']",
@@ -10583,7 +10727,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5345,
+      "line": 5353,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-core.xml",
@@ -10593,7 +10737,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5382,
+      "line": 5390,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-filings-hot.xml",
@@ -10603,7 +10747,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5419,
+      "line": 5427,
       "receiver": "app",
       "method": "GET",
       "path": "['/rss.xml', '/rss', '/feed.xml', '/feed']",
@@ -10613,7 +10757,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5485,
+      "line": 5493,
       "receiver": "app",
       "method": "GET",
       "path": "[/^\\/https?:\\/?\\/?(?:www\\.)?bsenexus\\.in\\/sitemap(?:\\.xml)?$/i]",
@@ -10623,7 +10767,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5490,
+      "line": 5498,
       "receiver": "app",
       "method": "GET",
       "path": "[`/${INDEXNOW_KEY}.txt`, '/indexnow-key.txt']",
@@ -10633,7 +10777,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5497,
+      "line": 5505,
       "receiver": "app",
       "method": "GET",
       "path": "/opensearch.xml",
@@ -10643,7 +10787,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5515,
+      "line": 5523,
       "receiver": "app",
       "method": "GET",
       "path": "[sourcePath, sourcePath + '/']",
@@ -10653,7 +10797,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5522,
+      "line": 5530,
       "receiver": "app",
       "method": "GET",
       "path": "/filing/:symbol/:newsId",
@@ -10663,7 +10807,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5581,
+      "line": 5589,
       "receiver": "app",
       "method": "GET",
       "path": "/filing/:symbol",
@@ -10673,7 +10817,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5592,
+      "line": 5600,
       "receiver": "app",
       "method": "GET",
       "path": "['/filing', '/filing/']",
@@ -10683,7 +10827,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5598,
+      "line": 5606,
       "receiver": "app",
       "method": "GET",
       "path": "/announcement/:newsId",
@@ -10693,7 +10837,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5927,
+      "line": 5935,
       "receiver": "app",
       "method": "GET",
       "path": "/results/:symbol/:quarterKey",
@@ -10703,7 +10847,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5983,
+      "line": 5991,
       "receiver": "app",
       "method": "GET",
       "path": "['/company/:symbol', '/stock/:symbol']",
@@ -10713,7 +10857,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6052,
+      "line": 6060,
       "receiver": "app",
       "method": "GET",
       "path": "/guides/:slug",
@@ -10723,7 +10867,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6098,
+      "line": 6106,
       "receiver": "app",
       "method": "GET",
       "path": "['/faq', '/faqs']",
@@ -10733,7 +10877,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6105,
+      "line": 6113,
       "receiver": "app",
       "method": "GET",
       "path": "['/pricing', '/pricing/']",
@@ -10743,7 +10887,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6112,
+      "line": 6120,
       "receiver": "app",
       "method": "GET",
       "path": "['/plans', '/plans/']",
@@ -10753,7 +10897,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6117,
+      "line": 6125,
       "receiver": "app",
       "method": "GET",
       "path": "['/guides', '/guides/']",
@@ -10763,7 +10907,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6124,
+      "line": 6132,
       "receiver": "app",
       "method": "GET",
       "path": "['/market-guides', '/market-guides/']",
@@ -10773,7 +10917,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6129,
+      "line": 6137,
       "receiver": "app",
       "method": "GET",
       "path": "['/companies', '/companies/']",
@@ -10783,7 +10927,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6136,
+      "line": 6144,
       "receiver": "app",
       "method": "GET",
       "path": "['/company-directory', '/company-directory/']",
@@ -10793,7 +10937,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6141,
+      "line": 6149,
       "receiver": "app",
       "method": "GET",
       "path": "['/about', '/about/']",
@@ -10803,7 +10947,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6148,
+      "line": 6156,
       "receiver": "app",
       "method": "GET",
       "path": "['/contact', '/contact/']",
@@ -10813,7 +10957,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6155,
+      "line": 6163,
       "receiver": "app",
       "method": "GET",
       "path": "['/disclaimer', '/disclaimer/']",
@@ -10823,7 +10967,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6162,
+      "line": 6170,
       "receiver": "app",
       "method": "GET",
       "path": "['/privacy-policy', '/privacy-policy/']",
@@ -10833,7 +10977,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6169,
+      "line": 6177,
       "receiver": "app",
       "method": "GET",
       "path": "['/privacy', '/privacy/']",
@@ -10843,7 +10987,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6174,
+      "line": 6182,
       "receiver": "app",
       "method": "GET",
       "path": "['/terms', '/terms/']",
@@ -10853,7 +10997,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6181,
+      "line": 6189,
       "receiver": "app",
       "method": "GET",
       "path": "['/terms-of-service', '/terms-of-service/']",
@@ -10863,7 +11007,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6186,
+      "line": 6194,
       "receiver": "app",
       "method": "GET",
       "path": "/embed/widget",
@@ -10873,7 +11017,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6240,
+      "line": 6248,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-companies.xml",
@@ -10883,7 +11027,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6260,
+      "line": 6268,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-guides.xml",
@@ -10893,7 +11037,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6278,
+      "line": 6286,
       "receiver": "app",
       "method": "GET",
       "path": "/llms.txt",
@@ -10903,7 +11047,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6283,
+      "line": 6291,
       "receiver": "app",
       "method": "GET",
       "path": "/llms-full.txt",
@@ -10913,7 +11057,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6293,
+      "line": 6301,
       "receiver": "app",
       "method": "GET",
       "path": "/^\\/google([a-zA-Z0-9_-]+)\\.html$/",
@@ -10923,7 +11067,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6303,
+      "line": 6311,
       "receiver": "app",
       "method": "USE",
       "path": "express.static(path.join(process.cwd(), 'public'), { maxAge: '1d', immutable: false, setHeaders: (res, filePath) => { if (filePath.includes(`${path.sep}fonts${path.sep}`)) res.setHeader('Cache-Control', 'public, max-age=2592000'); if (fileP",
@@ -10931,7 +11075,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6313,
+      "line": 6321,
       "receiver": "app",
       "method": "USE",
       "path": "['/api', '/auth']",
@@ -10941,7 +11085,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6319,
+      "line": 6327,
       "receiver": "app",
       "method": "USE",
       "path": "/auth",
@@ -10951,7 +11095,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6322,
+      "line": 6330,
       "receiver": "app",
       "method": "POST",
       "path": "/api/security/verify-recaptcha",
@@ -10962,7 +11106,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6363,
+      "line": 6371,
       "receiver": "app",
       "method": "USE",
       "path": "/api",
@@ -10973,7 +11117,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6367,
+      "line": 6375,
       "receiver": "app",
       "method": "USE",
       "path": "['/api/*', '/auth/*']",
@@ -10983,7 +11127,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6372,
+      "line": 6380,
       "receiver": "app",
       "method": "USE",
       "path": "(err: any, req: express.Request, res: express.Response, next: express.NextFunction) => { if (req.path.startsWith('/api') || req.path.startsWith('/auth')) { console.error(\"API Error handler caught:\", err?.message || err); const isProd = proc",
@@ -10991,7 +11135,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6762,
+      "line": 6770,
       "receiver": "app",
       "method": "GET",
       "path": "[\"/\", \"/announcements\", \"/live\", \"/results-calendar\", \"/watchlist\", \"/watchlists\", \"/companies\", \"/about\", \"/contact\", \"/disclaimer\", \"/privacy\", \"/privacy-policy\", \"/terms\"]",
@@ -11001,7 +11145,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6792,
+      "line": 6800,
       "receiver": "app",
       "method": "USE",
       "path": "(req, res, next) => { if (req.method !== 'GET' && req.method !== 'HEAD') return next(); const p = req.path; if ( p === '/' || p === '/announcements' || p === '/results-calendar' || p === '/watchlist' || p === '/watchlists' || p === '/compan",
@@ -11009,7 +11153,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6827,
+      "line": 6835,
       "receiver": "app",
       "method": "USE",
       "path": "vite.middlewares",
@@ -11017,7 +11161,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6839,
+      "line": 6847,
       "receiver": "app",
       "method": "USE",
       "path": "express.static(distPath, { maxAge: '1y', immutable: true, index: false, setHeaders: (res, filePath) => { if (filePath.endsWith('.html')) { res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600'); } } }",
@@ -11025,7 +11169,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6873,
+      "line": 6881,
       "receiver": "app",
       "method": "GET",
       "path": "['/announcements', '/announcements/']",
@@ -11035,7 +11179,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6924,
+      "line": 6932,
       "receiver": "app",
       "method": "GET",
       "path": "*",
@@ -13254,7 +13398,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6484,
+      "line": 6492,
       "function": "fetch",
       "target": "`http://127.0.0.1:${port}/api/health`"
     },
@@ -13317,12 +13461,6 @@
       "line": 49,
       "function": "fetch",
       "target": "\"https://www.nseindia.com/api/fiidiiTradeReact\""
-    },
-    {
-      "file": "server/services/gemini.ts",
-      "line": 159,
-      "function": "fetchBseDocument",
-      "target": "pdfLink"
     },
     {
       "file": "server/services/indexNow.ts",
@@ -13440,13 +13578,13 @@
     },
     {
       "file": "server/services/telegram.ts",
-      "line": 74,
+      "line": 75,
       "function": "fetch",
       "target": "url"
     },
     {
       "file": "server/services/telegram.ts",
-      "line": 126,
+      "line": 127,
       "function": "fetch",
       "target": "url"
     },
@@ -13584,7 +13722,7 @@
     },
     {
       "file": "server/utils/bseDocument.ts",
-      "line": 18,
+      "line": 36,
       "function": "fetch",
       "target": "current"
     },
@@ -15025,6 +15163,30 @@
       "key": "'settings'"
     },
     {
+      "file": "server/database/telegramResultDao.ts",
+      "line": 13,
+      "function": "getSupabase().from",
+      "key": "'filing_delivery_timings'"
+    },
+    {
+      "file": "server/database/telegramResultDao.ts",
+      "line": 18,
+      "function": "getSupabase().rpc",
+      "key": "'claim_telegram_result'"
+    },
+    {
+      "file": "server/database/telegramResultDao.ts",
+      "line": 25,
+      "function": "getSupabase().from",
+      "key": "'telegram_result_state'"
+    },
+    {
+      "file": "server/database/telegramResultDao.ts",
+      "line": 31,
+      "function": "getSupabase().rpc",
+      "key": "'finish_telegram_result'"
+    },
+    {
       "file": "server/database/usersDao.ts",
       "line": 128,
       "function": "getSupabase()\n      .from",
@@ -15353,6 +15515,30 @@
       "line": 70,
       "function": "Array.from",
       "key": "result.quarterlyResults"
+    },
+    {
+      "file": "server/tests/telegramResultDocument.test.ts",
+      "line": 18,
+      "function": "Buffer.from",
+      "key": "data"
+    },
+    {
+      "file": "server/tests/telegramResultDocument.test.ts",
+      "line": 47,
+      "function": "Buffer.from",
+      "key": "'<html>Access denied</html>'"
+    },
+    {
+      "file": "server/tests/telegramResultDocument.test.ts",
+      "line": 51,
+      "function": "Buffer.from",
+      "key": "'<html>Access denied</html>'"
+    },
+    {
+      "file": "server/tests/telegramResultSql.test.ts",
+      "line": 17,
+      "function": "Array.from",
+      "key": "{length:8}"
     },
     {
       "file": "server/utils/bloomFilter.ts",
@@ -16305,42 +16491,42 @@
     },
     {
       "file": "server.ts",
-      "line": 114,
+      "line": 122,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6291,
+      "line": 6299,
       "name": "GOOGLE_SITE_VERIFICATION_HASH"
     },
     {
       "file": "server.ts",
-      "line": 6291,
+      "line": 6299,
       "name": "GOOGLE_SITE_VERIFICATION_HASH"
     },
     {
       "file": "server.ts",
-      "line": 6375,
+      "line": 6383,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6751,
+      "line": 6759,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6756,
+      "line": 6764,
       "name": "DISABLE_HMR"
     },
     {
       "file": "server.ts",
-      "line": 7027,
+      "line": 7035,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 7027,
+      "line": 7035,
       "name": "TEST_RUNNER"
     },
     {
@@ -16969,6 +17155,11 @@
       "name": "GROQ_API_KEY"
     },
     {
+      "file": "server/services/gemini.ts",
+      "line": 676,
+      "name": "TELEGRAM_CHAT_ID"
+    },
+    {
       "file": "server/services/indexNow.ts",
       "line": 4,
       "name": "INDEXNOW_KEY"
@@ -17025,22 +17216,22 @@
     },
     {
       "file": "server/services/telegram.ts",
-      "line": 59,
+      "line": 60,
       "name": "TELEGRAM_BOT_TOKEN"
     },
     {
       "file": "server/services/telegram.ts",
-      "line": 60,
+      "line": 61,
       "name": "TELEGRAM_CHAT_ID"
     },
     {
       "file": "server/services/telegram.ts",
-      "line": 114,
+      "line": 115,
       "name": "TELEGRAM_BOT_TOKEN"
     },
     {
       "file": "server/services/telegram.ts",
-      "line": 115,
+      "line": 116,
       "name": "TELEGRAM_CHAT_ID"
     },
     {

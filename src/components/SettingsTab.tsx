@@ -2459,7 +2459,7 @@ export function SettingsTab({
                       <span className="font-bold text-xs text-slate-900 dark:text-white">Telegram Alerts are a Pro feature</span>
                     </div>
                     <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
-                      Instant Telegram alerts with Gemini AI summary replies are only available on Pro. Your AI summary language below still applies to in-app summaries.
+                      Telegram alerts and financial-results AI replies are available on Pro. Your AI summary language below still applies to in-app summaries.
                     </p>
                     <button
                       type="button"
@@ -2562,7 +2562,7 @@ export function SettingsTab({
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1">
                           <Sparkles size={12} className="text-purple-500" />
-                          Gemini AI Summary Reply
+                          Financial Results AI Reply
                         </span>
                         <span className={cn(
                           "px-1.5 py-0.2 rounded text-[10px] font-bold uppercase",
@@ -2575,8 +2575,8 @@ export function SettingsTab({
                       </div>
                       <p className="text-[11px] text-slate-600 dark:text-slate-400">
                         {tgAiSummaryEnabled
-                          ? 'AI analyzes the filing PDF and sends a concise 3-bullet takeaway right below each alert.'
-                          : 'AI summary is turned off. You will receive only the raw BSE alert & direct PDF link.'}
+                          ? 'One results summary per company and result period. Other filings arrive as plain alerts with the original link.'
+                          : 'Result summaries are off. You will receive plain filing alerts and original document links.'}
                       </p>
                     </div>
 
@@ -2586,7 +2586,7 @@ export function SettingsTab({
                         type="button"
                         role="switch"
                         aria-checked={tgAiSummaryEnabled}
-                        aria-label="Toggle Gemini AI summary reply"
+                        aria-label="Toggle financial results AI reply"
                         disabled={isTogglingTgAiSummary}
                         onClick={handleToggleTgAiSummary}
                         className={cn(
@@ -3180,7 +3180,7 @@ export function SettingsTab({
                         />
                         <span className="font-semibold text-xs flex items-center gap-1">
                           <Sparkles size={11} className="text-purple-500" />
-                          AI Summary Replies Enabled
+                          Financial Results AI Replies Enabled
                         </span>
                       </label>
                     </div>
