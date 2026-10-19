@@ -138,7 +138,9 @@
         "server/services/telegramResultSummary.ts",
         "server/utils/telegramResultPolicy.ts",
         "supabase/migrations/20261019065115_telegram_result_delivery.sql",
-        "src/components/SettingsTab.tsx"
+        "src/components/SettingsTab.tsx",
+        "src/components/WatchlistEditor.tsx",
+        "src/shared/watchlistIdentity.ts"
       ],
       "tests": [
         "server/tests/bseBackfill.test.ts",
@@ -152,7 +154,9 @@
         "server/tests/announcementCadence.test.ts",
         "server/tests/telegramResults.test.ts",
         "server/tests/telegramResultSql.test.ts",
-        "server/tests/telegramResultDocument.test.ts"
+        "server/tests/telegramResultDocument.test.ts",
+        "server/tests/watchlistIdentity.test.ts",
+        "server/tests/watchlistMetadata.test.ts"
       ],
       "reason": "Poll \u2192 normalize/dedupe \u2192 persistence \u2192 feed and alert decisions \u2192 recipient-specific delivery/inbox. Global and personal recipients must remain distinct. Preset saves replace stable per-owner IDs atomically; confirmed cloud settings feed every poll. Personal channels supersede inherited defaults once presets are saved. Live polling has a CRON_SECRET bearer-protected HTTP trigger, a 60-second in-container watchdog timer, a continuous 15-second active poller, and a 15-second-stale traffic trigger. The shared process-local monitor lock skips running cycles without queueing. Request lifetime covers bounded ingestion, raw delivery/write drain and then result AI after releasing the ingestion lock; cron source failure eligibility is capped at 60 seconds. External Scheduler remains necessary for idle request-based Cloud Run; legacy cron returns 410. Numbered IST worker summaries and cron request summaries have distinct event fields. Automatic Telegram AI applies only to actual financial results with a stable security-code/period identity. Private durable claims share one valid analysis per period/language and reserve one reply per chat across exchange copies, languages and restart. Failed evidence uses a bounded newer-source retry; uncertain send acceptance never replays. Private admin delivery timings retain exchange, observed, processed and Telegram acceptance dates without recipient identity. Migration must precede runtime release."
     },
@@ -454,11 +458,15 @@
         "src/utils/avatarSave.ts",
         "src/components/AvatarPicker.tsx",
         "src/components/ui/UserAvatar.tsx",
-        "src/styles/avatars.css"
+        "src/styles/avatars.css",
+        "src/components/ui/Switch.tsx",
+        "src/styles/notification-controls.css",
+        "src/styles/watchlist-editor.css"
       ],
       "tests": [
         "server/tests/homeNews.test.ts",
-        "server/tests/avatar.test.ts"
+        "server/tests/avatar.test.ts",
+        "server/tests/watchlistEditorRender.test.ts"
       ],
       "reason": "Global CSS, inherited theme tokens, shared controls, focus, z-index and scroll locks connect screens without direct imports. Review all changed selector/token consumers; this seed list is not every affected screen. No browser accessibility or screenshot test suite is established by this domain."
     },
@@ -491,7 +499,11 @@
         "src/components/notes/SaveNoteButton.tsx",
         "src/shared/scripMatching.ts",
         "src/hooks/useUnreadNotificationCount.ts",
-        "src/utils/unreadNotificationCount.ts"
+        "src/utils/unreadNotificationCount.ts",
+        "src/components/WatchlistEditor.tsx",
+        "src/shared/watchlistIdentity.ts",
+        "src/styles/watchlist-editor.css",
+        "src/styles/notification-controls.css"
       ],
       "tests": [
         "server/tests/core.test.ts",
@@ -502,9 +514,12 @@
         "server/tests/announcementFeed.test.ts",
         "server/tests/sevenFixes.test.ts",
         "server/tests/notificationStartup.test.ts",
-        "server/tests/notificationCountApi.test.ts"
+        "server/tests/notificationCountApi.test.ts",
+        "server/tests/watchlistIdentity.test.ts",
+        "server/tests/watchlistEditorRender.test.ts",
+        "server/tests/watchlistMetadata.test.ts"
       ],
-      "reason": "List/detail identity, filters, watchlist membership, badge counts and timestamps must agree. Background refresh preserves content, density, selection and scroll. Rapid filter changes must not render older responses."
+      "reason": "List/detail identity, filters, watchlist membership, badge counts and timestamps must agree. Background refresh preserves content, density, selection and scroll. Rapid filter changes must not render older responses. Home membership uses active-list exact identities. The responsive watchlist editor preserves company metadata, page scrolling and four visible priority filters. Inbox opens on confirmed unread items, while device push delivery has an independent persistent control."
     },
     {
       "id": "frontend-notes",
@@ -596,7 +611,10 @@
         "src/components/PushNotificationPrompt.tsx",
         "src/components/ui/SyncStatusBadge.tsx",
         "index.html",
-        "public/OneSignalSDKWorker.js"
+        "public/OneSignalSDKWorker.js",
+        "src/components/DeviceNotificationControl.tsx",
+        "src/components/ui/Switch.tsx",
+        "src/hooks/useUnreadNotificationCount.ts"
       ],
       "tests": [
         "server/tests/pwaOfflineSync.test.ts",
@@ -696,7 +714,10 @@
         "src/shared/radarScope.ts",
         "supabase/migrations/20261017120454_impact_radar_focused_events.sql",
         "server/services/radarPriceSync.ts",
-        "server/api/announcementCron.ts"
+        "server/api/announcementCron.ts",
+        "src/utils/radarCompanyGroups.ts",
+        "server/database/radarSourceDao.ts",
+        "supabase/migrations/20261019143927_radar_source_checks.sql"
       ],
       "tests": [
         "server/tests/impactRadar.test.ts",
@@ -716,9 +737,11 @@
         "server/tests/radarPriceContext.test.ts",
         "server/tests/radarPriceStorage.test.ts",
         "server/tests/announcementCadence.test.ts",
-        "server/tests/announcementCron.test.ts"
+        "server/tests/announcementCron.test.ts",
+        "server/tests/radarCompanyGroups.test.ts",
+        "server/tests/radarSourceChecks.test.ts"
       ],
-      "reason": "Two Home previews open a native modal Radar dashboard and immediate detail. Watchlist scope stays separate from durable event follows. Both exchange disclosures and shared RSS intake carry source/date provenance; explicit jurisdiction/case references alone may join evidence. Future events have no predictions. Observed NSE final daily closes are a separate bounded, cached read with per-session source, missing-data states and no causal attribution. Account cancellation, modal focus/scroll, themes and reduced motion remain explicit contracts. The list is read-only; existing watchdog drives bounded intake. Server-only DB categories, strict real company identity, typed proceedings, source-domain rules and offset timestamps gate publishing. Reviewed PNC source backfill retains explicit news timestamps and separately sourced NSE daily ranges. Following outages preserve closed records. Additional material event terms come from private DB rules and match bounded literal phrases independently of source type or authority. Explicit RSS timestamps normalize to UTC. Publisher/report attribution and related-topic links preserve uncertainty. Selected company final NSE session values persist as small, private, duplicate-safe snapshots and can survive upstream outages. Routine corporate transactions and statutory takeover boilerplate are excluded independently of configured discovery terms. Insolvency/disputes retain the stable deals category ID with a focused label. Read projections hide legacy routine/vague cards while retaining immutable evidence and follows; all headings use source wording and original timeline titles remain intact. Official filing names and exact-code title prefixes repair numeric identities without assigning a guessed NSE symbol. Exchange daily rows may match one exact full company name; NSE SME and BSE scrip-keyed reports retain explicit source identity. Future hearing dates do not suppress prior publication-day history. Sparse details render known facts and collapsed source/method sections. Report requests use a private proxy-aware dispatcher and a bounded concurrency queue with an overall response budget. Security-code/ticker aliases share immutable prices across reports. Previous-session, event-window and latest-company context remain separately labelled. A bounded rotating worker captures the last eight dates on boot/watchdog and authenticated cron, with explicit read/write/source diagnostics and retry; request-based hosting still requires its external Scheduler. Related reports query the company directly, independently of feed caps or selected report age. Compact selectable daily bars retain exact source/price details and reduced-motion support. Latest persisted company context remains visible even beyond the eight-day event lookback, with its original date and source."
+      "reason": "Two Home previews open a native modal Radar dashboard and immediate detail. Watchlist scope stays separate from durable event follows. Both exchange disclosures and shared RSS intake carry source/date provenance; explicit jurisdiction/case references alone may join evidence. Future events have no predictions. Observed NSE final daily closes are a separate bounded, cached read with per-session source, missing-data states and no causal attribution. Account cancellation, modal focus/scroll, themes and reduced motion remain explicit contracts. The list is read-only; existing watchdog drives bounded intake. Server-only DB categories, strict real company identity, typed proceedings, source-domain rules and offset timestamps gate publishing. Reviewed PNC source backfill retains explicit news timestamps and separately sourced NSE daily ranges. Following outages preserve closed records. Additional material event terms come from private DB rules and match bounded literal phrases independently of source type or authority. Explicit RSS timestamps normalize to UTC. Publisher/report attribution and related-topic links preserve uncertainty. Selected company final NSE session values persist as small, private, duplicate-safe snapshots and can survive upstream outages. Routine corporate transactions and statutory takeover boilerplate are excluded independently of configured discovery terms. Insolvency/disputes retain the stable deals category ID with a focused label. Read projections hide legacy routine/vague cards while retaining immutable evidence and follows; all headings use source wording and original timeline titles remain intact. Official filing names and exact-code title prefixes repair numeric identities without assigning a guessed NSE symbol. Exchange daily rows may match one exact full company name; NSE SME and BSE scrip-keyed reports retain explicit source identity. Future hearing dates do not suppress prior publication-day history. Sparse details render known facts and collapsed source/method sections. Report requests use a private proxy-aware dispatcher and a bounded concurrency queue with an overall response budget. Security-code/ticker aliases share immutable prices across reports. Previous-session, event-window and latest-company context remain separately labelled. A bounded rotating worker captures the last eight dates on boot/watchdog and authenticated cron, with explicit read/write/source diagnostics and retry; request-based hosting still requires its external Scheduler. Related reports query the company directly, independently of feed caps or selected report age. Compact selectable daily bars retain exact source/price details and reduced-motion support. Latest persisted company context remains visible even beyond the eight-day event lookback, with its original date and source. Presentation groups exact company sets without merging durable proceedings. A private seven-day scan ledger supplies latest check health across hosting instances; missing history is pending, and optional RSS outage is distinct from filing-scan success."
     },
     {
       "id": "frontend-stories",

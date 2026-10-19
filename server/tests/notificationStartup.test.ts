@@ -90,13 +90,14 @@ test('StrictMode cleanup/replay ignores the first effect and permits the second 
 });
 
 /** Run the real SDK adapter with only browser/CDN boundaries replaced. */
-function pushBrowser(permission: NotificationPermission = 'default', ios = false) {
+function pushBrowser(permission: NotificationPermission = 'default', ios = false, saved = new Map<string,string>()) {
   const source = fs.readFileSync('src/utils/oneSignal.ts', 'utf8').replace(/\(import\.meta as any\)/g, '({ env: {} })');
   const compiled = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
   const timers = new Map<number, () => void>();
   let timerId = 0;
   let nativeRequests = 0;
   let optIns = 0;
+  let optOuts = 0;
   let initCalls = 0;
   let options: any;
   const notifications = new Map<string, () => void>();
@@ -112,22 +113,23 @@ function pushBrowser(permission: NotificationPermission = 'default', ios = false
   const sdk = {
     init: async (value: any) => { initCalls++; options = value; },
     Notifications: { isPushSupported: () => true, addEventListener: (event: string, callback: () => void) => notifications.set(event, callback) },
-    User: { PushSubscription: { optedIn: false, optIn: async () => { optIns++; }, addEventListener: (event: string, callback: () => void) => subscriptions.set(event, callback) } },
+    User: { PushSubscription: { optedIn: false, optIn: async () => { optIns++; sdk.User.PushSubscription.optedIn = true; }, optOut: async () => { optOuts++; sdk.User.PushSubscription.optedIn = false; }, addEventListener: (event: string, callback: () => void) => subscriptions.set(event, callback) } },
   };
   const exports: any = {};
-  new Function('exports', 'window', 'document', 'Notification', 'navigator', 'setTimeout', 'clearTimeout', compiled)(
+  new Function('exports', 'window', 'document', 'Notification', 'navigator', 'setTimeout', 'clearTimeout', 'localStorage', compiled)(
     exports, window, document, Notification,
     { userAgent: ios ? 'iPhone' : 'Chrome', platform: ios ? 'iPhone' : 'Linux', maxTouchPoints: 0 },
     (callback: () => void) => { timers.set(++timerId, callback); return timerId; },
     (id: number) => timers.delete(id),
+    {getItem:(key:string)=>saved.get(key) ?? null,setItem:(key:string,value:string)=>saved.set(key,value)},
   );
   return {
-    client: exports, window, sdk, scripts, timers,
+    client: exports, window, sdk, scripts, timers, saved,
     setPermission(value: NotificationPermission) { permission = value; },
     ready: () => window.OneSignalDeferred[0](sdk),
     emitPermission: () => notifications.get('permissionChange')?.(),
     emitSubscription: () => subscriptions.get('change')?.(),
-    stats: () => ({ nativeRequests, optIns, initCalls, options }),
+    stats: () => ({ nativeRequests, optIns, optOuts, initCalls, options }),
   };
 }
 
@@ -180,6 +182,38 @@ test('iPhone browser tabs keep the Home Screen guide and do not request native p
   const env = pushBrowser('default', true);
   assert.equal((await env.client.requestPushPermission()).reason, 'ios_requires_pwa');
   assert.equal(env.stats().nativeRequests, 0);
+});
+
+test('permanent device On/Off controls confirm subscription and preserve an explicit opt-out across reload', async () => {
+  const env=pushBrowser();
+  const enabling=env.client.setDevicePushEnabled(true);
+  assert.equal(env.stats().nativeRequests,1);
+  await env.ready();
+  assert.equal((await enabling).ok,true);
+  assert.equal(env.client.getPushState().subscribed,true);
+  assert.equal((await env.client.setDevicePushEnabled(false)).ok,true);
+  assert.equal(env.client.getPushState().permission,'granted','turning delivery off does not misrepresent browser permission');
+  assert.equal(env.client.getPushState().subscribed,false);
+  const reloaded=pushBrowser('granted',false,env.saved);
+  reloaded.client.initOneSignal();await reloaded.ready();
+  assert.equal(reloaded.stats().options.autoResubscribe,false);
+  assert.equal(reloaded.client.getPushState().subscribed,false);
+});
+test('native Allow never reports a successful device enable when provider registration stays unconfirmed', async () => {
+  const env=pushBrowser('granted');
+  env.sdk.User.PushSubscription.optIn=async()=>{};
+  env.client.initOneSignal();await env.ready();
+  const result=await env.client.setDevicePushEnabled(true);
+  assert.equal(result.ok,false);assert.match(result.message,/not confirmed/);
+});
+test('a late native Allow cannot undo a newer explicit Off choice', async () => {
+  const env=pushBrowser();
+  const enabling=env.client.setDevicePushEnabled(true);
+  const disabling=env.client.setDevicePushEnabled(false);
+  await env.ready();
+  await Promise.all([enabling,disabling]);
+  assert.equal(env.client.getPushState().subscribed,false);
+  assert.equal(env.saved.get('bsenexus_device_push_off'),'true');
 });
 
 test('preview cleanup unregisters the PWA worker without deleting existing push registration', async () => {

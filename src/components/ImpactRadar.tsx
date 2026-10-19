@@ -8,6 +8,7 @@ import { RadarWindow } from './RadarWindow';
 import { RadarMovementPanel } from './RadarMovementPanel';
 import { ActionButton } from './ui/ActionButton';
 import { ImpactRadarFeed } from '../utils/impactRadarFeed';
+import { groupRadarCompanies } from '../utils/radarCompanyGroups';
 import { RADAR_CATEGORIES, RADAR_NOTICE, RADAR_STALE_MS, isRadarEvent, isRadarUpdate, matchesRadarFilter, radarStatus, radarDay, radarUrl, radarTiming, RADAR_TIMING_LABELS, radarVerificationSources, radarHeadline, radarCompanyName, radarCaseLookup, isRadarCategoryOption,
   radarSourceLabel, isReportedRadarSource, type RadarEvent, type RadarFilter, type RadarUpdate } from '../shared/impactRadar';
 import '../styles/impact-radar.css';
@@ -145,7 +146,8 @@ export function ImpactRadar({ active, identity, onNavigate, density, watched = [
   const watchedSet = useMemo(() => new Set(watched.map(s => s.toUpperCase())), [watched]);
   const items = useMemo(() => state.items.filter(e => matchesRadarFilter(e, filter, tracked, now) && (category === 'all' || e.category === category) &&
     (scope === 'all' || e.companies.some(c => watchedSet.has(c.symbol) || watchedSet.has(c.scripCode)))), [state.items, filter, tracked, now, category, scope, watchedSet]);
-  const preview = state.items.filter(e => e.status !== 'closed').slice(0, 2);
+  const groups = useMemo(() => groupRadarCompanies(items), [items]);
+  const preview = groupRadarCompanies(state.items.filter(e => e.status !== 'closed')).slice(0, 2);
   const stale = !!state.error || state.sourceUnavailable || state.sourceStale || (state.checkedAt !== null && now - state.checkedAt > RADAR_STALE_MS);
   const close = () => { setOpened(false); setSelected(null); };
   const signIn = () => { close(); setIsAuthModalOpen(true); };
@@ -153,20 +155,25 @@ export function ImpactRadar({ active, identity, onNavigate, density, watched = [
   const open = (event: RadarEvent, button: HTMLButtonElement) => { opener.current = button; setSelected(event); setOpened(true); };
   const back = () => { setSelected(null); requestAnimationFrame(() => { if (opener.current?.isConnected) opener.current.focus({ preventScroll: true }); }); };
   const initial = state.checkedAt === null && !state.error;
-  const statusText = state.loading ? 'Checking updates' : state.error ? 'Check unavailable' : stale ? 'Update delayed' : state.checkedAt ? 'Radar checked' : 'Not checked yet';
+  const statusText = state.loading ? 'Checking updates' : state.error ? 'Check unavailable' : stale ? 'Update delayed' : state.sourcePending ? 'Source check pending' : state.checkedAt ? 'Updates checked' : 'Not checked yet';
   const markTone = state.items.some(e => radarTiming(e, now) === 'live') ? 'live' : state.items.some(e => radarTiming(e, now) === 'upcoming') ? 'upcoming' : 'past';
-  const cards = (events: RadarEvent[]) => <div className="impact-radar-grid">{events.map((event, i) => <motion.div key={event.id} initial={reduce ? false : { opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: reduce ? 0 : 0.18, delay: reduce ? 0 : Math.min(i, 3) * 0.035 }}>
-    <RadarCard categoryLabel={categories[event.category]} event={event} tracked={tracked.has(event.id)} saving={state.saving.includes(event.id)} disabled={identity !== 'guest' && !state.followingReady} now={now} selected={selected?.id === event.id} onOpen={open} onTrack={() => track(event)} />
-  </motion.div>)}</div>;
+  const cards = (companyGroups: ReturnType<typeof groupRadarCompanies>) => <div className="impact-radar-grid">{companyGroups.map((group, i) => {
+    const event = group.latest;
+    return <motion.div className="impact-radar-company-group" key={group.key} initial={reduce ? false : {opacity:0,x:-6}} animate={{opacity:1,x:0}} transition={{duration:reduce ? 0 : .18,delay:reduce ? 0 : Math.min(i,3)*.035}}>
+      <RadarCard categoryLabel={categories[event.category]} event={event} tracked={tracked.has(event.id)} saving={state.saving.includes(event.id)} disabled={identity !== 'guest' && !state.followingReady} now={now} selected={group.reports.some(report => report.id === selected?.id)} onOpen={open} onTrack={() => track(event)} />
+      {group.reports.length > 1 && <details className="impact-radar-company-reports"><summary>{group.reports.length} reports for this company</summary><div>{group.reports.map(report => <button key={report.id} type="button" onClick={e => open(report,e.currentTarget)}>{radarHeadline(report)}<span>{report.source.name} · {time(report.publishedAt)}</span></button>)}</div></details>}
+    </motion.div>;
+  })}</div>;
   const skeleton = (count: number) => <div className="impact-radar-grid" role="status"><span className="sr-only">Loading Impact Radar…</span>{Array.from({ length: count }, (_, i) => <div key={i} className="impact-radar-card impact-radar-skeleton" aria-hidden="true"><span /><span /><span /><span /></div>)}</div>;
   const feedback = <>
     {(state.error || state.sourceUnavailable) && <div className="impact-radar-status" role="status">{state.error || 'Some sources could not be refreshed. Saved events remain available.'}</div>}
-    {state.sourceStale && !state.sourceUnavailable && <div className="impact-radar-status" role="status">Source updates are delayed. Saved events remain available; the last fetch is not marked failed.</div>}
+    {state.sourceStale && !state.sourceUnavailable && <div className="impact-radar-status" role="status">The source check is overdue. Saved events remain available.</div>}
+    {state.newsUnavailable && !state.sourceUnavailable && !state.sourceStale && <p className="impact-radar-muted">News sources are recovering. Filing scans are available.</p>}
     {state.followingError && <div className="impact-radar-status" role="status">Your tracking list could not be checked. Refresh to retry.</div>}
     {state.actionError && <div className="impact-radar-status" role="alert">{state.actionError}</div>}
     {state.pending && <div className="impact-radar-new" role="status"><span><Check size={14} aria-hidden="true" />Event updates available</span><ActionButton type="button" size="sm" variant="ghost" onClick={feed.accept}>Show updates<ArrowRight size={14} aria-hidden="true" /></ActionButton></div>}
   </>;
-  const check = <div className="impact-radar-check" role="status"><span className={`impact-radar-check-dot${stale ? ' is-stale' : ''}`} /><span>{statusText}{state.checkedAt ? ` · ${time(state.checkedAt)}` : ''}</span></div>;
+  const check = <div className="impact-radar-check" role="status"><span className={`impact-radar-check-dot${stale ? ' is-stale' : ''}`} /><span>{statusText}{state.sourceCheckedAt ? ` · ${time(state.sourceCheckedAt)}` : ''}</span></div>;
   const refreshButton = <ActionButton type="button" variant="secondary" size="sm" className="impact-radar-refresh" aria-label="Refresh Impact Radar" title="Refresh Impact Radar" isLoading={state.loading} loadingText="" onClick={refresh} icon={<RefreshCw size={15} aria-hidden="true" />} />;
   return <section className={`impact-radar impact-radar-preview impact-radar--${density}`} aria-labelledby="impact-radar-title">
     <div className="impact-radar-heading"><div className="impact-radar-brand"><span className="impact-radar-mark" data-timing={markTone}><Radar size={23} aria-hidden="true" /></span><div><h2 id="impact-radar-title">Impact Radar</h2><p>Know the event. Follow the developments.</p></div></div>
@@ -184,7 +191,7 @@ export function ImpactRadar({ active, identity, onNavigate, density, watched = [
         <div className="impact-radar-legend"><span data-timing="live">Live / today</span><span data-timing="upcoming">Upcoming</span><span data-timing="past">Past</span></div>
         {identity === 'guest' && (scope === 'watchlist' || filter === 'tracking') ? <div className="impact-radar-empty"><h3>Your personal radar</h3><p>Sign in to see watchlist companies or followed events.</p><ActionButton type="button" size="sm" variant="secondary" onClick={signIn}>Sign in</ActionButton></div>
           : scope === 'watchlist' && watchlistStatus !== 'ready' ? <p className="impact-radar-status" role="status">{watchlistStatus === 'loading' ? 'Checking your watchlist…' : 'Your watchlist could not be checked.'}{watchlistStatus === 'error' && onRefreshWatchlist && <button type="button" onClick={onRefreshWatchlist}>Retry watchlist</button>}</p>
-          : initial ? skeleton(3) : items.length ? <>{cards(items.slice(0, limit))}{items.length > limit && <button type="button" className="impact-radar-more" onClick={() => setLimit(v => v + 12)}>Show more events <ArrowRight size={14} aria-hidden="true" /></button>}<p className="impact-radar-muted">Showing {Math.min(limit, items.length)} of {items.length} loaded events. Feed contains up to 200 recently updated events; tracked events remain available separately.</p></>
+          : initial ? skeleton(3) : groups.length ? <>{cards(groups.slice(0, limit))}{groups.length > limit && <button type="button" className="impact-radar-more" onClick={() => setLimit(v => v + 12)}>Show more companies <ArrowRight size={14} aria-hidden="true" /></button>}<p className="impact-radar-muted">Showing {Math.min(limit, groups.length)} of {groups.length} companies · {items.length} reports. Open a company’s reports to read each development.</p></>
           : <div className="impact-radar-empty"><Radar size={28} aria-hidden="true" /><h3>No events in this view</h3><p>{scope === 'watchlist' ? 'No sourced events match your watchlist and current filters.' : filter === 'tracking' ? 'Track an event to keep following its developments.' : 'Try another period or category. Missing dates are never invented.'}</p>{scope === 'watchlist' && <ActionButton type="button" size="sm" variant="ghost" onClick={() => { close(); onNavigate('watchlists'); }}>Manage watchlist</ActionButton>}</div>}
         <p className="impact-radar-note">{RADAR_NOTICE}</p>
       </>}

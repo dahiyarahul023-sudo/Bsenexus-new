@@ -164,3 +164,11 @@
 .impact-radar-movement .impact-radar-selected-price { font-size:11px; line-height:1.7; margin:7px 0; overflow-wrap:anywhere; }
 @keyframes radar-move-grow { from {transform:scaleY(0);} to {transform:scaleY(1);} }
 @media(prefers-reduced-motion:reduce) { .impact-radar-mini-fill { animation:none; } }
+.impact-radar-company-group { min-width:0; display:flex; flex-direction:column; }
+.impact-radar-company-group>.impact-radar-card { height:auto; flex:1; }
+.impact-radar-company-reports { margin-top:6px; padding:8px 12px; border:1px solid var(--radar-border,#cbd5e1); border-radius:12px; background:var(--rich-surface,#fff); font-size:12px; }
+.impact-radar-company-reports summary { cursor:pointer; min-height:32px; line-height:1.5; padding-block:7px; font-weight:700; }
+.impact-radar-company-reports button { display:block; width:100%; text-align:left; padding:10px 0; min-height:44px; border-top:1px solid #e2e8f0; line-height:1.5; cursor:pointer; overflow-wrap:anywhere; }
+.impact-radar-company-reports button span { display:block; margin-top:3px; font-size:11px; color:#64748b; }
+.dark .impact-radar-company-reports { background:#1a1926; border-color:#38324e; color:#f1f5f9; }
+.dark .impact-radar-company-reports button { border-color:#38324e; }

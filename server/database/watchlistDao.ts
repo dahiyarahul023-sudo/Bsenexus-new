@@ -1,7 +1,7 @@
 import { getSupabase, isSupabaseConfigured } from './supabase.js';
 import { runPaymentStore, PaymentStoreUnavailableError } from './paymentStore.js';
 import { readLocalJson, writeLocalJson, isOfflineOrNetworkError } from './localStore.js';
-import { resolveStockDetailsSync } from '../utils/stockResolver.js';
+import { resolveStockDetailsSync, resolveStockDetailsStrict } from '../utils/stockResolver.js';
 import { withRetry } from '../utils/retry.js';
 import { addLog } from './logDao.js';
 
@@ -123,7 +123,7 @@ function sanitizeStockItem(it: any): WatchlistStockItemDao {
   if (sym === 'STATEBANKOFINDIA') sym = 'SBIN';
   if (sym === 'LICOFINDIA') sym = 'LICI';
 
-  const resolved = resolveStockDetailsSync(sym);
+  const resolved = resolveStockDetailsStrict(sym);
 
   return {
     symbol: resolved?.symbol || sym,
@@ -507,7 +507,8 @@ export async function addSymbolToWatchlist(
   symbol: string, 
   priority: 'HIGH' | 'MEDIUM' | 'LOW' = 'HIGH', 
   category?: string,
-  userId?: string
+  userId?: string,
+  identity?: { scripCode?: string; companyName?: string }
 ): Promise<void> {
   const uid = sanitizeUserId(userId);
   return withUidLock(uid, async () => {
@@ -517,6 +518,8 @@ export async function addSymbolToWatchlist(
 
     const newItem: WatchlistStockItemDao = {
       symbol: sym,
+      scripCode: identity?.scripCode,
+      companyName: identity?.companyName,
       priority: priority || 'HIGH',
       category: category ? category.trim() : undefined
     };
@@ -599,6 +602,7 @@ export async function updateSymbolPriorityInWatchlist(
       if (idx >= 0) {
         const curr = targetList.items[idx];
         targetList.items[idx] = {
+          ...(typeof curr === 'object' ? curr : {}),
           symbol: sym,
           priority,
           category: category !== undefined ? category : extractCategory(curr)
@@ -752,6 +756,7 @@ export async function updateSymbolPriorityAcrossAllWatchlists(
         if (idx >= 0) {
           const curr = list.items[idx];
           list.items[idx] = {
+            ...(typeof curr === 'object' ? curr : {}),
             symbol: sym,
             priority,
             category: category !== undefined ? category : extractCategory(curr)

@@ -2,7 +2,7 @@ import express from 'express';
 import { requireAuth, requireAdmin, apiRateLimiter } from '../security/auth.js';
 import { listRadarEvents, listRadarCompanyReports, getRadarEvent, listRadarUpdates, firstRadarUpdate, getRadarFollowing, setRadarFollowing, publishRadarRecords, getRadarCategories } from '../database/impactRadarDao.js';
 import { getRadarMovement } from '../services/radarMovementService.js';
-import { radarIntakeStatus } from '../services/impactRadarService.js';
+import { durableRadarIntakeStatus } from '../services/impactRadarService.js';
 import { RADAR_ID, isRadarEvent, isRadarEventInScope, isRadarUpdate, publicRadarEvent } from '../../src/shared/impactRadar.js';
 
 export const impactRadarRouter = express.Router();
@@ -10,8 +10,8 @@ impactRadarRouter.use((_req, res, next) => { res.setHeader('Cache-Control', 'pri
 const unavailable = (res: express.Response) => res.status(503).json({ success: false, error: 'Impact Radar is unavailable. Please retry; previous information may be out of date.' });
 impactRadarRouter.get('/', apiRateLimiter, async (_req, res) => {
   try {
-    const items = await listRadarEvents();
-    res.json({ success: true, items, checkedAt: new Date().toISOString(), intake: radarIntakeStatus(), limit: 200 });
+    const [items,intake] = await Promise.all([listRadarEvents(),durableRadarIntakeStatus()]);
+    res.json({ success: true, items, checkedAt: new Date().toISOString(), intake, limit: 200 });
   } catch { unavailable(res); }
 });
 impactRadarRouter.get('/categories', apiRateLimiter, async (_req, res) => {

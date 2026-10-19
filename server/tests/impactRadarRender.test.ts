@@ -7,6 +7,7 @@ import ts from 'typescript';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import * as contract from '../../src/shared/impactRadar.js';
+import {groupRadarCompanies} from '../../src/utils/radarCompanyGroups.js';
 test('actual card renders an accessible neutral event with independent detail and tracking controls', () => {
   const source = fs.readFileSync('src/components/ImpactRadar.tsx', 'utf8');
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText;
@@ -36,7 +37,7 @@ test('Home Radar renders only two previews and keeps the full dashboard out of t
   const source = fs.readFileSync('src/components/ImpactRadar.tsx', 'utf8');
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText;
   const actualRequire = createRequire(new URL('../../src/components/ImpactRadar.tsx', import.meta.url));
-  const events = Array.from({ length: 10 }, (_, i) => ({ id: `event-${i}`, title: `Supreme Court matter ${i}`, companies: [{ symbol: 'TCS', name: 'Tata Consultancy Services', scripCode: '532540' }], category: 'legal', authority: 'Supreme Court', status: 'monitoring', scheduledDate: null, scheduleConfirmed: false, information: 'Sourced court development.', nextTrigger: null, source: { name: 'BSE', url: 'https://www.bseindia.com/test.pdf', kind: 'disclosure' }, publishedAt: '2026-10-15T10:00:00Z', updatedAt: '2026-10-15T10:00:00Z' }));
+  const events = Array.from({ length: 10 }, (_, i) => ({ id: `event-${i}`, title: `Supreme Court matter ${i}`, companies: [{ symbol: `STOCK${i%5}`, name: `Company ${i%5}`, scripCode: String(532540+i%5) }], category: 'legal', authority: 'Supreme Court', status: 'monitoring', scheduledDate: null, scheduleConfirmed: false, information: 'Sourced court development.', nextTrigger: null, source: { name: 'BSE', url: 'https://www.bseindia.com/test.pdf', kind: 'disclosure' }, publishedAt: '2026-10-15T10:00:00Z', updatedAt: '2026-10-15T10:00:00Z' }));
   class Feed {
     getSnapshot = () => ({ items: events, following: [], followingReady: true, saving: [], loading: false, checkedAt: Date.now(), error: null });
     subscribe = () => () => {};
@@ -45,6 +46,7 @@ test('Home Radar renders only two previews and keeps the full dashboard out of t
   vm.runInNewContext(code, { exports, console, require(path: string) {
     if (path.endsWith('/impactRadar')) return contract;
     if (path.endsWith('/impactRadarFeed')) return { ImpactRadarFeed: Feed };
+    if (path.endsWith('/radarCompanyGroups')) return {groupRadarCompanies};
     if (path.endsWith('/AuthContext')) return { useAuth: () => ({ setIsAuthModalOpen() {} }) };
     if (path.endsWith('/useVisibilityInterval')) return { useVisibilityInterval() {} };
     if (path === './ui/ActionButton') return actualRequire(path);
@@ -53,6 +55,7 @@ test('Home Radar renders only two previews and keeps the full dashboard out of t
   } });
   const html = renderToStaticMarkup(React.createElement(exports.ImpactRadar, { active: true, identity: 'guest', onNavigate() {}, density: 'standard' }));
   assert.equal((html.match(/<article/g) || []).length, 2);
+  assert.equal((html.match(/2 reports for this company/g) || []).length,2);
   assert.ok(html.includes('See more'));
   assert.ok(html.includes('impact-radar-card-open'));
   assert.ok(html.includes('aria-haspopup="dialog"'));

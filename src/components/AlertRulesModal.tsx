@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import { customFetch } from '../api';
 import { useAuth } from '../context/AuthContext';
+import { DeviceNotificationControl } from './DeviceNotificationControl';
+import { Switch } from './ui/Switch';
 import { presetKeyOf, presetsFromRules } from '../shared/alertRules';
 import type { AlertRule } from '../shared/alertRules';
 export type { AlertRule } from '../shared/alertRules';
@@ -90,6 +92,9 @@ export function AlertRulesModal({ isOpen, onClose }: AlertRulesModalProps) {
   const [excludeKeywordsInput, setExcludeKeywordsInput] = useState<string>('');
   const [inApp, setInApp] = useState<boolean>(true);
   const [telegram, setTelegram] = useState<boolean>(true);
+
+  const confirmedPresets = presetsFromRules(rules);
+  const presetDirty = loaded && (presetResults !== confirmedPresets.results || presetCorpActions !== confirmedPresets.corporate || presetMaterial !== confirmedPresets.material || (presetScope === 'all' ? 'ALL_STOCKS' : 'WATCHLIST_ONLY') !== confirmedPresets.scope || presetInApp !== confirmedPresets.channels.inApp || presetTelegram !== confirmedPresets.channels.telegram);
 
   const applyRules = (loadedRules: AlertRule[]) => {
     setRules(loadedRules);
@@ -191,7 +196,7 @@ export function AlertRulesModal({ isOpen, onClose }: AlertRulesModalProps) {
       aria-labelledby="alert-rules-title"
     >
       <div 
-        className="bg-white dark:bg-[#1A1926] border border-slate-200 dark:border-[#2D283E] rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150 overscroll-contain"
+        className="alert-rules-sheet bg-white dark:bg-[#1A1926] border border-slate-200 dark:border-[#2D283E] rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150 overscroll-contain"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -266,6 +271,7 @@ export function AlertRulesModal({ isOpen, onClose }: AlertRulesModalProps) {
         {/* Content Body */}
         <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4 overscroll-contain">
           {error && <div role="alert" className="text-sm text-rose-600">{error}{!loaded && <button type="button" onClick={()=>void loadRules()} disabled={loading} className="ml-2 underline">Try again</button>}</div>}
+          <DeviceNotificationControl />
           {loading && <AlertRuleSkeleton />}
           <fieldset disabled={saving || loading || !loaded} className="min-w-0" onChange={()=>setPresetSavedFeedback(null)} onClick={()=>setPresetSavedFeedback(null)}>
           
@@ -273,13 +279,13 @@ export function AlertRulesModal({ isOpen, onClose }: AlertRulesModalProps) {
           {activeTab === 'presets' && (
             <div className="space-y-4 animate-in fade-in duration-150">
               <div className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                Simple one-tap alerts configured for real-time BSE surveillance. Choose which event classes trigger notifications:
+                Choose filing categories, then save your inbox and Telegram rules.
               </div>
 
               {/* Preset 1: Results */}
               <div className="p-3.5 rounded-xl border border-slate-200/90 dark:border-[#2D283E] bg-slate-50/60 dark:bg-[#161522] flex items-center justify-between gap-3">
                 <div className="space-y-1 min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
+                  <div className="alert-preset-heading">
                     <div className="p-1 rounded bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300">
                       <TrendingUp size={14} />
                     </div>
@@ -294,23 +300,13 @@ export function AlertRulesModal({ isOpen, onClose }: AlertRulesModalProps) {
                     Quarterly &amp; Annual financial results, Board meeting outcomes, and revenue/profit figures.
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setPresetResults(!presetResults)}
-                  className={cn(
-                    "p-2 rounded-lg transition-colors cursor-pointer shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center",
-                    presetResults ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400 hover:text-slate-600"
-                  )}
-                  role="switch" aria-label="Financial Results" aria-checked={presetResults} title={presetResults ? "Enabled" : "Disabled"}
-                >
-                  {presetResults ? <ToggleRight size={28} /> : <ToggleLeft size={28} />}
-                </button>
+                <Switch checked={presetResults} onChange={setPresetResults} label="Financial Results" />
               </div>
 
               {/* Preset 2: Corporate Actions */}
               <div className="p-3.5 rounded-xl border border-slate-200/90 dark:border-[#2D283E] bg-slate-50/60 dark:bg-[#161522] flex items-center justify-between gap-3">
                 <div className="space-y-1 min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
+                  <div className="alert-preset-heading">
                     <div className="p-1 rounded bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300">
                       <Coins size={14} />
                     </div>
@@ -325,23 +321,13 @@ export function AlertRulesModal({ isOpen, onClose }: AlertRulesModalProps) {
                     Dividends, Bonus issues, Stock splits, Rights issues, and Share buybacks.
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setPresetCorpActions(!presetCorpActions)}
-                  className={cn(
-                    "p-2 rounded-lg transition-colors cursor-pointer shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center",
-                    presetCorpActions ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400 hover:text-slate-600"
-                  )}
-                  role="switch" aria-label="Corporate Actions" aria-checked={presetCorpActions} title={presetCorpActions ? "Enabled" : "Disabled"}
-                >
-                  {presetCorpActions ? <ToggleRight size={28} /> : <ToggleLeft size={28} />}
-                </button>
+                <Switch checked={presetCorpActions} onChange={setPresetCorpActions} label="Corporate Actions" />
               </div>
 
               {/* Preset 3: All Material Updates */}
               <div className="p-3.5 rounded-xl border border-slate-200/90 dark:border-[#2D283E] bg-slate-50/60 dark:bg-[#161522] flex items-center justify-between gap-3">
                 <div className="space-y-1 min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
+                  <div className="alert-preset-heading">
                     <div className="p-1 rounded bg-purple-100 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300">
                       <Activity size={14} />
                     </div>
@@ -356,17 +342,7 @@ export function AlertRulesModal({ isOpen, onClose }: AlertRulesModalProps) {
                     High impact disclosures: Order wins, M&amp;A, Capex, Credit ratings &amp; Management changes.
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setPresetMaterial(!presetMaterial)}
-                  className={cn(
-                    "p-2 rounded-lg transition-colors cursor-pointer shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center",
-                    presetMaterial ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400 hover:text-slate-600"
-                  )}
-                  role="switch" aria-label="All Material Updates" aria-checked={presetMaterial} title={presetMaterial ? "Enabled" : "Disabled"}
-                >
-                  {presetMaterial ? <ToggleRight size={28} /> : <ToggleLeft size={28} />}
-                </button>
+                <Switch checked={presetMaterial} onChange={setPresetMaterial} label="All Material Updates" />
               </div>
 
               {/* Channels & Scope Preferences */}
@@ -401,7 +377,7 @@ export function AlertRulesModal({ isOpen, onClose }: AlertRulesModalProps) {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-200/80 dark:border-[#2D283E]">
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-200/80 dark:border-[#2D283E]">
                   <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Channels:</span>
                   <div className="flex items-center gap-4 text-xs font-bold">
                     <label className="flex items-center gap-1.5 cursor-pointer text-slate-800 dark:text-slate-200">
@@ -696,17 +672,7 @@ export function AlertRulesModal({ isOpen, onClose }: AlertRulesModalProps) {
 
                           <div className="flex items-center gap-1.5 shrink-0">
                             <button type="button" onClick={()=>handleEdit(rule)} aria-label={`Edit ${rule.name}`} className="p-1.5"><Edit3 size={16} /></button>
-                            <button
-                              type="button"
-                              onClick={() => handleToggle(rule.id, rule.enabled)}
-                              className={cn(
-                                "p-1 rounded-lg transition-colors cursor-pointer",
-                                rule.enabled ? "text-emerald-600 hover:text-emerald-700" : "text-slate-400 hover:text-slate-600"
-                              )}
-                              title={rule.enabled ? "Disable Rule" : "Enable Rule"}
-                            >
-                              {rule.enabled ? <ToggleRight size={24} /> : <ToggleLeft size={24} />}
-                            </button>
+                            <Switch checked={rule.enabled} onChange={() => handleToggle(rule.id, rule.enabled)} label={`Enable ${rule.name}`} disabled={saving} />
 
                             <button
                               type="button"
@@ -729,14 +695,15 @@ export function AlertRulesModal({ isOpen, onClose }: AlertRulesModalProps) {
         </div>
 
         {/* Footer */}
-        <div className="p-3.5 border-t border-slate-100 dark:border-[#2D283E] bg-slate-50/80 dark:bg-[#15141F] flex items-center justify-between text-xs text-slate-500">
-          <span>Rules apply to newly received filings. Telegram requires a linked account, active Pro access and alerts enabled.</span>
+        <div className="alert-rules-footer p-3.5 border-t border-slate-100 dark:border-[#2D283E] bg-slate-50/80 dark:bg-[#15141F] flex items-center justify-between text-xs text-slate-500">
+          <span role="status">{activeTab === 'presets' && presetDirty ? 'Unsaved changes. Save to apply your alert rules.' : 'Device notifications and inbox rules are managed separately.'}</span>
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => { if (activeTab === 'presets' && presetDirty) void handleSavePresets(); else onClose(); }}
+            disabled={saving}
             className="px-4 py-1.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold rounded-lg text-xs hover:opacity-90 transition-opacity cursor-pointer"
           >
-            Done
+            {saving ? 'Saving…' : activeTab === 'presets' && presetDirty ? 'Save changes' : 'Done'}
           </button>
         </div>
       </div>

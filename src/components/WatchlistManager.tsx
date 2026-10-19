@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { customFetch } from '../api';
+import { WatchlistEditor } from './WatchlistEditor';
+import '../styles/watchlist-editor.css';
 import { getLowestPlanPrice } from '../utils/cashfree';
 import { useAuth } from '../context/AuthContext';
 import { useIntelModal } from '../context/IntelModalContext';
@@ -267,6 +269,8 @@ export function parseSymbolItem(item: any): WatchlistStockItem {
       symbol: String(item.symbol).trim().toUpperCase(),
       priority: validP,
       category: item.category ? String(item.category).trim() : undefined,
+      scripCode: item.scripCode,
+      companyName: item.companyName,
       notes: item.notes
     };
   }
@@ -502,10 +506,13 @@ export function WatchlistManager() {
   const summaryLang: 'hinglish' | 'english' = profile?.notificationPreferences?.aiSummaryLang === 'hinglish' ? 'hinglish' : 'english';
   const displaySummary = (item: any): string | undefined =>
     summaryLang === 'english' ? (item?.aiSummaryEn || item?.aiSummary) : item?.aiSummary;
+  const accountId = user?.uid || profile?.uid || 'guest';
+  const accountRef = useRef(accountId); accountRef.current = accountId;
+  const [watchlistOwner, setWatchlistOwner] = useState(accountId);
   const [watchlists, setWatchlists] = useState<any[]>(() => {
     // Show last cached watchlists instantly on login; fresh data replaces in background.
     try {
-      const cached = localStorage.getItem('bsenexus_watchlists_cache');
+      const cached = localStorage.getItem(`bsenexus_watchlists_cache:${accountId}`);
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed.items) && Date.now() - (parsed.ts || 0) < 12 * 60 * 60 * 1000) {
@@ -515,7 +522,9 @@ export function WatchlistManager() {
     } catch { /* ignore corrupt cache */ }
     return [];
   });
-  const watchlistsFetchInFlight = useRef(false);
+  const watchlistsRead = useRef<AbortController | null>(null);
+  const [watchlistsError, setWatchlistsError] = useState<string | null>(null);
+  const [isAddingSymbol, setIsAddingSymbol] = useState(false);
   const [activeListId, setActiveListId] = useState<string>('ALL');
   const [newListName, setNewListName] = useState('');
   const [isCreatingList, setIsCreatingList] = useState(false);
@@ -525,6 +534,7 @@ export function WatchlistManager() {
   
   // Mutex lock to prevent duplicate stock adds on multi-clicks or suggestions enter
   const isAddingSymbolRef = useRef(false);
+  const isCreatingListRef = useRef(false);
 
   // Toast notification for newly added stock
   const [lastAddedInfo, setLastAddedInfo] = useState<{
@@ -603,7 +613,7 @@ export function WatchlistManager() {
   const [announcements, setAnnouncements] = useState<any[]>(() => {
     // Show last cached feed instantly on login; fresh data replaces it in background.
     try {
-      const cached = localStorage.getItem('bsenexus_watchlist_feed');
+      const cached = localStorage.getItem(`bsenexus_watchlist_feed:${accountId}`);
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed.items) && Date.now() - (parsed.ts || 0) < 12 * 60 * 60 * 1000) {
@@ -849,28 +859,23 @@ export function WatchlistManager() {
   };
 
   const fetchWatchlists = async () => {
-    if (!user && !profile) {
-      setWatchlists([]);
-      return;
-    }
-    // Skip if a fetch is already running — login fires several triggers at once
-    if (watchlistsFetchInFlight.current) return;
-    watchlistsFetchInFlight.current = true;
+    const owner = accountId;
+    watchlistsRead.current?.abort();
+    if (!user && !profile) { setWatchlists([]); setWatchlistOwner(owner); return; }
+    const controller = new AbortController(); watchlistsRead.current = controller;
+    setWatchlistsError(null);
     try {
-      const res = await customFetch('/api/watchlists');
-      if (res.ok) {
-        const data = await res.json();
-        setWatchlists(data);
-        // Cache for instant display on next login (stale-while-revalidate).
-        try {
-          localStorage.setItem('bsenexus_watchlists_cache', JSON.stringify({ ts: Date.now(), items: data }));
-        } catch { /* storage full or unavailable */ }
-      }
-    } catch (e) {
-      console.error('Error fetching watchlists:', e);
-    } finally {
-      watchlistsFetchInFlight.current = false;
-    }
+      const res = await customFetch('/api/watchlists', { signal: controller.signal });
+      if (!res.ok) throw new Error('Your watchlists could not be loaded.');
+      const data = await res.json();
+      if (!Array.isArray(data)) throw new Error('Invalid watchlist response.');
+      if (controller.signal.aborted || accountRef.current !== owner) return;
+      setWatchlists(data); setWatchlistOwner(owner);
+      try { localStorage.setItem(`bsenexus_watchlists_cache:${owner}`, JSON.stringify({ ts: Date.now(), items: data })); } catch {}
+      window.dispatchEvent(new Event('watchlists-changed'));
+    } catch (error) {
+      if (!controller.signal.aborted && accountRef.current === owner) setWatchlistsError('Your watchlists could not be loaded. Please retry.');
+    } finally { if (watchlistsRead.current === controller) watchlistsRead.current = null; }
   };
 
   // Active symbols list across currently selected watchlist or all watchlists
@@ -912,7 +917,7 @@ export function WatchlistManager() {
           const merged = mergeAnnouncementFeed(prev, data);
           try {
             if (merged.length >= prev.length) {
-              localStorage.setItem('bsenexus_watchlist_feed', JSON.stringify({ ts: Date.now(), items: merged }));
+              localStorage.setItem(`bsenexus_watchlist_feed:${accountId}`, JSON.stringify({ ts: Date.now(), items: merged }));
             }
           } catch { /* storage full or unavailable */ }
           return merged;
@@ -929,14 +934,15 @@ export function WatchlistManager() {
   useVisibilityInterval(fetchAnnouncements, 90000);
 
   useEffect(() => {
-    fetchWatchlists();
+    if (watchlistOwner !== accountId) { setWatchlists([]); setWatchlistOwner(accountId); setActiveListId('ALL'); setLastAddedInfo(null); setUndoToast(null); }
+    void fetchWatchlists();
 
     const handleAuthChanged = () => {
       fetchWatchlists();
     };
 
     window.addEventListener('auth-state-changed', handleAuthChanged);
-    return () => window.removeEventListener('auth-state-changed', handleAuthChanged);
+    return () => { watchlistsRead.current?.abort(); window.removeEventListener('auth-state-changed', handleAuthChanged); };
   }, [user?.uid, profile?.uid]);
 
   useEffect(() => {
@@ -990,6 +996,7 @@ export function WatchlistManager() {
 
   const handleAddList = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isCreatingListRef.current) return;
     const name = newListName.trim();
     if (!name) return;
 
@@ -1008,12 +1015,14 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
       return;
     }
 
+    isCreatingListRef.current = true;
     try {
       const res = await customFetch('/api/watchlists', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name })
       });
       const data = await res.json();
+      if (!res.ok || !data?.id) throw new Error(data?.error || 'Could not create the watchlist. Please retry.');
       setNewListName('');
       setIsCreatingList(false);
       await fetchWatchlists();
@@ -1022,8 +1031,8 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
         setAllPanelTargetListId(String(data.id));
       }
     } catch (err) {
-      console.error('Error creating watchlist:', err);
-    }
+      setWatchlistsError(err instanceof Error ? err.message : 'Could not create the watchlist. Please retry.');
+    } finally { isCreatingListRef.current = false; }
   };
 
   const handleRenameList = async (id: string) => {
@@ -1031,11 +1040,12 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
       setEditingListId(null);
       return;
     }
-    await customFetch(`/api/watchlists/${id}/name`, {
+    const response = await customFetch(`/api/watchlists/${id}/name`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: editListName.trim() })
     });
+    if (!response.ok) {setWatchlistsError('Could not rename the watchlist. Your draft is kept for retry.'); return;}
     setEditingListId(null);
     fetchWatchlists();
   };
@@ -1080,6 +1090,8 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                   symbol: parsed.symbol,
+                  scripCode: parsed.scripCode,
+                  companyName: parsed.companyName,
                   priority: parsed.priority,
                   category: parsed.category
                 })
@@ -1130,12 +1142,14 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
     companyName?: string, 
     priorityOverride?: StockPriority, 
     customCategory?: string,
-    targetListIdOverride?: string
+    targetListIdOverride?: string,
+    selectedScripCode?: string
   ) => {
     if (!isProOrAdmin) { setIsProModalOpen(true); return; }
     if (isAddingSymbolRef.current) return;
     setCompanyAddError(null);
     const sym = (rawSymbol || '').trim().toUpperCase();
+    const owner = accountId;
     if (!sym) return;
 
     // Determine target list
@@ -1164,6 +1178,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
     }
 
     isAddingSymbolRef.current = true;
+    setIsAddingSymbol(true);
     setShowSuggestions(false);
     setNewSymbol('');
     setNewCategory('');
@@ -1175,7 +1190,8 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
       symbol: sym,
       priority: priorityToUse,
       category: categoryToUse,
-      scripCode: symbolToScripCache[sym] || undefined
+      scripCode: selectedScripCode || symbolToScripCache[sym] || (/^\d{6}$/.test(sym) ? sym : undefined),
+      companyName: companyName || undefined
     };
 
     setWatchlists(prev => prev.map(wl => {
@@ -1192,13 +1208,13 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
       return wl;
     }));
 
-    setLastAddedInfo({
+    const addedInfo = {
       symbol: sym,
       companyName: companyName || sym,
       listName: targetList.name,
       priority: priorityToUse,
       timestamp: Date.now()
-    });
+    };
     setHighlightedSymbol(sym);
 
     // Clear pulse after 4s
@@ -1212,11 +1228,14 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           symbol: sym,
+          scripCode: optimisticItem.scripCode,
+          companyName,
           priority: priorityToUse,
           category: categoryToUse
         })
       });
 
+      if (accountRef.current !== owner) return;
       if (res.status === 402 || res.status === 403) {
         setCompanyAddError("Your access could not be confirmed. Refreshing subscription status…");
         void refreshProfile();
@@ -1231,6 +1250,8 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
       }
 
       if (res.ok) {
+        setLastAddedInfo(addedInfo);
+        await fetchWatchlists();
         // Background sync
         customFetch('/api/watchlists/sync-stock', {
           method: 'POST',
@@ -1249,18 +1270,24 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
         }).catch(() => {});
       } else {
         setWatchlists(prevWatchlists); // Rollback
+        setNewSymbol(value => value || sym);
+        setNewCategory(value => value || categoryToUse || '');
         setLastAddedInfo(null);
         setHighlightedSymbol(null);
         setCompanyAddError("Could not add this company. Please try again.");
       }
     } catch (err: any) {
       console.error("Error adding symbol directly:", err);
+      if (accountRef.current !== owner) return;
       setWatchlists(prevWatchlists); // Rollback
+      setNewSymbol(value => value || sym);
+      setNewCategory(value => value || categoryToUse || '');
       setLastAddedInfo(null);
       setHighlightedSymbol(null);
       setCompanyAddError("Could not add this company. Please try again.");
     } finally {
       isAddingSymbolRef.current = false;
+      setIsAddingSymbol(false);
     }
   };
 
@@ -1279,6 +1306,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
       await handleDirectAddSymbol(symbols[0], undefined, newPriority, newCategory, targetId);
     } else {
       isAddingSymbolRef.current = true;
+      setIsAddingSymbol(true);
       setShowSuggestions(false);
       setNewSymbol('');
       setNewCategory('');
@@ -1300,6 +1328,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
           return;
         }
 
+        if (!res.ok) throw new Error('Could not add these companies. Please retry.');
         setLastAddedInfo({
           symbol: `${symbols.length} Stocks`,
           companyName: symbols.join(', '),
@@ -1319,8 +1348,13 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
         )).then(() => {
           fetchAnnouncements();
         });
+      } catch {
+        setCompanyAddError('Could not add these companies. Your input is kept for retry.');
+        setNewSymbol(value => value || symbols.join(', '));
+        setNewCategory(value => value || newCategory);
       } finally {
         isAddingSymbolRef.current = false;
+        setIsAddingSymbol(false);
       }
     }
   };
@@ -1398,6 +1432,8 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             symbol, 
+            scripCode: parsedItem?.scripCode,
+            companyName: parsedItem?.companyName,
             priority: prevPriority, 
             category: prevCategory 
           })
@@ -1477,7 +1513,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
 
   // All combined tracked stocks across all watchlists
   const allCombinedTrackedItems = useMemo(() => {
-    const list: { symbol: string; priority: StockPriority; category?: string; listName: string; listId: string }[] = [];
+    const list: { symbol: string; scripCode?: string; companyName?: string; priority: StockPriority; category?: string; listName: string; listId: string }[] = [];
     for (const wl of watchlists) {
       const items = wl.items || [];
       for (const raw of items) {
@@ -1485,6 +1521,8 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
         if (parsed.symbol) {
           list.push({
             symbol: parsed.symbol,
+            scripCode: parsed.scripCode,
+            companyName: parsed.companyName,
             priority: parsed.priority,
             category: parsed.category,
             listName: wl.name,
@@ -1539,9 +1577,9 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
       seen.add(item.symbol);
 
       const master = stockMasterClient[item.symbol];
-      const scripCode = master?.scripCode || getScripCodeClient(item.symbol);
+      const scripCode = (item as WatchlistStockItem).scripCode || master?.scripCode || getScripCodeClient(item.symbol);
 
-      let cleanName = item.symbol;
+      let cleanName = (item as WatchlistStockItem).companyName || item.symbol;
       if (master?.nameKeywords?.[0]) {
         cleanName = master.nameKeywords[0];
       }
@@ -2734,853 +2772,19 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
         </div>
       )}
 
-      {/* Tab: Edit Watchlist & Manage Stocks */}
-      {watchlistSubTab === 'edit' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white dark:bg-[#1A1926] border border-slate-200/90 dark:border-[#2D283E] rounded-xl p-3.5 shadow-xs space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Bookmark className="text-slate-700 dark:text-slate-300" size={17} />
-                <h3 className="font-bold text-sm text-slate-900 dark:text-white font-display">Your Watchlists</h3>
-              </div>
-              <button 
-                onClick={() => setIsCreatingList(!isCreatingList)}
-                className="px-2 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer"
-              >
-                <Plus size={12} />
-                <span>New List</span>
-              </button>
-            </div>
-
-            {isCreatingList && (
-              <form onSubmit={handleAddList} className="flex gap-2">
-                <input 
-                  type="text" 
-                  value={newListName} 
-                  onChange={e => setNewListName(e.target.value)}
-                  placeholder="Watchlist name..."
-                  className="flex-1 px-2.5 py-1 text-xs bg-slate-50 dark:bg-[#201E2E] border border-slate-200 dark:border-[#2D283E] rounded-lg focus:outline-none text-slate-900 dark:text-white"
-                  autoFocus
-                />
-                <button type="submit" className="px-2 py-1 bg-slate-900 text-white text-xs font-bold rounded-lg cursor-pointer">
-                  Save
-                </button>
-              </form>
-            )}
-
-            <div className="space-y-1 max-h-[380px] overflow-y-auto">
-              {watchlists.map(list => {
-              const isListSelected = String(activeListId) === String(list.id);
-              const itemCount = (list.items || []).length;
-              return (
-                <div 
-                  key={list.id} 
-                  className={cn(
-                    "p-3 flex items-center justify-between cursor-pointer rounded-lg transition-all active:scale-[0.98]",
-                    isListSelected 
-                      ? "bg-slate-900 text-white dark:bg-[#2A263D] dark:text-white font-bold shadow-sm" 
-                      : "hover:bg-slate-50 dark:hover:bg-[#222030] text-slate-700 dark:text-slate-300 font-semibold"
-                  )}
-                  onClick={() => { if (editingListId !== list.id) setActiveListId(String(list.id)); }}
-                >
-                  <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                    <input 
-                      type="checkbox" 
-                      checked={list.is_active === 1}
-                      onChange={(e) => { e.stopPropagation(); handleToggleList(list.id, list.is_active === 1); }}
-                      className="w-3.5 h-3.5 accent-slate-700 dark:accent-slate-400 rounded cursor-pointer shrink-0"
-                    />
-                    
-                    {editingListId === list.id ? (
-                      <div className="flex-1 flex items-center gap-1.5 mr-2">
-                        <input
-                          type="text"
-                          autoFocus
-                          value={editListName}
-                          onChange={e => setEditListName(e.target.value)}
-                          onKeyDown={e => {
-                            if (e.key === 'Enter') handleRenameList(list.id);
-                            if (e.key === 'Escape') setEditingListId(null);
-                          }}
-                          className="flex-1 px-2.5 py-1.5 text-xs bg-white dark:bg-[#201E2E] border border-slate-400 rounded-lg focus:outline-none w-full text-slate-900 dark:text-white font-bold"
-                          onClick={e => e.stopPropagation()}
-                        />
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); handleRenameList(list.id); }} 
-                          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#252233] rounded-lg transition-colors cursor-pointer"
-                          title="Save Rename"
-                        >
-                          <Check size={16} />
-                        </button>
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); setEditingListId(null); }} 
-                          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#252233] rounded-lg transition-colors cursor-pointer"
-                          title="Cancel"
-                        >
-                          <X size={16} />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex-1 min-w-0 truncate pr-2">
-                        <div className="text-xs uppercase truncate font-black">{list.name}</div>
-                        <div className={cn("text-[10px] font-mono font-medium", isListSelected ? "text-slate-300" : "text-slate-500 dark:text-slate-400")}>{itemCount} Symbols</div>
-                      </div>
-                    )}
-                  </div>
-
-                  {editingListId !== list.id && (
-                    <div className="flex items-center gap-0.5 shrink-0">
-                      <button 
-                        onClick={(e) => { 
-                          e.stopPropagation(); 
-                          setEditingListId(list.id); 
-                          setEditListName(list.name); 
-                        }} 
-                        title="Rename List"
-                        className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#252233] rounded-lg transition-colors cursor-pointer"
-                      >
-                        <Edit2 size={14} />
-                      </button>
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); handleDeleteList(list.id); }} 
-                        title="Delete List"
-                        className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Enhanced Symbols & Priority Categorization Panel */}
-        <div className="md:col-span-2 bg-white dark:bg-[#1A1926] border border-slate-200/90 dark:border-[#2D283E] rounded-xl flex flex-col h-[480px] shadow-xs overflow-hidden">
-          {activeListId && activeListId !== 'ALL' ? (() => {
-            const list = watchlists.find(l => String(l.id) === String(activeListId));
-            if (!list) return null;
-            return (
-              <>
-                {/* Form to Add Stock with Priority & Category */}
-                <div className="p-3.5 border-b border-slate-100 dark:border-[#2D283E] bg-slate-50/50 dark:bg-[#15141F] space-y-2.5">
-                  <form onSubmit={(e) => handleAddSymbol(e, activeListId)} className="space-y-2 relative">
-                    <div className="flex flex-col sm:flex-row gap-2 relative">
-                      <div className="flex-1 relative">
-                        <input 
-                          type="text" 
-                          value={newSymbol} 
-                          onChange={e => setNewSymbol(e.target.value)}
-                          placeholder="Search or enter stock symbol (e.g. TCS, RELIANCE, INFOSYS)..."
-                          className="w-full px-3 py-1.5 bg-white dark:bg-[#201E2E] border border-slate-200 dark:border-[#2D283E] text-xs rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400/20 text-slate-900 dark:text-white uppercase font-bold"
-                        />
-                        
-                        {/* 1-Click Instant Add Suggestions Dropdown */}
-                        {showSuggestions && newSymbol.length >= 2 && !newSymbol.includes(',') && (
-                          <div className="absolute top-full left-0 right-0 mt-1 surface-dropdown bg-white dark:bg-[#1A1926] border border-slate-200 dark:border-[#2D283E] rounded-xl shadow-2xl z-50 max-h-72 overflow-y-auto divide-y divide-slate-100 dark:divide-[#2D283E]/50">
-                            <div className="px-3 py-1.5 bg-slate-50 dark:bg-[#201E2E] flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 font-semibold sticky top-0 backdrop-blur-xs z-10">
-                              <span className="flex items-center gap-1 text-slate-800 dark:text-slate-200 font-bold">
-                                <Zap size={12} className="text-amber-500" />
-                                <span>⚡ Click any stock to ADD INSTANTLY to {list.name}</span>
-                              </span>
-                              <span className="text-slate-400 font-mono text-[9px]">ESC to close</span>
-                            </div>
-
-                            {isSearching ? (
-                              <div className="p-2 space-y-1.5 animate-pulse">
-                                {[1, 2, 3].map((sk) => (
-                                  <div key={sk} className="p-2.5 rounded-lg bg-slate-50/70 dark:bg-[#1f1d2b] flex items-center justify-between">
-                                    <div className="space-y-1">
-                                      <div className="h-3.5 w-24 bg-slate-200 dark:bg-slate-700 rounded" />
-                                      <div className="h-2.5 w-40 bg-slate-200/60 dark:bg-slate-800 rounded" />
-                                    </div>
-                                    <div className="h-5 w-12 bg-slate-200/50 dark:bg-slate-800 rounded" />
-                                  </div>
-                                ))}
-                              </div>
-                            ) : searchResults.length > 0 ? (
-                              searchResults.map((res, i) => {
-                                const symToAdd = (res.symbol && res.symbol.trim()) ? res.symbol.trim().toUpperCase() : res.name.replace(/\s+L(?:imi)?t(?:e)?d\.?$/i, '').trim().toUpperCase();
-                                const isAlreadyInCurrent = currentListParsedItems.some(it => it.symbol === symToAdd);
-                                const globalMatched = symbolDetailsMap[symToAdd];
-
-                                return (
-                                  <div 
-                                    key={i} 
-                                    className="p-2.5 hover:bg-slate-100 dark:hover:bg-[#252233] cursor-pointer flex items-center justify-between gap-3 group transition-all"
-                                    onClick={() => handleDirectAddSymbol(symToAdd, res.name, newPriority, newCategory, activeListId)}
-                                  >
-                                    <div className="flex-1 min-w-0">
-                                      <div className="flex items-center gap-2">
-                                        <span className="text-xs font-black text-slate-900 dark:text-white group-hover:text-slate-700 dark:group-hover:text-slate-200 truncate">
-                                          {res.name}
-                                        </span>
-                                        <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#201E2E] text-slate-700 dark:text-slate-300">
-                                          {symToAdd}
-                                        </span>
-                                      </div>
-                                      <div className="text-[10px] text-slate-400 flex items-center gap-2 mt-0.5">
-                                        {isAlreadyInCurrent ? (
-                                          <span className="text-slate-700 dark:text-slate-300 font-bold flex items-center gap-0.5">
-                                            <CheckCheck size={11} /> Already in this list ({currentListParsedItems.find(it => it.symbol === symToAdd)?.priority})
-                                          </span>
-                                        ) : globalMatched ? (
-                                          <span className="text-blue-500 font-medium flex items-center gap-0.5">
-                                            <span>In another list ({globalMatched.priority})</span>
-                                          </span>
-                                        ) : (
-                                          <span className="text-slate-600 dark:text-slate-300 font-medium">
-                                            ⚡ Click to add with <strong>{newPriority}</strong> priority
-                                          </span>
-                                        )}
-                                      </div>
-                                    </div>
-
-                                    {/* 1-Click Priority Selectors on each row */}
-                                    <div className="flex items-center gap-1.5 shrink-0" onClick={e => e.stopPropagation()}>
-                                      <button
-                                        type="button"
-                                        onClick={() => handleDirectAddSymbol(symToAdd, res.name, 'HIGH', newCategory, activeListId)}
-                                        title="Add directly with HIGH priority"
-                                        className="px-2.5 py-1.5 text-[10px] font-black rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 transition-all active:scale-[0.96] flex items-center gap-1 cursor-pointer shadow-2xs min-h-[32px]"
-                                      >
-                                        <span>🔴</span>
-                                        <span className="hidden sm:inline">HIGH</span>
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => handleDirectAddSymbol(symToAdd, res.name, 'MEDIUM', newCategory, activeListId)}
-                                        title="Add directly with MEDIUM priority"
-                                        className="px-2.5 py-1.5 text-[10px] font-black rounded-lg bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 transition-all active:scale-[0.96] flex items-center gap-1 cursor-pointer shadow-2xs min-h-[32px]"
-                                      >
-                                        <span>🟡</span>
-                                        <span className="hidden sm:inline">MED</span>
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => handleDirectAddSymbol(symToAdd, res.name, 'LOW', newCategory, activeListId)}
-                                        title="Add directly with LOW priority"
-                                        className="px-2.5 py-1.5 text-[10px] font-black rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-[#2D283E] text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-[#3E3854] transition-all active:scale-[0.96] flex items-center gap-1 cursor-pointer shadow-2xs min-h-[32px]"
-                                      >
-                                        <span>⚪</span>
-                                        <span className="hidden sm:inline">LOW</span>
-                                      </button>
-                                    </div>
-                                  </div>
-                                );
-                              })
-                            ) : (
-                              <div className="p-4 text-xs text-slate-400 text-center">No matching tickers found. Press Add to use exact ticker.</div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      <input
-                        type="text"
-                        value={newCategory}
-                        onChange={e => setNewCategory(e.target.value)}
-                        placeholder="Tag / Category (e.g. Core, Swing, SmallCap)"
-                        className="sm:w-48 px-3 py-1.5 bg-white dark:bg-[#201E2E] border border-slate-200 dark:border-[#2D283E] text-xs rounded-lg focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-900 dark:text-white min-h-[38px]"
-                      />
-
-                      <button type="submit" className="rich-action rich-action-primary px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg transition-colors cursor-pointer shrink-0 flex items-center gap-1.5 min-h-[38px] active:scale-[0.96]">
-                        <Plus size={14} />
-                        <span>Add Stock</span>
-                      </button>
-                    </div>
-
-                    {/* Priority Selector for the New Stock */}
-                    <div className="flex items-center gap-2 pt-0.5 flex-wrap">
-                      <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 shrink-0">Default Priority:</span>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <button
-                          type="button"
-                          onClick={() => setNewPriority('HIGH')}
-                          className={cn(
-                            "px-3 py-1.5 text-xs rounded-lg font-bold transition-all cursor-pointer border flex items-center gap-1.5 whitespace-nowrap shrink-0 min-h-[34px] active:scale-[0.96]",
-                            newPriority === 'HIGH'
-                              ? "bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-800 shadow-xs ring-1 ring-rose-500/30"
-                              : "bg-white dark:bg-[#201E2E] text-slate-600 dark:text-slate-400 border-slate-200 dark:border-[#2D283E] hover:bg-slate-50 dark:hover:bg-[#28253B]"
-                          )}
-                        >
-                          <span>🔴 High (Conviction)</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setNewPriority('MEDIUM')}
-                          className={cn(
-                            "px-3 py-1.5 text-xs rounded-lg font-bold transition-all cursor-pointer border flex items-center gap-1.5 whitespace-nowrap shrink-0 min-h-[34px] active:scale-[0.96]",
-                            newPriority === 'MEDIUM'
-                              ? "bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-800 shadow-xs ring-1 ring-amber-500/30"
-                              : "bg-white dark:bg-[#201E2E] text-slate-600 dark:text-slate-400 border-slate-200 dark:border-[#2D283E] hover:bg-slate-50 dark:hover:bg-[#28253B]"
-                          )}
-                        >
-                          <span>🟡 Medium (Radar)</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setNewPriority('LOW')}
-                          className={cn(
-                            "px-3 py-1.5 text-xs rounded-lg font-bold transition-all cursor-pointer border flex items-center gap-1.5 whitespace-nowrap shrink-0 min-h-[34px] active:scale-[0.96]",
-                            newPriority === 'LOW'
-                              ? "bg-slate-200 dark:bg-[#2D283E] text-slate-800 dark:text-slate-200 border-slate-300 dark:border-[#3E3854] shadow-xs"
-                              : "bg-white dark:bg-[#201E2E] text-slate-600 dark:text-slate-400 border-slate-200 dark:border-[#2D283E] hover:bg-slate-50 dark:hover:bg-[#28253B]"
-                          )}
-                        >
-                          <span>⚪ Low (Tracking)</span>
-                        </button>
-                      </div>
-                    </div>
-                  </form>
-                </div>
-
-                {/* Filter and Stats Bar for Symbols Panel */}
-                <div className="px-3.5 py-2 border-b border-slate-100 dark:border-[#2D283E] bg-slate-50/30 dark:bg-[#15141F]/40 flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-1 overflow-x-auto">
-                    {[
-                      { id: 'ALL' as const, label: 'All', count: symbolPriorityCounts.TOTAL },
-                      { id: 'HIGH' as const, label: '🔴 High', count: symbolPriorityCounts.HIGH },
-                      { id: 'MEDIUM' as const, label: '🟡 Med', count: symbolPriorityCounts.MEDIUM },
-                      { id: 'LOW' as const, label: '⚪ Low', count: symbolPriorityCounts.LOW }
-                    ].map(tab => (
-                      <button
-                        key={tab.id}
-                        type="button"
-                        onClick={() => setSymbolPriorityFilter(tab.id)}
-                        className={cn(
-                          "px-2 py-0.5 text-[11px] rounded-md font-bold transition-all cursor-pointer flex items-center gap-1",
-                          symbolPriorityFilter === tab.id
-                            ? "bg-slate-900 dark:bg-[#2A263D] text-white"
-                            : "text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-[#222030]"
-                        )}
-                      >
-                        <span>{tab.label}</span>
-                        <span className="text-[9px] opacity-75 font-mono">({tab.count})</span>
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <div className="relative">
-                      <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
-                      <input
-                        type="text"
-                        value={symbolSearchQuery}
-                        onChange={e => setSymbolSearchQuery(e.target.value)}
-                        placeholder="Filter stocks in list..."
-                        className="pl-6 pr-2 py-1 bg-white dark:bg-[#201E2E] border border-slate-200 dark:border-[#2D283E] text-[11px] rounded-md focus:outline-none text-slate-900 dark:text-white w-36 sm:w-44"
-                      />
-                    </div>
-
-                    {/* List Actions Menu */}
-                    <div className="relative" ref={listMenuRef}>
-                      <motion.button
-                        type="button"
-                        whileTap={buttonTap}
-                        transition={springSnappy}
-                        onClick={() => setOpenMenuForList(openMenuForList === activeListId ? null : activeListId)}
-                        className="p-2 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#201E2E] rounded-lg border border-slate-200 dark:border-[#2D283E] transition-colors cursor-pointer touch-manipulation min-h-[36px] min-w-[36px] flex items-center justify-center"
-                        title="List options"
-                      >
-                        <MoreVertical size={14} />
-                      </motion.button>
-
-                      {openMenuForList === activeListId && (
-                        <>
-                          <div className="absolute right-0 mt-1 w-48 bg-white dark:bg-[#1E1C2B] border border-slate-200 dark:border-[#38324E] rounded-xl shadow-xl p-1 z-30 animate-in fade-in duration-100">
-                            <motion.button
-                              type="button"
-                              whileTap={{ scale: 0.96 }}
-                              transition={springSnappy}
-                              onClick={() => {
-                                setOpenMenuForList(null);
-                                setConfirmModalState({
-                                  isOpen: true,
-                                  title: `Clear "${list.name}" Watchlist?`,
-                                  description: `Are you sure you want to remove all ${currentListParsedItems.length} stocks from "${list.name}"? This action cannot be undone.`,
-                                  actionType: 'clear_list',
-                                  listId: activeListId,
-                                  listName: list.name,
-                                  stockCount: currentListParsedItems.length
-                                });
-                              }}
-                              disabled={currentListParsedItems.length === 0}
-                              className="w-full text-left px-3 py-2 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed touch-manipulation min-h-[38px]"
-                            >
-                              <Trash2 size={13} />
-                              <span>Clear List ({currentListParsedItems.length})</span>
-                            </motion.button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Symbols Grid with 1-Click Priority Toggle & Pulse Highlight */}
-                <div className="flex-1 overflow-y-auto p-3">
-                  <div className="flex flex-wrap gap-2">
-                    {filteredListStockItems.map((item) => {
-                      const isHigh = item.priority === 'HIGH';
-                      const isMed = item.priority === 'MEDIUM';
-                      const isHighlighted = highlightedSymbol === item.symbol;
-
-                      return (
-                        <div 
-                          id={`watchlist-symbol-${item.symbol}`}
-                          key={item.symbol} 
-                          className={cn(
-                            "flex items-center gap-2 px-2.5 py-1.5 bg-white dark:bg-[#201E2E] border rounded-lg shadow-2xs group transition-all",
-                            isHighlighted ? "ring-2 ring-slate-400 border-slate-500 scale-105 bg-slate-100 dark:bg-[#252233]" :
-                            isHigh ? "border-rose-200 dark:border-rose-900/50 hover:border-rose-400" :
-                            isMed ? "border-amber-200 dark:border-amber-900/50 hover:border-amber-400" :
-                            "border-slate-200 dark:border-[#2D283E] hover:border-slate-400 dark:hover:border-[#4A4266]"
-                          )}
-                        >
-                          {/* 1-Click Priority Cycling Badge */}
-                          <button
-                            type="button"
-                            onClick={() => handleCyclePriority(activeListId, item)}
-                            title="Click to cycle priority: High -> Medium -> Low -> High"
-                            className={cn(
-                              "text-[10px] font-black px-1.5 py-0.5 rounded cursor-pointer transition-transform active:scale-90 flex items-center gap-1 uppercase",
-                              isHigh ? "bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800" :
-                              isMed ? "bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800" :
-                              "bg-slate-100 dark:bg-[#2D283E] text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-[#3E3854]"
-                            )}
-                          >
-                            <span>{isHigh ? '🔴 HIGH' : isMed ? '🟡 MED' : '⚪ LOW'}</span>
-                          </button>
-
-                          <div 
-                            className="flex flex-col cursor-pointer group/sym"
-                            onClick={(e) => {
-                              const master = stockMasterClient[item.symbol];
-                              handleOpenIntel(master?.scripCode, item.symbol, item.companyName || item.symbol, e);
-                            }}
-                            title="Click to open 360° Stock Intelligence"
-                          >
-                            <span className="font-mono text-xs font-bold text-slate-800 dark:text-white uppercase leading-tight group-hover/sym:text-slate-900 dark:group-hover/sym:text-slate-200 transition-colors">
-                              {item.symbol}
-                            </span>
-                            {item.category && (
-                              <span className="text-[9px] font-medium text-slate-400 leading-tight truncate max-w-[80px]">
-                                {item.category}
-                              </span>
-                            )}
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              const master = stockMasterClient[item.symbol];
-                              handleOpenIntel(master?.scripCode, item.symbol, item.companyName || item.symbol, e);
-                            }}
-                            className="p-1 rounded text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#2A263D] transition-colors cursor-pointer"
-                            title="Open 360° Intelligence"
-                          >
-                            <Building2 size={13} />
-                          </button>
-
-                          <button 
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleRemoveSymbol(activeListId, item.symbol);
-                            }} 
-                            className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer -mr-2"
-                            title="Remove stock"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-
-                          {/* Saved Notes: one-tap note linked to this stock */}
-                          <div onClick={(e) => e.stopPropagation()} className="-mr-2">
-                            <SaveNoteButton
-                              link={{ type: 'stock', label: item.companyName || item.symbol, symbol: item.symbol }}
-                              label={`Save note on ${item.companyName || item.symbol}`}
-                              className="min-w-[44px] min-h-[44px] flex items-center justify-center"
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
-                    {filteredListStockItems.length === 0 && (
-                      <div className="w-full text-center py-12 text-xs text-slate-400 space-y-1">
-                        <p className="font-semibold text-slate-600 dark:text-slate-300">
-                          {currentListParsedItems.length === 0 
-                            ? "No symbols added to this watchlist yet."
-                            : "No symbols match the current priority or search filter."}
-                        </p>
-                        <p className="text-[11px]">Type in the search bar above and click any stock to add it instantly.</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </>
-            );
-          })() : (
-            /* ALL WATCHLISTS COMBINED MANAGEMENT PANEL */
-            <div className="flex-1 flex flex-col h-full overflow-hidden">
-              {/* Form to Add Stock directly to any watchlist */}
-              <div className="p-3.5 border-b border-slate-100 dark:border-[#2D283E] bg-slate-50/50 dark:bg-[#15141F] space-y-2.5">
-                <form onSubmit={(e) => handleAddSymbol(e, allPanelTargetListId || watchlists[0]?.id)} className="space-y-2 relative">
-                  <div className="flex flex-col sm:flex-row gap-2 relative">
-                    {/* Watchlist Picker for Adding */}
-                    <div className="sm:w-40 shrink-0">
-                      <select
-                        value={allPanelTargetListId || watchlists[0]?.id || ''}
-                        onChange={e => setAllPanelTargetListId(e.target.value)}
-                        className="w-full px-2.5 py-1.5 bg-white dark:bg-[#201E2E] border border-slate-200 dark:border-[#2D283E] text-xs rounded-lg font-bold text-slate-800 dark:text-white focus:outline-none"
-                      >
-                        {watchlists.map(wl => (
-                          <option key={wl.id} value={wl.id}>Add to: {wl.name}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="flex-1 relative">
-                      <input 
-                        type="text" 
-                        value={newSymbol} 
-                        onChange={e => setNewSymbol(e.target.value)}
-                        placeholder="Search or enter stock symbol (e.g. TCS, RELIANCE, 500325)..."
-                        className="w-full px-3 py-1.5 bg-white dark:bg-[#201E2E] border border-slate-200 dark:border-[#2D283E] text-xs rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400/20 text-slate-900 dark:text-white uppercase font-bold"
-                      />
-                      
-                      {/* Suggestions Dropdown in ALL panel */}
-                      {showSuggestions && newSymbol.length >= 2 && !newSymbol.includes(',') && (
-                        <div className="absolute top-full left-0 right-0 mt-1 surface-dropdown bg-white dark:bg-[#1A1926] border border-slate-200 dark:border-[#2D283E] rounded-xl shadow-2xl z-50 max-h-72 overflow-y-auto divide-y divide-slate-100 dark:divide-[#2D283E]/50">
-                          <div className="px-3 py-1.5 bg-slate-50 dark:bg-[#201E2E] flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 font-semibold sticky top-0 backdrop-blur-xs z-10">
-                            <span className="flex items-center gap-1 text-slate-800 dark:text-slate-200 font-bold">
-                              <Zap size={12} className="text-amber-500" />
-                              <span>⚡ Click any stock to ADD INSTANTLY to {watchlists.find(w => w.id === (allPanelTargetListId || watchlists[0]?.id))?.name || 'Watchlist'}</span>
-                            </span>
-                            <span className="text-slate-400 font-mono text-[9px]">ESC to close</span>
-                          </div>
-
-                          {isSearching ? (
-                            <div className="p-2 space-y-1.5 animate-pulse">
-                              {[1, 2, 3].map((sk) => (
-                                <div key={sk} className="p-2.5 rounded-lg bg-slate-50/70 dark:bg-[#1f1d2b] flex items-center justify-between">
-                                  <div className="space-y-1">
-                                    <div className="h-3.5 w-24 bg-slate-200 dark:bg-slate-700 rounded" />
-                                    <div className="h-2.5 w-40 bg-slate-200/60 dark:bg-slate-800 rounded" />
-                                  </div>
-                                  <div className="h-5 w-12 bg-slate-200/50 dark:bg-slate-800 rounded" />
-                                </div>
-                              ))}
-                            </div>
-                          ) : searchResults.length > 0 ? (
-                            searchResults.map((res, i) => {
-                              const symToAdd = (res.symbol && res.symbol.trim()) ? res.symbol.trim().toUpperCase() : res.name.replace(/\s+L(?:imi)?t(?:e)?d\.?$/i, '').trim().toUpperCase();
-                              const targetId = allPanelTargetListId || watchlists[0]?.id;
-
-                              return (
-                                <div 
-                                  key={i} 
-                                  className="p-2.5 hover:bg-slate-100 dark:hover:bg-[#252233] cursor-pointer flex items-center justify-between gap-3 group transition-all"
-                                  onClick={() => handleDirectAddSymbol(symToAdd, res.name, newPriority, newCategory, targetId)}
-                                >
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-xs font-black text-slate-900 dark:text-white group-hover:text-slate-700 dark:group-hover:text-slate-200 truncate">
-                                        {res.name}
-                                      </span>
-                                      <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#201E2E] text-slate-700 dark:text-slate-300">
-                                        {symToAdd}
-                                      </span>
-                                    </div>
-                                    <div className="text-[10px] text-slate-400 flex items-center gap-2 mt-0.5">
-                                      <span className="text-slate-600 dark:text-slate-300 font-medium">
-                                        ⚡ Click to add with <strong>{newPriority}</strong> priority
-                                      </span>
-                                    </div>
-                                  </div>
-
-                                  <div className="flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleDirectAddSymbol(symToAdd, res.name, 'HIGH', newCategory, targetId)}
-                                      className="px-2 py-1 text-[10px] font-black rounded-md bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 transition-transform active:scale-90"
-                                    >
-                                      <span>🔴 HIGH</span>
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleDirectAddSymbol(symToAdd, res.name, 'MEDIUM', newCategory, targetId)}
-                                      className="px-2 py-1 text-[10px] font-black rounded-md bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 transition-transform active:scale-90"
-                                    >
-                                      <span>🟡 MED</span>
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleDirectAddSymbol(symToAdd, res.name, 'LOW', newCategory, targetId)}
-                                      className="px-2 py-1 text-[10px] font-black rounded-md bg-slate-100 hover:bg-slate-200 dark:bg-[#2D283E] text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-[#3E3854] transition-transform active:scale-90"
-                                    >
-                                      <span>⚪ LOW</span>
-                                    </button>
-                                  </div>
-                                </div>
-                              );
-                            })
-                          ) : (
-                            <div className="p-4 text-xs text-slate-400 text-center">No matching tickers found</div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-
-                    <input
-                      type="text"
-                      value={newCategory}
-                      onChange={e => setNewCategory(e.target.value)}
-                      placeholder="Tag / Category"
-                      className="sm:w-36 px-3 py-1.5 bg-white dark:bg-[#201E2E] border border-slate-200 dark:border-[#2D283E] text-xs rounded-lg focus:outline-none text-slate-900 dark:text-white"
-                    />
-
-                    <button type="submit" className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 dark:bg-[#2A263D] dark:hover:bg-[#342F4C] text-white font-semibold text-xs rounded-lg transition-colors cursor-pointer shrink-0">
-                      Add Stock
-                    </button>
-                  </div>
-
-                  {/* Priority Selector for ALL panel */}
-                  <div className="flex items-center gap-2 pt-0.5 flex-wrap">
-                    <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">Stock Priority:</span>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => setNewPriority('HIGH')}
-                        className={cn(
-                          "px-2.5 py-0.5 text-[11px] rounded-md font-bold transition-all cursor-pointer border flex items-center gap-1",
-                          newPriority === 'HIGH'
-                            ? "bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-800 shadow-xs ring-1 ring-rose-500/30"
-                            : "bg-white dark:bg-[#201E2E] text-slate-600 dark:text-slate-400 border-slate-200 dark:border-[#2D283E] hover:bg-slate-50"
-                        )}
-                      >
-                        <span>🔴 High (Core Conviction)</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setNewPriority('MEDIUM')}
-                        className={cn(
-                          "px-2.5 py-0.5 text-[11px] rounded-md font-bold transition-all cursor-pointer border flex items-center gap-1",
-                          newPriority === 'MEDIUM'
-                            ? "bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-800 shadow-xs ring-1 ring-amber-500/30"
-                            : "bg-white dark:bg-[#201E2E] text-slate-600 dark:text-slate-400 border-slate-200 dark:border-[#2D283E] hover:bg-slate-50"
-                        )}
-                      >
-                        <span>🟡 Medium (Radar/Swing)</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setNewPriority('LOW')}
-                        className={cn(
-                          "px-2.5 py-0.5 text-[11px] rounded-md font-bold transition-all cursor-pointer border flex items-center gap-1",
-                          newPriority === 'LOW'
-                            ? "bg-slate-200 dark:bg-[#2D283E] text-slate-800 dark:text-slate-200 border-slate-300 dark:border-[#3E3854] shadow-xs"
-                            : "bg-white dark:bg-[#201E2E] text-slate-600 dark:text-slate-400 border-slate-200 dark:border-[#2D283E] hover:bg-slate-50"
-                        )}
-                      >
-                        <span>⚪ Low (Tracking)</span>
-                      </button>
-                    </div>
-                  </div>
-                </form>
-              </div>
-
-              {/* Filter and Stats Bar for ALL Symbols */}
-              <div className="px-3.5 py-2 border-b border-slate-100 dark:border-[#2D283E] bg-slate-50/30 dark:bg-[#15141F]/40 flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-1 overflow-x-auto">
-                  {[
-                    { id: 'ALL' as const, label: 'All Stocks', count: allTrackedPriorityCounts.TOTAL },
-                    { id: 'HIGH' as const, label: '🔴 High', count: allTrackedPriorityCounts.HIGH },
-                    { id: 'MEDIUM' as const, label: '🟡 Med', count: allTrackedPriorityCounts.MEDIUM },
-                    { id: 'LOW' as const, label: '⚪ Low', count: allTrackedPriorityCounts.LOW }
-                  ].map(tab => (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      onClick={() => setSymbolPriorityFilter(tab.id)}
-                      className={cn(
-                        "px-2 py-0.5 text-[11px] rounded-md font-bold transition-all cursor-pointer flex items-center gap-1",
-                        symbolPriorityFilter === tab.id
-                          ? "bg-slate-900 dark:bg-[#2A263D] text-white"
-                          : "text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-[#222030]"
-                      )}
-                    >
-                      <span>{tab.label}</span>
-                      <span className="text-[9px] opacity-75 font-mono">({tab.count})</span>
-                    </button>
-                  ))}
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <div className="relative">
-                    <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input
-                      type="text"
-                      value={symbolSearchQuery}
-                      onChange={e => setSymbolSearchQuery(e.target.value)}
-                      placeholder="Search across all lists..."
-                      className="pl-6 pr-2 py-1 bg-white dark:bg-[#201E2E] border border-slate-200 dark:border-[#2D283E] text-[11px] rounded-md focus:outline-none text-slate-900 dark:text-white w-36 sm:w-44"
-                    />
-                  </div>
-
-                  {/* Options Menu */}
-                  <div className="relative" ref={allMenuRef}>
-                    <motion.button
-                      type="button"
-                      whileTap={buttonTap}
-                      transition={springSnappy}
-                      onClick={() => setOpenMenuForList(openMenuForList === 'ALL' ? null : 'ALL')}
-                      className="px-3 py-1.5 text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#201E2E] rounded-lg border border-slate-200 dark:border-[#2D283E] transition-colors flex items-center gap-1.5 text-xs font-bold cursor-pointer touch-manipulation min-h-[36px]"
-                      title="Watchlist management options"
-                    >
-                      <SlidersHorizontal size={13} />
-                      <span>Options</span>
-                    </motion.button>
-
-                    {openMenuForList === 'ALL' && (
-                      <>
-                        <div className="absolute right-0 mt-1 w-56 bg-white dark:bg-[#1E1C2B] border border-slate-200 dark:border-[#38324E] rounded-xl shadow-xl p-1.5 z-30 animate-in fade-in duration-100 space-y-1">
-                          <motion.button
-                            type="button"
-                            whileTap={{ scale: 0.96 }}
-                            transition={springSnappy}
-                            onClick={() => {
-                              setOpenMenuForList(null);
-                              setConfirmModalState({
-                                isOpen: true,
-                                title: "Restore Curated Default Watchlists?",
-                                description: "This will reset all your watchlists to the standard curated Indian equity baskets.",
-                                actionType: 'reset_defaults'
-                              });
-                            }}
-                            className="w-full text-left px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#2A263D] rounded-lg transition-colors flex items-center gap-2 cursor-pointer touch-manipulation min-h-[38px]"
-                          >
-                            <RotateCcw size={14} className="text-amber-500" />
-                            <span>Reset to Curated Defaults</span>
-                          </motion.button>
-
-                          <motion.button
-                            type="button"
-                            whileTap={{ scale: 0.96 }}
-                            transition={springSnappy}
-                            onClick={() => {
-                              setOpenMenuForList(null);
-                              setConfirmModalState({
-                                isOpen: true,
-                                title: "Clear ALL Watchlists?",
-                                description: `Are you sure you want to remove all ${allCombinedTrackedItems.length} stocks across all ${watchlists.length} watchlists? This action cannot be undone.`,
-                                actionType: 'clear_all',
-                                stockCount: allCombinedTrackedItems.length
-                              });
-                            }}
-                            disabled={allCombinedTrackedItems.length === 0}
-                            className="w-full text-left px-3 py-2 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed border-t border-slate-100 dark:border-[#2D283E] pt-2 touch-manipulation min-h-[38px]"
-                          >
-                            <Trash2 size={14} />
-                            <span>Clear All Watchlists ({allCombinedTrackedItems.length})</span>
-                          </motion.button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Combined Symbols Grid with List Badges & 1-Click Priority Toggle */}
-              <div className="flex-1 overflow-y-auto p-3">
-                <div className="flex flex-wrap gap-2">
-                  {filteredAllTrackedItems.map((item, idx) => {
-                    const isHigh = item.priority === 'HIGH';
-                    const isMed = item.priority === 'MEDIUM';
-                    const isHighlighted = highlightedSymbol === item.symbol;
-
-                    return (
-                      <div 
-                        key={`${item.listId}-${item.symbol}-${idx}`} 
-                        className={cn(
-                          "flex items-center gap-2 px-2.5 py-1.5 bg-white dark:bg-[#201E2E] border rounded-lg shadow-2xs group transition-all",
-                          isHighlighted ? "ring-2 ring-slate-400 border-slate-500 scale-105 bg-slate-100 dark:bg-[#252233]" :
-                          isHigh ? "border-rose-200 dark:border-rose-900/50 hover:border-rose-400" :
-                          isMed ? "border-amber-200 dark:border-amber-900/50 hover:border-amber-400" :
-                          "border-slate-200 dark:border-[#2D283E] hover:border-slate-400 dark:hover:border-[#4A4266]"
-                        )}
-                      >
-                        {/* 1-Click Priority Cycling Badge */}
-                        <button
-                          type="button"
-                          onClick={() => handleCyclePriority(item.listId, item as any)}
-                          title="Click to cycle priority: High -> Medium -> Low -> High"
-                          className={cn(
-                            "text-[10px] font-black px-1.5 py-0.5 rounded cursor-pointer transition-transform active:scale-90 flex items-center gap-1 uppercase",
-                            isHigh ? "bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800" :
-                            isMed ? "bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800" :
-                            "bg-slate-100 dark:bg-[#2D283E] text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-[#3E3854]"
-                          )}
-                        >
-                          <span>{isHigh ? '🔴 HIGH' : isMed ? '🟡 MED' : '⚪ LOW'}</span>
-                        </button>
-
-                        <div className="flex flex-col">
-                          <span className="font-mono text-xs font-bold text-slate-800 dark:text-white uppercase leading-tight">
-                            {item.symbol}
-                          </span>
-                          <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 leading-tight truncate max-w-[90px]">
-                            {item.listName}
-                          </span>
-                        </div>
-
-                        {item.category && (
-                          <span className="text-[9px] px-1 py-0.5 rounded bg-slate-100 dark:bg-[#15141F] text-slate-500 font-medium truncate max-w-[70px]">
-                            {item.category}
-                          </span>
-                        )}
-
-                        <button 
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRemoveSymbol(item.listId, item.symbol);
-                          }} 
-                          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer -mr-2"
-                          title={`Remove from ${item.listName}`}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-
-                        {/* Saved Notes: one-tap note linked to this stock */}
-                        <div onClick={(e) => e.stopPropagation()} className="-mr-2">
-                          <SaveNoteButton
-                            link={{ type: 'stock', label: item.symbol, symbol: item.symbol }}
-                            label={`Save note on ${item.symbol}`}
-                            className="min-w-[44px] min-h-[44px] flex items-center justify-center"
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {filteredAllTrackedItems.length === 0 && (
-                    <div className="w-full text-center py-12 text-xs text-slate-400 space-y-1">
-                      <p className="font-semibold text-slate-600 dark:text-slate-300">
-                        {allCombinedTrackedItems.length === 0 
-                          ? "No stocks across your watchlists." 
-                          : "No stocks match your search filter."}
-                      </p>
-                      <p className="text-[11px]">Search above to add symbols directly to any watchlist.</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-      )}
+      {/* One responsive editor owns list selection, stock identity and priority controls. */}
+      {watchlistSubTab === 'edit' && <>
+        {watchlistsError && <p role="alert" className="text-sm text-rose-600">{watchlistsError} <button type="button" onClick={() => void fetchWatchlists()} className="underline">Retry</button></p>}
+        <WatchlistEditor lists={watchlistOwner === accountId ? watchlists : []} activeId={activeListId} onSelect={setActiveListId}
+          creating={isCreatingList} onCreating={setIsCreatingList} listName={newListName} onListName={setNewListName} onCreate={handleAddList}
+          editingId={editingListId} editName={editListName} onEditName={setEditListName} onEdit={(id, name) => {setEditingListId(id);setEditListName(name);}} onCancelEdit={() => setEditingListId(null)} onRename={handleRenameList}
+          onToggle={handleToggleList} onDelete={handleDeleteList} symbol={newSymbol} onSymbol={setNewSymbol} category={newCategory} onCategory={setNewCategory} priority={newPriority} onPriority={setNewPriority}
+          targetId={allPanelTargetListId} onTarget={setAllPanelTargetListId} suggestions={searchResults} showSuggestions={showSuggestions} searching={isSearching} searchError={companySearchError} addError={companyAddError} adding={isAddingSymbol}
+          onAdd={handleAddSymbol} onDirectAdd={handleDirectAddSymbol} filter={symbolPriorityFilter} onFilter={setSymbolPriorityFilter} query={symbolSearchQuery} onQuery={setSymbolSearchQuery}
+          onCycle={handleCyclePriority} onRemove={handleRemoveSymbol} onOpen={handleOpenIntel}
+          onClear={id => setConfirmModalState({isOpen:true,title:id ? 'Clear this watchlist?' : 'Clear all watchlists?',description:'Remove the stocks in this view? Your other saved research stays available.',actionType:id ? 'clear_list' : 'clear_all',listId:id})}
+          onReset={() => setConfirmModalState({isOpen:true,title:'Restore default watchlists?',description:'This replaces your lists with the default company selection.',actionType:'reset_defaults'})} />
+      </>}
 
       {/* VIEW 2: DEDICATED WATCHLIST ANNOUNCEMENTS & SUMMARIES FEED */}
       {watchlistSubTab === 'updates' && (

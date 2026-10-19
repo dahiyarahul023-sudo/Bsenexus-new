@@ -22,6 +22,14 @@ export function useUnreadNotificationCount(owner: string | null) {
   }, [owner, refresh]);
 
   useVisibilityInterval(refresh, 15000, Boolean(owner));
+  const count = owner && snapshot.owner === owner ? snapshot.count : null;
+  useEffect(() => {
+    // Installed iPhone apps and supporting desktop browsers use the same
+    // confirmed unread count as the header. Unsupported browsers simply skip.
+    const badge = navigator as Navigator & {setAppBadge?: (count: number) => Promise<void>; clearAppBadge?: () => Promise<void>};
+    if (count !== null && count > 0) void badge.setAppBadge?.(count)?.catch(() => {});
+    else void badge.clearAppBadge?.()?.catch(() => {});
+  }, [count]);
   // Mask an old owner's value during render, before effect cleanup can run.
-  return { count: owner && snapshot.owner === owner ? snapshot.count : null, refresh };
+  return { count, refresh };
 }

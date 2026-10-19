@@ -83,7 +83,9 @@ test('F5/F13: category registry returns seven seeded options and the list is a d
  const result = await originalFetch(url);
  assert.equal(result.status, 200); assert.equal((await result.json()).items[0].id, event.id);
  assert.equal(externalCalls, 0);
- assert.ok(calls.every(c => new URL(c.url).pathname.endsWith('/impact_radar_events')));
+ assert.ok(calls.some(c => new URL(c.url).pathname.endsWith('/impact_radar_events')));
+ assert.ok(calls.some(c => new URL(c.url).pathname.endsWith('/impact_radar_source_checks')));
+ assert.ok(calls.every(c => c.method === 'GET' && ['/impact_radar_events','/impact_radar_source_checks'].some(path => new URL(c.url).pathname.endsWith(path))), 'list remains a database-only read, including shared scan health');
  const categories = await originalFetch(url + '/categories');
  assert.equal(categories.status, 200); const rows = (await categories.json()).categories;
  assert.equal(rows.length, 7); assert.equal(rows[0].id, 'restriction');

@@ -1,0 +1,81 @@
+.watchlist-editor { display:grid; grid-template-columns:240px minmax(0,1fr); gap:16px; align-items:start; font-size:13px; color:#0f172a; }
+.watchlist-editor * { box-sizing:border-box; }
+.watchlist-editor-lists,.watchlist-editor-main { min-width:0; padding:16px; border:1px solid #e2e8f0; border-radius:16px; background:var(--rich-surface,#fff); }
+.watchlist-editor button,.watchlist-editor summary { cursor:pointer; }
+.watchlist-editor button { min-height:44px; display:inline-flex; gap:6px; align-items:center; justify-content:center; border-radius:10px; padding:8px; font-weight:650; }
+.watchlist-editor button:focus-visible,.watchlist-editor summary:focus-visible { outline:2px solid #059669; outline-offset:2px; }
+.watchlist-editor button:disabled { opacity:.5; cursor:not-allowed; }
+.watchlist-editor button:hover { background:#f1f5f9; }
+.watchlist-editor-title { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px; }
+.watchlist-editor-title h2 { font-size:15px; font-weight:800; overflow-wrap:anywhere; }
+.watchlist-editor-title p { color:#64748b; margin-top:3px; font-size:12px; }
+.watchlist-editor input:not([type="checkbox"]),.watchlist-editor select { width:100%; min-width:0; height:44px; padding:9px 11px; border:1px solid #cbd5e1; border-radius:10px; background:#fff; color:inherit; font-size:14px; }
+.watchlist-editor input:focus,.watchlist-editor select:focus { outline:2px solid #10b98166; outline-offset:1px; }
+.watchlist-editor-create,.watchlist-editor-rename { display:flex; align-items:center; gap:4px; min-width:0; margin-bottom:8px; }
+.watchlist-editor-create label { flex:1; min-width:0; }
+.watchlist-editor-all { justify-content:space-between!important; width:100%; margin-bottom:5px; }
+.watchlist-editor-all[aria-pressed="true"] { background:#ecfdf5; color:#047857; }
+.watchlist-editor-list { display:flex; align-items:center; min-width:0; border-radius:12px; gap:2px; border:1px solid transparent; }
+.watchlist-editor-list.is-selected { background:#f0fdf4; border-color:#a7f3d0; }
+.watchlist-editor-active { display:flex; align-items:center; justify-content:center; flex:none; width:32px; min-height:44px; }
+.watchlist-editor-active input { accent-color:#059669; width:16px; height:16px; }
+.watchlist-editor .watchlist-editor-list-name { flex:1; min-width:0; flex-direction:column; align-items:flex-start; text-align:left; gap:2px; }
+.watchlist-editor-list-name strong { max-width:100%; overflow-wrap:anywhere; }
+.watchlist-editor-list-name span { color:#64748b; font-size:11px; font-weight:400; }
+.watchlist-editor-list>button:not(.watchlist-editor-list-name) { padding:6px; width:32px; flex:none; }
+.watchlist-editor-rename { flex:1; margin:0; }
+.watchlist-editor-rename button { padding:4px; }
+.watchlist-editor-add { padding:12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; margin-bottom:14px; }
+.watchlist-editor-target { display:flex; align-items:center; gap:10px; margin-bottom:8px; font-size:12px; font-weight:650; }
+.watchlist-editor-target select { flex:1; }
+.watchlist-editor-search-add { display:flex; gap:8px; align-items:center; }
+.watchlist-editor-search-add>label { min-width:0; flex:1; position:relative; }
+.watchlist-editor-search-add label>svg,.watchlist-editor-filter-search>svg { position:absolute; left:11px; top:14px; color:#64748b; }
+.watchlist-editor-search-add input { padding-left:34px!important; }
+.watchlist-editor .watchlist-editor-primary { color:#fff; background:#0f172a; min-width:70px; padding-inline:14px; }
+.watchlist-editor .watchlist-editor-primary:hover { background:#1e293b; }
+.watchlist-editor-add-options { margin-top:8px; }
+.watchlist-editor summary { min-height:36px; font-weight:650; line-height:1.5; padding-block:7px; }
+.watchlist-editor-add-options summary>span { margin-left:8px; color:#64748b; font-weight:400; font-size:11px; }
+.watchlist-editor-add-options>div { display:grid; grid-template-columns:1fr 2fr; gap:10px; padding-top:6px; }
+.watchlist-editor-add-options label { font-size:11px; display:grid; gap:5px; }
+.watchlist-editor-suggestions { margin-top:8px; max-height:320px; overflow-y:auto; border:1px solid #cbd5e1; border-radius:10px; background:#fff; }
+.watchlist-editor-suggestions>div { display:flex; align-items:center; gap:8px; padding:8px 10px; border-bottom:1px solid #e2e8f0; }
+.watchlist-editor-suggestions>div>div { flex:1; min-width:0; }
+.watchlist-editor-suggestions strong { display:block; font-size:12px; overflow-wrap:anywhere; }
+.watchlist-editor-suggestions span { display:block; color:#64748b; font-size:11px; margin-top:3px; }
+.watchlist-editor-suggestions p { padding:12px; }
+.watchlist-editor-error { color:#be123c; margin-top:8px; }
+.watchlist-editor-filters { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:5px; margin-bottom:10px; }
+.watchlist-editor-filters button { min-width:0; flex-direction:column; gap:3px; padding:8px 2px; border:1px solid #e2e8f0; font-size:11px; background:#f8fafc; }
+.watchlist-editor-filters button strong { font-size:14px; }
+.watchlist-editor-filters button[aria-pressed="true"] { background:#0f172a; color:white; border-color:#0f172a; }
+.watchlist-editor-filter-search { position:relative; display:block; }
+.watchlist-editor-filter-search input { padding-left:34px!important; }
+.watchlist-editor-count { margin:10px 0 6px; font-size:11px; color:#64748b; }
+.watchlist-editor-stocks { display:grid; gap:0; }
+.watchlist-editor-stock { display:flex; align-items:center; justify-content:space-between; min-width:0; gap:10px; padding:8px 0; border-bottom:1px solid #e2e8f0; }
+.watchlist-editor .watchlist-editor-stock-name { flex:1; min-width:0; display:block; text-align:left; padding:6px 0; }
+.watchlist-editor-stock-name strong { display:block; font-size:13px; line-height:1.5; overflow-wrap:anywhere; }
+.watchlist-editor-stock-name strong svg { display:inline; margin-left:4px; color:#64748b; }
+.watchlist-editor-stock-name>span { display:block; font-size:11px; font-weight:400; color:#64748b; margin-top:3px; overflow-wrap:anywhere; }
+.watchlist-editor-stock-actions { display:flex; gap:0; align-items:center; flex:none; }
+.watchlist-editor-stock-actions>button { min-width:38px; }
+.watchlist-editor-stock-actions .watchlist-editor-priority { min-width:62px; font-size:11px; border:1px solid #e2e8f0; min-height:36px; margin-right:4px; }
+.watchlist-editor-priority[data-priority="HIGH"] { color:#be123c; background:#fff1f2; }
+.watchlist-editor-priority[data-priority="MEDIUM"] { color:#92400e; background:#fffbeb; }
+.watchlist-editor-priority[data-priority="LOW"] { color:#475569; background:#f1f5f9; }
+.watchlist-editor-options { position:relative; flex:none; }
+.watchlist-editor-options>div { position:absolute; z-index:20; right:0; top:100%; width:200px; padding:6px; border:1px solid #cbd5e1; border-radius:12px; background:#fff; box-shadow:0 10px 30px #0f172a22; }
+.watchlist-editor-options button { width:100%; text-align:left; justify-content:flex-start; }
+.watchlist-editor-empty { padding:28px 10px; text-align:center; color:#64748b; line-height:1.6; }
+.dark .watchlist-editor { color:#f1f5f9; }
+.dark .watchlist-editor-lists,.dark .watchlist-editor-main,.dark .watchlist-editor-add,.dark .watchlist-editor-options>div,.dark .watchlist-editor-suggestions { background:#1a1926; border-color:#38324e; }
+.dark .watchlist-editor input:not([type="checkbox"]),.dark .watchlist-editor select { background:#201e2e; border-color:#4a4266; }
+.dark .watchlist-editor-stock,.dark .watchlist-editor-suggestions>div { border-color:#38324e; }
+.dark .watchlist-editor button:hover,.dark .watchlist-editor-filters button { background:#252233; }
+.dark .watchlist-editor-filters button[aria-pressed="true"] { background:#d1fae5; color:#064e3b; }
+.dark .watchlist-editor-list.is-selected,.dark .watchlist-editor-all[aria-pressed="true"] { background:#064e3b; color:#ecfdf5; }
+.dark .watchlist-editor :is(.watchlist-editor-list-name span,.watchlist-editor-stock-name>span,.watchlist-editor-count) { color:#a7b2c5; }
+@media(max-width:850px) { .watchlist-editor { grid-template-columns:minmax(0,1fr); gap:12px; } .watchlist-editor-lists,.watchlist-editor-main { padding:12px; } .watchlist-editor-list>button:not(.watchlist-editor-list-name) { width:44px; } }
+@media(max-width:480px) { .watchlist-editor input:not([type="checkbox"]),.watchlist-editor select { font-size:16px; } .watchlist-editor-stock { gap:6px; } .watchlist-editor-stock-actions .watchlist-editor-priority { min-width:50px; padding-inline:5px; } }

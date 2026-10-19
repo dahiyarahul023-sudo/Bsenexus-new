@@ -7,6 +7,8 @@ export type AlertCategoryFilter = 'ALL' | 'RESULTS_ONLY' | 'RESULTS_AND_CONCALLS
 
 export interface WatchlistStockItem {
   symbol: string;
+  scripCode?: string;
+  companyName?: string;
   priority: StockPriority;
   category?: string;
   notes?: string;

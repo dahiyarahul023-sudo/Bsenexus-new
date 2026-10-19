@@ -21,6 +21,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { customFetch } from '../api';
+import { activeWatchlistIdentities, matchesWatchlistIdentity } from '../shared/watchlistIdentity';
 import { useAuth } from '../context/AuthContext';
 import { useIntelModal } from '../context/IntelModalContext';
 import { formatFilingRelativeTime, formatCleanTime, formatDateOnly } from '../utils/timeFormat';
@@ -91,8 +92,10 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
   const loadedIdentity = useRef(identity);
   useEffect(() => {
     const refresh = (event: Event) => { if (isActive && (event as CustomEvent).detail?.tab === 'home') setHomeRefresh(v => v + 1); };
+    const changed = () => { if (isActive) setHomeRefresh(v => v + 1); };
     window.addEventListener('bse_nav_tab_refresh', refresh);
-    return () => window.removeEventListener('bse_nav_tab_refresh', refresh);
+    window.addEventListener('watchlists-changed', changed);
+    return () => { window.removeEventListener('bse_nav_tab_refresh', refresh); window.removeEventListener('watchlists-changed', changed); };
   }, [isActive]);
   useEffect(() => {
     if (!isActive) return;
@@ -105,10 +108,9 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
     const fetchHomeData = async () => {
       try {
         setLoading(true); setWatchlistStatus('loading');
-        const [wlRes, calRes, filRes] = await Promise.all([
+        const [wlRes, calRes] = await Promise.all([
           (user || profile) ? customFetch('/api/watchlists', { signal }).catch(() => null) : Promise.resolve(null),
           customFetch('/api/results-calendar?filter=upcoming&limit=8', { signal }).catch(() => null),
-          customFetch('/api/announcements?limit=50', { signal }).catch(() => null),
         ]);
 
         if (signal.aborted) return;
@@ -119,12 +121,7 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
           if (!Array.isArray(wlData)) throw new Error('Invalid watchlist response');
           const list = wlData;
           setWatchlists(list); setWatchlistStatus('ready');
-          list.forEach((w: any) => {
-            (w.items || []).forEach((it: any) => {
-              const s = typeof it === 'string' ? it.trim().toUpperCase() : it?.symbol?.trim()?.toUpperCase();
-              if (s) syms.add(s);
-            });
-          });
+          activeWatchlistIdentities(list).forEach(stock => { syms.add(stock.symbol); if (stock.scripCode) syms.add(stock.scripCode); });
         }
         if (!wlRes || !wlRes.ok) setWatchlistStatus((user || profile) ? 'error' : 'ready');
         setWatchlistSymbols(syms);
@@ -141,6 +138,8 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
           setUpcomingResults(weekUpcoming.slice(0, 4));
         }
 
+        const filRes = syms.size ? await customFetch(`/api/announcements?limit=100&symbols=${encodeURIComponent([...syms].join(','))}`, {signal}).catch(() => null) : null;
+        if (signal.aborted) return;
         if (filRes && filRes.ok) {
           const filData = await filRes.json();
           if (signal.aborted) return;
@@ -189,10 +188,10 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
         const addRes = await customFetch(`/api/watchlists/${targetList.id}/symbols`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ symbol: upperSym, scripCode: scripCode || '', priority: 'HIGH' })
+          body: JSON.stringify({ symbol: upperSym, scripCode: scripCode || undefined, companyName: name, priority: 'HIGH' })
         });
         if (addRes.ok) {
-          setWatchlistSymbols(prev => new Set([...prev, upperSym]));
+          setHomeRefresh(value => value + 1);
         }
       }
     } catch (e) {
@@ -203,20 +202,15 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
   };
 
   const sameIdentity = loadedIdentity.current === identity;
+  const trackedCompanyCount = activeWatchlistIdentities(watchlists).length;
   const hasWatchlist = sameIdentity && watchlistSymbols.size > 0;
 
   // 1. Filtered Watchlist Filings
   const watchlistFilings = useMemo(() => {
     if (!hasWatchlist) return [];
-    return allAnnouncements.filter(a => {
-      const sym = (a.companyName || '').toUpperCase();
-      const scrip = String(a.scrip_cd || '').toUpperCase();
-      for (const s of watchlistSymbols) {
-        if (sym.includes(s) || scrip === s) return true;
-      }
-      return false;
-    }).slice(0, 2);
-  }, [allAnnouncements, watchlistSymbols, hasWatchlist]);
+    const identities = activeWatchlistIdentities(watchlists);
+    return allAnnouncements.filter(filing => identities.some(stock => matchesWatchlistIdentity(filing, stock))).slice(0, 2);
+  }, [allAnnouncements, watchlists, hasWatchlist]);
 
   // Starter stocks filtered by search query in modal
   const filteredStarterStocks = useMemo(() => {
@@ -271,7 +265,7 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
       <div className="space-y-6">
 
         {/* Watchlist Section */}
-        {!hasWatchlist ? (
+        {watchlistStatus === 'error' ? <section className="space-y-2"><h2 className="text-sm font-bold">Your Watchlist Updates</h2><p role="status" className="text-xs text-slate-500">Your watchlist could not be checked. <button type="button" className="underline" onClick={() => setHomeRefresh(value => value + 1)}>Retry</button></p></section> : !hasWatchlist ? (
           /* Empty Watchlist State with Actionable Starter Recommendations */
           <section className="space-y-3">
             <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white font-display">
@@ -360,7 +354,7 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
               </h2>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-xl">
-              We are monitoring BSE regulatory disclosures in real time for your {watchlistSymbols.size} tracked {watchlistSymbols.size === 1 ? 'company' : 'companies'}. No unexpected announcements or board notifications have been filed today.
+              No recent filings were found in the loaded updates for your {trackedCompanyCount} tracked {trackedCompanyCount === 1 ? 'company' : 'companies'}.
             </p>
           </div>
         )}

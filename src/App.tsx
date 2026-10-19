@@ -1044,7 +1044,7 @@ function AppContent() {
           <div data-screen-page="watchlists" hidden={tabMotion.displayedKey !== 'watchlists'}>
             <TabErrorBoundary label="watchlists">
             <Suspense fallback={<PageSkeleton page="watchlists" />}>
-              <WatchlistManager />
+              <WatchlistManager key={user?.uid || profile?.uid || 'guest'} />
             </Suspense>
             </TabErrorBoundary>
           </div>

@@ -832,13 +832,14 @@ apiRouter.patch("/watchlists/:id/toggle", requireProOrAdmin, async (req, res) =>
 
 apiRouter.post("/watchlists/:id/symbols", requireProOrAdmin, async (req, res) => {
   const uid = getReqUserId(req);
-  const { symbol, priority, category } = req.body;
-  const sym = (symbol || '').trim().toUpperCase();
+  const { symbol, priority, category, scripCode, companyName } = req.body;
+  const sym = typeof symbol === 'string' ? symbol.trim().toUpperCase() : '';
+  if (sym.length > 60 || (scripCode != null && !/^\d{6}$/.test(String(scripCode))) || (companyName != null && (typeof companyName !== 'string' || companyName.length > 200))) return res.status(400).json({success:false,error:'Invalid company identity'});
   if (!sym) {
     return res.status(400).json({ success: false, error: "Symbol is required" });
   }
 
-  await addSymbolToWatchlist(req.params.id, sym, priority || 'HIGH', category, uid);
+  await addSymbolToWatchlist(req.params.id, sym, priority || 'HIGH', category, uid, {scripCode: scripCode ? String(scripCode) : undefined, companyName: typeof companyName === 'string' ? companyName.trim() : undefined});
   invalidateMonitorConfigCache();
   // Instant single-stock sync for BOTH Announcements AND Results Calendar in parallel!
   Promise.allSettled([

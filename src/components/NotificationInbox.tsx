@@ -17,6 +17,7 @@ import { customFetch } from '../api';
 import { getSafePdfUrl } from '../utils/pdfHelper';
 import { formatTimeOnly, formatDateOnly } from '../utils/timeFormat';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
+import { useVisibilityInterval } from '../hooks/useVisibilityInterval';
 import { useAuth } from '../context/AuthContext';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -29,7 +30,7 @@ export interface InAppNotificationItem {
   id: string;
   title: string;
   message: string;
-  type: 'RESULT' | 'DIVIDEND' | 'BONUS' | 'SPLIT' | 'BUYBACK' | 'ORDER_WIN' | 'BOARD_MEETING' | 'GOVERNANCE' | 'GENERAL';
+  type: 'RESULT' | 'DIVIDEND' | 'BONUS' | 'SPLIT' | 'BONUS_SPLIT' | 'BUYBACK' | 'ORDER_WIN' | 'BOARD_MEETING' | 'GOVERNANCE' | 'RULE_MATCH' | 'GENERAL';
   priority: 'HIGH' | 'MEDIUM' | 'LOW';
   symbol?: string;
   scripCode?: string;
@@ -61,13 +62,17 @@ export function NotificationInbox({
   const { user, profile } = useAuth();
   const [notifications, setNotifications] = useState<InAppNotificationItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [activeFilter, setActiveFilter] = useState<'WATCHLIST' | 'RESULTS' | 'ACTIONS' | 'UNREAD' | 'ALL'>('WATCHLIST');
+  const [activeFilter, setActiveFilter] = useState<'WATCHLIST' | 'RESULTS' | 'ACTIONS' | 'UNREAD' | 'ALL'>('UNREAD');
+  const filterRef = useRef(activeFilter); filterRef.current = activeFilter;
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [isTogglingMute, setIsTogglingMute] = useState<boolean>(false);
   // Race guard: panel open/filter change fires loadNotifications + fetchMuteStatus.
   // If the user toggles mute before those slow responses arrive, the stale
   // response must NOT overwrite the newer toggle — this was the "mute only
   // shows after close/reopen" bug.
+  const owner = user?.uid || profile?.uid || 'guest';
+  const ownerRef = useRef(owner); ownerRef.current = owner;
+  const readBusy = useRef(new Set<string>());
   const muteSeqRef = useRef(0);
   const loadSeqRef = useRef(0);
   const [confirmClear, setConfirmClear] = useState(false);
@@ -93,6 +98,7 @@ export function NotificationInbox({
     setConfirmClear(false);
     setActionFeedback(null);
     setNotifications([]);
+    if (isOpen) setActiveFilter('UNREAD');
     return () => {loadSeqRef.current++;};
   },[isOpen,user?.uid,profile?.uid]);
 
@@ -148,7 +154,7 @@ export function NotificationInbox({
     }
   };
 
-  const loadNotifications = async () => {
+  const loadNotifications = async (background = false) => {
     if (!user && !profile) {
       setNotifications([]);
       setLoading(false);
@@ -156,7 +162,7 @@ export function NotificationInbox({
     }
     const loadSeq = muteSeqRef.current;
     const requestSeq = ++loadSeqRef.current;
-    setLoading(true);
+    if (!background) setLoading(true);
     try {
       let url = '/api/notifications?limit=100';
       if (activeFilter === 'WATCHLIST') {
@@ -175,7 +181,7 @@ export function NotificationInbox({
       if (res.ok) {
         const data = await res.json();
         if (requestSeq !== loadSeqRef.current) return;
-        setNotifications(data.notifications || []);
+        setNotifications(Array.isArray(data.notifications) ? [...data.notifications].sort((a,b) => Number(a.isRead) - Number(b.isRead) || b.timestamp - a.timestamp) : []);
         if (typeof data.muteInAppNotifications === 'boolean' && muteSeqRef.current === loadSeq) {
           setIsMuted(data.muteInAppNotifications);
         }
@@ -190,39 +196,36 @@ export function NotificationInbox({
     }
   };
 
+  useVisibilityInterval(() => loadNotifications(true), 15000, isOpen);
+
   const handleMarkAsRead = async (id: string, e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    const prevNotifications = notifications;
-    // Optimistic UI update: mark read immediately
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+    e?.stopPropagation();
+    if (readBusy.current.has(id)) return;
+    const account = owner; readBusy.current.add(id); ++loadSeqRef.current; setLoading(false);
     try {
-      const res = await customFetch(`/api/notifications/${id}/read`, { method: 'POST' });
-      if (!res.ok) {
-        setNotifications(prevNotifications); // Rollback on error
-      }
+      const res = await customFetch(`/api/notifications/${encodeURIComponent(id)}/read`, { method: 'POST' });
+      if (!res.ok) throw new Error('Read status could not be saved. Please retry.');
+      if (ownerRef.current !== account) return;
+      setNotifications(prev => filterRef.current === 'UNREAD' ? prev.filter(n => n.id !== id) : prev.map(n => n.id === id ? {...n,isRead:true} : n));
       onRefreshCount();
-    } catch (err) {
-      console.error(err);
-      setNotifications(prevNotifications); // Rollback on network failure
-      onRefreshCount();
-    }
+    } catch {
+      if (ownerRef.current === account) setActionFeedback({error:true,message:'Read status could not be saved. Please retry.'});
+    } finally { readBusy.current.delete(id); }
   };
 
   const handleMarkAllRead = async () => {
-    const prevNotifications = notifications;
-    // Optimistic UI update: mark all read immediately
-    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+    if (readBusy.current.has('all')) return;
+    const account = owner, ids = new Set(notifications.map(n => n.id));
+    readBusy.current.add('all'); ++loadSeqRef.current; setLoading(false);
     try {
       const res = await customFetch('/api/notifications/read-all', { method: 'POST' });
-      if (!res.ok) {
-        setNotifications(prevNotifications); // Rollback on error
-      }
+      if (!res.ok) throw new Error('Read status could not be saved.');
+      if (ownerRef.current !== account) return;
+      setNotifications(prev => filterRef.current === 'UNREAD' ? prev.filter(n => !ids.has(n.id)) : prev.map(n => ids.has(n.id) ? {...n,isRead:true} : n));
       onRefreshCount();
-    } catch (err) {
-      console.error(err);
-      setNotifications(prevNotifications); // Rollback on network failure
-      onRefreshCount();
-    }
+    } catch {
+      if (ownerRef.current === account) setActionFeedback({error:true,message:'Read status could not be saved. Please retry.'});
+    } finally { readBusy.current.delete('all'); }
   };
 
   const handleClearAll = async () => {
@@ -292,7 +295,7 @@ export function NotificationInbox({
             <div>
               <div className="flex items-center gap-2">
                 <h2 id="notification-inbox-title" className="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
-                  Watchlist alerts
+                  Notifications
                 </h2>
                 {unreadCount !== null && unreadCount > 0 && !isMuted && (
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white">
@@ -301,7 +304,7 @@ export function NotificationInbox({
                 )}
               </div>
               <p className="text-[10px] sm:text-[11px] text-slate-500">
-                {isMuted ? "🔕 Alerts are temporarily muted" : "Strictly for your active Watchlist stocks"}
+                {isMuted ? 'Alerts are temporarily muted' : activeFilter === 'WATCHLIST' ? 'Your watchlist filing alerts' : 'Your filing alerts and unread updates'}
               </p>
             </div>
           </div>
@@ -361,12 +364,12 @@ export function NotificationInbox({
         )}
 
         {/* Filter Tabs & Quick Action Bar */}
-        <div className="mobile-alert-tabs px-3 sm:px-4 py-2 border-b border-slate-200 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-900/30 flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
-          <div className="flex items-center gap-1 shrink-0">
+        <div className="mobile-alert-tabs px-3 sm:px-4 py-2 border-b border-slate-200 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-900/30 flex flex-col items-stretch gap-2">
+          <div className="notification-filter-grid" role="group" aria-label="Filter notifications">
             {[
-              { id: 'WATCHLIST' as const, label: '⭐ My Watchlist' },
-              { id: 'RESULTS' as const, label: '📊 Results' },
-              { id: 'ACTIONS' as const, label: '🎁 Actions' },
+              { id: 'WATCHLIST' as const, label: 'Watchlist' },
+              { id: 'RESULTS' as const, label: 'Results' },
+              { id: 'ACTIONS' as const, label: 'Actions' },
               { id: 'UNREAD' as const, label: unreadCount === null ? 'Unread' : `Unread (${unreadCount})` },
               { id: 'ALL' as const, label: 'All' },
             ].map(f => (
@@ -375,6 +378,7 @@ export function NotificationInbox({
                 type="button"
                 whileTap={buttonTap}
                 disabled={isClearing}
+                aria-pressed={activeFilter === f.id}
                 onClick={() => setActiveFilter(f.id)}
                 className={cn(
                   "relative px-2.5 py-1 text-[11px] font-bold rounded-md transition-colors cursor-pointer whitespace-nowrap z-10 select-none",
@@ -403,7 +407,7 @@ export function NotificationInbox({
                 className="text-[11px] font-bold text-emerald-600 hover:underline flex items-center gap-1 cursor-pointer"
               >
                 <Check size={12} />
-                <span>Mark Read</span>
+                <span>Mark all read</span>
               </button>
             )}
             {notifications.length > 0 && (
@@ -461,7 +465,7 @@ export function NotificationInbox({
               <AnimatePresence initial={false}>
                 {notifications.map((n, idx) => {
                   const isResult = n.type === 'RESULT' || n.type === 'BOARD_MEETING';
-                  const isAction = n.type === 'DIVIDEND' || n.type === 'BONUS' || n.type === 'SPLIT' || n.type === 'BUYBACK';
+                  const isAction = n.type === 'DIVIDEND' || n.type === 'BONUS' || n.type === 'SPLIT' || n.type === 'BONUS_SPLIT' || n.type === 'BUYBACK';
                   const isOrder = n.type === 'ORDER_WIN';
                   const isHighPriority = n.priority === 'HIGH';
 
@@ -501,6 +505,7 @@ export function NotificationInbox({
 
                     {/* Content */}
                     <div className="min-w-0 flex-1 space-y-1">
+                      <div className="flex items-center justify-between gap-2"><span className="notification-read-label">{n.isRead ? 'Read' : 'Unread'}</span><time className="text-[10px] text-slate-500">{formatDateOnly(n.timestamp)} · {formatTimeOnly(n.timestamp)}</time></div>
                       <div className="rich-alert-meta flex items-center justify-between gap-2">
                         <div className="flex items-center gap-1.5 min-w-0">
                           {n.isWatchlist && (

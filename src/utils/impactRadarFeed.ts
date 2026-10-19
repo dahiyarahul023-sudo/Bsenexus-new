@@ -6,6 +6,7 @@ export interface RadarFeedState {
   followingReady: boolean; followingError: boolean; saving: string[];
   loading: boolean; checkedAt: number | null; error: string | null; sourceUnavailable: boolean;
   actionError: string | null; sourceStale: boolean;
+  sourceCheckedAt: number | null; sourcePending: boolean; newsUnavailable: boolean;
 }
 const merge = (items: RadarEvent[], followed: RadarEvent[]) => [...new Map([...followed, ...items].map(e => [e.id, e])).values()];
 export class ImpactRadarFeed {
@@ -17,7 +18,7 @@ export class ImpactRadarFeed {
   private followingRevision = 0;
   constructor(private identity: string, private request: Request) {
     this.state = { items: [], pending: null, following: [], followingReady: identity === 'guest', followingError: false,
-      saving: [], loading: false, checkedAt: null, error: null, sourceUnavailable: false, sourceStale: false, actionError: null };
+      saving: [], loading: false, checkedAt: null, error: null, sourceUnavailable: false, sourceStale: false, actionError: null, sourceCheckedAt:null,sourcePending:true,newsUnavailable:false };
   }
   subscribe = (fn: () => void) => { this.listeners.add(fn); return () => this.listeners.delete(fn); };
   getSnapshot = () => this.state;
@@ -48,7 +49,9 @@ export class ImpactRadarFeed {
       const items = merge(result.value.items.map(publicRadarEvent), extra);
       const changed = JSON.stringify(items) !== JSON.stringify(this.state.items);
       this.set({ ...(this.state.checkedAt !== null && this.state.items.length && changed ? { pending: items } : { items, pending: null }),
-        checkedAt: Date.now(), error: null, sourceUnavailable: result.value.intake?.unavailable === true, sourceStale: result.value.intake?.stale === true });
+        checkedAt: Date.now(), error: null, sourceUnavailable: result.value.intake?.unavailable === true, sourceStale: result.value.intake?.stale === true,
+        sourceCheckedAt: typeof result.value.intake?.checkedAt === 'number' ? result.value.intake.checkedAt : null,
+        sourcePending: result.value.intake?.pending === true, newsUnavailable:result.value.intake?.newsUnavailable === true });
     } catch (e) {
       if (revision === this.revision) this.set({ error: controller.signal.aborted ? 'Radar check timed out. Please retry.' : (e as Error).message });
     } finally {

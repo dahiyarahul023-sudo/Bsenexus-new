@@ -24,6 +24,10 @@ let sdkScheduled = false;
 let sdkInstance: any = null;
 let initialization: Promise<any | null> | null = null;
 const listeners = new Set<(state: PushState) => void>();
+const DEVICE_OFF_KEY = 'bsenexus_device_push_off';
+let deviceChangeVersion = 0;
+function deviceOff(): boolean { try { return localStorage.getItem(DEVICE_OFF_KEY) === 'true'; } catch { return false; } }
+function rememberDeviceOff(off: boolean) { try { localStorage.setItem(DEVICE_OFF_KEY, String(off)); } catch {} }
 
 export function getPushState(): PushState {
   return {
@@ -71,7 +75,7 @@ function ensureOneSignal(): Promise<any | null> {
         await OneSignal.init({
           appId: ONESIGNAL_APP_ID,
           allowLocalhostAsSecureOrigin: true,
-          autoResubscribe: true,
+          autoResubscribe: !deviceOff(),
           notifyButton: { enable: false },
           promptOptions: { slidedown: { prompts: [{ type: 'push', autoPrompt: false }] } },
           serviceWorkerParam: { scope: PUSH_WORKER_SCOPE },
@@ -81,6 +85,7 @@ function ensureOneSignal(): Promise<any | null> {
         sdkInstance = OneSignal;
         OneSignal.Notifications.addEventListener('permissionChange', publishPushState);
         OneSignal.User.PushSubscription.addEventListener('change', publishPushState);
+        if (deviceOff()) await OneSignal.User.PushSubscription.optOut();
         publishPushState();
         resolve(OneSignal);
       } catch (error) {
@@ -139,7 +144,7 @@ function permissionResult(permission: NotificationPermission): PushRequestResult
 }
 
 /** Trigger native permission within the click gesture, never from a delayed timer. */
-export async function requestPushPermission(): Promise<PushRequestResult> {
+export async function requestPushPermission(stillWanted: () => boolean = () => true): Promise<PushRequestResult> {
   if (typeof window === 'undefined') {
     return { granted: false, reason: 'unsupported', message: 'Not in a browser.' };
   }
@@ -161,11 +166,12 @@ export async function requestPushPermission(): Promise<PushRequestResult> {
       ? 'granted'
       : await Notification.requestPermission();
 
-    if (permission === 'granted') {
+    if (permission === 'granted' && stillWanted()) {
+      rememberDeviceOff(false);
       // Native Allow hides the permission banner immediately. OneSignal still
       // registers/reconciles its own subscription when its SDK becomes ready.
       void ready.then(async sdk => {
-        if (sdk?.Notifications.isPushSupported()) {
+        if (sdk?.Notifications.isPushSupported() && !deviceOff() && stillWanted()) {
           await sdk.User.PushSubscription.optIn();
           publishPushState();
         }
@@ -190,4 +196,32 @@ export async function isPushSubscribed(): Promise<boolean | null> {
   ]);
   clearTimeout(timer!);
   return sdk ? Boolean(sdk.User?.PushSubscription?.optedIn) : null;
+}
+
+/** Explicit device control: permission alone is never reported as delivery enabled. */
+export async function setDevicePushEnabled(enabled: boolean): Promise<{ ok: boolean; message: string }> {
+  const version = ++deviceChangeVersion;
+  const current = () => version === deviceChangeVersion;
+  if (enabled) {
+    const result = await requestPushPermission(current);
+    if (!result.granted) return { ok: false, message: result.message };
+  } else {
+    // Record an explicit opt-out before SDK work, so delayed auto-registration
+    // and reloads cannot accidentally turn this device back on.
+    rememberDeviceOff(true);
+  }
+  let timer: ReturnType<typeof setTimeout>;
+  const sdk = await Promise.race([ensureOneSignal(), new Promise<null>(resolve => { timer = setTimeout(() => resolve(null), 8000); })]);
+  clearTimeout(timer!);
+  if (!current()) return {ok:false,message:'A newer device setting is being applied.'};
+  if (!sdk) return { ok: false, message: enabled ? 'Browser permission is allowed, but delivery setup is not confirmed. Retry when connected.' : 'Off is saved for this device. Reconnect to finish updating delivery.' };
+  try {
+    if (enabled) await sdk.User.PushSubscription.optIn();
+    else await sdk.User.PushSubscription.optOut();
+    publishPushState();
+    const confirmed = Boolean(sdk.User.PushSubscription.optedIn) === enabled;
+    return { ok: confirmed, message: confirmed ? `Device notifications ${enabled ? 'on' : 'off'}.` : 'Delivery has not confirmed the change yet. Please retry.' };
+  } catch {
+    return { ok: false, message: 'Delivery could not be updated. Please retry.' };
+  }
 }

@@ -1,5 +1,6 @@
 import { AvatarPicker } from './AvatarPicker';
 import { UserAvatar } from './ui/UserAvatar';
+import { DeviceNotificationControl } from './DeviceNotificationControl';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useScreenTransition } from '../hooks/useScreenTransition';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -1749,6 +1750,8 @@ export function SettingsTab({
               </button>
               {showAvatarPicker && !activeSheet && <div id="account-avatar-picker"><AvatarPicker key={user.uid} /></div>}
             </div>}
+
+            <DeviceNotificationControl />
 
             {/* 2.2 Telegram Instant Push Delivery & AI Summaries */}
             {isMatch('telegram') && (

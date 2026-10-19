@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { readRadarSourceCheck, saveRadarSourceCheck, radarSourceStatus } from '../database/radarSourceDao.js';
 import { PNC_REVIEW } from './radarReviewedEvidence.js';
 import { refreshRadarCompanyIdentity, radarCompanyFromFiling } from './radarCompanyIdentity.js';
 import { getRecentAnnouncements } from '../database/announcementDao.js';
@@ -127,7 +128,18 @@ export function reviewedRadarRecords(now = Date.now()): RadarRecord[] {
   }
   return records;
 }
-export function radarIntakeStatus() { const news = getNewsSourceState(); return { checkedAt: lastCheckedAt, unavailable: lastError || news.unavailable, stale: !lastError && (!lastCheckedAt || Date.now() - lastCheckedAt > 5 * 60_000 || news.stale) }; }
+export function radarIntakeStatus() {
+  const news = getNewsSourceState();
+  return radarSourceStatus(lastCheckedAt === null ? null : {checkedAt:lastCheckedAt,available:!lastError,newsAvailable:!news.unavailable && !news.stale});
+}
+/** Process restarts and another hosting instance must not invent a source delay. */
+export async function durableRadarIntakeStatus() {
+  const local = radarIntakeStatus();
+  try {
+    const stored = await readRadarSourceCheck();
+    return stored && (local.checkedAt === null || stored.checkedAt >= local.checkedAt) ? radarSourceStatus(stored) : local;
+  } catch { return {...local,unavailable:local.checkedAt === null || local.unavailable,statusUnavailable:true}; }
+}
 export async function refreshRadarIntake(): Promise<void> {
   if (running) return running;
   if (Date.now() - lastAttempt < 60_000) return;
@@ -166,9 +178,16 @@ export async function refreshRadarIntake(): Promise<void> {
         if (r) records.push(r);
       }
       await publishRadarRecords(records);
-      lastCheckedAt = Date.now(); lastError = getNewsSourceState().unavailable || filingResult.status === 'rejected' || newsResult.status === 'rejected';
+      // An optional RSS failure does not mean a successful filing scan failed.
+      lastError = filingResult.status === 'rejected' && (newsResult.status === 'rejected' || getNewsSourceState().unavailable);
     } catch { lastError = true; }
-    finally { running = null; }
+    finally {
+      lastCheckedAt = Date.now();
+      const news = getNewsSourceState();
+      try { await saveRadarSourceCheck({checkedAt:lastCheckedAt,available:!lastError,newsAvailable:!news.unavailable && !news.stale}); }
+      catch { console.warn('[Radar] Source-check persistence unavailable'); }
+      running = null;
+    }
   })();
   return running;
 }
