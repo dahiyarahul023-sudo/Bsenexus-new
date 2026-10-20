@@ -30,42 +30,13 @@ jobs:
           const result=JSON.parse(raw.slice(raw.indexOf('{')));
           console.log(JSON.stringify({importConsumers:result.importConsumers,domains:result.semanticDomains.map(d=>({id:d.id,viaFiles:d.viaFiles})),candidateTests:result.candidateTests}));
           JS
-      - name: Probe responses without following redirects
-        run: |
-          node --input-type=module <<'JS'
-          const query=new URLSearchParams({response_type:'code',client_id:'2356f7bb-5244-4990-a72b-a0e4c2ab5c7a',redirect_uri:'https://chatgpt.com/connector/oauth/i9Jym6KvRpUi',code_challenge:'E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM',code_challenge_method:'S256',scope:'market:read',state:'codex-routing-investigation'});
-          for (const [label,base,extra] of [['public','https://bsenexus.in',{}],['published','https://bse-studio.ai.studio',{'X-Forwarded-Host':'bsenexus.in','X-Forwarded-Proto':'https'}]]) {
-            for(const path of ['/authorize?'+query,'/plugin?ai=chatgpt','/settings','/plugin/','/not-a-valid-route-codex']) {
-              const start=Date.now();
-              try {
-                const r=await fetch(base+path,{headers:{Accept:'text/html',...extra},redirect:'manual',signal:AbortSignal.timeout(8000)});
-                const body=await r.text();const loc=r.headers.get('location');
-                console.log('ROUTE_PROBE',JSON.stringify({label,path:path.split('?')[0],status:r.status,ms:Date.now()-start,location:loc?new URL(loc,base).pathname:null,consentInLocation:loc?new URL(loc,base).searchParams.has('request'):false,contentType:r.headers.get('content-type'),appRoot:/id=["']root["']/.test(body),server404:body.includes('requested page <code>'),cache:r.headers.get('cache-control')}));
-              } catch(e) {console.log('ROUTE_PROBE',JSON.stringify({label,path:path.split('?')[0],error:e.name}));}
-            }
-          }
-          JS
       - name: Install isolated browser tooling
         run: |
           npm view playwright@1.62.1 name version repository.url
           npm install --prefix "$RUNNER_TEMP/oauth-routing-browser" --ignore-scripts --no-audit --no-fund playwright@1.62.1
           node "$RUNNER_TEMP/oauth-routing-browser/node_modules/playwright/cli.js" install chromium --with-deps
-      - name: Observe a fresh anonymous live browser handoff
-        run: |
-          node --input-type=module <<'JS'
-          import {pathToFileURL} from 'node:url';
-          const {chromium}=await import(pathToFileURL(process.env.RUNNER_TEMP+'/oauth-routing-browser/node_modules/playwright/index.mjs').href);
-          const browser=await chromium.launch({headless:true});
-          const context=await browser.newContext({viewport:{width:768,height:1024}});
-          const page=await context.newPage();
-          const query=new URLSearchParams({response_type:'code',client_id:'2356f7bb-5244-4990-a72b-a0e4c2ab5c7a',redirect_uri:'https://chatgpt.com/connector/oauth/i9Jym6KvRpUi',code_challenge:'E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM',code_challenge_method:'S256',scope:'market:read',state:'codex-routing-investigation'});
-          try {
-            const errors=[];page.on('pageerror',e=>errors.push(e.message.slice(0,140)));
-            const response=await page.goto('https://bsenexus.in/authorize?'+query,{waitUntil:'domcontentloaded',timeout:20000});
-            await page.waitForTimeout(3000);
-            console.log('LIVE_BROWSER',JSON.stringify({status:response?.status(),pathname:new URL(page.url()).pathname,title:await page.title(),h1:await page.locator('h1').allTextContents(),pageNotFound:await page.getByRole('heading',{name:'Page Not Found',exact:true}).count(),errors}));
-          } finally {await browser.close();}
-          JS
+      - name: Verify browser handoff through redirect-following ingress
+        run: PLAYWRIGHT_MODULE="$RUNNER_TEMP/oauth-routing-browser/node_modules/playwright/index.mjs" node --import tsx scripts/verify-oauth-routing.mjs
       - name: Run routing regression cases when added
         if: ${{ !cancelled() }}
         run: |

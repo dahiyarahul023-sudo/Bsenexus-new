@@ -135,12 +135,21 @@ export class BsenexusOAuthProvider implements OAuthServerProvider {
       if (res.destroyed || res.writableEnded) return;
       res.setHeader("Cache-Control", "no-store");
       res.setHeader("Referrer-Policy", "no-referrer");
-      // This is a same-origin browser handoff, not an OAuth client callback.
-      // A relative Location also stays on the published origin if an ingress
-      // gateway follows redirects while proxying the public custom domain.
-      res.status(303).location(
-        "/plugin?request=" + encodeURIComponent(request),
-      ).end();
+      // The public ingress follows HTTP redirects internally, leaving the
+      // browser at /authorize without the pending-consent token. Navigate in
+      // the browser instead. Only our freshly generated opaque token enters
+      // this fixed same-origin destination; no caller-supplied return URL.
+      const destination = "/plugin?request=" + encodeURIComponent(request);
+      res.setHeader("X-Robots-Tag", "noindex, nofollow");
+      res.status(200).type("html").send(`<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="refresh" content="0;url=${destination}">
+<title>Continue to Bsenexus</title></head>
+<body><main><h1>Connecting to Bsenexus</h1>
+<p><a href="${destination}">Continue to review permissions</a></p>
+</main></body></html>`);
     } catch (error) {
       console.warn("[AI OAuth authorize]", {
         ...log("consent_unavailable"),

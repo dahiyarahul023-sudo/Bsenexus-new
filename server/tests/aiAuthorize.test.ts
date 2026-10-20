@@ -85,18 +85,24 @@ async function fixture(run: (f: {
   }
 }
 
-test("valid anonymous authorization persists exact binding and completes consent redirect behind trusted ingress", async () => {
+test("valid anonymous authorization persists exact binding and returns a browser consent handoff behind redirect-following ingress", async () => {
   await fixture(async ({ request, writes }) => {
     for (const accept of ["text/html", "application/json", "*/*"]) {
       const r = await request(query({ resource: "https://bsenexus.in/mcp", scope: "market:read notes:write" }), { Accept: accept });
-      assert.equal(r.status, 303);
-      const location = new URL(r.headers.get("location")!, "https://bsenexus.in");
+      assert.equal(r.status, 200);
+      assert.equal(r.headers.get("location"), null, "ingress must not consume an HTTP redirect");
+      assert.match(r.headers.get("content-type")!, /text\/html/);
+      const html = await r.text();
+      const refresh = html.match(/<meta http-equiv="refresh" content="0;url=([^"]+)">/);
+      assert.ok(refresh, "browser must receive the pending-consent destination");
+      const location = new URL(refresh[1], "https://bsenexus.in");
+      assert.ok(html.includes('href="' + refresh[1] + '"'), "manual continuation when refresh is disabled");
+      assert.equal(r.headers.get("x-robots-tag"), "noindex, nofollow");
       assert.equal(location.origin, "https://bsenexus.in");
       assert.equal(location.pathname, "/plugin");
       assert.match(location.searchParams.get("request")!, /^bnx_req_[A-Za-z0-9_-]{43}$/);
       assert.equal(r.headers.get("cache-control"), "no-store");
       assert.equal(r.headers.get("referrer-policy"), "no-referrer");
-      await r.text();
     }
     assert.equal(writes.length, 3);
     assert.equal(new Set(writes.map(w => w.p_hash)).size, 3);
