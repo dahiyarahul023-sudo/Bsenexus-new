@@ -9,7 +9,7 @@
 - Impact: temporary read-only GitHub Actions investigation runs the repository map:impact command before production-source edits. The local execution environment is unavailable.
 - Consumers: SDK authorize router/provider/DAO and consent handoff are under review. Public discovery, MCP auth, host/Origin policy, scopes/quotas and existing consent UI must stay compatible. Gemini confidential-client support is outside this fix.
 - CI blocker: main deleted package-lock.json in f74e1e8; application/rules-map npm ci and fresh-Bun setup fail. Restore the unchanged lock blob from green parent eb49a62 (root dependency metadata matches current package.json).
-- Delivery: investigation branch only; no deployment, Cloudflare changes, feature-flag changes or schema migration.
+- Delivery: source prepared in PR #2; final CI/merge state is recorded by GitHub. No hosting deployment, Cloudflare changes, feature-flag changes or schema migration.
 - Cleanup: the temporary investigation workflow will be removed before merge. Muse diagnostic client cleanup will only target the exact verified synthetic client and associated test requests after it is no longer needed.
 
 ## Reproduction and chosen correction
@@ -31,3 +31,13 @@
 - The same job executed npm run map:generate. Both generated outputs are copied from the generator's exact emitted diff, with strict context/count checks; they were not manually regenerated.
 - Pre-deployment live checks still target the previous hosted code: public 522 in 1.192 s, published origin 303 in 1.664 s. The new source has not been published. Do not report public 522 fixed until post-republish acceptance succeeds.
 - Required host-only compile_applet/lint_applet tools and local terminal are unavailable. Actual npm type/build checks run on GitHub; this limitation does not count as a host-tool pass.
+
+## Final source and cleanup review
+
+- Full application run 39481898320: npm type check, all 574 backend tests and application build passed on the changed source (the map job correctly waited for generated outputs in the following commit). Fresh Bun build also passed.
+- Run 39482236619 verifies committed generated outputs: rules-map fixtures/check and fresh Bun build passed; the final application job is recorded by GitHub. Run 39482236694 independently regenerated the maps and emitted MAP_PATCH_LENGTH 0.
+- Before removing the temporary workflow, that runner executed git grep -nF across tracked files for its exact filename. The only match was the workflow's own search command. No source consumer references it.
+- Diagnostic cleanup completed as explicitly requested: exact muse-diagnostic-probe client with the verified example.com callback and zero grants; eight associated pending requests and one client removed. Independent readback: zero diagnostic records remain, and real ChatGPT client 3df822fe-10e2-4341-bf4e-f87fcd814818 remains present. No actual client/grant was revoked.
+- Final change consists of OAuth provider/AI DAO, six regression cases, restored unchanged lockfile, domain/map artifacts and the evidence/runbook documents. The temporary investigation workflow is removed.
+- Rollback: revert this source change and sync/republish through the existing workflow. No schema rollback is needed. Pending requests expire normally; no account grants are created by diagnostic authorization requests.
+- Next deployment step: Rohit syncs/pulls the green main revision and Republishes in AI Studio. Muse repeats public and published-origin GET authorization without following redirects, real ChatGPT consent plus a read-only tool, discovery/DCR/MCP 401 regressions and homepage/health. If the public request still fails while Node logs response_finished, inspect that request's hosting/Worker response handling before changing unrelated configuration.
