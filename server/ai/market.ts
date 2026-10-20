@@ -171,6 +171,7 @@ export async function resultsData(query: string, options: { limit?: number; offs
     resultsCount: results.length, results, totalResults: declared.length,
     nextOffset: offset + limit < declared.length ? offset + limit : null,
     declaredOnly: true, excludedNoticesOrUnverified: history.length - declared.length,
+    coverageDetails: { completeArchive: false, source: "available_result_history", originalExchangePdfRequired: true },
     generatedAt: new Date().toISOString(), timezone: "Asia/Kolkata",
     coverage: "Available source-backed results filings; financial metrics and generated summaries require original-document verification.",
   };

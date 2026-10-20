@@ -52,7 +52,7 @@ export function getOpenApiSpec() {
     [
       "/filings",
       "getBseFilings",
-      "Retrieve available filings with original source links",
+      "Retrieve newest-first filings with original source links, time filters and brief/full summaries",
       [
         queryParam("symbol"),
         queryParam("category"),
@@ -70,7 +70,7 @@ export function getOpenApiSpec() {
     [
       "/results",
       "getQuarterlyResults",
-      "Retrieve results filings and available summaries; structured financial metrics are not guaranteed",
+      "Retrieve source-backed declared results, latest with limit=1; brief/full summaries, financial metrics not independently validated",
       [queryParam("symbol", true), queryParam("limit", false, "integer", { minimum: 1, maximum: 8, default: 8 }), queryParam("offset", false, "integer", { minimum: 0, maximum: 200, default: 0 }), queryParam("detail", false, "string", { enum: ["brief", "full"], default: "brief" })],
     ],
     [
@@ -167,7 +167,8 @@ export function getGeminiToolsSpec() {
             v.name,
             {
               type: v.schema.type.toUpperCase(),
-              description: v.name,
+              description: v.schema.description || v.name,
+              ...(v.schema.enum ? { enum: v.schema.enum } : {}),
               ...(v.schema.minimum !== undefined
                 ? { minimum: v.schema.minimum, maximum: v.schema.maximum }
                 : {}),

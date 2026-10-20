@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import { filingsData, resultsData } from "../ai/market.js";
 import { parseTool } from "../ai/policy.js";
+import { getOpenApiSpec, getGeminiToolsSpec } from "../api/aiPlugin.js";
 import { renderPublicCalendarShell, publicCalendarCacheControl } from "../services/publicCalendar.js";
 import { readCachedResultsCalendar } from "../services/resultsCalendarService.js";
 const date = "2026-10-21T06:00:00.000Z";
@@ -78,4 +79,15 @@ test("required brand icon exists as a valid square PNG, not a placeholder path",
   const icon=fs.readFileSync("public/icon-192.png");
   assert.equal(icon.subarray(0,8).toString("hex"),"89504e470d0a1a0a");
   assert.equal(icon.readUInt32BE(16),192);assert.equal(icon.readUInt32BE(20),192);
+});
+
+test("REST and Gemini consumers advertise bounded read detail and pagination consistently",()=>{
+  const spec=getOpenApiSpec() as any;
+  const results=spec.paths["/api/ai/v1/results"].get.parameters;
+  assert.deepEqual(results.find((p:any)=>p.name==="detail").schema.enum,["brief","full"]);
+  assert.equal(results.find((p:any)=>p.name==="limit").schema.maximum,8);
+  const filings=spec.paths["/api/ai/v1/filings"].get.parameters;
+  for(const field of ["after","before","beforeId","detail"]) assert.ok(filings.some((p:any)=>p.name===field));
+  const gemini=getGeminiToolsSpec() as any;
+  assert.deepEqual(gemini.functionDeclarations.find((p:any)=>p.name==="getQuarterlyResults").parameters.properties.detail.enum,["brief","full"]);
 });
