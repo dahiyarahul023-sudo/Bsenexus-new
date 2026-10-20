@@ -26,6 +26,7 @@ async function fixture(run: (f: {
   request: (params?: URLSearchParams, headers?: Record<string, string>) => Promise<Response>;
   setMode: (mode: Mode) => void;
   writes: any[];
+  fetchPath: (path: string, init?: RequestInit) => Promise<Response>;
   release: () => void;
 }) => Promise<void>) {
   const envNames = ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "AI_PUBLIC_ORIGIN", "AI_CONNECTIONS_ENABLED", "NODE_ENV"] as const;
@@ -61,8 +62,14 @@ async function fixture(run: (f: {
   const server = app.listen(0, "127.0.0.1"); await once(server, "listening");
   const base = "http://127.0.0.1:" + (server.address() as any).port;
   const headers = { Host: "internal-service.run.app", "X-Forwarded-Host": "bsenexus.in", "X-Forwarded-Proto": "https" };
+  const fetchPath = (path: string, init: RequestInit = {}) => {
+    const merged = new Headers(headers);
+    new Headers(init.headers).forEach((value, key) => merged.set(key, value));
+    return fetch(base + path, { ...init, headers: merged, redirect: "manual", signal: AbortSignal.timeout(4500) });
+  };
   try {
     await run({
+      fetchPath,
       request: (params = query(), overrides = {}) => fetch(base + "/authorize?" + params, {
         headers: { ...headers, ...overrides }, redirect: "manual", signal: AbortSignal.timeout(4500),
       }),
@@ -167,5 +174,45 @@ test("storage deadline settles even when a dependency ignores its abort signal",
       assert.ok(Date.now() - started < 500);
       assert.equal(aborted, true);
     } finally { clearTimeout(timer); clearTimeout(watchdog); }
+  });
+});
+
+test("discovery, public-PKCE registration and the unauthenticated MCP challenge keep their contracts", async () => {
+  await fixture(async ({ fetchPath }) => {
+    const metadata = await fetchPath("/.well-known/oauth-authorization-server");
+    assert.equal(metadata.status, 200);
+    const oauth = await metadata.json();
+    assert.equal(oauth.issuer, "https://bsenexus.in/");
+    assert.deepEqual(oauth.token_endpoint_auth_methods_supported, ["none"]);
+    assert.deepEqual(oauth.code_challenge_methods_supported, ["S256"]);
+    for (const path of ["/.well-known/oauth-protected-resource", "/.well-known/oauth-protected-resource/mcp"]) {
+      const r = await fetchPath(path);
+      assert.equal(r.status, 200);
+      const body = await r.json();
+      assert.equal(body.resource, "https://bsenexus.in/mcp");
+      assert.deepEqual(body.authorization_servers, ["https://bsenexus.in/"]);
+      assert.equal(body.scopes_supported.length, 10);
+    }
+    const registration = (auth: string) => fetchPath("/register", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...client, client_id: undefined, token_endpoint_auth_method: auth }),
+    });
+    const valid = await registration("none");
+    assert.equal(valid.status, 201);
+    assert.match((await valid.json()).client_id, /^[a-f0-9-]{36}$/);
+    const invalid = await registration("client_secret_post");
+    assert.equal(invalid.status, 400);
+    assert.equal((await invalid.json()).error, "invalid_client_metadata");
+    for (const method of ["GET", "POST"]) {
+      const r = await fetchPath("/mcp", {
+        method, headers: { "Content-Type": "application/json" },
+        ...(method === "POST" ? { body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "initialize", params: {} }) } : {}),
+      });
+      assert.equal(r.status, 401);
+      assert.deepEqual(await r.json(), {
+        success: false, error: "Connect your Bsenexus account in your AI application.", code: "connection_required",
+      });
+      assert.equal(r.headers.get("www-authenticate"), 'Bearer resource_metadata="https://bsenexus.in/.well-known/oauth-protected-resource/mcp"');
+    }
   });
 });

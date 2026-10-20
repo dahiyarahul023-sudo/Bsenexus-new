@@ -1,15 +1,32 @@
 import { getSupabase } from "./supabase.js";
 import { AiError, hashSecret } from "../ai/policy.js";
+type AiStorageOptions = { timeoutMs?: number; signal?: AbortSignal };
 export async function aiDb<T = any>(
   fn: (
     db: ReturnType<typeof getSupabase>,
   ) => PromiseLike<{ data: T | null; error: any }>,
+  options: AiStorageOptions = {},
 ): Promise<T> {
+  const timeout = AbortSignal.timeout(options.timeoutMs ?? 10000);
+  const signal = options.signal
+    ? AbortSignal.any([options.signal, timeout])
+    : timeout;
+  let onAbort: (() => void) | undefined;
   try {
+    if (signal.aborted) throw signal.reason;
+    const deadline = new Promise<never>((_resolve, reject) => {
+      onAbort = () => reject(signal.reason);
+      signal.addEventListener("abort", onAbort, { once: true });
+    });
     let query: any = fn(getSupabase());
     if (typeof query.abortSignal === "function")
-      query = query.abortSignal(AbortSignal.timeout(10000));
-    const { data, error } = await query;
+      query = query.abortSignal(signal);
+    // Cancellation is cooperative. Independently bound a dependency that
+    // ignores its signal; race also observes any eventual rejection.
+    const { data, error } = await Promise.race([
+      Promise.resolve(query),
+      deadline,
+    ]);
     if (error) throw error;
     return data as T;
   } catch {
@@ -18,10 +35,16 @@ export async function aiDb<T = any>(
       503,
       "Connection storage is unavailable. Please retry.",
     );
+  } finally {
+    if (onAbort) signal.removeEventListener("abort", onAbort);
   }
 }
-export async function aiRpc(name: string, args: Record<string, unknown>) {
-  const data = await aiDb((db) => db.rpc(name, args));
+export async function aiRpc(
+  name: string,
+  args: Record<string, unknown>,
+  options: AiStorageOptions = {},
+) {
+  const data = await aiDb((db) => db.rpc(name, args), options);
   if (!data || typeof data !== "object")
     throw new AiError("connection_storage_unavailable", 503);
   if (data.error)
