@@ -73,7 +73,7 @@ export function getOpenApiSpec() {
     [
       "/board-meetings",
       "getBoardMeetings",
-      "Retrieve available results-related board meetings",
+      "Retrieve upcoming results-related board meetings, including today, nearest date first (IST)",
       [
         queryParam("symbol"),
         queryParam("daysAhead", false, "integer", {
@@ -81,6 +81,10 @@ export function getOpenApiSpec() {
           maximum: 60,
           default: 14,
         }),
+        queryParam("fromDate", false, "string", { description: "Inclusive IST start: today, tomorrow or YYYY-MM-DD. Defaults to today." }),
+        queryParam("toDate", false, "string", { description: "Inclusive IST end. Set both dates to tomorrow for tomorrow only." }),
+        queryParam("limit", false, "integer", { minimum: 1, maximum: 25, default: 20 }),
+        queryParam("offset", false, "integer", { minimum: 0, maximum: 10000, default: 0 }),
       ],
     ],
     [
@@ -225,7 +229,7 @@ for (const [path, tool] of [
           : path === "/results"
             ? ["symbol"]
             : path === "/board-meetings"
-              ? ["symbol", "daysAhead"]
+              ? ["symbol", "daysAhead", "fromDate", "toDate", "limit", "offset"]
               : ["symbol", "category", "limit", "before"];
       if (Object.keys(req.query).some((k) => !allowed.includes(k))) {
         res
@@ -244,6 +248,10 @@ for (const [path, tool] of [
                   ...(req.query.daysAhead !== undefined
                     ? { daysAhead: Number(single(req.query.daysAhead)) }
                     : {}),
+                  fromDate: single(req.query.fromDate),
+                  toDate: single(req.query.toDate),
+                  ...(req.query.limit !== undefined ? { limit: Number(single(req.query.limit)) } : {}),
+                  ...(req.query.offset !== undefined ? { offset: Number(single(req.query.offset)) } : {}),
                 }
               : {
                   company: single(req.query.symbol),

@@ -93,6 +93,13 @@ const id = z
   .regex(/^[A-Za-z0-9_-]+$/);
 const company = z.string().trim().min(1).max(60);
 const priority = z.enum(["HIGH", "MEDIUM", "LOW"]);
+const calendarDates = {
+  fromDate: z.string().max(10).optional().describe("Inclusive IST start: today (default), tomorrow or YYYY-MM-DD."),
+  toDate: z.string().max(10).optional().describe("Inclusive IST end. For one day, set it equal to fromDate, e.g. tomorrow."),
+  daysAhead: z.number().int().min(1).max(60).default(14),
+  limit: z.number().int().min(1).max(25).default(20),
+  offset: z.number().int().min(0).max(10000).default(0),
+};
 export const TOOL_SPECS = {
   account_context: {
     scope: "account:read",
@@ -130,7 +137,7 @@ export const TOOL_SPECS = {
     pro: false,
     write: false,
     description:
-      "Retrieve results filings and available summaries, not guaranteed structured financial metrics. Include source links.",
+      "Use for already declared quarterly results and available summaries for one company. For future result dates use meetings_read or watchlist_results_upcoming. Include source links; metrics are not independently validated.",
     schema: z.object({ company }).strict(),
   },
   meetings_read: {
@@ -138,19 +145,22 @@ export const TOOL_SPECS = {
     pro: false,
     write: false,
     description:
-      "Read upcoming results-related board meetings from available calendar coverage.",
-    schema: z
-      .object({
-        company: company.optional(),
-        daysAhead: z.number().int().min(1).max(60).default(14),
-      })
-      .strict(),
+      "Use for upcoming or tomorrow's result dates across the market or one company. Includes today by default, nearest date first. Use fromDate=tomorrow,toDate=tomorrow for only tomorrow. For the user's watchlist use watchlist_results_upcoming.",
+    schema: z.object({ company: company.optional(), ...calendarDates }).strict(),
+  },
+  watchlist_results_upcoming: {
+    scope: "watchlists:read",
+    pro: true,
+    write: false,
+    description:
+      "Use for upcoming result dates of the connected account's watchlist stocks in one call. No need to fetch every stock first. All active watchlists by default, or an exact watchlistId. Also requires market:read. Includes today, nearest first; use fromDate=tomorrow,toDate=tomorrow for tomorrow only.",
+    schema: z.object({ watchlistId: id.optional(), ...calendarDates }).strict(),
   },
   watchlists_read: {
     scope: "watchlists:read",
     pro: true,
     write: false,
-    description: "Read your own watchlists; use returned IDs for edits.",
+    description: "Read compact metadata and up to five preview stocks for your watchlists; use IDs for edits. For upcoming results call watchlist_results_upcoming directly.",
     schema: z
       .object({ offset: z.number().int().min(0).max(10000).default(0) })
       .strict(),
