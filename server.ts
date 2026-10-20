@@ -44,6 +44,7 @@ import { getBseBlockBackoffLevel } from "./server/services/bse.js";
 import { getAllFeedback } from "./server/database/feedbackDao.js";
 import { prerenderFilingHtml, prerenderCompanyHtml, buildSitemapIndexXml, cleanCanonicalUrl, buildAnnouncementsFeedCards, buildAnnouncementsCollectionJsonLd, PRELOADER_CARD_RE } from "./server/services/seoPrerender.js";
 import { mountAiIntegration } from './server/ai/http.js';
+import { SPA_PATHS, normalizeSpaPath } from './server/utils/spaRoutes.js';
 import { getAiPluginManifest } from "./server/api/aiPlugin.js";
 
 // Global error handlers to prevent background quota/network exceptions from crashing the process
@@ -6768,7 +6769,7 @@ function injectTabSeoMetadata(html: string, tabQuery?: string): string {
 // Helper to compute Cloudflare edge and browser Cache-Control headers for SPA routes
 function getSpaRouteCacheControl(reqPath: string): string {
   const p = reqPath.toLowerCase().replace(/\/+$/, '') || '/';
-  if (p === '/plugin' || p === '/ai-plugin') return 'no-store';
+  if (p === '/plugin' || p === '/ai-plugin' || p === '/settings') return 'no-store';
   if (p === '/') {
     // 1. / (homepage)
     return 'public, max-age=60, s-maxage=300, stale-while-revalidate=600';
@@ -6804,21 +6805,22 @@ async function startServer() {
     });
 
     // In development mode, allow verifying tab-specific SEO metadata in responses with proper headers
-    app.get(["/", "/announcements", "/live", "/results-calendar", "/watchlist", "/watchlists", "/companies", "/about", "/contact", "/disclaimer", "/privacy-policy", "/terms", "/plugin", "/ai-plugin"], async (req, res, next) => {
-      let tab = req.path === "/live" ? "live" : req.query.tab as string | undefined;
+    app.get(SPA_PATHS, async (req, res, next) => {
+      const routePath = normalizeSpaPath(req.path);
+      let tab = routePath === "/settings" ? "settings" : routePath === "/live" ? "live" : req.query.tab as string | undefined;
       if (!tab) {
-        if (req.path === '/announcements') tab = 'announcements';
-        else if (req.path === '/live') tab = 'live';
-        else if (req.path === '/results-calendar') tab = 'results-calendar';
-        else if (req.path === '/watchlist' || req.path === '/watchlists') tab = 'watchlists';
-        else if (req.path === '/companies') tab = 'companies';
-        else if (req.path === '/about') tab = 'about';
-        else if (req.path === '/contact') tab = 'contact';
-        else if (req.path === '/disclaimer') tab = 'disclaimer';
-        else if (req.path === '/privacy-policy') tab = 'privacy-policy';
-        else if (req.path === '/privacy') tab = 'privacy';
-        else if (req.path === '/terms') tab = 'terms';
-        else if (req.path === '/plugin' || req.path === '/ai-plugin') tab = 'plugin';
+        if (routePath === '/announcements') tab = 'announcements';
+        else if (routePath === '/live') tab = 'live';
+        else if (routePath === '/results-calendar') tab = 'results-calendar';
+        else if (routePath === '/watchlist' || routePath === '/watchlists') tab = 'watchlists';
+        else if (routePath === '/companies') tab = 'companies';
+        else if (routePath === '/about') tab = 'about';
+        else if (routePath === '/contact') tab = 'contact';
+        else if (routePath === '/disclaimer') tab = 'disclaimer';
+        else if (routePath === '/privacy-policy') tab = 'privacy-policy';
+        else if (routePath === '/privacy') tab = 'privacy';
+        else if (routePath === '/terms') tab = 'terms';
+        else if (routePath === '/plugin' || routePath === '/ai-plugin') tab = 'plugin';
       }
       try {
         const rawIndexHtml = fs.readFileSync(path.join(process.cwd(), "index.html"), "utf-8");
@@ -6838,7 +6840,7 @@ async function startServer() {
     // Intercept invalid HTML navigation requests so they return real 404 instead of silent homepage fallback
     app.use((req, res, next) => {
       if (req.method !== 'GET' && req.method !== 'HEAD') return next();
-      const p = req.path;
+      const p = normalizeSpaPath(req.path);
       if (
         p === '/' ||
         p === '/announcements' ||
@@ -6853,6 +6855,8 @@ async function startServer() {
         p === '/terms' ||
         p === '/plugin' ||
         p === '/ai-plugin' ||
+        p === '/settings' ||
+        p === '/live' ||
         p.startsWith('/@') ||
         p.startsWith('/src') ||
         p.startsWith('/node_modules') ||
@@ -6896,22 +6900,7 @@ async function startServer() {
     }));
 
     // Server-side HTML renderer with tab-specific SEO metadata & ETag cache
-    const VALID_SPA_ROUTES = new Set([
-      '/',
-      '/announcements',
-      '/live',
-      '/results-calendar',
-      '/watchlist',
-      '/watchlists',
-      '/companies',
-      '/about',
-      '/contact',
-      '/disclaimer',
-      '/privacy-policy',
-      '/terms',
-      '/plugin',
-      '/ai-plugin'
-    ]);
+    const VALID_SPA_ROUTES = new Set(SPA_PATHS);
     const tabHtmlCache = new Map<string, { html: string; etag: string }>();
 
     // /announcements Soft-404 fix (production): serve the SPA shell with REAL
@@ -6971,25 +6960,26 @@ async function startServer() {
     });
 
     app.get("*", (req, res) => {
+      const routePath = normalizeSpaPath(req.path);
       // If the path is not a valid SPA route, return a true 404 instead of silent homepage fallback!
-      if (!VALID_SPA_ROUTES.has(req.path)) {
+      if (!VALID_SPA_ROUTES.has(routePath)) {
         return res.status(404).setHeader('Content-Type', 'text/html; charset=utf-8').send(renderGeneral404Page(req.path));
       }
 
-      let tabParam = req.path === "/live" ? "live" : (typeof req.query.tab === "string" ? req.query.tab.trim().toLowerCase() : "");
+      let tabParam = routePath === "/settings" ? "settings" : routePath === "/live" ? "live" : (typeof req.query.tab === "string" ? req.query.tab.trim().toLowerCase() : "");
       if (!tabParam) {
-        if (req.path === '/announcements') tabParam = 'announcements';
-        else if (req.path === '/live') tabParam = 'live';
-        else if (req.path === '/results-calendar') tabParam = 'results-calendar';
-        else if (req.path === '/watchlist' || req.path === '/watchlists') tabParam = 'watchlists';
-        else if (req.path === '/companies') tabParam = 'companies';
-        else if (req.path === '/about') tabParam = 'about';
-        else if (req.path === '/contact') tabParam = 'contact';
-        else if (req.path === '/disclaimer') tabParam = 'disclaimer';
-        else if (req.path === '/privacy-policy') tabParam = 'privacy-policy';
-        else if (req.path === '/privacy') tabParam = 'privacy';
-        else if (req.path === '/terms') tabParam = 'terms';
-        else if (req.path === '/plugin' || req.path === '/ai-plugin') tabParam = 'plugin';
+        if (routePath === '/announcements') tabParam = 'announcements';
+        else if (routePath === '/live') tabParam = 'live';
+        else if (routePath === '/results-calendar') tabParam = 'results-calendar';
+        else if (routePath === '/watchlist' || routePath === '/watchlists') tabParam = 'watchlists';
+        else if (routePath === '/companies') tabParam = 'companies';
+        else if (routePath === '/about') tabParam = 'about';
+        else if (routePath === '/contact') tabParam = 'contact';
+        else if (routePath === '/disclaimer') tabParam = 'disclaimer';
+        else if (routePath === '/privacy-policy') tabParam = 'privacy-policy';
+        else if (routePath === '/privacy') tabParam = 'privacy';
+        else if (routePath === '/terms') tabParam = 'terms';
+        else if (routePath === '/plugin' || routePath === '/ai-plugin') tabParam = 'plugin';
         else tabParam = 'default';
       }
       const clientEtag = req.headers['if-none-match'];
