@@ -43,6 +43,7 @@ export class BsenexusOAuthProvider implements OAuthServerProvider {
           .select("metadata")
           .eq("id", clientId)
           .maybeSingle(),
+        { timeoutMs: 2000 },
       );
       return row?.metadata;
     },
@@ -111,18 +112,47 @@ export class BsenexusOAuthProvider implements OAuthServerProvider {
       throw new InvalidScopeError("Unknown permission.");
     if (!client.redirect_uris.includes(params.redirectUri))
       throw new InvalidRequestError("Callback mismatch.");
-    const request = newSecret("req");
-    await aiRpc("begin_ai_connection_request", {
-      p_hash: hashSecret(request),
-      p_client: client.client_id,
-      p_params: { ...params, resource: resourceUrl(), scopes },
+    const started = Date.now();
+    const traceId = crypto.randomUUID();
+    const log = (stage: string) => ({
+      traceId, stage, elapsedMs: Date.now() - started,
     });
-    res.setHeader("Cache-Control", "no-store");
-    res.setHeader("Referrer-Policy", "no-referrer");
-    res.redirect(
-      303,
-      publicOrigin() + "/plugin?request=" + encodeURIComponent(request),
-    );
+    // Safe operation stages distinguish persistence from a response delivered
+    // to the hosting gateway. Never include query strings or consent secrets.
+    res.once("finish", () => {
+      console.info("[AI OAuth authorize]", {
+        ...log("response_finished"), status: res.statusCode,
+      });
+    });
+    try {
+      const request = newSecret("req");
+      await aiRpc("begin_ai_connection_request", {
+        p_hash: hashSecret(request),
+        p_client: client.client_id,
+        p_params: { ...params, resource: resourceUrl(), scopes },
+      }, { timeoutMs: 2000 });
+      console.info("[AI OAuth authorize]", log("consent_persisted"));
+      if (res.destroyed || res.writableEnded) return;
+      res.setHeader("Cache-Control", "no-store");
+      res.setHeader("Referrer-Policy", "no-referrer");
+      // This is a same-origin browser handoff, not an OAuth client callback.
+      // A relative Location also stays on the published origin if an ingress
+      // gateway follows redirects while proxying the public custom domain.
+      res.status(303).location(
+        "/plugin?request=" + encodeURIComponent(request),
+      ).end();
+    } catch (error) {
+      console.warn("[AI OAuth authorize]", {
+        ...log("consent_unavailable"),
+        code: error instanceof AiError ? error.code : "response_unavailable",
+      });
+      if (res.destroyed || res.writableEnded) return;
+      res.status(503).json({
+        error: "temporarily_unavailable",
+        error_description:
+          "Connection setup is temporarily unavailable. Start again from your AI application.",
+      });
+    }
   }
   async challengeForAuthorizationCode(
     client: OAuthClientInformationFull,

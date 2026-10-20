@@ -817,6 +817,7 @@
         "server/tests/aiConnections.test.ts",
         "server/tests/aiConnectionsSql.test.ts",
         "server/tests/aiOAuth.test.ts",
+        "server/tests/aiAuthorize.test.ts",
         "server/tests/aiPlugin.test.ts",
         "server/tests/aiWatchlistConcurrency.test.ts",
         "server/tests/aiTelemetry.test.ts",
