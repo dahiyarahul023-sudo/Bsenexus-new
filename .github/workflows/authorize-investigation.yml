@@ -1,0 +1,76 @@
+name: Authorize investigation (temporary)
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  authorize-investigation:
+    if: startsWith(github.head_ref, 'codex/fix-authorize')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      NODE_ENV: test
+      JWT_SECRET: ci-only-not-a-production-secret-do-not-deploy
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: node scripts/patch-firebase-auth.cjs
+      - name: Trace impact before implementation
+        run: npm run map:impact -- server/ai/oauth.ts server/ai/http.ts server/database/aiConnectionsDao.ts
+      - name: Inspect the installed authorization boundary
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          console.log(fs.readFileSync('node_modules/@modelcontextprotocol/sdk/dist/esm/server/auth/handlers/authorize.js','utf8'));
+          JS
+      - name: Probe a valid authorization through the real router and a local storage fixture
+        run: |
+          node --import tsx --input-type=module <<'JS'
+          import express from 'express';
+          import compression from 'compression';
+          import { once } from 'node:events';
+          import { mountAiIntegration } from './server/ai/http.ts';
+          import { resetSupabaseClient } from './server/database/supabase.ts';
+          const client = { client_id: '00000000-0000-0000-0000-000000000001', redirect_uris:['https://example.com/mcp-callback'], token_endpoint_auth_method:'none', grant_types:['authorization_code','refresh_token'], response_types:['code'] };
+          const db = express(); db.use(express.json());
+          db.get('/rest/v1/ai_connection_clients', (_req,res)=>res.json(client ? { metadata:client }:null));
+          db.post('/rest/v1/rpc/begin_ai_connection_request', (_req,res)=>{console.log('PROBE_STORAGE_SUCCESS');res.json({success:true});});
+          const dbServer=db.listen(0,'127.0.0.1'); await once(dbServer,'listening');
+          process.env.SUPABASE_URL='http://127.0.0.1:'+dbServer.address().port;
+          process.env.SUPABASE_SERVICE_ROLE_KEY='synthetic-ci-key-not-a-real-credential';
+          process.env.AI_CONNECTIONS_ENABLED='true';
+          resetSupabaseClient();
+          const app=express();app.set('trust proxy',1);app.use(compression());app.use(express.json());mountAiIntegration(app);
+          const server=app.listen(0,'127.0.0.1');await once(server,'listening');
+          const query=new URLSearchParams({response_type:'code',client_id:client.client_id,redirect_uri:client.redirect_uris[0],code_challenge:'E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM',code_challenge_method:'S256',state:'x'});
+          try {
+            const started=Date.now();
+            const r=await fetch('http://127.0.0.1:'+server.address().port+'/authorize?'+query,{headers:{Host:'internal-service.run.app','X-Forwarded-Host':'bsenexus.in','X-Forwarded-Proto':'https'},redirect:'manual',signal:AbortSignal.timeout(4500)});
+            const location=r.headers.get('location');
+            console.log('PROBE_RESPONSE',JSON.stringify({status:r.status,ms:Date.now()-started,location:location?.replace(/request=.*/, 'request=[redacted]'),body:(await r.text()).replace(/bnx_req_[A-Za-z0-9_-]+/g,'[redacted]')}));
+          } finally {server.closeAllConnections();dbServer.closeAllConnections();await Promise.all([new Promise(r=>server.close(r)),new Promise(r=>dbServer.close(r))]);resetSupabaseClient();}
+          JS
+      - name: Reproduce authorize regression cases when present
+        if: ${{ !cancelled() }}
+        run: |
+          if test -f server/tests/aiAuthorize.test.ts; then
+            node --test --import tsx server/tests/aiAuthorize.test.ts
+          fi
+      - name: Regenerate maps and emit the exact generated patch
+        if: ${{ !cancelled() }}
+        run: |
+          npm run map:generate
+          node --input-type=module <<'JS'
+          import {execFileSync} from 'node:child_process';
+          const patch=execFileSync('git',['diff','--','rule/generated/spider-map.json','rule/generated/spider-map.html'],{encoding:'utf8',maxBuffer:20*1024*1024});
+          const b64=Buffer.from(patch).toString('base64');
+          for(let i=0;i<b64.length;i+=6000) console.log('MAP_PATCH_PART '+i+' '+b64.slice(i,i+6000));
+          console.log('MAP_PATCH_LENGTH '+b64.length);
+          JS
