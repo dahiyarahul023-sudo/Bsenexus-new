@@ -44,6 +44,9 @@ jobs:
             node --test --import tsx server/tests/spaRouteParity.test.ts
           fi
           node --test --import tsx server/tests/aiAuthorize.test.ts
+      - name: Trace temporary workflow references before removal
+        run: |
+          git grep -nF -- 'oauth-routing-investigation.yml' || test "$?" -eq 1
       - name: Generate dependency maps and emit exact diff
         if: ${{ !cancelled() }}
         run: |
