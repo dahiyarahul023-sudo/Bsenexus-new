@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Search, X, Flame, List, CalendarDays, Newspaper, Settings, 
   Moon, Sun, Zap, Sparkles, Building2, TrendingUp, ExternalLink, 
-  ChevronRight, Command, CornerDownLeft, Loader2, Plus, Star, Bot
+  ChevronRight, Command, CornerDownLeft, Loader2, Plus, Star
 } from 'lucide-react';
 import { springSnappy } from '../../utils/motionTokens';
 import { useIntelModal } from '../../context/IntelModalContext';
@@ -190,16 +190,6 @@ export function CommandPalette({
         icon: CalendarDays,
         action: () => { onTabChange('results-calendar'); onClose(); },
         keywords: ['earnings', 'results', 'calendar', 'q1', 'q2', 'q3', 'q4', 'board meeting']
-      },
-      {
-        id: 'nav_ai_plugin',
-        title: 'AI Connections',
-        subtitle: 'Connect your account to a compatible AI client',
-        category: 'Navigation',
-        icon: Bot,
-        action: () => { window.location.href = '/plugin'; onClose(); },
-        badge: 'New',
-        keywords: ['ai', 'plugin', 'chatgpt', 'gemini', 'gpt', 'bot', 'api', 'openapi', 'actions', 'telegram', 'schema', 'llm']
       },
       {
         id: 'nav_news',

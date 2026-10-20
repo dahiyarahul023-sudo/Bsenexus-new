@@ -97,13 +97,17 @@ describe('Search Engine & Cross-Browser Discovery (Step 06: IndexNow & OpenSearc
     assert.ok(content.includes('<loc>https://bsenexus.in/company/RELIANCE</loc>'));
   });
 
-  test('index.html head title starts with Bsenexus and meta description contains Bsenexus', () => {
+  test('index.html uses the search-first branded title consistently across social metadata', () => {
     const indexHtmlPath = path.join(process.cwd(), 'index.html');
     const indexHtml = fs.readFileSync(indexHtmlPath, 'utf8');
 
     const titleMatch = indexHtml.match(/<title>(.*?)<\/title>/);
     assert.ok(titleMatch, 'index.html must have a title');
-    assert.ok(titleMatch[1].startsWith('Bsenexus'), 'Title must start with Bsenexus');
+    const expectedTitle = 'BSE Corporate Announcements &amp; Filings Live | Bsenexus';
+    assert.strictEqual(titleMatch[1], expectedTitle);
+    for (const tag of ['property="og:title"', 'name="twitter:title"']) {
+      assert.ok(indexHtml.includes(`<meta ${tag} content="${expectedTitle}"`), `${tag} must match the page title`);
+    }
 
     const descMatch = indexHtml.match(/<meta\s+name="description"\s+content="([^"]*)"/);
     assert.ok(descMatch, 'index.html must have meta description');
