@@ -113,3 +113,5 @@ UserAvatar shares 96/256/512 transparent WebP sources across header, profile and
 
 
 2026-10-20 bounded AI connection repair: a single Settings entry, provider-specific OAuth steps, explicit copy/approval states and same-owner refresh improve the setup journey. Scoped phone/tablet layout changes are source/typecheck/build verified; browser/physical-device acceptance remains blocked by the current test environment. Proxy-aware discovery and exact MCP Origin checks retain bearer-only authority. This is not a hosted-client or full frontend completion claim; see changes/ai-connection-usability.md.
+
+2026-10-20 AI connection verification follow-up: eight Chromium scenario groups pass on the actual component/CSS with test-only API/auth adapters, including 320–1440 CSS widths, manual copy, dark mode, 200% CSS zoom, keyboard focus, account isolation, retry/revoke and opt-in consent. This does not certify live OAuth, storage or physical iOS/Android devices. See changes/ai-connection-usability.md for concurrent-main integration and separate CI/merge/hosting status.

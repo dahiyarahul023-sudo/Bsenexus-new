@@ -131,3 +131,5 @@ UserAvatar shares 96/256/512 transparent WebP sources across header, profile and
 
 
 2026-10-20 AI connection setup: Settings owns the sole visible entry. Canonical/legacy plugin routes and OAuth deep links remain. AiPluginPage separates selected provider, public URL copy, approved grants and external-client completion; account/request-keyed data and action guards prevent stale feedback, while same-owner refresh retains content. Provider-specific instructions and scoped wrapping controls replace duplicate pills and generic platform cards. See changes/ai-connection-usability.md for security and browser/deployment limits.
+
+2026-10-20 AI connection verification follow-up: eight Chromium scenario groups pass on the actual component/CSS with test-only API/auth adapters, including 320–1440 CSS widths, manual copy, dark mode, 200% CSS zoom, keyboard focus, account isolation, retry/revoke and opt-in consent. This does not certify live OAuth, storage or physical iOS/Android devices. See changes/ai-connection-usability.md for concurrent-main integration and separate CI/merge/hosting status.

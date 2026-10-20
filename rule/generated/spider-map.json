@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "a26cd433bce73375123767af3e767973fae34cefa1b8e70d910a34816de74192",
+  "sourceDigest": "63cbc25c107325b6199039b0f8011c5829be53b85ec43e145b20b1b1313fb096",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -179,7 +179,7 @@
     },
     {
       "path": "server/ai/http.ts",
-      "sha256": "6178f8408f9e178487558c6234a2960310b10bcfed478d6b1c5af25355184b5c",
+      "sha256": "dfacc21b1d8eab90b8470607fe6c7c7e050010d16bf6edeb455a366bb5e9e01c",
       "importedBy": [
         "server.ts",
         "server/api/aiPlugin.ts",
@@ -1414,7 +1414,7 @@
     },
     {
       "path": "server/tests/searchEngineDiscovery.test.ts",
-      "sha256": "4f6efcef52339f5803eba0abad754bac0a0d706206904bfc646255e72f998bff",
+      "sha256": "aa5c914597354c072c82694b7966afe443303d5d64da179b0af17045b8da9f1a",
       "importedBy": []
     },
     {
