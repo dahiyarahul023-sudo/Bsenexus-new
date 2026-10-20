@@ -62,13 +62,16 @@ export function getOpenApiSpec() {
           default: 10,
         }),
         queryParam("before"),
+        queryParam("beforeId"),
+        queryParam("after"),
+        queryParam("detail", false, "string", { enum: ["brief", "full"], default: "brief" }),
       ],
     ],
     [
       "/results",
       "getQuarterlyResults",
       "Retrieve results filings and available summaries; structured financial metrics are not guaranteed",
-      [queryParam("symbol", true)],
+      [queryParam("symbol", true), queryParam("limit", false, "integer", { minimum: 1, maximum: 8, default: 8 }), queryParam("offset", false, "integer", { minimum: 0, maximum: 200, default: 0 }), queryParam("detail", false, "string", { enum: ["brief", "full"], default: "brief" })],
     ],
     [
       "/board-meetings",
@@ -227,10 +230,10 @@ for (const [path, tool] of [
         path === "/company"
           ? ["query"]
           : path === "/results"
-            ? ["symbol"]
+            ? ["symbol", "limit", "offset", "detail"]
             : path === "/board-meetings"
               ? ["symbol", "daysAhead", "fromDate", "toDate", "limit", "offset"]
-              : ["symbol", "category", "limit", "before"];
+              : ["symbol", "category", "limit", "before", "beforeId", "after", "detail"];
       if (Object.keys(req.query).some((k) => !allowed.includes(k))) {
         res
           .status(400)
@@ -241,7 +244,9 @@ for (const [path, tool] of [
         path === "/company"
           ? { query: single(req.query.query) }
           : path === "/results"
-            ? { company: single(req.query.symbol) }
+            ? { company: single(req.query.symbol), detail: single(req.query.detail),
+                ...(req.query.limit !== undefined ? { limit: Number(single(req.query.limit)) } : {}),
+                ...(req.query.offset !== undefined ? { offset: Number(single(req.query.offset)) } : {}) }
             : path === "/board-meetings"
               ? {
                   company: single(req.query.symbol),
@@ -257,6 +262,9 @@ for (const [path, tool] of [
                   company: single(req.query.symbol),
                   category: single(req.query.category),
                   before: single(req.query.before),
+                  beforeId: single(req.query.beforeId),
+                  after: single(req.query.after),
+                  detail: single(req.query.detail),
                   ...(req.query.limit !== undefined
                     ? { limit: Number(single(req.query.limit)) }
                     : {}),

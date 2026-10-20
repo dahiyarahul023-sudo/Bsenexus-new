@@ -44,3 +44,6 @@ Primary references reviewed 21 Oct 2026:
 - https://modelcontextprotocol.io/specification/2025-11-25/schema
 - https://www.anthropic.com/research/code-execution-with-mcp
 - https://developers.openai.com/api/docs/bots
+
+## Mandatory branding and broader read review (21 Oct2026)
+See [ai-tool-review.md](ai-tool-review.md) for the checked mandatory logo requirement, each operation's changed/compatible status, source-backed reads and the factual public calendar preview. Host rendering remains an observed acceptance item, not a force-logo protocol flag.
