@@ -667,12 +667,9 @@ export function invalidateEnrichedCalendarCache() {
   enrichedCache = null;
 }
 
-export async function getResultsCalendarData(
-  filterStatus: 'all' | 'today' | 'upcoming' | 'recent' = 'all', 
-  watchlistId?: string,
-  userId?: string,
-  scope: 'watchlist' | 'market' = 'watchlist'
-) {
+// Public calendar facts only. Account visibility remains in the caller;
+// website callers keep their original scope/filter semantics below.
+export async function getResultsCalendarSnapshot() {
   const now = Date.now();
   if (cachedCalendar.length === 0 || now - lastCalendarFetchTime > 12 * 60 * 60 * 1000) {
     await fetchAndSyncResultsCalendar(false);
@@ -826,6 +823,17 @@ export async function getResultsCalendarData(
     };
   }
 
+  return { items: allEnrichedItems, lastUpdated: lastCalendarFetchTime };
+}
+
+export async function getResultsCalendarData(
+  filterStatus: 'all' | 'today' | 'upcoming' | 'recent' = 'all', 
+  watchlistId?: string,
+  userId?: string,
+  scope: 'watchlist' | 'market' = 'watchlist'
+) {
+  const snapshot = await getResultsCalendarSnapshot();
+  const allEnrichedItems = snapshot.items;
   let items = [...allEnrichedItems];
 
   // Retrieve user's watchlists to enforce strict visibility filtering

@@ -297,14 +297,16 @@
         "src/utils/timeFormat.ts",
         "src/components/HomeMarketNews.tsx",
         "src/utils/homeNews.ts",
-        "src/shared/scripMatching.ts"
+        "src/shared/scripMatching.ts",
+        "server/ai/calendarRead.ts"
       ],
       "tests": [
         "server/tests/core.test.ts",
         "server/tests/auditData.test.ts",
         "server/tests/followupAudit.test.ts",
         "server/tests/homeNews.test.ts",
-        "server/tests/sevenFixes.test.ts"
+        "server/tests/sevenFixes.test.ts",
+        "server/tests/aiConnectorQuality.test.ts"
       ],
       "reason": "Upstream timestamps, stock identity and market sessions affect cached API results, screen freshness and alert timing. Public market data availability does not establish trading-data accuracy."
     },
@@ -818,7 +820,8 @@
         "src/lib/sentry.ts",
         "src/shared/aiTelemetry.ts",
         "scripts/verify-ai-connections-staging.sql",
-        "server/utils/spaRoutes.ts"
+        "server/utils/spaRoutes.ts",
+        "server/ai/calendarRead.ts"
       ],
       "tests": [
         "server/tests/aiConnections.test.ts",
@@ -830,7 +833,8 @@
         "server/tests/aiTelemetry.test.ts",
         "server/tests/aiIngress.test.ts",
         "server/tests/spaRouteParity.test.ts",
-        "scripts/verify-oauth-routing.mjs"
+        "scripts/verify-oauth-routing.mjs",
+        "server/tests/aiConnectorQuality.test.ts"
       ],
       "reason": "Website sign-in approves a public PKCE client with explicit permissions. External opaque credentials never accept website cookies or client-supplied owners/roles. Live durable entitlement and shared per-account quotas precede bounded tools; writes recheck grant and plan in a transaction with an idempotent receipt. Website watchlists use request-local revision CAS while enabled, and reads do not restore stale backups. Connection/consent responses bypass browser, CDN and SW caches. Profile/watchlist/notes refresh on return; account changes suppress late responses. Root OAuth endpoints, MCP and the four compatibility GET routes share the same authorization owner. The disabled-by-default flag is required until an approved service-only schema rollout and live client/browser checks; source tests do not certify deployment or marketplace publication. Connection discovery uses the configured Express trusted-proxy hostname while all issuer/resource URLs remain canonical. Exact browser-Origin checks cover MCP requests and preflights. Settings owns the sole visible entry; client-specific web setup distinguishes public URL copying, approved grants and completed client setup. Same-account refresh retains content and account/request changes hide obsolete responses."
     }

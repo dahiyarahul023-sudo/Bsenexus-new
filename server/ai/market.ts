@@ -8,9 +8,10 @@ import {
 } from "../database/announcementDao.js";
 import {
   getStockResultsHistory,
-  getResultsCalendarData,
+  getResultsCalendarSnapshot,
 } from "../services/resultsCalendarService.js";
 import { AiError } from "./policy.js";
+import { selectCalendarMeetings, type CalendarReadArgs } from "./calendarRead.js";
 const clean = (v: any, max = 4000) =>
   String(v || "")
     .replace(/<[^>]*>/g, " ")
@@ -165,36 +166,8 @@ export async function resultsData(query: string) {
       "Available results filings; financial metrics are not independently validated by this endpoint.",
   };
 }
-export async function meetingsData(query?: string, daysAhead = 14) {
-  const e = query ? exactCompany(query) : null;
-  const calendar = await getResultsCalendarData(
-    "upcoming",
-    undefined,
-    undefined,
-    "market",
-  );
-  const meetings = (calendar.items || [])
-    .filter(
-      (m) =>
-        (!e || String(m.scripCode) === e.scripCode) &&
-        typeof m.daysLeft === "number" &&
-        m.daysLeft >= 0 &&
-        m.daysLeft <= daysAhead,
-    )
-    .slice(0, 20)
-    .map((m) => ({
-      symbol: m.symbol,
-      scripCode: m.scripCode,
-      companyName: m.companyName,
-      meetingDate: m.meetingDate,
-      purpose: m.purpose || "Results-related board meeting",
-      daysLeft: m.daysLeft,
-    }));
-  return {
-    success: true,
-    count: meetings.length,
-    meetings,
-    coverage:
-      "Available results calendar; not a complete archive of all board agendas.",
-  };
+export async function meetingsData(query?: string, daysAhead = 14, options: CalendarReadArgs = {}) {
+  const entry = query ? exactCompany(query) : null;
+  const snapshot = await getResultsCalendarSnapshot();
+  return selectCalendarMeetings(snapshot, { ...options, daysAhead }, entry ? new Set([entry.scripCode]) : undefined);
 }

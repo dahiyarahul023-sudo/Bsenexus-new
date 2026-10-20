@@ -147,9 +147,14 @@ test("a remote SDK client initializes and discovers scoped tools after bearer au
     assert.equal(cookieOnly.status, 401);
     assert.match(cookieOnly.headers.get("www-authenticate") || "", /oauth-protected-resource\/mcp/);
     await client.connect(new StreamableHTTPClientTransport(url, { requestInit: { headers: { Authorization: `Bearer ${token}` } } }));
+    const info = client.getServerVersion()!;
+    assert.equal(info.title, "BSE Nexus");
+    assert.equal(info.websiteUrl, "https://bsenexus.in");
+    assert.equal(info.icons?.[0].src, "https://bsenexus.in/icon-192.png");
     const { tools } = await client.listTools();
     assert.ok(tools.some((tool) => tool.name === "filings_search"));
     assert.ok(tools.some((tool) => tool.name === "watchlist_create"));
+    assert.ok(tools.some((tool) => tool.name === "watchlist_results_upcoming"));
     assert.ok(!tools.some((tool) => /admin|payments|execute_sql/.test(tool.name)));
     assert.ok(tools.every((tool) => tool.inputSchema.type === "object"));
     const profile = tools.find((tool) => tool.name === "get_profile")!;

@@ -34,6 +34,8 @@ import {
   resultsData,
   meetingsData,
 } from "./market.js";
+import { getResultsCalendarSnapshot } from "../services/resultsCalendarService.js";
+import { calendarWindow, compactWatchlistStock, selectCalendarMeetings } from "./calendarRead.js";
 
 export async function accountState(uid: string) {
   const [profile, entitlement] = await Promise.all([
@@ -59,13 +61,16 @@ export function createAiToolRunner(
     state?: typeof connectedState;
     rpc?: typeof aiRpc;
     db?: typeof aiDb;
+    calendar?: typeof getResultsCalendarSnapshot;
   } = {},
 ) {
   const state = overrides.state || connectedState,
     rpc = overrides.rpc || aiRpc,
     dbCall = overrides.db || aiDb;
+  const calendar = overrides.calendar || getResultsCalendarSnapshot;
   return async function (token: string, name: string, input: unknown) {
     const { spec, args } = parseTool(name, input);
+    if (name === "meetings_read" || name === "watchlist_results_upcoming") calendarWindow(args);
     const { grant, profile, pro, limits } = await state(token);
     const uid = grant.uid;
     if (!grant.scopes.includes(spec.scope))
@@ -74,6 +79,8 @@ export function createAiToolRunner(
         403,
         "Reconnect and allow this specific permission.",
       );
+    if (name === "watchlist_results_upcoming" && !grant.scopes.includes("market:read"))
+      throw new AiError("scope_required", 403, "Reconnect and allow market:read and watchlists:read.");
     if (spec.pro && !pro)
       throw new AiError(
         "pro_required",
@@ -133,7 +140,32 @@ export function createAiToolRunner(
       if (name === "filings_search") return filingsData(args);
       if (name === "results_read") return resultsData(args.company);
       if (name === "meetings_read")
-        return meetingsData(args.company, args.daysAhead);
+        return meetingsData(args.company, args.daysAhead, args);
+      if (name === "watchlist_results_upcoming") {
+        const row = await dbCall((db) =>
+          db.from("user_watchlists").select("lists").eq("uid", uid).maybeSingle(),
+        );
+        const lists = Array.isArray(row?.lists) ? row.lists : [];
+        const selected = args.watchlistId
+          ? lists.filter((l: any) => String(l.id) === args.watchlistId)
+          : lists.filter((l: any) => l.is_active !== 0 && l.is_active !== false);
+        if (args.watchlistId && !selected.length) throw new AiError("not_found", 404);
+        const codes = new Set<string>();
+        for (const list of selected) for (const raw of (Array.isArray(list.items) ? list.items : [])) {
+          const stock = compactWatchlistStock(raw);
+          if (stock.scripCode) codes.add(stock.scripCode);
+          else if (stock.symbol) {
+            const matches = companyCandidates(stock.symbol);
+            if (matches.length === 1) codes.add(matches[0].scripCode);
+          }
+        }
+        const snapshot = codes.size ? await calendar() : { items: [], lastUpdated: 0 };
+        return {
+          ...selectCalendarMeetings(snapshot, args, codes),
+          watchlistCount: selected.length,
+          watchlistStockCount: codes.size,
+        };
+      }
       if (name === "watchlists_read") {
         const row = await dbCall((db) =>
           db
@@ -145,11 +177,11 @@ export function createAiToolRunner(
         const lists = Array.isArray(row?.lists) ? row.lists : [];
         return {
           watchlists: lists.slice(args.offset, args.offset + 20).map((l) => ({
-            id: l.id,
-            name: l.name,
+            id: String(l.id || "").slice(0, 100),
+            name: String(l.name || "").slice(0, 80),
             is_active: l.is_active,
             stockCount: (l.items || []).length,
-            preview: (l.items || []).slice(0, 5),
+            preview: (Array.isArray(l.items) ? l.items : []).slice(0, 5).map(compactWatchlistStock),
           })),
           nextOffset: lists.length > args.offset + 20 ? args.offset + 20 : null,
         };
@@ -166,9 +198,9 @@ export function createAiToolRunner(
           (l: any) => String(l.id) === args.watchlistId,
         );
         if (!list) throw new AiError("not_found", 404);
-        const items = list.items || [];
+        const items = Array.isArray(list.items) ? list.items : [];
         return {
-          items: items.slice(args.offset, args.offset + 25),
+          items: items.slice(args.offset, args.offset + 25).map(compactWatchlistStock),
           nextOffset: items.length > args.offset + 25 ? args.offset + 25 : null,
         };
       }
