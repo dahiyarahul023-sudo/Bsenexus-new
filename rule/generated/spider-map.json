@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "af70551f96fd3005cea712c76afa20edfdc8d5ca18e58403cd47bae9a9cf632f",
+  "sourceDigest": "441a393d6f1fef8ac8ca146c1d36032cbc2c5124834e9aa85f1226c55c4bf559",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -80,7 +80,7 @@
     },
     {
       "path": "public/llms.txt",
-      "sha256": "5b7f87f0dbe970090c3b144850cf65e88f75d8540471e459326b7cc2c52d9673",
+      "sha256": "797e8340332d83d3bdce224d8fd5b9a55be7d1a0ec387ee22d86fefbd505e700",
       "importedBy": []
     },
     {
@@ -183,8 +183,17 @@
       ]
     },
     {
+      "path": "server/ai/calendarRead.ts",
+      "sha256": "2af039eec47e8abab693f44cb7305896fb0b06162d33128d65927442d6ee5a81",
+      "importedBy": [
+        "server/ai/market.ts",
+        "server/ai/tools.ts",
+        "server/tests/aiConnectorQuality.test.ts"
+      ]
+    },
+    {
       "path": "server/ai/http.ts",
-      "sha256": "5703979754cfb400e03500d85d9a1ea864b62c5b681a57afc9fd921f38c49bb0",
+      "sha256": "5e7ad013a96b21c1a54a78c4bfb2845132fb1f85c3cafe61a3b7d6919470b53a",
       "importedBy": [
         "scripts/verify-oauth-routing.mjs",
         "server.ts",
@@ -197,7 +206,7 @@
     },
     {
       "path": "server/ai/market.ts",
-      "sha256": "9312c2b21e275622bc6c8920133a3d33acf7ae760fae13d248b4fb18fd5e6ecf",
+      "sha256": "08a5861151c0aa207c7991480a4238a4c8c03e59de4a1ab2d8c3315b7aabdf57",
       "importedBy": [
         "server/ai/tools.ts",
         "server/tests/aiConnections.test.ts"
@@ -214,9 +223,10 @@
     },
     {
       "path": "server/ai/policy.ts",
-      "sha256": "67952ac9ce92df617df8c367de8e1aab28c6b2e9abff6c4e438b6b064953f621",
+      "sha256": "ceb4b3f3e40887573fed97952003ef53788a4a8936b90e9e6878366c3f83b83f",
       "importedBy": [
         "scripts/verify-oauth-routing.mjs",
+        "server/ai/calendarRead.ts",
         "server/ai/http.ts",
         "server/ai/market.ts",
         "server/ai/oauth.ts",
@@ -225,21 +235,23 @@
         "server/api/routes.ts",
         "server/database/aiConnectionsDao.ts",
         "server/database/watchlistDao.ts",
-        "server/tests/aiConnections.test.ts"
+        "server/tests/aiConnections.test.ts",
+        "server/tests/aiConnectorQuality.test.ts"
       ]
     },
     {
       "path": "server/ai/tools.ts",
-      "sha256": "34bfd35d98eeaa5abc51be610bc973900ceb163b17b67431d6f5ef36b2f0857c",
+      "sha256": "b4da9b288210643f1e5a2bf0aa2855e7b33fc83f56c5ac6b870b7b31c1157d68",
       "importedBy": [
         "server/ai/http.ts",
         "server/api/aiPlugin.ts",
-        "server/tests/aiConnections.test.ts"
+        "server/tests/aiConnections.test.ts",
+        "server/tests/aiConnectorQuality.test.ts"
       ]
     },
     {
       "path": "server/api/aiPlugin.ts",
-      "sha256": "4ab5c1ce20570115168188088a5f90638d6acf09a6e09d6ad9b362c509601ebb",
+      "sha256": "5e56905da514d7872655e91c36ca11156f06746d98c3208eeed173a6bb6e8795",
       "importedBy": [
         "server.ts",
         "server/api/routes.ts",
@@ -977,15 +989,18 @@
     },
     {
       "path": "server/services/resultsCalendarService.ts",
-      "sha256": "4ec415ea361ba67b0c27f4ea430a91c447753c3638c0de57e843e2f3cf60a21b",
+      "sha256": "d1561e54fd35111c7e3e90e7345894566b202a05a24c43f228a45666e505cc73",
       "importedBy": [
         "server.ts",
+        "server/ai/calendarRead.ts",
         "server/ai/market.ts",
+        "server/ai/tools.ts",
         "server/api/routes.ts",
         "server/services/bse.ts",
         "server/services/companyIntelService.ts",
         "server/services/gemini.ts",
         "server/services/storyFeedService.ts",
+        "server/tests/aiConnectorQuality.test.ts",
         "server/tests/calendarScope.test.ts"
       ]
     },
@@ -1084,13 +1099,18 @@
       "importedBy": []
     },
     {
+      "path": "server/tests/aiConnectorQuality.test.ts",
+      "sha256": "6195ad01cade1910ea6bbac2c572ad0e327a8c1843d3b61305c5f3a06480ce18",
+      "importedBy": []
+    },
+    {
       "path": "server/tests/aiGateway.test.ts",
       "sha256": "0b357563ef264d255a12f8d44f641b1febe6f7e26d686e7f96a95e7178356218",
       "importedBy": []
     },
     {
       "path": "server/tests/aiIngress.test.ts",
-      "sha256": "aaa871dc49f0bad13ceadee614f650f2b59efee161f51d938c41e3bd155a427a",
+      "sha256": "cd3a6f7eef63438f10d4ab5f2627a87fbb779105fd38b4ca8f475513208ebb11",
       "importedBy": []
     },
     {
@@ -3913,6 +3933,18 @@
       "line": 48
     },
     {
+      "source": "server/ai/calendarRead.ts",
+      "target": "server/ai/policy.ts",
+      "kind": "import",
+      "line": 1
+    },
+    {
+      "source": "server/ai/calendarRead.ts",
+      "target": "server/services/resultsCalendarService.ts",
+      "kind": "import",
+      "line": 2
+    },
+    {
       "source": "server/ai/http.ts",
       "target": "server/ai/oauth.ts",
       "kind": "import",
@@ -3965,6 +3997,12 @@
       "target": "server/ai/policy.ts",
       "kind": "import",
       "line": 13
+    },
+    {
+      "source": "server/ai/market.ts",
+      "target": "server/ai/calendarRead.ts",
+      "kind": "import",
+      "line": 14
     },
     {
       "source": "server/ai/oauth.ts",
@@ -4043,6 +4081,18 @@
       "target": "server/ai/market.ts",
       "kind": "import",
       "line": 30
+    },
+    {
+      "source": "server/ai/tools.ts",
+      "target": "server/services/resultsCalendarService.ts",
+      "kind": "import",
+      "line": 37
+    },
+    {
+      "source": "server/ai/tools.ts",
+      "target": "server/ai/calendarRead.ts",
+      "kind": "import",
+      "line": 38
     },
     {
       "source": "server/api/aiPlugin.ts",
@@ -5921,6 +5971,30 @@
       "target": "server/ai/tools.ts",
       "kind": "import",
       "line": 12
+    },
+    {
+      "source": "server/tests/aiConnectorQuality.test.ts",
+      "target": "server/ai/calendarRead.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "server/tests/aiConnectorQuality.test.ts",
+      "target": "server/ai/tools.ts",
+      "kind": "import",
+      "line": 4
+    },
+    {
+      "source": "server/tests/aiConnectorQuality.test.ts",
+      "target": "server/ai/policy.ts",
+      "kind": "import",
+      "line": 5
+    },
+    {
+      "source": "server/tests/aiConnectorQuality.test.ts",
+      "target": "server/services/resultsCalendarService.ts",
+      "kind": "import",
+      "line": 6
     },
     {
       "source": "server/tests/aiGateway.test.ts",
@@ -10965,14 +11039,16 @@
         "src/utils/timeFormat.ts",
         "src/components/HomeMarketNews.tsx",
         "src/utils/homeNews.ts",
-        "src/shared/scripMatching.ts"
+        "src/shared/scripMatching.ts",
+        "server/ai/calendarRead.ts"
       ],
       "tests": [
         "server/tests/core.test.ts",
         "server/tests/auditData.test.ts",
         "server/tests/followupAudit.test.ts",
         "server/tests/homeNews.test.ts",
-        "server/tests/sevenFixes.test.ts"
+        "server/tests/sevenFixes.test.ts",
+        "server/tests/aiConnectorQuality.test.ts"
       ],
       "reason": "Upstream timestamps, stock identity and market sessions affect cached API results, screen freshness and alert timing. Public market data availability does not establish trading-data accuracy."
     },
@@ -11486,7 +11562,8 @@
         "src/lib/sentry.ts",
         "src/shared/aiTelemetry.ts",
         "scripts/verify-ai-connections-staging.sql",
-        "server/utils/spaRoutes.ts"
+        "server/utils/spaRoutes.ts",
+        "server/ai/calendarRead.ts"
       ],
       "tests": [
         "server/tests/aiConnections.test.ts",
@@ -11498,7 +11575,8 @@
         "server/tests/aiTelemetry.test.ts",
         "server/tests/aiIngress.test.ts",
         "server/tests/spaRouteParity.test.ts",
-        "scripts/verify-oauth-routing.mjs"
+        "scripts/verify-oauth-routing.mjs",
+        "server/tests/aiConnectorQuality.test.ts"
       ],
       "reason": "Website sign-in approves a public PKCE client with explicit permissions. External opaque credentials never accept website cookies or client-supplied owners/roles. Live durable entitlement and shared per-account quotas precede bounded tools; writes recheck grant and plan in a transaction with an idempotent receipt. Website watchlists use request-local revision CAS while enabled, and reads do not restore stale backups. Connection/consent responses bypass browser, CDN and SW caches. Profile/watchlist/notes refresh on return; account changes suppress late responses. Root OAuth endpoints, MCP and the four compatibility GET routes share the same authorization owner. The disabled-by-default flag is required until an approved service-only schema rollout and live client/browser checks; source tests do not certify deployment or marketplace publication. Connection discovery uses the configured Express trusted-proxy hostname while all issuer/resource URLs remain canonical. Exact browser-Origin checks cover MCP requests and preflights. Settings owns the sole visible entry; client-specific web setup distinguishes public URL copying, approved grants and completed client setup. Same-account refresh retains content and account/request changes hide obsolete responses."
     }
@@ -12185,7 +12263,7 @@
     },
     {
       "file": "server/api/aiPlugin.ts",
-      "line": 179,
+      "line": 183,
       "receiver": "aiPluginRouter",
       "method": "GET",
       "path": "/openapi.json",
@@ -12195,7 +12273,7 @@
     },
     {
       "file": "server/api/aiPlugin.ts",
-      "line": 180,
+      "line": 184,
       "receiver": "aiPluginRouter",
       "method": "GET",
       "path": "[\"/ai-plugin.json\", \"/.well-known/ai-plugin.json\"]",
@@ -12205,7 +12283,7 @@
     },
     {
       "file": "server/api/aiPlugin.ts",
-      "line": 184,
+      "line": 188,
       "receiver": "aiPluginRouter",
       "method": "GET",
       "path": "/gemini-tools.json",
@@ -12215,7 +12293,7 @@
     },
     {
       "file": "server/api/aiPlugin.ts",
-      "line": 187,
+      "line": 191,
       "receiver": "aiPluginRouter",
       "method": "USE",
       "path": "/v1",
@@ -12226,7 +12304,7 @@
     },
     {
       "file": "server/api/aiPlugin.ts",
-      "line": 220,
+      "line": 224,
       "receiver": "aiPluginRouter",
       "method": "GET",
       "path": "\"/v1\" + path",
@@ -14681,19 +14759,19 @@
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 1459,
+      "line": 1467,
       "function": "fetch",
       "target": "bmUrl"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 1512,
+      "line": 1520,
       "function": "fetch",
       "target": "url"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 1528,
+      "line": 1536,
       "function": "fetch",
       "target": "fbUrl"
     },
@@ -16105,7 +16183,7 @@
     },
     {
       "file": "server/ai/market.ts",
-      "line": 22,
+      "line": 23,
       "function": "Array.from",
       "key": "new Map(getAllStockEntries().map((e) => [e.scripCode, e])).values()"
     },
@@ -16141,31 +16219,37 @@
     },
     {
       "file": "server/ai/tools.ts",
-      "line": 139,
+      "line": 146,
+      "function": "db.from",
+      "key": "\"user_watchlists\""
+    },
+    {
+      "file": "server/ai/tools.ts",
+      "line": 171,
       "function": "db\n            .from",
       "key": "\"user_watchlists\""
     },
     {
       "file": "server/ai/tools.ts",
-      "line": 159,
+      "line": 191,
       "function": "db\n            .from",
       "key": "\"user_watchlists\""
     },
     {
       "file": "server/ai/tools.ts",
-      "line": 177,
+      "line": 209,
       "function": "db\n            .from",
       "key": "\"user_notes\""
     },
     {
       "file": "server/ai/tools.ts",
-      "line": 265,
+      "line": 297,
       "function": "db\n              .from",
       "key": "\"ai_connection_operations\""
     },
     {
       "file": "server/ai/tools.ts",
-      "line": 310,
+      "line": 342,
       "function": "db\n            .from",
       "key": "\"ai_connection_operations\""
     },
@@ -16789,13 +16873,13 @@
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 1430,
+      "line": 1438,
       "function": "Array.from",
       "key": "quarterOutcomesMap.values()"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 1504,
+      "line": 1512,
       "function": "Array.from",
       "key": "{ length: Math.min(batchSize, maxPages - startPage + 1) }"
     },
@@ -16828,6 +16912,18 @@
       "line": 195,
       "function": "Array.from",
       "key": "{ length: 8 }"
+    },
+    {
+      "file": "server/tests/aiConnectorQuality.test.ts",
+      "line": 27,
+      "function": "Array.from",
+      "key": "{length:30}"
+    },
+    {
+      "file": "server/tests/aiConnectorQuality.test.ts",
+      "line": 99,
+      "function": "Array.from",
+      "key": "{length:26}"
     },
     {
       "file": "server/tests/auditSecurity.test.ts",
@@ -18865,12 +18961,12 @@
     },
     {
       "file": "server/tests/aiIngress.test.ts",
-      "line": 163,
+      "line": 168,
       "name": "AI_CONNECTIONS_ENABLED"
     },
     {
       "file": "server/tests/aiIngress.test.ts",
-      "line": 164,
+      "line": 169,
       "name": "AI_CONNECTIONS_ENABLED"
     },
     {
