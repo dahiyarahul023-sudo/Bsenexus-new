@@ -111,7 +111,8 @@ test("invalid authorization and untrusted hosts terminate without creating conse
     const wrong = await request(query({ redirect_uri: "https://evil.example.org/callback" }));
     assert.equal(wrong.status, 400); assert.equal((await wrong.json()).error_description, "Unregistered redirect_uri");
     assert.equal((await request(query(), { "X-Forwarded-Host": "evil.example.org" })).status, 403);
-    for (const extra of [{ state: "" }, { code_challenge_method: "plain" }, { scope: "admin:write" }, { resource: "https://evil.example.org/mcp" }]) {
+    const invalid: Record<string, string>[] = [{ state: "" }, { code_challenge_method: "plain" }, { scope: "admin:write" }, { resource: "https://evil.example.org/mcp" }];
+    for (const extra of invalid) {
       const r = await request(query(extra));
       assert.equal(r.status, 302);
       assert.ok(new URL(r.headers.get("location")!).searchParams.get("error"));
@@ -156,11 +157,15 @@ test("storage deadline settles even when a dependency ignores its abort signal",
     };
     const started = Date.now();
     const timer = setTimeout(() => controller.abort(), 30);
+    let watchdog: ReturnType<typeof setTimeout> | undefined;
     try {
       // Optional deadline signal must bound a non-cooperating PromiseLike too.
-      await assert.rejects(aiDb(() => dependency as any, { signal: controller.signal }), (e: any) => e.code === "connection_storage_unavailable");
+      await assert.rejects(Promise.race([
+        aiDb(() => dependency as any, { signal: controller.signal }),
+        new Promise((_, reject) => { watchdog = setTimeout(() => reject(new Error("storage deadline did not settle")), 500); }),
+      ]), (e: any) => e.code === "connection_storage_unavailable");
       assert.ok(Date.now() - started < 500);
       assert.equal(aborted, true);
-    } finally { clearTimeout(timer); }
+    } finally { clearTimeout(timer); clearTimeout(watchdog); }
   });
 });
