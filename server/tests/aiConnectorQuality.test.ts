@@ -59,9 +59,11 @@ function fixture(lists: any[], opts: { scopes?:string[];pro?:boolean;calendarErr
       const q={
         select:(_fields:string)=>q,
         eq:(key:string,value:string)=>{calls.push({filter:key,value});assert.equal(key,"uid");assert.equal(value,"alice");return q;},
-        maybeSingle:async()=>({lists}),
+        maybeSingle:async()=>({data:{lists},error:null}),
       };
-      return action({from:(table:string)=>{assert.equal(table,"user_watchlists");return q;}} as any);
+      const response = await action({from:(table:string)=>{assert.equal(table,"user_watchlists");return q;}} as any);
+      if (response.error) throw response.error;
+      return response.data;
     },
     calendar:async()=>{calls.push({calendar:true});if(opts.calendarError)throw new AiError("calendar_unavailable",503);return {lastUpdated:Date.now(),items:[event("532540",today),event("500325",today)]};},
   });
