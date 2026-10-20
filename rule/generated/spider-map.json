@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "c8593c583133d287d12fbb24276f054e8fe054df0cdd0dddd6add766cb9ae802",
+  "sourceDigest": "4c609cff30fdb96ee118d9a69c16154a4ed4b5fc6c715998a1bb124b31b8bfce",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -16,6 +16,11 @@
     {
       "path": "eslint.config.mjs",
       "sha256": "19401d83b4bcfbc08fdc003ad77af6a28667ffbdae86258af06a0b8b48c55e18",
+      "importedBy": []
+    },
+    {
+      "path": "firebase-applet-config.json",
+      "sha256": "b259e6ecadd726427194a15673d71624cfc5cba229b12a96763c7069f3440f5f",
       "importedBy": []
     },
     {
@@ -40,7 +45,7 @@
     },
     {
       "path": "package-lock.json",
-      "sha256": "2d7ae8bc660fa82829d8dcc4a79fb878e7cca05f3da3958f0b4cdd1b492e7e45",
+      "sha256": "3ed7c0e163b71c467a5c9faaba90f4b3d3de15cb13b87cb2b30c61db650fc258",
       "importedBy": []
     },
     {
@@ -179,7 +184,7 @@
     },
     {
       "path": "server/ai/http.ts",
-      "sha256": "bf35e22cb668878e8836ed88cca64bc77d514c92de1c41dba72165e54a08c290",
+      "sha256": "d35fa84e86136f915383daa4a50551361386a482a0f010d718a3e1221aece3dd",
       "importedBy": [
         "server.ts",
         "server/api/aiPlugin.ts",
@@ -1734,7 +1739,7 @@
     },
     {
       "path": "src/components/AiPluginPage.tsx",
-      "sha256": "b81f20102e1c2e48ae020e605fff6c4552eee96304eccd899968279210b5b460",
+      "sha256": "92337e00c6c328a0bef390e8876bbb30240d5907ffbefbc3d6c7a6ef7e66a757",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -3524,7 +3529,7 @@
     },
     {
       "path": "src/version.ts",
-      "sha256": "abdeaea3c49b5df1596e7faa74539f6d1ee888baaa753635923219e46379ee5d",
+      "sha256": "974f6173316a7e6ec1e4c4d6b3c8f2ea4c1cb52151d61de531be58f1376f436d",
       "importedBy": [
         "src/components/SettingsTab.tsx",
         "src/lib/sentry.ts"

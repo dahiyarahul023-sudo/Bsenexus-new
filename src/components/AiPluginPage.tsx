@@ -28,12 +28,12 @@ interface Connection {
   expiresAt: string;
 }
 interface Status {
-  plan: string;
-  limits: { daily: number; perMinute: number; writes: number };
-  used: number;
-  connections: Connection[];
-  mcpUrl: string;
-  scopeLabels: Record<string, string>;
+  plan?: string;
+  limits?: { daily: number; perMinute: number; writes: number };
+  used?: number;
+  connections?: Connection[];
+  mcpUrl?: string;
+  scopeLabels?: Record<string, string>;
   activity?: { action: string; at: string; status: string }[];
 }
 interface Consent {
@@ -375,8 +375,8 @@ export const AiPluginPage: React.FC<AiPluginPageProps> = ({
               </div>
               <div className="ai-connect-meter">
                 <strong>
-                  {Math.max(0, status.limits.daily - status.used)}{" "}
-                  <small>/ {status.limits.daily}</small>
+                  {Math.max(0, (status.limits?.daily ?? 0) - (status.used ?? 0))}{" "}
+                  <small>/ {status.limits?.daily ?? 0}</small>
                 </strong>
                 <span>connection requests remaining today</span>
                 <small>
@@ -451,7 +451,7 @@ export const AiPluginPage: React.FC<AiPluginPageProps> = ({
                   <RefreshCw size={16} />
                 </button>
               </div>
-              {status.connections.length ? (
+              {status.connections?.length ? (
                 status.connections.map((c) => (
                   <article
                     key={c.id}
@@ -464,7 +464,7 @@ export const AiPluginPage: React.FC<AiPluginPageProps> = ({
                       </h3>
                       <p>
                         {c.scopes
-                          .map((s) => status.scopeLabels[s] || s)
+                          .map((s) => status.scopeLabels?.[s] || s)
                           .join(" · ")}
                       </p>
                       <small>
