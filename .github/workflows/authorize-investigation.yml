@@ -57,6 +57,16 @@ jobs:
             console.log('PROBE_RESPONSE',JSON.stringify({status:r.status,ms:Date.now()-started,location:location?.replace(/request=.*/, 'request=[redacted]'),body:(await r.text()).replace(/bnx_req_[A-Za-z0-9_-]+/g,'[redacted]')}));
           } finally {server.closeAllConnections();dbServer.closeAllConnections();await Promise.all([new Promise(r=>server.close(r)),new Promise(r=>dbServer.close(r))]);resetSupabaseClient();}
           JS
+      - name: Read-only live response probe (no redirect following)
+        run: |
+          node --input-type=module <<'JS'
+          const q=new URLSearchParams({response_type:'code',client_id:'dd350a93-6056-4f56-b06a-78427104066c',redirect_uri:'https://example.com/mcp-callback',code_challenge:'E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM',code_challenge_method:'S256',state:'codex-diagnostic'});
+          for(const [label,origin,headers] of [['public','https://bsenexus.in',{}],['published-origin','https://bse-studio.ai.studio',{'X-Forwarded-Host':'bsenexus.in','X-Forwarded-Proto':'https'}]]) {
+            const start=Date.now();
+            try { const r=await fetch(origin+'/authorize?'+q,{headers,redirect:'manual',signal:AbortSignal.timeout(8000)});const loc=r.headers.get('location');console.log('LIVE_PROBE',JSON.stringify({label,status:r.status,ms:Date.now()-start,location:loc?loc.split('?')[0]:null,server:r.headers.get('server')}));await r.body?.cancel(); }
+            catch(e){console.log('LIVE_PROBE',JSON.stringify({label,ms:Date.now()-start,error:e.name}));}
+          }
+          JS
       - name: Reproduce authorize regression cases when present
         if: ${{ !cancelled() }}
         run: |
