@@ -23,3 +23,11 @@
 - Related consumers: oauth.ts/AI DAO changed; http.ts (host/Origin/flag guards), policy.ts (strict true/default public origin), tools.ts (same AiError contract and ten-second default), API compatibility routes and consent page (same request binding and URL query) reviewed-and-compatible. Non-AI domain peers reached through server.ts/routes.ts retain their own DAOs and business rules; full application regression checks cover them. No frontend/layout change or schema migration.
 - Domains: ai-connections gains the authorization regression test. The generator must refresh both artifacts after these changes; do not hand-edit generated maps.
 - Actual local checks: unavailable because no usable local execution environment exists. Verification runs on GitHub Actions with synthetic local storage and no production credentials. Live ChatGPT approval/tool invocation, Cloud Run logs and physical-device checks remain pending the authorized AI Studio sync/republish.
+
+## Post-change verification
+
+- Run 39481898514: all six authorize regression tests passed. The healthy router probe completed 303 in 96 ms with an empty, explicitly ended response and relative consent Location. Each stalled storage path returned an OAuth error in about two seconds; both sequential cases took 4.014 seconds in total. A dependency ignoring cancellation settled as a storage error in 34 ms with a 30-ms test deadline.
+- Discovery (root and path resource metadata), DCR public/invalid cases, exact unauthenticated GET/POST MCP error body and WWW-Authenticate challenge passed. Existing trusted-proxy/Origin/security/PKCE/SQL suites run in the full CI job.
+- The same job executed npm run map:generate. Both generated outputs are copied from the generator's exact emitted diff, with strict context/count checks; they were not manually regenerated.
+- Pre-deployment live checks still target the previous hosted code: public 522 in 1.192 s, published origin 303 in 1.664 s. The new source has not been published. Do not report public 522 fixed until post-republish acceptance succeeds.
+- Required host-only compile_applet/lint_applet tools and local terminal are unavailable. Actual npm type/build checks run on GitHub; this limitation does not count as a host-tool pass.

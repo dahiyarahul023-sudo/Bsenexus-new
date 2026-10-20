@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "33da178d2f73ade4196679ba2d23cee7d532af2e447744bde095ad8f5e439a35",
+  "sourceDigest": "e315b81923eaf2a31b3adc817f6f18dc4f4a877ab0833855b50e932b31dab767",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -184,6 +184,7 @@
         "server.ts",
         "server/api/aiPlugin.ts",
         "server/api/routes.ts",
+        "server/tests/aiAuthorize.test.ts",
         "server/tests/aiIngress.test.ts",
         "server/tests/aiPlugin.test.ts"
       ]
@@ -198,7 +199,7 @@
     },
     {
       "path": "server/ai/oauth.ts",
-      "sha256": "3fa55c8cb32516adcf4083b04204a0483f11b115f6af699a58f09a42c319cd5f",
+      "sha256": "4285372d7bf0996cf3fefee0357adf8b0ea7113a04e59add4bd1628f384a7980",
       "importedBy": [
         "server/ai/http.ts",
         "server/tests/aiIngress.test.ts",
@@ -319,11 +320,12 @@
     },
     {
       "path": "server/database/aiConnectionsDao.ts",
-      "sha256": "ed6bc58e8014da87bc13d05352a4175792f84a779e5b4c5ef74154bad342ad87",
+      "sha256": "02c3ad86325910611f037033a0d5f1c2ebf728f5482f90799a84b7e429c463b8",
       "importedBy": [
         "server/ai/http.ts",
         "server/ai/oauth.ts",
-        "server/ai/tools.ts"
+        "server/ai/tools.ts",
+        "server/tests/aiAuthorize.test.ts"
       ]
     },
     {
@@ -579,6 +581,7 @@
         "server/security/accountRateLimiter.ts",
         "server/services/resultsCalendarService.ts",
         "server/services/stockNewsService.ts",
+        "server/tests/aiAuthorize.test.ts",
         "server/tests/aiWatchlistConcurrency.test.ts",
         "server/tests/followupAudit.test.ts"
       ]
@@ -1055,6 +1058,11 @@
     {
       "path": "server/tests/accountProtection.test.ts",
       "sha256": "84085521d72fd0661a75cb6e9ebbf1ad4a6ad081dd4515323069b6a48d54ebf1",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/aiAuthorize.test.ts",
+      "sha256": "de21cfafcef6107ab0bb15ce92b8cda7156112baff6f0df510bf021a13ca7c72",
       "importedBy": []
     },
     {
@@ -5825,6 +5833,24 @@
       "target": "server/security/accountRateLimiter.ts",
       "kind": "dynamic",
       "line": 18
+    },
+    {
+      "source": "server/tests/aiAuthorize.test.ts",
+      "target": "server/ai/http.ts",
+      "kind": "import",
+      "line": 6
+    },
+    {
+      "source": "server/tests/aiAuthorize.test.ts",
+      "target": "server/database/aiConnectionsDao.ts",
+      "kind": "import",
+      "line": 7
+    },
+    {
+      "source": "server/tests/aiAuthorize.test.ts",
+      "target": "server/database/supabase.ts",
+      "kind": "import",
+      "line": 8
     },
     {
       "source": "server/tests/aiConnections.test.ts",
@@ -11401,6 +11427,7 @@
         "server/tests/aiConnections.test.ts",
         "server/tests/aiConnectionsSql.test.ts",
         "server/tests/aiOAuth.test.ts",
+        "server/tests/aiAuthorize.test.ts",
         "server/tests/aiPlugin.test.ts",
         "server/tests/aiWatchlistConcurrency.test.ts",
         "server/tests/aiTelemetry.test.ts",
@@ -14110,6 +14137,22 @@
       ]
     },
     {
+      "file": "server/tests/aiAuthorize.test.ts",
+      "line": 60,
+      "receiver": "app",
+      "method": "USE",
+      "path": "compression()",
+      "middleware": []
+    },
+    {
+      "file": "server/tests/aiAuthorize.test.ts",
+      "line": 60,
+      "receiver": "app",
+      "method": "USE",
+      "path": "express.json()",
+      "middleware": []
+    },
+    {
       "file": "server/tests/aiIngress.test.ts",
       "line": 18,
       "receiver": "app",
@@ -14604,6 +14647,18 @@
       "line": 127,
       "function": "fetch",
       "target": "url"
+    },
+    {
+      "file": "server/tests/aiAuthorize.test.ts",
+      "line": 68,
+      "function": "fetch",
+      "target": "base + path"
+    },
+    {
+      "file": "server/tests/aiAuthorize.test.ts",
+      "line": 73,
+      "function": "fetch",
+      "target": "base + \"/authorize?\" + params"
     },
     {
       "file": "server/tests/aiIngress.test.ts",
@@ -15983,25 +16038,25 @@
     },
     {
       "file": "server/ai/oauth.ts",
-      "line": 104,
+      "line": 105,
       "function": "Array.from",
       "key": "new Set([ \"account:read\", ...(params.scopes?.length ? params.scopes : [\"market:read\"]), ])"
     },
     {
       "file": "server/ai/oauth.ts",
-      "line": 134,
+      "line": 164,
       "function": "db\n        .from",
       "key": "\"ai_connection_secrets\""
     },
     {
       "file": "server/ai/oauth.ts",
-      "line": 237,
+      "line": 267,
       "function": "db\n        .from",
       "key": "\"ai_connection_secrets\""
     },
     {
       "file": "server/ai/oauth.ts",
-      "line": 245,
+      "line": 275,
       "function": "db\n          .from",
       "key": "\"ai_connection_grants\""
     },
@@ -16043,13 +16098,13 @@
     },
     {
       "file": "server/database/aiConnectionsDao.ts",
-      "line": 24,
+      "line": 47,
       "function": "db.rpc",
       "key": "name"
     },
     {
       "file": "server/database/aiConnectionsDao.ts",
-      "line": 49,
+      "line": 72,
       "function": "db\n      .from",
       "key": "\"ai_connection_secrets\""
     },
@@ -18573,6 +18628,46 @@
       "file": "server/tests/accountProtection.test.ts",
       "line": 9,
       "name": "SUPABASE_SERVICE_ROLE_KEY"
+    },
+    {
+      "file": "server/tests/aiAuthorize.test.ts",
+      "line": 33,
+      "name": "<computed>"
+    },
+    {
+      "file": "server/tests/aiAuthorize.test.ts",
+      "line": 53,
+      "name": "SUPABASE_URL"
+    },
+    {
+      "file": "server/tests/aiAuthorize.test.ts",
+      "line": 54,
+      "name": "SUPABASE_SERVICE_ROLE_KEY"
+    },
+    {
+      "file": "server/tests/aiAuthorize.test.ts",
+      "line": 55,
+      "name": "AI_PUBLIC_ORIGIN"
+    },
+    {
+      "file": "server/tests/aiAuthorize.test.ts",
+      "line": 56,
+      "name": "AI_CONNECTIONS_ENABLED"
+    },
+    {
+      "file": "server/tests/aiAuthorize.test.ts",
+      "line": 57,
+      "name": "NODE_ENV"
+    },
+    {
+      "file": "server/tests/aiAuthorize.test.ts",
+      "line": 84,
+      "name": "<computed>"
+    },
+    {
+      "file": "server/tests/aiAuthorize.test.ts",
+      "line": 84,
+      "name": "<computed>"
     },
     {
       "file": "server/tests/aiGateway.test.ts",
