@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "f36e1beb88ff21a35749c5ac45d7acbf809b18fdcb7b408a3b7873825310c4d6",
+  "sourceDigest": "af70551f96fd3005cea712c76afa20edfdc8d5ca18e58403cd47bae9a9cf632f",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -1445,7 +1445,7 @@
     },
     {
       "path": "server/tests/spaRouteParity.test.ts",
-      "sha256": "57a4828613a0e9608ed6bebbaf78d1dd0eadeb939168325b8c301ada635542bf",
+      "sha256": "5fbae6c562f717cee96284ab4ee53f1eb1f49d06e00dcf8777bd5693d738ca4e",
       "importedBy": []
     },
     {
@@ -6958,7 +6958,7 @@
       "source": "server/tests/spaRouteParity.test.ts",
       "target": "server/utils/spaRoutes.ts",
       "kind": "import",
-      "line": 4
+      "line": 3
     },
     {
       "source": "server/tests/startupRecovery.test.ts",
