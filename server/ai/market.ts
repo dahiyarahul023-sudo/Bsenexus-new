@@ -11,6 +11,7 @@ import {
   getResultsCalendarSnapshot,
 } from "../services/resultsCalendarService.js";
 import { AiError } from "./policy.js";
+import { parseBseDate } from "../utils/helpers.js";
 import { selectCalendarMeetings, type CalendarReadArgs } from "./calendarRead.js";
 const clean = (v: any, max = 4000) =>
   String(v || "")
@@ -71,21 +72,32 @@ export function officialPdf(value: any): string {
   } catch {}
   return "";
 }
-export function formatFiling(ann: any) {
+export function filingTimestamp(ann: any): number {
+  const numeric = Number(ann.bseTimestamp || ann.submissionTimestamp);
+  if (Number.isFinite(numeric) && numeric > 0) return numeric;
+  return parseBseDate(ann.dt_tm || ann.bseTime || ann.declarationDate || "") || 0;
+}
+const filingId = (ann: any) => clean(ann.newsId || ann.newsid || ann.news_id || ann.id, 100);
+export type ReadDetail = "brief" | "full";
+function summaryText(value: any, detail: ReadDetail) {
+  const max = detail === "full" ? 4000 : 600;
+  const valueText = clean(value, max + 1);
+  return { summary: valueText.slice(0, max), summaryTruncated: valueText.length > max };
+}
+export function formatFiling(ann: any, detail: ReadDetail = "brief") {
   const id = clean(ann.newsId || ann.newsid || ann.news_id || ann.id, 100),
     scrip = String(ann.scrip_cd || ann.scripCode || ann.SCRIP_CD || "");
   const company = companyCandidates(scrip)[0];
   const symbol = company?.symbol || clean(ann.symbol, 30);
-  const timestamp =
-    ann.bseTimestamp || Date.parse(ann.dt_tm || ann.bseTime || "");
+  const timestamp = filingTimestamp(ann);
   return {
     id,
     symbol,
     scripCode: scrip,
     companyName:
       company?.name || clean(ann.companyName || ann.company_name, 200),
-    headline: clean(ann.subject || ann.NEWSSUB),
-    summary: clean(ann.aiSummaryEn || ann.aiSummary || ann.more || ann.details),
+    headline: clean(ann.subject || ann.NEWSSUB, 1000),
+    ...summaryText(ann.aiSummaryEn || ann.aiSummary || ann.more || ann.details, detail),
     summarySource:
       ann.aiSummaryEn || ann.aiSummary ? "stored_summary" : "filing_text",
     category: clean(
@@ -97,73 +109,71 @@ export function formatFiling(ann: any) {
         ? new Date(Number(timestamp)).toISOString()
         : "",
     pdfUrl: officialPdf(ann.pdfLink || ann.attachmentname),
+    sourceKind: officialPdf(ann.pdfLink || ann.attachmentname) ? "exchange_filing" : "stored_filing_record",
     nexusUrl: id
       ? `https://bsenexus.in/filing/${encodeURIComponent(symbol || scrip)}/${encodeURIComponent(id)}`
       : "",
   };
 }
 export async function filingsData(args: {
-  company?: string;
-  category?: string;
-  limit?: number;
-  before?: string;
-}) {
+  company?: string; category?: string; limit?: number; before?: string;
+  beforeId?: string; after?: string; detail?: ReadDetail;
+}, sources: {
+  recent?: typeof getRecentAnnouncements; company?: typeof getAnnouncementsForScrip;
+} = {}) {
   const entry = args.company ? exactCompany(args.company) : null;
   const raw = entry
-    ? await getAnnouncementsForScrip(entry.scripCode, 400)
-    : await getRecentAnnouncements(500);
+    ? await (sources.company || getAnnouncementsForScrip)(entry.scripCode, 400)
+    : await (sources.recent || getRecentAnnouncements)(500);
   const before = args.before ? Date.parse(args.before) : Infinity;
-  const filtered = raw.filter(
-    (ann) =>
-      (!entry ||
-        String(ann.scrip_cd || ann.scripCode || ann.SCRIP_CD || "") ===
-          entry.scripCode) &&
-      (!args.category ||
-        `${ann.category || ""} ${ann.subject || ""}`
-          .toLowerCase()
-          .includes(args.category.toLowerCase())) &&
-      (before === Infinity ||
-        Number(ann.bseTimestamp || Date.parse(ann.dt_tm || "")) < before),
-  );
-  const items = filtered.slice(0, args.limit || 10).map(formatFiling);
+  const after = args.after ? Date.parse(args.after) : -Infinity;
+  const filtered = raw.filter(ann => {
+    const timestamp = filingTimestamp(ann);
+    return (!entry || String(ann.scrip_cd || ann.scripCode || ann.SCRIP_CD || "") === entry.scripCode) &&
+      (!args.category || `${ann.category || ""} ${ann.subject || ""}`.toLowerCase().includes(args.category.toLowerCase())) &&
+      (after === -Infinity || timestamp >= after) &&
+      (before === Infinity || timestamp < before || (timestamp === before && Boolean(args.beforeId) && filingId(ann).localeCompare(args.beforeId!) > 0));
+  }).sort((a, b) => filingTimestamp(b) - filingTimestamp(a) || filingId(a).localeCompare(filingId(b)));
+  const items = filtered.slice(0, args.limit || 10).map(ann => formatFiling(ann, args.detail));
+  const hasMore = filtered.length > items.length;
   return {
-    success: true,
-    count: items.length,
-    filings: items,
-    coverage: {
-      kind: entry ? "stored_company_filings" : "recent_market_window",
-      scanned: raw.length,
-      scanLimit: entry ? 400 : 500,
-      completeArchive: false,
-    },
-    hasMore: filtered.length > items.length,
+    success: true, count: items.length, filings: items,
+    timezone: "Asia/Kolkata", generatedAt: new Date().toISOString(),
+    newestPublishedAt: filtered.length && filingTimestamp(filtered[0]) ? new Date(filingTimestamp(filtered[0])).toISOString() : null,
+    coverage: { kind: entry ? "stored_company_filings" : "recent_market_window", scanned: raw.length, scanLimit: entry ? 400 : 500, completeArchive: false },
+    hasMore,
     nextBefore: items.at(-1)?.publishedAt || null,
+    nextBeforeId: hasMore ? items.at(-1)?.id || null : null,
   };
 }
-export async function resultsData(query: string) {
+export async function resultsData(query: string, options: { limit?: number; offset?: number; detail?: ReadDetail } = {},
+  readHistory: typeof getStockResultsHistory = getStockResultsHistory) {
   const e = exactCompany(query);
-  const history = await getStockResultsHistory(e.symbol, e.scripCode);
-  const results = history.slice(0, 8).map((h) => ({
-    quarterKey: h.quarterKey || "",
-    period: h.periodOrMeeting || h.quarterKey || "",
+  const history = await readHistory(e.symbol, e.scripCode);
+  // Meeting dates, including a past meeting inferred as declared, are not
+  // original result filings. Require both an outcome and exchange evidence.
+  const declared = history.filter(h => h.isOutcome === true && Boolean(officialPdf(h.pdfLink)))
+    .sort((a, b) => filingTimestamp(b) - filingTimestamp(a) || a.id.localeCompare(b.id));
+  const offset = options.offset || 0, limit = options.limit || 8;
+  const results = declared.slice(offset, offset + limit).map(h => ({
+    quarterKey: h.quarterKey || "", period: h.periodOrMeeting || h.quarterKey || "",
     meetingDate: h.meetingDate || h.boardMeetingDate || "",
     declarationDate: h.declarationDate || "",
-    headline: clean(h.subject),
-    summary: clean(h.aiSummary || h.details),
+    publishedAt: filingTimestamp(h) ? new Date(filingTimestamp(h)).toISOString() : "",
+    headline: clean(h.subject, 1000),
+    ...summaryText(h.aiSummary || h.details, options.detail || "brief"),
+    summarySource: h.aiSummary ? "stored_summary" : "filing_text",
     pdfUrl: officialPdf(h.pdfLink),
-    nexusResultsUrl: h.quarterKey
-      ? `https://bsenexus.in/results/${encodeURIComponent(e.symbol)}/${encodeURIComponent(h.quarterKey)}`
-      : "",
+    nexusResultsUrl: h.quarterKey ? `https://bsenexus.in/results/${encodeURIComponent(e.symbol)}/${encodeURIComponent(h.quarterKey)}` : "",
   }));
   return {
-    success: true,
-    symbol: e.symbol,
-    scripCode: e.scripCode,
-    companyName: e.name,
-    resultsCount: results.length,
-    results,
-    coverage:
-      "Available results filings; financial metrics are not independently validated by this endpoint.",
+    success: true, symbol: e.symbol, scripCode: e.scripCode, companyName: e.name,
+    resultsCount: results.length, results, totalResults: declared.length,
+    nextOffset: offset + limit < declared.length ? offset + limit : null,
+    declaredOnly: true, excludedNoticesOrUnverified: history.length - declared.length,
+    coverageDetails: { completeArchive: false, source: "available_result_history", originalExchangePdfRequired: true },
+    generatedAt: new Date().toISOString(), timezone: "Asia/Kolkata",
+    coverage: "Available source-backed results filings; financial metrics and generated summaries require original-document verification.",
   };
 }
 export async function meetingsData(query?: string, daysAhead = 14, options: CalendarReadArgs = {}) {

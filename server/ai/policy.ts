@@ -122,13 +122,16 @@ export const TOOL_SPECS = {
     pro: false,
     write: false,
     description:
-      "Read bounded company filings. Resolve ambiguous company names first. Empty results describe available coverage, not proof that no filing exists.",
+      "Read newest-first company filings with source links. Brief summaries by default; detail=full for more text. Filter published time with after/before, and reuse nextBefore plus nextBeforeId for paging. Empty results describe coverage, not proof of no filing.",
     schema: z
       .object({
         company: company.optional(),
         category: z.string().max(50).optional(),
         limit: z.number().int().min(1).max(25).default(10),
-        before: z.string().datetime().optional(),
+        before: z.string().datetime().optional().describe("Exclusive published timestamp; send nextBefore with nextBeforeId to continue a page."),
+        beforeId: z.string().min(1).max(100).optional(),
+        after: z.string().datetime().optional().describe("Inclusive published timestamp. Convert the requested day boundary from Asia/Kolkata."),
+        detail: z.enum(["brief", "full"]).default("brief"),
       })
       .strict(),
   },
@@ -137,8 +140,8 @@ export const TOOL_SPECS = {
     pro: false,
     write: false,
     description:
-      "Use for already declared quarterly results and available summaries for one company. For future result dates use meetings_read or watchlist_results_upcoming. Include source links; metrics are not independently validated.",
-    schema: z.object({ company }).strict(),
+      "Use for source-backed declared quarterly result filings for one company. For the latest result set limit=1; brief summaries by default, detail=full when needed. For future result dates use meetings_read or watchlist_results_upcoming. Include source links; metrics are not independently validated.",
+    schema: z.object({ company, limit: z.number().int().min(1).max(8).default(8), offset: z.number().int().min(0).max(200).default(0), detail: z.enum(["brief", "full"]).default("brief") }).strict(),
   },
   meetings_read: {
     scope: "market:read",
@@ -357,6 +360,11 @@ export function parseTool(name: string, args: unknown) {
         .join("; ")
         .slice(0, 400),
     );
+  if (name === "filings_search" && ((parsed.data as any).beforeId && !(parsed.data as any).before))
+    throw new AiError("invalid_arguments", 400, "beforeId requires before.");
+  if (name === "filings_search" && (parsed.data as any).after && (parsed.data as any).before &&
+      Date.parse((parsed.data as any).after) >= Date.parse((parsed.data as any).before))
+    throw new AiError("invalid_arguments", 400, "after must precede before.");
   if (
     name === "preferences_update" &&
     !("summaryLanguage" in parsed.data) &&

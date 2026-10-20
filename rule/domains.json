@@ -231,7 +231,8 @@
         "server/services/marketGuidesService.ts",
         "server/services/seoPrerender.ts",
         "src/shared/scripMatching.ts",
-        "server/utils/spaRoutes.ts"
+        "server/utils/spaRoutes.ts",
+        "server/services/publicCalendar.ts"
       ],
       "tests": [
         "server/tests/routeResolution.test.ts",
@@ -241,7 +242,9 @@
         "server/tests/sevenFixes.test.ts",
         "server/tests/seoPrehydration.test.ts",
         "server/tests/spaRouteParity.test.ts",
-        "scripts/verify-oauth-routing.mjs"
+        "scripts/verify-oauth-routing.mjs",
+        "server/tests/aiEvidence.test.ts",
+        "scripts/verify-public-calendar.mjs"
       ],
       "reason": "API responses, SSR routes, browser deep links, SEO and service-worker caching must remain compatible. User-specific responses must never enter shared public caches."
     },
@@ -298,7 +301,8 @@
         "src/components/HomeMarketNews.tsx",
         "src/utils/homeNews.ts",
         "src/shared/scripMatching.ts",
-        "server/ai/calendarRead.ts"
+        "server/ai/calendarRead.ts",
+        "server/services/publicCalendar.ts"
       ],
       "tests": [
         "server/tests/core.test.ts",
@@ -306,7 +310,9 @@
         "server/tests/followupAudit.test.ts",
         "server/tests/homeNews.test.ts",
         "server/tests/sevenFixes.test.ts",
-        "server/tests/aiConnectorQuality.test.ts"
+        "server/tests/aiConnectorQuality.test.ts",
+        "server/tests/aiEvidence.test.ts",
+        "scripts/verify-public-calendar.mjs"
       ],
       "reason": "Upstream timestamps, stock identity and market sessions affect cached API results, screen freshness and alert timing. Public market data availability does not establish trading-data accuracy."
     },
@@ -330,7 +336,8 @@
         "public/llms.txt",
         "public/llms-full.txt",
         "src/content/keywordGuides.ts",
-        "src/shared/scripMatching.ts"
+        "src/shared/scripMatching.ts",
+        "server/services/publicCalendar.ts"
       ],
       "tests": [
         "server/tests/faqBank.test.ts",
@@ -338,7 +345,9 @@
         "server/tests/routeResolution.test.ts",
         "server/tests/keywordGuides.test.ts",
         "server/tests/sevenFixes.test.ts",
-        "server/tests/seoPrehydration.test.ts"
+        "server/tests/seoPrehydration.test.ts",
+        "server/tests/aiEvidence.test.ts",
+        "scripts/verify-public-calendar.mjs"
       ],
       "reason": "Public copy and crawler metadata must agree with actual API/product contracts. Admin SEO mutations inherit mount guards; generated summaries are not evidence of source accuracy."
     },
@@ -657,13 +666,16 @@
         "server/services/marketGuidesService.ts",
         "server/services/guideIndexNow.ts",
         "src/shared/scripMatching.ts",
-        "src/config/topCompanies.ts"
+        "src/config/topCompanies.ts",
+        "server/services/publicCalendar.ts"
       ],
       "tests": [
         "server/tests/searchEngineDiscovery.test.ts",
         "server/tests/routeResolution.test.ts",
         "server/tests/keywordGuides.test.ts",
-        "server/tests/sevenFixes.test.ts"
+        "server/tests/sevenFixes.test.ts",
+        "server/tests/aiEvidence.test.ts",
+        "scripts/verify-public-calendar.mjs"
       ],
       "reason": "Public links, pricing claims, server-rendered content and client views must agree. Lazy navigation, responsive composition, keyboard operation and motion require browser evidence beyond server discovery tests."
     },
@@ -821,7 +833,8 @@
         "src/shared/aiTelemetry.ts",
         "scripts/verify-ai-connections-staging.sql",
         "server/utils/spaRoutes.ts",
-        "server/ai/calendarRead.ts"
+        "server/ai/calendarRead.ts",
+        "server/services/publicCalendar.ts"
       ],
       "tests": [
         "server/tests/aiConnections.test.ts",
@@ -834,7 +847,9 @@
         "server/tests/aiIngress.test.ts",
         "server/tests/spaRouteParity.test.ts",
         "scripts/verify-oauth-routing.mjs",
-        "server/tests/aiConnectorQuality.test.ts"
+        "server/tests/aiConnectorQuality.test.ts",
+        "server/tests/aiEvidence.test.ts",
+        "scripts/verify-public-calendar.mjs"
       ],
       "reason": "Website sign-in approves a public PKCE client with explicit permissions. External opaque credentials never accept website cookies or client-supplied owners/roles. Live durable entitlement and shared per-account quotas precede bounded tools; writes recheck grant and plan in a transaction with an idempotent receipt. Website watchlists use request-local revision CAS while enabled, and reads do not restore stale backups. Connection/consent responses bypass browser, CDN and SW caches. Profile/watchlist/notes refresh on return; account changes suppress late responses. Root OAuth endpoints, MCP and the four compatibility GET routes share the same authorization owner. The disabled-by-default flag is required until an approved service-only schema rollout and live client/browser checks; source tests do not certify deployment or marketplace publication. Connection discovery uses the configured Express trusted-proxy hostname while all issuer/resource URLs remain canonical. Exact browser-Origin checks cover MCP requests and preflights. Settings owns the sole visible entry; client-specific web setup distinguishes public URL copying, approved grants and completed client setup. Same-account refresh retains content and account/request changes hide obsolete responses."
     }

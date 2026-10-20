@@ -44,6 +44,8 @@ import { getBseBlockBackoffLevel } from "./server/services/bse.js";
 import { getAllFeedback } from "./server/database/feedbackDao.js";
 import { prerenderFilingHtml, prerenderCompanyHtml, buildSitemapIndexXml, cleanCanonicalUrl, buildAnnouncementsFeedCards, buildAnnouncementsCollectionJsonLd, PRELOADER_CARD_RE } from "./server/services/seoPrerender.js";
 import { mountAiIntegration } from './server/ai/http.js';
+import { readCachedResultsCalendar } from './server/services/resultsCalendarService.js';
+import { renderPublicCalendarShell, publicCalendarCacheControl } from './server/services/publicCalendar.js';
 import { SPA_PATHS, normalizeSpaPath } from './server/utils/spaRoutes.js';
 import { getAiPluginManifest } from "./server/api/aiPlugin.js";
 
@@ -6776,7 +6778,7 @@ function getSpaRouteCacheControl(reqPath: string): string {
   }
   if (p === '/results-calendar') {
     // 4. /results-calendar
-    return 'public, max-age=300, s-maxage=1800, stale-while-revalidate=1800';
+    return publicCalendarCacheControl();
   }
   if (p.startsWith('/company/') || p.startsWith('/stock/')) {
     // 2. /company/:symbol
@@ -6825,7 +6827,8 @@ async function startServer() {
       try {
         const rawIndexHtml = fs.readFileSync(path.join(process.cwd(), "index.html"), "utf-8");
         const transformedHtml = await vite.transformIndexHtml(req.originalUrl, rawIndexHtml);
-        const finalHtml = injectTabSeoMetadata(transformedHtml, tab);
+        let finalHtml = injectTabSeoMetadata(transformedHtml, routePath === "/results-calendar" ? "results-calendar" : tab);
+        if (routePath === "/results-calendar") finalHtml = renderPublicCalendarShell(finalHtml, readCachedResultsCalendar());
         res.setHeader("Content-Type", "text/html; charset=utf-8");
         res.setHeader("Cache-Control", getSpaRouteCacheControl(req.path));
         if (tab === 'settings' || tab === 'admin' || tab === 'account') {
@@ -6964,6 +6967,14 @@ async function startServer() {
       // If the path is not a valid SPA route, return a true 404 instead of silent homepage fallback!
       if (!VALID_SPA_ROUTES.has(routePath)) {
         return res.status(404).setHeader('Content-Type', 'text/html; charset=utf-8').send(renderGeneral404Page(req.path));
+      }
+
+      // This dynamic public document never enters the static tabHtmlCache.
+      // The snapshot is synchronous/cache-only: no fetch, account read or wait.
+      if (routePath === "/results-calendar") {
+        const html = renderPublicCalendarShell(injectTabSeoMetadata(getIndexHtml(), "results-calendar"), readCachedResultsCalendar());
+        res.setHeader("Cache-Control", publicCalendarCacheControl());
+        return res.type("html").send(html);
       }
 
       let tabParam = routePath === "/settings" ? "settings" : routePath === "/live" ? "live" : (typeof req.query.tab === "string" ? req.query.tab.trim().toLowerCase() : "");

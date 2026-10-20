@@ -127,7 +127,7 @@ export function createAiToolRunner(
           found: entries.length === 1,
           ambiguous: entries.length > 1,
           ...(entries.length === 1
-            ? { company: entries[0] }
+            ? { company: { symbol: entries[0].symbol, scripCode: entries[0].scripCode, name: entries[0].name } }
             : {
                 candidates: entries.map((e) => ({
                   symbol: e.symbol,
@@ -138,7 +138,7 @@ export function createAiToolRunner(
         };
       }
       if (name === "filings_search") return filingsData(args);
-      if (name === "results_read") return resultsData(args.company);
+      if (name === "results_read") return resultsData(args.company, args);
       if (name === "meetings_read")
         return meetingsData(args.company, args.daysAhead, args);
       if (name === "watchlist_results_upcoming") {

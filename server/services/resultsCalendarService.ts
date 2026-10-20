@@ -667,6 +667,14 @@ export function invalidateEnrichedCalendarCache() {
   enrichedCache = null;
 }
 
+// Fast public-document path: never sync, fetch, query accounts or await a
+// dependency. Use the existing cache and report its actual age/coverage.
+export function readCachedResultsCalendar() {
+  const items = enrichedCache && Date.now() - enrichedCache.ts < 45000
+    ? enrichedCache.items : cachedCalendar;
+  return { items: [...items], lastUpdated: lastCalendarFetchTime };
+}
+
 // Public calendar facts only. Account visibility remains in the caller;
 // website callers keep their original scope/filter semantics below.
 export async function getResultsCalendarSnapshot() {
