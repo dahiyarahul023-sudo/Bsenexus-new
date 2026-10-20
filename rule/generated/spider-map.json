@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "63cbc25c107325b6199039b0f8011c5829be53b85ec43e145b20b1b1313fb096",
+  "sourceDigest": "94649d9d46cc6563fefda4ea8ce9c99178bea6f3d94a761e64a5ead512e5438f",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -179,7 +179,7 @@
     },
     {
       "path": "server/ai/http.ts",
-      "sha256": "dfacc21b1d8eab90b8470607fe6c7c7e050010d16bf6edeb455a366bb5e9e01c",
+      "sha256": "5703979754cfb400e03500d85d9a1ea864b62c5b681a57afc9fd921f38c49bb0",
       "importedBy": [
         "server.ts",
         "server/api/aiPlugin.ts",
@@ -1074,7 +1074,7 @@
     },
     {
       "path": "server/tests/aiIngress.test.ts",
-      "sha256": "a9b9c7651380f94045cdfba646fa74b14fef3f7f12628a8e00c336e21eab5108",
+      "sha256": "aaa871dc49f0bad13ceadee614f650f2b59efee161f51d938c41e3bd155a427a",
       "importedBy": []
     },
     {
@@ -12014,7 +12014,7 @@
     },
     {
       "file": "server/ai/http.ts",
-      "line": 329,
+      "line": 354,
       "receiver": "app",
       "method": "USE",
       "path": "rootPaths",
@@ -12025,7 +12025,7 @@
     },
     {
       "file": "server/ai/http.ts",
-      "line": 346,
+      "line": 371,
       "receiver": "app",
       "method": "USE",
       "path": "[\"/authorize\", \"/token\", \"/register\", \"/revoke\", \"/mcp\"]",
@@ -12035,7 +12035,7 @@
     },
     {
       "file": "server/ai/http.ts",
-      "line": 361,
+      "line": 386,
       "receiver": "app",
       "method": "GET",
       "path": "/.well-known/oauth-authorization-server",
@@ -12045,7 +12045,7 @@
     },
     {
       "file": "server/ai/http.ts",
-      "line": 374,
+      "line": 399,
       "receiver": "app",
       "method": "GET",
       "path": "/.well-known/oauth-protected-resource",
@@ -12055,7 +12055,7 @@
     },
     {
       "file": "server/ai/http.ts",
-      "line": 383,
+      "line": 408,
       "receiver": "app",
       "method": "USE",
       "path": "mcpAuthRouter({ provider: aiOAuthProvider, issuerUrl: new URL(publicOrigin()), resourceServerUrl: new URL(resourceUrl()), scopesSupported: [...SCOPES], serviceDocumentationUrl: new URL(publicOrigin() + \"/plugin\"), resourceName: \"Bsenexus\", ",
@@ -12063,7 +12063,7 @@
     },
     {
       "file": "server/ai/http.ts",
-      "line": 399,
+      "line": 424,
       "receiver": "app",
       "method": "ALL",
       "path": "/mcp",
@@ -15935,37 +15935,37 @@
     },
     {
       "file": "server/ai/http.ts",
-      "line": 141,
+      "line": 166,
       "function": "db\n        .from",
       "key": "\"ai_connection_grants\""
     },
     {
       "file": "server/ai/http.ts",
-      "line": 159,
+      "line": 184,
       "function": "db\n        .from",
       "key": "\"ai_connection_usage\""
     },
     {
       "file": "server/ai/http.ts",
-      "line": 167,
+      "line": 192,
       "function": "db\n        .from",
       "key": "\"ai_connection_operations\""
     },
     {
       "file": "server/ai/http.ts",
-      "line": 210,
+      "line": 235,
       "function": "db\n        .from",
       "key": "\"ai_connection_requests\""
     },
     {
       "file": "server/ai/http.ts",
-      "line": 244,
+      "line": 269,
       "function": "db\n          .from",
       "key": "\"ai_connection_requests\""
     },
     {
       "file": "server/ai/http.ts",
-      "line": 281,
+      "line": 306,
       "function": "db\n        .from",
       "key": "\"ai_connection_grants\""
     },
@@ -17836,12 +17836,12 @@
     },
     {
       "file": "server/ai/http.ts",
-      "line": 301,
+      "line": 326,
       "name": "AI_ALLOWED_ORIGINS"
     },
     {
       "file": "server/ai/http.ts",
-      "line": 337,
+      "line": 362,
       "name": "NODE_ENV"
     },
     {
@@ -18666,12 +18666,12 @@
     },
     {
       "file": "server/tests/aiIngress.test.ts",
-      "line": 158,
+      "line": 163,
       "name": "AI_CONNECTIONS_ENABLED"
     },
     {
       "file": "server/tests/aiIngress.test.ts",
-      "line": 159,
+      "line": 164,
       "name": "AI_CONNECTIONS_ENABLED"
     },
     {

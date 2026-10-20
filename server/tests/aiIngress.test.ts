@@ -152,6 +152,11 @@ test("a remote SDK client initializes and discovers scoped tools after bearer au
     assert.ok(tools.some((tool) => tool.name === "watchlist_create"));
     assert.ok(!tools.some((tool) => /admin|payments|execute_sql/.test(tool.name)));
     assert.ok(tools.every((tool) => tool.inputSchema.type === "object"));
+    const profile = tools.find((tool) => tool.name === "get_profile")!;
+    assert.equal(profile.outputSchema?.type, "object");
+    assert.deepEqual(profile.outputSchema?.required, ["id", "name"]);
+    const denied = await client.callTool({ name: "filings_search", arguments: { unexpected: "not permitted" } });
+    assert.equal(denied.isError, true, "registration must retain runtime input validation");
   } finally {
     await client.close();
     aiOAuthProvider.verifyAccessToken = original;
