@@ -1,0 +1,710 @@
+import { HomeMarketNews } from './HomeMarketNews';
+import { ImpactRadar } from './ImpactRadar';
+import { HomeSkeleton } from './ui/PageSkeleton';
+import { StoryCarouselBar } from './story/StoryCarouselBar';
+import { TodayMarketStoryModal } from './TodayMarketStoryModal';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Plus, 
+  Check, 
+  CheckCircle2,
+  CalendarDays, 
+  FileText, 
+  Newspaper, 
+  Bookmark, 
+  ChevronRight, 
+  Search, 
+  X, 
+  ExternalLink,
+  Sparkles,
+  ArrowRight
+} from 'lucide-react';
+import { customFetch } from '../api';
+import { activeWatchlistIdentities, matchesWatchlistIdentity } from '../shared/watchlistIdentity';
+import { useAuth } from '../context/AuthContext';
+import { useIntelModal } from '../context/IntelModalContext';
+import { formatFilingRelativeTime, formatCleanTime, formatDateOnly } from '../utils/timeFormat';
+import { cleanBseSubject } from '../utils/cleanBseSubject';
+import { getSafePdfUrl } from '../utils/pdfHelper';
+import { parseMeetingDateTile } from '../utils/calendarDateTile';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
+import { useFeedDensity } from '../hooks/useFeedDensity';
+import { HeliosPill, heliosCard } from './ui/helios';
+import { springSnappy, containerStaggerVariants, itemFadeUpVariants, buttonTap } from '../utils/motionTokens';
+import { ActionButton } from './ui/ActionButton';
+import { CommonQuestionsFAQ } from './ui/CommonQuestionsFAQ';
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+const STARTER_STOCKS = [
+  { symbol: 'TATAMOTORS', scripCode: '500570', name: 'Tata Motors Ltd' },
+  { symbol: 'RELIANCE', scripCode: '500325', name: 'Reliance Industries' },
+  { symbol: 'INFY', scripCode: '500209', name: 'Infosys Ltd' },
+  { symbol: 'HDFCBANK', scripCode: '500180', name: 'HDFC Bank Ltd' },
+  { symbol: 'TCS', scripCode: '532540', name: 'Tata Consultancy Services' },
+  { symbol: 'ITC', scripCode: '500875', name: 'ITC Ltd' },
+  { symbol: 'LT', scripCode: '500510', name: 'Larsen & Toubro' },
+  { symbol: 'BHARTIARTL', scripCode: '532454', name: 'Bharti Airtel' },
+];
+
+interface HomeForYouProps {
+  onNavigate: (tabId: string) => void;
+  isActive?: boolean;
+}
+
+export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
+  // Shared feed density (Settings screen) — visibly resizes home cards.
+  const [density] = useFeedDensity();
+  const homeCardPad = density === 'comfortable' ? 'p-5' : density === 'dense' ? 'p-3' : 'p-3.5';
+  const homeGridGap = density === 'comfortable' ? 'gap-3.5' : density === 'dense' ? 'gap-2' : 'gap-2.5';
+  const { user, profile, setIsAuthModalOpen } = useAuth();
+  const { openIntelModal } = useIntelModal();
+
+  const [watchlists, setWatchlists] = useState<any[]>([]);
+  const [homeRefresh, setHomeRefresh] = useState(0);
+  const [watchlistStatus, setWatchlistStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [watchlistSymbols, setWatchlistSymbols] = useState<Set<string>>(new Set());
+  const [upcomingResults, setUpcomingResults] = useState<any[]>([]);
+  const [allAnnouncements, setAllAnnouncements] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [hasLoaded, setHasLoaded] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
+  const [modalSearch, setModalSearch] = useState<string>('');
+  const [addingStock, setAddingStock] = useState<string | null>(null);
+
+  // Detail sheets
+  const [selectedFiling, setSelectedFiling] = useState<any | null>(null);
+  const [selectedResult, setSelectedResult] = useState<any | null>(null);
+
+  // Story modal state
+  const [storyModalOpen, setStoryModalOpen] = useState<boolean>(false);
+  const [selectedStoryChapter, setSelectedStoryChapter] = useState<string | undefined>(undefined);
+
+  // Prevent background scroll chaining when any modal or sheet is open
+  useBodyScrollLock(Boolean(isAddModalOpen || selectedFiling || selectedResult));
+
+  const identity = user?.uid || profile?.uid || 'guest';
+  const loadedIdentity = useRef(identity);
+  useEffect(() => {
+    const refresh = (event: Event) => { if (isActive && (event as CustomEvent).detail?.tab === 'home') setHomeRefresh(v => v + 1); };
+    const changed = () => { if (isActive) setHomeRefresh(v => v + 1); };
+    window.addEventListener('bse_nav_tab_refresh', refresh);
+    window.addEventListener('watchlists-changed', changed);
+    return () => { window.removeEventListener('bse_nav_tab_refresh', refresh); window.removeEventListener('watchlists-changed', changed); };
+  }, [isActive]);
+  useEffect(() => {
+    if (!isActive) return;
+    const controller = new AbortController();
+    const signal = controller.signal;
+    if (loadedIdentity.current !== identity) {
+      loadedIdentity.current = identity;
+      setWatchlistStatus('loading'); setWatchlists([]); setWatchlistSymbols(new Set()); setUpcomingResults([]); setAllAnnouncements([]); setHasLoaded(false);
+    }
+    const fetchHomeData = async () => {
+      try {
+        setLoading(true); setWatchlistStatus('loading');
+        const [wlRes, calRes] = await Promise.all([
+          (user || profile) ? customFetch('/api/watchlists', { signal }).catch(() => null) : Promise.resolve(null),
+          customFetch('/api/results-calendar?filter=upcoming&limit=8', { signal }).catch(() => null),
+        ]);
+
+        if (signal.aborted) return;
+        const syms = new Set<string>();
+        if (wlRes && wlRes.ok) {
+          const wlData = await wlRes.json();
+          if (signal.aborted) return;
+          if (!Array.isArray(wlData)) throw new Error('Invalid watchlist response');
+          const list = wlData;
+          setWatchlists(list); setWatchlistStatus('ready');
+          activeWatchlistIdentities(list).forEach(stock => { syms.add(stock.symbol); if (stock.scripCode) syms.add(stock.scripCode); });
+        }
+        if (!wlRes || !wlRes.ok) setWatchlistStatus((user || profile) ? 'error' : 'ready');
+        setWatchlistSymbols(syms);
+
+        if (calRes && calRes.ok) {
+          const calData = await calRes.json();
+          if (signal.aborted) return;
+          const items = calData.items || [];
+          // Keep meetings scheduled in the next 7 days
+          const weekUpcoming = items.filter((i: any) => {
+            if (i.daysLeft !== undefined) return i.daysLeft >= 0 && i.daysLeft <= 7;
+            return !i.isDeclared;
+          });
+          setUpcomingResults(weekUpcoming.slice(0, 4));
+        }
+
+        const filRes = syms.size ? await customFetch(`/api/announcements?limit=100&symbols=${encodeURIComponent([...syms].join(','))}`, {signal}).catch(() => null) : null;
+        if (signal.aborted) return;
+        if (filRes && filRes.ok) {
+          const filData = await filRes.json();
+          if (signal.aborted) return;
+          if (Array.isArray(filData)) {
+            setAllAnnouncements(filData);
+          }
+        }
+
+      } catch (e) {
+        if (!signal.aborted) setWatchlistStatus('error');
+        console.warn("Error loading Home For You data:", e);
+      } finally {
+        if (!signal.aborted) { setLoading(false); setHasLoaded(true); }
+      }
+    };
+
+    void fetchHomeData();
+    return () => controller.abort();
+  }, [identity, isActive, homeRefresh]);
+
+  const handleAddStock = async (symbol: string, scripCode?: string, name?: string) => {
+    if (!user && !profile) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+
+    const upperSym = symbol.trim().toUpperCase();
+    if (!upperSym) return;
+
+    setAddingStock(upperSym);
+    try {
+      let targetList = watchlists.find(w => w.is_active === 1) || watchlists[0];
+      if (!targetList) {
+        const createRes = await customFetch('/api/watchlists', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: 'My Watchlist' })
+        });
+        if (createRes.ok) {
+          targetList = await createRes.json();
+          setWatchlists([targetList]);
+        }
+      }
+
+      if (targetList) {
+        const addRes = await customFetch(`/api/watchlists/${targetList.id}/symbols`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ symbol: upperSym, scripCode: scripCode || undefined, companyName: name, priority: 'HIGH' })
+        });
+        if (addRes.ok) {
+          setHomeRefresh(value => value + 1);
+        }
+      }
+    } catch (e) {
+      console.warn("Could not add stock to watchlist:", e);
+    } finally {
+      setAddingStock(null);
+    }
+  };
+
+  const sameIdentity = loadedIdentity.current === identity;
+  const trackedCompanyCount = activeWatchlistIdentities(watchlists).length;
+  const hasWatchlist = sameIdentity && watchlistSymbols.size > 0;
+
+  // 1. Filtered Watchlist Filings
+  const watchlistFilings = useMemo(() => {
+    if (!hasWatchlist) return [];
+    const identities = activeWatchlistIdentities(watchlists);
+    return allAnnouncements.filter(filing => identities.some(stock => matchesWatchlistIdentity(filing, stock))).slice(0, 2);
+  }, [allAnnouncements, watchlists, hasWatchlist]);
+
+  // Starter stocks filtered by search query in modal
+  const filteredStarterStocks = useMemo(() => {
+    if (!modalSearch.trim()) return STARTER_STOCKS;
+    const q = modalSearch.trim().toLowerCase();
+    return STARTER_STOCKS.filter(s => 
+      s.symbol.toLowerCase().includes(q) || s.name.toLowerCase().includes(q) || s.scripCode.includes(q)
+    );
+  }, [modalSearch]);
+
+  return (
+    <div className="max-w-6xl mx-auto px-3.5 sm:px-6 py-4 sm:py-6 space-y-6">
+      
+      {/* 1. Top Header: Calm Page Title & ONLY Primary Action Button */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-200/80 dark:border-[#262335]">
+        <div className="space-y-0.5">
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight font-display">
+            For You
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-normal">
+            Your market. Your watchlist. One place.
+          </p>
+        </div>
+
+        {/* The ONLY Primary Button on For You home */}
+        <motion.button
+          type="button"
+          whileTap={buttonTap}
+          transition={springSnappy}
+          onClick={() => setIsAddModalOpen(true)}
+          className="min-h-[44px] sm:min-h-[38px] px-4 py-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer shrink-0 select-none"
+        >
+          <Plus size={15} />
+          <span>Add stocks</span>
+        </motion.button>
+      </div>
+
+      {/* Groww-Style Live Market Story Top Carousel Bar */}
+      <StoryCarouselBar 
+        onOpenStory={(chapterId) => {
+          setSelectedStoryChapter(chapterId);
+          setStoryModalOpen(true);
+        }}
+        className="pt-0 pb-1"
+      />
+
+      <ImpactRadar key={identity} active={isActive} identity={identity} onNavigate={onNavigate} density={density} watched={sameIdentity ? [...watchlistSymbols] : []} watchlistStatus={sameIdentity ? watchlistStatus : 'loading'} onRefreshWatchlist={() => setHomeRefresh(v => v + 1)} />
+      <HomeMarketNews key={`news-${identity}`} active={isActive} identity={identity} watched={sameIdentity ? [...watchlistSymbols] : []} onNavigate={onNavigate} density={density} />
+
+      {/* 2. Focused Sections or Calm Summary */}
+      {!sameIdentity || (loading && !hasLoaded) ? <HomeSkeleton /> : (
+      <div className="space-y-6">
+
+        {/* Watchlist Section */}
+        {watchlistStatus === 'error' ? <section className="space-y-2"><h2 className="text-sm font-bold">Your Watchlist Updates</h2><p role="status" className="text-xs text-slate-500">Your watchlist could not be checked. <button type="button" className="underline" onClick={() => setHomeRefresh(value => value + 1)}>Retry</button></p></section> : !hasWatchlist ? (
+          /* Empty Watchlist State with Actionable Starter Recommendations */
+          <section className="space-y-3">
+            <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white font-display">
+              Your Watchlist Updates
+            </h2>
+            <div className={cn(heliosCard, "p-5 text-center space-y-2")}>
+              <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-[#201E2E] flex items-center justify-center mx-auto text-slate-400">
+                <Bookmark size={18} />
+              </div>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                No watchlist filings yet
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
+                Add companies to your watchlist to see their real-time BSE regulatory filings, financial results, and board outcomes here.
+              </p>
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAddModalOpen(true)}
+                  className="text-xs font-bold text-slate-900 dark:text-white underline underline-offset-4 hover:opacity-80 cursor-pointer"
+                >
+                  Choose companies to track &rarr;
+                </button>
+              </div>
+            </div>
+          </section>
+        ) : watchlistFilings.length > 0 ? (
+          /* Populated & Active Watchlist */
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white font-display">
+                Your Watchlist Updates
+              </h2>
+              <button
+                type="button"
+                onClick={() => onNavigate('watchlists')}
+                className="text-xs font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white flex items-center gap-1 cursor-pointer"
+              >
+                <span>View all</span>
+                <ChevronRight size={13} />
+              </button>
+            </div>
+
+            <div className={cn("grid grid-cols-1 sm:grid-cols-2", homeGridGap)}>
+              {watchlistFilings.map((filing, idx) => {
+                const cleanSubj = cleanBseSubject(filing.subject || filing.details || '');
+                const relTime = formatFilingRelativeTime(filing.bseTimestamp || filing.fetched_at || Date.now());
+
+                return (
+                  <div
+                    key={filing.id || idx}
+                    onClick={() => setSelectedFiling(filing)}
+                    className={cn(heliosCard, homeCardPad, "transition-all cursor-pointer flex flex-col justify-between gap-2 hover:shadow-[0_12px_28px_rgba(15,23,42,0.09)] dark:hover:shadow-[0_12px_28px_rgba(0,0,0,0.5)]")}
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between gap-2 text-xs">
+                        <span className="font-bold text-slate-900 dark:text-white truncate">
+                          {filing.companyName}
+                        </span>
+                        <HeliosPill tone="slate">{relTime}</HeliosPill>
+                      </div>
+                      <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed">
+                        {cleanSubj.headline}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-100 dark:border-[#262335]">
+                      <HeliosPill tone="slate" dot={false} className="font-mono">BSE: {filing.scrip_cd}</HeliosPill>
+                      <span className="text-slate-500 dark:text-slate-400 flex items-center gap-0.5">
+                        <span>Details</span>
+                        <ChevronRight size={12} />
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        ) : (
+          /* Populated but Quiet Watchlist: Single calm summary */
+          <div className={cn(heliosCard, density === 'comfortable' ? "p-5 sm:p-6" : density === 'dense' ? "p-4" : "p-5", "space-y-2")}>
+            <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
+              <CheckCircle2 size={16} className="shrink-0" />
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white font-display">
+                Nothing urgent from your watchlist today
+              </h2>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-xl">
+              No recent filings were found in the loaded updates for your {trackedCompanyCount} tracked {trackedCompanyCount === 1 ? 'company' : 'companies'}.
+            </p>
+          </div>
+        )}
+
+        {/* SECTION 2: Upcoming Results / Upcoming earnings date */}
+        {upcomingResults.length > 0 && (
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white font-display">
+                Upcoming Results
+              </h2>
+              <button
+                type="button"
+                onClick={() => onNavigate('results-calendar')}
+                className="text-xs font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white flex items-center gap-1 cursor-pointer"
+              >
+                <span>Earnings calendar</span>
+                <ChevronRight size={13} />
+              </button>
+            </div>
+
+            <div className={cn("grid grid-cols-1 sm:grid-cols-2", homeGridGap)}>
+              {upcomingResults.map((item, idx) => {
+                const meetingDateStr = item.meetingDate || (item.bseTimestamp ? formatDateOnly(item.bseTimestamp) : (item.meetingTimestamp ? formatDateOnly(item.meetingTimestamp) : ''));
+                const tile = parseMeetingDateTile(meetingDateStr || undefined);
+                const isToday = item.daysLeft === 0;
+                const daysLabel = isToday ? 'Today' : item.daysLeft === 1 ? 'Tomorrow' : `In ${item.daysLeft} days`;
+                const companyName = (item.scripCode === '500034' || item.symbol === 'BAJFINANCE' || item.companyName === 'BAJAJ AUTO F') ? 'Bajaj Finance Ltd' : item.companyName;
+
+                return (
+                  <div
+                    key={item.id || idx}
+                    onClick={() => setSelectedResult({ ...item, companyName, meetingDate: meetingDateStr || item.meetingDate })}
+                    className={cn(heliosCard, homeCardPad, "transition-all cursor-pointer flex items-center justify-between gap-3 hover:shadow-[0_12px_28px_rgba(15,23,42,0.09)] dark:hover:shadow-[0_12px_28px_rgba(0,0,0,0.5)]")}
+                  >
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      {/* Date block */}
+                      <div className={cn(
+                        "w-11 h-11 rounded-lg flex flex-col items-center justify-center shrink-0 border",
+                        isToday
+                          ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-slate-900 dark:border-white"
+                          : "bg-slate-100 dark:bg-[#201E2E] text-slate-800 dark:text-slate-200 border-slate-200 dark:border-[#2D283E]"
+                      )}>
+                        <span className="text-xs font-black leading-none">{tile.day}</span>
+                        <span className="text-[9px] font-bold uppercase opacity-80 mt-0.5">{tile.month}</span>
+                      </div>
+
+                      <div className="space-y-0.5 min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">
+                            {companyName}
+                          </span>
+                          {item.symbol && (
+                            <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">
+                              {item.symbol}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                          {item.purpose || 'Financial Results'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <HeliosPill tone={isToday ? "emerald" : "slate"} pulseDot={isToday} className="shrink-0">{daysLabel}</HeliosPill>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {/* Common questions FAQ Section */}
+        <section className="pt-2">
+          <CommonQuestionsFAQ id="home-for-you-faq" compact />
+        </section>
+
+      </div>
+      )}
+
+      {/* Add Companies Modal */}
+      <AnimatePresence>
+        {isAddModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overscroll-contain">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsAddModalOpen(false)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs overscroll-contain"
+            />
+
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={springSnappy}
+              className="relative w-full max-w-md bg-white dark:bg-[#181624] rounded-2xl border border-slate-200 dark:border-[#262335] shadow-2xl p-5 space-y-4 z-10 overscroll-contain"
+            >
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#262335] pb-3">
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white font-display">
+                    Add company to watchlist
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Track earnings dates, filings, and news
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Search input */}
+              <div className="relative">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={modalSearch}
+                  onChange={e => setModalSearch(e.target.value)}
+                  placeholder="Search symbol (e.g. RELIANCE, INFY)..."
+                  className="w-full h-10 pl-9 pr-3 bg-slate-50 dark:bg-[#201E2E] border border-slate-200 dark:border-[#2D283E] rounded-xl text-xs font-medium focus:outline-none focus:ring-1 focus:ring-slate-400 text-slate-900 dark:text-white"
+                />
+              </div>
+
+              {/* Quick Starter Picks */}
+              <div className="space-y-2">
+                <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                  Popular Indian Companies
+                </div>
+                <div className="max-h-60 overflow-y-auto space-y-1.5 pr-1">
+                  {filteredStarterStocks.map(stk => {
+                    const isTracked = watchlistSymbols.has(stk.symbol.toUpperCase());
+                    const isBusy = addingStock === stk.symbol;
+
+                    return (
+                      <div
+                        key={stk.symbol}
+                        className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#201E2E] border border-slate-200/80 dark:border-[#2D283E] flex items-center justify-between gap-2"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                            {stk.name}
+                          </div>
+                          <div className="text-[10px] font-mono text-slate-400">
+                            {stk.symbol} &bull; BSE {stk.scripCode}
+                          </div>
+                        </div>
+
+                        <ActionButton
+                          onClick={() => handleAddStock(stk.symbol, stk.scripCode, stk.name)}
+                          isLoading={isBusy}
+                          loadingText="Adding..."
+                          disabled={isTracked}
+                          variant={isTracked ? "secondary" : "primary"}
+                          size="sm"
+                          className={cn(
+                            "min-h-[36px] shrink-0 text-xs font-bold",
+                            isTracked && "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100"
+                          )}
+                          icon={isTracked ? <Check size={13} className="text-emerald-600" /> : <Plus size={13} />}
+                        >
+                          {isTracked ? 'Added' : 'Add'}
+                        </ActionButton>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Bottom footer button to full watchlist */}
+              <div className="pt-2 border-t border-slate-100 dark:border-[#262335] flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAddModalOpen(false);
+                    onNavigate('watchlists');
+                  }}
+                  className="text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer flex items-center gap-1"
+                >
+                  <span>Manage full watchlist</span>
+                  <ArrowRight size={13} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="min-h-[36px] px-4 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 rounded-lg text-xs font-bold cursor-pointer"
+                >
+                  Done
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Filing Detail Bottom Sheet */}
+      <AnimatePresence>
+        {selectedFiling && (
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overscroll-contain">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedFiling(null)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs overscroll-contain"
+            />
+            <motion.div
+              initial={{ y: "100%", opacity: 0.5 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: "100%", opacity: 0 }}
+              transition={springSnappy}
+              className="relative w-full sm:max-w-lg bg-white dark:bg-[#181624] rounded-t-2xl sm:rounded-2xl border border-slate-200 dark:border-[#262335] shadow-2xl p-5 max-h-[85vh] overflow-y-auto overscroll-contain space-y-4 z-10 safe-area-bottom"
+            >
+              <div className="flex items-start justify-between gap-3 border-b border-slate-100 dark:border-[#262335] pb-3">
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white font-display">
+                    {selectedFiling.companyName}
+                  </h3>
+                  <p className="text-xs text-slate-400 font-mono">
+                    BSE Scrip {selectedFiling.scrip_cd} &bull; {formatFilingRelativeTime(selectedFiling.bseTimestamp || selectedFiling.fetched_at || Date.now())}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedFiling(null)}
+                  className="min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                <div className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Subject
+                </div>
+                <p className="text-xs text-slate-800 dark:text-slate-200 leading-relaxed bg-slate-50 dark:bg-[#201E2E] p-3 rounded-xl border border-slate-200/80 dark:border-[#2D283E]">
+                  {cleanBseSubject(selectedFiling.subject || selectedFiling.details || '').headline || selectedFiling.subject || selectedFiling.details || 'No subject details provided'}
+                </p>
+              </div>
+
+              {/* Action */}
+              <div className="pt-2 flex items-center gap-2">
+                {selectedFiling.attachment || selectedFiling.pdf_link ? (
+                  <a
+                    href={getSafePdfUrl(selectedFiling.attachment || selectedFiling.pdf_link)}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="flex-1 min-h-[44px] bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
+                  >
+                    <FileText size={14} />
+                    <span>Open Official BSE Document (PDF)</span>
+                  </a>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedFiling(null)}
+                    className="w-full min-h-[44px] bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl text-xs font-bold"
+                  >
+                    Close
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Result Detail Bottom Sheet */}
+      <AnimatePresence>
+        {selectedResult && (
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overscroll-contain">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedResult(null)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs overscroll-contain"
+            />
+            <motion.div
+              initial={{ y: "100%", opacity: 0.5 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: "100%", opacity: 0 }}
+              transition={springSnappy}
+              className="relative w-full sm:max-w-lg bg-white dark:bg-[#181624] rounded-t-2xl sm:rounded-2xl border border-slate-200 dark:border-[#262335] shadow-2xl p-5 max-h-[85vh] overflow-y-auto overscroll-contain space-y-4 z-10 safe-area-bottom"
+            >
+              <div className="flex items-start justify-between gap-3 border-b border-slate-100 dark:border-[#262335] pb-3">
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white font-display">
+                    {selectedResult.companyName}
+                  </h3>
+                  <p className="text-xs text-slate-400 font-mono">
+                    Scheduled Board Meeting: {selectedResult.meetingDate}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedResult(null)}
+                  className="min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                <div className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Meeting Purpose
+                </div>
+                <p className="text-xs text-slate-800 dark:text-slate-200 leading-relaxed bg-slate-50 dark:bg-[#201E2E] p-3 rounded-xl border border-slate-200/80 dark:border-[#2D283E]">
+                  {selectedResult.purpose || 'Financial Results & Corporate Review'}
+                </p>
+              </div>
+
+              <div className="pt-2 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedResult(null);
+                    onNavigate('results-calendar');
+                  }}
+                  className="flex-1 min-h-[44px] bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 rounded-xl text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <CalendarDays size={14} />
+                  <span>View in Earnings Calendar</span>
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Groww-Style Market Story Viewer Modal */}
+      {storyModalOpen && (
+        <TodayMarketStoryModal
+          isOpen={storyModalOpen}
+          initialChapterId={selectedStoryChapter}
+          onClose={() => {
+            setStoryModalOpen(false);
+            setSelectedStoryChapter(undefined);
+          }}
+          onOpenCompanyIntel={(scripCode, symbol, companyName) => {
+            openIntelModal({ scripCode, symbol, companyName });
+          }}
+        />
+      )}
+
+    </div>
+  );
+}

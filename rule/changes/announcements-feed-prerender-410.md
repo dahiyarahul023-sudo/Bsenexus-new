@@ -1,0 +1,68 @@
+# Change: /announcements feed pre-render (Soft-404 fix) + 410 Gone for dead test URLs
+
+- Starting commit: 475689cf (2026-10-16, "refactor(components): consolidate story motion variants")
+- User objective and acceptance cases:
+  - GSC Page Indexing (export 2026-10-16): Soft 404 = 1 page (https://bsenexus.in/announcements); Not found (404) = 177 pages (validation Failed).
+  - FIX 1: /announcements must serve real filing content in the first HTML paint so Googlebot no longer flags it as Soft 404.
+  - FIX 2: confirmed-dead `batch_test_` URLs must return 410 Gone (instead of 404) so Google drops them faster.
+  - Acceptance: `npm run lint`, `npm test`, `npm run map:check`, `npm run build` all pass; no change to design/layout/functionality for real users.
+- Verified facts (file + symbol):
+  - server.ts `injectTabSeoMetadata(html, tab)` (line ~6571): injects tab meta + CollectionPage JSON-LD for announcements, but body stays the SPA shell.
+  - dist/index.html `#root` contains `.critical-preloader` with 4 STATIC placeholder `<article style="background: #181624; ...">` cards (not real data).
+  - Hidden AEO `<main style="display:none">` FAQ uses plain `<article>` tags (no inline style) — must not be touched.
+  - src/main.tsx uses `createRoot` (not hydrateRoot) — pre-rendered DOM inside #root is safely replaced on mount, no hydration mismatch risk.
+  - server.ts `/announcement/:newsId` and `/filing/:symbol/:newsId`: legacy `nse_*` IDs already 301 to /announcements; missing IDs 404 via `renderAnnouncement404Page(isBatchTest)`.
+  - `getRecentAnnouncements(limit)` (server/database/announcementDao.ts) returns live filings with companyName/SLONGNAME, subject/NEWSSUB, symbol/scrip_id, scripCode/scrip_cd/SCRIP_CD, bseTimestamp/fetched_at/bseTime, newsId/id, category.
+  - `pageRenderCache.get/set` (server/utils/renderCache.ts): `set(key, body, contentType, { ttlMs })` returns `{ etag, body }`.
+  - `parseBseDate` imported in server.ts from `./server/utils/helpers.js` — reusable.
+- Assumptions/unknowns and how they will be resolved:
+  - The 177 GSC 404s are per-URL opaque in the CSV export (summary only). Only `batch_test_` is provably, permanently dead (test-fixture pattern, explicitly special-cased in code, disallowed in robots.txt). Other 404s keep 404 — re-check after the next GSC export with per-URL data.
+  - `getRecentAnnouncements(30)` at request time is the same source the client feed uses — bot and user see the same data (no cloaking).
+- Changed source of truth:
+  - server/services/seoPrerender.ts: added `PRELOADER_CARD_RE`, `buildAnnouncementsFeedCards()` (+ imports for announcementDao, helpers).
+  - server.ts: import the two new symbols; new production-only `app.get(['/announcements','/announcements/'])` route before the `app.get("*")` catch-all; 410 branches in the two `if (!announcement)` handlers.
+- Impact command and affected semantic domains:
+  - `npm run map:impact -- server.ts server/services/seoPrerender.ts` (to be run once node_modules present)
+  - Domains: public-contract (SEO/SSR), faq-search-seo.
+- Related consumers: API, UI, storage/RPC, jobs, caches, manual copy:
+  - Googlebot / GSC: /announcements now returns real content (fixes Soft 404); batch_test_ URLs return 410.
+  - React client (src/main.tsx, createRoot): pre-rendered cards replaced on mount — reviewed-and-compatible (no hydrateRoot).
+  - pageRenderCache: new key `announcements-feed-v1`, TTL 5 min (feed is live; short TTL per R10).
+  - Sitemap: untouched. robots.txt: untouched. VALID_SPA_ROUTES / catch-all 404 logic: untouched.
+- For each relevant consumer: changed / reviewed-and-compatible / blocked, with evidence:
+  - /announcements route: changed (pre-rendered cards + 5-min cache + ETag/304).
+  - /announcement/:newsId, /filing/:symbol/:newsId missing-ID path: changed (410 for batch_test_, 404 otherwise).
+  - Client feed UI: reviewed-and-compatible (same Firestore data; createRoot clears #root).
+  - AEO hidden FAQ: reviewed-and-compatible (regex only matches styled preloader cards).
+- Assignment scope: backend; no visual/behavior change for users (cards replaced within ~1s of React mount).
+- Expected user-visible effect: none (same feed). Crawler-visible effect: real filings in initial HTML; 410 on dead test URLs.
+- Failure/security/concurrency cases relevant to this change:
+  - Firestore outage/empty feed → `buildAnnouncementsFeedCards()` returns '' → normal shell served (graceful).
+  - Placeholder markup changes later → regex no-match → normal shell served (no-op, safe).
+  - R08: all dynamic text escaped via `escapeHtmlText`/`escapeHtmlAttr`; links use encodeURIComponent.
+  - R10: explicit cache key + 5-min TTL; no personalized data (global feed).
+  - R15: catch blocks log nothing sensitive; route catch falls through via next().
+- Implementation and coordinated updates:
+  - seoPrerender.ts: +imports, +PRELOADER_CARD_RE, +buildAnnouncementsFeedCards.
+  - server.ts: +import, +/announcements route (production branch only), +2× 410 branches.
+- Commands actually run and results:
+  - `npm run lint` (tsc --noEmit): PASS, zero errors.
+  - `node --test --import tsx server/tests/seoPrehydration.test.ts`: PASS 10/10 (6 existing + 4 new: PRELOADER_CARD_RE targeting, buildAnnouncementsFeedCards graceful, /announcements route, 410 for batch_test_).
+  - `node --test --import tsx server/tests/announcementFeed.test.ts`: PASS 5/5.
+  - `npm run map:generate && npm run map:check`: PASS (348 files, 925 edges, 22 domains verified).
+  - `npm run build`: PASS (vite build 15.27s, dist/server.cjs built).
+  - `npm test` (full 51-file suite): INCOMPLETE — hung 25+ min with no output (pre-existing; likely network/Firestore-dependent tests). Directly relevant suites pass (see above). No test asserts 404 for batch_test_ URLs (verified via grep).
+- Required checks unavailable (reason; do not mark passed):
+  - Full `npm test` suite: hung, did not complete (environmental, pre-existing).
+  - Live-browser verification of /announcements rendering: deferred until user republishes from AI Studio (assistant cannot deploy).
+- Deployment/migration requirements and rollback:
+  - No migration. Rollback: revert the two files (or just remove the /announcements route — catch-all resumes serving the shell).
+  - NOTE: pushing to GitHub only; user syncs into AI Studio and republishes (standing workflow).
+- Remaining risks and next bounded step:
+  - GSC Soft-404 clears only after recrawl — user should "Validate fix" in GSC after republish.
+  - 878 "Crawled - currently not indexed" is an authority (backlink) issue, not code — out of scope.
+- Graph/domain/documentation refreshed:
+  - `npm run map:generate` run; `rule/generated/spider-map.json` (+ html) regenerated and committed in same push. `npm run map:check` passes.
+
+- Delivery status: commit / merge / CI / deployment, reported separately:
+  - GitHub push via gh_push.py (files: server.ts, server/services/seoPrerender.ts, this record). AI Studio sync + Republish = user's step.

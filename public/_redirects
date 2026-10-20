@@ -1,0 +1,7 @@
+/announcement/nse_* /announcements 301
+/filing/* /announcements 301
+/privacy /privacy-policy 301
+/privacy/ /privacy-policy 301
+/live /announcements 301
+/live/ /announcements 301
+/* /index.html 200

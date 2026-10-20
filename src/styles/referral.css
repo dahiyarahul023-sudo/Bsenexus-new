@@ -1,0 +1,29 @@
+.referral-overlay { position:fixed; z-index:100; inset-inline:0; top:var(--payment-top,0); height:var(--payment-height,100dvh); display:flex; align-items:flex-end; justify-content:center; background:rgb(0 0 0 / .6); backdrop-filter:blur(6px); overflow:hidden; padding:12px 12px 0; }
+.referral-sheet { display:flex; flex-direction:column; min-width:0; width:100%; max-width:768px; height:min(82dvh,780px); max-height:100%; border-radius:28px 28px 0 0; overflow:hidden; animation:referral-enter 280ms cubic-bezier(.22,1,.36,1); }
+.referral-handle { flex:none; width:36px; height:4px; border-radius:9px; background:#94a3b855; margin:10px auto 0; }
+.referral-header { flex:none; }
+.referral-tabs { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); flex:none; gap:4px; padding:8px 12px; border-bottom:1px solid #94a3b830; }
+.referral-tab { min-width:0; min-height:64px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; padding:8px 3px; border-radius:12px; color:#64748b; font-weight:600; cursor:pointer; transition:background-color 160ms,color 160ms; }
+.referral-tab[aria-selected=true] { background:#10b98118; color:#047857; }
+.dark .referral-tab[aria-selected=true] { color:#6ee7b7; }
+.referral-tab-title { display:flex; align-items:center; justify-content:center; gap:5px; font-size:12px; line-height:18px; white-space:nowrap; }
+.referral-tab-title svg { flex:none; }
+.referral-tab-subtitle { font-size:10px; line-height:16px; white-space:nowrap; }
+.referral-content { flex:1 1 0%; min-height:0; min-width:0; overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; scrollbar-gutter:stable; padding-bottom:max(24px,env(safe-area-inset-bottom)); }
+.referral-content input { min-width:0; max-width:100%; font-size:16px; }
+.referral-share-link-row { display:flex; align-items:center; gap:12px; }
+.referral-share-link-text { flex:1; min-width:0; padding:12px 14px; border:1px solid #10b98130; border-radius:14px; background:rgb(255 255 255 / .75); }
+.dark .referral-share-link-text { background:rgb(15 23 42 / .7); }
+.referral-share-code-label { display:block; font-size:11px; color:#64748b; }
+.dark .referral-share-code-label { color:#94a3b8; }
+.referral-share-code { display:block; font-size:17px; line-height:1.5; overflow-wrap:anywhere; }
+.referral-share-url { display:block; margin-top:4px; font-size:12px; line-height:1.6; overflow-wrap:anywhere; user-select:all; }
+@media(max-width:420px) { .referral-share-link-row { align-items:stretch; flex-direction:column; } .referral-share-link-row button { align-self:flex-end; } }
+.referral-content .grid > * { min-width:0; overflow-wrap:anywhere; }
+.referral-content button, .referral-content a { min-height:40px; }
+.referral-overlay :focus-visible { outline:2px solid #10b981; outline-offset:2px; }
+@media(min-width:640px) { .referral-overlay { padding:24px 24px max(16px,env(safe-area-inset-bottom)); } .referral-sheet { border-radius:28px; } .referral-tab-title { font-size:13px; } .referral-tab-subtitle { font-size:11px; } }
+@media(max-width:359px) { .referral-overlay { padding-inline:0; } .referral-tabs { padding-inline:8px; } .referral-tab-title { gap:3px; font-size:11px; } }
+@media(max-height:500px) { .referral-sheet { height:100%; } .referral-header p { display:none; } .referral-header { padding-block:8px; } .referral-tab { min-height:52px; padding-block:4px; } }
+@keyframes referral-enter { from { transform:translateY(32px); opacity:.7; } to { transform:translateY(0); opacity:1; } }
+@media(prefers-reduced-motion:reduce) { .referral-sheet { animation:none; } .referral-tab { transition:none; } }

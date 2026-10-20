@@ -1,0 +1,22 @@
+# Change: Bound flushSupabaseWriteQueue to prevent poller cycle timeouts
+
+- Starting commit: `HEAD` (2026-10-14).
+- User objective: Fix poller cycle timeouts reported in AI Studio diagnostic monitor (`[POLLER_CYCLE] mode: "timeout" durationMs: ~15295ms-15979ms cycleNumber: 13, 16`).
+- Root cause:
+  - During the announcement poller loop (`processAnnouncements` in `server/services/monitor.ts`), the `write-drain` stage executes `await cycle.step('write-drain', () => flushSupabaseWriteQueue())`.
+  - The `PollCycle.step()` wrapper enforces a default 15-second stage timeout.
+  - In `server/database/announcementDao.ts`, `flushSupabaseWriteQueue()` had an unbounded loop waiting for `supabaseWriteQueue.size === 0`.
+  - When Supabase REST writes experienced transient latency or entered exponential backoff (`consecutiveBatchErrors > 0`), `processSupabaseQueue()` slept for several seconds. If multiple attempts occurred, the 15-second stage timeout was exceeded.
+  - This caused `PollStageTimeout('write-drain')` to abort the cycle, emitting `{ error: true, mode: 'timeout' }` even though all 50 exchange filings were already fetched, matched against watchlists and rules, sent to Telegram, and saved to memory and local disk.
+- Remedy:
+  - Added bounded wait parameter `maxWaitMs: number = 3000` to `flushSupabaseWriteQueue()`.
+  - In `flushSupabaseWriteQueue()`, check if Supabase is currently backing off (`consecutiveBatchErrors > 0 || Date.now() < nextBatchRetryTime`); if so, release immediately so the foreground poller cycle completes without delay. The background worker continues draining the queue asynchronously with exponential backoff once the window clears.
+  - If draining exceeds `maxWaitMs`, yield gracefully instead of stalling the poller thread.
+  - Updated `cycle.step('write-drain', () => flushSupabaseWriteQueue(3000))` in `server/services/monitor.ts`.
+- Files changed:
+  - `server/database/announcementDao.ts`: Bounded `flushSupabaseWriteQueue` with backoff escape and `maxWaitMs`.
+  - `server/services/monitor.ts`: Call `flushSupabaseWriteQueue(3000)`.
+  - `server/tests/batchOperations.test.ts`: Added test verifying bounded execution of `flushSupabaseWriteQueue`.
+- Verification:
+  - `server/tests/pollerStall.test.ts`: Passed (13/13).
+  - `server/tests/batchOperations.test.ts`: Passed (4/4).

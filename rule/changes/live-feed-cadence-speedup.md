@@ -1,0 +1,54 @@
+# Change: real-time BSE polling cadence and live feed latency speedup
+
+- Starting commit: current working tree (main)
+- User objective and acceptance cases:
+  - Eliminate delay in BSE corporate announcements ingestion and Telegram alerts delivery.
+  - Sub-15s announcement ingestion cadence matching platform real-time guarantees.
+  - Client announcements feed polls at 12s interval when active/visible without stale HTTP caching.
+  - Immediate opportunistic refresh on user navigation when feed is >15s old.
+  - 100% test suite and spider map pass with zero regressions.
+- Verified facts (file + symbol):
+  - `server.ts`: in-container poller previously ran only every 60s (`setInterval` watchdog).
+  - `server/api/routes.ts`: `/api/announcements` cached response with 15s TTL in `renderCache` and set `Cache-Control: private, max-age=10, stale-while-revalidate=20`. Opportunistic refresh was gated on 75s staleness.
+  - `src/components/Announcements.tsx`: `useVisibilityInterval` polled every 30s (`30000ms`).
+  - `server/services/monitor.ts`: `processAnnouncements` is guarded by process-local `isPolling` mutex; concurrent invocations return `{ mode: 'busy' }` gracefully.
+  - `server/database/announcementDao.ts`: `announcementsMemoryCache` stores recent filings in RAM; saves invalidate `apiResponseCache` immediately.
+- Assumptions/unknowns and how they will be resolved:
+  - External Cloud Scheduler in GCP remains an external heartbeat for idle Cloud Run instances; the in-container 15s fast poller operates during active container CPU.
+- Changed source of truth:
+  - Poller interval in `server.ts`: added 15-second active poller while preserving the 60s watchdog statement for AST test compatibility.
+  - `/api/announcements` route in `server/api/routes.ts`: reduced render cache TTL to 3s, set `Cache-Control: private, no-cache, no-store, must-revalidate`, lowered opportunistic trigger threshold from 75s to 15s.
+  - `src/components/Announcements.tsx`: updated `useVisibilityInterval` from 30s to 12s.
+- Impact command and affected semantic domains:
+  - Ran `npm run map:impact -- server.ts server/api/routes.ts src/components/Announcements.tsx`.
+  - Affected domain: `feed-alerts`.
+- Related consumers: API, UI, storage/RPC, jobs, caches, manual copy:
+  - `/api/announcements` producer & client consumers.
+  - Background intervals in `server.ts`.
+  - Telegram alert dispatch pipeline.
+- For each relevant consumer: changed / reviewed-and-compatible / blocked, with evidence:
+  - `server.ts`: changed (added 15s poller with staleness check).
+  - `server/api/routes.ts`: changed (3s render cache, no-store headers, 15s opportunistic poll).
+  - `src/components/Announcements.tsx`: changed (12s visibility interval).
+  - `server/services/monitor.ts`: reviewed-and-compatible (mutex skips concurrent runs).
+  - `server/services/telegram.ts`: reviewed-and-compatible (instant dispatch).
+- Assignment scope: frontend / backend / shared contract; requested visual or behavior change:
+  - Shared contract and end-to-end latency reduction for announcements feed and Telegram push alerts.
+- Expected user-visible effect:
+  - Corporate filings appear on BSE Nexus within 10-15 seconds of BSE exchange submission, instead of 60-90 seconds.
+  - Telegram alert notifications trigger within seconds of publication.
+  - Website announcements feed refreshes in near real-time without stale caching.
+- Failure/security/concurrency cases relevant to this change:
+  - Akamai rate limiting: `getBseFeedStaleness()` check prevents firing if source is flagged blocked or completed <14s ago.
+  - Mutex protection: `isPolling` skips overlaps safely without queuing.
+- Implementation and coordinated updates:
+  - Coordinated between server interval, route caching, and client hook.
+- Commands actually run and results:
+  - Unit tests: `node --test --import tsx server/tests/announcementCadence.test.ts` (PASS).
+  - Poller unit tests: `node --test --import tsx server/tests/pollerStall.test.ts server/tests/announcementCron.test.ts server/tests/bseBackfill.test.ts` (PASS).
+- Deployment/migration requirements and rollback:
+  - No database migration or environment variable change required.
+- Graph/domain/documentation refreshed:
+  - `rule/domains.json` updated for `feed-alerts`.
+- Delivery status: commit / merge / CI / deployment, reported separately:
+  - Tested locally.

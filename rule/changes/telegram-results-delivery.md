@@ -1,0 +1,40 @@
+# Telegram results delivery repair
+
+- Base: main `5e8b27791b120190a13610c1f624a6bbc3dac6d4`.
+- Approved scope, 2026-10-19: merge Telegram results-only AI, prevent duplicate company/period replies and repair the observed user-skeleton permission issue. Rahul deferred the new NSE/BSE earliest-source mechanism for discussion. Final `server/services/bse.ts` is identical to this main baseline: no new exchange fetching, retry/cookie, enrichment/history or source-selection behavior is included.
+- Evidence: NSE broadcast 12:03:22 IST, BSE broadcast 12:05:49, first BSE save 12:06:53.967, NSE save 12:09:39.506, later BSE results save 12:13:02.506. Earliest-exchange to first save is 211.967s, including 147s exchange timestamp difference and 64.967s after BSE publication. Screenshots retain minute-resolution Telegram times only. Exact historic Telegram acceptance and internal per-stage delay remain unknown; do not attribute all 211.967s to Telegram.
+- Verified causes of bad replies: `gemini.ts` cached/generated per NEWSID+language, so exchange/update IDs repeated a quarter; Telegram AI callers admitted every category. NSE PDFs failed BSE-only allowlisting, large PDFs used a v1 callable parser despite declared v2, and missing documents still reached AI. Unvalidated templates were cached and sent.
+- Change: strict results-only eligibility and explicit security-code/period identity; durable shared generation and per-chat delivery claims; missing-document/output validation; supported v2 large-PDF extraction and a separate exact official NSE archive document allowlist. Existing NSE filings may already arrive through baseline merge/fallback; supporting their PDF does not change the exchange poller.
+- Acceptance: zero automatic AI for concall/corporate/meeting notices; completed quarter replies survive new filing IDs, language changes and restarts without replay. Next quarter/company/recipient remains eligible. Unknown periods, missing documents, X.X/templates and all-unavailable replies are skipped; same failed source cannot burn quota repeatedly. New attachment recovery is bounded to two attempts; uncertain external send acceptance is terminal.
+- Storage: private RLS result state and service-only invoker RPCs, short atomic claims outside model/network calls, no local fallback. Chat IDs are hashed. Private admin delivery timings retain known exchange/processed/accepted dates; observed_at remains optional because baseline source fetchers do not set it.
+- Impact: monitor/gemini/telegram/document helper/routes/server/Settings/new state paths and the user-skeleton migration were inspected. Before removing the deferred source test, imports/re-exports/string references and both base/current maps were scanned; only reviewed domain/generated-map entries referred to it.
+
+## Consumer dispositions
+
+| Consumer | Disposition and evidence |
+|---|---|
+| Exchange poller, NSE/BSE fallback/merge, deep/history and retries | **reviewed-and-compatible**: unchanged from main, explicitly deferred by Rahul. Existing backfill, stall and cadence tests remain required. |
+| `monitor.ts::processAnnouncements` admin/personal | **changed**: RESULTS gate, stable scrip identity, bounded plain-delivery drain and private admin acceptance timestamps. Plan/watchlist/rules/overlap/inbox/push decisions unchanged. |
+| `gemini.ts::generateAndSendSummary`, manual Telegram route | **changed**: shared durable policy covers every Telegram summary caller; separate filing IDs cannot replay a completed company/period/chat. |
+| `generateDirectSummary`, `/news/summarize`, AI viewer/quota | **reviewed-and-compatible**: explicit site requests retain their quota/access contract; document/parser repair also benefits them. |
+| BSE public proxy and document helper | **reviewed-and-compatible**: old BSE-only predicate retained; AI alone uses the exact official NSE archive predicate. Every redirect is checked. |
+| Cron/watchdog/fast poller and Radar maintenance | **changed**: after releasing ingestion, authenticated cron keeps CPU for pending result AI beside existing bounded Radar work. Existing timer cadence and cron auth remain intact. |
+| Settings personal/server Telegram switches | **changed**: results-only copy; state/save handlers, Pro scope, roles, layout, language preference and site AI unchanged. Browser/device rendering unverified. |
+| `ensure_user_skeleton` and server-role callers | **changed in production** via existing narrow migration: browser roles denied EXECUTE; invoker rights, empty fixed search path and qualified public.users. Create/retry/paid-preservation rehearsed with rollback. Staging already had stricter input validation, retained unchanged. |
+| Payment/referral/profile readers and writers | **reviewed-and-compatible**: skeleton retries never overwrite paid rows; payment/referral RPC bodies untouched. Local tests and staging/production rolled-back probes verify the narrow operation, not a real payment flow. |
+
+## Validation and database delivery
+
+- Final `npm test`: **527 passed**, 0 failed, including 19 new Telegram policy/SQL/document tests. The three tests for the deferred source mechanism are excluded together with that implementation. Existing source/backfill/cadence tests remain. Narrow user-skeleton migration test: **1 passed**.
+- `npm run lint` and `npm run build --ignore-scripts`: passed (existing bundle-size warning; script suppression only avoids an unrelated automatic version bump). Map generation/freshness passed: 405 files, 1083 import edges, 24 semantic domains. `npm run test:map`: **6 passed**. `git diff --check`: passed. Main source-diff check confirms `server/services/bse.ts` unchanged.
+- Host compile_applet/lint_applet unavailable. No real AI calls, Telegram test messages, charges or rendered browser/device checks.
+- Telegram migration `20261019065115_telegram_result_delivery.sql` installed on staging/production. Service-role claim/duplicate/stale-token/ready-reuse rehearsal passed with rollback. RLS/browser denial/server execute verified; one incident suppression and zero test rows. Union Bank's already-observed admin summary is suppressed without fabricating a sent receipt; other chats keep independent hashed keys.
+- Existing `20261011031315_restrict_user_skeleton_rpc.sql` applied to production on 2026-10-19. Local migration replay/browser denial/paid-preservation test passed. Staging was already invoker/fixed-path/server-only and kept its additional input validation. Both staging and repaired production passed service-role create/retry/paid-row-preservation probes inside rolled-back transactions, with zero probe rows. Production metadata confirms SECURITY INVOKER and fixed empty search_path; anon/authenticated cannot execute, service_role can.
+- Production advisors no longer flag user-skeleton public/authenticated execution or its mutable path. Remaining mutable-search-path warnings concern four existing payment/demo functions outside this narrow permission repair. Private server-only RLS-without-browser-policy INFO is intentional. Reference: https://supabase.com/docs/guides/database/database-linter?lint=0011_function_search_path_mutable
+- Source commit, GitHub checks, merge, app republish and real delivery are separate release states, reported in the PR/handoff. Main diff must not contain the deferred source implementation.
+
+## Rollout and rollback
+
+Telegram schema and narrow permission repair are installed before app release. Checked-in migrations are replay-safe. Merge the scoped code only after fresh CI; app republish and the next genuine result establish runtime behavior. Existing external Scheduler remains required for idle request-based hosting, and no new exchange-latency SLA is claimed.
+
+Disable existing Telegram AI switches to pause result replies while keeping plain alerts. Revert code if needed but retain private receipts, which prevent replay on re-release. Keep the browser RPC restriction during code rollback; restoring public user creation is not necessary for the prior server. Ambiguous Telegram acceptance is intentionally never automatically retried. Site-requested AI remains independent.

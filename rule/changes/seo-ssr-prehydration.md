@@ -1,0 +1,38 @@
+# Change: Server-Side SEO Pre-Hydration, Dynamic Route Validation and Tiered Sitemaps
+
+- Starting commit: current worktree (compaction resume)
+- User objective and acceptance cases:
+  - Implement institutional-grade, non-destructive server-side SEO pre-hydration and route validation in Express + Vite SPA (bsenexus.in).
+  - Permanently eliminate Google Search Console issues: Not found 404, Soft 404, Crawled - currently not indexed, Discovered - currently not indexed, Alternate page with proper canonical tag, Excluded by noindex, and Blocked by robots.txt.
+  - Step 1: Return HTTP 404 (with robots noindex) on non-existent dynamic entities (/filing/:symbol/:id, /company/:symbol, /results/:symbol/:quarter, /guides/:slug) instead of SPA 200 OK soft-404 shells.
+  - Step 2: In server/services/seoPrerender.ts and server.ts, inject route-specific title, meta description, OpenGraph, Twitter tags, and clean self-referencing canonical URL (stripping utility query parameters like ?tab=, ?utm_*, ?design=). Pre-render semantic HTML content inside #root with company name, BSE scrip code, headline, timestamp, and AI summary snippet.
+  - Step 3: Inject structured JSON-LD schemas into head: Corporation + FAQPage on /company/:symbol; NewsArticle / Report on /filing/:symbol/:id; Article + BreadcrumbList on /guides/:slug.
+  - Step 4: Tiered dynamic sitemaps at /sitemap.xml (sitemap index) linking to /sitemap-core.xml, /sitemap-companies.xml, and /sitemap-filings-hot.xml (past 7 days filings with real publication lastmod).
+  - Step 5: Robots.txt & header hygiene: allow public content, disallow /api/ and /auth/; enforce X-Robots-Tag: noindex, nofollow on /api, /auth, and utility states (?tab=settings).
+  - Step 6: Targeted tests in server/tests/seoPrehydration.test.ts verifying all steps.
+- Verified facts (file + symbol):
+  - server.ts: routes /filing/:symbol/:newsId, /announcement/:newsId, /company/:symbol, /results/:symbol/:quarterKey, /guides/:slug, /sitemap.xml, /sitemap-core.xml, /sitemap-companies.xml, /sitemap-filings-hot.xml.
+  - server/services/seoPrerender.ts: cleanCanonicalUrl, prerenderFilingHtml, prerenderCompanyHtml, buildSitemapIndexXml, buildPrehydratedHtml.
+  - public/robots.txt: disallows /api/ and /auth/, allows AI crawlers and public content, references https://bsenexus.in/sitemap.xml.
+  - public/sitemap.xml: maintained on disk with curated catalogue and strict ElementTree XML compliance.
+- Assumptions/unknowns and how they will be resolved:
+  - Preserved existing renderCompanyPage output signature and JSON-LD structure so existing tests (e.g. sevenFixes.test.ts) pass without deviation.
+  - Client-side React in App.tsx parses /filing/:symbol/:newsId and mounts interactive detail screen via createRoot over the SSR prehydrated HTML.
+- Changed source of truth:
+  - server/services/seoPrerender.ts, server.ts, rule/domains.json, server/tests/seoPrehydration.test.ts.
+- Impact command and affected semantic domains:
+  - npm run map:impact -- server.ts server/services/seoPrerender.ts
+  - Affected semantic domains: public-contract, faq-search-seo.
+- Related consumers:
+  - Express route handlers, search engine crawlers, Google Search Console, OpenSearch, IndexNow, client-side App.tsx hydration.
+- For each relevant consumer:
+  - /filing/:symbol/:newsId: changed (real 404 on invalid IDs; pre-hydration + NewsArticle JSON-LD on valid IDs).
+  - /company/:symbol: changed (wrapped inside #root, Corporation + FAQPage JSON-LD preserved).
+  - /sitemap.xml: changed (serves tiered sitemap index linking to core, companies, hot filings).
+  - /api & /auth: changed (X-Robots-Tag: noindex, nofollow enforced).
+  - Client-side App.tsx: reviewed-and-compatible.
+- Commands actually run and results:
+  - node --test --import tsx server/tests/seoPrehydration.test.ts
+  - npm run map:generate && npm run map:check
+  - npm test
+  - compile_applet & lint_applet

@@ -1,0 +1,32 @@
+# Change: BSE 403 Akamai WAF Cooldown Protection & Opportunistic Poll Guard
+
+- Starting commit: working tree
+- User objective and acceptance cases:
+  - Fix: [POLLER] BSE request failed: HTTP 403 and rapid recurring poll-cycle source-unavailable errors.
+  - Eliminate repetitive pounding of api.bseindia.com when an Akamai WAF rate-limit block (HTTP 403) occurs.
+  - Guard GET /api/announcements so that active frontend client requests do not trigger background poll cycles while the feed source is marked blocked.
+  - Enforce exponential backoff cooldown (20s -> 60s -> 300s) inside fetchBSEAnnouncements: during active cooldown, skip BSE network calls entirely and seamlessly fallback to NSE corporate announcements feed.
+  - Prevent immediate in-flight retries on HTTP 403 so the WAF ban timer is never repeatedly reset.
+  - Acceptance: compile_applet, lint_applet, npm run map:check, announcementCadence.test.ts, announcementCron.test.ts, pollerStall.test.ts, and bseBackfill.test.ts all pass cleanly.
+- Verified facts (file + symbol):
+  - `server/services/bse.ts`: `fetchWithHardenedRetries` retried up to 2 times on 403 with short delays (400ms, 1000ms), which actively aggravated Akamai rate limits.
+  - `server/services/bse.ts`: `fetchBSEAnnouncements` did not gate BSE page requests on cooldown time, meaning every cycle attempted 2-3 requests to api.bseindia.com even when bseSourceBlocked was true.
+  - `server/api/routes.ts`: `GET /api/announcements` checked `(nowMs - lastSuccessfulFetchMs) > 15 * 1000` without verifying `!blocked`, causing every user/client fetch to trigger `processAnnouncements()` when BSE was down.
+- Changed source of truth:
+  - `server/services/bse.ts`:
+    - Added `getBseCooldownRemainingMs(): number`.
+    - Added fast-return on HTTP 403 in `fetchWithHardenedRetries` to prevent immediate WAF retries.
+    - Updated `markBseBlocked` to update `bseBlockedAtMs = now` upon escalation.
+    - Added active cooldown gate in `fetchBSEAnnouncements`: when cooldown is active, skips BSE network calls and attempts NSE recovery directly.
+    - Added cooldown check in `testBSEConnection`.
+  - `server/api/routes.ts`:
+    - Guarded opportunistic background poll with `!blocked`.
+- Impact command and affected semantic domains:
+  - `npm run map:impact -- server/services/bse.ts server/api/routes.ts`
+  - Domains: `feed-alerts`, `operations`.
+- Commands actually run and results:
+  - `node --test --import tsx server/tests/bseBackfill.test.ts`: PASS (11/11).
+  - `node --test --import tsx server/tests/announcementCadence.test.ts server/tests/announcementCron.test.ts server/tests/pollerStall.test.ts`: PASS (27/27).
+  - `npm run lint`: PASS (tsc --noEmit).
+  - `compile_applet`: PASS.
+  - `npm run map:generate && npm run map:check`: PASS.

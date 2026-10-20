@@ -1,0 +1,210 @@
+file,line,router,method,path,middleware
+server.ts,48,app,USE,"compression({ threshold: 1024, // Don't compress payloads under 1KB level: 6, // Optimal balance between CPU usage and compression ratio filter: (req, res) => { // 1. Honor client bypass header if requested if (req.headers['x-no-compression']) { return false; } // 2. Prevent double-compressing already-compressed payloads if (res.getHeader('Content-Encoding')) { return false; } // 3. Skip binary media / archives / PDFs / streams which are already ",
+server.ts,79,app,USE,"helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false, frameguard: false, crossOriginOpenerPolicy: false, crossOriginResourcePolicy: false, referrerPolicy: { policy: 'strict-origin-when-cross-origin' } })",
+server.ts,87,app,USE,'/api/payments/webhook',"express.raw({ type: 'application/json', limit: '1mb' })"
+server.ts,88,app,USE,express.json({ limit: '1mb' }),
+server.ts,89,app,USE,cookieParser(),
+server.ts,90,app,USE,authMiddleware,
+server.ts,93,app,GET,'/sw.js',<handler>
+server.ts,5080,app,GET,"['/health', '/healthz']",<handler>
+server.ts,5086,app,GET,'/robots.txt',<handler>
+server.ts,5092,app,GET,"['/sitemap.xml', '/sitemap', '/sitemap_index.xml', '/sitemap.txt']",<handler>
+server.ts,5099,app,GET,"['/rss.xml', '/rss', '/feed.xml', '/feed']",<handler>
+server.ts,5165,app,GET,[/^\/https?:\/?\/?(?:www\.)?bsenexus\.in\/sitemap(?:\.xml)?$/i],<handler>
+server.ts,5170,app,GET,"[`/${INDEXNOW_KEY}.txt`, '/indexnow-key.txt']",<handler>
+server.ts,5177,app,GET,'/opensearch.xml',<handler>
+server.ts,5195,app,GET,"[sourcePath, sourcePath + '/']",<handler>
+server.ts,5204,app,GET,'/filing/:symbol/:newsId',<handler>
+server.ts,5262,app,GET,'/announcement/:newsId',<handler>
+server.ts,5587,app,GET,'/results/:symbol/:quarterKey',<handler>
+server.ts,5643,app,GET,"['/company/:symbol', '/stock/:symbol']",<handler>
+server.ts,5712,app,GET,'/guides/:slug',<handler>
+server.ts,5758,app,GET,"['/faq', '/faqs']",<handler>
+server.ts,5765,app,GET,"['/pricing', '/pricing/']",<handler>
+server.ts,5772,app,GET,"['/plans', '/plans/']",<handler>
+server.ts,5777,app,GET,"['/guides', '/guides/']",<handler>
+server.ts,5784,app,GET,"['/market-guides', '/market-guides/']",<handler>
+server.ts,5789,app,GET,"['/companies', '/companies/']",<handler>
+server.ts,5796,app,GET,"['/company-directory', '/company-directory/']",<handler>
+server.ts,5801,app,GET,"['/about', '/about/']",<handler>
+server.ts,5808,app,GET,"['/contact', '/contact/']",<handler>
+server.ts,5815,app,GET,"['/disclaimer', '/disclaimer/']",<handler>
+server.ts,5822,app,GET,"['/privacy-policy', '/privacy-policy/']",<handler>
+server.ts,5829,app,GET,"['/privacy', '/privacy/']",<handler>
+server.ts,5834,app,GET,"['/terms', '/terms/']",<handler>
+server.ts,5841,app,GET,"['/terms-of-service', '/terms-of-service/']",<handler>
+server.ts,5846,app,GET,'/embed/widget',<handler>
+server.ts,5900,app,GET,'/sitemap-companies.xml',<handler>
+server.ts,5920,app,GET,'/sitemap-guides.xml',<handler>
+server.ts,5938,app,GET,'/llms.txt',<handler>
+server.ts,5943,app,GET,'/llms-full.txt',<handler>
+server.ts,5949,app,GET,/^\/google([a-zA-Z0-9_-]+)\.html$/,<handler>
+server.ts,5956,app,USE,"express.static(path.join(process.cwd(), 'public'), { maxAge: '1d', immutable: false })",
+server.ts,5962,app,USE,'/auth',authRouter
+server.ts,5965,app,POST,'/api/security/verify-recaptcha',authRateLimiter;<handler>
+server.ts,6006,app,USE,'/api',apiRateLimiter;apiRouter
+server.ts,6010,app,USE,"['/api/*', '/auth/*']",<handler>
+server.ts,6015,app,USE,"(err: any, req: express.Request, res: express.Response, next: express.NextFunction) => { if (req.path.startsWith('/api') || req.path.startsWith('/auth')) { console.error(""API Error handler caught:"", err?.message || err); const isProd = process.env.NODE_ENV === 'production'; const safeError = isProd ? ""An internal error occurred. Please try again later."" : (err?.message || ""Internal Server Error""); return res.status(500).json({ success: false, err",
+server.ts,6411,app,GET,"[""/"", ""/announcements"", ""/live"", ""/results-calendar"", ""/watchlist"", ""/watchlists"", ""/companies"", ""/about"", ""/contact"", ""/disclaimer"", ""/privacy-policy"", ""/terms""]",<handler>
+server.ts,6438,app,USE,"(req, res, next) => { if (req.method !== 'GET' && req.method !== 'HEAD') return next(); const p = req.path; if ( p === '/' || p === '/announcements' || p === '/results-calendar' || p === '/watchlist' || p === '/watchlists' || p === '/companies' || p === '/about' || p === '/contact' || p === '/disclaimer' || p === '/privacy-policy' || p === '/terms' || p.startsWith('/@') || p.startsWith('/src') || p.startsWith('/node_modules') || p.startsWith('/ap",
+server.ts,6470,app,USE,vite.middlewares,
+server.ts,6482,app,USE,"express.static(distPath, { maxAge: '1y', immutable: true, index: false, setHeaders: (res, filePath) => { if (filePath.endsWith('.html')) { res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600'); } } })",
+server.ts,6509,app,GET,"""*""",<handler>
+server/api/faq.ts,126,faqRouter,POST,'/ask',faqFloodLimiter;<handler>
+server/api/faq.ts,194,faqRouter,GET,'/status',faqFloodLimiter;<handler>
+server/api/notes.ts,37,notesRouter,GET,'/',requireAuth;apiRateLimiter;<handler>
+server/api/notes.ts,48,notesRouter,POST,'/',requireAuth;apiRateLimiter;<handler>
+server/api/notes.ts,73,notesRouter,PATCH,'/:id',requireAuth;apiRateLimiter;<handler>
+server/api/notes.ts,98,notesRouter,DELETE,'/:id',requireAuth;apiRateLimiter;<handler>
+server/api/payments.ts,347,paymentsRouter,POST,'/create-order',requireAuth;<handler>
+server/api/payments.ts,477,paymentsRouter,GET,'/verify',requireAuth;<handler>
+server/api/payments.ts,547,paymentsRouter,GET,'/status',requireAuth;<handler>
+server/api/payments.ts,633,paymentsRouter,POST,'/recover',requireAuth;paymentRecoveryLimiter;<handler>
+server/api/payments.ts,752,paymentsRouter,POST,'/claim',requireAuth;paymentRecoveryLimiter;<handler>
+server/api/payments.ts,827,paymentsRouter,GET,'/history',requireAuth;<handler>
+server/api/payments.ts,877,paymentsRouter,POST,'/send-receipt',requireAuth;sendReceiptLimiter;<handler>
+server/api/payments.ts,954,paymentsRouter,POST,'/webhook',<handler>
+server/api/routes.ts,98,apiRouter,USE,"""/seo""",requireAdmin;aiRateLimiter;seoRouter
+server/api/routes.ts,101,apiRouter,USE,"""/payments""",paymentsRouter
+server/api/routes.ts,104,apiRouter,USE,"""/faq""",faqRouter
+server/api/routes.ts,107,apiRouter,USE,"""/notes""",notesRouter
+server/api/routes.ts,110,apiRouter,GET,"""/market-guides""",<handler>
+server/api/routes.ts,119,apiRouter,GET,"""/market-guides/:slug""",<handler>
+server/api/routes.ts,132,apiRouter,GET,"""/config/public""",<handler>
+server/api/routes.ts,139,apiRouter,GET,"""/health""",<handler>
+server/api/routes.ts,154,apiRouter,GET,"""/cache/stats""",<handler>
+server/api/routes.ts,164,apiRouter,POST,"""/cache/clear""",requireAdmin;<handler>
+server/api/routes.ts,185,apiRouter,GET,"""/circuit-breakers""",<handler>
+server/api/routes.ts,193,apiRouter,POST,"""/circuit-breakers/:name/reset""",requireAdmin;<handler>
+server/api/routes.ts,208,apiRouter,POST,"""/circuit-breakers/reset-all""",requireAdmin;<handler>
+server/api/routes.ts,243,apiRouter,GET,"""/settings""",<handler>
+server/api/routes.ts,284,apiRouter,POST,"""/settings""",requireAdmin;<handler>
+server/api/routes.ts,307,apiRouter,GET,"""/logs""",requireAdmin;<handler>
+server/api/routes.ts,318,apiRouter,DELETE,"""/logs""",requireAdmin;<handler>
+server/api/routes.ts,325,apiRouter,POST,"""/client-log""",requireAuth;<handler>
+server/api/routes.ts,342,apiRouter,POST,"""/feedback""",apiRateLimiter;<handler>
+server/api/routes.ts,373,apiRouter,GET,"""/feedback""",requireAdmin;<handler>
+server/api/routes.ts,382,apiRouter,POST,"""/test-gemini""",requireAdmin;aiRateLimiter;<handler>
+server/api/routes.ts,412,apiRouter,GET,"""/announcements""","apiResponseCache.middleware({ ttlMs: 15 * 1000, publicCache: false });<handler>"
+server/api/routes.ts,455,apiRouter,GET,"""/announcements/:id""",<handler>
+server/api/routes.ts,469,apiRouter,POST,"""/announcements/refresh""",requireAuth;aiRateLimiter;<handler>
+server/api/routes.ts,479,apiRouter,GET,"""/billing/quota""",<handler>
+server/api/routes.ts,488,apiRouter,POST,"""/billing/reset-quota""",requireAdmin;<handler>
+server/api/routes.ts,498,apiRouter,POST,"""/announcements/:id/generate-summary""",requireAuth;aiRateLimiter;<handler>
+server/api/routes.ts,628,apiRouter,GET,"""/watchlists""",requireProOrAdmin;<handler>
+server/api/routes.ts,633,apiRouter,POST,"""/watchlists""",requireProOrAdmin;<handler>
+server/api/routes.ts,639,apiRouter,DELETE,"""/watchlists/:id""",requireProOrAdmin;<handler>
+server/api/routes.ts,646,apiRouter,DELETE,"""/watchlists/all/symbols""",requireProOrAdmin;<handler>
+server/api/routes.ts,653,apiRouter,DELETE,"""/watchlists/:id/symbols""",requireProOrAdmin;<handler>
+server/api/routes.ts,660,apiRouter,POST,"""/watchlists/reset-default""",requireProOrAdmin;<handler>
+server/api/routes.ts,667,apiRouter,POST,"[""/watchlists/sync"", ""/watchlists/sync-historical""]",requireProOrAdmin;<handler>
+server/api/routes.ts,678,apiRouter,POST,"""/watchlists/sync-stock""",requireProOrAdmin;<handler>
+server/api/routes.ts,693,apiRouter,POST,"""/results-calendar/sync-stock""",requireAuth;<handler>
+server/api/routes.ts,708,apiRouter,GET,"""/stock-master""","apiResponseCache.middleware({ ttlMs: 60 * 60 * 1000, publicCache: true });<handler>"
+server/api/routes.ts,716,apiRouter,PATCH,"""/watchlists/:id/toggle""",requireProOrAdmin;<handler>
+server/api/routes.ts,724,apiRouter,POST,"""/watchlists/:id/symbols""",requireProOrAdmin;<handler>
+server/api/routes.ts,742,apiRouter,PATCH,"""/watchlists/:id/symbols/:symbol/priority""",requireProOrAdmin;<handler>
+server/api/routes.ts,750,apiRouter,POST,"""/watchlists/:id/symbols/bulk""",requireProOrAdmin;<handler>
+server/api/routes.ts,788,apiRouter,GET,"""/search-company""",<handler>
+server/api/routes.ts,802,apiRouter,DELETE,"""/watchlists/:id/symbols/:symbol""",requireProOrAdmin;<handler>
+server/api/routes.ts,809,apiRouter,POST,"""/watchlists/:id/symbols/remove-batch""",requireProOrAdmin;<handler>
+server/api/routes.ts,823,apiRouter,POST,"""/watchlists/:id/symbols/priority-batch""",requireProOrAdmin;<handler>
+server/api/routes.ts,853,apiRouter,POST,"""/toggle""",requireAdmin;handleToggleRoute
+server/api/routes.ts,854,apiRouter,POST,"""/toggle-engine""",requireAdmin;handleToggleRoute
+server/api/routes.ts,856,apiRouter,POST,"""/test-telegram""",requireAdmin;telegramRateLimiter;<handler>
+server/api/routes.ts,882,apiRouter,POST,"""/users/test-telegram""",requireProOrAdmin;telegramRateLimiter;<handler>
+server/api/routes.ts,934,apiRouter,GET,"""/users/check-username""",<handler>
+server/api/routes.ts,960,apiRouter,GET,"""/users/profile""",requireAuth;<handler>
+server/api/routes.ts,1021,apiRouter,POST,"""/users/profile""",requireAuth;<handler>
+server/api/routes.ts,1151,apiRouter,POST,"""/users/telegram/settings""",requireAuth;<handler>
+server/api/routes.ts,1248,apiRouter,POST,"""/test-bse""",requireAdmin;<handler>
+server/api/routes.ts,1268,apiRouter,PATCH,"""/watchlists/:id/name""",requireProOrAdmin;<handler>
+server/api/routes.ts,1275,apiRouter,POST,"""/send-to-telegram-manual""",requireAdmin;telegramRateLimiter;<handler>
+server/api/routes.ts,1330,apiRouter,POST,"""/send-holiday-telegram""",requireAdmin;telegramRateLimiter;<handler>
+server/api/routes.ts,1370,apiRouter,GET,"""/results-calendar""",<handler>
+server/api/routes.ts,1383,apiRouter,POST,"""/results-calendar/refresh""",requireAuth;aiRateLimiter;<handler>
+server/api/routes.ts,1412,apiRouter,POST,"""/results-calendar/telegram-broadcast""",requireAdmin;telegramRateLimiter;<handler>
+server/api/routes.ts,1425,apiRouter,GET,"""/story/feed""",<handler>
+server/api/routes.ts,1438,apiRouter,GET,"[""/news"", ""/news/general""]",<handler>
+server/api/routes.ts,1450,apiRouter,GET,"""/news/watchlist""",<handler>
+server/api/routes.ts,1461,apiRouter,GET,"""/news/sources""","apiResponseCache.middleware({ ttlMs: 60 * 60 * 1000, publicCache: true });<handler>"
+server/api/routes.ts,1479,apiRouter,GET,"""/news/stock/:symbol""",<handler>
+server/api/routes.ts,1490,apiRouter,POST,"""/news/summarize""",requireAuth;aiRateLimiter;<handler>
+server/api/routes.ts,1590,apiRouter,POST,"""/news/telegram/send""",requireProOrAdmin;telegramRateLimiter;<handler>
+server/api/routes.ts,1609,apiRouter,POST,"""/news/telegram/digest""",requireProOrAdmin;telegramRateLimiter;<handler>
+server/api/routes.ts,1627,apiRouter,GET,"""/news/telegram/preferences""",<handler>
+server/api/routes.ts,1655,apiRouter,POST,"""/news/telegram/toggle-auto""",requireAuth;<handler>
+server/api/routes.ts,1712,apiRouter,POST,"""/news/telegram/trigger-worker""",requireAdmin;<handler>
+server/api/routes.ts,1722,apiRouter,GET,"""/storage/status""",requireAdmin;<handler>
+server/api/routes.ts,1731,apiRouter,POST,"""/storage/cleanup""",requireAdmin;<handler>
+server/api/routes.ts,1741,apiRouter,POST,"""/storage/test-alert""",requireAdmin;<handler>
+server/api/routes.ts,1755,apiRouter,GET,"""/storage/quota-mode""",requireAdmin;<handler>
+server/api/routes.ts,1767,apiRouter,POST,"""/storage/quota-mode""",requireAdmin;<handler>
+server/api/routes.ts,1792,apiRouter,POST,"""/storage/reset-quota""",requireAdmin;<handler>
+server/api/routes.ts,1805,apiRouter,POST,"""/storage/reset-permission""",requireAdmin;<handler>
+server/api/routes.ts,1818,apiRouter,POST,"""/admin/announcements/prune-percentage""",requireAdmin;<handler>
+server/api/routes.ts,1849,apiRouter,GET,"""/stock-results-history""",<handler>
+server/api/routes.ts,1886,apiRouter,POST,"""/stocks/:scripCode/fetch-deep-history""",requireProOrAdmin;aiRateLimiter;<handler>
+server/api/routes.ts,1906,apiRouter,POST,"""/watchlist/fetch-deep-history""",requireAdmin;aiRateLimiter;<handler>
+server/api/routes.ts,1917,apiRouter,POST,"""/stocks/:scripCode/boost-runup-priority""",requireAdmin;<handler>
+server/api/routes.ts,1929,apiRouter,GET,"""/stocks/:scripCode/runup-announcements""",<handler>
+server/api/routes.ts,1943,apiRouter,PATCH,"""/watchlists/symbols/:symbol/priority-sync""",requireProOrAdmin;<handler>
+server/api/routes.ts,1960,apiRouter,POST,"""/help/ask-ai""",requireProOrAdmin;aiRateLimiter;<handler>
+server/api/routes.ts,1977,apiRouter,GET,"""/pdf-open""",<handler>
+server/api/routes.ts,2056,apiRouter,GET,"""/company-intel/:identifier""",<handler>
+server/api/routes.ts,2069,apiRouter,ALL,"""/company-intel/:identifier/ai-overview""",requireProOrAdmin;aiRateLimiter;<handler>
+server/api/routes.ts,2133,apiRouter,GET,"""/stocks/:symbol/quote""",<handler>
+server/api/routes.ts,2149,apiRouter,GET,"""/material-events""",<handler>
+server/api/routes.ts,2187,apiRouter,GET,"""/notifications""",<handler>
+server/api/routes.ts,2217,apiRouter,GET,"""/notifications/unread-count""",<handler>
+server/api/routes.ts,2235,apiRouter,POST,"""/notifications/:id/read""",requireAuth;<handler>
+server/api/routes.ts,2245,apiRouter,POST,"""/notifications/read-batch""",requireAuth;<handler>
+server/api/routes.ts,2256,apiRouter,POST,"""/notifications/read-all""",requireAuth;<handler>
+server/api/routes.ts,2266,apiRouter,DELETE,"""/notifications""",requireAuth;<handler>
+server/api/routes.ts,2276,apiRouter,POST,"""/notifications/toggle-mute""",requireAuth;<handler>
+server/api/routes.ts,2335,apiRouter,GET,"""/alert-rules""",<handler>
+server/api/routes.ts,2345,apiRouter,POST,"""/alert-rules""",requireAuth;<handler>
+server/api/routes.ts,2355,apiRouter,PATCH,"""/alert-rules/:id/toggle""",requireAuth;<handler>
+server/api/routes.ts,2366,apiRouter,DELETE,"""/alert-rules/:id""",requireAuth;<handler>
+server/api/routes.ts,2380,apiRouter,GET,"""/market/indices""","apiResponseCache.middleware({ ttlMs: 15 * 1000, publicCache: true });<handler>"
+server/api/routes.ts,2393,apiRouter,GET,"""/market/status""","apiResponseCache.middleware({ ttlMs: 30 * 1000, publicCache: true });<handler>"
+server/api/routes.ts,2415,apiRouter,POST,"""/telemetry/event""",aiRateLimiter;<handler>
+server/api/routes.ts,2450,apiRouter,GET,"""/admin/diagnostics""",requireAdmin;<handler>
+server/api/routes.ts,2476,apiRouter,POST,"""/admin/diagnostics/clear""",requireAdmin;<handler>
+server/api/routes.ts,2486,apiRouter,POST,"""/admin/diagnostics/test-alert""",requireAdmin;<handler>
+server/api/routes.ts,2523,apiRouter,GET,"""/admin/diagnostics/approved-bugs""",requireAdmin;<handler>
+server/api/routes.ts,2533,apiRouter,POST,"""/admin/diagnostics/approved-bugs""",requireAdmin;<handler>
+server/api/routes.ts,2547,apiRouter,DELETE,"""/admin/diagnostics/approved-bugs/:id""",requireAdmin;<handler>
+server/api/routes.ts,2557,apiRouter,POST,"""/admin/diagnostics/toggle-mute-alerts""",requireAdmin;<handler>
+server/api/routes.ts,2574,apiRouter,GET,"""/security/audit""",requireAdmin;<handler>
+server/api/routes.ts,2585,apiRouter,POST,"""/security/pen-test""",requireAdmin;<handler>
+server/api/routes.ts,2596,apiRouter,GET,"""/admin/bloom-stats""",requireAdmin;<handler>
+server/api/routes.ts,2606,apiRouter,GET,"""/admin/bloom-test""",requireAdmin;<handler>
+server/api/seoRoutes.ts,22,seoRouter,POST,"""/fetch-url""",<handler>
+server/api/seoRoutes.ts,36,seoRouter,POST,"""/page-audit""",<handler>
+server/api/seoRoutes.ts,52,seoRouter,POST,"""/eeat-audit""",<handler>
+server/api/seoRoutes.ts,68,seoRouter,POST,"""/semantic-gap""",<handler>
+server/api/seoRoutes.ts,84,seoRouter,POST,"""/keyword-deep-dive""",<handler>
+server/api/seoRoutes.ts,100,seoRouter,POST,"""/content-brief""",<handler>
+server/api/seoRoutes.ts,116,seoRouter,POST,"""/topic-cluster""",<handler>
+server/api/seoRoutes.ts,132,seoRouter,POST,"""/write-content""",<handler>
+server/api/seoRoutes.ts,148,seoRouter,POST,"""/improve-content""",<handler>
+server/api/seoRoutes.ts,164,seoRouter,POST,"""/featured-snippet""",<handler>
+server/api/seoRoutes.ts,180,seoRouter,POST,"""/linkbuilding""",<handler>
+server/api/seoRoutes.ts,196,seoRouter,POST,"""/expert-interview""",<handler>
+server/api/seoRoutes.ts,212,seoRouter,GET,"""/indexnow/stats""",<handler>
+server/api/seoRoutes.ts,222,seoRouter,POST,"""/indexnow/ping""",<handler>
+server/security/auth.ts,281,authRouter,POST,'/session',authRateLimiter;<handler>
+server/security/auth.ts,489,authRouter,POST,'/login',authRateLimiter;<handler>
+server/security/auth.ts,631,authRouter,POST,'/verify-pin',authRateLimiter;<handler>
+server/security/auth.ts,763,authRouter,POST,'/logout',<handler>
+server/security/auth.ts,768,authRouter,GET,'/status',<handler>
+server/tests/auditSecurity.test.ts,61,app,USE,express.json(),authMiddleware
+server/tests/auditSecurity.test.ts,62,app,USE,'/api',apiRouter
+server/tests/authIdentity.test.ts,38,app,USE,express.json(),
+server/tests/authIdentity.test.ts,39,app,USE,cookieParser(),
+server/tests/authIdentity.test.ts,40,app,USE,authMiddleware,
+server/tests/authIdentity.test.ts,41,app,USE,'/auth',authRouter
+server/tests/authIdentity.test.ts,42,app,GET,'/admin',requireAdmin;<handler>
+server/tests/followupAudit.test.ts,105,app,USE,"(req,_res,next)=>{(req as any).user={uid:req.headers['x-fixture-uid'] || 'guest'};next();}",
+server/tests/followupAudit.test.ts,106,app,GET,'/feed',"cache.middleware({ttlMs:10000,publicCache:false});<handler>"
