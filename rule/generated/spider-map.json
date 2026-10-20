@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "c8593c583133d287d12fbb24276f054e8fe054df0cdd0dddd6add766cb9ae802",
+  "sourceDigest": "a26cd433bce73375123767af3e767973fae34cefa1b8e70d910a34816de74192",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -10,7 +10,7 @@
   "files": [
     {
       "path": ".env.example",
-      "sha256": "833dd058b169c1200412876bebe9d4ea23218dac12798aad63dc3ecb2bc76f40",
+      "sha256": "4900711756451712fae891ec0d67c8f49f5330915ae792eda421844b3a79b384",
       "importedBy": []
     },
     {
@@ -179,11 +179,12 @@
     },
     {
       "path": "server/ai/http.ts",
-      "sha256": "bf35e22cb668878e8836ed88cca64bc77d514c92de1c41dba72165e54a08c290",
+      "sha256": "6178f8408f9e178487558c6234a2960310b10bcfed478d6b1c5af25355184b5c",
       "importedBy": [
         "server.ts",
         "server/api/aiPlugin.ts",
         "server/api/routes.ts",
+        "server/tests/aiIngress.test.ts",
         "server/tests/aiPlugin.test.ts"
       ]
     },
@@ -200,6 +201,7 @@
       "sha256": "3fa55c8cb32516adcf4083b04204a0483f11b115f6af699a58f09a42c319cd5f",
       "importedBy": [
         "server/ai/http.ts",
+        "server/tests/aiIngress.test.ts",
         "server/tests/aiOAuth.test.ts"
       ]
     },
@@ -1071,6 +1073,11 @@
       "importedBy": []
     },
     {
+      "path": "server/tests/aiIngress.test.ts",
+      "sha256": "a9b9c7651380f94045cdfba646fa74b14fef3f7f12628a8e00c336e21eab5108",
+      "importedBy": []
+    },
+    {
       "path": "server/tests/aiOAuth.test.ts",
       "sha256": "4f891928cdd15c265fa011e1c03e4963fd23347a9cf01cde61b71dedad741ee7",
       "importedBy": []
@@ -1734,7 +1741,7 @@
     },
     {
       "path": "src/components/AiPluginPage.tsx",
-      "sha256": "b81f20102e1c2e48ae020e605fff6c4552eee96304eccd899968279210b5b460",
+      "sha256": "a1a358c9439da18d0bb3a5debc1e352c74a599588b4139a20ea648564e54a718",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -1861,14 +1868,14 @@
     },
     {
       "path": "src/components/LandingPage.tsx",
-      "sha256": "cf5abbdeb6abda15b1fa19ad15dd703c8e8d33761db262707205afcf623227ea",
+      "sha256": "d6df87e11810b56795cfa9627e548515c8e900557d7e0aa8f9c69794a844ae01",
       "importedBy": [
         "src/App.tsx"
       ]
     },
     {
       "path": "src/components/Layout.tsx",
-      "sha256": "5df0e5a2a3c41e06b50045977d9a06ebdb91c2e779186d9d7cce23cadf298650",
+      "sha256": "e49111531a6248ad32c6815dbdc478b28a32dda40c196a9454384d22270d609e",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -2003,7 +2010,7 @@
     },
     {
       "path": "src/components/SettingsTab.tsx",
-      "sha256": "dc16ea0ab6268fedf8174f43e5b864f88619dcc391421371b9c7a78e6849e71d",
+      "sha256": "db071d220d62f643a4397e854f834d21e00483b6c83521a338a3ef91a208917a",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -2406,7 +2413,7 @@
     },
     {
       "path": "src/components/ui/CommandPalette.tsx",
-      "sha256": "9e7a2c7abc73697ebfa436e1d8d01d6c8915390f244d43103c705e8a08612d47",
+      "sha256": "958327ccf394ab5570215fe3407f83107caf0ac15dd5305ed95cf038ae7e5beb",
       "importedBy": [
         "src/components/Layout.tsx"
       ]
@@ -3091,7 +3098,7 @@
     },
     {
       "path": "src/styles/ai-connections.css",
-      "sha256": "33ad9f6f42f4cb8f9f44858da363bbfe9d8840d7f5d62ae78909fbfcacbe8707",
+      "sha256": "70a0aa6c4e9368030e53584a4a0d001764f66e93f388635c2144c364d983bcdc",
       "importedBy": [
         "src/components/AiPluginPage.tsx"
       ]
@@ -5904,6 +5911,18 @@
       "line": 150
     },
     {
+      "source": "server/tests/aiIngress.test.ts",
+      "target": "server/ai/http.ts",
+      "kind": "import",
+      "line": 6
+    },
+    {
+      "source": "server/tests/aiIngress.test.ts",
+      "target": "server/ai/oauth.ts",
+      "kind": "import",
+      "line": 7
+    },
+    {
       "source": "server/tests/aiOAuth.test.ts",
       "target": "server/ai/oauth.ts",
       "kind": "import",
@@ -7281,25 +7300,25 @@
       "source": "src/components/AiPluginPage.tsx",
       "target": "src/context/AuthContext.tsx",
       "kind": "import",
-      "line": 17
+      "line": 15
     },
     {
       "source": "src/components/AiPluginPage.tsx",
       "target": "src/api.ts",
       "kind": "import",
-      "line": 18
+      "line": 16
     },
     {
       "source": "src/components/AiPluginPage.tsx",
       "target": "src/components/ui/BseNexusLogo.tsx",
       "kind": "import",
-      "line": 19
+      "line": 17
     },
     {
       "source": "src/components/AiPluginPage.tsx",
       "target": "src/styles/ai-connections.css",
       "kind": "import",
-      "line": 20
+      "line": 18
     },
     {
       "source": "src/components/AiSummaryViewer.tsx",
@@ -11384,9 +11403,10 @@
         "server/tests/aiOAuth.test.ts",
         "server/tests/aiPlugin.test.ts",
         "server/tests/aiWatchlistConcurrency.test.ts",
-        "server/tests/aiTelemetry.test.ts"
+        "server/tests/aiTelemetry.test.ts",
+        "server/tests/aiIngress.test.ts"
       ],
-      "reason": "Website sign-in approves a public PKCE client with explicit permissions. External opaque credentials never accept website cookies or client-supplied owners/roles. Live durable entitlement and shared per-account quotas precede bounded tools; writes recheck grant and plan in a transaction with an idempotent receipt. Website watchlists use request-local revision CAS while enabled, and reads do not restore stale backups. Connection/consent responses bypass browser, CDN and SW caches. Profile/watchlist/notes refresh on return; account changes suppress late responses. Root OAuth endpoints, MCP and the four compatibility GET routes share the same authorization owner. The disabled-by-default flag is required until an approved service-only schema rollout and live client/browser checks; source tests do not certify deployment or marketplace publication."
+      "reason": "Website sign-in approves a public PKCE client with explicit permissions. External opaque credentials never accept website cookies or client-supplied owners/roles. Live durable entitlement and shared per-account quotas precede bounded tools; writes recheck grant and plan in a transaction with an idempotent receipt. Website watchlists use request-local revision CAS while enabled, and reads do not restore stale backups. Connection/consent responses bypass browser, CDN and SW caches. Profile/watchlist/notes refresh on return; account changes suppress late responses. Root OAuth endpoints, MCP and the four compatibility GET routes share the same authorization owner. The disabled-by-default flag is required until an approved service-only schema rollout and live client/browser checks; source tests do not certify deployment or marketplace publication. Connection discovery uses the configured Express trusted-proxy hostname while all issuer/resource URLs remain canonical. Exact browser-Origin checks cover MCP requests and preflights. Settings owns the sole visible entry; client-specific web setup distinguishes public URL copying, approved grants and completed client setup. Same-account refresh retains content and account/request changes hide obsolete responses."
     }
   ],
   "routes": [
@@ -11994,7 +12014,7 @@
     },
     {
       "file": "server/ai/http.ts",
-      "line": 297,
+      "line": 329,
       "receiver": "app",
       "method": "USE",
       "path": "rootPaths",
@@ -12005,7 +12025,7 @@
     },
     {
       "file": "server/ai/http.ts",
-      "line": 311,
+      "line": 346,
       "receiver": "app",
       "method": "USE",
       "path": "[\"/authorize\", \"/token\", \"/register\", \"/revoke\", \"/mcp\"]",
@@ -12015,7 +12035,7 @@
     },
     {
       "file": "server/ai/http.ts",
-      "line": 326,
+      "line": 361,
       "receiver": "app",
       "method": "GET",
       "path": "/.well-known/oauth-authorization-server",
@@ -12025,7 +12045,17 @@
     },
     {
       "file": "server/ai/http.ts",
-      "line": 337,
+      "line": 374,
+      "receiver": "app",
+      "method": "GET",
+      "path": "/.well-known/oauth-protected-resource",
+      "middleware": [
+        "<handler>"
+      ]
+    },
+    {
+      "file": "server/ai/http.ts",
+      "line": 383,
       "receiver": "app",
       "method": "USE",
       "path": "mcpAuthRouter({ provider: aiOAuthProvider, issuerUrl: new URL(publicOrigin()), resourceServerUrl: new URL(resourceUrl()), scopesSupported: [...SCOPES], serviceDocumentationUrl: new URL(publicOrigin() + \"/plugin\"), resourceName: \"Bsenexus\", ",
@@ -12033,7 +12063,7 @@
     },
     {
       "file": "server/ai/http.ts",
-      "line": 353,
+      "line": 399,
       "receiver": "app",
       "method": "ALL",
       "path": "/mcp",
@@ -14080,6 +14110,22 @@
       ]
     },
     {
+      "file": "server/tests/aiIngress.test.ts",
+      "line": 18,
+      "receiver": "app",
+      "method": "USE",
+      "path": "express.json()",
+      "middleware": []
+    },
+    {
+      "file": "server/tests/aiIngress.test.ts",
+      "line": 139,
+      "receiver": "app",
+      "method": "USE",
+      "path": "express.json()",
+      "middleware": []
+    },
+    {
       "file": "server/tests/aiOAuth.test.ts",
       "line": 54,
       "receiver": "app",
@@ -14560,6 +14606,66 @@
       "target": "url"
     },
     {
+      "file": "server/tests/aiIngress.test.ts",
+      "line": 33,
+      "function": "fetch",
+      "target": "base + path"
+    },
+    {
+      "file": "server/tests/aiIngress.test.ts",
+      "line": 42,
+      "function": "fetch",
+      "target": "base + \"/mcp\""
+    },
+    {
+      "file": "server/tests/aiIngress.test.ts",
+      "line": 46,
+      "function": "fetch",
+      "target": "base + \"/.well-known/oauth-authorization-server\""
+    },
+    {
+      "file": "server/tests/aiIngress.test.ts",
+      "line": 56,
+      "function": "fetch",
+      "target": "base + \"/.well-known/oauth-authorization-server\""
+    },
+    {
+      "file": "server/tests/aiIngress.test.ts",
+      "line": 77,
+      "function": "fetch",
+      "target": "base + \"/mcp\""
+    },
+    {
+      "file": "server/tests/aiIngress.test.ts",
+      "line": 83,
+      "function": "fetch",
+      "target": "base + \"/mcp\""
+    },
+    {
+      "file": "server/tests/aiIngress.test.ts",
+      "line": 99,
+      "function": "fetch",
+      "target": "base + \"/mcp\""
+    },
+    {
+      "file": "server/tests/aiIngress.test.ts",
+      "line": 107,
+      "function": "fetch",
+      "target": "base + \"/mcp\""
+    },
+    {
+      "file": "server/tests/aiIngress.test.ts",
+      "line": 116,
+      "function": "fetch",
+      "target": "base + \"/mcp\""
+    },
+    {
+      "file": "server/tests/aiIngress.test.ts",
+      "line": 146,
+      "function": "fetch",
+      "target": "url"
+    },
+    {
       "file": "server/tests/aiOAuth.test.ts",
       "line": 59,
       "function": "fetch",
@@ -14885,21 +14991,15 @@
     },
     {
       "file": "src/components/AiPluginPage.tsx",
-      "line": 111,
+      "line": 206,
       "function": "customFetch",
       "target": "\"/api/ai/connections\" + (request ? \"/request?request=\" + encodeURIComponent(request) : \"\")"
     },
     {
       "file": "src/components/AiPluginPage.tsx",
-      "line": 161,
+      "line": 325,
       "function": "customFetch",
-      "target": "\"/api/ai/connections/\" + encodeURIComponent(id) + \"/revoke\""
-    },
-    {
-      "file": "src/components/AiPluginPage.tsx",
-      "line": 189,
-      "function": "customFetch",
-      "target": "\"/api/ai/connections/authorize\""
+      "target": "path"
     },
     {
       "file": "src/components/AlertRulesModal.tsx",
@@ -15053,7 +15153,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 721,
+      "line": 683,
       "function": "customFetch",
       "target": "'/api/health'"
     },
@@ -15835,37 +15935,37 @@
     },
     {
       "file": "server/ai/http.ts",
-      "line": 133,
+      "line": 141,
       "function": "db\n        .from",
       "key": "\"ai_connection_grants\""
     },
     {
       "file": "server/ai/http.ts",
-      "line": 151,
+      "line": 159,
       "function": "db\n        .from",
       "key": "\"ai_connection_usage\""
     },
     {
       "file": "server/ai/http.ts",
-      "line": 159,
+      "line": 167,
       "function": "db\n        .from",
       "key": "\"ai_connection_operations\""
     },
     {
       "file": "server/ai/http.ts",
-      "line": 202,
+      "line": 210,
       "function": "db\n        .from",
       "key": "\"ai_connection_requests\""
     },
     {
       "file": "server/ai/http.ts",
-      "line": 236,
+      "line": 244,
       "function": "db\n          .from",
       "key": "\"ai_connection_requests\""
     },
     {
       "file": "server/ai/http.ts",
-      "line": 273,
+      "line": 281,
       "function": "db\n        .from",
       "key": "\"ai_connection_grants\""
     },
@@ -17197,7 +17297,7 @@
     },
     {
       "file": "src/components/ui/CommandPalette.tsx",
-      "line": 430,
+      "line": 420,
       "function": "Array.from",
       "key": "companyItemsMap.values()"
     },
@@ -17736,7 +17836,12 @@
     },
     {
       "file": "server/ai/http.ts",
-      "line": 302,
+      "line": 301,
+      "name": "AI_ALLOWED_ORIGINS"
+    },
+    {
+      "file": "server/ai/http.ts",
+      "line": 337,
       "name": "NODE_ENV"
     },
     {
@@ -18505,6 +18610,71 @@
       "name": "NVIDIA_API_KEY"
     },
     {
+      "file": "server/tests/aiIngress.test.ts",
+      "line": 12,
+      "name": "AI_CONNECTIONS_ENABLED"
+    },
+    {
+      "file": "server/tests/aiIngress.test.ts",
+      "line": 13,
+      "name": "NODE_ENV"
+    },
+    {
+      "file": "server/tests/aiIngress.test.ts",
+      "line": 14,
+      "name": "NODE_ENV"
+    },
+    {
+      "file": "server/tests/aiIngress.test.ts",
+      "line": 15,
+      "name": "AI_CONNECTIONS_ENABLED"
+    },
+    {
+      "file": "server/tests/aiIngress.test.ts",
+      "line": 115,
+      "name": "AI_CONNECTIONS_ENABLED"
+    },
+    {
+      "file": "server/tests/aiIngress.test.ts",
+      "line": 118,
+      "name": "AI_CONNECTIONS_ENABLED"
+    },
+    {
+      "file": "server/tests/aiIngress.test.ts",
+      "line": 119,
+      "name": "AI_CONNECTIONS_ENABLED"
+    },
+    {
+      "file": "server/tests/aiIngress.test.ts",
+      "line": 120,
+      "name": "NODE_ENV"
+    },
+    {
+      "file": "server/tests/aiIngress.test.ts",
+      "line": 121,
+      "name": "NODE_ENV"
+    },
+    {
+      "file": "server/tests/aiIngress.test.ts",
+      "line": 128,
+      "name": "AI_CONNECTIONS_ENABLED"
+    },
+    {
+      "file": "server/tests/aiIngress.test.ts",
+      "line": 129,
+      "name": "AI_CONNECTIONS_ENABLED"
+    },
+    {
+      "file": "server/tests/aiIngress.test.ts",
+      "line": 158,
+      "name": "AI_CONNECTIONS_ENABLED"
+    },
+    {
+      "file": "server/tests/aiIngress.test.ts",
+      "line": 159,
+      "name": "AI_CONNECTIONS_ENABLED"
+    },
+    {
       "file": "server/tests/aiPlugin.test.ts",
       "line": 31,
       "name": "AI_CONNECTIONS_ENABLED"
@@ -18988,19 +19158,35 @@
     },
     {
       "file": "src/components/AiPluginPage.tsx",
-      "line": 94,
+      "line": 181,
       "target": "window",
       "kind": "listen",
       "name": "popstate",
-      "expression": "window.addEventListener(\"popstate\", fn)"
+      "expression": "window.addEventListener(\"popstate\", sync)"
     },
     {
       "file": "src/components/AiPluginPage.tsx",
-      "line": 95,
+      "line": 182,
       "target": "window",
       "kind": "remove",
       "name": "popstate",
-      "expression": "window.removeEventListener(\"popstate\", fn)"
+      "expression": "window.removeEventListener(\"popstate\", sync)"
+    },
+    {
+      "file": "src/components/AiPluginPage.tsx",
+      "line": 280,
+      "target": "window",
+      "kind": "listen",
+      "name": "focus",
+      "expression": "window.addEventListener(\"focus\", refresh)"
+    },
+    {
+      "file": "src/components/AiPluginPage.tsx",
+      "line": 281,
+      "target": "window",
+      "kind": "remove",
+      "name": "focus",
+      "expression": "window.removeEventListener(\"focus\", refresh)"
     },
     {
       "file": "src/components/AiUsageCard.tsx",
@@ -19716,7 +19902,7 @@
     },
     {
       "file": "src/components/ui/CommandPalette.tsx",
-      "line": 263,
+      "line": 253,
       "target": "window",
       "kind": "dispatch",
       "name": "bse-filter-topic",
@@ -19724,7 +19910,7 @@
     },
     {
       "file": "src/components/ui/CommandPalette.tsx",
-      "line": 276,
+      "line": 266,
       "target": "window",
       "kind": "dispatch",
       "name": "bse-filter-topic",
