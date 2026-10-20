@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "94649d9d46cc6563fefda4ea8ce9c99178bea6f3d94a761e64a5ead512e5438f",
+  "sourceDigest": "33da178d2f73ade4196679ba2d23cee7d532af2e447744bde095ad8f5e439a35",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -2010,7 +2010,7 @@
     },
     {
       "path": "src/components/SettingsTab.tsx",
-      "sha256": "db071d220d62f643a4397e854f834d21e00483b6c83521a338a3ef91a208917a",
+      "sha256": "7743ffa3cc2356fb96f53339b32b8ea95fdfe4731ef1516169f0a29710629529",
       "importedBy": [
         "src/App.tsx"
       ]

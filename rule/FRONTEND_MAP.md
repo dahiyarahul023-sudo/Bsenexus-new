@@ -1,5 +1,7 @@
 # Frontend spider web: where changes travel
 
+2026-10-20 Settings discovery correction: `indexGroups` now includes the existing `ai-plugin` definition once in Tools & Discovery. Default/search views share its `/plugin` action; guest/user/admin render and handler checks pass. Browser executable is unavailable; see changes/ai-settings-entry.md.
+
 2026-10-17 Impact Radar follow-up: HomeForYou mounts a two-card ImpactRadar preview alongside the original three-card HomeMarketNews. See more opens RadarWindow, a native modal dashboard with All events / Watchlist Radar, timing/category filters and 12-at-a-time display. Whole-card primary buttons open detail immediately inside that window; detail never extends Home. RadarWindow owns inert background, focus containment, scroll position and return focus. RadarMovementPanel reads a separately validated NSE daily-report endpoint; publication, sourced event and earliest recorded announcement dates remain distinct. The Home owner refreshes watchlists on navigation refresh and explicit retry, aborting obsolete identity/refresh reads. Existing durable event-follow ownership is unchanged. See changes/impact-radar-follow-up.md for verification limits.
 
 2026-10-11 startup audit: App feed/home lazy imports, immediate main error boundary and dynamically configured Sentry. Shared nav/tab indicators avoid layout tracking; screen transitions animate direct children after paint scheduling. See changes/performance-security-audit.md for linked consumers and unverified browser gates.

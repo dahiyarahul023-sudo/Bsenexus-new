@@ -1127,7 +1127,7 @@ export function SettingsTab({
 
   const indexGroups: { label?: string; ids: string[]; danger?: boolean }[] = [
     { ids: ['preferences', 'account', 'subscription', 'notes', 'watchlist'] },
-    { label: 'Tools & Discovery', ids: ['alerts', 'companies'] },
+    { label: 'Tools & Discovery', ids: ['alerts', 'ai-plugin', 'companies'] },
     { label: 'Support', ids: ['help', 'about'] },
   ];
 

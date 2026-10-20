@@ -1,5 +1,7 @@
 # Frontend strategy and evidence-based priorities
 
+2026-10-20 Settings AI entry correction: the existing connection row is now included in the rendered Settings group. Eighteen identity/search/action render checks pass; actual browser/device and hosted OAuth verification remain separate. See changes/ai-settings-entry.md.
+
 2026-10-17 bounded Impact Radar follow-up supersedes the initial inline layout: two Home cards and separate ordinary news, native full Radar dashboard/detail, Watchlist Radar scope, timing colours with labels, reduced-motion-safe pulse, source/date evidence and observed NSE session changes. The existing RSS cache coalesces simultaneous Radar/news requests. Neutral pre-event content, authenticated durable follows and reviewed-case grouping remain intact. Automated source/contract/render tests do not certify browser/device usability or hosting deployment; see changes/impact-radar-follow-up.md.
 
 2026-10-11 performance follow-up: entry JavaScript 1,692,008→1,464,208 raw bytes; default CTA delay and recursive layout reads removed; decorative work bounded/paused and optional SDKs deferred. Clean install/tests/build pass. Browser acceptance, real INP/PageSpeed improvement and deployment remain separate gates. See docs/audit/PERFORMANCE_SECURITY_2026-10-11.md; P3 is not complete from bundle size alone.
