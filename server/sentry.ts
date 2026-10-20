@@ -1,4 +1,5 @@
 import * as Sentry from '@sentry/node';
+import { redactAiTelemetry } from '../src/shared/aiTelemetry.js';
 
 /**
  * BSE Nexus Server-Side Sentry Monitoring
@@ -28,6 +29,8 @@ export function initServerSentry(): void {
       dsn,
       environment: process.env.NODE_ENV || 'production',
       tracesSampleRate: 0.1,
+      beforeSend: event => redactAiTelemetry(event),
+      beforeSendTransaction: event => redactAiTelemetry(event),
     });
     isServerInitialized = true;
     console.log('[Sentry] Server monitoring initialized.');

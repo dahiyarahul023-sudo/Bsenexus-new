@@ -934,6 +934,13 @@ export function WatchlistManager() {
   useVisibilityInterval(fetchAnnouncements, 90000);
 
   useEffect(() => {
+    const refresh = () => { if (document.visibilityState === 'visible') void fetchWatchlists(); };
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refresh);
+    return () => { window.removeEventListener('focus', refresh); document.removeEventListener('visibilitychange', refresh); };
+  }, [user?.uid, isPro, isAdmin]);
+
+  useEffect(() => {
     if (watchlistOwner !== accountId) { setWatchlists([]); setWatchlistOwner(accountId); setActiveListId('ALL'); setLastAddedInfo(null); setUndoToast(null); }
     void fetchWatchlists();
 

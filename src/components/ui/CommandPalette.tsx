@@ -193,8 +193,8 @@ export function CommandPalette({
       },
       {
         id: 'nav_ai_plugin',
-        title: 'Universal AI Plugin & Action Schema',
-        subtitle: 'Connect ChatGPT, Google Gemini & custom bots directly to live BSE filings',
+        title: 'AI Connections',
+        subtitle: 'Connect your account to a compatible AI client',
         category: 'Navigation',
         icon: Bot,
         action: () => { window.location.href = '/plugin'; onClose(); },

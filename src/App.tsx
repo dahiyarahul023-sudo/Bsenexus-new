@@ -420,7 +420,8 @@ function AppContent() {
     enabled: true
   });
 
-  const handleTabChange = (newTab: string) => {
+  const handleTabChange = (requestedTab: string) => {
+    const newTab = requestedTab === 'announcements' ? 'dashboard' : requestedTab;
     // Watchlist is Pro-only: free users get the upgrade sheet instead (covers
     // deep links, profile-modal shortcut and in-app buttons).
     const canUseWatchlist = Boolean(isPro || isAdmin || adminUnlocked || profile?.tier === 'admin');
@@ -428,7 +429,7 @@ function AppContent() {
       setIsProModalOpen(true);
       return;
     }
-    if (newTab === activeTab) {
+    if (newTab === activeTab && getAppPathRoute() === 'home') {
       // Tap active tab to scroll to top (like iOS / Twitter)
       scrollToTop();
       return;
@@ -545,6 +546,10 @@ function AppContent() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
+  useEffect(() => {
+    if (currentRoute === 'home') document.title = activeTab === 'dashboard' ? 'Live BSE Filings | Bsenexus' : 'Bsenexus — Stock Market Intelligence';
+  }, [currentRoute, activeTab]);
+
   // Synchronize browser address bar with activeTab navigation without reloading
   const isFirstTabSyncRender = useRef(true);
   useEffect(() => {
@@ -578,7 +583,7 @@ function AppContent() {
         targetPath = '/?tab=seo-suite';
         break;
       case 'settings':
-        targetPath = '/?tab=settings';
+        targetPath = '/settings';
         break;
       case 'home':
       default:
@@ -605,6 +610,10 @@ function AppContent() {
         if (shared) return;
         if (pathname === '/announcements') {
           setActiveTab('dashboard');
+          return;
+        }
+        if (pathname === '/settings') {
+          setActiveTab('settings');
           return;
         }
         if (pathname === '/live') {

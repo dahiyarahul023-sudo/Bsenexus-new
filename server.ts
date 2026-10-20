@@ -43,6 +43,7 @@ import { verifyRecaptchaToken } from "./server/security/recaptchaService.js";
 import { getBseBlockBackoffLevel } from "./server/services/bse.js";
 import { getAllFeedback } from "./server/database/feedbackDao.js";
 import { prerenderFilingHtml, prerenderCompanyHtml, buildSitemapIndexXml, cleanCanonicalUrl, buildAnnouncementsFeedCards, buildAnnouncementsCollectionJsonLd, PRELOADER_CARD_RE } from "./server/services/seoPrerender.js";
+import { mountAiIntegration } from './server/ai/http.js';
 import { getAiPluginManifest } from "./server/api/aiPlugin.js";
 
 // Global error handlers to prevent background quota/network exceptions from crashing the process
@@ -94,6 +95,8 @@ app.use(compression({
 
 app.use(responseHeaders());
 app.use('/api/payments/webhook', express.raw({ type: 'application/json', limit: '1mb' }));
+app.use(['/mcp','/register'], express.json({ limit: '32kb' }));
+app.use(['/token','/revoke'], express.urlencoded({ extended: false, limit: '8kb' }));
 app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser());
 // The scheduler uses its own server-only secret, never a user session token.
@@ -115,6 +118,7 @@ app.get('/api/cron/poll-announcements', createAnnouncementCronHandler({
   },
 }));
 app.use(authMiddleware);
+mountAiIntegration(app);
 
 // Explicit Service Worker handler with no-cache headers
 app.get('/sw.js', (_req, res) => {
@@ -5517,7 +5521,7 @@ app.get('/opensearch.xml', (_req, res) => {
 app.get(['/.well-known/ai-plugin.json', '/ai-plugin.json'], (_req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.setHeader('Cache-Control', 'public, max-age=86400');
+  res.setHeader('Cache-Control', 'no-store');
   res.json(getAiPluginManifest());
 });
 
@@ -6764,6 +6768,7 @@ function injectTabSeoMetadata(html: string, tabQuery?: string): string {
 // Helper to compute Cloudflare edge and browser Cache-Control headers for SPA routes
 function getSpaRouteCacheControl(reqPath: string): string {
   const p = reqPath.toLowerCase().replace(/\/+$/, '') || '/';
+  if (p === '/plugin' || p === '/ai-plugin') return 'no-store';
   if (p === '/') {
     // 1. / (homepage)
     return 'public, max-age=60, s-maxage=300, stale-while-revalidate=600';

@@ -98,11 +98,15 @@ import { notesRouter } from "./notes.js";
 import { impactRadarRouter } from "./impactRadar.js";
 import { pageRenderCache, staticGuideCache, apiResponseCache } from "../utils/renderCache.js";
 import { getMarketGuides, getMarketGuideBySlug } from "../services/marketGuidesService.js";
+import { invalidateUserWatchlistCache } from '../database/watchlistDao.js';
+import { aiConnectionsRouter } from '../ai/http.js';
+import { connectionsEnabled } from '../ai/policy.js';
 import { aiPluginRouter } from "./aiPlugin.js";
 
 export const apiRouter = express.Router();
 
 // Universal AI Plugin & OpenAPI Action Gateway (ChatGPT, Gemini, Agents)
+apiRouter.use("/ai/connections", aiConnectionsRouter);
 apiRouter.use("/ai", aiPluginRouter);
 
 // Mount Super SEO Suite (11 Verified Skills Engine)
@@ -735,6 +739,7 @@ apiRouter.post("/announcements/:id/generate-summary", requireAuth, aiRateLimiter
 
 apiRouter.get("/watchlists", requireProOrAdmin, async (req, res) => {
   const uid = getReqUserId(req);
+  if (connectionsEnabled()) invalidateUserWatchlistCache(uid);
   res.json(await getAllWatchlists(uid));
 });
 

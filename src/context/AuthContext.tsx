@@ -1309,6 +1309,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  useEffect(() => {
+    if (!user || user.isAnonymous) return;
+    const uid=user.uid;let last=0;let pending:AbortController|null=null;
+    const refresh = () => {
+      if (document.visibilityState !== 'visible' || Date.now()-last<2000) return;
+      last=Date.now();pending?.abort();pending=new AbortController();const signal=pending.signal;
+      const expectedProfile=preferenceStateRef.current.profile;
+      void customFetch('/api/users/profile',{signal,cache:'no-store'}).then(async res=>{
+        if(!res.ok)return;const data=await res.json();
+        if(signal.aborted||data.profile?.uid!==uid||auth.currentUser?.uid!==uid)return;
+        setProfile(old=>old?.uid===uid&&old===expectedProfile?{...data.profile,photoURL:old.photoURL}:old);
+        setProfileUnavailable(false);
+        window.dispatchEvent(new Event('notes-changed'));
+      }).catch(()=>{});
+    };
+    window.addEventListener('focus',refresh);document.addEventListener('visibilitychange',refresh);
+    return()=>{pending?.abort();window.removeEventListener('focus',refresh);document.removeEventListener('visibilitychange',refresh);};
+  },[user?.uid,user?.isAnonymous]);
+
   const isOwner = Boolean(
     user && user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()
   );

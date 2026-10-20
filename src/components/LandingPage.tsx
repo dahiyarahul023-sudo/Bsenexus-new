@@ -400,8 +400,8 @@ export function LandingPage({
                 className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-all flex items-center gap-1.5 font-bold text-emerald-600 dark:text-emerald-400 min-h-[32px] px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300/80 dark:border-emerald-700/60 whitespace-nowrap select-none shadow-2xs hover:scale-105"
               >
                 <Bot className="w-3.5 h-3.5 text-emerald-500" />
-                <span>AI Plugin</span>
-                <span className="text-[9px] px-1 py-0.2 rounded bg-emerald-500 text-white font-mono font-bold leading-none">GPT &amp; Gemini</span>
+                <span>AI Connections</span>
+                <span className="text-[9px] px-1 py-0.2 rounded bg-emerald-500 text-white font-mono font-bold leading-none">OAuth</span>
               </a>
             </nav>
 
@@ -572,9 +572,9 @@ export function LandingPage({
                 >
                   <div className="flex items-center gap-2">
                     <Bot className="w-3.5 h-3.5 text-emerald-500" />
-                    <span>AI Plugin (ChatGPT &amp; Gemini)</span>
+                    <span>AI Connections</span>
                   </div>
-                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-mono">OpenAPI</span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">Connect</span>
                 </a>
 
                 <div className="pt-3 pb-1 border-t border-slate-200/80 dark:border-[#2D283E]">
@@ -2375,77 +2375,10 @@ export function LandingPage({
         </div>
       </section>
 
-      {/* Universal AI Plugin & Bot Action Gateway Spotlight Section */}
-      <section className="py-14 sm:py-20 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 text-white relative overflow-hidden border-t border-slate-800">
-        <div className="absolute -top-24 right-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            <div className="lg:col-span-7 space-y-5 text-left">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold border border-emerald-500/30">
-                <Bot className="w-3.5 h-3.5" />
-                <span>Zero-Code Universal AI Action &amp; OpenAPI 3.1</span>
-              </div>
-              <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight leading-snug">
-                Connect ChatGPT, Google Gemini &amp; Custom Bots Directly to BSE Filings
-              </h2>
-              <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-xl">
-                Feed real-time regulatory disclosures, quarterly financial results, upcoming board meetings, and BSE company intelligence directly into your favorite AI model or automated Telegram bot with one click.
-              </p>
-              <div className="flex flex-wrap items-center gap-3 pt-2">
-                <a
-                  href="/plugin"
-                  className="px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs sm:text-sm rounded-xl shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2 cursor-pointer"
-                >
-                  <Bot className="w-4 h-4" />
-                  <span>Open AI Plugin &amp; Schema Hub</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </a>
-                <a
-                  href="/api/ai/openapi.json"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-5 py-3 bg-slate-800/90 hover:bg-slate-700 text-slate-200 font-semibold text-xs sm:text-sm rounded-xl border border-slate-700/80 transition-all flex items-center gap-2 font-mono"
-                >
-                  <Code2 className="w-4 h-4 text-emerald-400" />
-                  <span>View OpenAPI Spec (JSON)</span>
-                </a>
-              </div>
-            </div>
-
-            <div className="lg:col-span-5 bg-slate-950/80 rounded-2xl border border-slate-800 p-5 space-y-3.5 font-mono text-xs shadow-2xl">
-              <div className="flex items-center justify-between border-b border-slate-800/80 pb-2 text-[11px] text-slate-400">
-                <span className="flex items-center gap-1.5 text-emerald-400 font-bold">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  Live AI Action Endpoints
-                </span>
-                <span>OpenAPI 3.1.0</span>
-              </div>
-              <div className="space-y-2 text-[11.5px]">
-                <div className="p-2.5 rounded-lg bg-slate-900/90 border border-slate-800/70">
-                  <div className="text-slate-400 text-[10px]">ChatGPT Custom GPT Action URL</div>
-                  <div className="text-emerald-300 break-all select-all font-semibold mt-0.5">
-                    https://bsenexus.in/api/ai/openapi.json
-                  </div>
-                </div>
-                <div className="p-2.5 rounded-lg bg-slate-900/90 border border-slate-800/70">
-                  <div className="text-slate-400 text-[10px]">Plugin Manifest (GPT Plugin)</div>
-                  <div className="text-amber-300 break-all select-all font-semibold mt-0.5">
-                    https://bsenexus.in/.well-known/ai-plugin.json
-                  </div>
-                </div>
-                <div className="p-2.5 rounded-lg bg-slate-900/90 border border-slate-800/70">
-                  <div className="text-slate-400 text-[10px]">Google Gemini Function Declarations</div>
-                  <div className="text-sky-300 break-all select-all font-semibold mt-0.5">
-                    https://bsenexus.in/api/ai/gemini-tools.json
-                  </div>
-                </div>
-              </div>
-              <div className="text-[11px] text-slate-400 flex items-center justify-between pt-1">
-                <span>⚡ Rate limit: 40 req/min per IP</span>
-                <span className="text-emerald-400">Instant Open Access</span>
-              </div>
-            </div>
-          </div>
+      <section className="py-12 sm:py-16 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#100e19]">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 grid md:grid-cols-2 gap-8 items-center">
+          <div><span className="text-emerald-600 dark:text-emerald-400 text-sm font-semibold">AI Connections</span><h2 className="text-3xl font-bold text-slate-900 dark:text-white mt-3">Your Bsenexus account, in your AI</h2><p className="text-slate-600 dark:text-slate-300 leading-relaxed mt-4">Read company filings, organise watchlists and manage permitted preferences through a compatible AI connection.</p><a href="/plugin" className="inline-flex items-center gap-2 bg-emerald-700 text-white font-semibold rounded-xl px-5 py-3 mt-6">Connect your AI <ArrowRight size={18}/></a></div>
+          <div className="rounded-2xl p-6 border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#191625]"><ol className="space-y-4 text-slate-700 dark:text-slate-200"><li><strong>1. Choose your AI</strong><p className="text-sm mt-1">See the supported connection setup.</p></li><li><strong>2. Sign in and choose permissions</strong><p className="text-sm mt-1">Approve reading or editing access.</p></li><li><strong>3. Manage your account through conversation</strong><p className="text-sm mt-1">Your plan and usage limits apply everywhere.</p></li></ol><p className="text-xs text-slate-500 dark:text-slate-400 mt-5 leading-relaxed">Requires a compatible MCP client. AI provider plans and workspace rules may apply. Custom connection setup is available; directory publication is separate.</p></div>
         </div>
       </section>
 
@@ -2517,7 +2450,7 @@ export function LandingPage({
                 <li><a href="/about" className="hover:text-emerald-500 transition-colors text-slate-700 dark:text-slate-300 block">About Bsenexus</a></li>
                 <li><a href="/companies" className="hover:text-emerald-500 transition-colors text-emerald-600 dark:text-emerald-400 font-semibold block">BSE Listed Companies</a></li>
                 <li><a href="/pricing" className="hover:text-emerald-500 transition-colors text-slate-700 dark:text-slate-300 block">Pricing &amp; Plans</a></li>
-                <li><a href="/plugin" className="hover:text-emerald-500 transition-colors text-emerald-600 dark:text-emerald-400 font-semibold block">AI Plugin (ChatGPT &amp; Gemini)</a></li>
+                <li><a href="/plugin" className="hover:text-emerald-500 transition-colors text-emerald-600 dark:text-emerald-400 font-semibold block">AI Connections</a></li>
                 <li><a href="/guides" className="hover:text-emerald-500 transition-colors text-slate-700 dark:text-slate-300 block">Market Research Guides</a></li>
                 <li><a href="/faq" className="hover:text-emerald-500 transition-colors text-slate-700 dark:text-slate-300 block">SEBI Disclosures FAQ</a></li>
                 <li><a href="/rss.xml" target="_blank" rel="noopener noreferrer" className="hover:text-emerald-500 transition-colors text-slate-700 dark:text-slate-300 block">RSS Feed</a></li>

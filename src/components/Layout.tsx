@@ -490,14 +490,14 @@ export function Layout({
               {/* AI Plugin Header Pill */}
               <a
                 href="/plugin"
-                aria-label="Universal AI Plugin for ChatGPT and Gemini"
+                aria-label="Connect your AI to Bsenexus"
                 className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 border border-emerald-300/80 dark:border-emerald-700/60 text-emerald-800 dark:text-emerald-200 cursor-pointer select-none shadow-xs shrink-0 min-h-[32px] transition-colors"
-                title="AI Plugin — Connect ChatGPT & Gemini to BSE live filings"
+                title="Connect your AI to your Bsenexus account"
               >
                 <Bot size={13} className="text-emerald-500 shrink-0" />
-                <span className="text-xs font-semibold">AI Plugin</span>
+                <span className="text-xs font-semibold">AI Connections</span>
                 <span className="text-[9px] font-bold px-1 py-0.2 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 leading-none">
-                  OpenAPI
+                  Connect
                 </span>
               </a>
 
@@ -614,12 +614,12 @@ export function Layout({
             <a
               href="/plugin"
               className="ml-auto hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/50 transition-colors shrink-0"
-              title="Connect ChatGPT & Google Gemini to BSE live filings"
+              title="Connect your account through a compatible AI client"
             >
               <Bot size={13} className="text-emerald-500 shrink-0" />
-              <span>AI Plugin</span>
+              <span>AI Connections</span>
               <span className="text-[9px] font-bold px-1 py-0.2 rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/30">
-                GPT &amp; Gemini
+                Connect
               </span>
             </a>
           </nav>
@@ -674,10 +674,10 @@ export function Layout({
               >
                 <div className="flex items-center gap-2.5">
                   <Bot size={16} className="text-emerald-500" />
-                  <span>AI Plugin (ChatGPT &amp; Gemini)</span>
+                  <span>AI Connections</span>
                 </div>
                 <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/30 font-mono">
-                  OpenAPI
+                  Connect
                 </span>
               </a>
 

@@ -387,7 +387,10 @@
         "src/utils/homeNews.ts",
         "src/styles/home-news.css",
         "src/components/ui/motion/ShareActionMenu.tsx",
-        "src/components/notes/SaveNoteButton.tsx"
+        "src/components/notes/SaveNoteButton.tsx",
+        "src/components/AiPluginPage.tsx",
+        "src/components/SettingsTab.tsx",
+        "src/components/ui/CommandPalette.tsx"
       ],
       "tests": [
         "server/tests/routeResolution.test.ts",
@@ -586,7 +589,10 @@
         "src/components/ui/ThinkingPill.tsx",
         "src/components/ui/TimeoutRetryState.tsx",
         "src/components/notes/SaveNoteButton.tsx",
-        "src/api.ts"
+        "src/api.ts",
+        "src/components/AiPluginPage.tsx",
+        "src/styles/ai-connections.css",
+        "server/api/aiPlugin.ts"
       ],
       "tests": [
         "server/tests/aiQuotaFrontend.test.ts",
@@ -771,6 +777,51 @@
         "server/tests/followupAudit.test.ts"
       ],
       "reason": "Public feed \u2192 validated content-led chapter adapter \u2192 Home carousel and both shared viewer entry points. Chapter selection uses stable IDs. Aggregate topics, especially FII/DII, have neutral symbols and no company CTA; only exact per-company records use the existing official-logo resolver and Company Intelligence callbacks. No sample facts on loading/error. News is bounded by sourced publication time and the existing 18-hour/session policy. Newer refreshes win cache races; stale/empty/error states remain distinct. The scoped reading canvas, proportional signed charts, native illustrations, pause clock, portal focus/inertness, scroll and reduced motion are one interaction contract. Browser/device verification and live deployment are separate from source/render/build evidence. Company news is one finite chapter: at most seven screens, two per company, complete explanations and adjacent company groups. Chapter-wide progress/count never reset per news sequence. Optional restrained sector art, clean text and unambiguous source-backed order metrics avoid a compulsory repeated illustration."
+    },
+    {
+      "id": "ai-connections",
+      "label": "Scoped OAuth AI connections and account tools",
+      "files": [
+        "server/ai/policy.ts",
+        "server/ai/oauth.ts",
+        "server/ai/http.ts",
+        "server/ai/tools.ts",
+        "server/ai/market.ts",
+        "server/database/aiConnectionsDao.ts",
+        "server/api/aiPlugin.ts",
+        "server/database/watchlistDao.ts",
+        "server/database/usersDao.ts",
+        "server/database/paymentEntitlementsDao.ts",
+        "server/database/notificationDao.ts",
+        "server/services/aiQuotaService.ts",
+        "server/services/monitor.ts",
+        "server.ts",
+        "server/api/routes.ts",
+        "src/components/AiPluginPage.tsx",
+        "src/styles/ai-connections.css",
+        "src/App.tsx",
+        "src/components/SettingsTab.tsx",
+        "src/components/Layout.tsx",
+        "src/components/LandingPage.tsx",
+        "src/components/ui/CommandPalette.tsx",
+        "src/components/WatchlistManager.tsx",
+        "src/context/AuthContext.tsx",
+        "public/sw.js",
+        "supabase/migrations/20261020072807_ai_connections.sql",
+        "server/sentry.ts",
+        "src/lib/sentry.ts",
+        "src/shared/aiTelemetry.ts",
+        "scripts/verify-ai-connections-staging.sql"
+      ],
+      "tests": [
+        "server/tests/aiConnections.test.ts",
+        "server/tests/aiConnectionsSql.test.ts",
+        "server/tests/aiOAuth.test.ts",
+        "server/tests/aiPlugin.test.ts",
+        "server/tests/aiWatchlistConcurrency.test.ts",
+        "server/tests/aiTelemetry.test.ts"
+      ],
+      "reason": "Website sign-in approves a public PKCE client with explicit permissions. External opaque credentials never accept website cookies or client-supplied owners/roles. Live durable entitlement and shared per-account quotas precede bounded tools; writes recheck grant and plan in a transaction with an idempotent receipt. Website watchlists use request-local revision CAS while enabled, and reads do not restore stale backups. Connection/consent responses bypass browser, CDN and SW caches. Profile/watchlist/notes refresh on return; account changes suppress late responses. Root OAuth endpoints, MCP and the four compatibility GET routes share the same authorization owner. The disabled-by-default flag is required until an approved service-only schema rollout and live client/browser checks; source tests do not certify deployment or marketplace publication."
     }
   ]
 }

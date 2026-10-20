@@ -5,6 +5,7 @@
 //   2. GET /api/config/public -> { sentryDsn } (runtime, server reads SENTRY_DSN env)
 // If neither is set, Sentry stays disabled and the app works normally.
 import type * as SentryTypes from '@sentry/react';
+import { redactAiTelemetry } from '../shared/aiTelemetry';
 import { APP_VERSION } from '../version';
 
 let initialized = false;
@@ -33,8 +34,9 @@ async function startSentry(dsn: string) {
             (typeof event.message === 'string' ? event.message : '');
           if (msg && BENIGN_PATTERNS.test(msg)) return null;
         } catch {}
-        return event;
+        return redactAiTelemetry(event);
       },
+      beforeSendTransaction: event => redactAiTelemetry(event),
     });
     initialized = true;
   } catch {
