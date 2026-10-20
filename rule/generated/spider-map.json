@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "441a393d6f1fef8ac8ca146c1d36032cbc2c5124834e9aa85f1226c55c4bf559",
+  "sourceDigest": "d1980a367211e0bd461fe6bf82aa82f4158cb7ead89c3d95a796b1d1ceaa1ab0",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -176,8 +176,13 @@
       "importedBy": []
     },
     {
+      "path": "scripts/verify-public-calendar.mjs",
+      "sha256": "325c12d11e2d38b1c2310c4ffdb84dbbacd43d91833dcc377a64fcd8490ef0d2",
+      "importedBy": []
+    },
+    {
       "path": "server.ts",
-      "sha256": "524e36875e1590bd3e2f8cbe1660edd3ae03b9ff546191a26a8d1507044b43b6",
+      "sha256": "685488249d5947eb8b1c6bb7d2976eeefea5fae850261550e97b3e5f0209a2ba",
       "importedBy": [
         "server/tests/routeResolution.test.ts"
       ]
@@ -188,6 +193,7 @@
       "importedBy": [
         "server/ai/market.ts",
         "server/ai/tools.ts",
+        "server/services/publicCalendar.ts",
         "server/tests/aiConnectorQuality.test.ts"
       ]
     },
@@ -206,10 +212,11 @@
     },
     {
       "path": "server/ai/market.ts",
-      "sha256": "08a5861151c0aa207c7991480a4238a4c8c03e59de4a1ab2d8c3315b7aabdf57",
+      "sha256": "8f6b6715a69c55bca67e00bbf5e1a3a060d4672a09cee3d0f3d64a4a4c1ec682",
       "importedBy": [
         "server/ai/tools.ts",
-        "server/tests/aiConnections.test.ts"
+        "server/tests/aiConnections.test.ts",
+        "server/tests/aiEvidence.test.ts"
       ]
     },
     {
@@ -223,7 +230,7 @@
     },
     {
       "path": "server/ai/policy.ts",
-      "sha256": "ceb4b3f3e40887573fed97952003ef53788a4a8936b90e9e6878366c3f83b83f",
+      "sha256": "8c0e8aad13153ea58af7b889ff89ac07da01ee67ba9b9b5cf76e98e43d051814",
       "importedBy": [
         "scripts/verify-oauth-routing.mjs",
         "server/ai/calendarRead.ts",
@@ -235,13 +242,15 @@
         "server/api/routes.ts",
         "server/database/aiConnectionsDao.ts",
         "server/database/watchlistDao.ts",
+        "server/services/publicCalendar.ts",
         "server/tests/aiConnections.test.ts",
-        "server/tests/aiConnectorQuality.test.ts"
+        "server/tests/aiConnectorQuality.test.ts",
+        "server/tests/aiEvidence.test.ts"
       ]
     },
     {
       "path": "server/ai/tools.ts",
-      "sha256": "b4da9b288210643f1e5a2bf0aa2855e7b33fc83f56c5ac6b870b7b31c1157d68",
+      "sha256": "a56c407c06f7cacc9116d96caa2ce079510d7b3c87ee813c0ba2bd63d24251d4",
       "importedBy": [
         "server/ai/http.ts",
         "server/api/aiPlugin.ts",
@@ -251,10 +260,11 @@
     },
     {
       "path": "server/api/aiPlugin.ts",
-      "sha256": "5e56905da514d7872655e91c36ca11156f06746d98c3208eeed173a6bb6e8795",
+      "sha256": "9fb949e193ed9162f696d7e5544098718852934ffbc5481ccb2a9ac65de7a516",
       "importedBy": [
         "server.ts",
         "server/api/routes.ts",
+        "server/tests/aiEvidence.test.ts",
         "server/tests/aiPlugin.test.ts"
       ]
     },
@@ -923,6 +933,15 @@
       ]
     },
     {
+      "path": "server/services/publicCalendar.ts",
+      "sha256": "273e0181a40a39bfacc0534f5f245a6bb20243fa0f608d563dc052508486ad11",
+      "importedBy": [
+        "scripts/verify-public-calendar.mjs",
+        "server.ts",
+        "server/tests/aiEvidence.test.ts"
+      ]
+    },
+    {
       "path": "server/services/radarCompanyIdentity.ts",
       "sha256": "4e6c3294011399ce81f74b14b18a647843b881ae84e4010ffa9dcd19a2695fdc",
       "importedBy": [
@@ -989,7 +1008,7 @@
     },
     {
       "path": "server/services/resultsCalendarService.ts",
-      "sha256": "d1561e54fd35111c7e3e90e7345894566b202a05a24c43f228a45666e505cc73",
+      "sha256": "b19052d3e08942e3e8f2e53b15b9cfced04cb1d5d3e88a039d132745563534fe",
       "importedBy": [
         "server.ts",
         "server/ai/calendarRead.ts",
@@ -999,8 +1018,10 @@
         "server/services/bse.ts",
         "server/services/companyIntelService.ts",
         "server/services/gemini.ts",
+        "server/services/publicCalendar.ts",
         "server/services/storyFeedService.ts",
         "server/tests/aiConnectorQuality.test.ts",
+        "server/tests/aiEvidence.test.ts",
         "server/tests/calendarScope.test.ts"
       ]
     },
@@ -1101,6 +1122,11 @@
     {
       "path": "server/tests/aiConnectorQuality.test.ts",
       "sha256": "6195ad01cade1910ea6bbac2c572ad0e327a8c1843d3b61305c5f3a06480ce18",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/aiEvidence.test.ts",
+      "sha256": "ef62698139ad66c0284bc6d4a79c1376b97cbb23a790be9b20d21be33e657bb7",
       "importedBy": []
     },
     {
@@ -1575,6 +1601,7 @@
       "sha256": "f4f294afa7b1fe35d25a8407c5a896b9fe398cfc2bb596d9831ba789602735e0",
       "importedBy": [
         "server.ts",
+        "server/ai/market.ts",
         "server/api/routes.ts",
         "server/database/alertRulesDao.ts",
         "server/database/announcementDao.ts",
@@ -3711,6 +3738,12 @@
       "line": 13
     },
     {
+      "source": "scripts/verify-public-calendar.mjs",
+      "target": "server/services/publicCalendar.ts",
+      "kind": "import",
+      "line": 8
+    },
+    {
       "source": "server.ts",
       "target": "src/shared/scripMatching.ts",
       "kind": "import",
@@ -3922,15 +3955,27 @@
     },
     {
       "source": "server.ts",
-      "target": "server/utils/spaRoutes.ts",
+      "target": "server/services/resultsCalendarService.ts",
       "kind": "import",
       "line": 47
     },
     {
       "source": "server.ts",
-      "target": "server/api/aiPlugin.ts",
+      "target": "server/services/publicCalendar.ts",
       "kind": "import",
       "line": 48
+    },
+    {
+      "source": "server.ts",
+      "target": "server/utils/spaRoutes.ts",
+      "kind": "import",
+      "line": 49
+    },
+    {
+      "source": "server.ts",
+      "target": "server/api/aiPlugin.ts",
+      "kind": "import",
+      "line": 50
     },
     {
       "source": "server/ai/calendarRead.ts",
@@ -4000,9 +4045,15 @@
     },
     {
       "source": "server/ai/market.ts",
-      "target": "server/ai/calendarRead.ts",
+      "target": "server/utils/helpers.ts",
       "kind": "import",
       "line": 14
+    },
+    {
+      "source": "server/ai/market.ts",
+      "target": "server/ai/calendarRead.ts",
+      "kind": "import",
+      "line": 15
     },
     {
       "source": "server/ai/oauth.ts",
@@ -5607,6 +5658,24 @@
       "line": 16
     },
     {
+      "source": "server/services/publicCalendar.ts",
+      "target": "server/ai/calendarRead.ts",
+      "kind": "import",
+      "line": 1
+    },
+    {
+      "source": "server/services/publicCalendar.ts",
+      "target": "server/ai/policy.ts",
+      "kind": "import",
+      "line": 2
+    },
+    {
+      "source": "server/services/publicCalendar.ts",
+      "target": "server/services/resultsCalendarService.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
       "source": "server/services/radarCompanyIdentity.ts",
       "target": "server/utils/stockResolver.ts",
       "kind": "import",
@@ -5995,6 +6064,36 @@
       "target": "server/services/resultsCalendarService.ts",
       "kind": "import",
       "line": 6
+    },
+    {
+      "source": "server/tests/aiEvidence.test.ts",
+      "target": "server/ai/market.ts",
+      "kind": "import",
+      "line": 4
+    },
+    {
+      "source": "server/tests/aiEvidence.test.ts",
+      "target": "server/ai/policy.ts",
+      "kind": "import",
+      "line": 5
+    },
+    {
+      "source": "server/tests/aiEvidence.test.ts",
+      "target": "server/api/aiPlugin.ts",
+      "kind": "import",
+      "line": 6
+    },
+    {
+      "source": "server/tests/aiEvidence.test.ts",
+      "target": "server/services/publicCalendar.ts",
+      "kind": "import",
+      "line": 7
+    },
+    {
+      "source": "server/tests/aiEvidence.test.ts",
+      "target": "server/services/resultsCalendarService.ts",
+      "kind": "import",
+      "line": 8
     },
     {
       "source": "server/tests/aiGateway.test.ts",
@@ -10973,7 +11072,8 @@
         "server/services/marketGuidesService.ts",
         "server/services/seoPrerender.ts",
         "src/shared/scripMatching.ts",
-        "server/utils/spaRoutes.ts"
+        "server/utils/spaRoutes.ts",
+        "server/services/publicCalendar.ts"
       ],
       "tests": [
         "server/tests/routeResolution.test.ts",
@@ -10983,7 +11083,9 @@
         "server/tests/sevenFixes.test.ts",
         "server/tests/seoPrehydration.test.ts",
         "server/tests/spaRouteParity.test.ts",
-        "scripts/verify-oauth-routing.mjs"
+        "scripts/verify-oauth-routing.mjs",
+        "server/tests/aiEvidence.test.ts",
+        "scripts/verify-public-calendar.mjs"
       ],
       "reason": "API responses, SSR routes, browser deep links, SEO and service-worker caching must remain compatible. User-specific responses must never enter shared public caches."
     },
@@ -11040,7 +11142,8 @@
         "src/components/HomeMarketNews.tsx",
         "src/utils/homeNews.ts",
         "src/shared/scripMatching.ts",
-        "server/ai/calendarRead.ts"
+        "server/ai/calendarRead.ts",
+        "server/services/publicCalendar.ts"
       ],
       "tests": [
         "server/tests/core.test.ts",
@@ -11048,7 +11151,9 @@
         "server/tests/followupAudit.test.ts",
         "server/tests/homeNews.test.ts",
         "server/tests/sevenFixes.test.ts",
-        "server/tests/aiConnectorQuality.test.ts"
+        "server/tests/aiConnectorQuality.test.ts",
+        "server/tests/aiEvidence.test.ts",
+        "scripts/verify-public-calendar.mjs"
       ],
       "reason": "Upstream timestamps, stock identity and market sessions affect cached API results, screen freshness and alert timing. Public market data availability does not establish trading-data accuracy."
     },
@@ -11072,7 +11177,8 @@
         "public/llms.txt",
         "public/llms-full.txt",
         "src/content/keywordGuides.ts",
-        "src/shared/scripMatching.ts"
+        "src/shared/scripMatching.ts",
+        "server/services/publicCalendar.ts"
       ],
       "tests": [
         "server/tests/faqBank.test.ts",
@@ -11080,7 +11186,9 @@
         "server/tests/routeResolution.test.ts",
         "server/tests/keywordGuides.test.ts",
         "server/tests/sevenFixes.test.ts",
-        "server/tests/seoPrehydration.test.ts"
+        "server/tests/seoPrehydration.test.ts",
+        "server/tests/aiEvidence.test.ts",
+        "scripts/verify-public-calendar.mjs"
       ],
       "reason": "Public copy and crawler metadata must agree with actual API/product contracts. Admin SEO mutations inherit mount guards; generated summaries are not evidence of source accuracy."
     },
@@ -11399,13 +11507,16 @@
         "server/services/marketGuidesService.ts",
         "server/services/guideIndexNow.ts",
         "src/shared/scripMatching.ts",
-        "src/config/topCompanies.ts"
+        "src/config/topCompanies.ts",
+        "server/services/publicCalendar.ts"
       ],
       "tests": [
         "server/tests/searchEngineDiscovery.test.ts",
         "server/tests/routeResolution.test.ts",
         "server/tests/keywordGuides.test.ts",
-        "server/tests/sevenFixes.test.ts"
+        "server/tests/sevenFixes.test.ts",
+        "server/tests/aiEvidence.test.ts",
+        "scripts/verify-public-calendar.mjs"
       ],
       "reason": "Public links, pricing claims, server-rendered content and client views must agree. Lazy navigation, responsive composition, keyboard operation and motion require browser evidence beyond server discovery tests."
     },
@@ -11563,7 +11674,8 @@
         "src/shared/aiTelemetry.ts",
         "scripts/verify-ai-connections-staging.sql",
         "server/utils/spaRoutes.ts",
-        "server/ai/calendarRead.ts"
+        "server/ai/calendarRead.ts",
+        "server/services/publicCalendar.ts"
       ],
       "tests": [
         "server/tests/aiConnections.test.ts",
@@ -11576,15 +11688,45 @@
         "server/tests/aiIngress.test.ts",
         "server/tests/spaRouteParity.test.ts",
         "scripts/verify-oauth-routing.mjs",
-        "server/tests/aiConnectorQuality.test.ts"
+        "server/tests/aiConnectorQuality.test.ts",
+        "server/tests/aiEvidence.test.ts",
+        "scripts/verify-public-calendar.mjs"
       ],
       "reason": "Website sign-in approves a public PKCE client with explicit permissions. External opaque credentials never accept website cookies or client-supplied owners/roles. Live durable entitlement and shared per-account quotas precede bounded tools; writes recheck grant and plan in a transaction with an idempotent receipt. Website watchlists use request-local revision CAS while enabled, and reads do not restore stale backups. Connection/consent responses bypass browser, CDN and SW caches. Profile/watchlist/notes refresh on return; account changes suppress late responses. Root OAuth endpoints, MCP and the four compatibility GET routes share the same authorization owner. The disabled-by-default flag is required until an approved service-only schema rollout and live client/browser checks; source tests do not certify deployment or marketplace publication. Connection discovery uses the configured Express trusted-proxy hostname while all issuer/resource URLs remain canonical. Exact browser-Origin checks cover MCP requests and preflights. Settings owns the sole visible entry; client-specific web setup distinguishes public URL copying, approved grants and completed client setup. Same-account refresh retains content and account/request changes hide obsolete responses."
     }
   ],
   "routes": [
     {
+      "file": "scripts/verify-public-calendar.mjs",
+      "line": 20,
+      "receiver": "app",
+      "method": "USE",
+      "path": "express.static('public')",
+      "middleware": []
+    },
+    {
+      "file": "scripts/verify-public-calendar.mjs",
+      "line": 21,
+      "receiver": "app",
+      "method": "GET",
+      "path": "/before",
+      "middleware": [
+        "<handler>"
+      ]
+    },
+    {
+      "file": "scripts/verify-public-calendar.mjs",
+      "line": 22,
+      "receiver": "app",
+      "method": "GET",
+      "path": "/results-calendar",
+      "middleware": [
+        "<handler>"
+      ]
+    },
+    {
       "file": "server.ts",
-      "line": 66,
+      "line": 68,
       "receiver": "app",
       "method": "USE",
       "path": "compression({ threshold: 1024, // Don't compress payloads under 1KB level: 6, // Optimal balance between CPU usage and compression ratio filter: (req, res) => { // 1. Honor client bypass header if requested if (req.headers['x-no-compression",
@@ -11592,7 +11734,7 @@
     },
     {
       "file": "server.ts",
-      "line": 97,
+      "line": 99,
       "receiver": "app",
       "method": "USE",
       "path": "responseHeaders()",
@@ -11600,7 +11742,7 @@
     },
     {
       "file": "server.ts",
-      "line": 98,
+      "line": 100,
       "receiver": "app",
       "method": "USE",
       "path": "/api/payments/webhook",
@@ -11610,7 +11752,7 @@
     },
     {
       "file": "server.ts",
-      "line": 99,
+      "line": 101,
       "receiver": "app",
       "method": "USE",
       "path": "['/mcp','/register']",
@@ -11620,7 +11762,7 @@
     },
     {
       "file": "server.ts",
-      "line": 100,
+      "line": 102,
       "receiver": "app",
       "method": "USE",
       "path": "['/token','/revoke']",
@@ -11630,7 +11772,7 @@
     },
     {
       "file": "server.ts",
-      "line": 101,
+      "line": 103,
       "receiver": "app",
       "method": "USE",
       "path": "express.json({ limit: '1mb' })",
@@ -11638,7 +11780,7 @@
     },
     {
       "file": "server.ts",
-      "line": 102,
+      "line": 104,
       "receiver": "app",
       "method": "USE",
       "path": "cookieParser()",
@@ -11646,7 +11788,7 @@
     },
     {
       "file": "server.ts",
-      "line": 104,
+      "line": 106,
       "receiver": "app",
       "method": "GET",
       "path": "/api/cron/poll-announcements",
@@ -11656,7 +11798,7 @@
     },
     {
       "file": "server.ts",
-      "line": 121,
+      "line": 123,
       "receiver": "app",
       "method": "USE",
       "path": "authMiddleware",
@@ -11664,7 +11806,7 @@
     },
     {
       "file": "server.ts",
-      "line": 125,
+      "line": 127,
       "receiver": "app",
       "method": "GET",
       "path": "/sw.js",
@@ -11674,7 +11816,7 @@
     },
     {
       "file": "server.ts",
-      "line": 146,
+      "line": 148,
       "receiver": "app",
       "method": "GET",
       "path": "/OneSignalSDKWorker.js",
@@ -11684,7 +11826,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5341,
+      "line": 5343,
       "receiver": "app",
       "method": "GET",
       "path": "['/health', '/healthz']",
@@ -11694,7 +11836,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5347,
+      "line": 5349,
       "receiver": "app",
       "method": "GET",
       "path": "/robots.txt",
@@ -11704,7 +11846,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5353,
+      "line": 5355,
       "receiver": "app",
       "method": "GET",
       "path": "['/sitemap.xml', '/sitemap', '/sitemap_index.xml', '/sitemap.txt']",
@@ -11714,7 +11856,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5362,
+      "line": 5364,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-core.xml",
@@ -11724,7 +11866,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5400,
+      "line": 5402,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-filings-hot.xml",
@@ -11734,7 +11876,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5437,
+      "line": 5439,
       "receiver": "app",
       "method": "GET",
       "path": "['/rss.xml', '/rss', '/feed.xml', '/feed']",
@@ -11744,7 +11886,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5503,
+      "line": 5505,
       "receiver": "app",
       "method": "GET",
       "path": "[/^\\/https?:\\/?\\/?(?:www\\.)?bsenexus\\.in\\/sitemap(?:\\.xml)?$/i]",
@@ -11754,7 +11896,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5508,
+      "line": 5510,
       "receiver": "app",
       "method": "GET",
       "path": "[`/${INDEXNOW_KEY}.txt`, '/indexnow-key.txt']",
@@ -11764,7 +11906,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5515,
+      "line": 5517,
       "receiver": "app",
       "method": "GET",
       "path": "/opensearch.xml",
@@ -11774,7 +11916,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5522,
+      "line": 5524,
       "receiver": "app",
       "method": "GET",
       "path": "['/.well-known/ai-plugin.json', '/ai-plugin.json']",
@@ -11784,7 +11926,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5542,
+      "line": 5544,
       "receiver": "app",
       "method": "GET",
       "path": "[sourcePath, sourcePath + '/']",
@@ -11794,7 +11936,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5549,
+      "line": 5551,
       "receiver": "app",
       "method": "GET",
       "path": "/filing/:symbol/:newsId",
@@ -11804,7 +11946,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5608,
+      "line": 5610,
       "receiver": "app",
       "method": "GET",
       "path": "/filing/:symbol",
@@ -11814,7 +11956,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5619,
+      "line": 5621,
       "receiver": "app",
       "method": "GET",
       "path": "['/filing', '/filing/']",
@@ -11824,7 +11966,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5625,
+      "line": 5627,
       "receiver": "app",
       "method": "GET",
       "path": "/announcement/:newsId",
@@ -11834,7 +11976,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5954,
+      "line": 5956,
       "receiver": "app",
       "method": "GET",
       "path": "/results/:symbol/:quarterKey",
@@ -11844,7 +11986,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6010,
+      "line": 6012,
       "receiver": "app",
       "method": "GET",
       "path": "['/company/:symbol', '/stock/:symbol']",
@@ -11854,7 +11996,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6079,
+      "line": 6081,
       "receiver": "app",
       "method": "GET",
       "path": "/guides/:slug",
@@ -11864,7 +12006,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6125,
+      "line": 6127,
       "receiver": "app",
       "method": "GET",
       "path": "['/faq', '/faqs']",
@@ -11874,7 +12016,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6132,
+      "line": 6134,
       "receiver": "app",
       "method": "GET",
       "path": "['/pricing', '/pricing/']",
@@ -11884,7 +12026,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6139,
+      "line": 6141,
       "receiver": "app",
       "method": "GET",
       "path": "['/plans', '/plans/']",
@@ -11894,7 +12036,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6144,
+      "line": 6146,
       "receiver": "app",
       "method": "GET",
       "path": "['/guides', '/guides/']",
@@ -11904,7 +12046,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6151,
+      "line": 6153,
       "receiver": "app",
       "method": "GET",
       "path": "['/market-guides', '/market-guides/']",
@@ -11914,7 +12056,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6156,
+      "line": 6158,
       "receiver": "app",
       "method": "GET",
       "path": "['/companies', '/companies/']",
@@ -11924,7 +12066,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6163,
+      "line": 6165,
       "receiver": "app",
       "method": "GET",
       "path": "['/company-directory', '/company-directory/']",
@@ -11934,7 +12076,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6168,
+      "line": 6170,
       "receiver": "app",
       "method": "GET",
       "path": "['/about', '/about/']",
@@ -11944,7 +12086,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6175,
+      "line": 6177,
       "receiver": "app",
       "method": "GET",
       "path": "['/contact', '/contact/']",
@@ -11954,7 +12096,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6182,
+      "line": 6184,
       "receiver": "app",
       "method": "GET",
       "path": "['/disclaimer', '/disclaimer/']",
@@ -11964,7 +12106,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6189,
+      "line": 6191,
       "receiver": "app",
       "method": "GET",
       "path": "['/privacy-policy', '/privacy-policy/']",
@@ -11974,7 +12116,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6196,
+      "line": 6198,
       "receiver": "app",
       "method": "GET",
       "path": "['/privacy', '/privacy/']",
@@ -11984,7 +12126,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6202,
+      "line": 6204,
       "receiver": "app",
       "method": "GET",
       "path": "['/terms', '/terms/']",
@@ -11994,7 +12136,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6209,
+      "line": 6211,
       "receiver": "app",
       "method": "GET",
       "path": "['/terms-of-service', '/terms-of-service/']",
@@ -12004,7 +12146,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6214,
+      "line": 6216,
       "receiver": "app",
       "method": "GET",
       "path": "/embed/widget",
@@ -12014,7 +12156,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6268,
+      "line": 6270,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-companies.xml",
@@ -12024,7 +12166,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6288,
+      "line": 6290,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-guides.xml",
@@ -12034,7 +12176,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6306,
+      "line": 6308,
       "receiver": "app",
       "method": "GET",
       "path": "/llms.txt",
@@ -12044,7 +12186,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6311,
+      "line": 6313,
       "receiver": "app",
       "method": "GET",
       "path": "/llms-full.txt",
@@ -12054,7 +12196,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6321,
+      "line": 6323,
       "receiver": "app",
       "method": "GET",
       "path": "/^\\/google([a-zA-Z0-9_-]+)\\.html$/",
@@ -12064,7 +12206,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6331,
+      "line": 6333,
       "receiver": "app",
       "method": "USE",
       "path": "express.static(path.join(process.cwd(), 'public'), { maxAge: '1d', immutable: false, setHeaders: (res, filePath) => { if (filePath.includes(`${path.sep}fonts${path.sep}`)) res.setHeader('Cache-Control', 'public, max-age=2592000'); if (fileP",
@@ -12072,7 +12214,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6341,
+      "line": 6343,
       "receiver": "app",
       "method": "USE",
       "path": "['/api', '/auth']",
@@ -12082,7 +12224,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6347,
+      "line": 6349,
       "receiver": "app",
       "method": "USE",
       "path": "/auth",
@@ -12092,7 +12234,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6350,
+      "line": 6352,
       "receiver": "app",
       "method": "POST",
       "path": "/api/security/verify-recaptcha",
@@ -12103,7 +12245,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6391,
+      "line": 6393,
       "receiver": "app",
       "method": "USE",
       "path": "/api",
@@ -12114,7 +12256,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6395,
+      "line": 6397,
       "receiver": "app",
       "method": "USE",
       "path": "['/api/*', '/auth/*']",
@@ -12124,7 +12266,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6400,
+      "line": 6402,
       "receiver": "app",
       "method": "USE",
       "path": "(err: any, req: express.Request, res: express.Response, next: express.NextFunction) => { if (req.path.startsWith('/api') || req.path.startsWith('/auth')) { console.error(\"API Error handler caught:\", err?.message || err); const isProd = proc",
@@ -12132,7 +12274,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6808,
+      "line": 6810,
       "receiver": "app",
       "method": "GET",
       "path": "SPA_PATHS",
@@ -12142,7 +12284,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6841,
+      "line": 6844,
       "receiver": "app",
       "method": "USE",
       "path": "(req, res, next) => { if (req.method !== 'GET' && req.method !== 'HEAD') return next(); const p = normalizeSpaPath(req.path); if ( p === '/' || p === '/announcements' || p === '/results-calendar' || p === '/watchlist' || p === '/watchlists'",
@@ -12150,7 +12292,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6879,
+      "line": 6882,
       "receiver": "app",
       "method": "USE",
       "path": "vite.middlewares",
@@ -12158,7 +12300,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6891,
+      "line": 6894,
       "receiver": "app",
       "method": "USE",
       "path": "express.static(distPath, { maxAge: '1y', immutable: true, index: false, setHeaders: (res, filePath) => { if (filePath.endsWith('.html')) { res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600'); } } }",
@@ -12166,7 +12308,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6911,
+      "line": 6914,
       "receiver": "app",
       "method": "GET",
       "path": "['/announcements', '/announcements/']",
@@ -12176,7 +12318,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6962,
+      "line": 6965,
       "receiver": "app",
       "method": "GET",
       "path": "*",
@@ -12263,7 +12405,7 @@
     },
     {
       "file": "server/api/aiPlugin.ts",
-      "line": 183,
+      "line": 187,
       "receiver": "aiPluginRouter",
       "method": "GET",
       "path": "/openapi.json",
@@ -12273,7 +12415,7 @@
     },
     {
       "file": "server/api/aiPlugin.ts",
-      "line": 184,
+      "line": 188,
       "receiver": "aiPluginRouter",
       "method": "GET",
       "path": "[\"/ai-plugin.json\", \"/.well-known/ai-plugin.json\"]",
@@ -12283,7 +12425,7 @@
     },
     {
       "file": "server/api/aiPlugin.ts",
-      "line": 188,
+      "line": 192,
       "receiver": "aiPluginRouter",
       "method": "GET",
       "path": "/gemini-tools.json",
@@ -12293,7 +12435,7 @@
     },
     {
       "file": "server/api/aiPlugin.ts",
-      "line": 191,
+      "line": 195,
       "receiver": "aiPluginRouter",
       "method": "USE",
       "path": "/v1",
@@ -12304,7 +12446,7 @@
     },
     {
       "file": "server/api/aiPlugin.ts",
-      "line": 224,
+      "line": 228,
       "receiver": "aiPluginRouter",
       "method": "GET",
       "path": "\"/v1\" + path",
@@ -14609,7 +14751,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6512,
+      "line": 6514,
       "function": "fetch",
       "target": "`http://127.0.0.1:${port}/api/health`"
     },
@@ -14759,19 +14901,19 @@
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 1467,
+      "line": 1475,
       "function": "fetch",
       "target": "bmUrl"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 1520,
+      "line": 1528,
       "function": "fetch",
       "target": "url"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 1536,
+      "line": 1544,
       "function": "fetch",
       "target": "fbUrl"
     },
@@ -16146,6 +16288,12 @@
       "key": "await response.arrayBuffer()"
     },
     {
+      "file": "scripts/verify-public-calendar.mjs",
+      "line": 11,
+      "function": "Array.from",
+      "key": "{length:3}"
+    },
+    {
       "file": "server/ai/http.ts",
       "line": 166,
       "function": "db\n        .from",
@@ -16183,7 +16331,7 @@
     },
     {
       "file": "server/ai/market.ts",
-      "line": 23,
+      "line": 24,
       "function": "Array.from",
       "key": "new Map(getAllStockEntries().map((e) => [e.scripCode, e])).values()"
     },
@@ -16873,13 +17021,13 @@
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 1438,
+      "line": 1446,
       "function": "Array.from",
       "key": "quarterOutcomesMap.values()"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 1512,
+      "line": 1520,
       "function": "Array.from",
       "key": "{ length: Math.min(batchSize, maxPages - startPage + 1) }"
     },
@@ -18050,43 +18198,53 @@
       "name": "AI_PUBLIC_ORIGIN"
     },
     {
+      "file": "scripts/verify-public-calendar.mjs",
+      "line": 9,
+      "name": "PLAYWRIGHT_MODULE"
+    },
+    {
+      "file": "scripts/verify-public-calendar.mjs",
+      "line": 26,
+      "name": "RUNNER_TEMP"
+    },
+    {
       "file": "server.ts",
-      "line": 128,
+      "line": 130,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6319,
+      "line": 6321,
       "name": "GOOGLE_SITE_VERIFICATION_HASH"
     },
     {
       "file": "server.ts",
-      "line": 6319,
+      "line": 6321,
       "name": "GOOGLE_SITE_VERIFICATION_HASH"
     },
     {
       "file": "server.ts",
-      "line": 6403,
+      "line": 6405,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6797,
+      "line": 6799,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6802,
+      "line": 6804,
       "name": "DISABLE_HMR"
     },
     {
       "file": "server.ts",
-      "line": 7068,
+      "line": 7079,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 7068,
+      "line": 7079,
       "name": "TEST_RUNNER"
     },
     {
@@ -21017,6 +21175,11 @@
     {
       "file": "scripts/verify-oauth-routing.mjs",
       "line": 14,
+      "expression": "import(pathToFileURL(process.env.PLAYWRIGHT_MODULE).href)"
+    },
+    {
+      "file": "scripts/verify-public-calendar.mjs",
+      "line": 9,
       "expression": "import(pathToFileURL(process.env.PLAYWRIGHT_MODULE).href)"
     }
   ],
