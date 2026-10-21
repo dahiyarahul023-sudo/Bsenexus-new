@@ -14,7 +14,7 @@ import {
   fetchPageContent
 } from "../services/seoService.js";
 import { addLog } from "../database/logDao.js";
-import { indexNowQueue, notifySearchEnginesOfNewPages, INDEXNOW_KEY, INDEXNOW_HOST } from "../services/indexNow.js";
+import { indexNowQueue, notifySearchEnginesOfNewPages, INDEXNOW_KEY, INDEXNOW_HOST, INDEXNOW_SUBMITTER } from "../services/indexNow.js";
 
 export const seoRouter = express.Router();
 
@@ -213,6 +213,7 @@ seoRouter.get("/indexnow/stats", (_req, res) => {
   res.json({
     success: true,
     host: INDEXNOW_HOST,
+    submitter: INDEXNOW_SUBMITTER,
     key: INDEXNOW_KEY,
     keyLocation: `https://${INDEXNOW_HOST}/${INDEXNOW_KEY}.txt`,
     stats: indexNowQueue.getStats()

@@ -43,3 +43,7 @@ Nine `frontend-*` domains cover navigation, sessions, shared design, feed/detail
 ## Detailed frontend completion specification
 
 Read [FRONTEND_COMPLETION_GUIDE.md](FRONTEND_COMPLETION_GUIDE.md) for the user's complete requirement and its remaining implementation gates. It explains action ownership and every connected effect, shared design/motion adoption, the planned action-level map, automatic refresh, coverage and truthful AI handoff. Use it with the existing rules and journey map; it does not certify runtime completion.
+
+## Directory counts and IndexNow operations
+
+`src/config/companyDirectory.ts` owns curated membership/order and displayed counts; keep the BSE_26_COMPANIES compatibility export until its consumers migrate. Adding a profile must update this single list, never a separate hardcoded count. IndexNow uses the existing server primary, INDEXNOW_KEY server env (public verification-file bootstrap if unset) and INDEXNOW_SUBMITTER=server/cloudflare/off. Check actual Cloudflare Crawler Hints before selecting another primary. The additive service-only URL ledger migration must precede runtime release. Its claims reserve 24 hours before HTTP; no indexing work is awaited from filing ingestion. See changes/directory-loading-indexnow.md for current schema/source evidence and publication gates.

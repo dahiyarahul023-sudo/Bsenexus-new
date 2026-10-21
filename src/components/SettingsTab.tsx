@@ -29,6 +29,7 @@ import { customFetch } from '../api';
 import { useDeveloperMode } from '../utils/developerMode';
 import { SavedNotesScreen } from './notes/SavedNotesScreen';
 import { APP_VERSION } from '../version';
+import { DIRECTORY_COMPANIES } from '../config/companyDirectory';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { useFeedDensity, DEFAULT_DENSITY, type FeedDensity } from '../hooks/useFeedDensity';
 import type { DesignTheme } from '../types';
@@ -79,7 +80,7 @@ const SETTINGS_REGISTRY = [
   { id: 'sign-out', title: 'Sign out of account', description: 'Log out of current investor session on this device', category: 'Danger Zone', keywords: ['sign out', 'logout', 'log out', 'exit', 'session'] },
   { id: 'alerts-triggers', title: 'Alerts & Triggers', description: 'Keyword and filing-based alert rules', category: 'Tools', keywords: ['alerts', 'triggers', 'keyword', 'filters', 'rules', 'notifications'] },
   { id: 'ai-plugin', title: 'AI Connections', description: 'Connect an AI, review permissions and manage access', category: 'Tools', keywords: ['ai', 'connections', 'mcp', 'chatgpt', 'gemini', 'claude', 'oauth', 'permissions'] },
-  { id: 'companies-dir', title: 'BSE Listed Companies', description: 'Company profiles, filings and disclosures', category: 'Tools', keywords: ['companies', 'directory', 'listed', 'profiles', 'bse'] },
+  { id: 'companies-dir', title: 'Companies & Exchanges', description: 'Company profiles, filings and disclosures', category: 'Tools', keywords: ['companies', 'directory', 'listed', 'profiles', 'bse', 'nse', 'nexus', 'nxst', 'reit'] },
   { id: 'guides', title: 'User Guides & Tutorials', description: 'SEBI LODR and disclosure guides', category: 'Help & Support', keywords: ['guides', 'tutorials', 'help', 'how to', 'learn', 'user guide'] },
   { id: 'sebi', title: 'SEBI & Legal Disclaimer', description: 'Investment risks and regulatory disclosures', category: 'About & Legal', keywords: ['sebi', 'disclaimer', 'legal', 'risk', 'regulatory'] },
   { id: 'seo-suite', title: 'Super SEO Suite', description: 'Page audits, EEAT, snippets and anti-slop engine', category: 'Advanced Engine', keywords: ['seo', 'suite', 'audit', 'eeat', 'snippets', 'super'] }
@@ -1032,14 +1033,14 @@ export function SettingsTab({
       subtitle: 'Connect ChatGPT, Gemini or Claude · No API key',
       icon: Bot, iconClass: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
       registryIds: ['ai-plugin'],
-      action: () => { if (typeof window !== 'undefined') window.location.href = '/plugin'; },
+      action: () => { if (onNavigate) onNavigate('plugin'); else if (typeof window !== 'undefined') window.location.href = '/plugin'; },
     },
     {
-      id: 'companies', title: 'BSE Listed Companies',
-      subtitle: 'Profiles, filings & disclosures',
+      id: 'companies', title: 'Companies & Exchanges',
+      subtitle: `${DIRECTORY_COMPANIES.length} profiles, filings & disclosures`,
       icon: Building2, iconClass: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
       registryIds: ['companies-dir'],
-      action: () => { if (typeof window !== 'undefined') window.location.href = '/companies'; },
+      action: () => { if (onNavigate) onNavigate('companies'); else if (typeof window !== 'undefined') window.location.href = '/companies'; },
     },
     {
       id: 'help', title: 'Help & Support',

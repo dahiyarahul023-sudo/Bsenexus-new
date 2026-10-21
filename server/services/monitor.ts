@@ -14,6 +14,7 @@ import { classifyMaterialEvent } from './timelineClassifier.js';
 import { doesAnnouncementMatchUserPrefs, personalAlertChannels } from '../utils/alertDecision.js';
 import { sendOneSignalPush, isOneSignalConfigured } from './oneSignal.js';
 import { recordFilingDeliveryTiming } from '../database/telegramResultDao.js';
+import { indexNowQueue } from './indexNow';
 
 export { pruneAndCheckStorageCapacity };
 
@@ -153,6 +154,7 @@ export async function processAnnouncements(): Promise<AnnouncementPollResult> {
     return result('busy');
   }
   isPolling = true;
+  const releaseIndexNowBatch = indexNowQueue.beginBatch();
   const cycleId = Date.now().toString(36);
   let outcome = 'success';
   let cycle: PollCycle | undefined;
@@ -651,6 +653,7 @@ export async function processAnnouncements(): Promise<AnnouncementPollResult> {
       cycle?.finish(outcome);
     } finally {
       isPolling = false;
+      releaseIndexNowBatch();
       logSummary(outcome);
     }
   }

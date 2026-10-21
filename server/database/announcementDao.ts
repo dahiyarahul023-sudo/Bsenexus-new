@@ -6,7 +6,7 @@ import { readLocalJson, writeLocalJson, isOfflineOrNetworkError } from './localS
 import { BloomFilter } from '../utils/bloomFilter.js';
 import { pageRenderCache, apiResponseCache } from '../utils/renderCache.js';
 import { notifySearchEnginesOfNewPages } from '../services/indexNow.js';
-import { resolveStockDetailsSync } from '../utils/stockResolver.js';
+import { publicFilingVersion, storedFilingIndexPages } from '../services/filingIndexNow';
 
 const ANNOUNCEMENTS_TABLE = 'announcements';
 
@@ -281,6 +281,7 @@ let nextBatchRetryTime = 0;
 async function processSupabaseQueue() {
   if (isQueueWorkerRunning) return;
   isQueueWorkerRunning = true;
+  const changedPublicFilings = new Map<string, any>();
 
   try {
     while (supabaseWriteQueue.size > 0) {
@@ -340,6 +341,10 @@ async function processSupabaseQueue() {
           .upsert(rowsToUpsert, { onConflict: 'id' });
         if (upsertError) throw upsertError;
 
+        for (const row of rowsToUpsert) {
+          if (!existingById.has(row.id) || publicFilingVersion(existingById.get(row.id)) !== publicFilingVersion(row.data)) changedPublicFilings.set(String(row.id), row.data);
+        }
+
         // Remove from queue ONLY after the upsert confirms success
         for (const t of tasksToProcess) {
           supabaseWriteQueue.delete(t.docId);
@@ -380,6 +385,11 @@ async function processSupabaseQueue() {
     console.warn("[Supabase] Write queue worker notice:", globalQueueErr);
   } finally {
     isQueueWorkerRunning = false;
+    // Coalesce the whole confirmed storage drain; no HTTP/database indexing work
+    // is awaited by the filing pipeline, and unchanged/delivery-only rows stay out.
+    try {
+      for (const page of storedFilingIndexPages([...changedPublicFilings.values()])) notifySearchEnginesOfNewPages(page.url, page.version);
+    } catch { console.warn('[IndexNow] Could not queue stored public changes; filing storage is unaffected'); }
   }
 }
 
@@ -630,26 +640,7 @@ export async function saveAnnouncementsBatch(items: AnnouncementInput[]): Promis
     scheduleLocalDiskSave();
     queueAnnouncementsBatchWrite(tasksToQueue);
 
-    // Notify search engines (Bing, Yandex, etc.) of newly published announcement pages.
-    // Canonical shareable scheme: /filing/:symbol/:newsId (legacy /announcement/
-    // URLs 301-redirect there, but notify the canonical URL directly).
-    if (inserted > 0) {
-      const newUrls = items
-        .filter(it => it && it.newsId)
-        .slice(0, 50)
-        .map(it => {
-          // Resolve the trading symbol from the BSE scrip code for the
-          // canonical /filing/:symbol/:newsId URL; fall back to the legacy URL
-          // (server 301-redirects it) when the symbol can't be resolved.
-          const sym = String(resolveStockDetailsSync(String(it.scrip_cd || ''))?.symbol || '').trim().toUpperCase();
-          return /^[A-Z0-9-]{2,20}$/.test(sym)
-            ? `https://bsenexus.in/filing/${encodeURIComponent(sym)}/${encodeURIComponent(it.newsId)}`
-            : `https://bsenexus.in/announcement/${encodeURIComponent(it.newsId)}`;
-        });
-      if (newUrls.length > 0) {
-        notifySearchEnginesOfNewPages(newUrls);
-      }
-    }
+
   }
 
   return { total: items.length, inserted, updated, skipped };
