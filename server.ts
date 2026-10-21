@@ -43,6 +43,8 @@ import { verifyRecaptchaToken } from "./server/security/recaptchaService.js";
 import { getBseBlockBackoffLevel } from "./server/services/bse.js";
 import { getAllFeedback } from "./server/database/feedbackDao.js";
 import { prerenderFilingHtml, prerenderCompanyHtml, buildSitemapIndexXml, cleanCanonicalUrl, buildAnnouncementsFeedCards, buildAnnouncementsCollectionJsonLd } from "./server/services/seoPrerender.js";
+import { renderAiConnectionDocs } from './server/ai/docs';
+import { AI_DATA_DISCLOSURE } from './src/shared/aiDataDisclosure';
 import { DIRECTORY_COMPANIES, directoryDescription, directoryBadge } from './src/config/companyDirectory';
 import { EXCHANGE_COMPANIES, exchangeCompany } from './src/config/exchangeCompanies';
 import { renderExchangeProfile } from './server/services/exchangeProfiles';
@@ -178,6 +180,7 @@ async function generateDynamicSitemap(): Promise<string> {
     { loc: "https://bsenexus.in/announcements", lastmod: todayStr, changefreq: "always", priority: "0.9" },
     { loc: "https://bsenexus.in/results-calendar", lastmod: todayStr, changefreq: "daily", priority: "0.9" },
     { loc: "https://bsenexus.in/watchlist", lastmod: todayStr, changefreq: "daily", priority: "0.8" },
+    { loc: "https://bsenexus.in/ai-docs", changefreq: "monthly", priority: "0.6" },
     { loc: "https://bsenexus.in/companies", lastmod: todayStr, changefreq: "weekly", priority: "0.8" },
     { loc: "https://bsenexus.in/guides", lastmod: todayStr, changefreq: "weekly", priority: "0.8" },
     { loc: "https://bsenexus.in/faq", lastmod: todayStr, changefreq: "weekly", priority: "0.8" },
@@ -4320,6 +4323,7 @@ function renderPrivacyPolicyPage(): string {
         You may request complete deletion of your account, watchlists, and associated data at any time by emailing <a href="mailto:admin@bsenexus.in" style="color: var(--accent);">admin@bsenexus.in</a> with the subject line "Data Deletion Request".
       </p>
     </div>
+    ${AI_DATA_DISCLOSURE.map(section => `<div class="content-sec"><h2>${escapeHtmlText(section.title)}</h2><p>${escapeHtmlText(section.text)}</p></div>`).join('')}
   `;
 
   return renderTrustPageLayout({
@@ -4328,7 +4332,7 @@ function renderPrivacyPolicyPage(): string {
     canonicalUrl: "https://bsenexus.in/privacy-policy",
     badge: "Privacy & Data Protection",
     heading: "Privacy Policy",
-    subheading: "Last updated: September 2026 • Clear, transparent data protection standards.",
+    subheading: "Last updated: 21 October 2026 • Clear, transparent data protection standards.",
     breadcrumbs: "Privacy Policy",
     contentHtml,
     schemaJson: schema
@@ -5985,6 +5989,8 @@ app.get('/results/:symbol/:quarterKey', async (req, res) => {
   }
 });
 
+app.get('/ai-docs', (_req,res) => res.type('html').set('Cache-Control','public, max-age=300').send(renderAiConnectionDocs()));
+
 // Crawlable, server-rendered individual company/stock pages for search engines & direct visitors
 app.get(['/company/:symbol', '/stock/:symbol'], async (req, res) => {
   const rawInput = req.params.symbol;
@@ -5993,6 +5999,7 @@ app.get(['/company/:symbol', '/stock/:symbol'], async (req, res) => {
   }
 
   const cleanInput = rawInput.trim().toUpperCase();
+  if (cleanInput === 'ZOMATO') return res.redirect(301, '/company/ETERNAL');
   const exchange = exchangeCompany(cleanInput);
   if (exchange) {
     if (req.path !== `/company/${exchange.symbol}`) return res.redirect(301, `/company/${exchange.symbol}`);

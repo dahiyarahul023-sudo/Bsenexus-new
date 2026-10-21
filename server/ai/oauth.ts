@@ -1,4 +1,5 @@
 import type { Response } from "express";
+import { redirectUriMatches } from "@modelcontextprotocol/sdk/server/auth/handlers/authorize.js";
 import type {
   OAuthServerProvider,
   AuthorizationParams,
@@ -32,12 +33,13 @@ import {
 } from "./policy.js";
 
 export class BsenexusOAuthProvider implements OAuthServerProvider {
+  constructor(private storage: {db: typeof aiDb; rpc: typeof aiRpc} = {db:aiDb,rpc:aiRpc}) {}
   clientsStore = {
     getClient: async (
       clientId: string,
     ): Promise<OAuthClientInformationFull | undefined> => {
       if (!/^[a-f0-9-]{36}$/.test(clientId)) return undefined;
-      const row = await aiDb((db) =>
+      const row = await this.storage.db((db) =>
         db
           .from("ai_connection_clients")
           .select("metadata")
@@ -54,19 +56,21 @@ export class BsenexusOAuthProvider implements OAuthServerProvider {
       >,
     ): Promise<OAuthClientInformationFull> => {
       if (
+        metadata.grant_types?.some(kind => !["authorization_code","refresh_token"].includes(kind)) ||
+        metadata.response_types?.some(kind => kind !== "code") ||
         metadata.token_endpoint_auth_method !== "none" ||
         !metadata.redirect_uris?.length ||
         metadata.redirect_uris.length > 3
       )
         throw new InvalidClientMetadataError(
-          "Only public PKCE clients with 1–3 HTTPS callbacks are supported.",
+          "Only public authorization-code/refresh PKCE clients with 1–3 HTTPS or HTTP loopback callbacks are supported.",
         );
       let redirects: string[];
       try {
         redirects = metadata.redirect_uris.map(validateRedirect);
       } catch {
         throw new InvalidClientMetadataError(
-          "Callbacks must be public HTTPS URLs without credentials, fragments or custom ports.",
+          "Callbacks require public HTTPS without custom ports, or exact HTTP localhost/127.0.0.1 loopback addresses; credentials and fragments are forbidden.",
         );
       }
       const id = crypto.randomUUID();
@@ -82,7 +86,7 @@ export class BsenexusOAuthProvider implements OAuthServerProvider {
         response_types: ["code"],
         scope: SCOPES.join(" "),
       };
-      await aiRpc("register_ai_connection_client", {
+      await this.storage.rpc("register_ai_connection_client", {
         p_id: id,
         p_metadata: safe,
       });
@@ -110,7 +114,7 @@ export class BsenexusOAuthProvider implements OAuthServerProvider {
     );
     if (scopes.some((s) => !SCOPES.includes(s as any)))
       throw new InvalidScopeError("Unknown permission.");
-    if (!client.redirect_uris.includes(params.redirectUri))
+    if (!client.redirect_uris.some(registered => redirectUriMatches(params.redirectUri, registered)))
       throw new InvalidRequestError("Callback mismatch.");
     const started = Date.now();
     const traceId = crypto.randomUUID();
@@ -126,7 +130,7 @@ export class BsenexusOAuthProvider implements OAuthServerProvider {
     });
     try {
       const request = newSecret("req");
-      await aiRpc("begin_ai_connection_request", {
+      await this.storage.rpc("begin_ai_connection_request", {
         p_hash: hashSecret(request),
         p_client: client.client_id,
         p_params: { ...params, resource: resourceUrl(), scopes },
@@ -169,7 +173,7 @@ export class BsenexusOAuthProvider implements OAuthServerProvider {
   ) {
     if (!/^bnx_code_[A-Za-z0-9_-]{43}$/.test(code))
       throw new InvalidGrantError("Invalid code.");
-    const row = await aiDb((db) =>
+    const row = await this.storage.db((db) =>
       db
         .from("ai_connection_secrets")
         .select(
@@ -207,7 +211,7 @@ export class BsenexusOAuthProvider implements OAuthServerProvider {
     const access = newSecret("at"),
       refresh = newSecret("rt");
     try {
-      const row = await aiRpc("exchange_ai_connection", {
+      const row = await this.storage.rpc("exchange_ai_connection", {
         p_hash: hashSecret(secret),
         p_client: client.client_id,
         p_kind: kind,
@@ -272,7 +276,7 @@ export class BsenexusOAuthProvider implements OAuthServerProvider {
     client: OAuthClientInformationFull,
     request: OAuthTokenRevocationRequest,
   ) {
-    const row = await aiDb((db) =>
+    const row = await this.storage.db((db) =>
       db
         .from("ai_connection_secrets")
         .select("grant_id")
@@ -280,7 +284,7 @@ export class BsenexusOAuthProvider implements OAuthServerProvider {
         .maybeSingle(),
     );
     if (row)
-      await aiDb((db) =>
+      await this.storage.db((db) =>
         db
           .from("ai_connection_grants")
           .update({ revoked_at: new Date().toISOString() })

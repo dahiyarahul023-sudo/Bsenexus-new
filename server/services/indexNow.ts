@@ -4,6 +4,7 @@ import { indexNowStore } from '../database/indexNowDao';
 import { IndexNowQueue, contentVersion } from './indexNowQueue';
 import { INDEXNOW_KEY, INDEXNOW_SUBMITTER } from './indexNowConfig';
 import { DIRECTORY_COMPANIES, directoryDescription } from '../../src/config/companyDirectory';
+import { renderAiConnectionDocs } from '../ai/docs';
 import { circuitRegistry } from '../utils/circuitBreaker';
 export { INDEXNOW_KEY, INDEXNOW_HOST, INDEXNOW_KEY_LOCATION, INDEXNOW_SUBMITTER } from './indexNowConfig';
 export const indexNowCircuit = circuitRegistry.getOrCreate('INDEXNOW_API', { failureThreshold: 3, timeoutMs: 8000, resetTimeoutMs: 60000 });
@@ -30,6 +31,11 @@ export function notifySearchEnginesOfNewPages(urls: string | string[], version?:
 
 export function startIndexNow(): void {
   indexNowQueue.start();
+  try {
+    indexNowQueue.enqueue('https://bsenexus.in/ai-docs', contentVersion(renderAiConnectionDocs()));
+  } catch {
+    console.warn('[IndexNow] AI documentation fingerprint unavailable; other indexing continues');
+  }
   indexNowQueue.enqueue('https://bsenexus.in/companies', contentVersion([DIRECTORY_COMPANIES, directoryDescription()]));
   const nexus = DIRECTORY_COMPANIES.find(company => company.symbol === 'NXST');
   if (nexus) indexNowQueue.enqueue('https://bsenexus.in/company/NXST', contentVersion(nexus));

@@ -1,3 +1,4 @@
+import { VERIFIED_STOCK_BY_SYMBOL } from '../shared/stockIdentity';
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { customFetch } from '../api';
 import { WatchlistEditor } from './WatchlistEditor';
@@ -229,7 +230,7 @@ const stockMasterClient: Record<string, { scripCode: string; nameKeywords: strin
   "HINDZINC": { scripCode: "500188", nameKeywords: ["HINDUSTAN ZINC"] },
   "AMBUJACEM": { scripCode: "500425", nameKeywords: ["AMBUJA CEMENTS"] },
   "ACC": { scripCode: "500410", nameKeywords: ["ACC LIMITED", "ACC"] },
-  "INDUSINDBK": { scripCode: "532209", nameKeywords: ["INDUSIND BANK"] },
+  "INDUSINDBK": { scripCode: VERIFIED_STOCK_BY_SYMBOL.INDUSINDBK.scripCode, nameKeywords: ["INDUSIND BANK"] },
   "TECHM": { scripCode: "532755", nameKeywords: ["TECH MAHINDRA"] },
   "ABB": { scripCode: "500002", nameKeywords: ["ABB INDIA"] },
   "BPCL": { scripCode: "500547", nameKeywords: ["BHARAT PETROLEUM", "BPCL"] },

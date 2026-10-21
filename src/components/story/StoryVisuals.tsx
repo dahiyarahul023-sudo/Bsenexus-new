@@ -1,3 +1,4 @@
+import { VERIFIED_STOCK_BY_SYMBOL } from '../../shared/stockIdentity';
 import React, { useState, useEffect } from 'react';
 import { 
   Sparkles, 
@@ -127,7 +128,7 @@ export const SYMBOL_TO_SCRIP: Record<string, string> = {
   'IEX': '540750',
   'INDIANB': '532814',
   'INDIGO': '539448',
-  'INDUSINDBK': '532209',
+  'INDUSINDBK': VERIFIED_STOCK_BY_SYMBOL.INDUSINDBK.scripCode,
   'INFY': '500209',
   'INFOSYS': '500209',
   'INOXWIND': '539083',

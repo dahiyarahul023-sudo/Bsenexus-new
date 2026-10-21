@@ -52,9 +52,12 @@ test("only explicit typed tools exist: user IDs, role fields and arbitrary URLs 
     ),
   );
 });
-test("callbacks disallow plaintext, private addresses, credentials, fragments and port tricks", () => {
+test("callbacks disallow non-loopback plaintext, private addresses, credentials, fragments and port tricks", () => {
   for (const url of [
     "http://client.example.org/cb",
+    "http://127.0.0.2/cb",
+    "http://localhost.evil.example/cb",
+    "http://127.1/cb",
     "https://127.0.0.1/cb",
     "https://[::1]/cb",
     "https://localhost/cb",

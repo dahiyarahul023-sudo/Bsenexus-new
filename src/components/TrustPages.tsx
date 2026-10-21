@@ -1,3 +1,4 @@
+import { AI_DATA_DISCLOSURE } from '../shared/aiDataDisclosure';
 import React, { useEffect } from 'react';
 import { 
   ShieldCheck, 
@@ -229,7 +230,7 @@ export const TrustPage: React.FC<TrustPageProps> = ({ type, onEnterTerminal }) =
                 Privacy Policy
               </h1>
               <p className="text-sm text-slate-400">
-                Last updated: September 2026 • Effective immediately
+                Last updated: 21 October 2026 • Effective immediately
               </p>
             </div>
 
@@ -275,6 +276,7 @@ export const TrustPage: React.FC<TrustPageProps> = ({ type, onEnterTerminal }) =
                   You may request complete deletion of your account, watchlists, and associated data at any time by emailing <a href="mailto:admin@bsenexus.in" className="text-emerald-400 underline">admin@bsenexus.in</a> with the subject line "Data Deletion Request".
                 </p>
               </div>
+              {AI_DATA_DISCLOSURE.map(section => <div className="space-y-3" key={section.title}><h2 className="text-base font-bold text-white">{section.title}</h2><p className="text-slate-400 text-xs sm:text-sm">{section.text}</p></div>)}
             </div>
           </div>
         );

@@ -11,13 +11,13 @@ import {
 } from "../database/usersDao.js";
 import { getPaymentEntitlement } from "../database/paymentEntitlementsDao.js";
 import { getAllNotifications } from "../database/notificationDao.js";
-import { getAnnouncementById } from "../database/announcementDao.js";
+import { getAnnouncementById, cacheAiConnectionSummary } from "../database/announcementDao.js";
 import {
   checkAndConsumeServerAiQuota,
   refundServerAiQuota,
   completeServerAiQuotaReservation,
 } from "../services/aiQuotaService.js";
-import { generateDirectSummary } from "../services/gemini.js";
+import { summarizeFilingPdf, cachedFilingSummary, filingSummarySource, summaryCacheField } from "./filingSummary";
 import { invalidateUserWatchlistCache } from "../database/watchlistDao.js";
 import { invalidateMonitorConfigCache } from "../services/monitor.js";
 import {
@@ -37,6 +37,9 @@ import {
 import { getResultsCalendarSnapshot } from "../services/resultsCalendarService.js";
 import { calendarWindow, compactWatchlistStock, selectCalendarMeetings } from "./calendarRead.js";
 
+export function publicToolResult(name: string, result: any) {
+  return name.startsWith('watchlist_') && result?.watchlist && Object.hasOwn(result.watchlist,'is_active') ? {...result,watchlist:{...result.watchlist,is_active:result.watchlist.is_active!==0 && result.watchlist.is_active!==false}} : result;
+}
 export async function accountState(uid: string) {
   const [profile, entitlement] = await Promise.all([
     getUserProfile(uid, { durable: true }),
@@ -49,7 +52,7 @@ export async function accountState(uid: string) {
       Number(profile.proExpiresAt || 0),
       Number(entitlement?.proExpiresAt || 0),
     ) > Date.now();
-  return { profile, pro, limits: allowance(pro) };
+  return { profile, pro, limits: allowance(pro, uid) };
 }
 export async function connectedState(token: string) {
   const { row, grant } = await readConnectionToken(token);
@@ -62,12 +65,21 @@ export function createAiToolRunner(
     rpc?: typeof aiRpc;
     db?: typeof aiDb;
     calendar?: typeof getResultsCalendarSnapshot;
+    filings?: typeof filingsData;
+    results?: typeof resultsData;
+    meetings?: typeof meetingsData;
+    notifications?: typeof getAllNotifications;
+    filing?: typeof getAnnouncementById;
+    summarize?: typeof summarizeFilingPdf;
+    cacheSummary?: typeof cacheAiConnectionSummary;
+    quota?: { consume: typeof checkAndConsumeServerAiQuota; refund: typeof refundServerAiQuota; complete: typeof completeServerAiQuotaReservation; claimFree: typeof claimFreeSummaryDemo; releaseFree: typeof releaseFreeSummaryDemo };
   } = {},
 ) {
   const state = overrides.state || connectedState,
     rpc = overrides.rpc || aiRpc,
     dbCall = overrides.db || aiDb;
   const calendar = overrides.calendar || getResultsCalendarSnapshot;
+  const quota = overrides.quota || {consume:checkAndConsumeServerAiQuota,refund:refundServerAiQuota,complete:completeServerAiQuotaReservation,claimFree:claimFreeSummaryDemo,releaseFree:releaseFreeSummaryDemo};
   return async function (token: string, name: string, input: unknown) {
     const { spec, args } = parseTool(name, input);
     if (name === "meetings_read" || name === "watchlist_results_upcoming") calendarWindow(args);
@@ -104,7 +116,7 @@ export function createAiToolRunner(
           reservation.result.error,
           reservation.result.status || 409,
         );
-      return reservation.result;
+      return publicToolResult(name, reservation.result);
     }
     try {
       if (name === "account_context")
@@ -122,11 +134,14 @@ export function createAiToolRunner(
             "Shared with existing website summaries. Cached reads do not generate a new model call.",
         };
       if (name === "company_lookup") {
-        const entries = companyCandidates(args.query);
+        const exact = companyCandidates(args.query);
+        const entries = exact.length ? exact : companyCandidates(args.query, true);
+        const approximate = !exact.length && entries.length > 0;
         return {
-          found: entries.length === 1,
+          found: entries.length === 1 && !approximate,
           ambiguous: entries.length > 1,
-          ...(entries.length === 1
+          approximate,
+          ...(entries.length === 1 && !approximate
             ? { company: { symbol: entries[0].symbol, scripCode: entries[0].scripCode, name: entries[0].name } }
             : {
                 candidates: entries.map((e) => ({
@@ -137,10 +152,10 @@ export function createAiToolRunner(
               }),
         };
       }
-      if (name === "filings_search") return filingsData(args);
-      if (name === "results_read") return resultsData(args.company, args);
+      if (name === "filings_search") return (overrides.filings || filingsData)(args);
+      if (name === "results_read") return (overrides.results || resultsData)(args.company, args);
       if (name === "meetings_read")
-        return meetingsData(args.company, args.daysAhead, args);
+        return (overrides.meetings || meetingsData)(args.company, args.daysAhead, args);
       if (name === "watchlist_results_upcoming") {
         const row = await dbCall((db) =>
           db.from("user_watchlists").select("lists").eq("uid", uid).maybeSingle(),
@@ -179,7 +194,7 @@ export function createAiToolRunner(
           watchlists: lists.slice(args.offset, args.offset + 20).map((l) => ({
             id: String(l.id || "").slice(0, 100),
             name: String(l.name || "").slice(0, 80),
-            is_active: l.is_active,
+            is_active: l.is_active !== 0 && l.is_active !== false,
             stockCount: (l.items || []).length,
             preview: (Array.isArray(l.items) ? l.items : []).slice(0, 5).map(compactWatchlistStock),
           })),
@@ -223,7 +238,7 @@ export function createAiToolRunner(
       }
       if (name === "notifications_read")
         return {
-          notifications: (await getAllNotifications(uid, 20)).map((n) => ({
+          notifications: (await (overrides.notifications || getAllNotifications)(uid, 20)).map((n) => ({
             id: n.id,
             title: n.title,
             message: n.message,
@@ -252,22 +267,22 @@ export function createAiToolRunner(
         };
       }
       if (name === "filing_summary") {
-        const item = await getAnnouncementById(args.filingId);
+        const item = await (overrides.filing || getAnnouncementById)(args.filingId);
         if (!item) throw new AiError("not_found", 404);
-        const cached =
-          args.language === "english" ? item.aiSummaryEn : item.aiSummary;
+        filingSummarySource(item);
+        const cached = cachedFilingSummary(item, args.language);
         let summary = cached,
           receipt: string | undefined,
           freeClaim = false;
         try {
           if (!summary) {
             if (pro) {
-              const q = await checkAndConsumeServerAiQuota(uid, false);
+              const q = await quota.consume(uid, false);
               if (!q.allowed)
                 throw new AiError("generation_quota_exceeded", 429, q.error);
               receipt = q.reservationId;
             } else {
-              freeClaim = await claimFreeSummaryDemo(uid);
+              freeClaim = await quota.claimFree(uid);
               if (!freeClaim)
                 throw new AiError(
                   "free_demo_used",
@@ -275,25 +290,17 @@ export function createAiToolRunner(
                   "Your website free summary demo has already been used.",
                 );
             }
-            summary = await generateDirectSummary(
-              item.companyName || "",
-              item.subject || "",
-              item.details || "",
-              item.category || "OTHER",
-              item.pdfLink || "",
-              args.filingId,
-              args.language,
-            );
+            summary = await (overrides.summarize || summarizeFilingPdf)(item, args.language);
             if (!summary) throw new AiError("generation_unavailable", 503);
           }
           const result = {
             success: true,
-            summary,
+            ...summary!,
             cached: Boolean(cached),
             filingId: args.filingId,
             language: args.language,
           };
-          await dbCall((db) =>
+          const saved = await dbCall((db) =>
             db
               .from("ai_connection_operations")
               .update({ result })
@@ -302,11 +309,13 @@ export function createAiToolRunner(
               .eq("fingerprint", fingerprint)
               .select("request_id"),
           );
-          completeServerAiQuotaReservation(receipt);
+          if (!Array.isArray(saved) || saved.length !== 1) throw new AiError('operation_unavailable',503,'The summary receipt could not be confirmed.');
+          quota.complete(receipt);
+          if (!cached) { try { (overrides.cacheSummary || cacheAiConnectionSummary)(args.filingId, summaryCacheField(args.language), summary); } catch {} }
           return result;
         } catch (e) {
-          if (receipt) await refundServerAiQuota(uid, false, receipt);
-          if (freeClaim) await releaseFreeSummaryDemo(uid);
+          if (receipt) await quota.refund(uid, false, receipt);
+          if (freeClaim) await quota.releaseFree(uid);
           throw e;
         }
       }
@@ -333,7 +342,7 @@ export function createAiToolRunner(
       invalidateUserWatchlistCache(uid);
       invalidateUserProfileCache(uid);
       invalidateMonitorConfigCache(uid);
-      return result;
+      return publicToolResult(name, result);
     } catch (e) {
       if (spec.write) {
         const err =
