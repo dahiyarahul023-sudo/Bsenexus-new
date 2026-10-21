@@ -225,14 +225,29 @@
   margin: 0;
 }
 .ai-connect-connection {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   justify-content: space-between;
-  align-items: center;
+  align-items: start;
   gap: 20px;
   margin-bottom: 12px;
 }
 .ai-connect-connection > div {
   min-width: 0;
+}
+.ai-connect-connection > .ai-connect-button {
+  white-space: nowrap;
+  overflow-wrap: normal;
+  flex-shrink: 0;
+}
+.ai-connect-scope-list {
+  margin: 12px 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 5px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ac-muted);
 }
 .ai-connect-connection p {
   font-size: 13px;
@@ -407,6 +422,8 @@
   .ai-connect-connection .ai-connect-button {
     align-self: flex-start;
   }
+  .ai-connect-connection { grid-template-columns: minmax(0, 1fr); }
+  .ai-connect-connection > .ai-connect-button { justify-self: start; }
   .ai-connect-page h2 {
     font-size: 19px;
   }

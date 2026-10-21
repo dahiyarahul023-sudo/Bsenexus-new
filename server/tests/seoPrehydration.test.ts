@@ -183,7 +183,8 @@ describe('Server-Side SEO Pre-Hydration & Validation Architecture', () => {
 
     assert.ok(serverSource.includes("app.get(['/announcements', '/announcements/']"), '/announcements route must exist before the catch-all');
     assert.ok(serverSource.includes('buildAnnouncementsFeedCards()'), 'route must build real filing cards');
-    assert.ok(serverSource.includes("announcements-feed-v1"), 'feed HTML must be cached with explicit key');
+    assert.ok(serverSource.includes("announcements-feed-v2"), 'updated neutral shell feed HTML must be cached with explicit key');
+    assert.ok(serverSource.includes("html.replace('<!--announcements-feed-->'"), 'real cards must target the announcements-only insertion point');
     assert.ok(serverSource.includes('ttlMs: 5 * 60 * 1000'), 'feed cache must have a short 5-minute TTL');
   });
 

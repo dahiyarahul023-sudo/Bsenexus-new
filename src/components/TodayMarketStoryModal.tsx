@@ -197,7 +197,7 @@ export function TodayMarketStoryModal({ isOpen, onClose, initialChapterId, onSto
     if (dy > 100 && dy > Math.abs(dx) && start.scroll === 0 && !scrollable) { onCloseRef.current(); return; }
     if (Math.abs(dx) > 42 && Math.abs(dx) > Math.abs(dy)) { move(dx < 0 ? 1 : -1); return; }
     if (start.held || performance.now() - start.time > 350 || Math.abs(dx) + Math.abs(dy) > 12) return;
-    const bounds = event.currentTarget.getBoundingClientRect(); move(event.clientX - bounds.left < bounds.width * .3 ? -1 : 1);
+    const bounds = event.currentTarget.getBoundingClientRect(); move(event.clientX - bounds.left < bounds.width * .5 ? -1 : 1);
   };
 
   const openCompany = useCallback((company: StoryCompany) => {
@@ -257,6 +257,11 @@ export function TodayMarketStoryModal({ isOpen, onClose, initialChapterId, onSto
       </main>
       <footer className="story-footer">
         {slide && <>
+          <nav className="story-navigation" aria-label="Story navigation">
+            <button type="button" disabled={index === 0} onClick={() => move(-1)}><ChevronLeft size={19} />Previous</button>
+            <button type="button" aria-label={paused ? 'Resume story' : 'Pause story'} aria-pressed={paused} onClick={() => setPaused(value => !value)}>{paused ? <Play size={19} /> : <Pause size={19} />}</button>
+            <button type="button" onClick={() => move(1)}>{index === slides.length - 1 ? 'Done' : 'Next'}<ChevronRight size={19} /></button>
+          </nav>
           {subjectCompany && onOpenCompanyIntel && <button type="button" className="story-company-link" onClick={() => openCompany(subjectCompany)}><CompanyBrandLogo {...subjectCompany} size="sm" /><span>{subjectCompany.name}</span><ChevronRight size={17} /></button>}
           <div className="story-source">{slide.source.url ? <a href={slide.source.url} target="_blank" rel="noopener noreferrer">{slide.source.name} ↗</a> : <span>{slide.source.name}</span>}{sourceDate && <span>{sourceDate}</span>}</div>
           {failed ? <button className="story-refresh-status" type="button" onClick={() => void load(true)}>Showing saved snapshot · Retry refresh</button> : loading ? <p className="story-refresh-status">Checking for updates…</p> : null}

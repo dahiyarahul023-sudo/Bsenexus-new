@@ -5,6 +5,7 @@ import { useFeedDensity } from '../hooks/useFeedDensity';
 import { heliosCard } from './ui/helios';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { EXCHANGE_COMPANIES } from '../config/exchangeCompanies';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -18,9 +19,11 @@ export interface ListedCompany {
   category: string;
   description: string;
   marketCapRank: number;
+  listingLabel?: string;
 }
 
 export const BSE_26_COMPANIES: ListedCompany[] = [
+  ...EXCHANGE_COMPANIES.map(company => ({ ...company, marketCapRank: 0 })),
   {
     symbol: "RELIANCE",
     scripCode: "500325",
@@ -270,10 +273,10 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({ onEnterTerminal })
   const [selectedSector, setSelectedSector] = useState<string>('ALL');
 
   useEffect(() => {
-    document.title = 'BSE Listed Companies — Company Profiles, Results & Filings | Bsenexus';
+    document.title = 'Companies & Exchanges — Profiles, Results & Filings | Bsenexus';
     const metaDesc = document.querySelector('meta[name="description"]');
     if (metaDesc) {
-      metaDesc.setAttribute('content', 'Explore all 26 premier BSE listed companies on Bsenexus. Access live corporate announcements, quarterly earnings results, SEBI LODR disclosures, and AI intelligence.');
+      metaDesc.setAttribute('content', 'Explore company profiles, BSE Limited and NSE Limited on Bsenexus. Find corporate filings, available earnings dates and official investor sources.');
     }
     let canonical = document.querySelector('link[rel="canonical"]');
     if (!canonical) {
@@ -367,13 +370,13 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({ onEnterTerminal })
         <div className="mb-8">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 text-xs font-bold mb-3">
             <Building2 className="w-3.5 h-3.5" />
-            <span>26 PREMIER BSE BLUECHIPS &amp; HEAVYWEIGHTS</span>
+            <span>COMPANIES &amp; EXCHANGE OPERATORS</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
-            BSE Listed Companies — Profiles, Earnings Results &amp; Regulatory Filings
+            Companies &amp; Exchanges — Profiles, Earnings &amp; Filings
           </h1>
           <p className="mt-2 text-sm sm:text-base text-slate-600 dark:text-slate-400 max-w-3xl leading-relaxed">
-            Direct access to dedicated company intelligence hubs for India's 26 leading listed equities. Track Bombay Stock Exchange (BSE) regulatory disclosures, quarterly earnings metrics, investor presentations, and SEBI LODR corporate actions.
+            Explore company intelligence and exchange operator profiles, including BSE Limited and NSE Limited. Find available corporate disclosures, earnings information and official investor sources.
           </p>
         </div>
 
@@ -413,7 +416,7 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({ onEnterTerminal })
                     : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                 }`}
               >
-                {sec === 'ALL' ? 'All Sectors (26)' : sec}
+                {sec === 'ALL' ? `All Sectors (${BSE_26_COMPANIES.length})` : sec}
               </button>
             ))}
           </div>
@@ -452,7 +455,7 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({ onEnterTerminal })
                         {company.symbol}
                       </span>
                       <span className="text-slate-500 dark:text-slate-400">
-                        BSE: {company.scripCode}
+                        {company.listingLabel || `BSE: ${company.scripCode}`}
                       </span>
                     </div>
                   </div>
@@ -503,7 +506,7 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({ onEnterTerminal })
                 <span>Instant Regulatory Ingestion</span>
               </div>
               <h2 className="text-xl sm:text-2xl font-black tracking-tight">
-                Track Live BSE Disclosures for All 26 Bluechips
+                Explore Live Corporate Disclosures
               </h2>
               <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
                 Receive fast Telegram alerts with AI-powered financial metric extraction whenever any of these companies files a board meeting outcome, quarterly financial result, or material event with the Bombay Stock Exchange.

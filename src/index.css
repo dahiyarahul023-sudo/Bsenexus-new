@@ -295,6 +295,15 @@ html, body {
   max-width: 100vw;
 }
 
+/* Keep horizontal clipping without a non-scrolling ancestor trapping the
+   calendar toolbar/date headings. Retained hidden tabs must not enable this. */
+@supports (overflow-x: clip) {
+  html:has([data-screen-page="results-calendar"]:not([hidden])),
+  body:has([data-screen-page="results-calendar"]:not([hidden])) {
+    overflow-x: clip;
+  }
+}
+
 /* 
  * Video Principle: "Jump links need scroll-margin-top, or every heading tucks up under the bar."
  * Targets anchors, headings, and sections with IDs so they clear the sticky header + ticker

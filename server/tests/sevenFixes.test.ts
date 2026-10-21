@@ -6,6 +6,7 @@ import vm from 'node:vm';
 import ts from 'typescript';
 import { hasExactScripCode } from '../../src/shared/scripMatching.js';
 import { TOP_COMPANIES } from '../../src/config/topCompanies.js';
+import { EXCHANGE_COMPANIES } from '../../src/config/exchangeCompanies.js';
 import { getScripCode } from '../utils/stockResolver.js';
 import { isSymbolMatch } from '../utils/helpers.js';
 
@@ -96,18 +97,31 @@ test('sitemap parses with a strict XML parser; alias URLs are excluded', () => {
   assert.ok(!urls.includes('https://bsenexus.in/privacy'));
 });
 
-test('homepage initial HTML links every curated company with name and BSE code', () => {
-  assert.equal(TOP_COMPANIES.length, 26);
-  assert.equal(new Set(TOP_COMPANIES.map(c => c.scripCode)).size, 26);
+test('homepage no-script HTML links every curated company with its correct listing identity', () => {
+  assert.equal(TOP_COMPANIES.length, 28);
+  assert.equal(new Set(TOP_COMPANIES.map(c => c.symbol)).size, 28);
   const index = readFileSync('index.html', 'utf8');
-  const section = index.match(/<section aria-labelledby="top-companies-heading">([\s\S]*?)<\/section>/)?.[1] || '';
+  const section = index.match(/<section aria-labelledby="noscript-top-companies-heading">([\s\S]*?)<\/section>/)?.[1] || '';
   const directory = readFileSync('src/components/CompaniesPage.tsx', 'utf8');
   for (const c of TOP_COMPANIES) {
     assert.ok(section.includes(`href="/company/${c.symbol}"`), c.symbol);
-    assert.ok(section.includes(`BSE: ${c.scripCode}`), c.symbol);
+    assert.ok(section.includes(c.listingLabel || `BSE: ${c.scripCode}`), c.symbol);
     assert.ok(section.includes(c.name.replaceAll('&', '&amp;')), c.symbol);
-    assert.ok(directory.includes(`scripCode: "${c.scripCode}"`));
+    if (!c.listingLabel) assert.ok(directory.includes(`scripCode: "${c.scripCode}"`));
+    else assert.ok(directory.includes('...EXCHANGE_COMPANIES.map'));
   }
+});
+
+test('server directory renders exchange names, correct listings and all 28 discovery links', () => {
+  const ctx = load(declarations(['renderCompaniesDirectoryPage', 'escapeHtmlText', 'escapeHtmlAttr']), { EXCHANGE_COMPANIES, AI_STUDIO_REDIRECT_SCRIPT: '' });
+  const html = ctx.renderCompaniesDirectoryPage();
+  for (const company of EXCHANGE_COMPANIES) {
+    assert.ok(html.includes(`href="https://bsenexus.in/company/${company.symbol}"`));
+    assert.ok(html.includes(company.name));
+    assert.ok(html.includes(company.listingLabel));
+  }
+  assert.doesNotMatch(html, /BSE: 540025|26 PREMIER/);
+  assert.match(html, /"numberOfItems":\s*28/);
 });
 
 test('live alias metadata uses the announcements canonical', () => {

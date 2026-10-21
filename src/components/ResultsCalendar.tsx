@@ -149,6 +149,16 @@ export function ResultsCalendar() {
 }
 
 function ResultsCalendarView() {
+  const toolbarRef = useRef<HTMLDivElement>(null);
+  const [toolbarHeight, setToolbarHeight] = useState(0);
+  useEffect(() => {
+    const toolbar = toolbarRef.current;
+    if (!toolbar) return;
+    const measure = () => setToolbarHeight(toolbar.getBoundingClientRect().height);
+    const observer = new ResizeObserver(measure);
+    observer.observe(toolbar); measure();
+    return () => observer.disconnect();
+  }, []);
   const { user, profile, isAdmin, isPro, isPaidPro, adminUnlocked, setIsAuthModalOpen, setIsProModalOpen } = useAuth();
   const owner = user && !user.isAnonymous ? user.uid : 'guest';
   const [calendarScope, setCalendarScope] = useState<CalendarScope>(() => readCalendarScope(calendarStorage(), owner));
@@ -1157,7 +1167,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
         </div>
       )}
       {/* Compact Streamlined Unified Toolbar: Sticky below navbar - Title, Search, Filter & Single Tab Row */}
-      <div className="sticky top-14 md:top-[89px] z-30 bg-white/95 dark:bg-[#1A1926]/95 backdrop-blur-md border border-slate-200/90 dark:border-[#2D283E] rounded-xl p-2.5 sm:p-3 shadow-xs flex flex-col gap-2">
+      <div ref={toolbarRef} className="sticky top-14 md:top-[89px] z-30 bg-white/95 dark:bg-[#1A1926]/95 backdrop-blur-md border border-slate-200/90 dark:border-[#2D283E] rounded-xl p-2.5 sm:p-3 shadow-xs flex flex-col gap-2">
         {/* Row 1: Title, Search Box & Filter Bottom Sheet Trigger */}
         <div className="results-toolbar flex items-center gap-2 justify-between">
           
@@ -1960,8 +1970,14 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
               const isDeclared = item.isDeclared === true;
               const isFlashing = lightningId === item.id;
               const isSelected = selectedIds.has(item.id);
+              const dateLabel = getResolvedMeetingDate(item) || 'Date to be confirmed';
+              const startsDate = idx === 0 || dateLabel !== (getResolvedMeetingDate(paginatedItems[idx - 1]) || 'Date to be confirmed');
 
               return (
+                <React.Fragment key={`${item.id || 'cal'}-${idx}`}>
+                {startsDate && <h2 style={{ '--calendar-toolbar-height': `${toolbarHeight}px` } as React.CSSProperties} className="calendar-date-heading sticky top-[calc(56px+var(--calendar-toolbar-height))] md:top-[calc(89px+var(--calendar-toolbar-height))] z-20 col-span-full flex items-center gap-3 rounded-lg border border-slate-200 dark:border-[#3E3854] bg-slate-100 dark:bg-[#222030] px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 shadow-xs">
+                  <CalendarDays size={15} aria-hidden="true" /><span>{dateLabel}</span>{isToday && <span className="text-amber-700 dark:text-amber-300">Today</span>}
+                </h2>}
                 <motion.div
                   id={`calendar-item-${item.id || item.scripCode || idx}`}
                   key={`${item.id || 'cal'}-${idx}`}
@@ -2025,10 +2041,10 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
 
                         <span 
                           onClick={(e) => handleOpenIntel(item.scripCode, item.symbol, getCorrectCompanyName(item), e)}
-                          className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors cursor-pointer truncate"
+                          className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors cursor-pointer break-words"
                           title="Open 360° Stock Intelligence"
                         >
-                          {item.symbol}
+                          {/^[0-9]+$/.test(item.symbol || '') || !item.symbol ? getCorrectCompanyName(item) : item.symbol}
                         </span>
 
                         {/* 360° Company Intel Icon with informative tooltip */}
@@ -2042,9 +2058,6 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                           <Building2 size={12} />
                         </button>
 
-                        <HeliosPill tone="slate" dot={false} className="font-mono">
-                          {item.scripCode}
-                        </HeliosPill>
                       </div>
                     </div>
 
@@ -2067,9 +2080,9 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                   </div>
 
                   <div className="space-y-0.5 flex-1 min-w-0">
-                    <div className="text-xs font-semibold text-slate-800 dark:text-slate-200 line-clamp-1">
+                    {item.symbol && !/^[0-9]+$/.test(item.symbol) && <div className="text-xs font-semibold text-slate-800 dark:text-slate-200 line-clamp-1">
                       {getCorrectCompanyName(item)}
-                    </div>
+                    </div>}
 
                     <div className="text-[10px] text-slate-600 dark:text-slate-400 flex items-center gap-1 flex-wrap">
                       <span className="font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-[#222030] px-1.5 py-0.2 rounded border border-slate-200/60 dark:border-[#2D283E] line-clamp-1 max-w-[300px]">
@@ -2311,6 +2324,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                   </div>
                 </div>
               </motion.div>
+              </React.Fragment>
             );
           })}
         </motion.div>

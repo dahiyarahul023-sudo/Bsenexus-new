@@ -2214,9 +2214,9 @@ export function LandingPage({
             <h2 id="top-companies-heading" className="text-xl font-bold text-slate-900 dark:text-white mb-4">Track Companies</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {TOP_COMPANIES.map(company => (
-                <a key={company.scripCode} href={`/company/${encodeURIComponent(company.symbol)}`} className="p-4 rounded-2xl bg-slate-50 dark:bg-[#15141F] border border-slate-200/80 dark:border-slate-800/80 hover:border-emerald-500/50 transition-colors">
+                <a key={company.symbol} href={`/company/${encodeURIComponent(company.symbol)}`} className="p-4 rounded-2xl bg-slate-50 dark:bg-[#15141F] border border-slate-200/80 dark:border-slate-800/80 hover:border-emerald-500/50 transition-colors">
                   <span className="block text-sm font-bold text-slate-900 dark:text-white">{company.name}</span>
-                  <span className="block text-xs text-slate-500 dark:text-slate-400 mt-1">BSE: {company.scripCode}</span>
+                  <span className="block text-xs text-slate-500 dark:text-slate-400 mt-1">{company.listingLabel || `BSE: ${company.scripCode}`}</span>
                 </a>
               ))}
             </div>

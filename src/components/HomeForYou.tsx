@@ -21,7 +21,8 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { customFetch } from '../api';
-import { activeWatchlistIdentities, matchesWatchlistIdentity } from '../shared/watchlistIdentity';
+import { activeWatchlistIdentities } from '../shared/watchlistIdentity';
+import { latestWatchlistUpdates } from '../utils/watchlistPreview';
 import { useAuth } from '../context/AuthContext';
 import { useIntelModal } from '../context/IntelModalContext';
 import { formatFilingRelativeTime, formatCleanTime, formatDateOnly } from '../utils/timeFormat';
@@ -208,8 +209,7 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
   // 1. Filtered Watchlist Filings
   const watchlistFilings = useMemo(() => {
     if (!hasWatchlist) return [];
-    const identities = activeWatchlistIdentities(watchlists);
-    return allAnnouncements.filter(filing => identities.some(stock => matchesWatchlistIdentity(filing, stock))).slice(0, 2);
+    return latestWatchlistUpdates(allAnnouncements, watchlists);
   }, [allAnnouncements, watchlists, hasWatchlist]);
 
   // Starter stocks filtered by search query in modal

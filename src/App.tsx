@@ -79,7 +79,6 @@ function TabFallback() {
 }
 import { useScrollRestoration } from './hooks/useScrollRestoration';
 import { TabErrorBoundary } from './components/ui/TabErrorBoundary';
-import { ScrollRestoredPill } from './components/ui/ScrollRestoredPill';
 import { saveScrollPosition } from './utils/scrollState';
 import { parseShareablePath } from './utils/shareUrls';
 import { FilingPage } from './components/filing/FilingPage';
@@ -415,7 +414,7 @@ function AppContent() {
   const tabMotion = useScreenTransition(activeTab);
 
   // Apple-Grade Scroll State & Restoration System ("Scroll is state")
-  const { restoredInfo, scrollToTop } = useScrollRestoration({
+  const { scrollToTop } = useScrollRestoration({
     activeKey: tabMotion.displayedKey,
     enabled: true
   });
@@ -1202,11 +1201,6 @@ function AppContent() {
         </div>
       </Layout>
 
-      {/* Floating Reassurance Indicator when restoring scroll position */}
-      <ScrollRestoredPill 
-        restoredY={restoredInfo?.y ?? null} 
-        onScrollToTop={scrollToTop} 
-      />
     </>
   );
 }

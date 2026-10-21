@@ -42,7 +42,9 @@ import { autoIndexNewGuides } from "./server/services/guideIndexNow.js";
 import { verifyRecaptchaToken } from "./server/security/recaptchaService.js";
 import { getBseBlockBackoffLevel } from "./server/services/bse.js";
 import { getAllFeedback } from "./server/database/feedbackDao.js";
-import { prerenderFilingHtml, prerenderCompanyHtml, buildSitemapIndexXml, cleanCanonicalUrl, buildAnnouncementsFeedCards, buildAnnouncementsCollectionJsonLd, PRELOADER_CARD_RE } from "./server/services/seoPrerender.js";
+import { prerenderFilingHtml, prerenderCompanyHtml, buildSitemapIndexXml, cleanCanonicalUrl, buildAnnouncementsFeedCards, buildAnnouncementsCollectionJsonLd } from "./server/services/seoPrerender.js";
+import { EXCHANGE_COMPANIES, exchangeCompany } from './src/config/exchangeCompanies';
+import { renderExchangeProfile } from './server/services/exchangeProfiles';
 import { mountAiIntegration } from './server/ai/http.js';
 import { readCachedResultsCalendar } from './server/services/resultsCalendarService.js';
 import { renderPublicCalendarShell, publicCalendarCacheControl } from './server/services/publicCalendar.js';
@@ -245,7 +247,7 @@ async function generateDynamicSitemap(): Promise<string> {
     try {
       const stockEntries = getAllStockEntries();
       const seenSymbols = new Set<string>();
-      for (const entry of stockEntries) {
+      for (const entry of [...EXCHANGE_COMPANIES, ...stockEntries]) {
         const sym = entry.symbol?.trim().toUpperCase();
         if (!sym || seenSymbols.has(sym) || !/^[A-Z0-9-]{2,15}$/.test(sym)) continue;
         seenSymbols.add(sym);
@@ -3020,11 +3022,12 @@ ${jsonLd}
 }
 
 export function renderCompaniesDirectoryPage(): string {
-  const pageTitle = "BSE Listed Companies — Company Profiles, Results & Filings | Bsenexus";
+  const pageTitle = "Companies & Exchanges — Profiles, Results & Filings | Bsenexus";
   const canonicalUrl = "https://bsenexus.in/companies";
-  const description = "Comprehensive directory of India's top 26 BSE listed companies. Access real-time corporate filings, quarterly financial results, SEBI LODR disclosures, and AI analysis.";
+  const description = "Explore listed companies and exchange operators BSE Limited and NSE Limited. Find company profiles, financial results, regulatory filings and official investor sources.";
 
   const companiesList = [
+    ...EXCHANGE_COMPANIES.map(company => ({ ...company, desc: company.description })),
     { symbol: "RELIANCE", scripCode: "500325", name: "Reliance Industries Ltd", sector: "Energy & Petrochemicals / Conglomerate", category: "Mega Cap Leader", desc: "India's largest conglomerate spanning energy, retail, telecommunications (Jio), and petrochemicals." },
     { symbol: "TCS", scripCode: "532540", name: "Tata Consultancy Services Ltd", sector: "IT Services & Software", category: "Tech Heavyweight", desc: "Global leader in IT services, digital transformation consulting, and enterprise cloud infrastructure." },
     { symbol: "HDFCBANK", scripCode: "500180", name: "HDFC Bank Ltd", sector: "Private Sector Banking & Finance", category: "Banking Giant", desc: "India's largest private sector bank providing retail, commercial, and digital transaction banking." },
@@ -3064,7 +3067,7 @@ export function renderCompaniesDirectoryPage(): string {
         "description": description,
         "mainEntity": {
           "@type": "ItemList",
-          "name": "BSE 26 Listed Heavyweights & Bluechips",
+          "name": "Companies and Exchange Operators",
           "numberOfItems": companiesList.length,
           "itemListElement": companiesList.map((c, idx) => ({
             "@type": "ListItem",
@@ -3424,9 +3427,9 @@ ${jsonLd}
     </div>
 
     <div class="hero">
-      <span class="badge">🏛️ 26 PREMIER BSE BLUECHIPS &amp; HEAVYWEIGHTS</span>
-      <h1>BSE Listed Companies — Profiles, Earnings &amp; Filings</h1>
-      <p class="subtitle">Complete company intelligence dossiers for India's 26 leading listed equities. Track real-time Bombay Stock Exchange regulatory disclosures, quarterly financial results, and SEBI LODR corporate actions.</p>
+      <span class="badge">🏛️ COMPANIES &amp; EXCHANGE OPERATORS</span>
+      <h1>Companies &amp; Exchanges — Profiles, Earnings &amp; Filings</h1>
+      <p class="subtitle">Explore company intelligence and exchange operator profiles, including BSE Limited and NSE Limited. Find available corporate disclosures, earnings information and official investor sources.</p>
     </div>
 
     <div class="companies-list">
@@ -3438,7 +3441,7 @@ ${jsonLd}
               <div class="comp-title">${escapeHtmlText(c.name)}</div>
               <div class="comp-sub">
                 <span class="comp-ticker">${escapeHtmlText(c.symbol)}</span>
-                <span>BSE: ${escapeHtmlText(c.scripCode)}</span>
+                <span>${escapeHtmlText("listingLabel" in c ? c.listingLabel : `BSE: ${c.scripCode}`)}</span>
               </div>
             </div>
           </div>
@@ -3455,7 +3458,7 @@ ${jsonLd}
     </div>
 
     <div class="cta-box">
-      <h2>Continuous Sub-Minute BSE Ingestion for All 26 Heavyweights</h2>
+      <h2>Explore Live Corporate Disclosures</h2>
       <p>Bsenexus monitors BSE announcements every 15 seconds to deliver instant AI metric extraction and instant Telegram alerts directly to your trading desk.</p>
       <div class="cta-actions">
         <a href="https://bsenexus.in/?tab=announcements" class="btn-emerald">Open Live Terminal &rarr;</a>
@@ -6016,6 +6019,11 @@ app.get(['/company/:symbol', '/stock/:symbol'], async (req, res) => {
   }
 
   const cleanInput = rawInput.trim().toUpperCase();
+  const exchange = exchangeCompany(cleanInput);
+  if (exchange) {
+    if (req.path !== `/company/${exchange.symbol}`) return res.redirect(301, `/company/${exchange.symbol}`);
+    return res.type('html').set('Cache-Control', 'public, max-age=300, s-maxage=3600').send(renderExchangeProfile(exchange));
+  }
   let symbol = cleanInput;
   let scripCode = getScripCode(cleanInput);
 
@@ -6273,7 +6281,7 @@ app.get('/sitemap-companies.xml', (_req, res) => {
   const seenSymbols = new Set<string>();
 
   let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
-  for (const entry of stockEntries) {
+  for (const entry of [...EXCHANGE_COMPANIES, ...stockEntries]) {
     const sym = entry.symbol?.trim().toUpperCase();
     if (!sym || seenSymbols.has(sym) || !/^[A-Z0-9-]{2,15}$/.test(sym)) continue;
     seenSymbols.add(sym);
@@ -6560,8 +6568,8 @@ const TAB_SEO_CONFIG: Record<string, TabSeoMeta> = {
     canonical: "https://bsenexus.in/pricing",
   },
   companies: {
-    title: "BSE Listed Companies — Company Profiles, Results & Filings | Bsenexus",
-    description: "Explore all 26 premier BSE listed companies on Bsenexus. Access live corporate announcements, quarterly earnings results, SEBI LODR disclosures, and AI intelligence.",
+    title: "Companies & Exchanges — Profiles, Results & Filings | Bsenexus",
+    description: "Explore company profiles, BSE Limited and NSE Limited on Bsenexus. Find corporate filings, available earnings dates and official investor sources.",
     canonical: "https://bsenexus.in/companies",
   },
   about: {
@@ -6913,7 +6921,7 @@ async function startServer() {
     // Any failure falls through to the standard shell via next().
     app.get(['/announcements', '/announcements/'], async (req, res, next) => {
       try {
-        const cacheKey = 'announcements-feed-v1';
+        const cacheKey = 'announcements-feed-v2';
         const clientEtag = req.headers['if-none-match'];
         const cached = pageRenderCache.get(cacheKey);
         if (cached) {
@@ -6931,11 +6939,7 @@ async function startServer() {
         let html = injectTabSeoMetadata(rawHtml, 'announcements');
         const cards = await buildAnnouncementsFeedCards();
         if (cards) {
-          let replaced = false;
-          html = html.replace(PRELOADER_CARD_RE, () => {
-            if (!replaced) { replaced = true; return cards; }
-            return '';
-          });
+          html = html.replace('<!--announcements-feed-->', () => cards);
         }
         // Swap the neutral CollectionPage marker for the dynamic ItemList built
         // from the same real filings as the cards. No-op if the feed is empty
