@@ -27,8 +27,8 @@ describe('Search Engine & Cross-Browser Discovery (Step 06: IndexNow & OpenSearc
   });
 
   test('IndexNowQueue enqueues valid URLs and deduplicates', () => {
-    indexNowQueue.enqueue('https://bsenexus.in/announcement/12345');
-    indexNowQueue.enqueue('https://bsenexus.in/announcement/12345'); // Duplicate
+    indexNowQueue.enqueue('https://bsenexus.in/announcements');
+    indexNowQueue.enqueue('https://bsenexus.in/announcements'); // Duplicate
     indexNowQueue.enqueue('https://bsenexus.in/company/RELIANCE');
     indexNowQueue.enqueue('invalid-url-ignored'); // Invalid
 

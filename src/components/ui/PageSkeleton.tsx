@@ -40,6 +40,7 @@ export function PageSkeleton({ page = 'section' }: { page?: string }) {
     settings: 'Settings', watchlists: 'Watchlist', 'results-calendar': 'BSE Results Calendar',
     news: 'News', dashboard: 'Filings', logs: 'Logs', storage: 'Storage', diagnostics: 'Diagnostics',
     'seo-suite': 'SEO Studio',
+    companies: 'Companies & Exchanges', 'ai-connections': 'AI Connections',
   };
   let listView = ['logs', 'storage', 'diagnostics'].includes(page);
   if (page === 'watchlists' || page === 'results-calendar') {

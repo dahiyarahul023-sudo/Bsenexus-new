@@ -433,9 +433,11 @@ function AppContent() {
       scrollToTop();
       return;
     }
-    if (newTab === 'companies') {
-      // Legacy: companies now lives under Settings → BSE Listed Companies.
-      window.location.href = '/companies';
+    if (newTab === 'companies' || newTab === 'plugin') {
+      saveScrollPosition(tabMotion.displayedKey);
+      window.history.pushState(null, '', newTab === 'companies' ? '/companies' : '/plugin');
+      setCurrentRoute(newTab);
+      window.scrollTo({ top: 0, behavior: 'instant' });
       return;
     }
     // Save previous tab scroll position immediately before switching
@@ -913,7 +915,7 @@ function AppContent() {
     return (
       <>
         <TabErrorBoundary label="companies">
-        <Suspense fallback={<TabFallback />}>
+        <Suspense fallback={<PageSkeleton page="companies" />}>
           <CompaniesPage
             onEnterTerminal={(tab) => {
               setCurrentRoute('home');
@@ -960,7 +962,7 @@ function AppContent() {
     return (
       <>
         <TabErrorBoundary label="ai-plugin-page">
-          <Suspense fallback={<TabFallback />}>
+          <Suspense fallback={<PageSkeleton page="ai-connections" />}>
             <AiPluginPage
               onEnterTerminal={(tab) => {
                 setCurrentRoute('home');

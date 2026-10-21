@@ -140,7 +140,10 @@
         "supabase/migrations/20261019065115_telegram_result_delivery.sql",
         "src/components/SettingsTab.tsx",
         "src/components/WatchlistEditor.tsx",
-        "src/shared/watchlistIdentity.ts"
+        "src/shared/watchlistIdentity.ts",
+        "server/services/filingIndexNow.ts",
+        "server/services/indexNow.ts",
+        "server/services/indexNowQueue.ts"
       ],
       "tests": [
         "server/tests/bseBackfill.test.ts",
@@ -156,9 +159,11 @@
         "server/tests/telegramResultSql.test.ts",
         "server/tests/telegramResultDocument.test.ts",
         "server/tests/watchlistIdentity.test.ts",
-        "server/tests/watchlistMetadata.test.ts"
+        "server/tests/watchlistMetadata.test.ts",
+        "server/tests/indexNowIngestion.test.ts",
+        "server/tests/indexNowQueue.test.ts"
       ],
-      "reason": "Poll → normalize/dedupe → persistence → feed and alert decisions → recipient-specific delivery/inbox. Global and personal recipients must remain distinct. Preset saves replace stable per-owner IDs atomically; confirmed cloud settings feed every poll. Personal channels supersede inherited defaults once presets are saved. Live polling has a CRON_SECRET bearer-protected HTTP trigger, a 60-second in-container watchdog timer, a continuous 15-second active poller, and a 15-second-stale traffic trigger. The shared process-local monitor lock skips running cycles without queueing. Request lifetime covers bounded ingestion, raw delivery/write drain and then result AI after releasing the ingestion lock; cron source failure eligibility is capped at 60 seconds. External Scheduler remains necessary for idle request-based Cloud Run; legacy cron returns 410. Numbered IST worker summaries and cron request summaries have distinct event fields. Automatic Telegram AI applies only to actual financial results with a stable security-code/period identity. Private durable claims share one valid analysis per period/language and reserve one reply per chat across exchange copies, languages and restart. Failed evidence uses a bounded newer-source retry; uncertain send acceptance never replays. Private admin delivery timings retain exchange, observed, processed and Telegram acceptance dates without recipient identity. Migration must precede runtime release."
+      "reason": "Poll → normalize/dedupe → persistence → feed and alert decisions → recipient-specific delivery/inbox. Global and personal recipients must remain distinct. Preset saves replace stable per-owner IDs atomically; confirmed cloud settings feed every poll. Personal channels supersede inherited defaults once presets are saved. Live polling has a CRON_SECRET bearer-protected HTTP trigger, a 60-second in-container watchdog timer, a continuous 15-second active poller, and a 15-second-stale traffic trigger. The shared process-local monitor lock skips running cycles without queueing. Request lifetime covers bounded ingestion, raw delivery/write drain and then result AI after releasing the ingestion lock; cron source failure eligibility is capped at 60 seconds. External Scheduler remains necessary for idle request-based Cloud Run; legacy cron returns 410. Numbered IST worker summaries and cron request summaries have distinct event fields. Automatic Telegram AI applies only to actual financial results with a stable security-code/period identity. Private durable claims share one valid analysis per period/language and reserve one reply per chat across exchange copies, languages and restart. Failed evidence uses a bounded newer-source retry; uncertain send acceptance never replays. Private admin delivery timings retain exchange, observed, processed and Telegram acceptance dates without recipient identity. Migration must precede runtime release. Confirmed public filing changes queue company/announcements IndexNow URLs after successful upsert; the poll collection hold is idempotently released in finally. Indexing I/O runs outside ingestion and does not change alert recipients or intake."
     },
     {
       "id": "user-data",
@@ -207,14 +212,17 @@
         "supabase/migrations/003_durable_ai_quota.sql",
         "supabase/migrations/004_notification_inbox_receipts.sql",
         "supabase/migrations/005_user_notification_inbox_clear.sql",
-        "supabase/migrations/006_durable_referrals.sql"
+        "supabase/migrations/006_durable_referrals.sql",
+        "server/database/indexNowDao.ts",
+        "supabase/migrations/20261021133613_indexnow_url_cooldown.sql"
       ],
       "tests": [
         "server/tests/storageQuotaSwitch.test.ts",
         "server/tests/startupRecovery.test.ts",
-        "server/tests/productionAudit.test.ts"
+        "server/tests/productionAudit.test.ts",
+        "server/tests/indexNowSql.test.ts"
       ],
-      "reason": "Supabase and privileged RPCs are server-only. Cache/fallback behavior varies per DAO: local success never proves durable payment success. Review migrations with caller changes."
+      "reason": "Supabase and privileged RPCs are server-only. Cache/fallback behavior varies per DAO: local success never proves durable payment success. Review migrations with caller changes. IndexNow public-URL claims use service-role-only RLS/invoker RPCs and reserve a durable 24-hour cooldown before HTTP; browser grants and local fallback authority are absent."
     },
     {
       "id": "public-contract",
@@ -344,7 +352,15 @@
         "src/shared/scripMatching.ts",
         "server/services/publicCalendar.ts",
         "src/config/exchangeCompanies.ts",
-        "server/services/exchangeProfiles.ts"
+        "server/services/exchangeProfiles.ts",
+        "src/config/companyDirectory.ts",
+        "server/services/indexNowConfig.ts",
+        "server/services/indexNowQueue.ts",
+        "server/services/filingIndexNow.ts",
+        "server/database/indexNowDao.ts",
+        "supabase/migrations/20261021133613_indexnow_url_cooldown.sql",
+        "public/indexnow-key.txt",
+        "public/bbf74ca16c536bfcbe219216d579fdb009cdc40013aad38a3fd6bc649e18fa93.txt"
       ],
       "tests": [
         "server/tests/faqBank.test.ts",
@@ -355,9 +371,14 @@
         "server/tests/seoPrehydration.test.ts",
         "server/tests/aiEvidence.test.ts",
         "scripts/verify-public-calendar.mjs",
-        "server/tests/exchangeProfiles.test.ts"
+        "server/tests/exchangeProfiles.test.ts",
+        "server/tests/companyDirectory.test.ts",
+        "server/tests/indexNowQueue.test.ts",
+        "server/tests/indexNowSql.test.ts",
+        "server/tests/indexNowIngestion.test.ts",
+        "server/tests/indexNowKeyRoute.test.ts"
       ],
-      "reason": "Public copy and crawler metadata must agree with actual API/product contracts. Admin SEO mutations inherit mount guards; generated summaries are not evidence of source accuracy. BSE/NSE operator profiles, shared listing identity, directory/landing links and static/dynamic sitemaps agree; these records never expand intake or assign BSE Limited an invented BSE code."
+      "reason": "Public copy and crawler metadata must agree with actual API/product contracts. Admin SEO mutations inherit mount guards; generated summaries are not evidence of source accuracy. BSE/NSE operator profiles, shared listing identity, directory/landing links and static/dynamic sitemaps agree; these records never expand intake or assign BSE Limited an invented BSE code. The shared directory count includes Nexus Select Trust (NXST/543913) and drives client/server metadata, badge, filters and schema. One configured primary IndexNow submitter batches canonical changed public URLs, dedupes 24 hours across instances and allows at most one later retry. Directory content-version changes enqueue once, not on every startup; Cloudflare configuration is external and not assumed."
     },
     {
       "id": "operations",
@@ -377,7 +398,10 @@
         "server/utils/retry.ts",
         "server/utils/circuitBreaker.ts",
         "server/utils/pollCycle.ts",
-        "package.json"
+        "package.json",
+        "server/services/indexNow.ts",
+        "server/services/indexNowConfig.ts",
+        "server/services/indexNowQueue.ts"
       ],
       "tests": [
         "server/tests/startupRecovery.test.ts",
@@ -385,9 +409,11 @@
         "server/tests/circuitBreaker.test.ts",
         "server/tests/recaptchaSecurity.test.ts",
         "server/tests/pollerStall.test.ts",
-        "server/tests/announcementCadence.test.ts"
+        "server/tests/announcementCadence.test.ts",
+        "server/tests/indexNowQueue.test.ts",
+        "server/tests/indexNowSql.test.ts"
       ],
-      "reason": "Startup and settings influence background jobs, provider calls, abuse limits and logs. A live HTTP listener does not establish that durable stores or external providers are ready. Poller stage deadlines release the monitor lock without resuming abandoned workers; dedicated local poller history is not cloud deployment durability."
+      "reason": "Startup and settings influence background jobs, provider calls, abuse limits and logs. A live HTTP listener does not establish that durable stores or external providers are ready. Poller stage deadlines release the monitor lock without resuming abandoned workers; dedicated local poller history is not cloud deployment durability. IndexNow starts only after listen, uses the existing provider circuit and reports configured primary mode/HTTP status in diagnostics. Its background failures never fail filing storage; production Crawler Hints state requires independent inspection."
     },
     {
       "id": "frontend-navigation",
@@ -413,15 +439,19 @@
         "src/components/AiPluginPage.tsx",
         "src/components/SettingsTab.tsx",
         "src/components/ui/CommandPalette.tsx",
-        "server/utils/spaRoutes.ts"
+        "server/utils/spaRoutes.ts",
+        "src/components/CompaniesPage.tsx",
+        "src/config/companyDirectory.ts"
       ],
       "tests": [
         "server/tests/routeResolution.test.ts",
         "server/tests/homeNews.test.ts",
         "server/tests/spaRouteParity.test.ts",
-        "scripts/verify-oauth-routing.mjs"
+        "scripts/verify-oauth-routing.mjs",
+        "server/tests/companyDirectory.test.ts",
+        "server/tests/sevenFixes.test.ts"
       ],
-      "reason": "URL and active tab must agree across direct links, refresh, browser Back/Forward and share pages. Loading, focus and scroll restoration are part of navigation; route tests do not prove browser behavior. Saved scroll positions restore silently; App does not mount the restored-position notification."
+      "reason": "URL and active tab must agree across direct links, refresh, browser Back/Forward and share pages. Loading, focus and scroll restoration are part of navigation; route tests do not prove browser behavior. Saved scroll positions restore silently; App does not mount the restored-position notification. Settings Companies/AI entries use the App route owner and existing PageSkeleton during cold lazy imports; native history/popstate preserves Back/Forward without a full document reload."
     },
     {
       "id": "frontend-session",
@@ -682,7 +712,8 @@
         "src/config/topCompanies.ts",
         "server/services/publicCalendar.ts",
         "src/config/exchangeCompanies.ts",
-        "server/services/exchangeProfiles.ts"
+        "server/services/exchangeProfiles.ts",
+        "src/config/companyDirectory.ts"
       ],
       "tests": [
         "server/tests/searchEngineDiscovery.test.ts",
@@ -691,9 +722,10 @@
         "server/tests/sevenFixes.test.ts",
         "server/tests/aiEvidence.test.ts",
         "scripts/verify-public-calendar.mjs",
-        "server/tests/exchangeProfiles.test.ts"
+        "server/tests/exchangeProfiles.test.ts",
+        "server/tests/companyDirectory.test.ts"
       ],
-      "reason": "Public links, pricing claims, server-rendered content and client views must agree. Lazy navigation, responsive composition, keyboard operation and motion require browser evidence beyond server discovery tests. BSE/NSE operator profiles, shared listing identity, directory/landing links and static/dynamic sitemaps agree; these records never expand intake or assign BSE Limited an invented BSE code."
+      "reason": "Public links, pricing claims, server-rendered content and client views must agree. Lazy navigation, responsive composition, keyboard operation and motion require browser evidence beyond server discovery tests. BSE/NSE operator profiles, shared listing identity, directory/landing links and static/dynamic sitemaps agree; these records never expand intake or assign BSE Limited an invented BSE code. The ordered shared company/REIT/exchange directory drives live counts, landing links and SSR discovery; Nexus Select Trust is appended with verified code 543913 and does not expand filing intake."
     },
     {
       "id": "document-startup-security",

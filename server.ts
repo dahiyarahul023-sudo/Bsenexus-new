@@ -37,12 +37,13 @@ import type { ServerMarketGuide as MarketGuide } from "./server/services/marketG
 import { resumeFirestoreNetwork, startStorageRecoveryProbe } from "./server/database/firebase.js";
 import { isFirestoreQuotaExceeded, getManualStorageMode, resetAdminPermissionDenied } from "./server/database/localStore.js";
 import { pageRenderCache, staticGuideCache, apiResponseCache } from "./server/utils/renderCache.js";
-import { INDEXNOW_KEY, indexNowQueue } from "./server/services/indexNow.js";
+import { INDEXNOW_KEY, indexNowQueue, startIndexNow } from "./server/services/indexNow.js";
 import { autoIndexNewGuides } from "./server/services/guideIndexNow.js";
 import { verifyRecaptchaToken } from "./server/security/recaptchaService.js";
 import { getBseBlockBackoffLevel } from "./server/services/bse.js";
 import { getAllFeedback } from "./server/database/feedbackDao.js";
 import { prerenderFilingHtml, prerenderCompanyHtml, buildSitemapIndexXml, cleanCanonicalUrl, buildAnnouncementsFeedCards, buildAnnouncementsCollectionJsonLd } from "./server/services/seoPrerender.js";
+import { DIRECTORY_COMPANIES, directoryDescription, directoryBadge } from './src/config/companyDirectory';
 import { EXCHANGE_COMPANIES, exchangeCompany } from './src/config/exchangeCompanies';
 import { renderExchangeProfile } from './server/services/exchangeProfiles';
 import { mountAiIntegration } from './server/ai/http.js';
@@ -247,7 +248,7 @@ async function generateDynamicSitemap(): Promise<string> {
     try {
       const stockEntries = getAllStockEntries();
       const seenSymbols = new Set<string>();
-      for (const entry of [...EXCHANGE_COMPANIES, ...stockEntries]) {
+      for (const entry of [...DIRECTORY_COMPANIES, ...stockEntries]) {
         const sym = entry.symbol?.trim().toUpperCase();
         if (!sym || seenSymbols.has(sym) || !/^[A-Z0-9-]{2,15}$/.test(sym)) continue;
         seenSymbols.add(sym);
@@ -3024,37 +3025,9 @@ ${jsonLd}
 export function renderCompaniesDirectoryPage(): string {
   const pageTitle = "Companies & Exchanges — Profiles, Results & Filings | Bsenexus";
   const canonicalUrl = "https://bsenexus.in/companies";
-  const description = "Explore listed companies and exchange operators BSE Limited and NSE Limited. Find company profiles, financial results, regulatory filings and official investor sources.";
+  const description = directoryDescription();
 
-  const companiesList = [
-    ...EXCHANGE_COMPANIES.map(company => ({ ...company, desc: company.description })),
-    { symbol: "RELIANCE", scripCode: "500325", name: "Reliance Industries Ltd", sector: "Energy & Petrochemicals / Conglomerate", category: "Mega Cap Leader", desc: "India's largest conglomerate spanning energy, retail, telecommunications (Jio), and petrochemicals." },
-    { symbol: "TCS", scripCode: "532540", name: "Tata Consultancy Services Ltd", sector: "IT Services & Software", category: "Tech Heavyweight", desc: "Global leader in IT services, digital transformation consulting, and enterprise cloud infrastructure." },
-    { symbol: "HDFCBANK", scripCode: "500180", name: "HDFC Bank Ltd", sector: "Private Sector Banking & Finance", category: "Banking Giant", desc: "India's largest private sector bank providing retail, commercial, and digital transaction banking." },
-    { symbol: "INFY", scripCode: "500209", name: "Infosys Ltd", sector: "IT Services & Consulting", category: "Tech Heavyweight", desc: "Pioneer in global information technology services, next-gen cloud migration, and enterprise AI." },
-    { symbol: "ICICIBANK", scripCode: "532174", name: "ICICI Bank Ltd", sector: "Private Sector Banking & Finance", category: "Banking Giant", desc: "Premier Indian banking institution delivering retail loans, wealth management, and corporate credit." },
-    { symbol: "SBIN", scripCode: "500112", name: "State Bank of India", sector: "Public Sector Banking", category: "PSU Banking Leader", desc: "India's flagship public sector commercial bank commanding over 22% domestic deposit market share." },
-    { symbol: "BHARTIARTL", scripCode: "532454", name: "Bharti Airtel Ltd", sector: "Telecommunications & Digital", category: "Telecom Leader", desc: "Leading global telecommunications provider with 5G mobile, broadband, and enterprise cloud networks." },
-    { symbol: "ITC", scripCode: "500875", name: "ITC Ltd", sector: "Diversified FMCG & Cigarettes", category: "FMCG Heavyweight", desc: "Diversified conglomerate with leadership across branded packaged foods, hotels, paperboards, and agri-business." },
-    { symbol: "KOTAKBANK", scripCode: "500247", name: "Kotak Mahindra Bank Ltd", sector: "Private Sector Banking & Finance", category: "Banking & Wealth", desc: "Prominent Indian banking and financial conglomerate spanning commercial lending and asset management." },
-    { symbol: "LT", scripCode: "500510", name: "Larsen & Toubro Ltd", sector: "Infrastructure & Heavy Engineering", category: "Capex & Infra Titan", desc: "India's premier multinational engaged in EPC projects, hi-tech manufacturing, defense, and power grids." },
-    { symbol: "AXISBANK", scripCode: "532215", name: "Axis Bank Ltd", sector: "Private Sector Banking & Finance", category: "Banking Giant", desc: "Major private sector bank in India delivering corporate lending, retail credit, and digital payment solutions." },
-    { symbol: "MARUTI", scripCode: "532500", name: "Maruti Suzuki India Ltd", sector: "Automobile Manufacturing", category: "Auto Champion", desc: "India's undisputed passenger vehicle manufacturer controlling over 40% domestic market share." },
-    { symbol: "TITAN", scripCode: "500114", name: "Titan Company Ltd", sector: "Consumer Goods & Jewellery", category: "Consumer Discretionary", desc: "Tata Group luxury retail powerhouse dominating organized jewellery (Tanishq), watches, and precision eyewear." },
-    { symbol: "ASIANPAINT", scripCode: "500820", name: "Asian Paints Ltd", sector: "Paints & Home Improvement", category: "Consumer & Home Decor", desc: "India's largest decorative and industrial paint manufacturer with extensive international presence." },
-    { symbol: "HCLTECH", scripCode: "532281", name: "HCL Technologies Ltd", sector: "IT Services & Software Products", category: "Tech Heavyweight", desc: "Global technology enterprise delivering digital engineering, hybrid cloud platforms, and software products." },
-    { symbol: "SUNPHARMA", scripCode: "524715", name: "Sun Pharmaceutical Industries Ltd", sector: "Pharmaceuticals & Healthcare", category: "Pharma Champion", desc: "India's largest pharmaceutical corporation and top global specialty generic drug manufacturer." },
-    { symbol: "TATAMOTORS", scripCode: "500570", name: "Tata Motors Ltd", sector: "Automotive & Commercial Vehicles", category: "Mobility & EV Pioneer", desc: "Multinational automotive corporation leading Indian electric mobility (EVs), commercial freight, and Jaguar Land Rover." },
-    { symbol: "TATASTEEL", scripCode: "500470", name: "Tata Steel Ltd", sector: "Metals & Mining", category: "Metals Leader", desc: "Top global integrated steel manufacturing corporation with crude steel capacity exceeding 35 MTPA." },
-    { symbol: "WIPRO", scripCode: "507685", name: "Wipro Ltd", sector: "IT Services & Consulting", category: "IT Major", desc: "Global information technology and enterprise cloud consulting company driving digital workflows." },
-    { symbol: "ULTRACEMCO", scripCode: "532538", name: "UltraTech Cement Ltd", sector: "Cement & Building Materials", category: "Materials Champion", desc: "Flagship cement company of Aditya Birla Group and India's largest manufacturer of grey cement." },
-    { symbol: "NTPC", scripCode: "532555", name: "NTPC Ltd", sector: "Power Generation & Utilities", category: "Energy & Utilities", desc: "India's largest integrated energy utility generating over 24% of national electricity with rapid green expansion." },
-    { symbol: "POWERGRID", scripCode: "532898", name: "Power Grid Corporation of India Ltd", sector: "Power Transmission", category: "Infrastructure Monopoly", desc: "Central Transmission Utility of India wheeling 85% of domestic inter-regional electricity." },
-    { symbol: "ONGC", scripCode: "500312", name: "Oil & Natural Gas Corporation Ltd", sector: "Oil & Gas Exploration", category: "Energy & Resources", desc: "India's premier public sector enterprise contributing 71% to domestic crude oil and 84% of natural gas output." },
-    { symbol: "COALINDIA", scripCode: "533278", name: "Coal India Ltd", sector: "Mining & Energy Resources", category: "Energy Security Titan", desc: "The world's largest coal-producing corporation supplying key fuel feedstock to Indian thermal power generation." },
-    { symbol: "BAJFINANCE", scripCode: "500034", name: "Bajaj Finance Ltd", sector: "Non-Banking Financials (NBFC)", category: "Consumer Finance Star", desc: "India's largest diversified NBFC specializing in consumer financing, MSME loans, and digital credit cards." },
-    { symbol: "TRENT", scripCode: "500251", name: "Trent Ltd", sector: "Retail & Fashion Apparel", category: "Fast Fashion Powerhouse", desc: "Fast-growing Tata Group retail powerhouse operating leading lifestyle and value chains Westside and Zudio." }
-  ];
+  const companiesList = DIRECTORY_COMPANIES.map(company => ({ ...company, desc: company.description }));
 
   const jsonLd = JSON.stringify({
     "@context": "https://schema.org",
@@ -3427,9 +3400,9 @@ ${jsonLd}
     </div>
 
     <div class="hero">
-      <span class="badge">🏛️ COMPANIES &amp; EXCHANGE OPERATORS</span>
+      <span class="badge">${escapeHtmlText(directoryBadge())}</span>
       <h1>Companies &amp; Exchanges — Profiles, Earnings &amp; Filings</h1>
-      <p class="subtitle">Explore company intelligence and exchange operator profiles, including BSE Limited and NSE Limited. Find available corporate disclosures, earnings information and official investor sources.</p>
+      <p class="subtitle">${escapeHtmlText(directoryDescription())}</p>
     </div>
 
     <div class="companies-list">
@@ -5511,6 +5484,7 @@ app.get([/^\/https?:\/?\/?(?:www\.)?bsenexus\.in\/sitemap(?:\.xml)?$/i], (_req, 
 
 // IndexNow Key verification endpoint for search engines (Bing, Yandex, Seznam, Naver)
 app.get([`/${INDEXNOW_KEY}.txt`, '/indexnow-key.txt'], (_req, res) => {
+  if (!INDEXNOW_KEY) return res.status(503).type('text/plain').send('IndexNow ownership key is not configured');
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
   res.setHeader('Cache-Control', 'public, max-age=86400');
   res.send(INDEXNOW_KEY);
@@ -6024,8 +5998,9 @@ app.get(['/company/:symbol', '/stock/:symbol'], async (req, res) => {
     if (req.path !== `/company/${exchange.symbol}`) return res.redirect(301, `/company/${exchange.symbol}`);
     return res.type('html').set('Cache-Control', 'public, max-age=300, s-maxage=3600').send(renderExchangeProfile(exchange));
   }
-  let symbol = cleanInput;
-  let scripCode = getScripCode(cleanInput);
+  const curated = DIRECTORY_COMPANIES.find(company => company.symbol === cleanInput || (company.scripCode && company.scripCode === cleanInput));
+  let symbol = curated?.symbol || cleanInput;
+  let scripCode = curated?.scripCode || getScripCode(cleanInput);
 
   // If user navigated via numeric BSE Scrip Code (e.g., 500325)
   if (/^\d{5,7}$/.test(cleanInput)) {
@@ -6069,7 +6044,7 @@ app.get(['/company/:symbol', '/stock/:symbol'], async (req, res) => {
       return res.status(404).setHeader('Content-Type', 'text/html; charset=utf-8').send(renderCompany404Page(symbol));
     }
 
-    const html = renderCompanyPage(intel, symbol, scripCode);
+    const html = renderCompanyPage({ ...intel, companyName: curated?.name || intel.companyName }, symbol, scripCode);
     const entry = pageRenderCache.set(cacheKey, html, 'text/html; charset=utf-8', { ttlMs: 15 * 60 * 1000 });
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('ETag', entry.etag);
@@ -6162,7 +6137,7 @@ app.get(['/market-guides', '/market-guides/'], (_req, res) => {
   res.redirect(301, '/guides');
 });
 
-// Crawlable, server-rendered 26 BSE Listed Companies directory page
+// Crawlable directory; all membership and counts come from the shared list.
 app.get(['/companies', '/companies/'], (_req, res) => {
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400');
@@ -6281,7 +6256,7 @@ app.get('/sitemap-companies.xml', (_req, res) => {
   const seenSymbols = new Set<string>();
 
   let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
-  for (const entry of [...EXCHANGE_COMPANIES, ...stockEntries]) {
+  for (const entry of [...DIRECTORY_COMPANIES, ...stockEntries]) {
     const sym = entry.symbol?.trim().toUpperCase();
     if (!sym || seenSymbols.has(sym) || !/^[A-Z0-9-]{2,15}$/.test(sym)) continue;
     seenSymbols.add(sym);
@@ -6569,7 +6544,7 @@ const TAB_SEO_CONFIG: Record<string, TabSeoMeta> = {
   },
   companies: {
     title: "Companies & Exchanges — Profiles, Results & Filings | Bsenexus",
-    description: "Explore company profiles, BSE Limited and NSE Limited on Bsenexus. Find corporate filings, available earnings dates and official investor sources.",
+    description: directoryDescription(),
     canonical: "https://bsenexus.in/companies",
   },
   about: {
@@ -7038,6 +7013,7 @@ async function startServer() {
   startStorageRecoveryProbe();
   void addLog('INFO', 'SYSTEM', 'Bsenexus Server Started').catch(error => console.error('DB connect err:', error));
   // "Apne aap index": auto-submit any newly published guide URLs to IndexNow (deduped, create-only).
+  startIndexNow();
   try { autoIndexNewGuides(); } catch (e: any) { console.error('Guide auto-index err:', e?.message || e); }
   // PERF-006 (1 Oct 2026 audit): Graceful shutdown handler.
   // Cloud Run sends SIGTERM ~10s before killing the instance. Without this:
