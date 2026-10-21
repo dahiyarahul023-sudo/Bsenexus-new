@@ -1,7 +1,9 @@
 import { hasExactScripCode } from '../../src/shared/scripMatching.js';
 import fs from 'fs';
 import path from 'path';
-import { getActiveWatchlistSymbols, getAllWatchlists, extractSymbol } from '../database/watchlistDao.js';
+import { getActiveWatchlistSymbols, getAllWatchlists, extractSymbol, getCalendarWatchlistStocks } from '../database/watchlistDao.js';
+import { automaticCalendarMeetings, buildCalendarTargets, calendarIdentity, calendarWatchlistCodes, FNO_CALENDAR_VERSION, isFnoCalendarCode, mergeCalendarMeetings, selectCalendarScope } from './calendarUniverse.js';
+import type { CalendarScope } from '../../src/shared/calendarScope.js';
 import { getScripCodeForSymbolOrName, parseBseDate, resolveStockDetails } from '../utils/helpers.js';
 import { addLog } from '../database/logDao.js';
 import { 
@@ -44,11 +46,8 @@ export interface ResultCalendarItem {
 }
 
 /**
- * Market-wide calendar universe: major result-season companies whose board
- * meetings are synced even when they are on nobody's watchlist. This powers
- * the "Market" scope of the results calendar. Symbols only — all dates come
- * from the live BSE BoardMeeting API at sync time; nothing is hardcoded.
- * Every symbol must resolve via getScripCodeForSymbolOrName (verified Oct 7, 2026).
+ * Legacy export retained for existing consumers. Calendar sync now uses the
+ * supplied BSE-code-keyed FNO_CALENDAR_STOCKS in calendarUniverse.ts.
  */
 export const MARKET_CALENDAR_UNIVERSE: string[] = [
   'TCS','INFY','WIPRO','TECHM','HCLTECH',
@@ -84,6 +83,10 @@ export function applyCalendarScope(
 let cachedCalendar: ResultCalendarItem[] = [];
 let lastCalendarFetchTime = 0;
 let isSyncing = false;
+let lastCalendarSyncIncomplete = false;
+let lastCalendarAttemptTime = 0;
+let calendarUniverseVersion = '';
+let calendarSyncPromise: Promise<ResultCalendarItem[]> | null = null;
 
 const CACHE_FILE_PATH = path.join(process.cwd(), 'data', 'results_calendar.json');
 const NOTIFIED_MEETINGS_FILE = path.join(process.cwd(), 'data', 'notified_calendar_meetings.json');
@@ -168,6 +171,9 @@ function loadLocalCache() {
           return item;
         });
         lastCalendarFetchTime = parsed.lastUpdated || 0;
+        lastCalendarAttemptTime = parsed.lastAttempt || lastCalendarFetchTime;
+        calendarUniverseVersion = parsed.universeVersion || '';
+        lastCalendarSyncIncomplete = Boolean(parsed.incomplete);
       }
     }
   } catch (e: any) {
@@ -301,8 +307,9 @@ export async function syncSingleStockResultsCalendar(
   scripCodeOverride?: string
 ): Promise<{ success: boolean; count: number; newlyFound: number; items: ResultCalendarItem[] }> {
   try {
-    let resolvedSym = symbolOrScrip.toUpperCase().trim();
-    let scripCode = scripCodeOverride || getScripCodeForSymbolOrName(resolvedSym);
+    const identity = calendarIdentity({ symbol: symbolOrScrip, scripCode: scripCodeOverride });
+    let resolvedSym = identity?.symbol || symbolOrScrip.toUpperCase().trim();
+    let scripCode = identity?.scripCode;
 
     if (!scripCode) {
       const resolved = await resolveStockDetails(symbolOrScrip);
@@ -326,6 +333,11 @@ export async function syncSingleStockResultsCalendar(
       return { success: true, count: cachedCalendar.length, newlyFound: 0, items: [] };
     }
     const json = JSON.parse(text);
+    if (!Array.isArray(json?.Table) || json.Table.some((row: any) => {
+      if (!row || typeof row !== 'object') return true;
+      const code = row.SCRIP_CD ?? row.scrip_cd ?? row.scripCode ?? row.scrip_code;
+      return code != null && String(code).trim() !== scripCode;
+    })) throw new Error('Unexpected BSE calendar security response');
     const todayStartTs = getIstMidnightTs(new Date());
     const stockItems: ResultCalendarItem[] = [];
 
@@ -345,7 +357,7 @@ export async function syncSingleStockResultsCalendar(
           else if (daysLeft >= -30) status = 'RECENT';
           else status = 'PAST';
 
-          let companyName = (row.LONG_NAME || row.Short_name || resolvedSym).trim();
+          let companyName = (row.LONG_NAME || row.Short_name || identity?.companyName || resolvedSym).trim();
           if (scripCode === '500034' || resolvedSym === 'BAJFINANCE' || companyName.toUpperCase() === 'BAJAJ AUTO F') {
             companyName = 'Bajaj Finance Ltd';
           }
@@ -361,7 +373,8 @@ export async function syncSingleStockResultsCalendar(
             meetingTimestamp: meetingTs,
             daysLeft,
             status,
-            updatedAt: new Date().toISOString()
+            updatedAt: new Date().toISOString(),
+            marketUniverse: isFnoCalendarCode(scripCode)
           });
         }
       }
@@ -383,8 +396,7 @@ export async function syncSingleStockResultsCalendar(
 
     // Merge into in-memory cachedCalendar (remove older items for this scripCode first)
     loadLocalCache();
-    const otherItems = cachedCalendar.filter(i => i.scripCode !== scripCode && i.symbol !== resolvedSym);
-    cachedCalendar = [...otherItems, ...finalStockItems];
+    cachedCalendar = mergeCalendarMeetings(cachedCalendar, finalStockItems, new Set([scripCode]));
     lastCalendarFetchTime = Date.now();
 
     // Save to disk
@@ -392,6 +404,9 @@ export async function syncSingleStockResultsCalendar(
       ensureDataDir();
       fs.writeFileSync(CACHE_FILE_PATH, JSON.stringify({
         lastUpdated: lastCalendarFetchTime,
+        lastAttempt: lastCalendarAttemptTime,
+        universeVersion: calendarUniverseVersion,
+        incomplete: lastCalendarSyncIncomplete,
         items: cachedCalendar
       }, null, 2));
     } catch {}
@@ -413,77 +428,58 @@ export async function syncSingleStockResultsCalendar(
   }
 }
 
-export async function fetchAndSyncResultsCalendar(
+export function fetchAndSyncResultsCalendar(
+  force: boolean = false,
+  options?: { quick?: boolean; symbols?: string[] }
+): Promise<ResultCalendarItem[]> {
+  if (calendarSyncPromise) return calendarSyncPromise;
+  calendarSyncPromise = performCalendarSync(force, options).finally(() => { calendarSyncPromise = null; });
+  return calendarSyncPromise;
+}
+
+async function performCalendarSync(
   force: boolean = false,
   options?: { quick?: boolean; symbols?: string[] }
 ): Promise<ResultCalendarItem[]> {
   const now = Date.now();
-  if (!force && isSyncing) return cachedCalendar;
-  if (!force && lastCalendarFetchTime > 0 && (now - lastCalendarFetchTime < 60 * 60 * 1000) && cachedCalendar.length > 0) {
+  if (!force && calendarUniverseVersion === FNO_CALENDAR_VERSION && lastCalendarAttemptTime > 0 &&
+      now - lastCalendarAttemptTime < (lastCalendarSyncIncomplete ? 60000 : 60 * 60 * 1000)) {
     return cachedCalendar;
   }
 
   isSyncing = true;
+  lastCalendarAttemptTime = now;
   try {
-    let targetSymbols: string[] = [];
-    if (options?.symbols && options.symbols.length > 0) {
-      targetSymbols = options.symbols;
-    } else {
-      targetSymbols = await getActiveWatchlistSymbols();
-      // Market-wide universe: also sync major result-season companies so the
-      // market calendar scope can show companies beyond any watchlist.
-      const seen = new Set(targetSymbols.map(s => s.trim().toUpperCase()));
-      for (const sym of MARKET_CALENDAR_UNIVERSE) {
-        const clean = sym.trim().toUpperCase();
-        if (clean && !seen.has(clean)) {
-          seen.add(clean);
-          targetSymbols.push(clean);
-        }
-      }
-    }
-
-    // Scrip codes belonging to the market universe (for scope tagging below)
-    const marketScripSet = new Set<string>();
-    if (!options?.symbols || options.symbols.length === 0) {
-      for (const sym of MARKET_CALENDAR_UNIVERSE) {
-        const sc = getScripCodeForSymbolOrName(sym.trim().toUpperCase());
-        if (sc) marketScripSet.add(sc);
-      }
-    }
-
-    if (!targetSymbols || targetSymbols.length === 0) {
-      cachedCalendar = [];
-      lastCalendarFetchTime = now;
-      return [];
-    }
-
-    const scripMap = new Map<string, string[]>(); // scripCode -> list of symbols
-    for (const sym of targetSymbols) {
-      const cleanSym = sym.trim().toUpperCase();
-      if (!cleanSym) continue;
-      const sc = getScripCodeForSymbolOrName(cleanSym);
-      if (sc) {
-        if (!scripMap.has(sc)) scripMap.set(sc, []);
-        scripMap.get(sc)!.push(cleanSym);
-      }
-    }
+    const subset = Boolean(options?.symbols?.length);
+    const targets = buildCalendarTargets(subset ? options!.symbols! : await getCalendarWatchlistStocks(), !subset);
+    const watchlistScrips = new Set([...targets.values()].filter(stock => stock.isWatchlist).map(stock => stock.scripCode));
+    const successfulCodes = new Set<string>();
 
     const todayStartTs = getIstMidnightTs(new Date());
     const fetchedItems: ResultCalendarItem[] = [];
-    const scripEntries = Array.from(scripMap.entries());
+    const scripEntries = Array.from(targets.entries());
 
     // Fetch batch by batch (BATCH_SIZE = 8 to prevent rate limiting)
     const BATCH_SIZE = 8;
     for (let i = 0; i < scripEntries.length; i += BATCH_SIZE) {
       const batch = scripEntries.slice(i, i + BATCH_SIZE);
-      const promises = batch.map(async ([scripCode, symbols]) => {
+      const promises = batch.map(async ([scripCode, stock]) => {
         const url = `https://api.bseindia.com/BseIndiaAPI/api/BoardMeeting/w?scripcode=${scripCode}&strPurpose=&fromdate=&todate=`;
         try {
           const res = await fetch(url, { headers: COMMON_HEADERS, signal: AbortSignal.timeout(8000) });
           if (!res.ok) return [];
           const text = await res.text();
-          if (!text || text.includes("No Record") || text.trim() === "{}" || text.trim() === "[]") return [];
+          if (text.includes("No Record") || text.trim() === "{}" || text.trim() === "[]") {
+            successfulCodes.add(scripCode);
+            return [];
+          }
           const json = JSON.parse(text);
+          if (!Array.isArray(json?.Table)) throw new Error('Unexpected BSE calendar response');
+          if (json.Table.some((row: any) => {
+            if (!row || typeof row !== 'object') return true;
+            const code = row.SCRIP_CD ?? row.scrip_cd ?? row.scripCode ?? row.scrip_code;
+            return code != null && String(code).trim() !== scripCode;
+          })) throw new Error('BSE calendar security mismatch');
 
           const items: ResultCalendarItem[] = [];
           if (json && json.Table && Array.isArray(json.Table)) {
@@ -504,8 +500,8 @@ export async function fetchAndSyncResultsCalendar(
                 else if (daysLeft >= -30) status = 'RECENT';
                 else status = 'PAST';
 
-                const primarySymbol = symbols[0];
-                let companyName = (row.LONG_NAME || row.Short_name || primarySymbol).trim();
+                const primarySymbol = stock.symbol;
+                let companyName = (row.LONG_NAME || row.Short_name || stock.companyName).trim();
                 if (scripCode === '500034' || primarySymbol === 'BAJFINANCE' || companyName.toUpperCase() === 'BAJAJ AUTO F') {
                   companyName = 'Bajaj Finance Ltd';
                 }
@@ -522,11 +518,12 @@ export async function fetchAndSyncResultsCalendar(
                   daysLeft,
                   status,
                   updatedAt: new Date().toISOString(),
-                  marketUniverse: marketScripSet.has(scripCode)
+                  marketUniverse: isFnoCalendarCode(scripCode)
                 });
               }
             }
           }
+          successfulCodes.add(scripCode);
           return items;
         } catch (e: any) {
           return [];
@@ -555,14 +552,21 @@ export async function fetchAndSyncResultsCalendar(
       }
     }
 
-    cachedCalendar = Array.from(uniqueMap.values());
-    lastCalendarFetchTime = now;
+    cachedCalendar = mergeCalendarMeetings(cachedCalendar, Array.from(uniqueMap.values()), successfulCodes);
+    lastCalendarSyncIncomplete = successfulCodes.size < targets.size;
+    if (!subset) calendarUniverseVersion = FNO_CALENDAR_VERSION;
+    if (successfulCodes.size > 0) lastCalendarFetchTime = now;
+    invalidateEnrichedCalendarCache();
+    if (lastCalendarSyncIncomplete) await addLog('WARN', 'RESULTS_CALENDAR', `BSE calendar unavailable for ${targets.size - successfulCodes.size} securities; previous entries retained.`);
 
     // Save to disk cache
     try {
       ensureDataDir();
       fs.writeFileSync(CACHE_FILE_PATH, JSON.stringify({
         lastUpdated: lastCalendarFetchTime,
+        lastAttempt: lastCalendarAttemptTime,
+        universeVersion: calendarUniverseVersion,
+        incomplete: lastCalendarSyncIncomplete,
         items: cachedCalendar
       }, null, 2));
     } catch (fsErr: any) {
@@ -613,9 +617,7 @@ export async function fetchAndSyncResultsCalendar(
           saveNotifiedMeetings();
           console.info(`[ResultsCalendar] Initialized notified cache with ${notifiedMeetingIds.size} existing items (cold boot blast suppressed).`);
         } else {
-          const newlyFoundUpcoming = cachedCalendar.filter(item => 
-            (item.daysLeft >= 0) && !notifiedMeetingIds.has(item.id)
-          ).slice(0, 3); // Capped at 3 to prevent burst spam
+          const newlyFoundUpcoming = automaticCalendarMeetings(cachedCalendar, watchlistScrips, notifiedMeetingIds);
 
           if (newlyFoundUpcoming.length > 0) {
             for (const item of newlyFoundUpcoming) {
@@ -679,7 +681,8 @@ export function readCachedResultsCalendar() {
 // website callers keep their original scope/filter semantics below.
 export async function getResultsCalendarSnapshot() {
   const now = Date.now();
-  if (cachedCalendar.length === 0 || now - lastCalendarFetchTime > 12 * 60 * 60 * 1000) {
+  if (calendarUniverseVersion !== FNO_CALENDAR_VERSION || cachedCalendar.length === 0 ||
+      (lastCalendarSyncIncomplete && now - lastCalendarAttemptTime >= 60000) || now - lastCalendarFetchTime > 12 * 60 * 60 * 1000) {
     await fetchAndSyncResultsCalendar(false);
   }
 
@@ -838,7 +841,7 @@ export async function getResultsCalendarData(
   filterStatus: 'all' | 'today' | 'upcoming' | 'recent' = 'all', 
   watchlistId?: string,
   userId?: string,
-  scope: 'watchlist' | 'market' = 'watchlist'
+  scope: CalendarScope | 'market' = 'watchlist'
 ) {
   const snapshot = await getResultsCalendarSnapshot();
   const allEnrichedItems = snapshot.items;
@@ -864,29 +867,10 @@ export async function getResultsCalendarData(
   // user's watchlists. Watchlist scope (default): existing behavior unchanged.
   if (scope === 'market') {
     items = applyCalendarScope(items, 'market', userSymbols, userScripCodes);
-  } else if (watchlistId) {
-    const selectedList = userWatchlists.find(w => String(w.id) === String(watchlistId));
-    if (selectedList && selectedList.items) {
-      const listSymbols = new Set(selectedList.items.map(s => extractSymbol(s).toUpperCase().trim()));
-      const listScrips = new Set(selectedList.items.map(s => (typeof s === 'object' && s.scripCode) ? String(s.scripCode).trim() : getScripCodeForSymbolOrName(extractSymbol(s))).filter(Boolean));
-      items = items.filter(item => 
-        listSymbols.has(item.symbol.toUpperCase().trim()) ||
-        (item.scripCode && listScrips.has(String(item.scripCode).trim()))
-      );
-    } else {
-      items = [];
-    }
   } else {
-    // If user has watchlists configured and userSymbols is empty (all stocks deleted), return empty list
-    if (userWatchlists.length > 0 && userSymbols.size === 0) {
-      items = [];
-    } else if (userSymbols.size > 0) {
-      items = items.filter(item => 
-        userSymbols.has(item.symbol.toUpperCase().trim()) ||
-        (item.scripCode && userScripCodes.has(String(item.scripCode).trim()))
-      );
-    }
+    items = selectCalendarScope(items, scope, calendarWatchlistCodes(userWatchlists, scope === 'watchlist' ? watchlistId : undefined));
   }
+  const scopedCount = items.length;
 
   // Calculate clean, non-confusing summary metrics across active scope
   const todayItems = items.filter(i => i.status === 'TODAY' || i.daysLeft === 0);
@@ -928,8 +912,9 @@ export async function getResultsCalendarData(
 
   return {
     lastUpdated: lastCalendarFetchTime,
+    calendarIncomplete: lastCalendarSyncIncomplete,
     totalCount: items.length,
-    allCount: allEnrichedItems.length,
+    allCount: scopedCount,
     todayCount,
     todayDeclaredCount,
     todayPendingCount,

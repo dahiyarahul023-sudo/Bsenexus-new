@@ -1,5 +1,7 @@
 # Frontend strategy and evidence-based priorities
 
+2026-10-21 bounded calendar follow-up: All / F&O Stocks / Watchlist reuse existing controls. Per-account last selection, scoped cache/request guards and authoritative server membership address this calendar journey. Direct BSE security-code intake includes uploaded stocks absent from the symbol master (including 544307); partial failures preserve existing schedules and successful sync invalidates enrichment. This does not change filings, AI/history intake or subscription policy. Automated/render/build evidence, blocked browser interaction and delivery status are recorded separately in changes/calendar-fno.md.
+
 2026-10-20 Settings AI entry correction: the existing connection row is now included in the rendered Settings group. Eighteen identity/search/action render checks pass; actual browser/device and hosted OAuth verification remain separate. See changes/ai-settings-entry.md.
 
 2026-10-17 bounded Impact Radar follow-up supersedes the initial inline layout: two Home cards and separate ordinary news, native full Radar dashboard/detail, Watchlist Radar scope, timing colours with labels, reduced-motion-safe pulse, source/date evidence and observed NSE session changes. The existing RSS cache coalesces simultaneous Radar/news requests. Neutral pre-event content, authenticated durable follows and reviewed-case grouping remain intact. Automated source/contract/render tests do not certify browser/device usability or hosting deployment; see changes/impact-radar-follow-up.md.

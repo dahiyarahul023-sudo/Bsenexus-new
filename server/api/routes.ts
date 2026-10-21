@@ -1,4 +1,5 @@
 import express from "express";
+import { parseCalendarScope } from '../../src/shared/calendarScope.js';
 import bcrypt from "bcryptjs";
 import { getSettings, saveSettings } from "../database/settingsDao.js";
 import { getLogs, addLog, clearLogs } from "../database/logDao.js";
@@ -1570,10 +1571,11 @@ apiRouter.post("/send-holiday-telegram", requireAdmin, telegramRateLimiter, asyn
 
 apiRouter.get("/results-calendar", async (req, res) => {
   try {
-    res.setHeader('Cache-Control', 'private, max-age=10, stale-while-revalidate=30');
+    res.setHeader('Cache-Control', 'private, no-store');
     const filter = (req.query.filter as string || "all") as 'all' | 'today' | 'upcoming' | 'recent';
     const watchlistId = req.query.watchlistId as string;
-    const scope = (req.query.scope as string) === 'market' ? 'market' : 'watchlist';
+    const scope = req.query.scope === undefined ? 'watchlist' : parseCalendarScope(req.query.scope);
+    if (!scope) return res.status(400).json({ error: 'Invalid calendar scope' });
     const uid = getReqUserId(req);
     const data = await getResultsCalendarData(filter, watchlistId, uid, scope);
     res.json(data);
@@ -1584,10 +1586,12 @@ apiRouter.get("/results-calendar", async (req, res) => {
 
 apiRouter.post("/results-calendar/refresh", requireAuth, aiRateLimiter, async (req, res) => {
   try {
+    res.setHeader('Cache-Control', 'private, no-store');
     const mode = (req.query.mode as string) || req.body?.mode;
     const filter = (req.query.filter as string || "all") as 'all' | 'today' | 'upcoming' | 'recent';
     const watchlistId = req.query.watchlistId as string;
-    const scope = (req.query.scope as string) === 'market' ? 'market' : 'watchlist';
+    const scope = req.query.scope === undefined ? 'watchlist' : parseCalendarScope(req.query.scope);
+    if (!scope) return res.status(400).json({ error: 'Invalid calendar scope' });
     const uid = getReqUserId(req);
 
     if (mode === 'full') {

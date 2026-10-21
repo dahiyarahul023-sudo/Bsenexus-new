@@ -1,0 +1,850 @@
+{
+  "sourceFile": "derivative_scrips.xls",
+  "sourceSha256": "4a32ace057b6d5606eb8259833b05f8c3f49e85b21ece25336aee2b0f1d6db41",
+  "stocks": [
+    {
+      "scripCode": "541153",
+      "companyName": "Bandhan Bank Limited"
+    },
+    {
+      "scripCode": "540777",
+      "companyName": "HDFC LIFE INSURANCE COMPANY LTD"
+    },
+    {
+      "scripCode": "540133",
+      "companyName": "ICICI Prudential Life Insurance Company Ltd"
+    },
+    {
+      "scripCode": "540065",
+      "companyName": "RBL Bank Limited"
+    },
+    {
+      "scripCode": "539448",
+      "companyName": "InterGlobe Aviation Limited"
+    },
+    {
+      "scripCode": "539437",
+      "companyName": "IDFC FIRST BANK LIMITED"
+    },
+    {
+      "scripCode": "531642",
+      "companyName": "MARICO LTD."
+    },
+    {
+      "scripCode": "507685",
+      "companyName": "WIPRO LTD."
+    },
+    {
+      "scripCode": "534816",
+      "companyName": "INDUS TOWERS LIMITED"
+    },
+    {
+      "scripCode": "533519",
+      "companyName": "L&T Finance Limited"
+    },
+    {
+      "scripCode": "533398",
+      "companyName": "MUTHOOT FINANCE LTD."
+    },
+    {
+      "scripCode": "533278",
+      "companyName": "COAL INDIA LTD."
+    },
+    {
+      "scripCode": "500300",
+      "companyName": "GRASIM INDUSTRIES LTD."
+    },
+    {
+      "scripCode": "533155",
+      "companyName": "JUBILANT FOODWORKS LTD"
+    },
+    {
+      "scripCode": "533150",
+      "companyName": "GODREJ PROPERTIES LTD"
+    },
+    {
+      "scripCode": "532321",
+      "companyName": "Zydus Lifesciences Limited"
+    },
+    {
+      "scripCode": "532978",
+      "companyName": "BAJAJ FINSERV LTD."
+    },
+    {
+      "scripCode": "532977",
+      "companyName": "BAJAJ AUTO LTD."
+    },
+    {
+      "scripCode": "532955",
+      "companyName": "REC LIMITED"
+    },
+    {
+      "scripCode": "500830",
+      "companyName": "COLGATE-PALMOLIVE (INDIA) LTD."
+    },
+    {
+      "scripCode": "532921",
+      "companyName": "ADANI PORTS AND SPECIAL ECONOMIC ZONE LTD"
+    },
+    {
+      "scripCode": "532898",
+      "companyName": "POWER GRID CORPORATION OF INDIA LTD"
+    },
+    {
+      "scripCode": "532868",
+      "companyName": "DLF LTD."
+    },
+    {
+      "scripCode": "524715",
+      "companyName": "SUN PHARMACEUTICAL INDUSTRIES LTD"
+    },
+    {
+      "scripCode": "532827",
+      "companyName": "PAGE INDUSTRIES LTD"
+    },
+    {
+      "scripCode": "532822",
+      "companyName": "VODAFONE IDEA  LIMITED"
+    },
+    {
+      "scripCode": "532810",
+      "companyName": "POWER FINANCE CORPORATION LTD"
+    },
+    {
+      "scripCode": "532777",
+      "companyName": "INFO EDGE (INDIA) LTD"
+    },
+    {
+      "scripCode": "532432",
+      "companyName": "UNITED SPIRITS LTD"
+    },
+    {
+      "scripCode": "532755",
+      "companyName": "TECH MAHINDRA LTD"
+    },
+    {
+      "scripCode": "532754",
+      "companyName": "GMR Airports Limited"
+    },
+    {
+      "scripCode": "500325",
+      "companyName": "RELIANCE INDUSTRIES LTD"
+    },
+    {
+      "scripCode": "532555",
+      "companyName": "NTPC LTD"
+    },
+    {
+      "scripCode": "532541",
+      "companyName": "COFORGE LIMITED"
+    },
+    {
+      "scripCode": "532540",
+      "companyName": "TATA CONSULTANCY SERVICES LTD"
+    },
+    {
+      "scripCode": "532538",
+      "companyName": "ULTRATECH CEMENT LTD"
+    },
+    {
+      "scripCode": "532523",
+      "companyName": "BIOCON LTD"
+    },
+    {
+      "scripCode": "532522",
+      "companyName": "PETRONET LNG LTD"
+    },
+    {
+      "scripCode": "532500",
+      "companyName": "MARUTI SUZUKI INDIA LTD"
+    },
+    {
+      "scripCode": "532488",
+      "companyName": "DIVIS LABORATORIES LTD"
+    },
+    {
+      "scripCode": "532483",
+      "companyName": "CANARA BANK"
+    },
+    {
+      "scripCode": "532461",
+      "companyName": "PUNJAB NATIONAL BANK"
+    },
+    {
+      "scripCode": "532454",
+      "companyName": "BHARTI AIRTEL LTD"
+    },
+    {
+      "scripCode": "532424",
+      "companyName": "GODREJ CONSUMER PRODUCTS LTD"
+    },
+    {
+      "scripCode": "532343",
+      "companyName": "TVS MOTOR COMPANY LTD"
+    },
+    {
+      "scripCode": "532296",
+      "companyName": "GLENMARK PHARMACEUTICALS LTD"
+    },
+    {
+      "scripCode": "532286",
+      "companyName": "JINDAL STEEL LIMITED"
+    },
+    {
+      "scripCode": "532281",
+      "companyName": "HCL TECHNOLOGIES LTD"
+    },
+    {
+      "scripCode": "532215",
+      "companyName": "AXIS BANK LTD"
+    },
+    {
+      "scripCode": "532187",
+      "companyName": "INDUSIND BANK LTD"
+    },
+    {
+      "scripCode": "532174",
+      "companyName": "ICICI BANK LTD"
+    },
+    {
+      "scripCode": "532155",
+      "companyName": "GAIL (INDIA) LTD"
+    },
+    {
+      "scripCode": "532134",
+      "companyName": "BANK OF BARODA"
+    },
+    {
+      "scripCode": "531344",
+      "companyName": "CONTAINER CORPORATION OF INDIA LTD"
+    },
+    {
+      "scripCode": "531213",
+      "companyName": "Manappuram Finance Ltd"
+    },
+    {
+      "scripCode": "530965",
+      "companyName": "INDIAN OIL CORPORATION LTD"
+    },
+    {
+      "scripCode": "500180",
+      "companyName": "HDFC BANK LTD"
+    },
+    {
+      "scripCode": "500228",
+      "companyName": "JSW STEEL LTD"
+    },
+    {
+      "scripCode": "524804",
+      "companyName": "AUROBINDO PHARMA LTD"
+    },
+    {
+      "scripCode": "500253",
+      "companyName": "LIC HOUSING FINANCE LTD"
+    },
+    {
+      "scripCode": "512599",
+      "companyName": "ADANI ENTERPRISES LTD"
+    },
+    {
+      "scripCode": "500034",
+      "companyName": "BAJAJ FINANCE LIMITED"
+    },
+    {
+      "scripCode": "500469",
+      "companyName": "FEDERAL BANK LTD"
+    },
+    {
+      "scripCode": "500420",
+      "companyName": "TORRENT PHARMACEUTICALS LTD"
+    },
+    {
+      "scripCode": "500096",
+      "companyName": "DABUR INDIA LTD"
+    },
+    {
+      "scripCode": "517354",
+      "companyName": "HAVELLS INDIA LTD"
+    },
+    {
+      "scripCode": "500331",
+      "companyName": "PIDILITE INDUSTRIES LTD"
+    },
+    {
+      "scripCode": "500257",
+      "companyName": "LUPIN LTD"
+    },
+    {
+      "scripCode": "517334",
+      "companyName": "Samvardhana Motherson International ltd"
+    },
+    {
+      "scripCode": "500209",
+      "companyName": "INFOSYS LTD"
+    },
+    {
+      "scripCode": "500049",
+      "companyName": "BHARAT ELECTRONICS LTD"
+    },
+    {
+      "scripCode": "532234",
+      "companyName": "NATIONAL ALUMINIUM CO.LTD"
+    },
+    {
+      "scripCode": "500103",
+      "companyName": "BHARAT HEAVY ELECTRICALS LTD"
+    },
+    {
+      "scripCode": "500113",
+      "companyName": "STEEL AUTHORITY OF INDIA LTD"
+    },
+    {
+      "scripCode": "500547",
+      "companyName": "BHARAT PETROLEUM CORPORATION LTD"
+    },
+    {
+      "scripCode": "500247",
+      "companyName": "KOTAK MAHINDRA BANK LTD"
+    },
+    {
+      "scripCode": "511243",
+      "companyName": "CHOLAMANDALAM INVESTMENT AND FINANCE COMPANY LTD"
+    },
+    {
+      "scripCode": "511218",
+      "companyName": "Shriram Finance Limited"
+    },
+    {
+      "scripCode": "500271",
+      "companyName": "Max Financial Services Limited"
+    },
+    {
+      "scripCode": "503806",
+      "companyName": "SRF LTD"
+    },
+    {
+      "scripCode": "500124",
+      "companyName": "DR.REDDYS LABORATORIES LTD"
+    },
+    {
+      "scripCode": "500425",
+      "companyName": "AMBUJA CEMENTS LTD"
+    },
+    {
+      "scripCode": "505200",
+      "companyName": "EICHER MOTORS LTD"
+    },
+    {
+      "scripCode": "512070",
+      "companyName": "UPL LIMITED"
+    },
+    {
+      "scripCode": "500387",
+      "companyName": "SHREE CEMENT LTD"
+    },
+    {
+      "scripCode": "500182",
+      "companyName": "HERO MOTOCORP LTD"
+    },
+    {
+      "scripCode": "500087",
+      "companyName": "CIPLA LTD"
+    },
+    {
+      "scripCode": "508869",
+      "companyName": "APOLLO HOSPITALS ENTERPRISE LTD"
+    },
+    {
+      "scripCode": "500820",
+      "companyName": "ASIAN PAINTS LTD"
+    },
+    {
+      "scripCode": "500295",
+      "companyName": "VEDANTA LIMITED"
+    },
+    {
+      "scripCode": "500800",
+      "companyName": "TATA CONSUMER PRODUCTS LIMITED"
+    },
+    {
+      "scripCode": "500477",
+      "companyName": "ASHOK LEYLAND LTD"
+    },
+    {
+      "scripCode": "500550",
+      "companyName": "SIEMENS LTD"
+    },
+    {
+      "scripCode": "500875",
+      "companyName": "ITC LTD"
+    },
+    {
+      "scripCode": "500530",
+      "companyName": "BOSCH LTD"
+    },
+    {
+      "scripCode": "500790",
+      "companyName": "NESTLE INDIA LTD"
+    },
+    {
+      "scripCode": "500510",
+      "companyName": "LARSEN & TOUBRO LTD"
+    },
+    {
+      "scripCode": "500493",
+      "companyName": "BHARAT FORGE LTD"
+    },
+    {
+      "scripCode": "500480",
+      "companyName": "CUMMINS INDIA LTD"
+    },
+    {
+      "scripCode": "500112",
+      "companyName": "STATE BANK OF INDIA"
+    },
+    {
+      "scripCode": "500575",
+      "companyName": "VOLTAS LTD"
+    },
+    {
+      "scripCode": "500696",
+      "companyName": "HINDUSTAN UNILEVER LTD"
+    },
+    {
+      "scripCode": "500520",
+      "companyName": "MAHINDRA & MAHINDRA LTD"
+    },
+    {
+      "scripCode": "500570",
+      "companyName": "TATA MOTORS PASSENGER VEHICLES LTD"
+    },
+    {
+      "scripCode": "500470",
+      "companyName": "TATA STEEL LTD"
+    },
+    {
+      "scripCode": "500400",
+      "companyName": "TATA POWER CO.LTD"
+    },
+    {
+      "scripCode": "500440",
+      "companyName": "HINDALCO INDUSTRIES LTD"
+    },
+    {
+      "scripCode": "500114",
+      "companyName": "TITAN COMPANY LIMITED"
+    },
+    {
+      "scripCode": "526371",
+      "companyName": "NMDC LTD"
+    },
+    {
+      "scripCode": "500825",
+      "companyName": "BRITANNIA INDUSTRIES LTD"
+    },
+    {
+      "scripCode": "500104",
+      "companyName": "HINDUSTAN PETROLEUM CORPORATION LTD"
+    },
+    {
+      "scripCode": "500312",
+      "companyName": "OIL AND NATURAL GAS CORPORATION LTD"
+    },
+    {
+      "scripCode": "540719",
+      "companyName": "SBI Life Insurance Company Limited"
+    },
+    {
+      "scripCode": "540716",
+      "companyName": "ICICI Lombard General Insurance Company Ltd"
+    },
+    {
+      "scripCode": "541729",
+      "companyName": "HDFC Asset Management Company Ltd"
+    },
+    {
+      "scripCode": "539523",
+      "companyName": "Alkem Laboratories Limited"
+    },
+    {
+      "scripCode": "540611",
+      "companyName": "AU Small Finance Bank Limited"
+    },
+    {
+      "scripCode": "540005",
+      "companyName": "LTM LIMITED"
+    },
+    {
+      "scripCode": "526299",
+      "companyName": "MPHASIS LTD"
+    },
+    {
+      "scripCode": "523642",
+      "companyName": "P.I.INDUSTRIES LTD"
+    },
+    {
+      "scripCode": "500251",
+      "companyName": "TRENT LTD"
+    },
+    {
+      "scripCode": "500850",
+      "companyName": "INDIAN HOTELS CO.LTD"
+    },
+    {
+      "scripCode": "532830",
+      "companyName": "ASTRAL LIMITED"
+    },
+    {
+      "scripCode": "540699",
+      "companyName": "Dixon Technologies (India) Ltd"
+    },
+    {
+      "scripCode": "541154",
+      "companyName": "Hindustan Aeronautics Limited"
+    },
+    {
+      "scripCode": "540750",
+      "companyName": "Indian Energy Exchange Limited"
+    },
+    {
+      "scripCode": "534091",
+      "companyName": "MULTI COMMODITY EXCHANGE OF INDIA LTD"
+    },
+    {
+      "scripCode": "532466",
+      "companyName": "ORACLE FINANCIAL SERVICES SOFTWARE LTD"
+    },
+    {
+      "scripCode": "542652",
+      "companyName": "Polycab India Limited"
+    },
+    {
+      "scripCode": "539876",
+      "companyName": "Crompton Greaves Consumer Electricals ltd"
+    },
+    {
+      "scripCode": "533273",
+      "companyName": "OBEROI REALTY LTD"
+    },
+    {
+      "scripCode": "533179",
+      "companyName": "PERSISTENT SYSTEMS LTD"
+    },
+    {
+      "scripCode": "540222",
+      "companyName": "Laurus Labs Limited"
+    },
+    {
+      "scripCode": "543066",
+      "companyName": "SBI CARDS AND PAYMENT SERVICES LTD"
+    },
+    {
+      "scripCode": "500002",
+      "companyName": "ABB INDIA LIMITED"
+    },
+    {
+      "scripCode": "540691",
+      "companyName": "Aditya Birla Capital Ltd"
+    },
+    {
+      "scripCode": "533758",
+      "companyName": "APL APOLLO TUBES LTD"
+    },
+    {
+      "scripCode": "539254",
+      "companyName": "Adani Energy Solutions Limited"
+    },
+    {
+      "scripCode": "541450",
+      "companyName": "Adani Green Energy Limited"
+    },
+    {
+      "scripCode": "543235",
+      "companyName": "ANGEL ONE LIMITED"
+    },
+    {
+      "scripCode": "540376",
+      "companyName": "Avenue Supermarts Limited"
+    },
+    {
+      "scripCode": "532149",
+      "companyName": "BANK OF INDIA"
+    },
+    {
+      "scripCode": "543232",
+      "companyName": "Computer Age Management Services ltd"
+    },
+    {
+      "scripCode": "500093",
+      "companyName": "CG Power and Industrial Solutions ltd"
+    },
+    {
+      "scripCode": "543529",
+      "companyName": "Delhivery Limited"
+    },
+    {
+      "scripCode": "532814",
+      "companyName": "INDIAN BANK"
+    },
+    {
+      "scripCode": "543257",
+      "companyName": "Indian Railway Finance Corporation ltd"
+    },
+    {
+      "scripCode": "543940",
+      "companyName": "Jio Financial Services Limited"
+    },
+    {
+      "scripCode": "533148",
+      "companyName": "JSW ENERGY LTD"
+    },
+    {
+      "scripCode": "543278",
+      "companyName": "Kalyan Jewellers India Limited"
+    },
+    {
+      "scripCode": "517569",
+      "companyName": "KEI INDUSTRIES LTD"
+    },
+    {
+      "scripCode": "542651",
+      "companyName": "KPIT Technologies Ltd"
+    },
+    {
+      "scripCode": "543526",
+      "companyName": "LIFE INSURANCE CORPORATION OF INDIA"
+    },
+    {
+      "scripCode": "543287",
+      "companyName": "Lodha Developers Limited"
+    },
+    {
+      "scripCode": "543220",
+      "companyName": "Max Healthcare Institute Ltd"
+    },
+    {
+      "scripCode": "533098",
+      "companyName": "NHPC LTD"
+    },
+    {
+      "scripCode": "543384",
+      "companyName": "FSN E-Commerce Ventures Ltd"
+    },
+    {
+      "scripCode": "533106",
+      "companyName": "OIL INDIA LTD"
+    },
+    {
+      "scripCode": "543390",
+      "companyName": "PB Fintech Limited"
+    },
+    {
+      "scripCode": "533274",
+      "companyName": "PRESTIGE ESTATES PROJECTS LTD"
+    },
+    {
+      "scripCode": "543396",
+      "companyName": "One 97 Communications Limited"
+    },
+    {
+      "scripCode": "543300",
+      "companyName": "Sona BLW Precision Forgings Ltd"
+    },
+    {
+      "scripCode": "509930",
+      "companyName": "SUPREME INDUSTRIES LTD"
+    },
+    {
+      "scripCode": "500408",
+      "companyName": "TATA ELXSI LTD"
+    },
+    {
+      "scripCode": "540762",
+      "companyName": "Tube Investments of India Ltd"
+    },
+    {
+      "scripCode": "532477",
+      "companyName": "UNION BANK OF INDIA"
+    },
+    {
+      "scripCode": "540180",
+      "companyName": "Varun Beverages Limited"
+    },
+    {
+      "scripCode": "532648",
+      "companyName": "YES BANK LTD"
+    },
+    {
+      "scripCode": "543320",
+      "companyName": "Eternal Limited"
+    },
+    {
+      "scripCode": "534309",
+      "companyName": "NBCC (India) Limited"
+    },
+    {
+      "scripCode": "503100",
+      "companyName": "THE PHOENIX MILLS LTD"
+    },
+    {
+      "scripCode": "532725",
+      "companyName": "SOLAR INDUSTRIES INDIA LTD"
+    },
+    {
+      "scripCode": "544026",
+      "companyName": "Indian Renewable Energy Development Agnecy ltd"
+    },
+    {
+      "scripCode": "500368",
+      "companyName": "Patanjali Foods Limited"
+    },
+    {
+      "scripCode": "500188",
+      "companyName": "HINDUSTAN ZINC LTD"
+    },
+    {
+      "scripCode": "539083",
+      "companyName": "Inox Wind Limited"
+    },
+    {
+      "scripCode": "540173",
+      "companyName": "PNB Housing Finance Limited"
+    },
+    {
+      "scripCode": "541143",
+      "companyName": "Bharat Dynamics Limited"
+    },
+    {
+      "scripCode": "500067",
+      "companyName": "BLUE STAR LTD."
+    },
+    {
+      "scripCode": "532843",
+      "companyName": "FORTIS HEALTHCARE LTD."
+    },
+    {
+      "scripCode": "543664",
+      "companyName": "KAYNES TECHNOLOGY INDIA Ltd"
+    },
+    {
+      "scripCode": "543904",
+      "companyName": "Mankind Pharma Limited"
+    },
+    {
+      "scripCode": "543237",
+      "companyName": "Mazagon Dock Shipbuilders Ltd"
+    },
+    {
+      "scripCode": "542649",
+      "companyName": "Rail Vikas Nigam Limited"
+    },
+    {
+      "scripCode": "532539",
+      "companyName": "UNO Minda Limited"
+    },
+    {
+      "scripCode": "540902",
+      "companyName": "Amber Enterprises India Ltd"
+    },
+    {
+      "scripCode": "543720",
+      "companyName": "KFin Technologies Limited"
+    },
+    {
+      "scripCode": "542772",
+      "companyName": "360 ONE WAM LIMITED"
+    },
+    {
+      "scripCode": "533581",
+      "companyName": "PG ELECTROPLAST LTD."
+    },
+    {
+      "scripCode": "532667",
+      "companyName": "SUZLON ENERGY LTD"
+    },
+    {
+      "scripCode": "543187",
+      "companyName": "HITACHI ENERGY INDIA LIMITED"
+    },
+    {
+      "scripCode": "500490",
+      "companyName": "BAJAJ HOLDINGS & INVESTMENT LTD"
+    },
+    {
+      "scripCode": "544238",
+      "companyName": "Premier Energies Limited"
+    },
+    {
+      "scripCode": "544285",
+      "companyName": "SWIGGY LIMITED"
+    },
+    {
+      "scripCode": "544277",
+      "companyName": "Waaree Energies Limited"
+    },
+    {
+      "scripCode": "533096",
+      "companyName": "ADANI POWER LTD."
+    },
+    {
+      "scripCode": "540678",
+      "companyName": "Cochin Shipyard Limited"
+    },
+    {
+      "scripCode": "544274",
+      "companyName": "HYUNDAI MOTOR INDIA LIMITED"
+    },
+    {
+      "scripCode": "532892",
+      "companyName": "MOTILAL OSWAL FINANCIAL SERVICES LTD"
+    },
+    {
+      "scripCode": "540767",
+      "companyName": "NIPPON LIFE INDIA ASSET MANAGEMENT LTD"
+    },
+    {
+      "scripCode": "544307",
+      "companyName": "Vishal Mega Mart Limited"
+    },
+    {
+      "scripCode": "500033",
+      "companyName": "FORCE MOTORS LTD"
+    },
+    {
+      "scripCode": "500163",
+      "companyName": "GODFREY PHILLIPS INDIA LTD"
+    },
+    {
+      "scripCode": "522275",
+      "companyName": "GE Vernova T&D India Limited"
+    },
+    {
+      "scripCode": "532497",
+      "companyName": "RADICO KHAITAN LTD."
+    },
+    {
+      "scripCode": "544397",
+      "companyName": "ATHER ENERGY LTD"
+    },
+    {
+      "scripCode": "532525",
+      "companyName": "BANK OF MAHARASHTRA"
+    },
+    {
+      "scripCode": "544282",
+      "companyName": "SAGILITY LTD"
+    },
+    {
+      "scripCode": "543415",
+      "companyName": "Anand Rathi Wealth Ltd"
+    },
+    {
+      "scripCode": "544390",
+      "companyName": "Siemens Energy India Ltd"
+    },
+    {
+      "scripCode": "542904",
+      "companyName": "Ujjivan Small Finance Bank Ltd"
+    }
+  ]
+}

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { calendarCacheKey, readCalendarScope, saveCalendarScope, type CalendarScope } from '../shared/calendarScope';
 import { 
   CalendarDays, RefreshCw, Search, Clock, Building2, Filter, 
   AlertCircle, CheckCircle2, Upload, FileText, Sparkles, 
@@ -138,8 +139,30 @@ export function getResolvedMeetingDate(item?: any): string {
   return '';
 }
 
+function calendarStorage() {
+  try { return typeof window === 'undefined' ? undefined : window.localStorage; } catch { return undefined; }
+}
+
 export function ResultsCalendar() {
+  const { user } = useAuth();
+  return <ResultsCalendarView key={user && !user.isAnonymous ? user.uid : 'guest'} />;
+}
+
+function ResultsCalendarView() {
   const { user, profile, isAdmin, isPro, isPaidPro, adminUnlocked, setIsAuthModalOpen, setIsProModalOpen } = useAuth();
+  const owner = user && !user.isAnonymous ? user.uid : 'guest';
+  const [calendarScope, setCalendarScope] = useState<CalendarScope>(() => readCalendarScope(calendarStorage(), owner));
+  const [selectedWatchlistId, setSelectedWatchlistId] = useState<string>('');
+  const calendarKey = calendarCacheKey(owner, calendarScope, selectedWatchlistId);
+  const requestKey = useRef(calendarKey);
+  requestKey.current = calendarKey;
+  const requestSequence = useRef(0);
+  const calendarRequest = useRef<AbortController | null>(null);
+  const [calendarError, setCalendarError] = useState<string | null>(null);
+  const handleCalendarScopeChange = (scope: CalendarScope) => {
+    saveCalendarScope(calendarStorage(), owner, scope);
+    setCalendarScope(scope);
+  };
   // Shared feed density (Settings screen) — visibly resizes calendar cards.
   const [density] = useFeedDensity();
   const calCardPad = density === 'comfortable' ? 'p-5' : density === 'dense' ? 'p-3' : 'p-4';
@@ -153,7 +176,7 @@ export function ResultsCalendar() {
   // SWR: Initialize calendar items immediately from client cache for 0ms transition
   // (12h TTL — survives app restarts via localStorage; fresh data loads in background)
   const [items, setItems] = useState<ResultCalendarItem[]>(() => {
-    const cached = getCacheItem<ResultCalendarItem[]>('results_calendar_items', 12 * 60 * 60 * 1000) || [];
+    const cached = getCacheItem<ResultCalendarItem[]>(calendarKey, 12 * 60 * 60 * 1000) || [];
     return cached.map((it: any) => ({
       ...it,
       companyName: getCorrectCompanyName(it),
@@ -161,7 +184,7 @@ export function ResultsCalendar() {
     }));
   });
   const [loading, setLoading] = useState(() => {
-    const cached = getCacheItem<ResultCalendarItem[]>('results_calendar_items', 12 * 60 * 60 * 1000);
+    const cached = getCacheItem<ResultCalendarItem[]>(calendarKey, 12 * 60 * 60 * 1000);
     return !cached || cached.length === 0;
   });
   const [refreshing, setRefreshing] = useState(false);
@@ -170,10 +193,6 @@ export function ResultsCalendar() {
   const [declarationFilter, setDeclarationFilter] = useState<'all' | 'declared' | 'pending' | 'urgent_3d' | 'week_7d' | 'month_30d' | 'has_ai'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [watchlists, setWatchlists] = useState<any[]>([]);
-  const [selectedWatchlistId, setSelectedWatchlistId] = useState<string>('');
-  // Calendar scope: 'watchlist' (default, existing behavior) vs 'market'
-  // (market-wide view: companies beyond any watchlist, incl. Wipro/TechM).
-  const [calendarScope, setCalendarScope] = useState<'watchlist' | 'market'>('watchlist');
   const [sortBy, setSortBy] = useState<'date_asc' | 'date_desc' | 'status' | 'alpha'>('date_asc');
   
   // View Mode: 'grid' (default on PC/tablet) vs 'list' (default on mobile)
@@ -204,15 +223,19 @@ export function ResultsCalendar() {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(25);
 
-  const [summaryStats, setSummaryStats] = useState({ 
-    upcomingCount: 0, 
-    upcomingFutureCount: 0,
-    todayCount: 0, 
-    todayDeclaredCount: 0, 
-    todayPendingCount: 0, 
-    recentCount: 0,
-    aiSummaryCount: 0
-  });
+  const summaryStats = useMemo(() => {
+    const today = items.filter(item => item.daysLeft === 0);
+    const future = items.filter(item => item.daysLeft > 0);
+    return {
+      upcomingCount: today.length + future.length,
+      upcomingFutureCount: future.length,
+      todayCount: today.length,
+      todayDeclaredCount: today.filter(item => item.isDeclared).length,
+      todayPendingCount: today.filter(item => !item.isDeclared).length,
+      recentCount: items.filter(item => item.daysLeft < 0 && item.daysLeft >= -30).length,
+      aiSummaryCount: items.filter(item => Boolean(item.aiSummary)).length,
+    };
+  }, [items]);
 
   // Modal inspection state & animations
   const [selectedModalItem, setSelectedModalItem] = useState<ResultCalendarItem | null>(null);
@@ -446,9 +469,16 @@ export function ResultsCalendar() {
   };
 
   const fetchCalendar = async (force: boolean = false, mode: 'quick' | 'full' = 'quick') => {
+    const key = calendarKey;
+    const sequence = ++requestSequence.current;
+    calendarRequest.current?.abort();
+    const controller = new AbortController();
+    calendarRequest.current = controller;
+    const isCurrent = () => !controller.signal.aborted && sequence === requestSequence.current && key === requestKey.current;
+    setCalendarError(null);
     if (force) {
       setRefreshing(true);
-    } else if (items.length === 0) {
+    } else if (items.length === 0 && !getCacheItem<ResultCalendarItem[]>(key, 12 * 60 * 60 * 1000)?.length) {
       setLoading(true);
     } else {
       // Cached data is showing — indicate the silent background refresh
@@ -461,33 +491,26 @@ export function ResultsCalendar() {
       const wlParam = (selectedWatchlistId && calendarScope === 'watchlist') ? `&watchlistId=${selectedWatchlistId}` : '';
       const url = `${endpoint}?filter=all&scope=${calendarScope}${wlParam}${force && mode === 'full' ? '&mode=full' : ''}`;
 
-      const res = await customFetch(url, { method });
+      const res = await customFetch(url, { method, signal: controller.signal });
+      if (!isCurrent()) return;
+      if (!res.ok) throw new Error(`Calendar request failed (${res.status})`);
       if (res.ok) {
         const data = await res.json();
-        const rawFetched = data.items || [];
+        if (!isCurrent()) return;
+        if (!Array.isArray(data.items)) throw new Error('Invalid calendar response');
+        const rawFetched = data.items;
         const fetchedItems = rawFetched.map((it: any) => ({
           ...it,
           companyName: getCorrectCompanyName(it),
           meetingDate: getResolvedMeetingDate(it) || it.meetingDate
         }));
         setItems(fetchedItems);
-        setCacheItem('results_calendar_items', fetchedItems);
-        setLastUpdated(data.lastUpdated || Date.now());
+        setCacheItem(key, fetchedItems);
+        setLastUpdated(data.lastUpdated || 0);
+        if (data.calendarIncomplete) setCalendarError('Some BSE dates could not be refreshed. Previously available dates are retained.');
         
         const todayCount = data.todayCount ?? 0;
         const upcomingFutureCount = data.upcomingFutureCount ?? (data.upcomingCount ? Math.max(0, data.upcomingCount - todayCount) : 0);
-        const recentCount = data.recentCount ?? 0;
-        const aiSummaryCount = data.aiSummaryCount ?? fetchedItems.filter((i: any) => Boolean(i.aiSummary)).length;
-
-        setSummaryStats({
-          upcomingCount: data.upcomingCount ?? (todayCount + upcomingFutureCount),
-          upcomingFutureCount,
-          todayCount,
-          todayDeclaredCount: data.todayDeclaredCount ?? 0,
-          todayPendingCount: data.todayPendingCount ?? 0,
-          recentCount,
-          aiSummaryCount
-        });
 
         if (data.background) {
           setWatchlistSyncFeedback("⚡ Full library deep scan running seamlessly in the background. Calendar is live and accessible!");
@@ -512,10 +535,14 @@ export function ResultsCalendar() {
         }
       }
     } catch (err) {
+      if (!isCurrent()) return;
+      setCalendarError('Calendar could not be refreshed. Please try again.');
       console.error('Error loading results calendar:', err);
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (isCurrent()) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
   };
 
@@ -552,9 +579,17 @@ export function ResultsCalendar() {
   }, []);
 
   useEffect(() => {
-    // Fetch on initial mount or when selected watchlist / calendar scope changes
+    const cached = getCacheItem<ResultCalendarItem[]>(calendarKey, 12 * 60 * 60 * 1000) || [];
+    setItems(cached);
+    setLastUpdated(0);
+    setLoading(cached.length === 0);
+    setSelectedIds(new Set());
     fetchCalendar(false);
-  }, [selectedWatchlistId, calendarScope]);
+    return () => {
+      requestSequence.current++;
+      calendarRequest.current?.abort();
+    };
+  }, [calendarKey]);
 
   // Native Pull to Refresh Hook for Earnings Calendar
   const { 
@@ -878,40 +913,8 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
   // Filter and sort items with useMemo
   const filteredAndSortedItems = useMemo(() => {
     let result = [...items];
-    const isSearching = Boolean(searchQuery.trim());
-
-    // Build active watchlist symbols & scrips
-    const activeWatchlistSymbols = new Set<string>();
-    const activeWatchlistScrips = new Set<string>();
-
-    const targetLists = selectedWatchlistId 
-      ? watchlists.filter(w => String(w.id) === String(selectedWatchlistId))
-      : watchlists.filter(w => w.is_active !== 0);
-
-    targetLists.forEach(w => {
-      (w.items || []).forEach((it: any) => {
-        const sym = typeof it === 'string' ? it.split(':')[0] : (it?.symbol || '');
-        if (sym) activeWatchlistSymbols.add(sym.toUpperCase().trim());
-        const scrip = typeof it === 'object' && it.scripCode ? String(it.scripCode).trim() : '';
-        if (scrip) activeWatchlistScrips.add(scrip);
-      });
-    });
-
-    // If NOT searching and in watchlist scope, filter by active watchlist stocks.
-    // In market scope the server already returns the market-wide set.
-    if (!isSearching && calendarScope === 'watchlist') {
-      if (watchlists.length > 0 && activeWatchlistSymbols.size === 0 && selectedWatchlistId) {
-        return [];
-      }
-
-      if (activeWatchlistSymbols.size > 0) {
-        result = result.filter(item => {
-          const sym = (item.symbol || '').toUpperCase().trim();
-          const scrip = item.scripCode ? String(item.scripCode).trim() : '';
-          return activeWatchlistSymbols.has(sym) || (scrip && activeWatchlistScrips.has(scrip));
-        });
-      }
-    }
+    // Membership is enforced once by the owner/scope-aware server response.
+    // Searching must never broaden an empty watchlist into the public calendar.
 
     // 1. Status Filter
     if (statusFilter === 'today') {
@@ -1147,6 +1150,12 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
         label="Results Calendar"
       />
 
+      {calendarError && (
+        <div role="alert" className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">
+          <span>{calendarError}{items.length > 0 ? ' Previously loaded entries are still shown.' : ''}</span>
+          <button type="button" onClick={() => fetchCalendar(false)} className="min-h-10 rounded px-3 font-semibold underline">Retry</button>
+        </div>
+      )}
       {/* Compact Streamlined Unified Toolbar: Sticky below navbar - Title, Search, Filter & Single Tab Row */}
       <div className="sticky top-14 md:top-[89px] z-30 bg-white/95 dark:bg-[#1A1926]/95 backdrop-blur-md border border-slate-200/90 dark:border-[#2D283E] rounded-xl p-2.5 sm:p-3 shadow-xs flex flex-col gap-2">
         {/* Row 1: Title, Search Box & Filter Bottom Sheet Trigger */}
@@ -1191,38 +1200,23 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
 
           {/* Right: Filter & View Controls */}
           <div className="flex items-center gap-1.5 shrink-0">
-            {/* Calendar Scope Switcher: Market-wide vs Watchlist */}
-            <div className="flex items-center gap-0.5 bg-slate-100 dark:bg-[#201E2E] p-0.5 rounded-lg border border-slate-200 dark:border-[#2D283E]" role="tablist" aria-label="Calendar scope">
-              <button
-                type="button"
-                role="tab"
-                aria-selected={calendarScope === 'market'}
-                onClick={() => setCalendarScope('market')}
-                className={cn(
-                  "px-2.5 py-1.5 rounded-md text-xs transition-all cursor-pointer select-none",
-                  calendarScope === 'market'
-                    ? "bg-white dark:bg-[#2E2A42] text-slate-900 dark:text-white font-bold shadow-2xs"
-                    : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-                )}
-                title="Market-wide results: companies beyond any watchlist"
-              >
-                Market
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={calendarScope === 'watchlist'}
-                onClick={() => setCalendarScope('watchlist')}
-                className={cn(
-                  "px-2.5 py-1.5 rounded-md text-xs transition-all cursor-pointer select-none",
-                  calendarScope === 'watchlist'
-                    ? "bg-white dark:bg-[#2E2A42] text-slate-900 dark:text-white font-bold shadow-2xs"
-                    : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-                )}
-                title="Your watchlist results"
-              >
-                Watchlist
-              </button>
+            {/* Stock coverage and the existing date tabs are independent. */}
+            <div className="flex items-center gap-0.5 bg-slate-100 dark:bg-[#201E2E] p-0.5 rounded-lg border border-slate-200 dark:border-[#2D283E]" role="group" aria-label="Calendar scope">
+              {([
+                ['all', 'All', 'Your watchlist and F&O stocks, without duplicate meetings'],
+                ['fno', 'F&O Stocks', 'All stocks from the F&O calendar list'],
+                ['watchlist', 'Watchlist', 'Only your active watchlist stocks'],
+              ] as const).map(([scope, label, description]) => (
+                <button key={scope} type="button" aria-pressed={calendarScope === scope}
+                  onClick={() => handleCalendarScopeChange(scope)} title={description}
+                  className={cn(
+                    "px-2.5 py-1.5 min-h-9 rounded-md text-xs whitespace-nowrap transition-all cursor-pointer select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500",
+                    calendarScope === scope
+                      ? "bg-white dark:bg-[#2E2A42] text-slate-900 dark:text-white font-bold shadow-2xs"
+                      : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                  )}
+                >{label}</button>
+              ))}
             </div>
 
             {/* Desktop View Switcher */}
