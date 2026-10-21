@@ -1,3 +1,4 @@
+import { resolveStockDetailsSync } from "../utils/stockResolver";
 import { AiError, publicOrigin } from "./policy.js";
 import type { ResultCalendarItem } from "../services/resultsCalendarService.js";
 const DAY = 86400000;
@@ -28,12 +29,16 @@ export function calendarWindow(args: CalendarReadArgs, now = Date.now()) {
 }
 export function compactWatchlistStock(raw: any) {
   const object = raw && typeof raw === "object" ? raw : {};
-  const symbol = text(typeof raw === "string" ? raw : object.symbol, 60).trim().toUpperCase();
+  const reportedSymbol = text(typeof raw === "string" ? raw : object.symbol, 60).trim().toUpperCase();
   const code = String(object.scripCode || "");
+  const verified = /^\d{6}$/.test(code) ? resolveStockDetailsSync(code) : null;
+  const reported = reportedSymbol ? resolveStockDetailsSync(reportedSymbol) : null;
+  const identityConflict = Boolean(verified && reported && verified.scripCode !== reported.scripCode);
   return {
-    symbol,
+    symbol: verified?.symbol || reportedSymbol,
+    ...(identityConflict ? {identityConflict:true} : {}),
     ...( /^\d{6}$/.test(code) ? { scripCode: code } : {}),
-    ...(object.companyName ? { companyName: text(object.companyName, 160) } : {}),
+    ...(object.companyName ? { companyName: text(verified?.name || object.companyName, 160) } : {}),
     ...( ["HIGH", "MEDIUM", "LOW"].includes(object.priority) ? { priority: object.priority } : {}),
     ...(object.category ? { category: text(object.category, 80) } : {}),
   };
@@ -56,8 +61,8 @@ export function selectCalendarMeetings(
   const offset = args.offset ?? 0, limit = args.limit ?? 20;
   const page = matching.slice(offset, offset + limit);
   const meetings = page.map(({item: m, day}) => ({
-    symbol: text(m.symbol, 60), scripCode: String(m.scripCode),
-    companyName: text(m.companyName, 160),
+    symbol: text(resolveStockDetailsSync(String(m.scripCode))?.symbol || m.symbol, 60), scripCode: String(m.scripCode),
+    companyName: text(resolveStockDetailsSync(String(m.scripCode))?.name || m.companyName, 160),
     meetingDate: day, daysLeft: Math.round((dayNumber(day) - dayNumber(window.referenceDate)) / DAY),
     purpose: text(m.purpose || "Results-related board meeting", 240),
   }));

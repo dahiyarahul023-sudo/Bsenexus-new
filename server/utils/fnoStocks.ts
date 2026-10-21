@@ -1,3 +1,4 @@
+import { VERIFIED_STOCK_BY_SYMBOL } from '../../src/shared/stockIdentity';
 /**
  * F&O securities list — the NSE stocks on which futures & options trade.
  * Source: NSE fo_mktlots.csv (fetched 2026-09-27).
@@ -304,7 +305,7 @@ const FNO_BSE_SCRIP: Record<string, string> = {
   'IEX': '540750',
   'INDIANB': '532814',
   'INDIGO': '539448',
-  'INDUSINDBK': '532209',
+  'INDUSINDBK': VERIFIED_STOCK_BY_SYMBOL.INDUSINDBK.scripCode,
   'INFY': '500209',
   'INOXWIND': '539083',
   'IOC': '530965',

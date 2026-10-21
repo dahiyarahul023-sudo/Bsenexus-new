@@ -47,7 +47,13 @@ export async function aiRpc(
   const data = await aiDb((db) => db.rpc(name, args), options);
   if (!data || typeof data !== "object")
     throw new AiError("connection_storage_unavailable", 503);
-  if (data.error)
+  if (data.error) {
+    const messages: Record<string, string> = {
+      quota_exceeded: "Connector allowance exhausted. A per-minute limit clears after 60 seconds; daily call/write limits reset at midnight in Asia/Kolkata. Current limits are shown in AI Connections.",
+      not_found: "The object is not available in the connected account.",
+      idempotency_conflict: "This requestId belongs to a different action or input. A new action requires a new requestId.",
+      analysis_busy: "A filing analysis is already running for this account. Wait for its result before starting another.",
+    };
     throw new AiError(
       data.error,
       data.error === "invalid_token"
@@ -59,7 +65,9 @@ export async function aiRpc(
             : data.error === "not_found"
               ? 404
               : 409,
+      messages[data.error],
     );
+  }
   return data;
 }
 export function relation(value: any): any {

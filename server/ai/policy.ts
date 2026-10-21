@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { isIP } from "node:net";
 import { z } from "zod";
+import { FILING_CATEGORIES } from "./filingText";
 
 export const SCOPES = [
   "market:read",
@@ -60,6 +61,9 @@ export class AiError extends Error {
     super(message || code.replaceAll("_", " "));
   }
 }
+function isLoopbackCallback(raw: string, u: URL) {
+  return u.protocol === 'http:' && ['localhost','127.0.0.1'].includes(u.hostname) && /^http:\/\/(?:localhost|127\.0\.0\.1)(?::[0-9]+)?(?:\/|$)/.test(raw);
+}
 export function validateRedirect(raw: string): string {
   let u: URL;
   try {
@@ -69,14 +73,11 @@ export function validateRedirect(raw: string): string {
   }
   if (
     raw.length > 2048 ||
-    u.protocol !== "https:" ||
+    (u.protocol !== "https:" && !isLoopbackCallback(raw, u)) ||
     u.username ||
     u.password ||
     u.hash ||
-    u.port ||
-    isIP(u.hostname) ||
-    !u.hostname.includes(".") ||
-    /(^|\.)(localhost|local|internal|test|invalid)$/.test(u.hostname)
+    (!isLoopbackCallback(raw,u) && (u.port || isIP(u.hostname) || !u.hostname.includes(".") || /(^|\.)(localhost|local|internal|test|invalid)$/.test(u.hostname)))
   )
     throw new AiError("invalid_redirect");
   return u.href;
@@ -95,95 +96,96 @@ const company = z.string().trim().min(1).max(60);
 const priority = z.enum(["HIGH", "MEDIUM", "LOW"]);
 const calendarDates = {
   fromDate: z.string().max(10).optional().describe("Inclusive IST start: today (default), tomorrow or YYYY-MM-DD."),
-  toDate: z.string().max(10).optional().describe("Inclusive IST end. For one day, set it equal to fromDate, e.g. tomorrow."),
+  toDate: z.string().max(10).optional().describe("Inclusive IST end. A matching fromDate selects a single day, including tomorrow."),
   daysAhead: z.number().int().min(1).max(60).default(14),
   limit: z.number().int().min(1).max(25).default(20),
   offset: z.number().int().min(0).max(10000).default(0),
 };
 export const TOOL_SPECS = {
   account_context: {
+    title: 'Account and allowances',
     scope: "account:read",
     pro: false,
     write: false,
-    description:
-      "Read the connected account identity, current plan, permissions and remaining allowance. No user ID argument.",
+    description: 'Returns the connected account identity, plan, granted permissions and remaining connector allowance.',
     schema: z.object({}).strict(),
   },
   company_lookup: {
+    title: 'Find a company',
     scope: "market:read",
     pro: false,
     write: false,
-    description:
-      "Find a company by exact symbol, six-digit BSE code or name. Ambiguous queries return candidates; ask the user to choose.",
+    description: 'Returns verified company identities for a symbol, six-digit BSE code or name. Ambiguous and approximate name matches return candidates; renamed symbols resolve to the current identity.',
     schema: z.object({ query: company }).strict(),
   },
   filings_search: {
+    title: 'Search company filings',
     scope: "market:read",
     pro: false,
     write: false,
-    description:
-      "Read newest-first company filings with source links. Brief summaries by default; detail=full for more text. Filter published time with after/before, and reuse nextBefore plus nextBeforeId for paging. Empty results describe coverage, not proof of no filing.",
+    description: 'Returns newest-first stored filings with exchange links and bounded text. Supports category and publication-time filters, brief/full detail and timestamp-plus-ID pagination. Coverage is a limited stored window, not the complete market archive.',
     schema: z
       .object({
         company: company.optional(),
-        category: z.string().max(50).optional(),
+        category: z.string().max(50).transform(v=>v.trim().toUpperCase()).pipe(z.enum(FILING_CATEGORIES)).optional(),
         limit: z.number().int().min(1).max(25).default(10),
-        before: z.string().datetime().optional().describe("Exclusive published timestamp; send nextBefore with nextBeforeId to continue a page."),
+        before: z.string().datetime().optional().describe("Exclusive publication timestamp. Pagination pairs nextBefore with nextBeforeId."),
         beforeId: z.string().min(1).max(100).optional(),
-        after: z.string().datetime().optional().describe("Inclusive published timestamp. Convert the requested day boundary from Asia/Kolkata."),
+        after: z.string().datetime().optional().describe("Inclusive published timestamp; day boundaries use Asia/Kolkata."),
         detail: z.enum(["brief", "full"]).default("brief"),
       })
       .strict(),
   },
   results_read: {
+    title: 'Declared results filings',
     scope: "market:read",
     pro: false,
     write: false,
-    description:
-      "Use for source-backed declared quarterly result filings for one company. For the latest result set limit=1; brief summaries by default, detail=full when needed. For future result dates use meetings_read or watchlist_results_upcoming. Include source links; metrics are not independently validated.",
+    description: 'Returns declared quarterly results filing records for one company: headline, dates, bounded text and official PDF links. Revenue, EBITDA, PAT, EPS and YoY/QoQ figures are not extracted by this tool. Pagination is newest first; scheduled dates are separate calendar data.',
     schema: z.object({ company, limit: z.number().int().min(1).max(8).default(8), offset: z.number().int().min(0).max(200).default(0), detail: z.enum(["brief", "full"]).default("brief") }).strict(),
   },
   meetings_read: {
+    title: 'Upcoming results dates',
     scope: "market:read",
     pro: false,
     write: false,
-    description:
-      "Use for upcoming or tomorrow's result dates across the market or one company. Includes today by default, nearest date first. Use fromDate=tomorrow,toDate=tomorrow for only tomorrow. For the user's watchlist use watchlist_results_upcoming.",
+    description: 'Returns scheduled results-related meeting dates from available stored coverage, across companies or for one company. Includes today by default and sorts nearest first. Dates and today/tomorrow boundaries use Asia/Kolkata; complete market coverage is not available.',
     schema: z.object({ company: company.optional(), ...calendarDates }).strict(),
   },
   watchlist_results_upcoming: {
+    title: 'Watchlist results dates',
     scope: "watchlists:read",
     pro: true,
     write: false,
-    description:
-      "Use for upcoming result dates of the connected account's watchlist stocks in one call. No need to fetch every stock first. All active watchlists by default, or an exact watchlistId. Also requires market:read. Includes today, nearest first; use fromDate=tomorrow,toDate=tomorrow for tomorrow only.",
+    description: 'Returns upcoming results-related dates for the connected account’s active watchlists or one owned watchlistId. Requires market:read and watchlists:read plus active Pro/trial. Includes today, nearest first; supports an inclusive IST date range in one call.',
     schema: z.object({ watchlistId: id.optional(), ...calendarDates }).strict(),
   },
   watchlists_read: {
+    title: 'Read watchlists',
     scope: "watchlists:read",
     pro: true,
     write: false,
-    description: "Read compact metadata and up to five preview stocks for your watchlists; use IDs for edits. For upcoming results call watchlist_results_upcoming directly.",
+    description: 'Returns paginated watchlist metadata with boolean active state and up to five preview stocks per owned list. Upcoming result dates are available separately.',
     schema: z
       .object({ offset: z.number().int().min(0).max(10000).default(0) })
       .strict(),
   },
   watchlist_create: {
+    title: 'Create a watchlist',
     scope: "watchlists:write",
     pro: true,
     write: true,
-    description:
-      "Create an empty watchlist in the connected account. Use a stable requestId for retries.",
+    description: 'Creates an empty watchlist in the connected account. Matching requestId retries replay the stored outcome.',
     schema: z
       .object({ name: z.string().trim().min(1).max(80), requestId })
       .strict(),
   },
   watchlist_rename: {
+    title: 'Rename a watchlist',
     scope: "watchlists:write",
     pro: true,
     write: true,
-    description:
-      "Rename an existing watchlist by its exact ID. Preserve requestId on retries.",
+    description: 'Renames one owned watchlist by ID. Matching requestId retries replay the stored outcome.',
     schema: z
       .object({
         watchlistId: id,
@@ -193,20 +195,21 @@ export const TOOL_SPECS = {
       .strict(),
   },
   watchlist_toggle: {
+    title: 'Pause or enable a watchlist',
     scope: "watchlists:write",
     pro: true,
     write: true,
-    description: "Enable or pause an owned watchlist without deleting it.",
+    description: 'Enables or pauses one owned watchlist without deleting it. Matching requestId retries replay the stored outcome.',
     schema: z
       .object({ watchlistId: id, active: z.boolean(), requestId })
       .strict(),
   },
   watchlist_add_stock: {
+    title: 'Add a stock',
     scope: "watchlists:write",
     pro: true,
     write: true,
-    description:
-      "Add one exactly identified company to an owned watchlist. Resolve ambiguous names before calling.",
+    description: 'Adds one exactly identified company to an owned watchlist. Ambiguous or approximate identities are rejected. Matching requestId retries replay the stored outcome.',
     schema: z
       .object({
         watchlistId: id,
@@ -217,28 +220,29 @@ export const TOOL_SPECS = {
       .strict(),
   },
   watchlist_remove_stock: {
+    title: 'Remove a stock',
     scope: "watchlists:write",
     pro: true,
     write: true,
-    description:
-      "Remove one stock from an owned watchlist only when requested by the user. No bulk deletion.",
+    description: 'Removes one exactly identified stock from one owned watchlist. Bulk deletion is unavailable. Matching requestId retries replay the stored outcome.',
     schema: z.object({ watchlistId: id, company, requestId }).strict(),
   },
   watchlist_priority: {
+    title: 'Change stock priority',
     scope: "watchlists:write",
     pro: true,
     write: true,
-    description: "Set a stock priority in one owned watchlist.",
+    description: 'Sets HIGH, MEDIUM or LOW priority for one stock in an owned watchlist. Matching requestId retries replay the stored outcome.',
     schema: z
       .object({ watchlistId: id, company, priority, requestId })
       .strict(),
   },
   preferences_update: {
+    title: 'Update account preferences',
     scope: "profile:write",
     pro: false,
     write: true,
-    description:
-      "Change only summary language or in-app mute preference. Cannot change identity, subscription or notification destinations.",
+    description: 'Changes only summary language or in-app mute preference for the connected account. Identity, subscription and delivery destinations are excluded.',
     schema: z
       .object({
         summaryLanguage: z.enum(["english", "hinglish"]).optional(),
@@ -248,10 +252,11 @@ export const TOOL_SPECS = {
       .strict(),
   },
   watchlist_stocks_read: {
+    title: 'Read watchlist stocks',
     scope: "watchlists:read",
     pro: true,
     write: false,
-    description: "Read a page of up to 25 stocks in one owned watchlist.",
+    description: 'Returns a page of up to 25 stocks in one owned watchlist, with bounded company identity and priority fields.',
     schema: z
       .object({
         watchlistId: id,
@@ -260,20 +265,21 @@ export const TOOL_SPECS = {
       .strict(),
   },
   notes_read: {
+    title: 'Read saved notes',
     scope: "notes:read",
     pro: false,
     write: false,
-    description: "Read up to 10 notes belonging to the connected account.",
+    description: 'Returns up to 10 saved notes belonging to the connected account, with offset pagination.',
     schema: z
       .object({ offset: z.number().int().min(0).max(200).default(0) })
       .strict(),
   },
   note_create: {
+    title: 'Create a note',
     scope: "notes:write",
     pro: false,
     write: true,
-    description:
-      "Save a text note in the connected account. No arbitrary remote links or HTML execution.",
+    description: 'Creates a text note in the connected account. Text is stored as data; remote HTML or URLs are not executed.',
     schema: z
       .object({
         text: z.string().trim().min(1).max(2000),
@@ -283,10 +289,11 @@ export const TOOL_SPECS = {
       .strict(),
   },
   note_update: {
+    title: 'Update a note',
     scope: "notes:write",
     pro: false,
     write: true,
-    description: "Edit the text of one owned note using its exact ID.",
+    description: 'Updates the text of one note owned by the connected account, identified by noteId. Matching requestId retries replay the stored outcome.',
     schema: z
       .object({
         noteId: id,
@@ -296,27 +303,27 @@ export const TOOL_SPECS = {
       .strict(),
   },
   notifications_read: {
+    title: 'Read notifications',
     scope: "alerts:read",
     pro: false,
     write: false,
-    description:
-      "Read up to 20 notifications addressed to the connected account.",
+    description: 'Returns up to 20 notifications addressed to the connected account.',
     schema: z.object({}).strict(),
   },
   alert_preferences_read: {
+    title: 'Read alert preferences',
     scope: "alerts:read",
     pro: false,
     write: false,
-    description:
-      "Read your alert category switches without exposing delivery destinations.",
+    description: 'Returns the connected account’s alert category switches, without delivery destinations.',
     schema: z.object({}).strict(),
   },
   alert_preferences_update: {
+    title: 'Update alert preferences',
     scope: "alerts:write",
     pro: true,
     write: true,
-    description:
-      "Update selected alert category switches. Cannot change Telegram destinations or send messages.",
+    description: 'Updates selected alert category switches for the connected account. Telegram destinations and message sending are excluded.',
     schema: z
       .object({
         resultsAndEarnings: z.boolean().optional(),
@@ -332,11 +339,11 @@ export const TOOL_SPECS = {
       .strict(),
   },
   filing_summary: {
+    title: 'Analyze a filing PDF',
     scope: "analysis:generate",
     pro: false,
     write: true,
-    description:
-      "Get or generate a summary for an existing filing ID. Uses the same website AI allowance; no user prompts or arbitrary URLs accepted. Preserve requestId on retry.",
+    description: 'Returns a cached or newly generated AI analysis of an existing filing’s official exchange PDF in English or Roman Hinglish. Document coverage and provenance are included. New generation uses the website AI allowance; unavailable PDFs or providers return an error with no heuristic summary. Matching requestId retries replay the stored outcome.',
     schema: z
       .object({
         filingId: id,
@@ -378,7 +385,9 @@ export function parseTool(name: string, args: unknown) {
     throw new AiError("invalid_arguments", 400, "Choose an alert preference.");
   return { spec, args: parsed.data as Record<string, any> };
 }
-export function allowance(pro: boolean) {
+export function allowance(pro: boolean, uid?: string) {
+  const expires = Date.parse(process.env.AI_REVIEWER_UNTIL || "");
+  if (uid?.startsWith("mcp-reviewer-") && uid === process.env.AI_REVIEWER_UID && expires > Date.now() && expires <= Date.now()+31*86400000) return { daily: 1000, perMinute: 40, writes: 200 };
   return {
     daily: pro ? 200 : 20,
     perMinute: pro ? 20 : 5,

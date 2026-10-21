@@ -16,7 +16,7 @@ export function indexNowUrl(input: string): string | null {
       const symbol = decodeURIComponent(u.pathname.slice('/company/'.length));
       if (!/^[A-Z0-9&.-]{2,20}$/.test(symbol)) return null;
       u.pathname = `/company/${encodeURIComponent(symbol)}`;
-    } else if (!/^\/(?:companies|announcements|guides\/[a-z0-9-]+)$/.test(u.pathname)) return null;
+    } else if (!/^\/(?:companies|announcements|ai-docs|guides\/[a-z0-9-]+)$/.test(u.pathname)) return null;
     return u.href;
   } catch { return null; }
 }

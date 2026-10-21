@@ -39,7 +39,7 @@ const GUIDE_COMPANIES_MAP: Record<string, Array<{ symbol: string; name: string; 
   ],
   'auditor-resignations-red-flags': [
     { symbol: 'PAYTM', name: 'One97 Communications (Paytm)', scripCode: '543396' },
-    { symbol: 'ZOMATO', name: 'Zomato Ltd', scripCode: '543320' },
+    { symbol: 'ETERNAL', name: 'Eternal Limited', scripCode: '543320' },
     { symbol: 'YESBANK', name: 'Yes Bank Ltd', scripCode: '532648' },
     { symbol: 'ADANIENT', name: 'Adani Enterprises Ltd', scripCode: '512599' },
     { symbol: 'IDEA', name: 'Vodafone Idea Ltd', scripCode: '532822' },

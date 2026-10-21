@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { verifiedStockIdentity, verifiedSymbolAliases, VERIFIED_STOCK_IDENTITIES } from './stockIdentity';
 
 export interface StockMasterEntry {
   symbol: string;
@@ -50,6 +51,9 @@ function persistDiskCache() {
 
 export function registerStockEntry(entry: StockMasterEntry, saveToDisk = false) {
   if (!entry || !entry.symbol) return;
+  const verified = verifiedStockIdentity(entry);
+  if (!verified) return;
+  entry = verified;
   const sym = entry.symbol.toUpperCase().trim();
   const scrip = String(entry.scripCode || '').trim();
   const name = (entry.name || sym).toUpperCase().trim();
@@ -77,6 +81,7 @@ export function registerStockEntry(entry: StockMasterEntry, saveToDisk = false) 
   };
 
   symbolToEntry.set(sym, cleanEntry);
+  for (const alias of verifiedSymbolAliases(sym)) symbolToEntry.set(alias, cleanEntry);
   symbolToEntry.set(sym.replace(/[\s-]/g, ''), cleanEntry);
 
   if (scrip && /^\d{6}$/.test(scrip)) {
@@ -144,8 +149,8 @@ const INITIAL_STOCKS: StockMasterEntry[] = [
   { symbol: "SIEMENS", scripCode: "500550", name: "Siemens Ltd", nameKeywords: ["SIEMENS"] },
   { symbol: "IRFC", scripCode: "543257", name: "Indian Railway Finance Corporation Ltd", nameKeywords: ["INDIAN RAILWAY FINANCE", "IRFC"] },
   { symbol: "VBL", scripCode: "540180", name: "Varun Beverages Ltd", nameKeywords: ["VARUN BEVERAGES", "VBL"] },
-  { symbol: "ZOMATO", scripCode: "543320", name: "Zomato Ltd", nameKeywords: ["ZOMATO", "ETERNAL"] },
-  { symbol: "ETERNAL", scripCode: "543320", name: "Zomato Ltd", nameKeywords: ["ZOMATO", "ETERNAL"] },
+  { symbol: "ZOMATO", scripCode: "543320", name: "Eternal Limited", nameKeywords: ["ZOMATO", "ETERNAL"] },
+  { symbol: "ETERNAL", scripCode: "543320", name: "Eternal Limited", nameKeywords: ["ZOMATO", "ETERNAL"] },
   { symbol: "PIDILITIND", scripCode: "500331", name: "Pidilite Industries Ltd", nameKeywords: ["PIDILITE INDUSTRIES", "PIDILITE"] },
   { symbol: "GRASIM", scripCode: "500300", name: "Grasim Industries Ltd", nameKeywords: ["GRASIM INDUSTRIES", "GRASIM"] },
   { symbol: "SBILIFE", scripCode: "540719", name: "SBI Life Insurance Company Ltd", nameKeywords: ["SBI LIFE INSURANCE", "SBI LIFE"] },
@@ -294,7 +299,8 @@ const INITIAL_STOCKS: StockMasterEntry[] = [
   { symbol: "HINDZINC", scripCode: "500188", name: "Hindustan Zinc Ltd", nameKeywords: ["HINDUSTAN ZINC"] },
   { symbol: "AMBUJACEM", scripCode: "500425", name: "Ambuja Cements Ltd", nameKeywords: ["AMBUJA CEMENTS"] },
   { symbol: "ACC", scripCode: "500410", name: "ACC Ltd", nameKeywords: ["ACC LIMITED", "ACC"] },
-  { symbol: "INDUSINDBK", scripCode: "532209", name: "IndusInd Bank Ltd", nameKeywords: ["INDUSIND BANK"] },
+  { symbol: "INDUSINDBK", scripCode: "532187", name: "IndusInd Bank Ltd", nameKeywords: ["INDUSIND BANK"] },
+  { symbol: "J&KBANK", scripCode: "532209", name: "Jammu and Kashmir Bank Ltd", nameKeywords: ["JAMMU AND KASHMIR BANK", "J&K BANK", "JKBANK"] },
   { symbol: "TECHM", scripCode: "532755", name: "Tech Mahindra Ltd", nameKeywords: ["TECH MAHINDRA"] },
   { symbol: "ABB", scripCode: "500002", name: "ABB India Ltd", nameKeywords: ["ABB INDIA"] },
   { symbol: "BPCL", scripCode: "500547", name: "Bharat Petroleum Corporation Ltd", nameKeywords: ["BHARAT PETROLEUM", "BPCL"] },
@@ -323,7 +329,7 @@ const INITIAL_STOCKS: StockMasterEntry[] = [
 ];
 
 // Initialize in-memory tables
-for (const stock of INITIAL_STOCKS) {
+for (const stock of [...VERIFIED_STOCK_IDENTITIES, ...INITIAL_STOCKS]) {
   registerStockEntry(stock, false);
 }
 

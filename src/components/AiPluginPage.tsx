@@ -839,6 +839,10 @@ export const AiPluginPage: React.FC<AiPluginPageProps> = ({
               OpenAPI reference
               <ExternalLink size={14} />
             </a>
+            <a href="/ai-docs">
+              Setup, tools and data guide
+              <ExternalLink size={14} />
+            </a>
             <a href="/contact">
               Connection support
               <ExternalLink size={14} />

@@ -519,6 +519,13 @@ export async function updateAnnouncementSummary(newsId: string, aiSummary: strin
   pageRenderCache.invalidate(`ann:${newsId}`);
 }
 
+/** Separate provenance cache; legacy website summaries are never promoted to PDF evidence. */
+export function cacheAiConnectionSummary(newsId: string, field: 'aiConnectionSummaryEn' | 'aiConnectionSummary', value: unknown) {
+  const inMem = announcementsMemoryCache.find(a => a.id === newsId);
+  if (inMem) { (inMem as any)[field] = value; scheduleLocalDiskSave(); }
+  queueAnnouncementWrite(newsId, { [field]: value }, true);
+}
+
 export interface AnnouncementInput {
   newsId: string;
   companyName: string;

@@ -1,3 +1,4 @@
+import { TOOL_SPECS } from "../ai/policy";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import express from "express";
@@ -157,6 +158,9 @@ test("a remote SDK client initializes and discovers scoped tools after bearer au
     assert.ok(tools.some((tool) => tool.name === "watchlist_results_upcoming"));
     assert.ok(!tools.some((tool) => /admin|payments|execute_sql/.test(tool.name)));
     assert.ok(tools.every((tool) => tool.inputSchema.type === "object"));
+    assert.equal(tools.length,23);
+    for(const tool of tools){assert.ok(tool.title && tool.title.length>3);const write=tool.name!=="get_profile" && TOOL_SPECS[tool.name as keyof typeof TOOL_SPECS].write;assert.equal(tool.annotations?.readOnlyHint,!write);assert.equal(tool.annotations?.destructiveHint,write);}
+
     const profile = tools.find((tool) => tool.name === "get_profile")!;
     assert.equal(profile.outputSchema?.type, "object");
     assert.deepEqual(profile.outputSchema?.required, ["id", "name"]);

@@ -58,7 +58,7 @@ const TOP_BSE_STOCKS = [
   { name: 'Titan Company Ltd', symbol: 'TITAN', scrip: '500114', sector: 'Consumer Goods' },
   { name: 'Trent Ltd', symbol: 'TRENT', scrip: '500251', sector: 'Retail' },
   { name: 'State Bank of India', symbol: 'SBIN', scrip: '500112', sector: 'Banking' },
-  { name: 'Zomato Ltd', symbol: 'ZOMATO', scrip: '543320', sector: 'Tech' },
+  { name: 'Eternal Limited (formerly Zomato)', symbol: 'ETERNAL', scrip: '543320', sector: 'Tech' },
   { name: 'IRFC', symbol: 'IRFC', scrip: '543257', sector: 'Railways & PSU' },
   { name: 'RVNL', symbol: 'RVNL', scrip: '542649', sector: 'Railways & PSU' },
   { name: 'Suzlon Energy Ltd', symbol: 'SUZLON', scrip: '532667', sector: 'Renewable Energy' }
