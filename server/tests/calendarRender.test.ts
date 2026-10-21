@@ -50,6 +50,7 @@ test('calendar renders the existing date tabs with All, F&O Stocks and Watchlist
   assert.equal((html.match(/Vishal Mega Mart Limited/g) || []).length, 1);
   assert.equal((html.match(/Reliance Industries Ltd/g) || []).length, 1);
   assert.doesNotMatch(html, /title="Open 360° Stock Intelligence">\s*544307\s*</, 'the primary label must be a company name, not the numeric identity');
+  assert.doesNotMatch(html, />544307<\/span>/, 'calendar cards use names; internal security codes remain available to search and detail actions');
   assert.match(html, /calendar-date-heading/);
   assert.doesNotMatch(html, />Market<\/button>/);
 });

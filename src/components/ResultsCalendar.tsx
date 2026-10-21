@@ -2058,9 +2058,6 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                           <Building2 size={12} />
                         </button>
 
-                        <HeliosPill tone="slate" dot={false} className="font-mono">
-                          {item.scripCode}
-                        </HeliosPill>
                       </div>
                     </div>
 

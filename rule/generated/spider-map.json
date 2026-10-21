@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "f0d3d6b62a40626653360914a4a26c7367901d1f406da9c8f9462ce9dfaba525",
+  "sourceDigest": "034e82deb8e7c43a5ceee08b3e84d2910c184b6a126022b67fb338d4abb98ec0",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -1265,7 +1265,7 @@
     },
     {
       "path": "server/tests/calendarRender.test.ts",
-      "sha256": "b1d71977606d02bd9de1f109b4bfccb01830390670906aa79e65be7aad313d6f",
+      "sha256": "faf3147750581142846c3fc6415002b8dd9fe9598b1c8dc406e9a945a626f401",
       "importedBy": []
     },
     {
@@ -2122,7 +2122,7 @@
     },
     {
       "path": "src/components/ResultsCalendar.tsx",
-      "sha256": "229da45d66ac06246cdc61586a115af40b8daf47400ad11d5e47e97fc7cbc976",
+      "sha256": "a03a11c68d4e733ec537ce1551201cfab9fd4da64a2f4ea52b65f3025f65519d",
       "importedBy": [
         "src/App.tsx"
       ]
