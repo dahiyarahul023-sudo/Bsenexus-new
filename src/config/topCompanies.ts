@@ -1,5 +1,7 @@
-// Curated homepage links, matching the existing 26-company directory.
-export const TOP_COMPANIES = [
+import { EXCHANGE_COMPANIES } from './exchangeCompanies';
+// Curated homepage links, including the exchange operators' public profiles.
+export const TOP_COMPANIES: { symbol: string; scripCode: string; name: string; listingLabel?: string }[] = [
+  ...EXCHANGE_COMPANIES,
   {
     "symbol": "RELIANCE",
     "scripCode": "500325",

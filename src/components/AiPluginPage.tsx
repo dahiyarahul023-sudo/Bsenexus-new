@@ -745,11 +745,9 @@ export const AiPluginPage: React.FC<AiPluginPageProps> = ({
                           <span className="ai-connect-dot" />
                           {c.name}
                         </h3>
-                        <p>
-                          {c.scopes
-                            .map((s) => status.scopeLabels[s] || s)
-                            .join(" · ")}
-                        </p>
+                        <ul className="ai-connect-scope-list" aria-label="Approved permissions">
+                          {c.scopes.map((s) => <li key={s}>{status.scopeLabels[s] || s}</li>)}
+                        </ul>
                         <small>
                           Access approved · Expires{" "}
                           {new Date(c.expiresAt).toLocaleDateString()}

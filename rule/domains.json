@@ -342,7 +342,9 @@
         "public/llms-full.txt",
         "src/content/keywordGuides.ts",
         "src/shared/scripMatching.ts",
-        "server/services/publicCalendar.ts"
+        "server/services/publicCalendar.ts",
+        "src/config/exchangeCompanies.ts",
+        "server/services/exchangeProfiles.ts"
       ],
       "tests": [
         "server/tests/faqBank.test.ts",
@@ -352,9 +354,10 @@
         "server/tests/sevenFixes.test.ts",
         "server/tests/seoPrehydration.test.ts",
         "server/tests/aiEvidence.test.ts",
-        "scripts/verify-public-calendar.mjs"
+        "scripts/verify-public-calendar.mjs",
+        "server/tests/exchangeProfiles.test.ts"
       ],
-      "reason": "Public copy and crawler metadata must agree with actual API/product contracts. Admin SEO mutations inherit mount guards; generated summaries are not evidence of source accuracy."
+      "reason": "Public copy and crawler metadata must agree with actual API/product contracts. Admin SEO mutations inherit mount guards; generated summaries are not evidence of source accuracy. BSE/NSE operator profiles, shared listing identity, directory/landing links and static/dynamic sitemaps agree; these records never expand intake or assign BSE Limited an invented BSE code."
     },
     {
       "id": "operations",
@@ -418,7 +421,7 @@
         "server/tests/spaRouteParity.test.ts",
         "scripts/verify-oauth-routing.mjs"
       ],
-      "reason": "URL and active tab must agree across direct links, refresh, browser Back/Forward and share pages. Loading, focus and scroll restoration are part of navigation; route tests do not prove browser behavior."
+      "reason": "URL and active tab must agree across direct links, refresh, browser Back/Forward and share pages. Loading, focus and scroll restoration are part of navigation; route tests do not prove browser behavior. Saved scroll positions restore silently; App does not mount the restored-position notification."
     },
     {
       "id": "frontend-session",
@@ -528,7 +531,8 @@
         "src/components/WatchlistEditor.tsx",
         "src/shared/watchlistIdentity.ts",
         "src/styles/watchlist-editor.css",
-        "src/styles/notification-controls.css"
+        "src/styles/notification-controls.css",
+        "src/utils/watchlistPreview.ts"
       ],
       "tests": [
         "server/tests/core.test.ts",
@@ -544,9 +548,10 @@
         "server/tests/watchlistEditorRender.test.ts",
         "server/tests/watchlistMetadata.test.ts",
         "server/tests/calendarFno.test.ts",
-        "server/tests/calendarRender.test.ts"
+        "server/tests/calendarRender.test.ts",
+        "server/tests/watchlistPreview.test.ts"
       ],
-      "reason": "List/detail identity, filters, watchlist membership, badge counts and timestamps must agree. Background refresh preserves content, density, selection and scroll. Rapid filter changes must not render older responses. Home membership uses active-list exact identities. The responsive watchlist editor preserves company metadata, page scrolling and four visible priority filters. Inbox opens on confirmed unread items, while device push delivery has an independent persistent control."
+      "reason": "List/detail identity, filters, watchlist membership, badge counts and timestamps must agree. Background refresh preserves content, density, selection and scroll. Rapid filter changes must not render older responses. Home membership uses active-list exact identities. The responsive watchlist editor preserves company metadata, page scrolling and four visible priority filters. Inbox opens on confirmed unread items, while device push delivery has an independent persistent control. Calendar labels use company names when symbols are numeric; sticky date headings share measured toolbar offsets. Home previews select the newest filing per exact watchlist security before limiting, without changing the full filing feed."
     },
     {
       "id": "frontend-notes",
@@ -675,7 +680,9 @@
         "server/services/guideIndexNow.ts",
         "src/shared/scripMatching.ts",
         "src/config/topCompanies.ts",
-        "server/services/publicCalendar.ts"
+        "server/services/publicCalendar.ts",
+        "src/config/exchangeCompanies.ts",
+        "server/services/exchangeProfiles.ts"
       ],
       "tests": [
         "server/tests/searchEngineDiscovery.test.ts",
@@ -683,9 +690,10 @@
         "server/tests/keywordGuides.test.ts",
         "server/tests/sevenFixes.test.ts",
         "server/tests/aiEvidence.test.ts",
-        "scripts/verify-public-calendar.mjs"
+        "scripts/verify-public-calendar.mjs",
+        "server/tests/exchangeProfiles.test.ts"
       ],
-      "reason": "Public links, pricing claims, server-rendered content and client views must agree. Lazy navigation, responsive composition, keyboard operation and motion require browser evidence beyond server discovery tests."
+      "reason": "Public links, pricing claims, server-rendered content and client views must agree. Lazy navigation, responsive composition, keyboard operation and motion require browser evidence beyond server discovery tests. BSE/NSE operator profiles, shared listing identity, directory/landing links and static/dynamic sitemaps agree; these records never expand intake or assign BSE Limited an invented BSE code."
     },
     {
       "id": "document-startup-security",
@@ -705,7 +713,7 @@
         "server/tests/recaptchaSecurity.test.ts",
         "server/tests/appCheckStartup.test.ts"
       ],
-      "reason": "Canonical document headers preserve OAuth popups, AI Studio preview and public embeds. Deferred optional SDKs preserve authentication assessment, configured monitoring and explicit push requests without blocking public paint."
+      "reason": "Canonical document headers preserve OAuth popups, AI Studio preview and public embeds. Deferred optional SDKs preserve authentication assessment, configured monitoring and explicit push requests without blocking public paint. Generic HTML has a neutral brand/loading root, never synthetic filings or an unrelated directory. Real announcements use an explicit route-only insertion marker and public calendar SSR retains its own source-backed document."
     },
     {
       "id": "impact-radar",
@@ -804,7 +812,7 @@
         "server/tests/companyStoryBudget.test.ts",
         "server/tests/followupAudit.test.ts"
       ],
-      "reason": "Public feed → validated content-led chapter adapter → Home carousel and both shared viewer entry points. Chapter selection uses stable IDs. Aggregate topics, especially FII/DII, have neutral symbols and no company CTA; only exact per-company records use the existing official-logo resolver and Company Intelligence callbacks. No sample facts on loading/error. News is bounded by sourced publication time and the existing 18-hour/session policy. Newer refreshes win cache races; stale/empty/error states remain distinct. The scoped reading canvas, proportional signed charts, native illustrations, pause clock, portal focus/inertness, scroll and reduced motion are one interaction contract. Browser/device verification and live deployment are separate from source/render/build evidence. Company news is one finite chapter: at most seven screens, two per company, complete explanations and adjacent company groups. Chapter-wide progress/count never reset per news sequence. Optional restrained sector art, clean text and unambiguous source-backed order metrics avoid a compulsory repeated illustration."
+      "reason": "Public feed → validated content-led chapter adapter → Home carousel and both shared viewer entry points. Chapter selection uses stable IDs. Aggregate topics, especially FII/DII, have neutral symbols and no company CTA; only exact per-company records use the existing official-logo resolver and Company Intelligence callbacks. No sample facts on loading/error. News is bounded by sourced publication time and the existing 18-hour/session policy. Newer refreshes win cache races; stale/empty/error states remain distinct. The scoped reading canvas, proportional signed charts, native illustrations, pause clock, portal focus/inertness, scroll and reduced motion are one interaction contract. Browser/device verification and live deployment are separate from source/render/build evidence. Company news is one finite chapter: at most seven screens, two per company, complete explanations and adjacent company groups. Chapter-wide progress/count never reset per news sequence. Optional restrained sector art, clean text and unambiguous source-backed order metrics avoid a compulsory repeated illustration. Visible 46px Previous/Pause/Next controls supplement symmetric side taps, swipes and keyboard navigation; a contrast-visible 4px progress track remains present at zero elapsed time and under reduced motion."
     },
     {
       "id": "ai-connections",
@@ -859,7 +867,7 @@
         "server/tests/aiEvidence.test.ts",
         "scripts/verify-public-calendar.mjs"
       ],
-      "reason": "Website sign-in approves a public PKCE client with explicit permissions. External opaque credentials never accept website cookies or client-supplied owners/roles. Live durable entitlement and shared per-account quotas precede bounded tools; writes recheck grant and plan in a transaction with an idempotent receipt. Website watchlists use request-local revision CAS while enabled, and reads do not restore stale backups. Connection/consent responses bypass browser, CDN and SW caches. Profile/watchlist/notes refresh on return; account changes suppress late responses. Root OAuth endpoints, MCP and the four compatibility GET routes share the same authorization owner. The disabled-by-default flag is required until an approved service-only schema rollout and live client/browser checks; source tests do not certify deployment or marketplace publication. Connection discovery uses the configured Express trusted-proxy hostname while all issuer/resource URLs remain canonical. Exact browser-Origin checks cover MCP requests and preflights. Settings owns the sole visible entry; client-specific web setup distinguishes public URL copying, approved grants and completed client setup. Same-account refresh retains content and account/request changes hide obsolete responses."
+      "reason": "Website sign-in approves a public PKCE client with explicit permissions. External opaque credentials never accept website cookies or client-supplied owners/roles. Live durable entitlement and shared per-account quotas precede bounded tools; writes recheck grant and plan in a transaction with an idempotent receipt. Website watchlists use request-local revision CAS while enabled, and reads do not restore stale backups. Connection/consent responses bypass browser, CDN and SW caches. Profile/watchlist/notes refresh on return; account changes suppress late responses. Root OAuth endpoints, MCP and the four compatibility GET routes share the same authorization owner. The disabled-by-default flag is required until an approved service-only schema rollout and live client/browser checks; source tests do not certify deployment or marketplace publication. Connection discovery uses the configured Express trusted-proxy hostname while all issuer/resource URLs remain canonical. Exact browser-Origin checks cover MCP requests and preflights. Settings owns the sole visible entry; client-specific web setup distinguishes public URL copying, approved grants and completed client setup. Same-account refresh retains content and account/request changes hide obsolete responses. Approved-access cards use a minmax content column and non-wrapping action column, with permission rows and a single-column phone layout; confirmed revoke and account guards are unchanged."
     }
   ]
 }
