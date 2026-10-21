@@ -831,6 +831,22 @@ export async function getAllActiveWatchlistsAcrossUsers(): Promise<any[]> {
   return allLists;
 }
 
+/** Internal calendar intake: retain supplied security codes for symbols outside the local master. */
+export async function getCalendarWatchlistStocks(): Promise<any[]> {
+  const activeItems = (lists: any[]) => lists.filter(list => list?.is_active === true || list?.is_active === 1)
+    .flatMap(list => Array.isArray(list.items) ? list.items : []);
+  if (isSupabaseConfigured()) {
+    try {
+      const { data, error } = await getSupabase().from(WATCHLISTS_TABLE).select('lists');
+      if (error) throw error;
+      if (Array.isArray(data)) return data.flatMap(row => activeItems(Array.isArray(row.lists) ? row.lists : []));
+    } catch {
+      console.warn('[ResultsCalendar] Watchlist intake unavailable; retaining cached meetings and using known local lists.');
+    }
+  }
+  return activeItems(await getAllActiveWatchlistsAcrossUsers());
+}
+
 export async function getActiveWatchlistSymbols(userId?: string, opts?: GetWatchlistsOptions): Promise<string[]> {
   const symbols: string[] = [];
 

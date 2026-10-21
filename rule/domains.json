@@ -290,6 +290,9 @@
         "server/services/fiiDiiService.ts",
         "server/services/marketIndicesService.ts",
         "server/services/resultsCalendarService.ts",
+        "server/services/calendarUniverse.ts",
+        "server/config/fnoCalendarStocks.json",
+        "src/shared/calendarScope.ts",
         "server/services/stockNewsService.ts",
         "server/services/storyFeedService.ts",
         "server/services/timelineClassifier.ts",
@@ -309,6 +312,8 @@
         "server/tests/auditData.test.ts",
         "server/tests/followupAudit.test.ts",
         "server/tests/homeNews.test.ts",
+        "server/tests/calendarFno.test.ts",
+        "server/tests/calendarSync.test.ts",
         "server/tests/sevenFixes.test.ts",
         "server/tests/aiConnectorQuality.test.ts",
         "server/tests/aiEvidence.test.ts",
@@ -497,6 +502,7 @@
         "src/components/Announcements.tsx",
         "src/components/WatchlistManager.tsx",
         "src/components/ResultsCalendar.tsx",
+        "src/shared/calendarScope.ts",
         "src/components/QuarterlyResultsLedger.tsx",
         "src/components/NewsPortal.tsx",
         "src/components/NotificationInbox.tsx",
@@ -536,7 +542,9 @@
         "server/tests/notificationCountApi.test.ts",
         "server/tests/watchlistIdentity.test.ts",
         "server/tests/watchlistEditorRender.test.ts",
-        "server/tests/watchlistMetadata.test.ts"
+        "server/tests/watchlistMetadata.test.ts",
+        "server/tests/calendarFno.test.ts",
+        "server/tests/calendarRender.test.ts"
       ],
       "reason": "List/detail identity, filters, watchlist membership, badge counts and timestamps must agree. Background refresh preserves content, density, selection and scroll. Rapid filter changes must not render older responses. Home membership uses active-list exact identities. The responsive watchlist editor preserves company metadata, page scrolling and four visible priority filters. Inbox opens on confirmed unread items, while device push delivery has an independent persistent control."
     },
