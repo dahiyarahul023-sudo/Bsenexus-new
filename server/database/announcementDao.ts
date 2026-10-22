@@ -1,4 +1,4 @@
-import { hasExactScripCode } from '../../src/shared/scripMatching.js';
+import { hasExactScripCode, isBseOperatorFiling, projectFilingIdentity } from '../../src/shared/scripMatching.js';
 import { getSupabase, isSupabaseConfigured } from './supabase.js';
 import { determinePriority, parseBseDate, isSymbolMatch } from '../utils/helpers.js';
 import { addLog } from './logDao.js';
@@ -23,7 +23,7 @@ function toRow(id: string, item: any): Record<string, any> {
 
 function fromRow(row: any): any {
   const data = row?.data ?? {};
-  return { id: row?.id, ...data };
+  return projectFilingIdentity({ id: row?.id, ...data });
 }
 
 const ANNOUNCEMENTS_FILE = 'announcements.json';
@@ -43,7 +43,7 @@ const LEGACY_DEMO_IDS = new Set([
 ]);
 
 let loadedLocal = readLocalJson<any[]>(ANNOUNCEMENTS_FILE, []);
-let announcementsMemoryCache: any[] = (Array.isArray(loadedLocal) ? loadedLocal : []).filter(item => !LEGACY_DEMO_IDS.has(item?.id));
+let announcementsMemoryCache: any[] = (Array.isArray(loadedLocal) ? loadedLocal : []).filter(item => !LEGACY_DEMO_IDS.has(item?.id)).map(projectFilingIdentity);
 
 let saveDiskTimer: NodeJS.Timeout | null = null;
 function scheduleLocalDiskSave() {
@@ -114,7 +114,7 @@ export async function initAnnouncementCache() {
       let bseTs = parseBseDate(dataItem.bseTime);
       if (!bseTs) bseTs = dataItem.fetched_at || 0;
 
-      const fsItem = { id: row.id, ...dataItem, bseTimestamp: bseTs };
+      const fsItem = projectFilingIdentity({ id: row.id, ...dataItem, bseTimestamp: bseTs });
       const existing = mergedMap.get(row.id);
       mergedMap.set(row.id, existing ? { ...existing, ...fsItem } : fsItem);
     }
@@ -388,7 +388,11 @@ async function processSupabaseQueue() {
     // Coalesce the whole confirmed storage drain; no HTTP/database indexing work
     // is awaited by the filing pipeline, and unchanged/delivery-only rows stay out.
     try {
-      for (const page of storedFilingIndexPages([...changedPublicFilings.values()])) notifySearchEnginesOfNewPages(page.url, page.version);
+      for (const page of storedFilingIndexPages([...changedPublicFilings.values()])) {
+        const match = new URL(page.url).pathname.match(/^\/company\/(.+)$/);
+        if (match) pageRenderCache.invalidate(`comp:${decodeURIComponent(match[1])}`);
+        notifySearchEnginesOfNewPages(page.url, page.version);
+      }
     } catch { console.warn('[IndexNow] Could not queue stored public changes; filing storage is unaffected'); }
   }
 }
@@ -528,6 +532,8 @@ export function cacheAiConnectionSummary(newsId: string, field: 'aiConnectionSum
 
 export interface AnnouncementInput {
   newsId: string;
+  symbol?: string;
+  source?: string;
   companyName: string;
   subject: string;
   details: string;
@@ -761,6 +767,21 @@ export async function getAnnouncementsForScrip(scripCode: string, limitNum: numb
   }
 
   return Array.from(byId.values());
+}
+
+/** BSE equity has no BSE scrip. Read exact NSE identity, including verified legacy PDFs. */
+export async function getBseOperatorAnnouncements(): Promise<any[]> {
+  const byId = new Map<string, any>();
+  for (const item of announcementsMemoryCache) if (isBseOperatorFiling(item)) byId.set(item.id, item);
+  if (isSupabaseConfigured()) {
+    const { data, error } = await getSupabase().from(ANNOUNCEMENTS_TABLE).select('*')
+      .or('data->>symbol.eq.BSE,data->>companyName.eq.BSE Limited,data->>companyName.eq.BSE Ltd')
+      .order('fetched_at', { ascending: false }).limit(400).abortSignal(AbortSignal.timeout(4000));
+    if (error && !byId.size) throw new Error('BSE operator filings unavailable');
+    for (const row of data || []) { const item = fromRow(row); if (isBseOperatorFiling(item)) byId.set(row.id, item); }
+  }
+  // Projection only; immutable stored evidence and its old code are not rewritten.
+  return [...byId.values()].map(projectFilingIdentity);
 }
 
 export async function boostAnnouncementsPriorityForWindow(

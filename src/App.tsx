@@ -670,14 +670,7 @@ function AppContent() {
     document.documentElement.style.overflow = '';
   }, [activeTab]);
 
-  // When user successfully signs in, immediately navigate inside to the live terminal dashboard
-  const prevUserRef = useRef<any>(null);
-  useEffect(() => {
-    if (user && !prevUserRef.current && !parseShareablePath(window.location.pathname) && getAppPathRoute() === 'home') {
-      setActiveTab(prev => (prev === 'home' ? 'dashboard' : prev));
-    }
-    prevUserRef.current = user;
-  }, [user]);
+  // The home tab is For You. Authentication preserves it and any explicit URL/tab intent.
 
   useEffect(() => {
     if (theme === 'dark') document.documentElement.classList.add('dark');
@@ -1007,7 +1000,7 @@ function AppContent() {
             // No silent entry for logged-out visitors: open the auth modal so they
             // explicitly choose Sign in / Create account / Continue as Guest.
             if (!user) {
-              pendingTerminalTabRef.current = tab || 'dashboard';
+              pendingTerminalTabRef.current = tab || 'home';
               setIsAuthModalOpen(true);
               return;
             }
@@ -1050,7 +1043,7 @@ function AppContent() {
             // No silent entry for logged-out visitors: open the auth modal so they
             // explicitly choose Sign in / Create account / Continue as Guest.
             if (!user) {
-              pendingTerminalTabRef.current = tab || 'dashboard';
+              pendingTerminalTabRef.current = tab || 'home';
               setIsAuthModalOpen(true);
               return;
             }

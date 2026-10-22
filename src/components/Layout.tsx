@@ -1,3 +1,4 @@
+import { triggerNavigationHaptic } from '../utils/haptics';
 import { UserAvatar } from './ui/UserAvatar';
 import '../styles/mobile-repairs.css';
 import { RichIcon } from './ui/RichVisual';
@@ -512,9 +513,10 @@ export function Layout({
                 whileHover={{ scale: 1.02 }}
                 whileTap={buttonTap}
                 transition={springSnappy}
-                onClick={() => onTabChange('settings')}
+                onClick={() => { triggerNavigationHaptic(); onTabChange('settings'); }}
+                aria-pressed={activeTab === 'settings'}
                 aria-label="Open Settings and Preferences"
-                className="flex items-center justify-center p-2 sm:p-1.5 rounded-lg bg-slate-100 dark:bg-[#252233] hover:bg-slate-200 dark:hover:bg-[#2F2B40] border border-slate-200/90 dark:border-[#352F48] text-slate-700 dark:text-slate-200 cursor-pointer select-none shadow-xs shrink-0 min-w-[44px] min-h-[44px] sm:min-w-[32px] sm:min-h-[32px]"
+                className="shell-settings-button flex items-center justify-center p-2 sm:p-1.5 rounded-lg bg-slate-100 dark:bg-[#252233] hover:bg-slate-200 dark:hover:bg-[#2F2B40] border border-slate-200/90 dark:border-[#352F48] text-slate-700 dark:text-slate-200 cursor-pointer select-none shadow-xs shrink-0 min-w-[44px] min-h-[44px] sm:min-w-[32px] sm:min-h-[32px]"
                 title="Open Settings & Preferences"
               >
                 <Settings size={15} className="text-slate-600 dark:text-slate-300" />
@@ -846,8 +848,9 @@ export function Layout({
         onOpenPrivacyPolicy={() => handleOpenTermsModal('privacy')}
         onOpenCookiePolicy={() => handleOpenTermsModal('cookies')}
       />
-      {notificationInboxOpen && (
+      {/* Keep confirmed same-owner inbox snapshots while its dialog is closed. */}
         <NotificationInbox
+          key={user?.uid || profile?.uid || 'guest'}
           isOpen={notificationInboxOpen}
           onClose={() => setNotificationInboxOpen(false)}
           onOpenCompanyIntel={handleOpenCompanyIntel}
@@ -858,7 +861,6 @@ export function Layout({
           unreadCount={unreadNotifCount}
           onRefreshCount={fetchUnreadCount}
         />
-      )}
       {alertRulesModalOpen && (
         <AlertRulesModal
           isOpen={alertRulesModalOpen}

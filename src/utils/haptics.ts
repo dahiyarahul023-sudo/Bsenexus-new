@@ -70,3 +70,10 @@ export function triggerSuccessHaptic() {
     } catch {}
   }
 }
+
+/** Quiet navigation feedback; visual pressed state remains available without vibration. */
+export function triggerNavigationHaptic() {
+  if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+    try { navigator.vibrate(8); } catch { /* Device may not support vibration. */ }
+  }
+}

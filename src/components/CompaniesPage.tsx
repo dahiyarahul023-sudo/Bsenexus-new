@@ -1,3 +1,4 @@
+import { BseNexusLogo } from './ui/BseNexusLogo';
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, Building2, Search, ExternalLink, ChevronRight, TrendingUp, ShieldCheck, Zap } from 'lucide-react';
 import { SocialIconsRow } from './ui/SocialLinks';
@@ -73,9 +74,7 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({ onEnterTerminal })
               }}
               className="flex items-center gap-2 group text-decoration-none"
             >
-              <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white font-black text-sm shadow-md shadow-emerald-600/20 group-hover:scale-105 transition-transform">
-                N
-              </div>
+              <BseNexusLogo className="w-8 h-8 transition-transform group-hover:scale-105" />
               <span className="font-black text-lg tracking-tight text-slate-900 dark:text-white">
                 BSE<span className="text-emerald-500">NEXUS</span>
               </span>
@@ -282,7 +281,7 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({ onEnterTerminal })
       <footer className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0F172A] py-8 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded bg-emerald-600 text-white font-bold flex items-center justify-center text-[10px]">N</div>
+            <BseNexusLogo className="w-6 h-6" />
             <span className="font-bold text-slate-800 dark:text-slate-200">Bsenexus</span>
             <span>&copy; {new Date().getFullYear()} — India's Premier Corporate Disclosures Intelligence Platform</span>
           </div>

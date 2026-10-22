@@ -16,7 +16,7 @@ test('actual filing writer queues one drain of public changes only after storage
     async upsert(values:any[]){await gate;values.forEach(row=>rows.set(row.id,row.data));return {error:null}},
   }}};
   const exports:any={};
-  vm.runInNewContext(source,{exports,console,setTimeout,clearTimeout,Date,process:{env:{NODE_ENV:'test'}},require(spec:string){
+  vm.runInNewContext(source,{exports,console,setTimeout,clearTimeout,Date,URL,process:{env:{NODE_ENV:'test'}},require(spec:string){
     if(spec.endsWith('/supabase.js'))return {getSupabase:()=>db,isSupabaseConfigured:()=>true};
     if(spec.endsWith('/localStore.js'))return {readLocalJson:()=>[],writeLocalJson(){},isOfflineOrNetworkError:()=>false};
     if(spec.endsWith('/logDao.js'))return {addLog:async()=>{}};

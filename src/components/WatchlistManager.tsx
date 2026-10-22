@@ -1,3 +1,4 @@
+import { ComponentSkeleton } from './ui/ComponentSkeleton';
 import { VERIFIED_STOCK_BY_SYMBOL } from '../shared/stockIdentity';
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { customFetch } from '../api';
@@ -37,6 +38,20 @@ import { ShareActionMenu } from './ui/motion/ShareActionMenu';
 import { HeliosPill, heliosCard, heliosDivider, heliosTitle, heliosMeta } from './ui/helios';
 import { SaveNoteButton } from './notes/SaveNoteButton';
 import { AiSummaryViewer } from './AiSummaryViewer';
+
+function readCachedWatchlists(accountId: string): any[] | null {
+  // Show last cached watchlists instantly on login; fresh data replaces in background.
+  try {
+    const cached = localStorage.getItem(`bsenexus_watchlists_cache:${accountId}`);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed.items) && Date.now() - (parsed.ts || 0) < 12 * 60 * 60 * 1000) {
+        return parsed.items;
+      }
+    }
+  } catch { /* ignore corrupt cache */ }
+  return null;
+}
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -156,7 +171,7 @@ const stockMasterClient: Record<string, { scripCode: string; nameKeywords: strin
   "MPHASIS": { scripCode: "526299", nameKeywords: ["MPHASIS"] },
   "MCX": { scripCode: "534091", nameKeywords: ["MULTI COMMODITY EXCHANGE", "MCX"] },
   "CDSL": { scripCode: "540615", nameKeywords: ["CENTRAL DEPOSITARY SERVICES", "CDSL"] },
-  "BSE": { scripCode: "540025", nameKeywords: ["BSE LIMITED"] },
+  "BSE": { scripCode: VERIFIED_STOCK_BY_SYMBOL.BSE.scripCode, nameKeywords: ["BSE LIMITED"] },
   "IEX": { scripCode: "540750", nameKeywords: ["INDIAN ENERGY EXCHANGE", "IEX"] },
   "POLYCAB": { scripCode: "542652", nameKeywords: ["POLYCAB INDIA", "POLYCAB"] },
   "HAVELLS": { scripCode: "517354", nameKeywords: ["HAVELLS INDIA", "HAVELLS"] },
@@ -510,19 +525,8 @@ export function WatchlistManager() {
   const accountId = user?.uid || profile?.uid || 'guest';
   const accountRef = useRef(accountId); accountRef.current = accountId;
   const [watchlistOwner, setWatchlistOwner] = useState(accountId);
-  const [watchlists, setWatchlists] = useState<any[]>(() => {
-    // Show last cached watchlists instantly on login; fresh data replaces in background.
-    try {
-      const cached = localStorage.getItem(`bsenexus_watchlists_cache:${accountId}`);
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed.items) && Date.now() - (parsed.ts || 0) < 12 * 60 * 60 * 1000) {
-          return parsed.items;
-        }
-      }
-    } catch { /* ignore corrupt cache */ }
-    return [];
-  });
+  const [watchlists, setWatchlists] = useState<any[]>(() => readCachedWatchlists(accountId) || []);
+  const [watchlistsReady, setWatchlistsReady] = useState(() => readCachedWatchlists(accountId) !== null);
   const watchlistsRead = useRef<AbortController | null>(null);
   const [watchlistsError, setWatchlistsError] = useState<string | null>(null);
   const [isAddingSymbol, setIsAddingSymbol] = useState(false);
@@ -871,7 +875,7 @@ export function WatchlistManager() {
       const data = await res.json();
       if (!Array.isArray(data)) throw new Error('Invalid watchlist response.');
       if (controller.signal.aborted || accountRef.current !== owner) return;
-      setWatchlists(data); setWatchlistOwner(owner);
+      setWatchlists(data); setWatchlistOwner(owner); setWatchlistsReady(true);
       try { localStorage.setItem(`bsenexus_watchlists_cache:${owner}`, JSON.stringify({ ts: Date.now(), items: data })); } catch {}
       window.dispatchEvent(new Event('watchlists-changed'));
     } catch (error) {
@@ -942,7 +946,7 @@ export function WatchlistManager() {
   }, [user?.uid, isPro, isAdmin]);
 
   useEffect(() => {
-    if (watchlistOwner !== accountId) { setWatchlists([]); setWatchlistOwner(accountId); setActiveListId('ALL'); setLastAddedInfo(null); setUndoToast(null); }
+    if (watchlistOwner !== accountId) { const cached = readCachedWatchlists(accountId); setWatchlists(cached || []); setWatchlistsReady(cached !== null); setWatchlistOwner(accountId); setActiveListId('ALL'); setLastAddedInfo(null); setUndoToast(null); }
     void fetchWatchlists();
 
     const handleAuthChanged = () => {
@@ -1912,13 +1916,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
   return (
     <div ref={watchlistContainerRef} className="space-y-2 overscroll-y-contain relative">
       {/* Pull to Refresh Animated Indicator for Watchlists */}
-      <PullToRefreshIndicator 
-        pullDistance={watchlistPullDist}
-        isPulling={isWatchlistPulling}
-        isRefreshing={isWatchlistRefreshing}
-        progress={watchlistPullProg}
-        label="Watchlist & Filings"
-      />
+
 
       {/* Consolidated High-Density Navigation & Filter Bar - Sticky below navbar */}
       <div className="sticky top-14 md:top-[89px] z-30 bg-white/95 dark:bg-[#1A1926]/95 backdrop-blur-md border border-slate-200/90 dark:border-[#2D283E] rounded-xl p-2 sm:p-2.5 shadow-xs space-y-2">
@@ -2183,6 +2181,16 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
           </div>
         )}
       </div>
+
+      <PullToRefreshIndicator
+        pullDistance={watchlistPullDist}
+        isPulling={isWatchlistPulling}
+        isRefreshing={isWatchlistRefreshing}
+        progress={watchlistPullProg}
+        label="Watchlist & Filings"
+      />
+
+      {watchlistsError && <p role="alert" className="text-sm text-rose-600">{watchlistsError} <button type="button" onClick={() => void fetchWatchlists()} className="underline">Retry</button></p>}
 
       {/* FILTER BOTTOM SHEET / DRAWER */}
       {isFilterDrawerOpen && (
@@ -2608,7 +2616,10 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
 
           {companyAddError && <p role="alert" className="p-3 rounded-xl text-sm text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/30">{companyAddError}</p>}
           {/* Companies List / Grid */}
-          {filteredMyCompanies.length === 0 ? (
+          {(watchlistOwner !== accountId || !watchlistsReady) ? (
+            watchlistsError ? <p role="status" className="p-4 text-sm text-slate-500">No saved watchlist is available yet.</p>
+              : <div role="status" aria-label="Loading your watchlist"><ComponentSkeleton type="section" /></div>
+          ) : filteredMyCompanies.length === 0 ? (
             <div className="rich-panel rich-empty my-4 p-6 sm:p-8 text-slate-400 space-y-4 border rounded-2xl max-w-lg">
               {myCompaniesList.length === 0 ? <RichIllustration kind="companies" /> : <Search size={28} className="mx-auto" aria-hidden="true" />}
               <div className="space-y-1">
@@ -2782,8 +2793,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
 
       {/* One responsive editor owns list selection, stock identity and priority controls. */}
       {watchlistSubTab === 'edit' && <>
-        {watchlistsError && <p role="alert" className="text-sm text-rose-600">{watchlistsError} <button type="button" onClick={() => void fetchWatchlists()} className="underline">Retry</button></p>}
-        <WatchlistEditor lists={watchlistOwner === accountId ? watchlists : []} activeId={activeListId} onSelect={setActiveListId}
+        {!watchlistsReady || watchlistOwner !== accountId ? (watchlistsError ? <p role="status">No saved watchlist is available yet.</p> : <div role="status" aria-label="Loading your watchlist"><ComponentSkeleton type="section" /></div>) : <WatchlistEditor lists={watchlistOwner === accountId ? watchlists : []} activeId={activeListId} onSelect={setActiveListId}
           creating={isCreatingList} onCreating={setIsCreatingList} listName={newListName} onListName={setNewListName} onCreate={handleAddList}
           editingId={editingListId} editName={editListName} onEditName={setEditListName} onEdit={(id, name) => {setEditingListId(id);setEditListName(name);}} onCancelEdit={() => setEditingListId(null)} onRename={handleRenameList}
           onToggle={handleToggleList} onDelete={handleDeleteList} symbol={newSymbol} onSymbol={setNewSymbol} category={newCategory} onCategory={setNewCategory} priority={newPriority} onPriority={setNewPriority}
@@ -2791,7 +2801,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
           onAdd={handleAddSymbol} onDirectAdd={handleDirectAddSymbol} filter={symbolPriorityFilter} onFilter={setSymbolPriorityFilter} query={symbolSearchQuery} onQuery={setSymbolSearchQuery}
           onCycle={handleCyclePriority} onRemove={handleRemoveSymbol} onOpen={handleOpenIntel}
           onClear={id => setConfirmModalState({isOpen:true,title:id ? 'Clear this watchlist?' : 'Clear all watchlists?',description:'Remove the stocks in this view? Your other saved research stays available.',actionType:id ? 'clear_list' : 'clear_all',listId:id})}
-          onReset={() => setConfirmModalState({isOpen:true,title:'Restore default watchlists?',description:'This replaces your lists with the default company selection.',actionType:'reset_defaults'})} />
+          onReset={() => setConfirmModalState({isOpen:true,title:'Restore default watchlists?',description:'This replaces your lists with the default company selection.',actionType:'reset_defaults'})} />}
       </>}
 
       {/* VIEW 2: DEDICATED WATCHLIST ANNOUNCEMENTS & SUMMARIES FEED */}

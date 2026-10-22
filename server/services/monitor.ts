@@ -356,6 +356,7 @@ export async function processAnnouncements(): Promise<AnnouncementPollResult> {
         try {
           await cycle.step('filing-save', () => saveAnnouncement({
             newsId, companyName, subject, details, pdfLink, scrip_cd,
+            symbol: item.symbol, source: sourceName,
             bseTime: item.News_submission_dt || item.DT_TM || item.NEWS_DT,
             priority: priority.level,
             category: priority.category,

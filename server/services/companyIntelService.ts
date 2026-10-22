@@ -1,14 +1,16 @@
-import { hasExactScripCode } from '../../src/shared/scripMatching.js';
+import { hasExactScripCode, matchesCompanyFiling } from '../../src/shared/scripMatching.js';
 import YahooFinance from 'yahoo-finance2';
 import { getStockResultsHistory, getResultsCalendarData, autoFetchDeepHistoricalResults } from './resultsCalendarService.js';
 import { classifyMaterialEvent, MaterialEvent } from './timelineClassifier.js';
-import { getRecentAnnouncements, getAnnouncementsForScrip } from '../database/announcementDao.js';
+import { getRecentAnnouncements, getAnnouncementsForScrip, getBseOperatorAnnouncements } from '../database/announcementDao.js';
 import { generateDirectSummary } from './gemini.js';
 import { parseBseDate } from '../utils/helpers.js';
 import { getAllStockEntries } from '../utils/stockResolver.js';
 
 // Known quote symbol aliases for Yahoo Finance / Indian exchanges
 const TICKER_QUOTE_ALIASES: Record<string, string[]> = {
+  'BSE': ['BSE.NS'],
+  'NSE': ['544937.BO'],
   'TATAMOTORS': ['TMCV.NS', 'TMCV.BO', 'TMPV.NS', 'TMPV.BO', '500570.BO'],
   'ZOMATO': ['ZOMATO.NS', 'ZOMATO.BO', 'ETERNAL.NS', 'ETERNAL.BO', '543320.BO'],
   'M&M': ['M&M.NS', 'M&M.BO', '500520.BO'],
@@ -88,7 +90,7 @@ export async function fetchStockQuote(symbol: string): Promise<CompanyQuoteConte
   const yf = getYF();
   // Restrict ticker lookup strictly to Indian exchanges (NSE .NS and BSE .BO)
   const aliases = TICKER_QUOTE_ALIASES[cleanSym] || [];
-  const tickerVariants = [...aliases, `${cleanSym}.NS`, `${cleanSym}.BO`];
+  const tickerVariants = ['BSE', 'NSE'].includes(cleanSym) ? aliases : [...aliases, `${cleanSym}.NS`, `${cleanSym}.BO`];
 
   for (const ticker of tickerVariants) {
     try {
@@ -145,7 +147,8 @@ export async function fetchStockQuote(symbol: string): Promise<CompanyQuoteConte
 
 export async function getCompanyIntelligence(scripCode: string, symbol: string): Promise<CompanyIntelligenceData> {
   const targetSym = (symbol || '').trim().toUpperCase();
-  const targetScrip = String(scripCode || '').trim();
+  const targetScrip = targetSym === 'BSE' ? '' : String(scripCode || '').trim();
+  const nseOnly = targetSym === 'BSE';
 
   // 1. Fetch Quote & Valuation Context
   let quote: CompanyQuoteContext | null = null;
@@ -158,8 +161,8 @@ export async function getCompanyIntelligence(scripCode: string, symbol: string):
   }
 
   // 2. Fetch Historical Results & Calendar Data
-  const rawHistory = (await getStockResultsHistory(targetScrip, targetSym)).filter(h => hasExactScripCode(h, targetScrip));
-  const calendarData = await getResultsCalendarData();
+  const rawHistory = nseOnly ? [] : (await getStockResultsHistory(targetScrip, targetSym)).filter(h => hasExactScripCode(h, targetScrip));
+  const calendarData = nseOnly ? { items: [] } : await getResultsCalendarData();
   
   // Find strictly upcoming or today event from calendarData
   const upcomingItem = (calendarData.items || []).find((c: any) => 
@@ -223,7 +226,7 @@ export async function getCompanyIntelligence(scripCode: string, symbol: string):
   let quarterlyResults = Array.from(resultMap.values()).sort((a, b) => (b.submissionTimestamp || 0) - (a.submissionTimestamp || 0));
 
   // 4. Extract Material Corporate Events Timeline & All Recent Filings
-  const recentAnnouncements = await getRecentAnnouncements(10000);
+  const recentAnnouncements = nseOnly ? await getBseOperatorAnnouncements() : await getRecentAnnouncements(10000);
   let announcementPool: any[] = recentAnnouncements;
   if (targetScrip) {
     try {
@@ -234,7 +237,7 @@ export async function getCompanyIntelligence(scripCode: string, symbol: string):
       }
     } catch (e) {}
   }
-  const rawStockAnnouncements = announcementPool.filter((ann: any) => hasExactScripCode(ann, targetScrip));
+  const rawStockAnnouncements = announcementPool.filter((ann: any) => matchesCompanyFiling(ann, targetScrip, targetSym));
 
   const filingMap = new Map<string, any>();
 
@@ -256,6 +259,7 @@ export async function getCompanyIntelligence(scripCode: string, symbol: string):
       timestamp: ts,
       scripCode: targetScrip,
       symbol: targetSym,
+      companyName: ann.companyName,
       category: ann.category,
       priority: ann.priority
     });
@@ -323,6 +327,11 @@ export async function getCompanyIntelligence(scripCode: string, symbol: string):
     }
   }
 
+  if (nseOnly) {
+    quarterlyResults = Array.from(filingMap.values()).filter(f => f.category === 'RESULTS' && /financial.*results|audited.*results/i.test(f.subject || '')).map(f => ({
+      ...f, periodOrMeeting: 'Financial results filing', declarationDate: f.bseTime, status: 'Filed',
+    }));
+  }
   const allStockFilings = Array.from(filingMap.values()).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
   const timelineEvents: MaterialEvent[] = [];

@@ -1152,13 +1152,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
   return (
     <div ref={calendarContainerRef} className="space-y-2 overscroll-y-contain relative">
       {/* Pull to Refresh Animated Indicator for Earnings & Results Calendar */}
-      <PullToRefreshIndicator 
-        pullDistance={calPullDist}
-        isPulling={isCalPulling}
-        isRefreshing={isCalRefreshing}
-        progress={calPullProg}
-        label="Results Calendar"
-      />
+
 
       {calendarError && (
         <div role="alert" className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">
@@ -1331,6 +1325,14 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
           )}
         </div>
       </div>
+
+      <PullToRefreshIndicator
+        pullDistance={calPullDist}
+        isPulling={isCalPulling}
+        isRefreshing={isCalRefreshing}
+        progress={calPullProg}
+        label="Results Calendar"
+      />
 
       {/* Filter & Operations Bottom Sheet */}
       <AnimatePresence>

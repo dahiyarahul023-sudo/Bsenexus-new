@@ -318,7 +318,7 @@
         font-display: swap;
       }
       .app-boot { min-height: 100dvh; display: flex; align-items: center; justify-content: center; gap: 12px; background: #f8fafc; color: #172033; font: 600 18px system-ui, sans-serif; }
-      .app-boot-mark { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: #047857; color: white; }
+      .app-boot-mark { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; }
       .app-boot-label { display: block; margin-top: 5px; color: #64748b; font-size: 12px; font-weight: 400; }
       @media (prefers-color-scheme: dark) { .app-boot { background: #100e19; color: #f0f3f8; } .app-boot-label { color: #b2b9c9; } }
       .critical-preloader {
@@ -418,7 +418,7 @@
   <body>
     <div id="root">
       <div class="app-boot" role="status" aria-label="Loading BSE Nexus">
-        <span class="app-boot-mark" aria-hidden="true">N</span>
+        <img class="app-boot-mark" src="/icon.svg" alt="" width="40" height="40">
         <span>BSE Nexus<span class="app-boot-label">Loading…</span></span>
       </div>
       <!--announcements-feed-->
