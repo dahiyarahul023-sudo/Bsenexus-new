@@ -1,3 +1,5 @@
+import '../styles/overnight-adr.css';
+import { CompanyAdr } from './adr/OvernightAdr';
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   X, Building2, TrendingUp, TrendingDown, Calendar, Sparkles, 
@@ -483,6 +485,7 @@ export function CompanyIntelligenceModal({
 
         {/* Modal Body Container - Scrollable area (flex-1 min-h-0 overflow-y-auto) */}
         <div className="p-4 sm:p-6 flex-1 min-h-0 overflow-y-auto space-y-4 overscroll-contain">
+          <CompanyAdr symbol={effectiveSymbol} scripCode={effectiveScrip} />
           {loadError ? (
             <div className="py-8">
               <TimeoutRetryState

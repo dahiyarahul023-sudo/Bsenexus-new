@@ -1,3 +1,4 @@
+import { adrIsRecent, adrPercent, adrSessionLabel, adrSeverity, rankAdrs, readAdrSnapshot } from '../../shared/adr';
 import type { StoryArtworkKind, StoryChapter, StoryCompany, StorySlide, StorySource, StoryTopic } from './storyTypes';
 
 export const MAX_MAJOR_STORY_AGE_MS = 18 * 60 * 60 * 1000;
@@ -161,6 +162,19 @@ export function buildStoryChapters(payload: unknown, now = Date.now(), showMarke
   const base = (id: string, chapterId: StoryTopic, title: string, source: StorySource) => ({ id, chapterId, title, source, checkedAt, subject: { kind: 'topic' as const, topic: chapterId } });
 
   const market: StorySlide[] = [];
+  const adr = readAdrSnapshot(feed.adr, now);
+  const adrItems = rankAdrs(adr?.items.filter(item => adrIsRecent(item, now)) || []).slice(0, 3);
+  if (adrItems.length && adr && !adr.refreshFailed && now - adr.checkedAt < 10 * 60000) {
+    const lead = adrItems.find(item => !item.corporateAction && adrSeverity(item.changePercent) !== 'normal');
+    market.push({ ...base(`overnight-adr-${adrItems[0].sessionDate}`, 'market-pulse', lead ? `${lead.name} moves in the US` : 'Overnight ADR snapshot',
+      { name: 'Yahoo Finance · USD · regular sessions', url: lead?.sourceUrl || adrItems[0].sourceUrl, dateLabel: 'Latest completed US sessions' }),
+      layout: 'list', summary: 'US session change; the Indian opening can differ.',
+      items: adrItems.map(item => ({ id: item.adrSymbol, label: item.name, value: adrPercent(item.changePercent),
+        detail: `${item.adrSymbol} · $${item.close.toFixed(2)} · ${adrSessionLabel(item.sessionDate)} US close${item.corporateAction ? ' · split in period' : ''}`,
+        tone: item.changePercent < 0 ? 'negative' : item.changePercent > 0 ? 'positive' : 'neutral',
+        company: { symbol: item.symbol, scripCode: item.scripCode, name: item.name } })) });
+  }
+
   const indices = record(feed.indices);
   const validIndices = [['SENSEX', record(indices.sensex)], ['NIFTY 50', record(indices.nifty)]].filter(([, item]: any) => finite(item.price) && item.price > 0 && finite(item.changePercent)) as [string, Record<string, any>][];
   if (validIndices.length) market.push({

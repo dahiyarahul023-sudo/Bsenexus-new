@@ -1,3 +1,5 @@
+import '../styles/overnight-adr.css';
+import { OvernightAdr } from './adr/OvernightAdr';
 import { HomeMarketNews } from './HomeMarketNews';
 import { ImpactRadar } from './ImpactRadar';
 import { HomeSkeleton } from './ui/PageSkeleton';
@@ -257,6 +259,9 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
         className="pt-0 pb-1"
       />
 
+      <OvernightAdr key={`adr-${identity}`} active={isActive} density={density} watched={sameIdentity ? [...watchlistSymbols] : []}
+        onOpenCompany={company => openIntelModal({ scripCode: company.scripCode, symbol: company.symbol, companyName: company.name })}
+        onOpenStory={() => { setSelectedStoryChapter('market-pulse'); setStoryModalOpen(true); }} />
       <ImpactRadar key={identity} active={isActive} identity={identity} onNavigate={onNavigate} density={density} watched={sameIdentity ? [...watchlistSymbols] : []} watchlistStatus={sameIdentity ? watchlistStatus : 'loading'} onRefreshWatchlist={() => setHomeRefresh(v => v + 1)} />
       <HomeMarketNews key={`news-${identity}`} active={isActive} identity={identity} watched={sameIdentity ? [...watchlistSymbols] : []} onNavigate={onNavigate} density={density} />
 

@@ -147,7 +147,10 @@
         "src/shared/watchlistIdentity.ts",
         "server/services/filingIndexNow.ts",
         "server/services/indexNow.ts",
-        "server/services/indexNowQueue.ts"
+        "server/services/indexNowQueue.ts",
+        "src/shared/adr.ts",
+        "server/services/adrService.ts",
+        "server/services/adrAlerts.ts"
       ],
       "tests": [
         "server/tests/bseBackfill.test.ts",
@@ -165,9 +168,11 @@
         "server/tests/watchlistIdentity.test.ts",
         "server/tests/watchlistMetadata.test.ts",
         "server/tests/indexNowIngestion.test.ts",
-        "server/tests/indexNowQueue.test.ts"
+        "server/tests/indexNowQueue.test.ts",
+        "server/tests/adr.test.ts",
+        "server/tests/adrInbox.test.ts"
       ],
-      "reason": "Poll \u2192 normalize/dedupe \u2192 persistence \u2192 feed and alert decisions \u2192 recipient-specific delivery/inbox. Global and personal recipients must remain distinct. Preset saves replace stable per-owner IDs atomically; confirmed cloud settings feed every poll. Personal channels supersede inherited defaults once presets are saved. Live polling has a CRON_SECRET bearer-protected HTTP trigger, a 60-second in-container watchdog timer, a continuous 15-second active poller, and a 15-second-stale traffic trigger. The shared process-local monitor lock skips running cycles without queueing. Request lifetime covers bounded ingestion, raw delivery/write drain and then result AI after releasing the ingestion lock; cron source failure eligibility is capped at 60 seconds. External Scheduler remains necessary for idle request-based Cloud Run; legacy cron returns 410. Numbered IST worker summaries and cron request summaries have distinct event fields. Automatic Telegram AI applies only to actual financial results with a stable security-code/period identity. Private durable claims share one valid analysis per period/language and reserve one reply per chat across exchange copies, languages and restart. Failed evidence uses a bounded newer-source retry; uncertain send acceptance never replays. Private admin delivery timings retain exchange, observed, processed and Telegram acceptance dates without recipient identity. Migration must precede runtime release. Confirmed public filing changes queue company/announcements IndexNow URLs after successful upsert; the poll collection hold is idempotently released in finally. Indexing I/O runs outside ingestion and does not change alert recipients or intake."
+      "reason": "Poll \u2192 normalize/dedupe \u2192 persistence \u2192 feed and alert decisions \u2192 recipient-specific delivery/inbox. Global and personal recipients must remain distinct. Preset saves replace stable per-owner IDs atomically; confirmed cloud settings feed every poll. Personal channels supersede inherited defaults once presets are saved. Live polling has a CRON_SECRET bearer-protected HTTP trigger, a 60-second in-container watchdog timer, a continuous 15-second active poller, and a 15-second-stale traffic trigger. The shared process-local monitor lock skips running cycles without queueing. Request lifetime covers bounded ingestion, raw delivery/write drain and then result AI after releasing the ingestion lock; cron source failure eligibility is capped at 60 seconds. External Scheduler remains necessary for idle request-based Cloud Run; legacy cron returns 410. Numbered IST worker summaries and cron request summaries have distinct event fields. Automatic Telegram AI applies only to actual financial results with a stable security-code/period identity. Private durable claims share one valid analysis per period/language and reserve one reply per chat across exchange copies, languages and restart. Failed evidence uses a bounded newer-source retry; uncertain send acceptance never replays. Private admin delivery timings retain exchange, observed, processed and Telegram acceptance dates without recipient identity. Migration must precede runtime release. Confirmed public filing changes queue company/announcements IndexNow URLs after successful upsert; the poll collection hold is idempotently released in finally. Indexing I/O runs outside ingestion and does not change alert recipients or intake. Overnight ADR adds one existing Market pulse screen and an opt-in private morning inbox digest; source dates and fetch times remain distinct, and durable insertion prevents per-session repeats."
     },
     {
       "id": "user-data",
@@ -888,15 +893,20 @@
         "src/hooks/useBodyScrollLock.ts",
         "src/api.ts",
         "server/services/storyFeedService.ts",
-        "src/shared/stockIdentity.ts"
+        "src/shared/stockIdentity.ts",
+        "src/shared/adr.ts",
+        "server/services/adrService.ts",
+        "server/services/adrAlerts.ts"
       ],
       "tests": [
         "server/tests/marketStories.test.ts",
         "server/tests/companyStoryBudget.test.ts",
         "server/tests/followupAudit.test.ts",
-        "server/tests/mcpDirectoryQuality.test.ts"
+        "server/tests/mcpDirectoryQuality.test.ts",
+        "server/tests/adr.test.ts",
+        "server/tests/adrInbox.test.ts"
       ],
-      "reason": "Public feed \u2192 validated content-led chapter adapter \u2192 Home carousel and both shared viewer entry points. Chapter selection uses stable IDs. Aggregate topics, especially FII/DII, have neutral symbols and no company CTA; only exact per-company records use the existing official-logo resolver and Company Intelligence callbacks. No sample facts on loading/error. News is bounded by sourced publication time and the existing 18-hour/session policy. Newer refreshes win cache races; stale/empty/error states remain distinct. The scoped reading canvas, proportional signed charts, native illustrations, pause clock, portal focus/inertness, scroll and reduced motion are one interaction contract. Browser/device verification and live deployment are separate from source/render/build evidence. Company news is one finite chapter: at most seven screens, two per company, complete explanations and adjacent company groups. Chapter-wide progress/count never reset per news sequence. Optional restrained sector art, clean text and unambiguous source-backed order metrics avoid a compulsory repeated illustration. Visible 46px Previous/Pause/Next controls supplement symmetric side taps, swipes and keyboard navigation; a contrast-visible 4px progress track remains present at zero elapsed time and under reduced motion. Story identity lookup reuses the same verified IndusInd code as watchlists and server resolution; story timing/navigation/style is unchanged."
+      "reason": "Public feed \u2192 validated content-led chapter adapter \u2192 Home carousel and both shared viewer entry points. Chapter selection uses stable IDs. Aggregate topics, especially FII/DII, have neutral symbols and no company CTA; only exact per-company records use the existing official-logo resolver and Company Intelligence callbacks. No sample facts on loading/error. News is bounded by sourced publication time and the existing 18-hour/session policy. Newer refreshes win cache races; stale/empty/error states remain distinct. The scoped reading canvas, proportional signed charts, native illustrations, pause clock, portal focus/inertness, scroll and reduced motion are one interaction contract. Browser/device verification and live deployment are separate from source/render/build evidence. Company news is one finite chapter: at most seven screens, two per company, complete explanations and adjacent company groups. Chapter-wide progress/count never reset per news sequence. Optional restrained sector art, clean text and unambiguous source-backed order metrics avoid a compulsory repeated illustration. Visible 46px Previous/Pause/Next controls supplement symmetric side taps, swipes and keyboard navigation; a contrast-visible 4px progress track remains present at zero elapsed time and under reduced motion. Story identity lookup reuses the same verified IndusInd code as watchlists and server resolution; story timing/navigation/style is unchanged. Overnight ADR adds one existing Market pulse screen and an opt-in private morning inbox digest; source dates and fetch times remain distinct, and durable insertion prevents per-session repeats."
     },
     {
       "id": "ai-connections",
@@ -963,6 +973,41 @@
         "server/tests/mcpToolMatrix.test.ts"
       ],
       "reason": "Website sign-in approves a public PKCE client with explicit permissions. External opaque credentials never accept website cookies or client-supplied owners/roles. Live durable entitlement and shared per-account quotas precede bounded tools; writes recheck grant and plan in a transaction with an idempotent receipt. Website watchlists use request-local revision CAS while enabled, and reads do not restore stale backups. Connection/consent responses bypass browser, CDN and SW caches. Profile/watchlist/notes refresh on return; account changes suppress late responses. Root OAuth endpoints, MCP and the four compatibility GET routes share the same authorization owner. The disabled-by-default flag is required until an approved service-only schema rollout and live client/browser checks; source tests do not certify deployment or marketplace publication. Connection discovery uses the configured Express trusted-proxy hostname while all issuer/resource URLs remain canonical. Exact browser-Origin checks cover MCP requests and preflights. Settings owns the sole visible entry; client-specific web setup distinguishes public URL copying, approved grants and completed client setup. Same-account refresh retains content and account/request changes hide obsolete responses. Approved-access cards use a minmax content column and non-wrapping action column, with permission rows and a single-column phone layout; confirmed revoke and account guards are unchanged. Every wire tool has a title and complete read/write hints; descriptions are factual. PDF analysis has an independent provenance cache, language/coverage validation and shared-quota refunds, with no heuristic success. Service-only owner predicates and request receipts survive guessed IDs; local wire/SQL tests and rolled-back staging checks are distinct from a clean deployed Claude/Inspector flow. DCR supports exact loopback hosts with port relaxation and rejects client_credentials. Public docs/privacy describe partial coverage, upstream processing and retention; reviewer fixtures/expiring UID-specific limits never grant a paid entitlement."
+    },
+    {
+      "id": "overnight-adr",
+      "label": "Overnight ADR: shared sessions and private morning alerts",
+      "files": [
+        "src/shared/adr.ts",
+        "src/services/adrClient.ts",
+        "src/components/adr/OvernightAdr.tsx",
+        "src/components/adr/AdrAlertPreference.tsx",
+        "src/styles/overnight-adr.css",
+        "server/services/adrService.ts",
+        "server/services/adrAlerts.ts",
+        "server/services/adrRuntime.ts",
+        "server/api/adr.ts",
+        "server/api/routes.ts",
+        "server/database/notificationDao.ts",
+        "server/database/watchlistDao.ts",
+        "server/database/usersDao.ts",
+        "server/services/storyFeedService.ts",
+        "src/components/story/storyBuilder.ts",
+        "src/components/HomeForYou.tsx",
+        "src/components/CompanyIntelligenceModal.tsx",
+        "src/components/AlertRulesModal.tsx",
+        "src/types.ts",
+        "server.ts"
+      ],
+      "tests": [
+        "server/tests/adr.test.ts",
+        "server/tests/adrInbox.test.ts",
+        "server/tests/announcementCadence.test.ts",
+        "server/tests/marketStories.test.ts",
+        "server/tests/companyStoryBudget.test.ts",
+        "server/tests/notificationStartup.test.ts"
+      ],
+      "reason": "One reviewed company registry and completed-US-session snapshot supplies Home, company intelligence, Market pulse and the opt-in watchlist inbox worker. Current US bars, pre/post market, bad identities/currency, stale/partial data and split/thin-volume alerts are guarded. Home uses shared Helios/density/actions and exact company navigation; Stories use one existing chapter. Morning alerts honor fresh owner/list/mute/priority checks and a durable private per-session insert-once key. The existing cron/watchdog supplies the execution lifetime without another timer, migration or public broadcast. Browser/device, live delivery, hosting and source redistribution evidence remain separate."
     }
   ]
 }

@@ -1,6 +1,7 @@
 import { matchesCompanyFiling } from './src/shared/scripMatching.js';
 import { getKeywordGuide, KEYWORD_GUIDE_CSS } from './src/content/keywordGuides.js';
 import 'dotenv/config';
+import { processAdrAlerts } from './server/services/adrRuntime.js';
 import { initServerSentry, Sentry } from "./server/sentry.js";
 initServerSentry();
 
@@ -115,6 +116,7 @@ app.get('/api/cron/poll-announcements', createAnnouncementCronHandler({
     await Promise.allSettled([
       (async () => { await refreshRadarIntake(); await refreshRadarPriceSnapshots(); })(),
       drainTelegramSummaries(),
+      processAdrAlerts().catch(() => console.warn("[ADR] Morning alert pass unavailable")),
     ]);
   },
   backoffMs: () => {
@@ -6427,6 +6429,7 @@ trackInterval(setInterval(async () => {
   // Reuse the watchdog; intake has its own 60s single-flight guard and never dispatches alerts.
   void refreshRadarIntake();
   void refreshRadarPriceSnapshots();
+  void processAdrAlerts().catch(() => console.warn("[ADR] Morning alert pass unavailable"));
   try {
     await processAnnouncements();
   } catch (err: any) {
