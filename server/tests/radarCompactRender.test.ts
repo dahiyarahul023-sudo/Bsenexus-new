@@ -15,6 +15,7 @@ function load(file:string,extra='') {
   if(p.endsWith('/radarMovement'))return movement;
   if(p.endsWith('/impactRadar'))return contract;
   if(p==='./RadarMovementPanel')return {RadarMovementPanel:()=>null};
+  if(p==='./RadarResearchPanel')return load('src/components/RadarResearchPanel.tsx');
   if(p==='./ui/ActionButton')return req(p);
   if(p.startsWith('.'))return {};
   return req(p);

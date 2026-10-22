@@ -172,3 +172,15 @@
 .impact-radar-company-reports button span { display:block; margin-top:3px; font-size:11px; color:#64748b; }
 .dark .impact-radar-company-reports { background:#1a1926; border-color:#38324e; color:#f1f5f9; }
 .dark .impact-radar-company-reports button { border-color:#38324e; }
+.impact-radar-history-search{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;margin:18px 0}
+.impact-radar-history-search label{display:grid;gap:6px;min-width:0;font-size:12px;flex:1 1 145px}
+.impact-radar-history-search label:first-child{flex:2 1 240px}
+.impact-radar-history-search input{width:100%;min-height:44px;min-width:0;border:1px solid var(--rich-border,#dce4e9);border-radius:12px;padding:10px 12px;background:var(--rich-soft,#f4f7f8);color:inherit;font:inherit}
+.impact-radar-history-search input:focus-visible{outline:2px solid #10b981;outline-offset:2px}
+.impact-radar-history-list{display:grid;gap:12px;margin:16px 0}
+.impact-radar-history-list article{border:1px solid var(--rich-border,#dce4e9);background:var(--rich-surface,#fff);border-radius:16px;padding:16px;min-width:0;overflow-wrap:anywhere}
+.impact-radar-history-list article>button{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;text-align:left;width:100%;min-height:44px;background:none;border:0;color:inherit;font:inherit;cursor:pointer}
+.impact-radar-history-list button svg{flex-shrink:0}.impact-radar-history-list p,.impact-radar-history-list article>span{font-size:12px;color:var(--rich-muted,#586578);margin-top:8px}
+.impact-radar-research{margin:18px 0;border:1px solid var(--rich-border,#dce4e9);border-radius:14px;padding:14px}
+.impact-radar-research summary{cursor:pointer;min-height:32px;font-size:13px;font-weight:600}
+.impact-radar-research-company{min-width:0;margin-top:14px}.impact-radar-research table{width:100%;border-collapse:collapse;text-align:left;font-size:12px;table-layout:fixed}.impact-radar-research th,.impact-radar-research td{padding:10px 4px;border-bottom:1px solid rgba(100,116,139,.16);overflow-wrap:anywhere}.impact-radar-research th:first-child{width:19%}.impact-radar-research th:nth-child(2){width:31%}

@@ -1,9 +1,13 @@
 import express from 'express';
 import { requireAuth, requireAdmin, apiRateLimiter } from '../security/auth.js';
-import { listRadarEvents, listRadarCompanyReports, getRadarEvent, listRadarUpdates, firstRadarUpdate, getRadarFollowing, setRadarFollowing, publishRadarRecords, getRadarCategories } from '../database/impactRadarDao.js';
+import { listRadarEvents, listRadarCompanyReports, getRadarEvent, listRadarUpdates, listRadarTimelinePage, firstRadarUpdate, getRadarFollowing, setRadarFollowing, publishRadarRecords, getRadarCategories } from '../database/impactRadarDao.js';
+import { parseRadarHistoryQuery, searchRadarHistory } from '../database/radarHistoryDao.js';
+import { archiveRadarCase } from '../services/radarArchiveWorker.js';
+import { readRadarResearch, refreshRadarResearchCase } from '../services/radarResearchService.js';
+import { getSupabase } from '../database/supabase.js';
 import { getRadarMovement } from '../services/radarMovementService.js';
 import { durableRadarIntakeStatus } from '../services/impactRadarService.js';
-import { RADAR_ID, isRadarEvent, isRadarEventInScope, isRadarUpdate, publicRadarEvent } from '../../src/shared/impactRadar.js';
+import { RADAR_ID, isRadarEvent, isRadarEventInScope, isRadarUpdate, publicRadarEvent, validRadarDate, radarUrl } from '../../src/shared/impactRadar.js';
 
 export const impactRadarRouter = express.Router();
 impactRadarRouter.use((_req, res, next) => { res.setHeader('Cache-Control', 'private, no-store'); next(); });
@@ -16,6 +20,36 @@ impactRadarRouter.get('/', apiRateLimiter, async (_req, res) => {
 });
 impactRadarRouter.get('/categories', apiRateLimiter, async (_req, res) => {
   try { res.json({ success: true, categories: await getRadarCategories() }); } catch { unavailable(res); }
+});
+impactRadarRouter.get('/history', apiRateLimiter, async (req,res)=>{
+  const query=parseRadarHistoryQuery(req.query);
+  if(!query)return res.status(400).json({success:false,error:'Use a search up to 120 characters, valid dates and a valid page cursor.'});
+  try {res.json({success:true,...await searchRadarHistory(query),coverage:'Saved source-backed records only; this is not a complete two-year market dataset.'});}catch{unavailable(res);}
+});
+impactRadarRouter.get('/admin/storage',requireAuth,requireAdmin,apiRateLimiter,async(_req,res)=>{
+  try{const r=await getSupabase().rpc('radar_storage_usage').abortSignal(AbortSignal.timeout(4000));if(r.error)throw r.error;res.json({success:true,usage:r.data,retention:'no-expiry',hotClosedMonths:24,independentBackupConfigured:(await import('../services/radarDriveBackup.js')).radarDriveConfigured()});}catch{unavailable(res);}
+});
+impactRadarRouter.post('/admin/archive/:id',requireAuth,requireAdmin,apiRateLimiter,async(req,res)=>{
+  if(!RADAR_ID.test(String(req.params.id)))return res.status(400).json({success:false,error:'Invalid event.'});
+  try{res.json({success:true,...await archiveRadarCase(String(req.params.id),false)});}catch{unavailable(res);}
+});
+// Explicit reviewed exchange calendar evidence. A failed daily report must never imply a closure.
+impactRadarRouter.post('/admin/research/calendar',requireAuth,requireAdmin,apiRateLimiter,async(req,res)=>{
+  const days=req.body?.days;
+  if(!Array.isArray(days)||!days.length||days.length>200||days.some(d=>!validRadarDate(d?.date)||!['NSE','BSE'].includes(d.exchange)||typeof d.open!=='boolean'||!radarUrl(d.sourceUrl)||!/(^|\.)(nseindia|bseindia)\.com$/.test(new URL(d.sourceUrl).hostname)))return res.status(400).json({success:false,error:'Supply at most 200 source-reviewed official exchange calendar dates.'});
+  try {
+    const rows=days.map(d=>({session_date:d.date,exchange:d.exchange,is_open:d.open,source_url:d.sourceUrl}));
+    const r=await getSupabase().from('impact_market_days').upsert(rows,{onConflict:'exchange,session_date',ignoreDuplicates:true}).abortSignal(AbortSignal.timeout(6000));
+    if(r.error)throw r.error;res.json({success:true,submitted:rows.length});
+  }catch{unavailable(res);}
+});
+impactRadarRouter.post('/admin/research/:id',requireAuth,requireAdmin,apiRateLimiter,async(req,res)=>{
+  const id=String(req.params.id);if(!RADAR_ID.test(id))return res.status(400).json({success:false,error:'Invalid event.'});
+  try {
+    const row=await getSupabase().from('impact_radar_events').select('data,first_public_at').eq('id',id).abortSignal(AbortSignal.timeout(4000)).maybeSingle();
+    if(row.error)throw row.error;if(!isRadarEvent(row.data?.data))return res.status(404).json({success:false,error:'Event not found.'});
+    res.json({success:true,research:await refreshRadarResearchCase(row.data.data,row.data.first_public_at,req.body?.capture===true)});
+  }catch{unavailable(res);}
 });
 impactRadarRouter.get('/following', requireAuth, async (req, res) => {
   try { res.json({ success: true, ...await getRadarFollowing((req as any).user.uid) }); }
@@ -55,12 +89,21 @@ impactRadarRouter.get('/:id/movement', apiRateLimiter, async (req, res) => {
     res.json({ success: true, id: event.id, movement: await getRadarMovement(anchor) });
   } catch { unavailable(res); }
 });
+impactRadarRouter.get('/:id/research',apiRateLimiter,async(req,res)=>{
+  const id=String(req.params.id);if(!RADAR_ID.test(id))return res.status(400).json({success:false,error:'Invalid event.'});
+  try {if(!await getRadarEvent(id))return res.status(404).json({success:false,error:'Event not found.'});res.json({success:true,research:await readRadarResearch(id)});}catch{unavailable(res);}
+});
+impactRadarRouter.get('/:id/timeline',apiRateLimiter,async(req,res)=>{
+  const id=String(req.params.id),query=parseRadarHistoryQuery({cursor:req.query.cursor});
+  if(!RADAR_ID.test(id)||!query)return res.status(400).json({success:false,error:'Invalid event or cursor.'});
+  try {if(!await getRadarEvent(id))return res.status(404).json({success:false,error:'Event not found.'});res.json({success:true,...await listRadarTimelinePage(id,query.before)});}catch{unavailable(res);}
+});
 impactRadarRouter.get('/:id', apiRateLimiter, async (req, res) => {
   if (!RADAR_ID.test(String(req.params.id))) return res.status(400).json({ success: false, error: 'Invalid event.' });
   try {
     const event = await getRadarEvent(String(req.params.id));
     if (!event) return res.status(404).json({ success: false, error: 'Event not found.' });
-    const [updates, firstUpdate, related] = await Promise.all([listRadarUpdates(event.id), firstRadarUpdate(event.id), listRadarCompanyReports(event)]);
-    res.json({ success: true, event, updates, firstUpdate, related, timelineLimit: 50 });
+    const [timeline, firstUpdate, related] = await Promise.all([listRadarTimelinePage(event.id,null), firstRadarUpdate(event.id), listRadarCompanyReports(event)]);
+    res.json({ success: true, event, updates:timeline.items, nextTimelineCursor:timeline.nextCursor, firstUpdate, related, timelineLimit: 50 });
   } catch { unavailable(res); }
 });

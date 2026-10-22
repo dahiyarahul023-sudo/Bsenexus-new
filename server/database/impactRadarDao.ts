@@ -2,6 +2,7 @@ import { getSupabase } from './supabase.js';
 import { isRadarEvent, isRadarEventInScope, isRadarUpdate, isRadarCategoryOption, publicRadarEvent, publicRadarUpdate, type RadarCategoryOption, type RadarEvent, type RadarUpdate } from '../../src/shared/impactRadar.js';
 import { isRadarIntakeRule, type RadarIntakeRule } from '../services/radarIntakePolicy.js';
 import { resolveRadarCompany, radarCompanyFromFiling } from '../services/radarCompanyIdentity.js';
+import { readArchivedRadarUpdates } from '../services/radarArchive.js';
 
 export class RadarStorageError extends Error { constructor() { super('Impact Radar storage is unavailable. Please retry.'); } }
 const checked = <T>(result: { data: T; error: unknown }): T => { if (result.error) throw new RadarStorageError(); return result.data; };
@@ -84,22 +85,51 @@ export async function listRadarCompanyReports(event: RadarEvent): Promise<RadarE
 }
 export async function listRadarUpdates(id: string): Promise<RadarUpdate[]> {
   try {
-    const rows = checked(await getSupabase().from('impact_radar_updates').select('data').eq('event_id', id).order('published_at', { ascending: false }).limit(50).abortSignal(AbortSignal.timeout(6000)));
-    return (rows || []).map(r => r.data).filter(isRadarUpdate).map(publicRadarUpdate);
+    const [rows,archived] = await Promise.all([
+      getSupabase().from('impact_radar_updates').select('data').eq('event_id', id).order('published_at', { ascending: false }).limit(50).abortSignal(AbortSignal.timeout(6000)).then(checked),
+      readArchivedRadarUpdates(id),
+    ]);
+    return [...new Map([...archived,...(rows || []).map(r => r.data).filter(isRadarUpdate)].map(u=>[u.id,publicRadarUpdate(u)])).values()]
+      .sort((a,b)=>Date.parse(b.publishedAt)-Date.parse(a.publishedAt)||b.id.localeCompare(a.id)).slice(0,50);
   } catch { throw new RadarStorageError(); }
+}
+export async function listRadarTimelinePage(id:string,before:{time:string;id:string}|null) {
+  let query=getSupabase().from('impact_radar_updates').select('data').eq('event_id',id).order('published_at',{ascending:false}).order('id',{ascending:false}).limit(51);
+  if(before)query=query.or(`published_at.lt.${before.time},and(published_at.eq.${before.time},id.lt.${before.id})`);
+  const [hot,archive]=await Promise.all([query.abortSignal(AbortSignal.timeout(6000)),readArchivedRadarUpdates(id)]);
+  if(hot.error)throw new RadarStorageError();
+  const eligible=(u:RadarUpdate)=>!before||Date.parse(u.publishedAt)<Date.parse(before.time)||(Date.parse(u.publishedAt)===Date.parse(before.time)&&u.id<before.id);
+  const all=[...new Map([...archive,...(hot.data||[]).map(r=>r.data).filter(isRadarUpdate)].filter(eligible).map(u=>[u.id,publicRadarUpdate(u)])).values()]
+    .sort((a,b)=>Date.parse(b.publishedAt)-Date.parse(a.publishedAt)||(a.id<b.id?1:a.id>b.id?-1:0));
+  const items=all.slice(0,50),last=items.at(-1);
+  return {items,nextCursor:all.length>50&&last?Buffer.from(JSON.stringify([last.publishedAt,last.id])).toString('base64url'):null};
 }
 export async function firstRadarUpdate(id: string): Promise<RadarUpdate | null> {
   try {
-    const rows = checked(await getSupabase().from('impact_radar_updates').select('data').eq('event_id', id).order('published_at', { ascending: true }).limit(1).abortSignal(AbortSignal.timeout(6000)));
-    return isRadarUpdate(rows?.[0]?.data) ? publicRadarUpdate(rows[0].data) : null;
+    const [rows,archives] = await Promise.all([
+      getSupabase().from('impact_radar_updates').select('data').eq('event_id', id).order('published_at', { ascending: true }).limit(1).abortSignal(AbortSignal.timeout(6000)).then(checked),
+      getSupabase().from('impact_radar_archives').select('first_update').eq('event_id',id).not('compacted_at','is',null).limit(2).abortSignal(AbortSignal.timeout(3000)).then(checked),
+    ]);
+    return [...(rows||[]).map(r=>r.data),...(archives||[]).map(r=>r.first_update)].filter(isRadarUpdate).sort((a,b)=>Date.parse(a.publishedAt)-Date.parse(b.publishedAt))[0] || null;
   } catch { throw new RadarStorageError(); }
 }
 export async function publishRadarRecords(records: RadarRecord[]): Promise<void> {
   if (!records.length) return;
   const categories = new Set((await getRadarCategories()).map(c => c.id));
   if (records.length > 60 || records.some(r => !isRadarEvent(r.event, categories) || !isRadarEventInScope(r.event) || !isRadarUpdate(r.update) || r.update.eventId !== r.event.id)) throw new Error('Invalid radar records');
-  const safeRecords = records.map(r => ({ event: publicRadarEvent(r.event), update: publicRadarUpdate(r.update), origin: r.origin === 'intake' ? 'intake' : 'editorial' }));
-  try { checked(await getSupabase().rpc('publish_impact_radar_records', { p_records: safeRecords }).abortSignal(AbortSignal.timeout(6000))); }
+  try {
+    // Identity-policy upgrades must not duplicate known evidence or break existing follow IDs.
+    const keys=checked(await getSupabase().from('impact_radar_update_keys').select('id,event_id').in('id',records.map(r=>r.update.id)).limit(60).abortSignal(AbortSignal.timeout(4000))) || [];
+    const mappings=new Map<string,Set<string>>();
+    for(const r of records){const prior=keys.find(k=>k.id===r.update.id);if(prior){const ids=mappings.get(r.event.id)||new Set<string>();ids.add(prior.event_id);mappings.set(r.event.id,ids);}}
+    const safeRecords = records.map(r => {
+      const candidates=mappings.get(r.event.id),known=keys.find(k=>k.id===r.update.id);
+      // Conflicting legacy groups are not silently merged and do not poison unrelated intake.
+      const id=known?.event_id || (candidates?.size===1?candidates.values().next().value:null) || r.event.id;
+      return {event:publicRadarEvent({...r.event,id}),update:publicRadarUpdate({...r.update,eventId:id}),origin:r.origin==='intake'?'intake':'editorial'};
+    });
+    checked(await getSupabase().rpc('publish_impact_radar_records', { p_records: safeRecords }).abortSignal(AbortSignal.timeout(6000)));
+  }
   catch { throw new RadarStorageError(); }
 }
 export async function getRadarFollowing(uid: string): Promise<{ ids: string[]; events: RadarEvent[] }> {

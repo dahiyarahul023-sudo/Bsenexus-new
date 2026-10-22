@@ -7,12 +7,14 @@ process.env.SUPABASE_URL = 'https://radar-test.invalid';
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-only-service-role';
 const originalFetch = globalThis.fetch;
 let fail = false, externalCalls = 0, firstEvidence: any = null, relatedEvents: any[] | null = null, calls: { url: string; method: string; body: any }[] = [];
+let knownUpdateKeys:{id:string;event_id:string}[]=[];
 const event = { id: 'matter-1', title: 'Supreme Court hearing listed', companies: [{ symbol: 'TCS', name: 'Tata Consultancy Services', scripCode: '532540' }], category: 'liability', authority: 'Supreme Court', status: 'scheduled', scheduledDate: '2026-10-17', scheduleConfirmed: true, information: 'The company reported a listed hearing.', nextTrigger: null, source: { name: 'BSE', url: 'https://www.bseindia.com/report.pdf', kind: 'disclosure' }, publishedAt: '2026-10-15T10:00:00Z', updatedAt: '2026-10-15T10:00:00Z' };
 globalThis.fetch = (async (input: any, init: any) => {
   const url = String(input?.url || input), method = init?.method || 'GET';
   if (!url.startsWith('https://radar-test.invalid')) { externalCalls++; return new Response('<rss><channel></channel></rss>', { status: 200 }); }
   const body = init?.body ? JSON.parse(String(init.body)) : null;
   calls.push({ url, method, body });
+  if(new URL(url).pathname.endsWith('/impact_radar_update_keys'))return Response.json(knownUpdateKeys);
   const data = new URL(url).pathname.endsWith('/impact_categories') ? Object.entries((await import('../../src/shared/impactRadar.js')).RADAR_CATEGORIES).map(([id, label], i) => ({ id, label, sort_order: (i+1)*10, active: true })) : fail ? { message: 'unavailable' } : new URL(url).pathname.endsWith('/impact_radar_updates') && firstEvidence ? [{data:firstEvidence}] : new URL(url).pathname.endsWith('/impact_radar_events') ? new URL(url).searchParams.get('id')?.startsWith('eq.') ? { data: event } : (relatedEvents || [event]).map(data=>({data})) : [];
   return new Response(JSON.stringify(data), { status: fail ? 503 : 200, headers: { 'Content-Type': 'application/json' } });
 }) as typeof fetch;
@@ -57,9 +59,9 @@ test('discovery excludes generic compliance, forecasts, unknown times and uniden
   assert.equal(radarRecordFromSource({ ...input, company: { ...input.company, scripCode: '' } }), null);
 });
 test('explicit case references link source updates without merging unrelated cases or companies', () => {
-  const input = { sourceId: 'source-a', title: 'Supreme Court appeal no 123/2026 hearing listed', company: event.companies[0], source: event.source as any, publishedAt: event.publishedAt };
+  const input = { sourceId: 'source-a', title: 'Supreme Court of India civil appeal no 123/2026 hearing listed', company: event.companies[0], source: event.source as any, publishedAt: event.publishedAt };
   const a = radarRecordFromSource(input)!;
-  const b = radarRecordFromSource({ ...input, sourceId: 'source-b', title: 'Supreme Court appeal no 123/2026 hearing deferred', source: { ...input.source, url: 'https://www.bseindia.com/next-report.pdf' } })!;
+  const b = radarRecordFromSource({ ...input, sourceId: 'source-b', title: 'Supreme Court of India civil appeal no 123/2026 hearing deferred', source: { ...input.source, url: 'https://www.bseindia.com/next-report.pdf' } })!;
   assert.equal(a.event.id, b.event.id); assert.notEqual(a.update.id, b.update.id);
   assert.notEqual(a.event.id, radarRecordFromSource({ ...input, title: 'Supreme Court appeal no 124/2026 hearing listed' })!.event.id);
   assert.notEqual(a.event.id, radarRecordFromSource({ ...input, company: { ...input.company, symbol: 'INFY', scripCode: '500209' } })!.event.id);
@@ -124,4 +126,24 @@ test('a past report exposes newer company reports beyond seven days and independ
  event.publishedAt='2026-09-01T04:00:00Z';event.updatedAt=event.publishedAt;relatedEvents=[latest,event];
  try{const r=await originalFetch(url+'/matter-1');assert.equal(r.status,200);const d=await r.json();assert.deepEqual(d.related.map((e:any)=>e.id),['latest-report']);assert.equal(d.event.publishedAt,event.publishedAt);}
  finally{Object.assign(event,original);relatedEvents=null;}
+});
+test('history validation runs before storage and archive/calendar/research mutations stay admin-only',async()=>{
+ for(const query of ['?from=2026-02-30','?cursor=bad','?q='+encodeURIComponent('x'.repeat(121))])assert.equal((await originalFetch(url+'/history'+query)).status,400);
+ for(const path of ['/admin/archive/matter-1','/admin/research/calendar','/admin/research/matter-1']) {
+  assert.equal((await originalFetch(url+path,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).status,401);
+  assert.equal((await originalFetch(url+path,{method:'POST',headers:{authorization:'Bearer alice','Content-Type':'application/json'},body:'{}'})).status,403);
+ }
+ assert.equal((await originalFetch(url+'/admin/research/calendar',{method:'POST',headers:{authorization:'Bearer admin','Content-Type':'application/json'},body:JSON.stringify({days:[{date:'2026-10-22',exchange:'NSE',open:false,sourceUrl:'https://unverified.example/holiday'}]})})).status,400);
+});
+test('identity-policy upgrades reuse the existing source case instead of duplicating evidence or losing follow IDs',async()=>{
+ const master=(await import('../utils/stockResolver.js')).resolveStockDetailsStrict('532540')!;
+ const candidate={...event,id:'new-v2-case',companies:[{symbol:master.symbol,name:master.name,scripCode:master.scripCode}]};
+ const update={id:'known-v2-evidence',eventId:candidate.id,title:event.title,information:event.information,source:event.source,publishedAt:event.publishedAt};
+ knownUpdateKeys=[{id:update.id,event_id:'original-followed-case'}];
+ try {
+  const r=await originalFetch(url+'/admin/publish',{method:'POST',headers:{authorization:'Bearer admin','Content-Type':'application/json'},body:JSON.stringify({event:candidate,update})});
+  assert.equal(r.status,200);
+  const record=[...calls].reverse().find(c=>c.url.endsWith('/publish_impact_radar_records'))!.body.p_records[0];
+  assert.equal(record.event.id,'original-followed-case');assert.equal(record.update.eventId,'original-followed-case');assert.equal(record.update.id,update.id);
+ }finally{knownUpdateKeys=[];}
 });

@@ -1,4 +1,5 @@
 import { listRadarEvents } from '../database/impactRadarDao.js';
+import { saveRadarMarketDay } from './radarResearchService.js';
 import { radarDay, type RadarEvent } from '../../src/shared/impactRadar.js';
 import type { RadarSessionMove } from '../../src/shared/radarMovement.js';
 import { loadRadarPriceDay, radarPriceAliases, radarPriceDates, radarPriceStore, radarSnapshotAliases, type RadarPriceStore } from './radarMovementService.js';
@@ -38,6 +39,11 @@ export function createRadarPriceSync(overrides: Partial<SyncDependencies> = {}) 
           let timeout: ReturnType<typeof setTimeout>;
           const rows=await Promise.race([deps.day(companies,day,saved),new Promise<null>(resolve=>{timeout=setTimeout(()=>resolve(null),Math.max(1,deadline-Date.now()));})]).finally(()=>clearTimeout(timeout!));
           if(!rows){sourceMisses+=companies.length;return;}
+          // A validated official security row proves an open exchange session, never a holiday.
+          if(deps.store===radarPriceStore) {
+            const exchanges=new Map([...rows.values()].map(row=>[row.sourceUrl.includes('nsearchives.nseindia.com')?'NSE' as const:'BSE' as const,row]));
+            for(const [exchange,row] of exchanges)try {await saveRadarMarketDay(day,exchange,row.sourceUrl);}catch{writeFailures++;}
+          }
           sourceMisses+=companies.length-rows.size;
           const fresh=radarSnapshotAliases(companies,[...rows.values()]).filter(s=>!saved.some(r=>r.symbol===s.symbol&&r.date===s.date));
           for(let i=0;i<fresh.length;i+=30){

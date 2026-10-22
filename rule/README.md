@@ -1,5 +1,7 @@
 # Start here: safe frontend and backend changes
 
+Radar history changes must follow [../docs/RADAR_HISTORY.md](../docs/RADAR_HISTORY.md): permanent case/update identities, conservative proceeding association, first-recorded-public timestamps and cursor paging are separate from the bounded live feed. Calendar gaps and unreviewed prices cannot become zero-reaction claims. Private gzip evidence may replace hot update bodies only after two full verified readbacks and a transactional age/version/digest check. Missing independent backup credentials leave originals intact. Apply the additive migration before publishing server code; a PR or local PGlite test is not a staged/live migration.
+
 Read `AGENTS.md`, this file and the relevant entries in `domains.json` before editing. Frontend work starts with `FRONTEND_RULES.md`, `FRONTEND_MAP.md` and `FRONTEND_STRATEGY.md`. Backend work starts with `BACKEND_RULES.md`. Contract changes need both. The repository source is evidence; old reports and generated maps are navigation aids. When they disagree, inspect the implementation and update the explanation. Never silently infer production state from repository files.
 
 For the shared evidence ledger and plain-English handoff, read `WORKFLOW.md`. The current assignment is frontend strategy and rules; the previous backend-only restriction was a misunderstanding.

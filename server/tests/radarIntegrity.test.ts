@@ -8,7 +8,7 @@ import { ImpactRadarFeed } from '../../src/utils/impactRadarFeed.js';
 const now = Date.parse('2026-10-17T05:00:00Z');
 const company = { symbol: 'PNCINFRA', name: 'PNC Infratech Ltd', scripCode: '539150' };
 const source = { name: 'BSE', url: 'https://www.bseindia.com/report.pdf', kind: 'disclosure' as const };
-const input = { title: 'Supreme Court appeal no 123/2026 hearing listed', company, source, sourceId: 'one', publishedAt: '2026-10-13T14:30:19Z' };
+const input = { title: 'Supreme Court of India civil appeal no 123/2026 hearing listed', company, source, sourceId: 'one', publishedAt: '2026-10-13T14:30:19Z' };
 const event = radarRecordFromSource(input, now)!.event;
 const response = (data: any, status = 200) => new Response(JSON.stringify(data), { status });
 test('F1: plural banks and ambiguous company/symbol headlines never select a stock; duplicate master aliases do not cause ambiguity', () => {

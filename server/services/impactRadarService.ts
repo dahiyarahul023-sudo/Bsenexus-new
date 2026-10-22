@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { radarCaseIdentity, radarSourceIdentity } from './radarCaseIdentity.js';
 import { readRadarSourceCheck, saveRadarSourceCheck, radarSourceStatus } from '../database/radarSourceDao.js';
 import { PNC_REVIEW } from './radarReviewedEvidence.js';
 import { refreshRadarCompanyIdentity, radarCompanyFromFiling } from './radarCompanyIdentity.js';
@@ -13,11 +14,6 @@ import { isNeutralRadarText, isRadarEvent, radarUrl, radarDay, validRadarDate, v
 
 const digest = (s: string) => createHash('sha256').update(s).digest('hex').slice(0, 32);
 const text = (s: unknown) => typeof s === 'string' ? s.replace(/<[^>]*>/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim() : '';
-function sourceIdentity(source: RadarSource): string {
-  const url = new URL(source.url); url.hash = '';
-  for (const key of [...url.searchParams.keys()]) if (/^utm_|^fbclid$|^gclid$/i.test(key)) url.searchParams.delete(key);
-  return url.href;
-}
 const MATERIAL = /\b(?:order|orders|hearing|judgment|judgement|petition|appeal|litigation|tribunal|penalty|demand|restriction|restricted|ban|debarment|stays?|quashes|relief|licen[cs]e|investigat\w*|indictment|insolvency|injunction|blocks?|rejects?|prohibits?|revokes?|market coupling|show.?cause|warning letter|settlement)\b/i;
 export function classifyRadarEvent(title: string, rules: readonly RadarIntakeRule[] = DEFAULT_RADAR_INTAKE_RULES): { category: RadarCategory; authority: string } | null {
   if (isRoutineRadarTransaction(title)) return null;
@@ -68,14 +64,8 @@ export function radarRecordFromSource(input: {
   const ts = Date.parse(input.publishedAt);
   if (!classified || !summary || !isNeutralRadarText(title, 200) || !isNeutralRadarText(summary, 200) || !radarUrl(input.source.url) || !validRadarTime(input.publishedAt) || ts > now || ts < now - 7 * 86_400_000) return null;
   if (!/^\d{6}$/.test(input.company.scripCode)) return null;
-  // Group only an explicit case reference within the same company and authority.
-  // Missing references remain separate source reports rather than guessing a shared case.
-  const proceeding = title.match(/\b(case|appeal|petition)\s+(?:number\b|no\.?(?=\s|\d)|#)\s*([a-z0-9][a-z0-9./-]{1,40}(?:\s+of\s+20\d{2})?)/i);
-  const reference = proceeding?.[2].toUpperCase().replace(/\s+/g, '');
-  const unambiguousReference = reference && /(?:^|[/.\-]|OF)20\d{2}(?:$|[/.\-])/.test(reference) &&
-    ['Supreme Court', 'SEBI', 'RBI', 'APTEL', 'CERC', 'NCLAT'].includes(classified.authority);
-  const sourceKey = sourceIdentity(input.source);
-  const id = `radar_${digest(unambiguousReference ? `${input.company.scripCode}:${classified.authority}:${proceeding![1].toLowerCase()}:${reference}` : `${input.company.scripCode}:${sourceKey}`)}`;
+  const sourceKey = radarSourceIdentity(input.source);
+  const { id } = radarCaseIdentity(input.company.scripCode, classified.authority, title, input.source, input.publishedAt);
   const reported = input.source.kind === 'news' || input.source.kind === 'report';
   const attributed = reported ? `${input.source.name} reported: ${text(input.evidence)} Official confirmation is not recorded in this source.` : text(input.evidence);
   const information = input.evidence && isNeutralRadarText(attributed, 1200) ? attributed : reported

@@ -26,6 +26,8 @@ import { initWatchlists } from "./server/database/watchlistDao.js";
 import { updateTelegramHealth } from "./server/services/telegram.js";
 import { refreshRadarIntake } from "./server/services/impactRadarService.js";
 import { refreshRadarPriceSnapshots } from "./server/services/radarPriceSync.js";
+import { refreshRadarResearch } from "./server/services/radarResearchService.js";
+import { refreshRadarArchives } from "./server/services/radarArchiveWorker.js";
 import { processAutomatedNewsAlerts } from "./server/services/stockNewsService.js";
 import { addLog } from "./server/database/logDao.js";
 import { getPollingIntervalMs, parseBseDate } from "./server/utils/helpers.js";
@@ -113,7 +115,7 @@ app.get('/api/cron/poll-announcements', createAnnouncementCronHandler({
     // Raw delivery is complete; result AI keeps request CPU after releasing
     // ingestion, so the independent fast poller can continue handling filings.
     await Promise.allSettled([
-      (async () => { await refreshRadarIntake(); await refreshRadarPriceSnapshots(); })(),
+      (async () => { await refreshRadarIntake(); await refreshRadarPriceSnapshots(); await refreshRadarResearch(); await refreshRadarArchives(); })(),
       drainTelegramSummaries(),
     ]);
   },
@@ -6427,6 +6429,8 @@ trackInterval(setInterval(async () => {
   // Reuse the watchdog; intake has its own 60s single-flight guard and never dispatches alerts.
   void refreshRadarIntake();
   void refreshRadarPriceSnapshots();
+  void refreshRadarResearch();
+  void refreshRadarArchives();
   try {
     await processAnnouncements();
   } catch (err: any) {
@@ -6485,6 +6489,8 @@ trackInterval(setInterval(() => {
 setTimeout(() => {
   void refreshRadarIntake();
   void refreshRadarPriceSnapshots();
+  void refreshRadarResearch();
+  void refreshRadarArchives();
   processAutomatedNewsAlerts().catch(e => console.warn("[StockNewsWorker] Initial pass notice:", e.message));
 }, 8000);
 trackInterval(setInterval(() => {

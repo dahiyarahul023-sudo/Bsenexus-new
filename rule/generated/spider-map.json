@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "0a05cf3e1133537b7468abaae429f1387dc3683242eab7763f86a390834ba4e3",
+  "sourceDigest": "482d07c623bf067d38d4718e2f5920a1b16689ab9b1600cfaf40243c384af025",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -204,7 +204,7 @@
     },
     {
       "path": "server.ts",
-      "sha256": "5c5926d2bb884b2a54f80aaf2c36ad861e51c33ecd4d00d4a628d2b908cbec51",
+      "sha256": "8f2588407805abf8b2b0b5e39c52f66f9496961cead2bfcd00b0726adc037e60",
       "importedBy": [
         "server/tests/routeResolution.test.ts"
       ]
@@ -349,7 +349,7 @@
     },
     {
       "path": "server/api/impactRadar.ts",
-      "sha256": "ff1751dd21cb614de9d1f9dffc1077818e7dacc239db4fe648b9e7b2e6fbf84c",
+      "sha256": "f4c7eb4bf94392a784d81dfded6dc81fa2cdd50bba80a49498ee68b27762f1e6",
       "importedBy": [
         "server/api/routes.ts",
         "server/tests/impactRadarApi.test.ts"
@@ -494,9 +494,10 @@
     },
     {
       "path": "server/database/impactRadarDao.ts",
-      "sha256": "a6d017258766fd4945777d66b65360286ab708d5d46d061df0c4c32377032e31",
+      "sha256": "935da7d4cf3b1ed77024e7176a97f9351bd6354962e889834fa40beaaa643cb8",
       "importedBy": [
         "server/api/impactRadar.ts",
+        "server/database/radarHistoryDao.ts",
         "server/services/impactRadarService.ts",
         "server/services/radarPriceSync.ts",
         "server/tests/radarCoverage.test.ts",
@@ -623,10 +624,19 @@
       ]
     },
     {
+      "path": "server/database/radarHistoryDao.ts",
+      "sha256": "a8d0fedb32594e63a4de56f4f03edd293e1e7991c3c7e52e01806074ed2acb9d",
+      "importedBy": [
+        "server/api/impactRadar.ts",
+        "server/tests/radarHistoryArchive.test.ts"
+      ]
+    },
+    {
       "path": "server/database/radarPriceDao.ts",
       "sha256": "562640723e773aff886335e25a63ed2016619326084542f6ac436c7f8cf4cca7",
       "importedBy": [
         "server/services/radarMovementService.ts",
+        "server/services/radarResearchService.ts",
         "server/tests/radarPriceStorage.test.ts"
       ]
     },
@@ -667,6 +677,7 @@
       "importedBy": [
         "scripts/provision-ai-reviewer.ts",
         "scripts/verify-oauth-routing.mjs",
+        "server/api/impactRadar.ts",
         "server/api/referrals.ts",
         "server/database/aiConnectionsDao.ts",
         "server/database/aiQuotaDao.ts",
@@ -681,6 +692,7 @@
         "server/database/paymentEntitlementsDao.ts",
         "server/database/paymentOrdersDao.ts",
         "server/database/paymentStore.ts",
+        "server/database/radarHistoryDao.ts",
         "server/database/radarPriceDao.ts",
         "server/database/radarSourceDao.ts",
         "server/database/referralsDao.ts",
@@ -690,6 +702,9 @@
         "server/database/watchlistDao.ts",
         "server/security/accountRateLimiter.ts",
         "server/services/indexNow.ts",
+        "server/services/radarArchive.ts",
+        "server/services/radarArchiveWorker.ts",
+        "server/services/radarResearchService.ts",
         "server/services/resultsCalendarService.ts",
         "server/services/stockNewsService.ts",
         "server/tests/aiAuthorize.test.ts",
@@ -967,7 +982,7 @@
     },
     {
       "path": "server/services/impactRadarService.ts",
-      "sha256": "c933d2f436f58078c77c73b4e7d800c11be850b6475a054375443cd0b4637ca1",
+      "sha256": "150c576c8393e777eabac6e27a959e6e990e386e6ebc863e88fff28c811ce43e",
       "importedBy": [
         "server.ts",
         "server/api/impactRadar.ts",
@@ -1070,6 +1085,31 @@
       ]
     },
     {
+      "path": "server/services/radarArchive.ts",
+      "sha256": "83aad6b27cac797b460ff7d218e955696f0fa546c8a2586a0528e504374d643d",
+      "importedBy": [
+        "server/database/impactRadarDao.ts",
+        "server/services/radarArchiveWorker.ts",
+        "server/tests/radarHistoryArchive.test.ts"
+      ]
+    },
+    {
+      "path": "server/services/radarArchiveWorker.ts",
+      "sha256": "380eac481a147ec6e9819eae4383ac3f569de11c795f49eb6b063a883e59df08",
+      "importedBy": [
+        "server.ts",
+        "server/api/impactRadar.ts"
+      ]
+    },
+    {
+      "path": "server/services/radarCaseIdentity.ts",
+      "sha256": "94abde18bd897bbd14b16dd7584c67f12f7696c4f86526f52baa85ce08199711",
+      "importedBy": [
+        "server/services/impactRadarService.ts",
+        "server/tests/radarHistoryArchive.test.ts"
+      ]
+    },
+    {
       "path": "server/services/radarCompanyIdentity.ts",
       "sha256": "4e6c3294011399ce81f74b14b18a647843b881ae84e4010ffa9dcd19a2695fdc",
       "importedBy": [
@@ -1078,6 +1118,14 @@
         "server/services/radarMovementService.ts",
         "server/tests/radarCoverage.test.ts",
         "server/tests/radarIntegrity.test.ts"
+      ]
+    },
+    {
+      "path": "server/services/radarDriveBackup.ts",
+      "sha256": "79b0adb39932c98304b4acf89a7200ccc6d529309fe73cde8e62ccce17562dcc",
+      "importedBy": [
+        "server/api/impactRadar.ts",
+        "server/services/radarArchiveWorker.ts"
       ]
     },
     {
@@ -1097,6 +1145,7 @@
       "importedBy": [
         "server/api/impactRadar.ts",
         "server/services/radarPriceSync.ts",
+        "server/services/radarResearchService.ts",
         "server/tests/radarCoverage.test.ts",
         "server/tests/radarFollowUp.test.ts",
         "server/tests/radarMaterialIntake.test.ts",
@@ -1106,10 +1155,19 @@
     },
     {
       "path": "server/services/radarPriceSync.ts",
-      "sha256": "7892711fe67684914c87978a9269166c820cc0a6bd46a8fa44ddb935e254f6e1",
+      "sha256": "fe7fdfe8b9d0966b09a9ef37749008d780b3342afd9235dd0afa7a67773359b6",
       "importedBy": [
         "server.ts",
         "server/tests/radarPriceContext.test.ts"
+      ]
+    },
+    {
+      "path": "server/services/radarResearchService.ts",
+      "sha256": "f93a9595530d30a46f7fb3017f6f886747e8aa084c36b5cb432c62e59d225aca",
+      "importedBy": [
+        "server.ts",
+        "server/api/impactRadar.ts",
+        "server/services/radarPriceSync.ts"
       ]
     },
     {
@@ -1310,7 +1368,7 @@
     },
     {
       "path": "server/tests/announcementCadence.test.ts",
-      "sha256": "4de7d762c8650e5aa4893f36182fab491f34c915b80045b7cfc566d4c4506561",
+      "sha256": "5c062f66a6eaf0605087d8489b726627b60c2136e812e2f6339f68203db63e96",
       "importedBy": []
     },
     {
@@ -1440,7 +1498,7 @@
     },
     {
       "path": "server/tests/impactRadarApi.test.ts",
-      "sha256": "cad1778aea4a5ce91136db2a3fcf9895ed5120f174ae156a34f0ad93eaca5c9b",
+      "sha256": "65b1893a6c2e7d813e41f14b9922600a5126e40393ad931583e5c67bc5d3d7bf",
       "importedBy": []
     },
     {
@@ -1550,7 +1608,7 @@
     },
     {
       "path": "server/tests/radarCompactRender.test.ts",
-      "sha256": "e640ba04b7b0c2b0f34dae22b0deef0dbdd5642bf869c11d1ad9374601b28358",
+      "sha256": "513996960f554e9e119ee5f169001c0f3c12dbd00ccf93fc1ae49d5fbea43c2e",
       "importedBy": []
     },
     {
@@ -1574,13 +1632,23 @@
       "importedBy": []
     },
     {
+      "path": "server/tests/radarHistoryArchive.test.ts",
+      "sha256": "daf97fa9595b5d288af5a1d73cd5251b0202d33234efd71b003e5d55d3c034e6",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/radarHistorySql.test.ts",
+      "sha256": "b3b7b3edba8efb00a24ea3c60132be3caffdd54f622958e1a778d012b137b46a",
+      "importedBy": []
+    },
+    {
       "path": "server/tests/radarIntakeIntegration.test.ts",
       "sha256": "ad3c1690d02731e06a3d26131f112a1585963480d91afcc543bee4482348eb4a",
       "importedBy": []
     },
     {
       "path": "server/tests/radarIntegrity.test.ts",
-      "sha256": "1203d27a6e13b43111c9507f5ea154c4d52469328b506cae16c37b58ddd068b9",
+      "sha256": "6173de64e9854e17cd2025d0bcede196a9c3c0329e09b045c92cafcc2f6e4b71",
       "importedBy": []
     },
     {
@@ -1981,7 +2049,9 @@
         "src/components/NotificationInbox.tsx",
         "src/components/PricingPage.tsx",
         "src/components/ProCheckoutView.tsx",
+        "src/components/RadarHistory.tsx",
         "src/components/RadarMovementPanel.tsx",
+        "src/components/RadarResearchPanel.tsx",
         "src/components/ReferralDashboardModal.tsx",
         "src/components/ResultsCalendar.tsx",
         "src/components/SecurityAuditModal.tsx",
@@ -2151,7 +2221,7 @@
     },
     {
       "path": "src/components/ImpactRadar.tsx",
-      "sha256": "e0aac4c1b036401529d4c8ad21dc4f3c29fbeb77202fcaa9ce217c3325c53262",
+      "sha256": "b1f760169e071643d1e0dbd79f8b8af6d73aa5ec70e80afc62ed56bb284f5581",
       "importedBy": [
         "src/components/HomeForYou.tsx"
       ]
@@ -2263,6 +2333,13 @@
       ]
     },
     {
+      "path": "src/components/RadarHistory.tsx",
+      "sha256": "56b5fc0d92d43f199fdbf61e8fd96f974147756eac4c065f95c1f29bbd2a3122",
+      "importedBy": [
+        "src/components/ImpactRadar.tsx"
+      ]
+    },
+    {
       "path": "src/components/RadarMovementPanel.tsx",
       "sha256": "25f0cd3ec98a2acb71870d926836f47080da36dbe80dedb368cb70a41285f33f",
       "importedBy": [
@@ -2270,8 +2347,15 @@
       ]
     },
     {
+      "path": "src/components/RadarResearchPanel.tsx",
+      "sha256": "fa4f877096e1a1a015cf3057a92e760a78b56ff2f0877f8de5cc8001d68fd2ae",
+      "importedBy": [
+        "src/components/ImpactRadar.tsx"
+      ]
+    },
+    {
       "path": "src/components/RadarWindow.tsx",
-      "sha256": "2e6b12a044a091a27923d54177aea2735a68ccbae459aed8cd7e7ba05b6082d6",
+      "sha256": "fbd5e4cf2f9816fac4395b727341b6e8db3733d742ce7c5882b37ed329a2d444",
       "importedBy": [
         "src/components/ImpactRadar.tsx"
       ]
@@ -2658,6 +2742,7 @@
         "src/components/LogsTab.tsx",
         "src/components/NewsPortal.tsx",
         "src/components/QuarterlyResultsLedger.tsx",
+        "src/components/RadarHistory.tsx",
         "src/components/ResultsCalendar.tsx",
         "src/components/SecurityAuditModal.tsx",
         "src/components/SettingsTab.tsx",
@@ -3367,12 +3452,16 @@
       "importedBy": [
         "server/api/impactRadar.ts",
         "server/database/impactRadarDao.ts",
+        "server/database/radarHistoryDao.ts",
         "server/database/radarPriceDao.ts",
         "server/services/impactRadarService.ts",
+        "server/services/radarArchive.ts",
+        "server/services/radarCaseIdentity.ts",
         "server/services/radarCompanyIdentity.ts",
         "server/services/radarIntakePolicy.ts",
         "server/services/radarMovementService.ts",
         "server/services/radarPriceSync.ts",
+        "server/services/radarResearchService.ts",
         "server/tests/impactRadar.test.ts",
         "server/tests/impactRadarApi.test.ts",
         "server/tests/impactRadarRender.test.ts",
@@ -3387,7 +3476,10 @@
         "server/tests/radarPriceContext.test.ts",
         "server/utils/newsPublicationTime.ts",
         "src/components/ImpactRadar.tsx",
+        "src/components/RadarHistory.tsx",
+        "src/components/RadarResearchPanel.tsx",
         "src/shared/radarMovement.ts",
+        "src/shared/radarResearch.ts",
         "src/utils/impactRadarFeed.ts",
         "src/utils/radarCompanyGroups.ts"
       ]
@@ -3399,11 +3491,24 @@
         "server/database/radarPriceDao.ts",
         "server/services/radarMovementService.ts",
         "server/services/radarPriceSync.ts",
+        "server/services/radarResearchService.ts",
         "server/tests/radarCompactRender.test.ts",
         "server/tests/radarCoverage.test.ts",
         "server/tests/radarFollowUp.test.ts",
+        "server/tests/radarHistoryArchive.test.ts",
         "server/tests/radarPriceContext.test.ts",
-        "src/components/RadarMovementPanel.tsx"
+        "src/components/RadarMovementPanel.tsx",
+        "src/shared/radarResearch.ts"
+      ]
+    },
+    {
+      "path": "src/shared/radarResearch.ts",
+      "sha256": "551b7b2ee9066c47e209f4e3f4ecbea51fd598c6109e323f6b53969fbcfb3361",
+      "importedBy": [
+        "server/services/radarArchive.ts",
+        "server/services/radarResearchService.ts",
+        "server/tests/radarHistoryArchive.test.ts",
+        "src/components/RadarResearchPanel.tsx"
       ]
     },
     {
@@ -3473,7 +3578,7 @@
     },
     {
       "path": "src/styles/impact-radar.css",
-      "sha256": "4fa5bbb8fc396961f6a23263724c5999eed2baea13d4e0e8a20717e137f93b59",
+      "sha256": "39f08e67c349a05d7fd1550e3f256a1e3754305229f6bb285809bc94b5023ba2",
       "importedBy": [
         "src/components/ImpactRadar.tsx"
       ]
@@ -3991,6 +4096,11 @@
       "importedBy": []
     },
     {
+      "path": "supabase/migrations/20261022042548_radar_history_archive.sql",
+      "sha256": "95e8cc3c1c4f8e89af92a3233e2f9ff074f7951f5e39c924d81cc70b819d180b",
+      "importedBy": []
+    },
+    {
       "path": "tsconfig.json",
       "sha256": "e93e15c3794e43a117964ea191ae985cbedea70c41d3d82b2e20aa8d07374fe4",
       "importedBy": []
@@ -4160,159 +4270,171 @@
     },
     {
       "source": "server.ts",
-      "target": "server/services/stockNewsService.ts",
+      "target": "server/services/radarResearchService.ts",
       "kind": "import",
       "line": 29
     },
     {
       "source": "server.ts",
-      "target": "server/database/logDao.ts",
+      "target": "server/services/radarArchiveWorker.ts",
       "kind": "import",
       "line": 30
     },
     {
       "source": "server.ts",
-      "target": "server/utils/helpers.ts",
+      "target": "server/services/stockNewsService.ts",
       "kind": "import",
       "line": 31
     },
     {
       "source": "server.ts",
-      "target": "server/database/announcementDao.ts",
+      "target": "server/database/logDao.ts",
       "kind": "import",
       "line": 32
     },
     {
       "source": "server.ts",
-      "target": "server/utils/stockResolver.ts",
+      "target": "server/utils/helpers.ts",
       "kind": "import",
       "line": 33
     },
     {
       "source": "server.ts",
-      "target": "server/services/companyIntelService.ts",
+      "target": "server/database/announcementDao.ts",
       "kind": "import",
       "line": 34
     },
     {
       "source": "server.ts",
-      "target": "server/services/marketGuidesService.ts",
+      "target": "server/utils/stockResolver.ts",
       "kind": "import",
       "line": 35
     },
     {
       "source": "server.ts",
-      "target": "server/services/marketGuidesService.ts",
+      "target": "server/services/companyIntelService.ts",
       "kind": "import",
       "line": 36
     },
     {
       "source": "server.ts",
-      "target": "server/database/firebase.ts",
+      "target": "server/services/marketGuidesService.ts",
       "kind": "import",
       "line": 37
     },
     {
       "source": "server.ts",
-      "target": "server/database/localStore.ts",
+      "target": "server/services/marketGuidesService.ts",
       "kind": "import",
       "line": 38
     },
     {
       "source": "server.ts",
-      "target": "server/utils/renderCache.ts",
+      "target": "server/database/firebase.ts",
       "kind": "import",
       "line": 39
     },
     {
       "source": "server.ts",
-      "target": "server/services/indexNow.ts",
+      "target": "server/database/localStore.ts",
       "kind": "import",
       "line": 40
     },
     {
       "source": "server.ts",
-      "target": "server/services/guideIndexNow.ts",
+      "target": "server/utils/renderCache.ts",
       "kind": "import",
       "line": 41
     },
     {
       "source": "server.ts",
-      "target": "server/security/recaptchaService.ts",
+      "target": "server/services/indexNow.ts",
       "kind": "import",
       "line": 42
     },
     {
       "source": "server.ts",
-      "target": "server/services/bse.ts",
+      "target": "server/services/guideIndexNow.ts",
       "kind": "import",
       "line": 43
     },
     {
       "source": "server.ts",
-      "target": "server/database/feedbackDao.ts",
+      "target": "server/security/recaptchaService.ts",
       "kind": "import",
       "line": 44
     },
     {
       "source": "server.ts",
-      "target": "server/services/seoPrerender.ts",
+      "target": "server/services/bse.ts",
       "kind": "import",
       "line": 45
     },
     {
       "source": "server.ts",
-      "target": "server/ai/docs.ts",
+      "target": "server/database/feedbackDao.ts",
       "kind": "import",
       "line": 46
     },
     {
       "source": "server.ts",
-      "target": "src/shared/aiDataDisclosure.ts",
+      "target": "server/services/seoPrerender.ts",
       "kind": "import",
       "line": 47
     },
     {
       "source": "server.ts",
-      "target": "src/config/companyDirectory.ts",
+      "target": "server/ai/docs.ts",
       "kind": "import",
       "line": 48
     },
     {
       "source": "server.ts",
-      "target": "src/config/exchangeCompanies.ts",
+      "target": "src/shared/aiDataDisclosure.ts",
       "kind": "import",
       "line": 49
     },
     {
       "source": "server.ts",
-      "target": "server/ai/http.ts",
+      "target": "src/config/companyDirectory.ts",
       "kind": "import",
       "line": 50
     },
     {
       "source": "server.ts",
-      "target": "server/services/resultsCalendarService.ts",
+      "target": "src/config/exchangeCompanies.ts",
       "kind": "import",
       "line": 51
     },
     {
       "source": "server.ts",
-      "target": "server/services/publicCalendar.ts",
+      "target": "server/ai/http.ts",
       "kind": "import",
       "line": 52
     },
     {
       "source": "server.ts",
-      "target": "server/utils/spaRoutes.ts",
+      "target": "server/services/resultsCalendarService.ts",
       "kind": "import",
       "line": 53
     },
     {
       "source": "server.ts",
-      "target": "server/api/aiPlugin.ts",
+      "target": "server/services/publicCalendar.ts",
       "kind": "import",
       "line": 54
+    },
+    {
+      "source": "server.ts",
+      "target": "server/utils/spaRoutes.ts",
+      "kind": "import",
+      "line": 55
+    },
+    {
+      "source": "server.ts",
+      "target": "server/api/aiPlugin.ts",
+      "kind": "import",
+      "line": 56
     },
     {
       "source": "server/ai/calendarRead.ts",
@@ -4610,27 +4732,57 @@
     },
     {
       "source": "server/api/impactRadar.ts",
-      "target": "server/services/radarMovementService.ts",
+      "target": "server/database/radarHistoryDao.ts",
       "kind": "import",
       "line": 4
     },
     {
       "source": "server/api/impactRadar.ts",
-      "target": "server/services/impactRadarService.ts",
+      "target": "server/services/radarArchiveWorker.ts",
       "kind": "import",
       "line": 5
     },
     {
       "source": "server/api/impactRadar.ts",
-      "target": "src/shared/impactRadar.ts",
+      "target": "server/services/radarResearchService.ts",
       "kind": "import",
       "line": 6
     },
     {
       "source": "server/api/impactRadar.ts",
+      "target": "server/database/supabase.ts",
+      "kind": "import",
+      "line": 7
+    },
+    {
+      "source": "server/api/impactRadar.ts",
+      "target": "server/services/radarMovementService.ts",
+      "kind": "import",
+      "line": 8
+    },
+    {
+      "source": "server/api/impactRadar.ts",
+      "target": "server/services/impactRadarService.ts",
+      "kind": "import",
+      "line": 9
+    },
+    {
+      "source": "server/api/impactRadar.ts",
+      "target": "src/shared/impactRadar.ts",
+      "kind": "import",
+      "line": 10
+    },
+    {
+      "source": "server/api/impactRadar.ts",
+      "target": "server/services/radarDriveBackup.ts",
+      "kind": "dynamic",
+      "line": 30
+    },
+    {
+      "source": "server/api/impactRadar.ts",
       "target": "server/utils/stockResolver.ts",
       "kind": "dynamic",
-      "line": 38
+      "line": 72
     },
     {
       "source": "server/api/notes.ts",
@@ -5269,6 +5421,12 @@
       "line": 4
     },
     {
+      "source": "server/database/impactRadarDao.ts",
+      "target": "server/services/radarArchive.ts",
+      "kind": "import",
+      "line": 5
+    },
+    {
       "source": "server/database/indexNowDao.ts",
       "target": "server/database/supabase.ts",
       "kind": "import",
@@ -5387,6 +5545,24 @@
       "target": "server/database/supabase.ts",
       "kind": "import",
       "line": 53
+    },
+    {
+      "source": "server/database/radarHistoryDao.ts",
+      "target": "server/database/supabase.ts",
+      "kind": "import",
+      "line": 1
+    },
+    {
+      "source": "server/database/radarHistoryDao.ts",
+      "target": "src/shared/impactRadar.ts",
+      "kind": "import",
+      "line": 2
+    },
+    {
+      "source": "server/database/radarHistoryDao.ts",
+      "target": "server/database/impactRadarDao.ts",
+      "kind": "import",
+      "line": 3
     },
     {
       "source": "server/database/radarPriceDao.ts",
@@ -5948,69 +6124,75 @@
     },
     {
       "source": "server/services/impactRadarService.ts",
-      "target": "server/database/radarSourceDao.ts",
+      "target": "server/services/radarCaseIdentity.ts",
       "kind": "import",
       "line": 2
     },
     {
       "source": "server/services/impactRadarService.ts",
-      "target": "server/services/radarReviewedEvidence.ts",
+      "target": "server/database/radarSourceDao.ts",
       "kind": "import",
       "line": 3
     },
     {
       "source": "server/services/impactRadarService.ts",
-      "target": "server/services/radarCompanyIdentity.ts",
+      "target": "server/services/radarReviewedEvidence.ts",
       "kind": "import",
       "line": 4
     },
     {
       "source": "server/services/impactRadarService.ts",
-      "target": "server/database/announcementDao.ts",
+      "target": "server/services/radarCompanyIdentity.ts",
       "kind": "import",
       "line": 5
     },
     {
       "source": "server/services/impactRadarService.ts",
-      "target": "server/utils/stockResolver.ts",
+      "target": "server/database/announcementDao.ts",
       "kind": "import",
       "line": 6
     },
     {
       "source": "server/services/impactRadarService.ts",
-      "target": "server/services/stockNewsService.ts",
+      "target": "server/utils/stockResolver.ts",
       "kind": "import",
       "line": 7
     },
     {
       "source": "server/services/impactRadarService.ts",
-      "target": "server/database/impactRadarDao.ts",
+      "target": "server/services/stockNewsService.ts",
       "kind": "import",
       "line": 8
     },
     {
       "source": "server/services/impactRadarService.ts",
-      "target": "server/utils/newsPublicationTime.ts",
+      "target": "server/database/impactRadarDao.ts",
       "kind": "import",
       "line": 9
     },
     {
       "source": "server/services/impactRadarService.ts",
-      "target": "server/services/radarIntakePolicy.ts",
+      "target": "server/utils/newsPublicationTime.ts",
       "kind": "import",
       "line": 10
     },
     {
       "source": "server/services/impactRadarService.ts",
-      "target": "src/shared/radarScope.ts",
+      "target": "server/services/radarIntakePolicy.ts",
       "kind": "import",
       "line": 11
     },
     {
       "source": "server/services/impactRadarService.ts",
-      "target": "src/shared/impactRadar.ts",
+      "target": "src/shared/radarScope.ts",
       "kind": "import",
       "line": 12
+    },
+    {
+      "source": "server/services/impactRadarService.ts",
+      "target": "src/shared/impactRadar.ts",
+      "kind": "import",
+      "line": 13
     },
     {
       "source": "server/services/indexNow.ts",
@@ -6193,6 +6375,48 @@
       "line": 3
     },
     {
+      "source": "server/services/radarArchive.ts",
+      "target": "server/database/supabase.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "server/services/radarArchive.ts",
+      "target": "src/shared/radarResearch.ts",
+      "kind": "import",
+      "line": 5
+    },
+    {
+      "source": "server/services/radarArchive.ts",
+      "target": "src/shared/impactRadar.ts",
+      "kind": "import",
+      "line": 6
+    },
+    {
+      "source": "server/services/radarArchiveWorker.ts",
+      "target": "server/database/supabase.ts",
+      "kind": "import",
+      "line": 1
+    },
+    {
+      "source": "server/services/radarArchiveWorker.ts",
+      "target": "server/services/radarDriveBackup.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "server/services/radarArchiveWorker.ts",
+      "target": "server/services/radarArchive.ts",
+      "kind": "import",
+      "line": 4
+    },
+    {
+      "source": "server/services/radarCaseIdentity.ts",
+      "target": "src/shared/impactRadar.ts",
+      "kind": "import",
+      "line": 2
+    },
+    {
       "source": "server/services/radarCompanyIdentity.ts",
       "target": "server/utils/stockResolver.ts",
       "kind": "import",
@@ -6242,21 +6466,63 @@
     },
     {
       "source": "server/services/radarPriceSync.ts",
-      "target": "src/shared/impactRadar.ts",
+      "target": "server/services/radarResearchService.ts",
       "kind": "import",
       "line": 2
     },
     {
       "source": "server/services/radarPriceSync.ts",
-      "target": "src/shared/radarMovement.ts",
+      "target": "src/shared/impactRadar.ts",
       "kind": "import",
       "line": 3
     },
     {
       "source": "server/services/radarPriceSync.ts",
-      "target": "server/services/radarMovementService.ts",
+      "target": "src/shared/radarMovement.ts",
       "kind": "import",
       "line": 4
+    },
+    {
+      "source": "server/services/radarPriceSync.ts",
+      "target": "server/services/radarMovementService.ts",
+      "kind": "import",
+      "line": 5
+    },
+    {
+      "source": "server/services/radarResearchService.ts",
+      "target": "server/database/supabase.ts",
+      "kind": "import",
+      "line": 1
+    },
+    {
+      "source": "server/services/radarResearchService.ts",
+      "target": "src/shared/impactRadar.ts",
+      "kind": "import",
+      "line": 2
+    },
+    {
+      "source": "server/services/radarResearchService.ts",
+      "target": "src/shared/radarResearch.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "server/services/radarResearchService.ts",
+      "target": "src/shared/radarMovement.ts",
+      "kind": "import",
+      "line": 4
+    },
+    {
+      "source": "server/services/radarResearchService.ts",
+      "target": "server/services/radarMovementService.ts",
+      "kind": "import",
+      "line": 5
+    },
+    {
+      "source": "server/services/radarResearchService.ts",
+      "target": "server/database/radarPriceDao.ts",
+      "kind": "import",
+      "line": 6
     },
     {
       "source": "server/services/resultsCalendarService.ts",
@@ -7216,31 +7482,37 @@
       "source": "server/tests/impactRadarApi.test.ts",
       "target": "src/shared/impactRadar.ts",
       "kind": "dynamic",
-      "line": 16
+      "line": 18
     },
     {
       "source": "server/tests/impactRadarApi.test.ts",
       "target": "server/api/impactRadar.ts",
       "kind": "dynamic",
-      "line": 19
+      "line": 21
     },
     {
       "source": "server/tests/impactRadarApi.test.ts",
       "target": "server/services/impactRadarService.ts",
       "kind": "dynamic",
-      "line": 20
+      "line": 22
     },
     {
       "source": "server/tests/impactRadarApi.test.ts",
       "target": "server/utils/stockResolver.ts",
       "kind": "dynamic",
-      "line": 94
+      "line": 96
     },
     {
       "source": "server/tests/impactRadarApi.test.ts",
       "target": "server/security/auth.ts",
       "kind": "dynamic",
-      "line": 105
+      "line": 107
+    },
+    {
+      "source": "server/tests/impactRadarApi.test.ts",
+      "target": "server/utils/stockResolver.ts",
+      "kind": "dynamic",
+      "line": 139
     },
     {
       "source": "server/tests/impactRadarRender.test.ts",
@@ -7613,6 +7885,36 @@
       "target": "server/services/stockNewsService.ts",
       "kind": "dynamic",
       "line": 78
+    },
+    {
+      "source": "server/tests/radarHistoryArchive.test.ts",
+      "target": "server/services/radarCaseIdentity.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "server/tests/radarHistoryArchive.test.ts",
+      "target": "server/services/radarArchive.ts",
+      "kind": "import",
+      "line": 4
+    },
+    {
+      "source": "server/tests/radarHistoryArchive.test.ts",
+      "target": "server/database/radarHistoryDao.ts",
+      "kind": "import",
+      "line": 5
+    },
+    {
+      "source": "server/tests/radarHistoryArchive.test.ts",
+      "target": "src/shared/radarResearch.ts",
+      "kind": "import",
+      "line": 6
+    },
+    {
+      "source": "server/tests/radarHistoryArchive.test.ts",
+      "target": "src/shared/radarMovement.ts",
+      "kind": "import",
+      "line": 7
     },
     {
       "source": "server/tests/radarIntakeIntegration.test.ts",
@@ -9104,33 +9406,45 @@
     },
     {
       "source": "src/components/ImpactRadar.tsx",
-      "target": "src/components/ui/ActionButton.tsx",
+      "target": "src/components/RadarHistory.tsx",
       "kind": "import",
       "line": 9
     },
     {
       "source": "src/components/ImpactRadar.tsx",
-      "target": "src/utils/impactRadarFeed.ts",
+      "target": "src/components/RadarResearchPanel.tsx",
       "kind": "import",
       "line": 10
     },
     {
       "source": "src/components/ImpactRadar.tsx",
-      "target": "src/utils/radarCompanyGroups.ts",
+      "target": "src/components/ui/ActionButton.tsx",
       "kind": "import",
       "line": 11
     },
     {
       "source": "src/components/ImpactRadar.tsx",
-      "target": "src/shared/impactRadar.ts",
+      "target": "src/utils/impactRadarFeed.ts",
       "kind": "import",
       "line": 12
     },
     {
       "source": "src/components/ImpactRadar.tsx",
-      "target": "src/styles/impact-radar.css",
+      "target": "src/utils/radarCompanyGroups.ts",
+      "kind": "import",
+      "line": 13
+    },
+    {
+      "source": "src/components/ImpactRadar.tsx",
+      "target": "src/shared/impactRadar.ts",
       "kind": "import",
       "line": 14
+    },
+    {
+      "source": "src/components/ImpactRadar.tsx",
+      "target": "src/styles/impact-radar.css",
+      "kind": "import",
+      "line": 16
     },
     {
       "source": "src/components/LandingPage.tsx",
@@ -9919,6 +10233,24 @@
       "line": 27
     },
     {
+      "source": "src/components/RadarHistory.tsx",
+      "target": "src/api.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "src/components/RadarHistory.tsx",
+      "target": "src/components/ui/ActionButton.tsx",
+      "kind": "import",
+      "line": 4
+    },
+    {
+      "source": "src/components/RadarHistory.tsx",
+      "target": "src/shared/impactRadar.ts",
+      "kind": "import",
+      "line": 5
+    },
+    {
       "source": "src/components/RadarMovementPanel.tsx",
       "target": "src/api.ts",
       "kind": "import",
@@ -9929,6 +10261,24 @@
       "target": "src/shared/radarMovement.ts",
       "kind": "import",
       "line": 3
+    },
+    {
+      "source": "src/components/RadarResearchPanel.tsx",
+      "target": "src/api.ts",
+      "kind": "import",
+      "line": 2
+    },
+    {
+      "source": "src/components/RadarResearchPanel.tsx",
+      "target": "src/shared/radarResearch.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "src/components/RadarResearchPanel.tsx",
+      "target": "src/shared/impactRadar.ts",
+      "kind": "import",
+      "line": 4
     },
     {
       "source": "src/components/RadarWindow.tsx",
@@ -11677,6 +12027,18 @@
       "line": 1
     },
     {
+      "source": "src/shared/radarResearch.ts",
+      "target": "src/shared/impactRadar.ts",
+      "kind": "import",
+      "line": 1
+    },
+    {
+      "source": "src/shared/radarResearch.ts",
+      "target": "src/shared/radarMovement.ts",
+      "kind": "import",
+      "line": 2
+    },
+    {
       "source": "src/shared/watchlistIdentity.ts",
       "target": "src/shared/scripMatching.ts",
       "kind": "import",
@@ -12581,7 +12943,17 @@
         "server/api/announcementCron.ts",
         "src/utils/radarCompanyGroups.ts",
         "server/database/radarSourceDao.ts",
-        "supabase/migrations/20261019143927_radar_source_checks.sql"
+        "supabase/migrations/20261019143927_radar_source_checks.sql",
+        "src/shared/radarResearch.ts",
+        "src/components/RadarHistory.tsx",
+        "src/components/RadarResearchPanel.tsx",
+        "server/database/radarHistoryDao.ts",
+        "server/services/radarCaseIdentity.ts",
+        "server/services/radarResearchService.ts",
+        "server/services/radarArchive.ts",
+        "server/services/radarArchiveWorker.ts",
+        "server/services/radarDriveBackup.ts",
+        "supabase/migrations/20261022042548_radar_history_archive.sql"
       ],
       "tests": [
         "server/tests/impactRadar.test.ts",
@@ -12604,9 +12976,11 @@
         "server/tests/announcementCron.test.ts",
         "server/tests/radarCompanyGroups.test.ts",
         "server/tests/radarSourceChecks.test.ts",
-        "server/tests/brandRefreshInbox.test.ts"
+        "server/tests/brandRefreshInbox.test.ts",
+        "server/tests/radarHistoryArchive.test.ts",
+        "server/tests/radarHistorySql.test.ts"
       ],
-      "reason": "Two Home previews open a native modal Radar dashboard and immediate detail. Watchlist scope stays separate from durable event follows. Both exchange disclosures and shared RSS intake carry source/date provenance; explicit jurisdiction/case references alone may join evidence. Future events have no predictions. Observed NSE final daily closes are a separate bounded, cached read with per-session source, missing-data states and no causal attribution. Account cancellation, modal focus/scroll, themes and reduced motion remain explicit contracts. The list is read-only; existing watchdog drives bounded intake. Server-only DB categories, strict real company identity, typed proceedings, source-domain rules and offset timestamps gate publishing. Reviewed PNC source backfill retains explicit news timestamps and separately sourced NSE daily ranges. Following outages preserve closed records. Additional material event terms come from private DB rules and match bounded literal phrases independently of source type or authority. Explicit RSS timestamps normalize to UTC. Publisher/report attribution and related-topic links preserve uncertainty. Selected company final NSE session values persist as small, private, duplicate-safe snapshots and can survive upstream outages. Routine corporate transactions and statutory takeover boilerplate are excluded independently of configured discovery terms. Insolvency/disputes retain the stable deals category ID with a focused label. Read projections hide legacy routine/vague cards while retaining immutable evidence and follows; all headings use source wording and original timeline titles remain intact. Official filing names and exact-code title prefixes repair numeric identities without assigning a guessed NSE symbol. Exchange daily rows may match one exact full company name; NSE SME and BSE scrip-keyed reports retain explicit source identity. Future hearing dates do not suppress prior publication-day history. Sparse details render known facts and collapsed source/method sections. Report requests use a private proxy-aware dispatcher and a bounded concurrency queue with an overall response budget. Security-code/ticker aliases share immutable prices across reports. Previous-session, event-window and latest-company context remain separately labelled. A bounded rotating worker captures the last eight dates on boot/watchdog and authenticated cron, with explicit read/write/source diagnostics and retry; request-based hosting still requires its external Scheduler. Related reports query the company directly, independently of feed caps or selected report age. Compact selectable daily bars retain exact source/price details and reduced-motion support. Latest persisted company context remains visible even beyond the eight-day event lookback, with its original date and source. Presentation groups exact company sets without merging durable proceedings. A private seven-day scan ledger supplies latest check health across hosting instances; missing history is pending, and optional RSS outage is distinct from filing-scan success. October 22 inspection found recent durable checks healthy. Client refresh resumes explicitly on visible/online/pageshow; timed-out abort-resolving reads expose retry and release the read lock. Source policy and scheduling are unchanged."
+      "reason": "Two Home previews open a native modal Radar dashboard and immediate detail. Watchlist scope stays separate from durable event follows. Both exchange disclosures and shared RSS intake carry source/date provenance; explicit jurisdiction/case references alone may join evidence. Future events have no predictions. Observed NSE final daily closes are a separate bounded, cached read with per-session source, missing-data states and no causal attribution. Account cancellation, modal focus/scroll, themes and reduced motion remain explicit contracts. The list is read-only; existing watchdog drives bounded intake. Server-only DB categories, strict real company identity, typed proceedings, source-domain rules and offset timestamps gate publishing. Reviewed PNC source backfill retains explicit news timestamps and separately sourced NSE daily ranges. Following outages preserve closed records. Additional material event terms come from private DB rules and match bounded literal phrases independently of source type or authority. Explicit RSS timestamps normalize to UTC. Publisher/report attribution and related-topic links preserve uncertainty. Selected company final NSE session values persist as small, private, duplicate-safe snapshots and can survive upstream outages. Routine corporate transactions and statutory takeover boilerplate are excluded independently of configured discovery terms. Insolvency/disputes retain the stable deals category ID with a focused label. Read projections hide legacy routine/vague cards while retaining immutable evidence and follows; all headings use source wording and original timeline titles remain intact. Official filing names and exact-code title prefixes repair numeric identities without assigning a guessed NSE symbol. Exchange daily rows may match one exact full company name; NSE SME and BSE scrip-keyed reports retain explicit source identity. Future hearing dates do not suppress prior publication-day history. Sparse details render known facts and collapsed source/method sections. Report requests use a private proxy-aware dispatcher and a bounded concurrency queue with an overall response budget. Security-code/ticker aliases share immutable prices across reports. Previous-session, event-window and latest-company context remain separately labelled. A bounded rotating worker captures the last eight dates on boot/watchdog and authenticated cron, with explicit read/write/source diagnostics and retry; request-based hosting still requires its external Scheduler. Related reports query the company directly, independently of feed caps or selected report age. Compact selectable daily bars retain exact source/price details and reduced-motion support. Latest persisted company context remains visible even beyond the eight-day event lookback, with its original date and source. Presentation groups exact company sets without merging durable proceedings. A private seven-day scan ledger supplies latest check health across hosting instances; missing history is pending, and optional RSS outage is distinct from filing-scan success. October 22 inspection found recent durable checks healthy. Client refresh resumes explicitly on visible/online/pageshow; timed-out abort-resolving reads expose retry and release the read lock. Live materiality scope and discovery cadence are unchanged. Permanent history and timeline keyset paging are separate from feed caps. V2 auto-association requires a fully typed, unambiguous Supreme Court proceeding; provisional source reports separate publication/title identities and known evidence preserves legacy IDs. First-recorded publication anchors durable raw session research; unknown calendars/prices are never zero or causal/benchmark claims. Private gzip archives have full checksum/readback/restore checks, a dedicated optional Drive backup and capacity gate. Distributed leases and transactional age/version/count/digest checks gate compaction; case summaries, follows, prices and immutable evidence keys never expire. The History dashboard remains mounted under detail to retain search; explicit opener focus and list scroll remain modal-owned. Migration application, private object verification, independent credentials and hosting publication are separate release gates."
     },
     {
       "id": "frontend-stories",
@@ -12738,7 +13112,7 @@
     },
     {
       "file": "server.ts",
-      "line": 72,
+      "line": 74,
       "receiver": "app",
       "method": "USE",
       "path": "compression({ threshold: 1024, // Don't compress payloads under 1KB level: 6, // Optimal balance between CPU usage and compression ratio filter: (req, res) => { // 1. Honor client bypass header if requested if (req.headers['x-no-compression",
@@ -12746,7 +13120,7 @@
     },
     {
       "file": "server.ts",
-      "line": 103,
+      "line": 105,
       "receiver": "app",
       "method": "USE",
       "path": "responseHeaders()",
@@ -12754,7 +13128,7 @@
     },
     {
       "file": "server.ts",
-      "line": 104,
+      "line": 106,
       "receiver": "app",
       "method": "USE",
       "path": "/api/payments/webhook",
@@ -12764,7 +13138,7 @@
     },
     {
       "file": "server.ts",
-      "line": 105,
+      "line": 107,
       "receiver": "app",
       "method": "USE",
       "path": "['/mcp','/register']",
@@ -12774,7 +13148,7 @@
     },
     {
       "file": "server.ts",
-      "line": 106,
+      "line": 108,
       "receiver": "app",
       "method": "USE",
       "path": "['/token','/revoke']",
@@ -12784,7 +13158,7 @@
     },
     {
       "file": "server.ts",
-      "line": 107,
+      "line": 109,
       "receiver": "app",
       "method": "USE",
       "path": "express.json({ limit: '1mb' })",
@@ -12792,7 +13166,7 @@
     },
     {
       "file": "server.ts",
-      "line": 108,
+      "line": 110,
       "receiver": "app",
       "method": "USE",
       "path": "cookieParser()",
@@ -12800,7 +13174,7 @@
     },
     {
       "file": "server.ts",
-      "line": 110,
+      "line": 112,
       "receiver": "app",
       "method": "GET",
       "path": "/api/cron/poll-announcements",
@@ -12810,7 +13184,7 @@
     },
     {
       "file": "server.ts",
-      "line": 127,
+      "line": 129,
       "receiver": "app",
       "method": "USE",
       "path": "authMiddleware",
@@ -12818,7 +13192,7 @@
     },
     {
       "file": "server.ts",
-      "line": 131,
+      "line": 133,
       "receiver": "app",
       "method": "GET",
       "path": "/sw.js",
@@ -12828,7 +13202,7 @@
     },
     {
       "file": "server.ts",
-      "line": 152,
+      "line": 154,
       "receiver": "app",
       "method": "GET",
       "path": "/OneSignalSDKWorker.js",
@@ -12838,7 +13212,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5334,
+      "line": 5336,
       "receiver": "app",
       "method": "GET",
       "path": "['/health', '/healthz']",
@@ -12848,7 +13222,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5340,
+      "line": 5342,
       "receiver": "app",
       "method": "GET",
       "path": "/robots.txt",
@@ -12858,7 +13232,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5346,
+      "line": 5348,
       "receiver": "app",
       "method": "GET",
       "path": "['/sitemap.xml', '/sitemap', '/sitemap_index.xml', '/sitemap.txt']",
@@ -12868,7 +13242,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5355,
+      "line": 5357,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-core.xml",
@@ -12878,7 +13252,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5393,
+      "line": 5395,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-filings-hot.xml",
@@ -12888,7 +13262,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5430,
+      "line": 5432,
       "receiver": "app",
       "method": "GET",
       "path": "['/rss.xml', '/rss', '/feed.xml', '/feed']",
@@ -12898,7 +13272,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5496,
+      "line": 5498,
       "receiver": "app",
       "method": "GET",
       "path": "[/^\\/https?:\\/?\\/?(?:www\\.)?bsenexus\\.in\\/sitemap(?:\\.xml)?$/i]",
@@ -12908,7 +13282,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5501,
+      "line": 5503,
       "receiver": "app",
       "method": "GET",
       "path": "[`/${INDEXNOW_KEY}.txt`, '/indexnow-key.txt']",
@@ -12918,7 +13292,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5509,
+      "line": 5511,
       "receiver": "app",
       "method": "GET",
       "path": "/opensearch.xml",
@@ -12928,7 +13302,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5516,
+      "line": 5518,
       "receiver": "app",
       "method": "GET",
       "path": "['/.well-known/ai-plugin.json', '/ai-plugin.json']",
@@ -12938,7 +13312,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5536,
+      "line": 5538,
       "receiver": "app",
       "method": "GET",
       "path": "[sourcePath, sourcePath + '/']",
@@ -12948,7 +13322,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5543,
+      "line": 5545,
       "receiver": "app",
       "method": "GET",
       "path": "/filing/:symbol/:newsId",
@@ -12958,7 +13332,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5602,
+      "line": 5604,
       "receiver": "app",
       "method": "GET",
       "path": "/filing/:symbol",
@@ -12968,7 +13342,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5613,
+      "line": 5615,
       "receiver": "app",
       "method": "GET",
       "path": "['/filing', '/filing/']",
@@ -12978,7 +13352,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5619,
+      "line": 5621,
       "receiver": "app",
       "method": "GET",
       "path": "/announcement/:newsId",
@@ -12988,7 +13362,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5948,
+      "line": 5950,
       "receiver": "app",
       "method": "GET",
       "path": "/results/:symbol/:quarterKey",
@@ -12998,7 +13372,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6003,
+      "line": 6005,
       "receiver": "app",
       "method": "GET",
       "path": "/ai-docs",
@@ -13008,7 +13382,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6006,
+      "line": 6008,
       "receiver": "app",
       "method": "GET",
       "path": "['/company/:symbol', '/stock/:symbol']",
@@ -13018,7 +13392,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6081,
+      "line": 6083,
       "receiver": "app",
       "method": "GET",
       "path": "/guides/:slug",
@@ -13028,7 +13402,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6127,
+      "line": 6129,
       "receiver": "app",
       "method": "GET",
       "path": "['/faq', '/faqs']",
@@ -13038,7 +13412,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6134,
+      "line": 6136,
       "receiver": "app",
       "method": "GET",
       "path": "['/pricing', '/pricing/']",
@@ -13048,7 +13422,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6141,
+      "line": 6143,
       "receiver": "app",
       "method": "GET",
       "path": "['/plans', '/plans/']",
@@ -13058,7 +13432,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6146,
+      "line": 6148,
       "receiver": "app",
       "method": "GET",
       "path": "['/guides', '/guides/']",
@@ -13068,7 +13442,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6153,
+      "line": 6155,
       "receiver": "app",
       "method": "GET",
       "path": "['/market-guides', '/market-guides/']",
@@ -13078,7 +13452,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6158,
+      "line": 6160,
       "receiver": "app",
       "method": "GET",
       "path": "['/companies', '/companies/']",
@@ -13088,7 +13462,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6165,
+      "line": 6167,
       "receiver": "app",
       "method": "GET",
       "path": "['/company-directory', '/company-directory/']",
@@ -13098,7 +13472,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6170,
+      "line": 6172,
       "receiver": "app",
       "method": "GET",
       "path": "['/about', '/about/']",
@@ -13108,7 +13482,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6177,
+      "line": 6179,
       "receiver": "app",
       "method": "GET",
       "path": "['/contact', '/contact/']",
@@ -13118,7 +13492,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6184,
+      "line": 6186,
       "receiver": "app",
       "method": "GET",
       "path": "['/disclaimer', '/disclaimer/']",
@@ -13128,7 +13502,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6191,
+      "line": 6193,
       "receiver": "app",
       "method": "GET",
       "path": "['/privacy-policy', '/privacy-policy/']",
@@ -13138,7 +13512,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6198,
+      "line": 6200,
       "receiver": "app",
       "method": "GET",
       "path": "['/privacy', '/privacy/']",
@@ -13148,7 +13522,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6204,
+      "line": 6206,
       "receiver": "app",
       "method": "GET",
       "path": "['/terms', '/terms/']",
@@ -13158,7 +13532,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6211,
+      "line": 6213,
       "receiver": "app",
       "method": "GET",
       "path": "['/terms-of-service', '/terms-of-service/']",
@@ -13168,7 +13542,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6216,
+      "line": 6218,
       "receiver": "app",
       "method": "GET",
       "path": "/embed/widget",
@@ -13178,7 +13552,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6270,
+      "line": 6272,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-companies.xml",
@@ -13188,7 +13562,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6290,
+      "line": 6292,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-guides.xml",
@@ -13198,7 +13572,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6308,
+      "line": 6310,
       "receiver": "app",
       "method": "GET",
       "path": "/llms.txt",
@@ -13208,7 +13582,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6313,
+      "line": 6315,
       "receiver": "app",
       "method": "GET",
       "path": "/llms-full.txt",
@@ -13218,7 +13592,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6323,
+      "line": 6325,
       "receiver": "app",
       "method": "GET",
       "path": "/^\\/google([a-zA-Z0-9_-]+)\\.html$/",
@@ -13228,7 +13602,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6333,
+      "line": 6335,
       "receiver": "app",
       "method": "USE",
       "path": "express.static(path.join(process.cwd(), 'public'), { maxAge: '1d', immutable: false, setHeaders: (res, filePath) => { if (filePath.includes(`${path.sep}fonts${path.sep}`)) res.setHeader('Cache-Control', 'public, max-age=2592000'); if (fileP",
@@ -13236,7 +13610,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6343,
+      "line": 6345,
       "receiver": "app",
       "method": "USE",
       "path": "['/api', '/auth']",
@@ -13246,7 +13620,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6349,
+      "line": 6351,
       "receiver": "app",
       "method": "USE",
       "path": "/auth",
@@ -13256,7 +13630,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6352,
+      "line": 6354,
       "receiver": "app",
       "method": "POST",
       "path": "/api/security/verify-recaptcha",
@@ -13267,7 +13641,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6393,
+      "line": 6395,
       "receiver": "app",
       "method": "USE",
       "path": "/api",
@@ -13278,7 +13652,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6397,
+      "line": 6399,
       "receiver": "app",
       "method": "USE",
       "path": "['/api/*', '/auth/*']",
@@ -13288,7 +13662,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6402,
+      "line": 6404,
       "receiver": "app",
       "method": "USE",
       "path": "(err: any, req: express.Request, res: express.Response, next: express.NextFunction) => { if (req.path.startsWith('/api') || req.path.startsWith('/auth')) { console.error(\"API Error handler caught:\", err?.message || err); const isProd = proc",
@@ -13296,7 +13670,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6810,
+      "line": 6816,
       "receiver": "app",
       "method": "GET",
       "path": "SPA_PATHS",
@@ -13306,7 +13680,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6844,
+      "line": 6850,
       "receiver": "app",
       "method": "USE",
       "path": "(req, res, next) => { if (req.method !== 'GET' && req.method !== 'HEAD') return next(); const p = normalizeSpaPath(req.path); if ( p === '/' || p === '/announcements' || p === '/results-calendar' || p === '/watchlist' || p === '/watchlists'",
@@ -13314,7 +13688,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6882,
+      "line": 6888,
       "receiver": "app",
       "method": "USE",
       "path": "vite.middlewares",
@@ -13322,7 +13696,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6894,
+      "line": 6900,
       "receiver": "app",
       "method": "USE",
       "path": "express.static(distPath, { maxAge: '1y', immutable: true, index: false, setHeaders: (res, filePath) => { if (filePath.endsWith('.html')) { res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600'); } } }",
@@ -13330,7 +13704,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6914,
+      "line": 6920,
       "receiver": "app",
       "method": "GET",
       "path": "['/announcements', '/announcements/']",
@@ -13340,7 +13714,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6961,
+      "line": 6967,
       "receiver": "app",
       "method": "GET",
       "path": "*",
@@ -13500,7 +13874,7 @@
     },
     {
       "file": "server/api/impactRadar.ts",
-      "line": 9,
+      "line": 13,
       "receiver": "impactRadarRouter",
       "method": "USE",
       "path": "(_req, res, next) => { res.setHeader('Cache-Control', 'private, no-store'); next(); }",
@@ -13508,7 +13882,7 @@
     },
     {
       "file": "server/api/impactRadar.ts",
-      "line": 11,
+      "line": 15,
       "receiver": "impactRadarRouter",
       "method": "GET",
       "path": "/",
@@ -13519,7 +13893,7 @@
     },
     {
       "file": "server/api/impactRadar.ts",
-      "line": 17,
+      "line": 21,
       "receiver": "impactRadarRouter",
       "method": "GET",
       "path": "/categories",
@@ -13530,7 +13904,70 @@
     },
     {
       "file": "server/api/impactRadar.ts",
-      "line": 20,
+      "line": 24,
+      "receiver": "impactRadarRouter",
+      "method": "GET",
+      "path": "/history",
+      "middleware": [
+        "apiRateLimiter",
+        "<handler>"
+      ]
+    },
+    {
+      "file": "server/api/impactRadar.ts",
+      "line": 29,
+      "receiver": "impactRadarRouter",
+      "method": "GET",
+      "path": "/admin/storage",
+      "middleware": [
+        "requireAuth",
+        "requireAdmin",
+        "apiRateLimiter",
+        "<handler>"
+      ]
+    },
+    {
+      "file": "server/api/impactRadar.ts",
+      "line": 32,
+      "receiver": "impactRadarRouter",
+      "method": "POST",
+      "path": "/admin/archive/:id",
+      "middleware": [
+        "requireAuth",
+        "requireAdmin",
+        "apiRateLimiter",
+        "<handler>"
+      ]
+    },
+    {
+      "file": "server/api/impactRadar.ts",
+      "line": 37,
+      "receiver": "impactRadarRouter",
+      "method": "POST",
+      "path": "/admin/research/calendar",
+      "middleware": [
+        "requireAuth",
+        "requireAdmin",
+        "apiRateLimiter",
+        "<handler>"
+      ]
+    },
+    {
+      "file": "server/api/impactRadar.ts",
+      "line": 46,
+      "receiver": "impactRadarRouter",
+      "method": "POST",
+      "path": "/admin/research/:id",
+      "middleware": [
+        "requireAuth",
+        "requireAdmin",
+        "apiRateLimiter",
+        "<handler>"
+      ]
+    },
+    {
+      "file": "server/api/impactRadar.ts",
+      "line": 54,
       "receiver": "impactRadarRouter",
       "method": "GET",
       "path": "/following",
@@ -13541,7 +13978,7 @@
     },
     {
       "file": "server/api/impactRadar.ts",
-      "line": 24,
+      "line": 58,
       "receiver": "impactRadarRouter",
       "method": "PUT",
       "path": "/:id/follow",
@@ -13553,7 +13990,7 @@
     },
     {
       "file": "server/api/impactRadar.ts",
-      "line": 34,
+      "line": 68,
       "receiver": "impactRadarRouter",
       "method": "POST",
       "path": "/admin/publish",
@@ -13566,7 +14003,7 @@
     },
     {
       "file": "server/api/impactRadar.ts",
-      "line": 48,
+      "line": 82,
       "receiver": "impactRadarRouter",
       "method": "GET",
       "path": "/:id/movement",
@@ -13577,7 +14014,29 @@
     },
     {
       "file": "server/api/impactRadar.ts",
-      "line": 58,
+      "line": 92,
+      "receiver": "impactRadarRouter",
+      "method": "GET",
+      "path": "/:id/research",
+      "middleware": [
+        "apiRateLimiter",
+        "<handler>"
+      ]
+    },
+    {
+      "file": "server/api/impactRadar.ts",
+      "line": 96,
+      "receiver": "impactRadarRouter",
+      "method": "GET",
+      "path": "/:id/timeline",
+      "middleware": [
+        "apiRateLimiter",
+        "<handler>"
+      ]
+    },
+    {
+      "file": "server/api/impactRadar.ts",
+      "line": 101,
       "receiver": "impactRadarRouter",
       "method": "GET",
       "path": "/:id",
@@ -15647,7 +16106,7 @@
     },
     {
       "file": "server/tests/impactRadarApi.test.ts",
-      "line": 21,
+      "line": 23,
       "receiver": "app",
       "method": "USE",
       "path": "express.json()",
@@ -15655,7 +16114,7 @@
     },
     {
       "file": "server/tests/impactRadarApi.test.ts",
-      "line": 22,
+      "line": 24,
       "receiver": "app",
       "method": "USE",
       "path": "(req, _res, next) => { if (req.headers.authorization === 'Bearer alice') (req as any).user = { uid: 'alice', isAnonymous: false }; if (req.headers.authorization === 'Bearer admin') (req as any).user = { uid: 'admin', isAnonymous: false, isA",
@@ -15663,7 +16122,7 @@
     },
     {
       "file": "server/tests/impactRadarApi.test.ts",
-      "line": 23,
+      "line": 25,
       "receiver": "app",
       "method": "USE",
       "path": "/api/impact-radar",
@@ -15801,7 +16260,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6514,
+      "line": 6520,
       "function": "fetch",
       "target": "`http://127.0.0.1:${port}/api/health`"
     },
@@ -15890,6 +16349,12 @@
       "target": "'https://api.onesignal.com/notifications'"
     },
     {
+      "file": "server/services/radarArchive.ts",
+      "line": 56,
+      "function": "fetch",
+      "target": "input"
+    },
+    {
       "file": "server/services/radarCompanyIdentity.ts",
       "line": 36,
       "function": "fetch",
@@ -15900,6 +16365,30 @@
       "line": 44,
       "function": "fetch",
       "target": "`https://www.screener.in/company/${encodeURIComponent(path[1])}/`"
+    },
+    {
+      "file": "server/services/radarDriveBackup.ts",
+      "line": 12,
+      "function": "fetch",
+      "target": "'https://oauth2.googleapis.com/token'"
+    },
+    {
+      "file": "server/services/radarDriveBackup.ts",
+      "line": 17,
+      "function": "fetch",
+      "target": "`https://www.googleapis.com/drive/v3/files?${query}`"
+    },
+    {
+      "file": "server/services/radarDriveBackup.ts",
+      "line": 24,
+      "function": "fetch",
+      "target": "'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,size'"
+    },
+    {
+      "file": "server/services/radarDriveBackup.ts",
+      "line": 28,
+      "function": "fetch",
+      "target": "`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`"
     },
     {
       "file": "server/services/radarMovementService.ts",
@@ -16551,13 +17040,19 @@
     },
     {
       "file": "src/components/ImpactRadar.tsx",
-      "line": 59,
+      "line": 63,
+      "function": "customFetch",
+      "target": "`/api/impact-radar/${encodeURIComponent(event.id)}/timeline?cursor=${encodeURIComponent(timelineCursor)}`"
+    },
+    {
+      "file": "src/components/ImpactRadar.tsx",
+      "line": 75,
       "function": "customFetch",
       "target": "`/api/impact-radar/${encodeURIComponent(event.id)}`"
     },
     {
       "file": "src/components/ImpactRadar.tsx",
-      "line": 125,
+      "line": 145,
       "function": "customFetch",
       "target": "'/api/impact-radar/categories'"
     },
@@ -16688,10 +17183,22 @@
       "target": "'/api/referrals/apply'"
     },
     {
+      "file": "src/components/RadarHistory.tsx",
+      "line": 18,
+      "function": "customFetch",
+      "target": "`/api/impact-radar/history?${query}`"
+    },
+    {
       "file": "src/components/RadarMovementPanel.tsx",
       "line": 52,
       "function": "customFetch",
       "target": "`/api/impact-radar/${encodeURIComponent(eventId)}/movement`"
+    },
+    {
+      "file": "src/components/RadarResearchPanel.tsx",
+      "line": 11,
+      "function": "customFetch",
+      "target": "`/api/impact-radar/${encodeURIComponent(eventId)}/research`"
     },
     {
       "file": "src/components/ReferralDashboardModal.tsx",
@@ -17548,6 +18055,24 @@
       "key": "\"ai_connection_operations\""
     },
     {
+      "file": "server/api/impactRadar.ts",
+      "line": 30,
+      "function": "getSupabase().rpc",
+      "key": "'radar_storage_usage'"
+    },
+    {
+      "file": "server/api/impactRadar.ts",
+      "line": 42,
+      "function": "getSupabase().from",
+      "key": "'impact_market_days'"
+    },
+    {
+      "file": "server/api/impactRadar.ts",
+      "line": 49,
+      "function": "getSupabase().from",
+      "key": "'impact_radar_events'"
+    },
+    {
       "file": "server/api/search.ts",
       "line": 206,
       "function": "Array.from",
@@ -17699,67 +18224,91 @@
     },
     {
       "file": "server/database/impactRadarDao.ts",
-      "line": 18,
+      "line": 19,
       "function": "getSupabase().from",
       "key": "'impact_intake_rules'"
     },
     {
       "file": "server/database/impactRadarDao.ts",
-      "line": 33,
+      "line": 34,
       "function": "getSupabase().from",
       "key": "'impact_categories'"
     },
     {
       "file": "server/database/impactRadarDao.ts",
-      "line": 51,
+      "line": 52,
       "function": "getSupabase().from",
       "key": "'announcements'"
     },
     {
       "file": "server/database/impactRadarDao.ts",
-      "line": 65,
+      "line": 66,
       "function": "getSupabase().from",
       "key": "'impact_radar_events'"
     },
     {
       "file": "server/database/impactRadarDao.ts",
-      "line": 71,
+      "line": 72,
       "function": "getSupabase().from",
       "key": "'impact_radar_events'"
     },
     {
       "file": "server/database/impactRadarDao.ts",
-      "line": 79,
+      "line": 80,
       "function": "getSupabase().from",
       "key": "'impact_radar_events'"
     },
     {
       "file": "server/database/impactRadarDao.ts",
-      "line": 87,
+      "line": 89,
       "function": "getSupabase().from",
       "key": "'impact_radar_updates'"
     },
     {
       "file": "server/database/impactRadarDao.ts",
-      "line": 93,
+      "line": 97,
       "function": "getSupabase().from",
       "key": "'impact_radar_updates'"
     },
     {
       "file": "server/database/impactRadarDao.ts",
-      "line": 102,
+      "line": 105,
+      "function": "Buffer.from",
+      "key": "JSON.stringify([last.publishedAt,last.id])"
+    },
+    {
+      "file": "server/database/impactRadarDao.ts",
+      "line": 110,
+      "function": "getSupabase().from",
+      "key": "'impact_radar_updates'"
+    },
+    {
+      "file": "server/database/impactRadarDao.ts",
+      "line": 111,
+      "function": "getSupabase().from",
+      "key": "'impact_radar_archives'"
+    },
+    {
+      "file": "server/database/impactRadarDao.ts",
+      "line": 122,
+      "function": "getSupabase().from",
+      "key": "'impact_radar_update_keys'"
+    },
+    {
+      "file": "server/database/impactRadarDao.ts",
+      "line": 131,
       "function": "getSupabase().rpc",
       "key": "'publish_impact_radar_records'"
     },
     {
       "file": "server/database/impactRadarDao.ts",
-      "line": 107,
+      "line": 137,
       "function": "getSupabase().from",
       "key": "'impact_radar_follows'"
     },
     {
       "file": "server/database/impactRadarDao.ts",
-      "line": 117,
+      "line": 147,
       "function": "getSupabase().from",
       "key": "'impact_radar_follows'"
     },
@@ -17918,6 +18467,24 @@
       "line": 266,
       "function": "getSupabase().from",
       "key": "ORDERS_TABLE"
+    },
+    {
+      "file": "server/database/radarHistoryDao.ts",
+      "line": 14,
+      "function": "Buffer.from",
+      "key": "input.cursor"
+    },
+    {
+      "file": "server/database/radarHistoryDao.ts",
+      "line": 22,
+      "function": "getSupabase().rpc",
+      "key": "'search_radar_history'"
+    },
+    {
+      "file": "server/database/radarHistoryDao.ts",
+      "line": 28,
+      "function": "Buffer.from",
+      "key": "JSON.stringify([last.first_public_at,last.id])"
     },
     {
       "file": "server/database/radarPriceDao.ts",
@@ -18148,6 +18715,84 @@
       "key": "set"
     },
     {
+      "file": "server/services/radarArchive.ts",
+      "line": 27,
+      "function": "Buffer.from",
+      "key": "JSON.stringify(safe)"
+    },
+    {
+      "file": "server/services/radarArchive.ts",
+      "line": 51,
+      "function": "radarArchiveStorage().from",
+      "key": "RADAR_ARCHIVE_BUCKET"
+    },
+    {
+      "file": "server/services/radarArchive.ts",
+      "line": 60,
+      "function": "getSupabase().from",
+      "key": "'impact_radar_archives'"
+    },
+    {
+      "file": "server/services/radarArchiveWorker.ts",
+      "line": 8,
+      "function": "db.rpc",
+      "key": "'claim_radar_archive'"
+    },
+    {
+      "file": "server/services/radarArchiveWorker.ts",
+      "line": 12,
+      "function": "db.rpc",
+      "key": "'release_radar_archive'"
+    },
+    {
+      "file": "server/services/radarArchiveWorker.ts",
+      "line": 16,
+      "function": "db.from",
+      "key": "'impact_radar_archives'"
+    },
+    {
+      "file": "server/services/radarArchiveWorker.ts",
+      "line": 19,
+      "function": "db.rpc",
+      "key": "'radar_archive_snapshot'"
+    },
+    {
+      "file": "server/services/radarArchiveWorker.ts",
+      "line": 26,
+      "function": "db.rpc",
+      "key": "'radar_storage_usage'"
+    },
+    {
+      "file": "server/services/radarArchiveWorker.ts",
+      "line": 47,
+      "function": "db.from",
+      "key": "'impact_radar_archives'"
+    },
+    {
+      "file": "server/services/radarArchiveWorker.ts",
+      "line": 51,
+      "function": "db.rpc",
+      "key": "'compact_radar_archive'"
+    },
+    {
+      "file": "server/services/radarArchiveWorker.ts",
+      "line": 67,
+      "function": "getSupabase().rpc",
+      "key": "'radar_archive_candidates'"
+    },
+    {
+      "file": "server/services/radarDriveBackup.ts",
+      "line": 23,
+      "function": "Buffer.from",
+      "key": "`--${boundary}\\r\\nContent-Type: application/json; charset=UTF-8\\r\\n\\r\\n${metadata}\\r\\n--${boundary}\\r\\nContent-Type: application/gzip\\r\\n\\r\\n`"
+    },
+    {
+      "file": "server/services/radarDriveBackup.ts",
+      "line": 23,
+      "function": "Buffer.from",
+      "key": "`\\r\\n--${boundary}--`"
+    },
+    {
       "file": "server/services/radarMovementService.ts",
       "line": 118,
       "function": "Array.from",
@@ -18155,9 +18800,51 @@
     },
     {
       "file": "server/services/radarPriceSync.ts",
-      "line": 27,
+      "line": 28,
       "function": "Array.from",
       "key": "{length:Math.min(30,unique.length)}"
+    },
+    {
+      "file": "server/services/radarResearchService.ts",
+      "line": 8,
+      "function": "getSupabase().from",
+      "key": "'impact_radar_research'"
+    },
+    {
+      "file": "server/services/radarResearchService.ts",
+      "line": 14,
+      "function": "getSupabase().from",
+      "key": "'impact_market_days'"
+    },
+    {
+      "file": "server/services/radarResearchService.ts",
+      "line": 21,
+      "function": "db.from",
+      "key": "'impact_price_sessions'"
+    },
+    {
+      "file": "server/services/radarResearchService.ts",
+      "line": 22,
+      "function": "db.from",
+      "key": "'impact_market_days'"
+    },
+    {
+      "file": "server/services/radarResearchService.ts",
+      "line": 31,
+      "function": "Array.from",
+      "key": "{length:60}"
+    },
+    {
+      "file": "server/services/radarResearchService.ts",
+      "line": 47,
+      "function": "db.from",
+      "key": "'impact_radar_research'"
+    },
+    {
+      "file": "server/services/radarResearchService.ts",
+      "line": 55,
+      "function": "getSupabase().rpc",
+      "key": "'radar_research_candidates'"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
@@ -18356,6 +19043,30 @@
       "line": 30,
       "function": "Buffer.from",
       "key": "[0x50, 0x4b, 0x01, 0x02]"
+    },
+    {
+      "file": "server/tests/radarHistoryArchive.test.ts",
+      "line": 40,
+      "function": "Buffer.from",
+      "key": "'corrupt'"
+    },
+    {
+      "file": "server/tests/radarHistoryArchive.test.ts",
+      "line": 42,
+      "function": "Buffer.from",
+      "key": "'corrupt'"
+    },
+    {
+      "file": "server/tests/radarHistoryArchive.test.ts",
+      "line": 47,
+      "function": "Buffer.from",
+      "key": "JSON.stringify([time,'bad,id'])"
+    },
+    {
+      "file": "server/tests/radarHistoryArchive.test.ts",
+      "line": 48,
+      "function": "Buffer.from",
+      "key": "JSON.stringify([time,event.id])"
     },
     {
       "file": "server/tests/radarReportQueue.test.ts",
@@ -18617,7 +19328,7 @@
     },
     {
       "file": "src/components/ImpactRadar.tsx",
-      "line": 169,
+      "line": 189,
       "function": "Array.from",
       "key": "{ length: count }"
     },
@@ -19436,42 +20147,42 @@
     },
     {
       "file": "server.ts",
-      "line": 134,
+      "line": 136,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6321,
+      "line": 6323,
       "name": "GOOGLE_SITE_VERIFICATION_HASH"
     },
     {
       "file": "server.ts",
-      "line": 6321,
+      "line": 6323,
       "name": "GOOGLE_SITE_VERIFICATION_HASH"
     },
     {
       "file": "server.ts",
-      "line": 6405,
+      "line": 6407,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6799,
+      "line": 6805,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6804,
+      "line": 6810,
       "name": "DISABLE_HMR"
     },
     {
       "file": "server.ts",
-      "line": 7076,
+      "line": 7082,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 7076,
+      "line": 7082,
       "name": "TEST_RUNNER"
     },
     {
@@ -20163,6 +20874,51 @@
       "file": "server/services/oneSignal.ts",
       "line": 43,
       "name": "ONESIGNAL_API_KEY"
+    },
+    {
+      "file": "server/services/radarArchive.ts",
+      "line": 55,
+      "name": "SUPABASE_URL"
+    },
+    {
+      "file": "server/services/radarArchive.ts",
+      "line": 55,
+      "name": "SUPABASE_SERVICE_ROLE_KEY"
+    },
+    {
+      "file": "server/services/radarArchiveWorker.ts",
+      "line": 27,
+      "name": "RADAR_ARCHIVE_BUDGET_BYTES"
+    },
+    {
+      "file": "server/services/radarDriveBackup.ts",
+      "line": 11,
+      "name": "RADAR_DRIVE_FOLDER_ID"
+    },
+    {
+      "file": "server/services/radarDriveBackup.ts",
+      "line": 13,
+      "name": "RADAR_DRIVE_CLIENT_ID"
+    },
+    {
+      "file": "server/services/radarDriveBackup.ts",
+      "line": 13,
+      "name": "RADAR_DRIVE_CLIENT_SECRET"
+    },
+    {
+      "file": "server/services/radarDriveBackup.ts",
+      "line": 13,
+      "name": "RADAR_DRIVE_REFRESH_TOKEN"
+    },
+    {
+      "file": "server/services/radarDriveBackup.ts",
+      "line": 16,
+      "name": "RADAR_DRIVE_FOLDER_ID"
+    },
+    {
+      "file": "server/services/radarDriveBackup.ts",
+      "line": 22,
+      "name": "RADAR_DRIVE_FOLDER_ID"
     },
     {
       "file": "server/services/radarMovementService.ts",
@@ -21134,7 +21890,7 @@
     },
     {
       "file": "src/components/ImpactRadar.tsx",
-      "line": 141,
+      "line": 161,
       "target": "document",
       "kind": "listen",
       "name": "visibilitychange",
@@ -21142,7 +21898,7 @@
     },
     {
       "file": "src/components/ImpactRadar.tsx",
-      "line": 141,
+      "line": 161,
       "target": "window",
       "kind": "listen",
       "name": "bse_nav_tab_refresh",
@@ -21150,7 +21906,7 @@
     },
     {
       "file": "src/components/ImpactRadar.tsx",
-      "line": 142,
+      "line": 162,
       "target": "window",
       "kind": "listen",
       "name": "online",
@@ -21158,7 +21914,7 @@
     },
     {
       "file": "src/components/ImpactRadar.tsx",
-      "line": 142,
+      "line": 162,
       "target": "window",
       "kind": "listen",
       "name": "pageshow",
@@ -21166,7 +21922,7 @@
     },
     {
       "file": "src/components/ImpactRadar.tsx",
-      "line": 143,
+      "line": 163,
       "target": "document",
       "kind": "remove",
       "name": "visibilitychange",
@@ -21174,7 +21930,7 @@
     },
     {
       "file": "src/components/ImpactRadar.tsx",
-      "line": 143,
+      "line": 163,
       "target": "window",
       "kind": "remove",
       "name": "bse_nav_tab_refresh",
@@ -21182,7 +21938,7 @@
     },
     {
       "file": "src/components/ImpactRadar.tsx",
-      "line": 143,
+      "line": 163,
       "target": "window",
       "kind": "remove",
       "name": "online",
@@ -21190,7 +21946,7 @@
     },
     {
       "file": "src/components/ImpactRadar.tsx",
-      "line": 143,
+      "line": 163,
       "target": "window",
       "kind": "remove",
       "name": "pageshow",
