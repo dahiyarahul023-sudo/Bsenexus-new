@@ -42,3 +42,5 @@ Configured tsc/build and focused 30 checks pass at the intermediate revision. Ea
 - Screenshots inspected: inbox390, Earnings390 during pull and revised BSE profile390; viewport evidence includes all three widths. Actual original assets are reused, no generated company identity.
 - No deployment, physical vibration, live user login, live archive completion, search recrawl or IndexNow HTTP acceptance claimed. Remote main unchanged from baseline when delivery started. No migration/production data writes. Reverting the runtime commit restores previous UI without data deletion.
 - Stage: source implemented, automated/local browser verified; remote CI/merge pending. Public hosting publication is a separate owner workflow.
+
+Final consumer trace also found the same old BSE540025 value in client Watchlist and Story logo fallback maps. Both now read VERIFIED_STOCK_BY_SYMBOL.BSE, matching resolver/F&O; official exchange logos and all layout/interaction behavior remain unchanged. No client or server map retains that wrong BSE association. Final CI reruns on this additional two-consumer repair before merge.

@@ -171,7 +171,7 @@ const stockMasterClient: Record<string, { scripCode: string; nameKeywords: strin
   "MPHASIS": { scripCode: "526299", nameKeywords: ["MPHASIS"] },
   "MCX": { scripCode: "534091", nameKeywords: ["MULTI COMMODITY EXCHANGE", "MCX"] },
   "CDSL": { scripCode: "540615", nameKeywords: ["CENTRAL DEPOSITARY SERVICES", "CDSL"] },
-  "BSE": { scripCode: "540025", nameKeywords: ["BSE LIMITED"] },
+  "BSE": { scripCode: VERIFIED_STOCK_BY_SYMBOL.BSE.scripCode, nameKeywords: ["BSE LIMITED"] },
   "IEX": { scripCode: "540750", nameKeywords: ["INDIAN ENERGY EXCHANGE", "IEX"] },
   "POLYCAB": { scripCode: "542652", nameKeywords: ["POLYCAB INDIA", "POLYCAB"] },
   "HAVELLS": { scripCode: "517354", nameKeywords: ["HAVELLS INDIA", "HAVELLS"] },

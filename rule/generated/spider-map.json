@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "65e894dc41e3802b2ef39ee544571fd97fbfccc4cda173d357bd90efc1c57d78",
+  "sourceDigest": "0a05cf3e1133537b7468abaae429f1387dc3683242eab7763f86a390834ba4e3",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -2365,7 +2365,7 @@
     },
     {
       "path": "src/components/WatchlistManager.tsx",
-      "sha256": "49526535b9369c2df8d3e29ccd10996f4dc8633aa3a8776faa4f6d60885b6ed8",
+      "sha256": "3d611b6f6da8f87da1e2ef1e45dd3af714e74158465475cd84a43f4edd89548f",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -2587,7 +2587,7 @@
     },
     {
       "path": "src/components/story/StoryVisuals.tsx",
-      "sha256": "83348b690729de4b65bc1dcf87936b98f633380a65e8b108f8e7e4a3ee91b0f5",
+      "sha256": "3c18af8ac9105f449b4b8ceaa8cd0fa48836a9329ab5ee7397661cfb89750f1f",
       "importedBy": [
         "src/components/TodayMarketStoryModal.tsx",
         "src/components/story/StorySlideView.tsx"
@@ -12343,7 +12343,8 @@
         "src/utils/notificationSnapshots.ts",
         "src/hooks/usePullToRefresh.ts",
         "src/components/ui/PullToRefreshIndicator.tsx",
-        "src/components/ui/ComponentSkeleton.tsx"
+        "src/components/ui/ComponentSkeleton.tsx",
+        "src/components/story/StoryVisuals.tsx"
       ],
       "tests": [
         "server/tests/core.test.ts",
@@ -12364,7 +12365,7 @@
         "server/tests/mcpDirectoryQuality.test.ts",
         "server/tests/brandRefreshInbox.test.ts"
       ],
-      "reason": "List/detail identity, filters, watchlist membership, badge counts and timestamps must agree. Background refresh preserves content, density, selection and scroll. Rapid filter changes must not render older responses. Home membership uses active-list exact identities. The responsive watchlist editor preserves company metadata, page scrolling and four visible priority filters. Inbox presents unread items first, while device push delivery has an independent persistent control. Calendar labels use company names when symbols are numeric; sticky date headings share measured toolbar offsets. Home previews select the newest filing per exact watchlist security before limiting, without changing the full filing feed. Static Watchlist identity fallback uses the shared verified IndusInd code; existing list state, revisions and editor behavior are preserved. Inbox now has All/Watchlist/Results only, with unread-first ordering, read action below/right of filters and ephemeral per-owner/filter snapshots retained across close. Confirmed read/clear reconciles all cached filters; loading/error never erases saved content. Watchlist first-read readiness separates unknown from confirmed empty. Calendar/News/Watchlist pull indicators occupy flow below stable controls."
+      "reason": "List/detail identity, filters, watchlist membership, badge counts and timestamps must agree. Background refresh preserves content, density, selection and scroll. Rapid filter changes must not render older responses. Home membership uses active-list exact identities. The responsive watchlist editor preserves company metadata, page scrolling and four visible priority filters. Inbox presents unread items first, while device push delivery has an independent persistent control. Calendar labels use company names when symbols are numeric; sticky date headings share measured toolbar offsets. Home previews select the newest filing per exact watchlist security before limiting, without changing the full filing feed. Static Watchlist identity fallback uses the shared verified IndusInd code; existing list state, revisions and editor behavior are preserved. Inbox now has All/Watchlist/Results only, with unread-first ordering, read action below/right of filters and ephemeral per-owner/filter snapshots retained across close. Confirmed read/clear reconciles all cached filters; loading/error never erases saved content. Watchlist first-read readiness separates unknown from confirmed empty. Calendar/News/Watchlist pull indicators occupy flow below stable controls. Watchlist and Story symbol-to-code fallback maps also use the shared blank BSE code, preventing the old Advanced Enzyme mapping from returning through a client fallback."
     },
     {
       "id": "frontend-notes",

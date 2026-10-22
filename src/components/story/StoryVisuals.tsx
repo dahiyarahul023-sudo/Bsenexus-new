@@ -86,7 +86,7 @@ export const SYMBOL_TO_SCRIP: Record<string, string> = {
   'BIOCON': '532523',
   'BLUESTARCO': '500067',
   'BPCL': '500547',
-  'BSE': '540025',
+  'BSE': VERIFIED_STOCK_BY_SYMBOL.BSE.scripCode,
   'CANBK': '532483',
   'CDSL': '540615',
   'CGPOWER': '500093',
