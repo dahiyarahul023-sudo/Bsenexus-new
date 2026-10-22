@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { calendarCacheKey, readCalendarScope, saveCalendarScope, type CalendarScope } from '../shared/calendarScope';
+import { calendarDayKey, projectCalendarTiming } from '../shared/calendarTiming';
 import { 
   CalendarDays, RefreshCw, Search, Clock, Building2, Filter, 
   AlertCircle, CheckCircle2, Upload, FileText, Sparkles, 
@@ -30,6 +31,7 @@ import { ShareActionMenu } from './ui/motion/ShareActionMenu';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { useFeedDensity } from '../hooks/useFeedDensity';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
+import { useVisibilityInterval } from '../hooks/useVisibilityInterval';
 import { useSwipeGesture } from '../hooks/useSwipeGesture';
 import { PullToRefreshIndicator } from './ui/PullToRefreshIndicator';
 import { HeliosPill, heliosCard } from './ui/helios';
@@ -185,7 +187,7 @@ function ResultsCalendarView() {
   const { isDeveloperMode } = useDeveloperMode();
   // SWR: Initialize calendar items immediately from client cache for 0ms transition
   // (12h TTL — survives app restarts via localStorage; fresh data loads in background)
-  const [items, setItems] = useState<ResultCalendarItem[]>(() => {
+  const [storedItems, setItems] = useState<ResultCalendarItem[]>(() => {
     const cached = getCacheItem<ResultCalendarItem[]>(calendarKey, 12 * 60 * 60 * 1000) || [];
     return cached.map((it: any) => ({
       ...it,
@@ -193,6 +195,9 @@ function ResultsCalendarView() {
       meetingDate: getResolvedMeetingDate(it) || it.meetingDate
     }));
   });
+  const [calendarDay, setCalendarDay] = useState(() => calendarDayKey());
+  const dayClock = useRef(calendarDay);
+  const items = useMemo(() => storedItems.map(item => projectCalendarTiming(item, Date.now())), [storedItems, calendarDay]);
   const [loading, setLoading] = useState(() => {
     const cached = getCacheItem<ResultCalendarItem[]>(calendarKey, 12 * 60 * 60 * 1000);
     return !cached || cached.length === 0;
@@ -518,6 +523,7 @@ function ResultsCalendarView() {
         setCacheItem(key, fetchedItems);
         setLastUpdated(data.lastUpdated || 0);
         if (data.calendarIncomplete) setCalendarError('Some BSE dates could not be refreshed. Previously available dates are retained.');
+        if (data.calendarHistoryUnavailable) setCalendarError('Stored calendar history could not be fully recovered. Retry to check missing archive dates.');
         
         const todayCount = data.todayCount ?? 0;
         const upcomingFutureCount = data.upcomingFutureCount ?? (data.upcomingCount ? Math.max(0, data.upcomingCount - todayCount) : 0);
@@ -555,6 +561,16 @@ function ResultsCalendarView() {
       }
     }
   };
+
+  useVisibilityInterval(() => {
+    const nextDay = calendarDayKey();
+    if (nextDay !== dayClock.current) {
+      dayClock.current = nextDay;
+      setCalendarDay(nextDay);
+      setCurrentPage(1);
+      void fetchCalendar(false);
+    }
+  }, 30_000);
 
   const fetchWatchlists = async () => {
     if (!user && !profile) {
@@ -932,8 +948,8 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
     } else if (statusFilter === 'upcoming') {
       result = result.filter(i => i.status === 'UPCOMING' || i.daysLeft > 0);
     } else if (statusFilter === 'declared') {
-      // Declared or Recent past 30 days
-      result = result.filter(i => i.isDeclared || i.status === 'RECENT' || (i.daysLeft < 0 && i.daysLeft >= -30));
+      // Keep all recorded past meetings accessible without inventing a declaration.
+      result = result.filter(i => i.isDeclared || i.daysLeft < 0);
     } else if (statusFilter === 'ai') {
       result = result.filter(i => Boolean(i.aiSummary));
     }
@@ -1626,7 +1642,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
         <div className="px-3 py-2 bg-slate-50 dark:bg-[#1A1926] border border-slate-200/90 dark:border-[#2D283E] rounded-xl text-xs text-slate-600 dark:text-slate-300 flex items-center justify-between gap-2 shadow-2xs">
           <div className="flex items-center gap-2">
             <Info size={14} className="text-slate-400 dark:text-slate-400 shrink-0" />
-            <span>No board meetings today or upcoming &middot; <strong className="text-slate-900 dark:text-white">{summaryStats.recentCount || allDeclaredCount}</strong> results declared in last 30 days</span>
+            <span>No board meetings today or upcoming &middot; {summaryStats.recentCount > 0 ? <><strong className="text-slate-900 dark:text-white">{summaryStats.recentCount}</strong> meetings archived in last 30 days</> : 'Declared results are available in Results Archive'}</span>
           </div>
           {statusFilter !== 'declared' && (
             <button
@@ -1634,7 +1650,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
               onClick={() => handleTabChange('declared')}
               className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer flex items-center gap-1 shrink-0"
             >
-              <span>View Declared Results</span>
+              <span>View Results Archive</span>
               <ChevronRight size={12} />
             </button>
           )}
@@ -1918,7 +1934,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-[#252233] dark:hover:bg-[#2D2840] border border-slate-200 dark:border-[#3E3854] text-slate-700 dark:text-slate-200 rounded-lg text-xs font-bold transition-all cursor-pointer"
                   >
                     <Clock size={13} />
-                    <span>View {summaryStats.recentCount} Recent Declared</span>
+                    <span>View {summaryStats.recentCount} Recently Archived</span>
                   </button>
                 )}
 

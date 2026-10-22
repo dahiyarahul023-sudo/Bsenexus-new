@@ -2,7 +2,7 @@ import { pageItems } from '../shared/companyFilings';
 import { ListPagination } from './ui/ListPagination';
 import '../styles/overnight-adr.css';
 import { CompanyAdr } from './adr/OvernightAdr';
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback } from 'react';
 import { 
   X, Building2, TrendingUp, TrendingDown, Calendar, Sparkles, 
   ExternalLink, Clock, Shield, BarChart3, FileText, Download, 
@@ -71,6 +71,8 @@ export function CompanyIntelligenceModal({
   const [listPages, setListPages] = useState({ filings: 1, timeline: 1 });
   const readRevision = useRef(0);
   const contentRef = useRef<HTMLDivElement>(null);
+  const pageHeadingRef = useRef<HTMLHeadingElement>(null);
+  const pageChangePending = useRef(false);
   const readController = useRef<AbortController | null>(null);
   const syncController = useRef<AbortController | null>(null);
   const syncRevision = useRef(0);
@@ -368,9 +370,16 @@ export function CompanyIntelligenceModal({
 
   const filingsPage = pageItems<any>(recentFilings, listPages.filings);
   const timelinePage = pageItems<any>(filteredTimeline, listPages.timeline);
+  useLayoutEffect(() => {
+    if (!pageChangePending.current) return;
+    pageChangePending.current = false;
+    // Reset after the new rows commit. The modal body is the only scroll owner.
+    if (contentRef.current) contentRef.current.scrollTop = 0;
+    pageHeadingRef.current?.focus({ preventScroll: true });
+  }, [listPages.filings, listPages.timeline]);
   const changePage = (list: 'filings' | 'timeline', page: number) => {
+    pageChangePending.current = true;
     setListPages(previous => ({ ...previous, [list]: page }));
-    contentRef.current?.scrollTo({ top: 0 });
   };
   if (!isOpen) return null;
   return (
@@ -974,19 +983,19 @@ export function CompanyIntelligenceModal({
               {visibleIntel?.filingCoverage === 'partial' && <p role="status" className="text-xs">Stored history could not be fully read. These are available cached records; retry to check counts.</p>}
               {activeTab === 'filings' && (
                 <div className="space-y-3 animate-in fade-in duration-150">
-                  <div className="text-xs font-bold text-slate-900 dark:text-white">
+                  <h3 ref={pageHeadingRef} tabIndex={-1} className="text-xs font-bold text-slate-900 dark:text-white">
                     Chronological BSE Filings Archive ({recentFilings.length} items)
-                  </div>
+                  </h3>
 
                   {recentFilings.length === 0 ? (
                     <div className="py-12 text-center text-xs text-slate-400">
                       No stored filings found for this company.
                     </div>
                   ) : (
-                    <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
+                    <div className="space-y-2">
                       {filingsPage.items.map((filing: any, fIdx: number) => (
                         <div 
-                          key={fIdx}
+                          key={filing.id || fIdx}
                           className={cn(heliosCard, "p-3 text-xs flex items-center justify-between gap-3 transition-all hover:shadow-[0_16px_40px_rgba(15,23,42,0.10)] dark:hover:shadow-[0_16px_40px_rgba(0,0,0,0.55)]")}
                         >
                           <div className="min-w-0 flex-1 space-y-0.5">

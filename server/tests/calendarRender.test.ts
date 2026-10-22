@@ -13,10 +13,11 @@ const originalCss = moduleRequire.extensions['.css'];
 moduleRequire.extensions['.css'] = () => {};
 after(() => { if (originalCss) moduleRequire.extensions['.css'] = originalCss; else delete moduleRequire.extensions['.css']; });
 
-function renderScope(scope?: CalendarScope, owner = 'rahul') {
+function renderScope(scope?: CalendarScope, owner = 'rahul', now = '2026-10-21T10:00:00+05:30', archive = false) {
   const file = 'src/components/ResultsCalendar.tsx';
   const actual = createRequire(new URL('../../' + file, import.meta.url));
   const exports: any = {};
+  class Clock extends Date { static now() { return Date.parse(now); } }
   const storage = { getItem: (key: string) => key === calendarPreferenceKey('rahul') ? scope || null : null, setItem() {} };
   const selected = owner === 'rahul' ? scope || 'all' : 'all';
   const raw = [
@@ -25,8 +26,9 @@ function renderScope(scope?: CalendarScope, owner = 'rahul') {
   ].map(item => ({ ...item, id: item.scripCode, purpose: 'Financial Results', meetingDate: '22/10/2026', meetingTimestamp: Date.parse('2026-10-22T00:00:00+05:30'), status: 'UPCOMING', daysLeft: 1, updatedAt: '' }));
   const code = ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText;
   vm.runInNewContext(code, {
-    exports, localStorage: storage, window: { localStorage: storage, innerWidth: 390 }, console, setTimeout, clearTimeout,
+    exports, Date: Clock, localStorage: storage, window: { localStorage: storage, innerWidth: 390 }, console, setTimeout, clearTimeout,
     require(spec: string) {
+      if (spec === 'react' && archive) return { ...React, useState: (value: any) => React.useState(value === 'upcoming' ? 'declared' : value) };
       if (spec.endsWith('/AuthContext')) return { useAuth: () => ({ user: { uid: owner }, profile: { tier: 'pro' }, isPro: true, isPaidPro: true }) };
       if (spec.endsWith('/IntelModalContext')) return { useIntelModal: () => ({ openIntelModal() {} }) };
       if (spec.endsWith('/aiQuota')) return { useAiQuota: () => ({ canGenerate: true }), syncQuotaFromResponse() {} };
@@ -63,4 +65,13 @@ test('remembered Watchlist/F&O selections render correctly and do not carry into
   assert.match(fno, /aria-pressed="true"[^>]*>F&amp;O Stocks<\/button>/);
   const differentAccount = renderScope('watchlist', 'another-account');
   assert.match(differentAccount, /aria-pressed="true"[^>]*>All<\/button>/);
+});
+
+test('cached October 22 meetings rebase into Archive after IST rollover and remain accessible beyond 30 days without a declaration', () => {
+  for (const now of ['2026-10-23T00:00:00+05:30', '2026-12-01T10:00:00+05:30']) {
+    const html = renderScope('all', 'rahul', now, true);
+    assert.equal((html.match(/Reliance Industries Ltd/g) || []).length, 1);
+    assert.equal((html.match(/Vishal Mega Mart Limited/g) || []).length, 1);
+    assert.doesNotMatch(html, /results declared in last 30 days/);
+  }
 });
