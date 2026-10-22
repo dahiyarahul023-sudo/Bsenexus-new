@@ -1,3 +1,4 @@
+import { createAdrHandler } from './adr.js';
 import express from "express";
 import { parseCalendarScope } from '../../src/shared/calendarScope.js';
 import bcrypt from "bcryptjs";
@@ -78,6 +79,7 @@ import { readLocalJson } from "../database/localStore.js";
 import { classifyMaterialEvent } from "../services/timelineClassifier.js";
 import { searchCompany } from "./search.js";
 import { fetchLiveMarketIndices, getMarketSessionStatus } from "../services/marketIndicesService.js";
+import { getAdrSnapshot } from '../services/adrService.js';
 import { getLiveStoryFeed } from "../services/storyFeedService.js";
 import { sendOneSignalPush, isOneSignalConfigured, ONESIGNAL_APP_ID } from "../services/oneSignal.js";
 import { 
@@ -1259,7 +1261,7 @@ apiRouter.post("/users/profile", requireAuth, async (req, res) => {
         'muteInAppNotifications', 'stocksHighPriority', 'stocksMediumPriority',
         'stocksLowPriority', 'concallsAndInvestorMeets', 'boardMeetingsAndOutcomes',
         'insiderTradingAndSAST', 'creditRatingChanges', 'annualReportsAndAudits',
-        'telegramNewsAlerts', 'telegramAlertsEnabled', 'telegramAiSummaryEnabled',
+        'telegramNewsAlerts', 'telegramAlertsEnabled', 'telegramAiSummaryEnabled', 'adrAlertsEnabled',
       ];
       for (const k of booleanKeys) {
         if (k in rawNp && typeof rawNp[k] === 'boolean') cleanedNp[k] = rawNp[k];
@@ -1629,6 +1631,8 @@ apiRouter.post("/results-calendar/telegram-broadcast", requireAdmin, telegramRat
 // ==========================================
 // Dynamic Live Market Story Feed Route
 // ==========================================
+apiRouter.get('/market/adr', createAdrHandler(getAdrSnapshot));
+
 apiRouter.get("/story/feed", async (_req, res) => {
   try {
     res.setHeader('Cache-Control', 'private, max-age=30, stale-while-revalidate=60');

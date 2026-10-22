@@ -16,13 +16,14 @@ function executeStatement(needle: string, globals: Record<string, unknown>) {
 
 test('the container attempts a cycle every 60 seconds, including after a failure and a recent successful fetch', async () => {
   let tick!: () => Promise<void>;
-  let calls = 0, radarCalls = 0, priceCalls = 0;
+  let calls = 0, radarCalls = 0, priceCalls = 0, adrCalls = 0;
   let interval = 0;
   executeStatement('await processAnnouncements()', {
     trackInterval: (handle: unknown) => handle,
     setInterval: (callback: typeof tick, ms: number) => { tick = callback; interval = ms; },
     refreshRadarIntake: async () => { radarCalls++; },
     refreshRadarPriceSnapshots: async () => { priceCalls++; },
+    processAdrAlerts: async () => { adrCalls++; },
     processAnnouncements: async () => { calls++; if (calls === 1) throw new Error('offline'); },
     getBseFeedStaleness: () => ({ lastSuccessfulFetchMs: Date.now(), bootMs: Date.now() }),
     Date, console: { warn() {} },
@@ -33,6 +34,7 @@ test('the container attempts a cycle every 60 seconds, including after a failure
   assert.equal(calls, 2, 'a recent fetch or a failed tick must not suppress the next minute');
   assert.equal(radarCalls, 2, 'the existing watchdog also triggers source intake without another timer');
   assert.equal(priceCalls, 2, 'price capture runs without a detail visit');
+  assert.equal(adrCalls, 2, 'the ADR worker is invoked by the same watchdog, with its own morning gate');
 });
 
 test('the cron wiring caps source-block/off-hours failure backoff at one minute', () => {

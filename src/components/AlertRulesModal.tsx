@@ -1,3 +1,4 @@
+import { AdrAlertPreference } from './adr/AdrAlertPreference';
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   X, ShieldAlert, Plus, ToggleLeft, ToggleRight, Trash2, 
@@ -272,6 +273,7 @@ export function AlertRulesModal({ isOpen, onClose }: AlertRulesModalProps) {
         <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4 overscroll-contain">
           {error && <div role="alert" className="text-sm text-rose-600">{error}{!loaded && <button type="button" onClick={()=>void loadRules()} disabled={loading} className="ml-2 underline">Try again</button>}</div>}
           <DeviceNotificationControl />
+          <AdrAlertPreference key={uid} />
           {loading && <AlertRuleSkeleton />}
           <fieldset disabled={saving || loading || !loaded} className="min-w-0" onChange={()=>setPresetSavedFeedback(null)} onClick={()=>setPresetSavedFeedback(null)}>
           

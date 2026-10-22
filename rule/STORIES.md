@@ -53,3 +53,8 @@ Reading duration depends on text, including list/metric/comparison copy, and vis
 Feed check time, publication time, quote time and institutional report date are distinct. Do not label check time as trade time or claim every available snapshot is live. Source links allow credential-free HTTPS only. Generated content is rendered as React text, never injected HTML. This change adds no backend write, job, database migration or authorization policy.
 
 Maintain this contract, the `frontend-stories` domain, generated map and the current `changes/bounded-company-stories.md` evidence together (`changes/clean-market-stories.md` records the earlier implementation). Tests are `server/tests/marketStories.test.ts` and `server/tests/companyStoryBudget.test.ts`; they cover data behavior and render output. Browser/device observations, fixture data, local build, commit, merge, CI and live deployment are separate evidence states. Do not mark an unexecuted device or production check as passed.
+
+
+## Overnight ADR (22 October 2026)
+
+The existing Market pulse chapter can lead with one three-company ADR list, from the same validated snapshot as Home/company intelligence. Exact quote-source dates and USD regular-session context are included. Unconfirmed/stale snapshots omit the ADR Story. There is no new chapter or change to the seven-screen Company news ceiling. ADR.md owns identities, source/session/price rules and morning alert boundaries.
