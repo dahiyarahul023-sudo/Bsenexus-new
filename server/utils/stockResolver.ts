@@ -222,7 +222,7 @@ const INITIAL_STOCKS: StockMasterEntry[] = [
   { symbol: "MPHASIS", scripCode: "526299", name: "Mphasis Ltd", nameKeywords: ["MPHASIS"] },
   { symbol: "MCX", scripCode: "534091", name: "Multi Commodity Exchange of India Ltd", nameKeywords: ["MULTI COMMODITY EXCHANGE", "MCX"] },
   { symbol: "CDSL", scripCode: "540615", name: "Central Depository Services (India) Ltd", nameKeywords: ["CENTRAL DEPOSITARY SERVICES", "CENTRAL DEPOSITORY SERVICES", "CDSL"] },
-  { symbol: "BSE", scripCode: "540025", name: "BSE Ltd", nameKeywords: ["BSE LIMITED", "BSE"] },
+  { symbol: "BSE", scripCode: "", name: "BSE Limited", nameKeywords: ["BSE LIMITED", "BSE"] },
   { symbol: "IEX", scripCode: "540750", name: "Indian Energy Exchange Ltd", nameKeywords: ["INDIAN ENERGY EXCHANGE", "IEX"] },
   { symbol: "POLYCAB", scripCode: "542652", name: "Polycab India Ltd", nameKeywords: ["POLYCAB INDIA", "POLYCAB"] },
   { symbol: "HAVELLS", scripCode: "517354", name: "Havells India Ltd", nameKeywords: ["HAVELLS INDIA", "HAVELLS"] },

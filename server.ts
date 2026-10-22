@@ -1,4 +1,4 @@
-import { hasExactScripCode } from './src/shared/scripMatching.js';
+import { matchesCompanyFiling } from './src/shared/scripMatching.js';
 import { getKeywordGuide, KEYWORD_GUIDE_CSS } from './src/content/keywordGuides.js';
 import 'dotenv/config';
 import { initServerSentry, Sentry } from "./server/sentry.js";
@@ -47,7 +47,6 @@ import { renderAiConnectionDocs } from './server/ai/docs';
 import { AI_DATA_DISCLOSURE } from './src/shared/aiDataDisclosure';
 import { DIRECTORY_COMPANIES, directoryDescription, directoryBadge } from './src/config/companyDirectory';
 import { EXCHANGE_COMPANIES, exchangeCompany } from './src/config/exchangeCompanies';
-import { renderExchangeProfile } from './server/services/exchangeProfiles';
 import { mountAiIntegration } from './server/ai/http.js';
 import { readCachedResultsCalendar } from './server/services/resultsCalendarService.js';
 import { renderPublicCalendarShell, publicCalendarCacheControl } from './server/services/publicCalendar.js';
@@ -816,6 +815,8 @@ ${JSON.stringify(jsonLd, null, 2)}
 }
 
 function renderCompanyPage(data: any, symbol: string, scripCode?: string): string {
+  const operator = exchangeCompany(symbol);
+  const venue = operator?.symbol === 'BSE' ? 'NSE' : 'BSE';
   const allStockEntries = getAllStockEntries();
   const masterEntry = allStockEntries.find(
     e => e.symbol.toUpperCase() === symbol.toUpperCase() || (scripCode && e.scripCode === scripCode)
@@ -827,25 +828,25 @@ function renderCompanyPage(data: any, symbol: string, scripCode?: string): strin
   const companyName = cleanCompanyName;
   const quote = data.quote;
   const upcomingEvent = data.upcomingEvent;
-  const quarterlyResults: any[] = Array.isArray(data.quarterlyResults) ? data.quarterlyResults.filter((filing: any) => hasExactScripCode(filing, scripCode)) : [];
-  const recentFilings: any[] = Array.isArray(data.recentFilings) ? data.recentFilings.filter((filing: any) => hasExactScripCode(filing, scripCode)) : [];
+  const quarterlyResults: any[] = Array.isArray(data.quarterlyResults) ? data.quarterlyResults.filter((filing: any) => matchesCompanyFiling(filing, scripCode, symbol)) : [];
+  const recentFilings: any[] = Array.isArray(data.recentFilings) ? data.recentFilings.filter((filing: any) => matchesCompanyFiling(filing, scripCode, symbol)) : [];
   const aiSnapshot = (data.aiSnapshot || '').trim();
 
   // High-CTR Stock Page Title formula:
-  // <Clean Company Name> (<SYMBOL>) BSE Announcements & Filings Live | Bsenexus
-  const pageTitle = `${cleanCompanyName} (${symbol}) BSE Announcements & Filings Live | Bsenexus`;
+  // <Clean Company Name> (<SYMBOL>) ${venue} Announcements & Filings Live | Bsenexus
+  const pageTitle = `${cleanCompanyName} (${symbol}) ${venue} Announcements & Filings Live | Bsenexus`;
   const canonicalUrl = `https://bsenexus.in/company/${encodeURIComponent(symbol)}`;
 
   const latestFiling = recentFilings[0];
   const latestAnnouncementText = latestFiling ? (latestFiling.headline || latestFiling.subject || latestFiling.NEWSSUB || latestFiling.MORE || '').trim() : '';
 
   const safeHeadline = latestAnnouncementText.replace(/`/g, "'").replace(/\$\{/g, '$ {').replace(/\s+/g, ' ').trim();
-  const scripTag = scripCode ? ` | BSE: ${scripCode}` : '';
+  const scripTag = scripCode ? ` | ${venue}: ${scripCode}` : '';
   const currentYear = new Date().getFullYear();
 
   let description = safeHeadline
-    ? `Get live BSE announcements & PDF filings for ${cleanCompanyName} (${symbol}${scripTag}). Latest disclosure: "${safeHeadline.slice(0, 48)}...". Track in real-time.`.slice(0, 155)
-    : `Get live BSE announcements, ${currentYear} results & official PDF filings for ${cleanCompanyName} (${symbol}${scripTag}). Track board meetings & corporate actions.`.slice(0, 155);
+    ? `Get live ${venue} announcements & PDF filings for ${cleanCompanyName} (${symbol}${scripTag}). Latest disclosure: "${safeHeadline.slice(0, 48)}...". Track in real-time.`.slice(0, 155)
+    : `Get live ${venue} announcements, ${currentYear} results & official PDF filings for ${cleanCompanyName} (${symbol}${scripTag}). Track board meetings & corporate actions.`.slice(0, 155);
 
   // FAQ — query-matched, data-driven Q&A (AI-search playbook: answer the exact
   // questions ChatGPT/Google AI Overviews search for, using the company's live
@@ -859,10 +860,10 @@ function renderCompanyPage(data: any, symbol: string, scripCode?: string): strin
     : (typeof upcomingEvent?.countdownDays === 'number' ? `in ${upcomingEvent.countdownDays} days` : '');
   const faqItems: Array<{ q: string; a: string }> = [
     {
-      q: `What is the latest BSE announcement by ${companyName}?`,
+      q: `What is the latest ${venue} announcement by ${companyName}?`,
       a: safeHeadline
-        ? `The latest BSE disclosure by ${companyName} (${symbol})${latestFilingDate ? `, filed on ${latestFilingDate},` : ''} is: "${safeHeadline}". Bsenexus tracks every official filing for ${companyName} with AI-powered summaries on its announcements feed.`
-        : `${companyName} (${symbol}) disclosures are tracked on Bsenexus, which structures every official BSE filing with AI-powered summaries.`
+        ? `The latest ${venue} disclosure by ${companyName} (${symbol})${latestFilingDate ? `, filed on ${latestFilingDate},` : ''} is: "${safeHeadline}". Bsenexus tracks every official filing for ${companyName} with AI-powered summaries on its announcements feed.`
+        : `${companyName} (${symbol}) disclosures are tracked on Bsenexus, which structures every official ${venue} filing with AI-powered summaries.`
     },
     {
       q: `When is ${companyName}'s next board meeting?`,
@@ -884,7 +885,7 @@ function renderCompanyPage(data: any, symbol: string, scripCode?: string): strin
         "@type": "Corporation",
         "@id": `${canonicalUrl}#corporation`,
         "name": companyName,
-        "tickerSymbol": `BSE:${scripCode || symbol}`,
+        "tickerSymbol": `${venue}:${scripCode || symbol}`,
         "url": canonicalUrl,
         "description": description,
         ...(quote?.sector || quote?.industry ? { "industry": quote.sector || quote.industry } : {}),
@@ -1391,13 +1392,20 @@ ${jsonLd}
       .price-val { font-size: 1.875rem; }
       .filing-item { flex-direction: column; align-items: flex-start; gap: 6px; }
     }
+    .operator-profile-note { font-size: .875rem; line-height: 1.65; }
+    .operator-profile-note summary { cursor: pointer; font-weight: 700; }
+    .operator-profile-note a { color: #047857; text-decoration: underline; text-underline-offset: 3px; }
+    .operator-profile-note a:focus-visible, .operator-profile-note summary:focus-visible { outline: 2px solid #10b981; outline-offset: 4px; }
+    .operator-profile-note li { margin-block: 8px; }
+    .operator-coverage { font-size: .8125rem; line-height: 1.65; color: var(--muted); }
+    @media (prefers-color-scheme: dark) { .operator-profile-note a { color: #6ee7b7; } }
   </style>
 </head>
 <body>
   <div id="root">
   <header class="top-banner">
     <a href="https://bsenexus.in/" class="top-brand">
-      Bsenexus <span>Terminal</span>
+      <img src="/icon.svg" alt="" width="28" height="28"> Bsenexus <span>Terminal</span>
     </a>
     <a href="https://bsenexus.in/?tab=watchlists" class="app-btn">
       Open in Bsenexus App &rarr;
@@ -1407,13 +1415,16 @@ ${jsonLd}
   <main class="container">
     <article class="card">
       <div class="meta-bar">
-        ${scripCode ? `<span class="badge scrip">BSE: ${escapeHtmlText(String(scripCode))}</span>` : ''}
+        ${operator ? `<span class="badge scrip">${escapeHtmlText(operator.listingLabel)}</span>` : scripCode ? `<span class="badge scrip">BSE: ${escapeHtmlText(String(scripCode))}</span>` : ''}
         <span class="badge scrip">${escapeHtmlText(symbol)}</span>
         ${quote?.exchange ? `<span class="badge scrip">${escapeHtmlText(quote.exchange)}</span>` : ''}
         ${quote?.sector ? `<span class="badge">${escapeHtmlText(quote.sector)}</span>` : ''}
       </div>
 
       <h1>${escapeHtmlText(companyName)} (${escapeHtmlText(scripCode || symbol)}) — Latest Corporate Announcements</h1>
+      ${operator ? `<details class="section operator-profile-note"><summary>Company identity &amp; official sources</summary><p>${escapeHtmlText(operator.description)}</p><p>Share listing: ${escapeHtmlText(operator.listingLabel)} · ISIN: ${escapeHtmlText(operator.isin)}. This equity is separate from the exchange’s market indices.</p><ul>${operator.sources.map(source => `<li><a href="${escapeHtmlAttr(source.url)}" target="_blank" rel="noopener noreferrer">${escapeHtmlText(source.label)} ↗</a></li>`).join('')}</ul></details><p class="operator-coverage">${operator.symbol === 'BSE' ? 'NSE disclosures appear below. Meeting dates for BSE Limited are available from NSE.' : 'Available BSE filings and financial results appear below.'}</p>` : ''}
+      ${operator && !recentFilings.length ? '<p role="status">No verified filings are available in this view yet. Check the official sources above.</p>' : ''}
+
 
       ${quote ? `
       <div class="quote-summary">
@@ -1475,7 +1486,7 @@ ${jsonLd}
         <div class="filings-list">
           ${recentFilings.slice(0, 20).map((f: any) => {
             const fId = f.id || f.newsId || '';
-            const fSub = f.subject || 'BSE Corporate Announcement';
+            const fSub = f.subject || `${venue} Corporate Announcement`;
             const fDate = f.bseTime || (f.timestamp ? new Date(f.timestamp).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' }) : 'Recent');
             return `<a href="/announcement/${escapeHtmlAttr(encodeURIComponent(fId))}" class="filing-item">
               <span class="filing-sub">${escapeHtmlText(fSub)}</span>
@@ -1559,7 +1570,7 @@ ${jsonLd}
       </section>
 
       <section class="section faq-sec">
-        <h2 class="section-label">Frequently Asked Questions about ${escapeHtmlText(companyName)} BSE Disclosures</h2>
+        <h2 class="section-label">Frequently Asked Questions about ${escapeHtmlText(companyName)} ${venue} Disclosures</h2>
         ${faqItems.map(item => `
         <div class="faq-item">
           <h3 class="faq-q">${escapeHtmlText(item.q)}</h3>
@@ -1575,7 +1586,7 @@ ${jsonLd}
     </article>
 
     <footer>
-      Bsenexus Financial Intelligence &middot; Real-time regulatory filings, board meetings &amp; quarterly results direct from BSE India public feeds.
+      Bsenexus Financial Intelligence &middot; Real-time regulatory filings, board meetings &amp; quarterly results from official ${venue} disclosures.
     </footer>
   </main>
   </div>
@@ -3379,7 +3390,7 @@ ${jsonLd}
 <body>
   <header class="top-banner">
     <a href="https://bsenexus.in/" class="top-brand">
-      <div class="brand-icon">N</div>
+      <img class="brand-icon" src="/icon.svg" alt="BSE Nexus" width="28" height="28">
       Bsenexus <span>Companies</span>
     </a>
     <nav class="nav-links">
@@ -6003,11 +6014,10 @@ app.get(['/company/:symbol', '/stock/:symbol'], async (req, res) => {
   const exchange = exchangeCompany(cleanInput);
   if (exchange) {
     if (req.path !== `/company/${exchange.symbol}`) return res.redirect(301, `/company/${exchange.symbol}`);
-    return res.type('html').set('Cache-Control', 'public, max-age=300, s-maxage=3600').send(renderExchangeProfile(exchange));
   }
   const curated = DIRECTORY_COMPANIES.find(company => company.symbol === cleanInput || (company.scripCode && company.scripCode === cleanInput));
   let symbol = curated?.symbol || cleanInput;
-  let scripCode = curated?.scripCode || getScripCode(cleanInput);
+  let scripCode = exchange?.symbol === 'BSE' ? '' : curated?.scripCode || getScripCode(cleanInput);
 
   // If user navigated via numeric BSE Scrip Code (e.g., 500325)
   if (/^\d{5,7}$/.test(cleanInput)) {
@@ -6017,7 +6027,7 @@ app.get(['/company/:symbol', '/stock/:symbol'], async (req, res) => {
     if (match && match.symbol) {
       symbol = match.symbol;
     }
-  } else if (!scripCode) {
+  } else if (!scripCode && !exchange) {
     const allEntries = getAllStockEntries();
     const match = allEntries.find(e => e.symbol.toUpperCase() === cleanInput);
     if (match && match.scripCode) {
@@ -6025,7 +6035,7 @@ app.get(['/company/:symbol', '/stock/:symbol'], async (req, res) => {
     }
   }
 
-  if (!scripCode) {
+  if (!scripCode && exchange?.symbol !== 'BSE') {
     return res.status(404).setHeader('Content-Type', 'text/html; charset=utf-8').send(renderCompany404Page(symbol));
   }
 

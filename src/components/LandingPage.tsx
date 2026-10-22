@@ -414,7 +414,7 @@ export function LandingPage({
               {user || profile ? (
                 <motion.button
                   whileTap={{ scale: 0.96 }}
-                  onClick={() => onEnterTerminal('dashboard')}
+                  onClick={() => onEnterTerminal('home')}
                   aria-label={`User profile: ${profile?.displayName || 'User profile'}`}
                   className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-[#222030] hover:bg-slate-200 dark:hover:bg-[#2C293D] text-slate-900 dark:text-white text-xs font-bold transition-all border border-slate-200 dark:border-[#332E45] cursor-pointer shadow-xs min-h-[38px] whitespace-nowrap select-none"
                 >
@@ -438,7 +438,7 @@ export function LandingPage({
               {/* Main Launch Live Terminal CTA */}
               <motion.button
                 whileTap={{ scale: 0.95 }}
-                onClick={() => onEnterTerminal('dashboard')}
+                onClick={() => onEnterTerminal('home')}
                 aria-label="Launch Live Terminal Dashboard"
                 className="hidden sm:flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white text-xs font-black shadow-md shadow-emerald-700/25 transition-all cursor-pointer select-none shrink-0 min-h-[38px]"
               >
@@ -562,7 +562,7 @@ export function LandingPage({
                   <button
                     onClick={() => {
                       setIsMobileNavOpen(false);
-                      onEnterTerminal('dashboard');
+                      onEnterTerminal('home');
                     }}
                     className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow-xs"
                   >
@@ -2046,7 +2046,7 @@ export function LandingPage({
                 'Board Meeting & Earnings Calendar',
               ]}
               ctaLabel={<span className="inline-flex items-center gap-2">Launch Terminal (Free) <ArrowRight className="w-4 h-4" /></span>}
-              onCta={() => onEnterTerminal('dashboard')}
+              onCta={() => onEnterTerminal('home')}
               className="h-full"
             />
 
@@ -2321,7 +2321,7 @@ export function LandingPage({
 
           <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
             <button
-              onClick={() => onEnterTerminal('dashboard')}
+              onClick={() => onEnterTerminal('home')}
               className="px-8 py-4 bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-black text-sm rounded-xl shadow-xl shadow-emerald-500/25 transition-all cursor-pointer flex items-center gap-2"
             >
               <Zap className="w-4 h-4 fill-slate-950" />

@@ -135,10 +135,12 @@ export function ImpactRadar({ active, identity, onNavigate, density, watched = [
   useEffect(() => {
     if (!active) return;
     if (!document.hidden) void refresh();
-    const visibility = () => { if (document.hidden) feed.cancelRead(); };
+    const visibility = () => { if (document.hidden) feed.cancelRead(); else void refresh(); };
+    const resume = () => { if (!document.hidden) void refresh(); };
     const nav = (e: Event) => { if ((e as CustomEvent).detail?.tab === 'home' && !document.hidden) void refresh(); };
     document.addEventListener('visibilitychange', visibility); window.addEventListener('bse_nav_tab_refresh', nav);
-    return () => { feed.dispose(); document.removeEventListener('visibilitychange', visibility); window.removeEventListener('bse_nav_tab_refresh', nav); };
+    window.addEventListener('online', resume); window.addEventListener('pageshow', resume);
+    return () => { feed.dispose(); document.removeEventListener('visibilitychange', visibility); window.removeEventListener('bse_nav_tab_refresh', nav); window.removeEventListener('online', resume); window.removeEventListener('pageshow', resume); };
   }, [active, feed, refresh]);
   useVisibilityInterval(refresh, 60_000, active);
   useVisibilityInterval(() => setNow(Date.now()), 15_000, active);

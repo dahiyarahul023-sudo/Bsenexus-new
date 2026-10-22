@@ -1,3 +1,4 @@
+import { isBseOperatorFiling } from '../../src/shared/scripMatching';
 import { DIRECTORY_COMPANIES } from '../../src/config/companyDirectory';
 import { resolveStockDetailsSync } from '../utils/stockResolver';
 import { contentVersion, type IndexNowPage } from './indexNowQueue';
@@ -10,8 +11,10 @@ export function storedFilingIndexPages(records: any[]): IndexNowPage[] {
   const companies = new Map<string, string[]>();
   for (const row of records) {
     const code = String(row?.scrip_cd || '').trim();
-    if (!row?.newsId || !row?.subject || !/^\d{6}$/.test(code)) continue;
-    const symbol = DIRECTORY_COMPANIES.find(company => company.scripCode === code)?.symbol || resolveStockDetailsSync(code)?.symbol || code;
+    if (!row?.newsId || !row?.subject) continue;
+    const nseOnlyBse = isBseOperatorFiling(row);
+    if (!nseOnlyBse && !/^\d{6}$/.test(code)) continue;
+    const symbol = nseOnlyBse ? 'BSE' : DIRECTORY_COMPANIES.find(company => company.scripCode === code)?.symbol || resolveStockDetailsSync(code)?.symbol || code;
     if (!/^[A-Z0-9&.-]{2,20}$/.test(symbol)) continue;
     const url = `https://bsenexus.in/company/${encodeURIComponent(symbol)}`;
     const versions = companies.get(url) || []; versions.push(publicFilingVersion(row)); companies.set(url, versions);
