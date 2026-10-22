@@ -1,3 +1,4 @@
+import { startHistorySync, historySyncStatus } from '../services/historicalFilings.js';
 import { createAdrHandler } from './adr.js';
 import express from "express";
 import { parseCalendarScope } from '../../src/shared/calendarScope.js';
@@ -50,7 +51,7 @@ import {
 } from "../services/resultsCalendarService.js";
 import { getStorageStatusReport, runAutoStorageCleanup, triggerManualTestStorageAlert, pruneAnnouncementsByPercentage } from "../services/storageMonitor.js";
 import { getManualStorageMode, setManualStorageMode, resetQuotaExceededFlag, isFirestoreQuotaExceeded, resetAdminPermissionDenied, isAdminPermissionDenied } from "../database/localStore.js";
-import { getCompanyIntelligence, generateCompanyAiOverview, fetchStockQuote } from "../services/companyIntelService.js";
+import { getCompanyIntelligence, getCompanyFilingCount, generateCompanyAiOverview, fetchStockQuote } from "../services/companyIntelService.js";
 import { filterNotifications, getAllNotifications, getUnreadNotificationCount, markNotificationRead, markNotificationsReadBatch, markAllNotificationsRead, clearAllNotifications } from "../database/notificationDao.js";
 import { circuitRegistry } from "../utils/circuitBreaker.js";
 import { 
@@ -554,7 +555,7 @@ apiRouter.get("/announcements",
         processAnnouncements().catch(() => {});
       }
     } catch { /* non-fatal: staleness headers are best-effort */ }
-    // Cap derived from per-stock policy: 25 filings per tracked stock × up to 100 stocks.
+    // Recent-feed response budget; full company history is separately paged.
     // DAO serves from in-memory cache (up to 10k items), so this costs no extra Firestore reads.
     const limitParam = Math.min(2500, Math.max(1, parseInt(req.query.limit as string) || 50));
     let symbols: string[] | undefined;
@@ -2087,30 +2088,28 @@ apiRouter.get("/stock-results-history", async (req, res) => {
   }
 });
 
-// Deep Historical Sync for a single stock (1 to 5 years)
-// PERF (1 Oct 2026 audit PERF-001): Previously awaited the FULL deep fetch
-// synchronously, which could block the event loop for 60-80s on slow BSE
-// (same pattern as the 1 Oct outage). Now uses autoFetchDeepHistoricalResults
-// which is bounded at 8s wait + 10-min cooldown + in-flight dedupe. The fetch
-// continues in the background if it doesn't land within 8s; the client gets
-// an immediate response and can re-query for the filled history.
+// Explicit archive start returns a worker receipt; polling never starts new exchange work.
+// The worker is bounded, duplicate-safe by filing ID and reports storage failures explicitly.
 apiRouter.post("/stocks/:scripCode/fetch-deep-history", requireProOrAdmin, aiRateLimiter, async (req, res) => {
   try {
     const scripCode = req.params.scripCode;
-    const { symbol, years } = req.body;
-    const yearsNum = Math.max(1, Math.min(5, parseInt(years, 10) || 1));
-    const landed = await autoFetchDeepHistoricalResults(scripCode, symbol, yearsNum);
-    res.json({
-      success: true,
-      landed,
-      message: landed
-        ? `Deep fetch complete (${yearsNum} year${yearsNum > 1 ? 's' : ''}).`
-        : 'Deep fetch initiated in background. Refresh in a few seconds to see updated history.',
-      years: yearsNum
-    });
+    const yearsNum = Number(req.body?.years ?? 1);
+    if (!/^\d{6}$/.test(scripCode) || !Number.isInteger(yearsNum) || yearsNum < 1 || yearsNum > 5) return res.status(400).json({ success: false, error: 'Valid BSE code and 1–5 whole years required' });
+    const job = startHistorySync(scripCode, yearsNum);
+    res.setHeader('Cache-Control', 'no-store');
+    res.status(job.state === 'running' ? 202 : 200).json({ success: true, job });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }
+});
+
+apiRouter.get("/stocks/:scripCode/fetch-deep-history", requireProOrAdmin, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  const years = Number(req.query.years ?? 1);
+  if (!/^\d{6}$/.test(req.params.scripCode) || !Number.isInteger(years) || years < 1 || years > 5 || typeof req.query.id !== 'string') return res.status(400).json({ success: false, error: 'Invalid archive status request' });
+  const job = historySyncStatus(req.params.scripCode, years, req.query.id);
+  if (!job) return res.status(404).json({ success: false, error: 'Archive worker status unavailable after restart or on this instance. Saved records remain available; retry sync.' });
+  res.json({ success: true, job });
 });
 
 // Deep Historical Sync for all active Watchlist stocks (1 to 5 years)
@@ -2263,6 +2262,18 @@ apiRouter.get("/pdf-open", async (req, res) => {
 // ==========================================
 // FEATURE 1: COMPANY INTELLIGENCE & QUOTE
 // ==========================================
+
+apiRouter.get("/company-filing-counts", async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  const stocks = typeof req.query.stocks === 'string' ? [...new Set(req.query.stocks.split(','))] : [];
+  if (!stocks.length || stocks.length > 20 || stocks.some(code => !/^\d{6}$/.test(code) && code !== 'BSE')) return res.status(400).json({ success: false, error: 'Provide 1–20 exact BSE codes or BSE operator identity' });
+  const items: Record<string, any> = {};
+  for (let i = 0; i < stocks.length; i += 4) await Promise.all(stocks.slice(i, i + 4).map(async code => {
+    try { items[code] = { ...await getCompanyFilingCount(code === 'BSE' ? '' : code, code === 'BSE' ? 'BSE' : ''), available: true }; }
+    catch { items[code] = { available: false }; }
+  }));
+  res.json({ success: true, items });
+});
 
 apiRouter.get("/company-intel/:identifier", async (req, res) => {
   try {

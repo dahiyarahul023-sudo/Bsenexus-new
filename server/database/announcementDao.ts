@@ -677,16 +677,9 @@ export async function getRecentAnnouncements(limitNum: number = 1000, symbols?: 
   if (symbols && symbols.length > 0) {
     const cleanSymbols = symbols.map(s => String(s).trim().toUpperCase()).filter(Boolean);
     if (cleanSymbols.length > 0) {
-      // Hybrid feed policy — "what's new", not an archive:
-      //   1. Time window: only filings from the last 7 days. Older items are not "news".
-      //   2. Per-stock cap: DYNAMIC — the 2500-item budget is split across the requested
-      //      symbols (max 100 per stock, min 25). A user tracking 10 stocks gets 100 filings
-      //      each (deep history); a user tracking 100+ stocks gets 25 each. Small watchlists
-      //      no longer waste most of the budget; hyperactive stocks still can't flood the feed.
-      // The cache is sorted newest-first, so we stop at the first item older than the
-      // window — no full-cache scan. (Archive needs are served by the per-company modal
-      // and the global All-Filings tab, not this feed.)
-      const PER_STOCK = Math.min(100, Math.max(25, Math.floor(2500 / cleanSymbols.length)));
+      // Recent updates keep their seven-day window and a global response budget.
+      // There is no per-company total cap; the company history read pages durable rows.
+      const PER_STOCK = limitNum;
       const WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
       const cutoff = Date.now() - WINDOW_MS;
       const buckets: any[][] = cleanSymbols.map(() => []);
@@ -734,10 +727,11 @@ export function getTotalAnnouncementsCount(): number {
 // still exists in Supabase. Query Supabase directly by scrip (indexed column)
 // and union with whatever memory already holds.
 // During local fallback this degrades to the memory-only view.
-export async function getAnnouncementsForScrip(scripCode: string, limitNum: number = 400): Promise<any[]> {
+export async function getAnnouncementsForScrip(scripCode: string, limitNum: number = Number.MAX_SAFE_INTEGER, strict = false): Promise<any[]> {
   const target = String(scripCode || '').trim();
   if (!target) return [];
 
+  if (strict && process.env.NODE_ENV === 'production' && !isSupabaseConfigured()) throw new Error('Stored filing history unavailable');
   const byId = new Map<string, any>();
   for (const ann of announcementsMemoryCache) {
     if (hasExactScripCode(ann, target)) {
@@ -747,22 +741,29 @@ export async function getAnnouncementsForScrip(scripCode: string, limitNum: numb
 
   if (isSupabaseConfigured()) {
     try {
-      const { data, error } = await getSupabase()
-        .from(ANNOUNCEMENTS_TABLE)
-        .select('*')
-        .eq('scrip_cd', target)
-        .limit(limitNum);
-      if (error) throw error;
-      for (const row of data || []) {
-        const dataItem: any = row.data || {};
-        let bseTs = parseBseDate(dataItem.bseTime);
-        if (!bseTs) bseTs = dataItem.bseTimestamp || dataItem.fetched_at || 0;
-        const item = { id: row.id, scrip_cd: row.scrip_cd, ...dataItem, bseTimestamp: bseTs };
-        if (!hasExactScripCode(item, target)) continue;
-        byId.set(row.id, { ...(byId.get(row.id) || {}), ...item });
+      // Keyset pages avoid both PostgREST's row ceiling and a silent total-history cap.
+      const deadline = AbortSignal.timeout(12_000);
+      let after = '';
+      while (true) {
+        let query = getSupabase().from(ANNOUNCEMENTS_TABLE).select('*')
+          .eq('scrip_cd', target).order('id', { ascending: true }).limit(Math.min(500, limitNum));
+        if (after) query = query.gt('id', after);
+        const { data, error } = await query.abortSignal(deadline);
+        if (error) throw error;
+        for (const row of data || []) {
+          const dataItem: any = row.data || {};
+          const item = { ...dataItem, id: row.id, scrip_cd: row.scrip_cd,
+            bseTimestamp: parseBseDate(dataItem.bseTime) || dataItem.bseTimestamp || 0 };
+          if (hasExactScripCode(item, target)) byId.set(row.id, { ...(byId.get(row.id) || {}), ...item });
+        }
+        if (!data?.length || data.length < Math.min(500, limitNum) || byId.size >= limitNum) break;
+        const next = String(data[data.length - 1].id);
+        if (next <= after) throw new Error('Filing history pagination did not advance');
+        after = next;
       }
     } catch (e) {
-      // Network trouble — memory-only view is the honest fallback.
+      if (strict) throw new Error('Stored filing history unavailable');
+      // Existing callers may explicitly use the memory fallback.
     }
   }
 
@@ -770,15 +771,28 @@ export async function getAnnouncementsForScrip(scripCode: string, limitNum: numb
 }
 
 /** BSE equity has no BSE scrip. Read exact NSE identity, including verified legacy PDFs. */
-export async function getBseOperatorAnnouncements(): Promise<any[]> {
+export async function getBseOperatorAnnouncements(strict = false): Promise<any[]> {
+  if (strict && process.env.NODE_ENV === 'production' && !isSupabaseConfigured()) throw new Error('BSE operator filings unavailable');
   const byId = new Map<string, any>();
   for (const item of announcementsMemoryCache) if (isBseOperatorFiling(item)) byId.set(item.id, item);
   if (isSupabaseConfigured()) {
-    const { data, error } = await getSupabase().from(ANNOUNCEMENTS_TABLE).select('*')
-      .or('data->>symbol.eq.BSE,data->>companyName.eq.BSE Limited,data->>companyName.eq.BSE Ltd')
-      .order('fetched_at', { ascending: false }).limit(400).abortSignal(AbortSignal.timeout(4000));
-    if (error && !byId.size) throw new Error('BSE operator filings unavailable');
-    for (const row of data || []) { const item = fromRow(row); if (isBseOperatorFiling(item)) byId.set(row.id, item); }
+    const deadline = AbortSignal.timeout(12_000);
+    let after = '';
+    try {
+      while (true) {
+        let query = getSupabase().from(ANNOUNCEMENTS_TABLE).select('*')
+          .or('data->>symbol.eq.BSE,data->>companyName.eq.BSE Limited,data->>companyName.eq.BSE Ltd')
+          .order('id', { ascending: true }).limit(500);
+        if (after) query = query.gt('id', after);
+        const { data, error } = await query.abortSignal(deadline);
+        if (error) throw error;
+        for (const row of data || []) { const item = fromRow(row); if (isBseOperatorFiling(item)) byId.set(row.id, item); }
+        if (!data?.length || data.length < 500) break;
+        const next = String(data[data.length - 1].id);
+        if (next <= after) throw new Error('Operator history pagination stalled');
+        after = next;
+      }
+    } catch { if (strict || !byId.size) throw new Error('BSE operator filings unavailable'); }
   }
   // Projection only; immutable stored evidence and its old code are not rewritten.
   return [...byId.values()].map(projectFilingIdentity);

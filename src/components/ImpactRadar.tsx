@@ -9,7 +9,7 @@ import { RadarMovementPanel } from './RadarMovementPanel';
 import { ActionButton } from './ui/ActionButton';
 import { ImpactRadarFeed } from '../utils/impactRadarFeed';
 import { groupRadarCompanies } from '../utils/radarCompanyGroups';
-import { RADAR_CATEGORIES, RADAR_NOTICE, RADAR_STALE_MS, isRadarEvent, isRadarUpdate, matchesRadarFilter, radarStatus, radarDay, radarUrl, radarTiming, RADAR_TIMING_LABELS, radarVerificationSources, radarHeadline, radarCompanyName, radarCaseLookup, isRadarCategoryOption,
+import { RADAR_CATEGORIES, RADAR_NOTICE, isRadarEvent, isRadarUpdate, matchesRadarFilter, radarStatus, radarDay, radarUrl, radarTiming, RADAR_TIMING_LABELS, radarVerificationSources, radarHeadline, radarCompanyName, radarCaseLookup, isRadarCategoryOption,
   radarSourceLabel, isReportedRadarSource, type RadarEvent, type RadarFilter, type RadarUpdate } from '../shared/impactRadar';
 import '../styles/impact-radar.css';
 
@@ -150,14 +150,15 @@ export function ImpactRadar({ active, identity, onNavigate, density, watched = [
     (scope === 'all' || e.companies.some(c => watchedSet.has(c.symbol) || watchedSet.has(c.scripCode)))), [state.items, filter, tracked, now, category, scope, watchedSet]);
   const groups = useMemo(() => groupRadarCompanies(items), [items]);
   const preview = groupRadarCompanies(state.items.filter(e => e.status !== 'closed')).slice(0, 2);
-  const stale = !!state.error || state.sourceUnavailable || state.sourceStale || (state.checkedAt !== null && now - state.checkedAt > RADAR_STALE_MS);
+  const sourceOverdue = state.sourceStale || (state.sourceCheckedAt !== null && now - state.sourceCheckedAt > 5 * 60_000);
+  const stale = !!state.error || state.sourceUnavailable || sourceOverdue;
   const close = () => { setOpened(false); setSelected(null); };
   const signIn = () => { close(); setIsAuthModalOpen(true); };
   const track = (event: RadarEvent) => { if (identity === 'guest') signIn(); else void feed.toggle(event.id); };
   const open = (event: RadarEvent, button: HTMLButtonElement) => { opener.current = button; setSelected(event); setOpened(true); };
   const back = () => { setSelected(null); requestAnimationFrame(() => { if (opener.current?.isConnected) opener.current.focus({ preventScroll: true }); }); };
   const initial = state.checkedAt === null && !state.error;
-  const statusText = state.loading ? 'Checking updates' : state.error ? 'Check unavailable' : stale ? 'Update delayed' : state.sourcePending ? 'Source check pending' : state.checkedAt ? 'Updates checked' : 'Not checked yet';
+  const statusText = state.loading ? 'Checking updates' : state.error ? 'Check unavailable' : state.sourceUnavailable ? 'Source scan unavailable' : sourceOverdue ? 'Source scan delayed' : state.sourcePending ? 'Source check pending' : state.checkedAt ? 'Sources checked' : 'Not checked yet';
   const markTone = state.items.some(e => radarTiming(e, now) === 'live') ? 'live' : state.items.some(e => radarTiming(e, now) === 'upcoming') ? 'upcoming' : 'past';
   const cards = (companyGroups: ReturnType<typeof groupRadarCompanies>) => <div className="impact-radar-grid">{companyGroups.map((group, i) => {
     const event = group.latest;
@@ -169,8 +170,8 @@ export function ImpactRadar({ active, identity, onNavigate, density, watched = [
   const skeleton = (count: number) => <div className="impact-radar-grid" role="status"><span className="sr-only">Loading Impact Radar…</span>{Array.from({ length: count }, (_, i) => <div key={i} className="impact-radar-card impact-radar-skeleton" aria-hidden="true"><span /><span /><span /><span /></div>)}</div>;
   const feedback = <>
     {(state.error || state.sourceUnavailable) && <div className="impact-radar-status" role="status">{state.error || 'Some sources could not be refreshed. Saved events remain available.'}</div>}
-    {state.sourceStale && !state.sourceUnavailable && <div className="impact-radar-status" role="status">The source check is overdue. Saved events remain available.</div>}
-    {state.newsUnavailable && !state.sourceUnavailable && !state.sourceStale && <p className="impact-radar-muted">News sources are recovering. Filing scans are available.</p>}
+    {sourceOverdue && !state.sourceUnavailable && <div className="impact-radar-status" role="status">No source scan recorded in the last 5 minutes{state.sourceCheckedAt ? ` · last scan ${time(state.sourceCheckedAt)}` : ''}. Saved events remain available. Refresh reads the latest saved scan status.</div>}
+    {state.newsUnavailable && !state.sourceUnavailable && !sourceOverdue && <p className="impact-radar-muted">News sources are recovering. Filing scans are available.</p>}
     {state.followingError && <div className="impact-radar-status" role="status">Your tracking list could not be checked. Refresh to retry.</div>}
     {state.actionError && <div className="impact-radar-status" role="alert">{state.actionError}</div>}
     {state.pending && <div className="impact-radar-new" role="status"><span><Check size={14} aria-hidden="true" />Event updates available</span><ActionButton type="button" size="sm" variant="ghost" onClick={feed.accept}>Show updates<ArrowRight size={14} aria-hidden="true" /></ActionButton></div>}
