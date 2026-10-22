@@ -1,3 +1,4 @@
+import { companyFilingStats } from '../../src/shared/companyFilings.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -53,6 +54,7 @@ for (const [symbol, scrip] of targets) {
     const ctx = load(readFileSync('server/services/companyIntelService.ts', 'utf8'), {
       setTimeout: () => 0,
       require(path: string) {
+        if (path.endsWith('/companyFilings.js')) return { companyFilingStats };
         if (path.endsWith('/scripMatching.js')) return { hasExactScripCode, matchesCompanyFiling };
         if (path === 'yahoo-finance2') return { default: class { async quote() { return { regularMarketPrice: 100, shortName: symbol }; } } };
         if (path.endsWith('/resultsCalendarService.js')) return {
@@ -68,7 +70,7 @@ for (const [symbol, scrip] of targets) {
       },
     });
     const result = await ctx.exports.getCompanyIntelligence(scrip, symbol);
-    assert.deepEqual(Array.from(result.recentFilings, (f: any) => f.id).sort(), ['good', 'history']);
+    assert.deepEqual(Array.from(result.recentFilings, (f: any) => f.id).sort(), ['good']);
     assert.deepEqual(Array.from(result.quarterlyResults, (f: any) => f.id), ['history']);
     assert.equal(result.upcomingEvent, undefined);
   });
@@ -149,6 +151,8 @@ test('BSE and NSE render stored official disclosures through the regular company
   const ctx = load(readFileSync('server/services/companyIntelService.ts','utf8'), {
     setTimeout:()=>0,
     require(path:string) {
+      if(path.endsWith('/companyFilings.js')) return {companyFilingStats};
+      if(path.endsWith('/helpers.js')) return {parseBseDate:(value:string)=>Date.parse(value)||0};
       if(path.endsWith('/scripMatching.js'))return {hasExactScripCode,matchesCompanyFiling};
       if(path==='yahoo-finance2')return {default:class {async quote(){return null;}}};
       if(path.endsWith('/resultsCalendarService.js'))return {getStockResultsHistory:async()=>{throw new Error('BSE-only history must not run for NSE-only equity');},getResultsCalendarData:async()=>{throw new Error('BSE calendar must not be read for NSE-only equity');}};

@@ -1,3 +1,4 @@
+import { companyFilingStats } from '../../src/shared/companyFilings.js';
 import { hasExactScripCode, matchesCompanyFiling } from '../../src/shared/scripMatching.js';
 import YahooFinance from 'yahoo-finance2';
 import { getStockResultsHistory, getResultsCalendarData, autoFetchDeepHistoricalResults } from './resultsCalendarService.js';
@@ -73,6 +74,8 @@ export interface CompanyIntelligenceData {
   materialTimeline: MaterialEvent[];
   recentFilings: any[];
   aiSnapshot?: string;
+  filingStats?: ReturnType<typeof companyFilingStats>;
+  filingCoverage?: 'stored' | 'partial';
 }
 
 // In-memory quote cache (5-minute TTL)
@@ -147,7 +150,7 @@ export async function fetchStockQuote(symbol: string): Promise<CompanyQuoteConte
 
 export async function getCompanyIntelligence(scripCode: string, symbol: string): Promise<CompanyIntelligenceData> {
   const targetSym = (symbol || '').trim().toUpperCase();
-  const targetScrip = targetSym === 'BSE' ? '' : String(scripCode || '').trim();
+  const targetScrip = targetSym === 'BSE' ? '' : String(scripCode || getAllStockEntries().find(e => e.symbol.toUpperCase() === targetSym)?.scripCode || '').trim();
   const nseOnly = targetSym === 'BSE';
 
   // 1. Fetch Quote & Valuation Context
@@ -226,16 +229,17 @@ export async function getCompanyIntelligence(scripCode: string, symbol: string):
   let quarterlyResults = Array.from(resultMap.values()).sort((a, b) => (b.submissionTimestamp || 0) - (a.submissionTimestamp || 0));
 
   // 4. Extract Material Corporate Events Timeline & All Recent Filings
-  const recentAnnouncements = nseOnly ? await getBseOperatorAnnouncements() : await getRecentAnnouncements(10000);
+  const recentAnnouncements = nseOnly ? await getBseOperatorAnnouncements(true) : await getRecentAnnouncements(10000);
   let announcementPool: any[] = recentAnnouncements;
+  let filingCoverage: 'stored' | 'partial' = 'stored';
   if (targetScrip) {
     try {
-      const durable = await getAnnouncementsForScrip(targetScrip);
+      const durable = await getAnnouncementsForScrip(targetScrip, Number.MAX_SAFE_INTEGER, true);
       if (durable.length > 0) {
         const seen = new Set(announcementPool.map((a: any) => a.id || a.newsId));
         announcementPool = [...announcementPool, ...durable.filter((a: any) => !seen.has(a.id || a.newsId))];
       }
-    } catch (e) {}
+    } catch (e) { filingCoverage = 'partial'; }
   }
   const rawStockAnnouncements = announcementPool.filter((ann: any) => matchesCompanyFiling(ann, targetScrip, targetSym));
 
@@ -243,11 +247,12 @@ export async function getCompanyIntelligence(scripCode: string, symbol: string):
 
   // Add all raw announcements from DB
   for (const ann of rawStockAnnouncements) {
-    const id = ann.id || ann.NEWSID || `ann_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    const id = ann.id || ann.newsId || ann.NEWSID;
+    if (!id) continue;
     const sub = ann.subject || ann.NEWSSUB || '';
     const det = ann.details || ann.HEADLINE || '';
     const rawTime = ann.bseTime || ann.News_submission_dt || ann.DT_TM || ann.NEWS_DT || '';
-    const ts = ann.bseTimestamp || ann.timestamp || (ann.fetched_at ? new Date(ann.fetched_at).getTime() : Date.now());
+    const ts = parseBseDate(rawTime) || ann.bseTimestamp || ann.timestamp || (ann.fetched_at ? new Date(ann.fetched_at).getTime() : Date.now());
     const pdfLink = ann.pdfLink || (ann.ATTACHMENTNAME ? `https://www.bseindia.com/xml-data/corpfiling/AttachLive/${ann.ATTACHMENTNAME}` : '');
 
     filingMap.set(id, {
@@ -265,67 +270,8 @@ export async function getCompanyIntelligence(scripCode: string, symbol: string):
     });
   }
 
-  // Also include calendar & history items
-  for (const h of rawHistory || []) {
-    const hId = h.id || `hist_${h.meetingDate}`;
-    if (!filingMap.has(hId)) {
-      filingMap.set(hId, {
-        id: hId,
-        subject: h.subject || h.periodOrMeeting,
-        details: h.details,
-        bseTime: h.declarationDate ? `${h.declarationDate} ${h.declarationTime || ''}` : h.meetingDate,
-        pdfLink: h.pdfLink,
-        timestamp: h.submissionTimestamp || Date.now(),
-        scripCode: targetScrip,
-        symbol: targetSym
-      });
-    }
-  }
-
-  // If this stock has no usable results history (no filings at all, or
-  // filings but not one declared quarter), automatically pull a 1-year
-  // archive from BSE so the Financial Results tab never opens blank for a
-  // listed company, then refresh BOTH the filings list and the results.
-  // The pull is bounded (autoFetchDeepHistoricalResults): a fast fetch
-  // still lands in this same response; a slow/blocked BSE finishes in the
-  // background instead of freezing the modal, and a per-scrip cooldown
-  // keeps repeat opens cheap. The re-read below runs only when the pull
-  // actually landed inside the wait — otherwise the modal opens at once
-  // with what's stored and the next open shows the filled results.
-  const hasDeclaredResult = quarterlyResults.some((r: any) => r.status === 'Declared');
-  if (targetScrip && (filingMap.size === 0 || !hasDeclaredResult)) {
-    try {
-      const fetchedInTime = await autoFetchDeepHistoricalResults(targetScrip, targetSym, 1);
-      const syncedHistory = fetchedInTime ? (await getStockResultsHistory(targetScrip, targetSym)).filter(h => hasExactScripCode(h, targetScrip)) : [];
-      for (const h of syncedHistory || []) {
-        const hId = h.id || `hist_${h.meetingDate}`;
-        if (!filingMap.has(hId)) {
-          filingMap.set(hId, {
-            id: hId,
-            subject: h.subject || h.periodOrMeeting,
-            details: h.details,
-            bseTime: h.declarationDate ? `${h.declarationDate} ${h.declarationTime || ''}` : h.meetingDate,
-            pdfLink: h.pdfLink,
-            timestamp: h.submissionTimestamp || Date.now(),
-            scripCode: targetScrip,
-            symbol: targetSym
-          });
-        }
-        const key = (h.quarterKey || h.periodOrMeeting || h.meetingDate || '').trim();
-        if (key) {
-          const existing = resultMap.get(key);
-          if (!existing || (!existing.pdfLink && h.pdfLink) || (!existing.isOutcome && h.isOutcome)) {
-            resultMap.set(key, existing ? { ...existing, ...h } : h);
-          }
-        }
-      }
-      if ((syncedHistory || []).length > 0) {
-        quarterlyResults = Array.from(resultMap.values()).sort((a, b) => (b.submissionTimestamp || 0) - (a.submissionTimestamp || 0));
-      }
-    } catch (syncErr: any) {
-      console.warn(`[CompanyIntel] Auto-sync notice for ${targetScrip}:`, syncErr?.message);
-    }
-  }
+  // Calendar rows remain in Results; only original disclosure records belong in Filings.
+  // Explicit Research sync owns archive work, so a public read never blocks on an exchange import.
 
   if (nseOnly) {
     quarterlyResults = Array.from(filingMap.values()).filter(f => f.category === 'RESULTS' && /financial.*results|audited.*results/i.test(f.subject || '')).map(f => ({
@@ -354,10 +300,6 @@ export async function getCompanyIntelligence(scripCode: string, symbol: string):
   }
   uniqueTimeline.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
-  // Filings shown per company in the modal: enough for recent context (20-30).
-  // Deeper history is fetched on demand, not preloaded for every stock.
-  const PER_STOCK_FILINGS = 25;
-
   const allEntries = getAllStockEntries();
   const masterEntry = allEntries.find(
     e => e.symbol.toUpperCase() === targetSym || (targetScrip && e.scripCode === targetScrip)
@@ -372,7 +314,9 @@ export async function getCompanyIntelligence(scripCode: string, symbol: string):
     upcomingEvent,
     quarterlyResults,
     materialTimeline: uniqueTimeline,
-    recentFilings: allStockFilings.slice(0, PER_STOCK_FILINGS)
+    recentFilings: allStockFilings,
+    filingStats: companyFilingStats(allStockFilings),
+    filingCoverage
   };
 }
 
@@ -396,4 +340,10 @@ ${filingsSummary || 'None'}
   } catch (e: any) {
     return `Analysis for ${intel.companyName}: Active BSE tracking initialized. ${intel.quarterlyResults.length} quarterly results indexed with ${intel.materialTimeline.length} material corporate actions tracked.`;
   }
+}
+
+/** Lightweight public card read; no quotes, AI, calendar import or paid work. */
+export async function getCompanyFilingCount(scripCode: string, symbol: string) {
+  const rows = symbol === 'BSE' ? await getBseOperatorAnnouncements(true) : await getAnnouncementsForScrip(scripCode, Number.MAX_SAFE_INTEGER, true);
+  return companyFilingStats(rows.filter(row => matchesCompanyFiling(row, scripCode, symbol)));
 }

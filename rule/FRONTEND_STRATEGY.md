@@ -131,3 +131,6 @@ UserAvatar shares 96/256/512 transparent WebP sources across header, profile and
 
 
 2026-10-22 Overnight ADR: one validated public USD regular-session snapshot feeds the compact Home Helios card, company intelligence strip, one Market pulse Story and the opt-in watchlist inbox worker. Shared density/themes/actions and existing company callbacks remain authoritative. Source/session dates, stale/error/partial status, whole-chapter progress and account-safe settings remain explicit. The existing cron/watchdog and notifications primary key provide private per-owner/session insertion without a new Scheduler or schema. See ADR.md and changes/overnight-adr.md for exact boundaries, evidence and separate browser/merge/deployment state.
+
+
+2026-10-22 Radar/research follow-through: source-traced count/history/worker consistency implemented with regression tests. Stored-count, recent-updates, result-quarter and import-progress facts have distinct owners and labels. Browser visual, deployed worker lifetime/multi-instance routing and live exchange/storage behavior remain release checks; tests do not certify them. See changes/radar-research-counts.md.

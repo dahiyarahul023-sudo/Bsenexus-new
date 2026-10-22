@@ -1,3 +1,4 @@
+import { startHistorySync, waitHistorySync, historySyncStatus } from './historicalFilings.js';
 import { hasExactScripCode } from '../../src/shared/scripMatching.js';
 import fs from 'fs';
 import path from 'path';
@@ -8,6 +9,7 @@ import { getScripCodeForSymbolOrName, parseBseDate, resolveStockDetails } from '
 import { addLog } from '../database/logDao.js';
 import { 
   getRecentAnnouncements, 
+  getAnnouncementsForScrip,
   saveAnnouncement, 
   saveAnnouncementsBatch,
   flushLocalDiskSave, 
@@ -1222,7 +1224,7 @@ export async function getStockResultsHistory(
   const todayStartTs = getIstMidnightTs(new Date());
 
   // 1. Fetch announcements for this stock from Dao
-  const recentAnnouncements = await getRecentAnnouncements(10000);
+  const recentAnnouncements = await getAnnouncementsForScrip(targetScrip);
   const stockAnns = recentAnnouncements.filter((ann: any) => hasExactScripCode(ann, targetScrip));
 
   // Group announcements strictly by calendar date in IST
@@ -1434,179 +1436,23 @@ export async function getStockResultsHistory(
   return canonicalResults;
 }
 
-export async function fetchDeepHistoricalResultsForStock(
-  scripCode: string,
-  symbol?: string,
-  years: number = 1
-): Promise<{ success: boolean; newlySaved: number; totalHistoryCount: number; years: number }> {
-  const targetScrip = String(scripCode || '').trim();
-  const targetSym = String(symbol || '').trim().toUpperCase();
-
-  if (!targetScrip) {
-    throw new Error('Valid BSE Scrip Code is required for deep historical fetch');
-  }
-
-  const validYears = Math.max(1, Math.min(5, years || 1));
-  const maxPages = Math.min(35, validYears * 6);
-  const cutoffTimestamp = Date.now() - (validYears * 365.25 * 86400000);
-
-  let totalSaved = 0;
-  let reachedCutoff = false;
-
-  // Also fetch official BSE Board Meetings archive table
-  try {
-    const cleanTargetScrip = targetScrip.replace(/[^0-9]/g, '');
-    const bmUrl = `https://api.bseindia.com/BseIndiaAPI/api/BoardMeeting/w?scripcode=${cleanTargetScrip}&strPurpose=&fromdate=&todate=`;
-    const bmRes = await fetch(bmUrl, {
-      headers: COMMON_HEADERS,
-      signal: AbortSignal.timeout(9000)
-    });
-    if (bmRes.ok) {
-      const bmJson = await bmRes.json();
-      if (bmJson && Array.isArray(bmJson.Table)) {
-        const bmAnnouncements: any[] = [];
-        for (const bm of bmJson.Table) {
-          const mDate = bm.meeting_date || '';
-          const purpose = bm.Purpose_name || 'Board Meeting';
-          if (mDate) {
-            const safeDateKey = mDate.replace(/[^a-zA-Z0-9]/g, '_');
-            const newsId = `bm_${cleanTargetScrip}_${safeDateKey}`;
-            const mTs = parseBseDate(mDate);
-            const isFuture = mTs > Date.now();
-            bmAnnouncements.push({
-              newsId,
-              companyName: bm.Long_Name || targetSym || "BSE Stock",
-              subject: `Board Meeting Intimation - ${purpose}`,
-              details: `Board Meeting scheduled on ${mDate} to consider ${purpose}`,
-              pdfLink: "",
-              scrip_cd: cleanTargetScrip,
-              // If meeting date is in the future, publication time is now (not the future meeting date)
-              bseTime: isFuture ? new Date().toISOString() : mDate,
-              meetingDate: mDate,
-              priority: 'MEDIUM',
-              category: 'BOARD_MEETING',
-              isWatchlist: true
-            });
-          }
-        }
-        if (bmAnnouncements.length > 0) {
-          const res = await saveAnnouncementsBatch(bmAnnouncements);
-          totalSaved += (res.inserted + res.updated);
-        }
-      }
-    }
-  } catch (e: any) {
-    console.warn(`BSE BoardMeeting sync for ${targetScrip} notice:`, e.message);
-  }
-
-  // Process in batches of 4 pages concurrently for rapid sync
-  const batchSize = 4;
-  for (let startPage = 1; startPage <= maxPages && !reachedCutoff; startPage += batchSize) {
-    const pageNumbers = Array.from({ length: Math.min(batchSize, maxPages - startPage + 1) }, (_, i) => startPage + i);
-
-    const batchResults = await Promise.all(
-      pageNumbers.map(async (page) => {
-        const prevDate = getBseISTDate(180);
-        const toDate = getBseISTDate(0);
-        try {
-          const url = `https://api.bseindia.com/BseIndiaAPI/api/AnnSubCategoryGetData/w?pageno=${page}&strCat=Result&strPrevDate=${prevDate}&strScrip=${targetScrip}&strSearch=P&strToDate=${toDate}&strType=C`;
-          const res = await fetch(url, {
-            headers: COMMON_HEADERS,
-            signal: AbortSignal.timeout(9000)
-          });
-          if (!res.ok) return [];
-          const txt = await res.text();
-          if (!txt || txt.includes("No Record") || txt.trim() === "{}" || txt.trim() === "[]") return [];
-
-          const data = JSON.parse(txt);
-          if (data && data.Table && Array.isArray(data.Table)) return data.Table;
-          if (Array.isArray(data)) return data;
-          return [];
-        } catch {
-          // Fallback to general AnnSubCategoryGetData for this page
-          try {
-            const fbUrl = `https://api.bseindia.com/BseIndiaAPI/api/AnnSubCategoryGetData/w?pageno=${page}&strCat=-1&strPrevDate=${prevDate}&strScrip=${targetScrip}&strSearch=P&strToDate=${toDate}&strType=C`;
-            const fbRes = await fetch(fbUrl, {
-              headers: COMMON_HEADERS,
-              signal: AbortSignal.timeout(9000)
-            });
-            if (!fbRes.ok) return [];
-            const fbTxt = await fbRes.text();
-            if (!fbTxt || fbTxt.includes("No Record")) return [];
-            const fbData = JSON.parse(fbTxt);
-            if (fbData && fbData.Table && Array.isArray(fbData.Table)) return fbData.Table;
-            if (Array.isArray(fbData)) return fbData;
-          } catch {}
-          return [];
-        }
-      })
-    );
-
-    for (const items of batchResults) {
-      if (!items || items.length === 0) {
-        reachedCutoff = true;
-        continue;
-      }
-
-      const historicalAnnouncements: any[] = [];
-      for (const item of items) {
-        const newsId = item.NEWSID;
-        if (!newsId || !hasExactScripCode(item, targetScrip)) continue;
-
-        const companyName = item.SLONGNAME || item.scrip_cd || targetSym || "BSE Stock";
-        const subject = item.NEWSSUB || "No Subject";
-        const details = item.HEADLINE || "";
-        const scrip_cd = String(item.scrip_cd || item.SCRIP_CD).trim();
-        const pdfLink = item.ATTACHMENTNAME ? `https://www.bseindia.com/xml-data/corpfiling/AttachLive/${item.ATTACHMENTNAME}` : "";
-        const priority = determinePriority(subject, details);
-        const rawTime = item.News_submission_dt || item.DT_TM || item.NEWS_DT;
-        const parsedTs = parseBseDate(rawTime);
-
-        if (parsedTs > 0 && parsedTs < cutoffTimestamp) {
-          reachedCutoff = true;
-        }
-
-        historicalAnnouncements.push({
-          newsId,
-          companyName,
-          subject,
-          details,
-          pdfLink,
-          scrip_cd,
-          bseTime: rawTime,
-          priority: priority.level,
-          category: priority.category,
-          isWatchlist: true
-        });
-      }
-
-      if (historicalAnnouncements.length > 0) {
-        const res = await saveAnnouncementsBatch(historicalAnnouncements);
-        totalSaved += (res.inserted + res.updated);
-      }
-    }
-  }
-
-  flushLocalDiskSave();
-
-  // Re-fetch historical results list to return updated count
-  const updatedHistory = await getStockResultsHistory(targetSym, targetScrip);
-
-  await addLog(
-    'INFO', 
-    'BSE', 
-    `Deep historical sync (${validYears} Year(s)) for ${targetSym || targetScrip} complete: +${totalSaved} filings processed, ${updatedHistory.length} total results/meetings recorded.`
-  );
-
-  return {
-    success: true,
-    newlySaved: totalSaved,
-    totalHistoryCount: updatedHistory.length,
-    years: validYears
-  };
+export async function fetchDeepHistoricalResultsForStock(scripCode: string, symbol?: string, years = 1) {
+  const status = await waitHistorySync(scripCode, years);
+  if (status.state === 'failed') throw new Error(status.error || 'Archive import failed');
+  const history = await getStockResultsHistory(symbol || '', scripCode);
+  return { success: true, newlySaved: status.processed, totalHistoryCount: history.length, years };
 }
-
-export const autoFetchDeepHistoricalResults = fetchDeepHistoricalResultsForStock;
+/** Bounded legacy auto-start: never aliases the full exchange walk. */
+export async function autoFetchDeepHistoricalResults(scripCode: string, symbol?: string, years = 1): Promise<boolean> {
+  try {
+    startHistorySync(scripCode, years);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      await Promise.race([waitHistorySync(scripCode, years), new Promise(resolve => { timer = setTimeout(resolve, 6000); })]);
+      return historySyncStatus(scripCode, years)?.state === 'complete';
+    } finally { clearTimeout(timer); }
+  } catch { return false; }
+}
 
 export async function fetchDeepHistoricalResultsForWatchlist(
   years: number = 1

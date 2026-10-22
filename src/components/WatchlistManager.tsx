@@ -1,3 +1,5 @@
+import { useCompanyFilingCounts } from '../hooks/useCompanyFilingCounts';
+import { matchesCompanyFiling } from '../shared/scripMatching';
 import { ComponentSkeleton } from './ui/ComponentSkeleton';
 import { VERIFIED_STOCK_BY_SYMBOL } from '../shared/stockIdentity';
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
@@ -900,17 +902,10 @@ export function WatchlistManager() {
         ? activeSymbols
         : Array.from(new Set(watchlists.flatMap(l => (l.items || []).map((it: any) => parseSymbolItem(it).symbol).filter(Boolean))));
 
-      // Feed size scales with the watchlist — mirrors the server's dynamic per-stock
-      // depth (2500 budget split across symbols, 25–100 each). Small watchlists get
-      // deeper per-stock history; the limit here just needs to cover the server's output.
-      const perStockDepth = Math.min(100, Math.max(25, Math.floor(2500 / Math.max(1, symbolsToFetch.length))));
-      let url = '/api/announcements';
-      if (symbolsToFetch.length > 0) {
-        const limit = Math.min(2500, symbolsToFetch.length * perStockDepth);
-        url += `?limit=${limit}&symbols=${encodeURIComponent(symbolsToFetch.join(','))}`;
-      } else {
-        url += '?limit=50';
-      }
+      // Recent updates have a global response budget; company history is independently paged.
+      const url = symbolsToFetch.length > 0
+        ? `/api/announcements?limit=2500&symbols=${encodeURIComponent(symbolsToFetch.join(','))}`
+        : '/api/announcements?limit=50';
 
       const res = await customFetch(url);
       if (res.ok) {
@@ -1557,6 +1552,9 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
 
   const currentWatchlist = watchlists.find(l => l.id === activeListId);
 
+  const filingCountKeys = allCombinedTrackedItems.map(item => item.symbol === 'BSE' ? 'BSE' : item.scripCode || stockMasterClient[item.symbol]?.scripCode || getScripCodeClient(item.symbol) || '');
+  const { counts: storedFilingCounts, retry: retryFilingCounts } = useCompanyFilingCounts(filingCountKeys, accountId);
+
   // Dedicated memo for "My companies" view with live update counts & formatted names
   const myCompaniesList = useMemo(() => {
     const seen = new Set<string>();
@@ -1569,6 +1567,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
       listName?: string;
       listId?: string;
       updateCount: number;
+      filingCountStatus: 'loading' | 'ready' | 'error';
       concreteStatus?: string;
       hasResultsDeclaredToday?: boolean;
       hasHighImpactUpdate?: boolean;
@@ -1610,7 +1609,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
 
       for (let i = 0; i < announcements.length; i++) {
         const a = announcements[i];
-        if (checkSymbolMatchFast(a.companyName, a.subject, item.symbol, a.scrip_cd)) {
+        if (matchesCompanyFiling(a, scripCode, item.symbol)) {
           uCount++;
           if (cleanName === item.symbol && a.companyName) {
             cleanName = a.companyName;
@@ -1638,8 +1637,11 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
         }
       }
 
+      const storedCount = storedFilingCounts[item.symbol === 'BSE' ? 'BSE' : scripCode || ''];
+      const filingCountStatus = !storedCount ? 'loading' : storedCount.available ? 'ready' : 'error';
+      uCount = storedCount?.available ? storedCount.last30Days! : 0;
       // Format concrete human-readable status
-      let concreteStatus = "No recent filings";
+      let concreteStatus = filingCountStatus === 'ready' ? (uCount ? `${uCount} stored filings in 30 days` : "No stored filings in 30 days") : "Filing count pending";
       if (hasResultsDeclaredToday) {
         concreteStatus = "Results declared today";
       } else if (filingsToday > 0) {
@@ -1678,6 +1680,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
         listName: item.listName,
         listId: item.listId,
         updateCount: uCount,
+        filingCountStatus,
         concreteStatus,
         hasResultsDeclaredToday,
         hasHighImpactUpdate: hasHighImpactUpdate || hasResultsDeclaredToday || item.priority === 'HIGH',
@@ -1693,7 +1696,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
       if (pDiff !== 0) return pDiff;
       return a.name.localeCompare(b.name);
     });
-  }, [activeListId, currentListParsedItems, currentWatchlist, allCombinedTrackedItems, announcements]);
+  }, [activeListId, currentListParsedItems, currentWatchlist, allCombinedTrackedItems, announcements, storedFilingCounts]);
 
   const filteredMyCompanies = useMemo(() => {
     if (!companySearch.trim()) return myCompaniesList;
@@ -2705,27 +2708,13 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
 
                     {/* Footer: filings · actions */}
                     <div className="flex items-center justify-between gap-2">
-                        {c.updateCount > 0 ? (
-                          <motion.button
-                            type="button"
-                            whileTap={buttonTap}
-                            transition={springSnappy}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedStockFilter(c.symbol);
-                              setWatchlistSubTab('updates');
-                            }}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold bg-slate-100 dark:bg-[#252233] text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#2F2B40] transition-colors cursor-pointer select-none min-h-[32px] active:scale-[0.96]"
-                            title={`View all ${c.updateCount} filings for ${c.symbol}`}
-                          >
-                            <span>{c.updateCount} {c.updateCount === 1 ? 'filing' : 'filings'}</span>
-                            <ChevronRight size={12} />
-                          </motion.button>
-                        ) : (
-                          <span className={cn(heliosMeta, "select-none")}>
-                            0 filings
-                          </span>
-                        )}
+                        <button type="button"
+                          onClick={e => { e.stopPropagation(); if (c.filingCountStatus === 'error') retryFilingCounts(); else handleOpenIntel(c.scripCode, c.symbol, c.name); }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold bg-slate-100 dark:bg-[#252233] min-h-[32px] cursor-pointer"
+                          title="Stored exchange filings in the last 30 days; open company history for all pages">
+                          <span>{c.filingCountStatus === 'ready' ? `${c.updateCount} filings · 30d` : c.filingCountStatus === 'error' ? 'Count unavailable · Retry' : 'Checking filings…'}</span>
+                          <ChevronRight size={12} />
+                        </button>
 
                       <div className="flex items-center gap-1">
                         <motion.button
