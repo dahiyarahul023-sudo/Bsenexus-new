@@ -49,7 +49,7 @@ Start with the highest-priority reproducible failure in the baseline. Do not rew
 
 ## Current evidence limits
 
-2026-10-23 calendar/brand follow-up: durable history recovery, rolling-source retention, IST-day cache projection, post-commit filing pagination scroll/focus and both brand-to-For-You handlers have regression coverage. Archive preserves past meeting evidence without inventing result declarations. This is a bounded journey fix, not completion of the broader frontend program; browser/device and deployed behavior remain separate gates. See changes/calendar-archive-home-scroll.md.
+2026-10-23 calendar/brand follow-up: durable history recovery, rolling-source retention, IST-day cache projection and post-commit filing pagination scroll/focus have regression coverage. The round logo opens Story; brand text uses For You, as clarified in changes/story-toolbars-company-adr.md. Archive preserves past meeting evidence without inventing result declarations. Browser/device and deployed behavior remain separate gates. See changes/calendar-archive-home-scroll.md.
 
 - Repository source establishes React/Vite, shared contexts, custom path/tab handling, mixed eager/lazy screens, global and scoped CSS, browser events and existing utility/API tests.
 - Existing `npm test` lives under `server/tests` and includes some frontend utility/contract tests. This is not a complete browser, visual-regression or accessibility suite.

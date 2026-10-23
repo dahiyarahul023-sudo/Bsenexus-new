@@ -93,26 +93,33 @@ test('actual company filing Next and Previous commit new rows before resetting t
   assert.deepEqual(focusCalls, [true, true]);
 });
 
-test('brand icon and title use the For You owner, including active-page scroll and refresh behavior', () => {
+test('round logo opens Story while brand title uses For You and its active-page scroll/refresh owner', () => {
   const changes: string[] = [], events: any[] = [], scrolls: any[] = [];
   const window = { scrollY: 0, dispatchEvent: (event: any) => events.push(event), scrollTo: (options: any) => scrolls.push(options) };
   const harness = componentHarness('src/components/Layout.tsx', { window, localStorage: { getItem: () => null },
     CustomEvent: class { constructor(public type: string, public options: any) {} },
   });
   const props = { children: null, activeTab: 'dashboard', onTabChange: (tab: string) => changes.push(tab), theme: 'light', setTheme() {}, onLogout() {} };
-  const brands = (activeTab: string) => nodes(harness.render('Layout', { ...props, activeTab }))
-    .filter(node => /^BSE Nexus.*For You$/.test(node.props['aria-label'] || ''));
-  let buttons = brands('dashboard');
-  assert.equal(buttons.length, 2);
-  buttons.forEach(button => { assert.equal(button.props.type, 'button'); button.props.onClick(); });
-  assert.deepEqual(changes, ['home', 'home']);
+  const render = (activeTab: string) => nodes(harness.render('Layout', { ...props, activeTab }));
+  let tree = render('dashboard');
+  const logo = tree.find(node => node.props['aria-label'] === "View Today's Market Story (Daily Highlights)");
+  assert.equal(logo.props.type, 'button');
+  logo.props.onClick();
+  tree = render('dashboard');
+  assert.ok(tree.some(node => node.props.isOpen && node.props.onStoryViewed), 'the existing Story viewer is opened');
+  assert.deepEqual(changes, [], 'Story access must not navigate to For You');
+  const title = tree.find(node => node.props['aria-label'] === 'BSE Nexus home — For You');
+  assert.equal(title.props.type, 'button');
+  title.props.onClick();
+  assert.deepEqual(changes, ['home']);
   assert.equal(events.length, 0);
-  buttons = brands('home');
-  buttons[0].props.onClick();
+  tree = render('home');
+  const home = tree.find(node => node.props['aria-label'] === 'BSE Nexus home — For You');
+  home.props.onClick();
   assert.equal(events[0].type, 'bse_nav_tab_refresh');
   assert.equal(events[0].options.detail.tab, 'home');
   window.scrollY = 800;
-  buttons[1].props.onClick();
+  home.props.onClick();
   assert.equal(scrolls[0].top, 0);
   assert.equal(events.length, 1);
 });

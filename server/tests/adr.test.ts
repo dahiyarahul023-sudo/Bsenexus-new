@@ -85,6 +85,16 @@ test('service coalesces callers, reports partial coverage and retains the origin
   assert.equal(empty.status, 'unavailable'); assert.deepEqual(empty.items, []);
 });
 
+test('an unavailable or partial ADR batch retries after one minute and recovers without losing single-flight behavior', async () => {
+  let time = now, calls = 0, outage = true;
+  const service = createAdrService(async symbol => { calls++; if (outage) throw Error('timeout'); return chart(symbol); }, () => time);
+  assert.equal((await service.load()).status, 'unavailable');
+  await service.load(); assert.equal(calls, 5, 'unavailable requests are backed off');
+  time += 60001; outage = false;
+  const [first, second] = await Promise.all([service.load(), service.load()]);
+  assert.equal(first.status, 'ready'); assert.deepEqual(first, second); assert.equal(calls, 10);
+});
+
 test('public client validates responses, shares reads and retains useful data on failure', async () => {
   let time = now; let calls = 0; let fail = false;
   const client = createAdrClient(async () => { calls++; if (fail) throw Error('offline'); return snapshot(); }, () => time);

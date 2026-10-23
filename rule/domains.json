@@ -543,6 +543,8 @@
       "label": "Frontend: shared styling, motion and overlays",
       "files": [
         "src/index.css",
+        "src/styles/mobile-repairs.css",
+        "scripts/verify-ui-followup.mjs",
         "src/types.ts",
         "src/App.tsx",
         "src/components/Layout.tsx",
@@ -596,6 +598,7 @@
         "src/components/Announcements.tsx",
         "src/components/WatchlistManager.tsx",
         "src/components/ResultsCalendar.tsx",
+        "src/styles/mobile-repairs.css",
         "src/shared/calendarScope.ts",
         "src/components/QuarterlyResultsLedger.tsx",
         "src/components/NewsPortal.tsx",
@@ -935,6 +938,7 @@
       ],
       "tests": [
         "server/tests/marketStories.test.ts",
+        "server/tests/calendarNavigation.test.ts",
         "server/tests/companyStoryBudget.test.ts",
         "server/tests/followupAudit.test.ts",
         "server/tests/mcpDirectoryQuality.test.ts",
