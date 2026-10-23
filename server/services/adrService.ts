@@ -43,12 +43,19 @@ export function createAdrService(fetchChart: (symbol: string, now: number) => Pr
   let pending: Promise<AdrSnapshot> | null = null;
   return { async load(): Promise<AdrSnapshot> {
     const now = clock();
-    if (cached && now - lastAttempt < 5 * 60000) return readAdrSnapshot(cached, now)!;
     if (pending) return pending;
+    // Retry unavailable/partial reads sooner; a failed refresh must not hide Retry for five minutes.
+    const ttl = cached?.status === 'ready' && !cached.refreshFailed ? 5 * 60000 : 60000;
+    if (cached && now - lastAttempt < ttl) return readAdrSnapshot(cached, now)!;
     lastAttempt = now;
     pending = (async () => {
       const results = await Promise.allSettled(ADR_COMPANIES.map(async company => adrFromChart(company, await fetchChart(company.adrSymbol, now), now)));
       const items = results.flatMap(result => result.status === 'fulfilled' && result.value ? [result.value] : []);
+      const failures = results.flatMap((result, index) => result.status === 'fulfilled' && result.value ? [] : [{
+        symbol: ADR_COMPANIES[index].adrSymbol,
+        reason: result.status === 'rejected' && result.reason instanceof Error ? result.reason.name : 'InvalidChart',
+      }]);
+      if (failures.length) console.warn('[ADR] Incomplete source batch', { failures });
       // Do not renew an old snapshot's check time after an upstream outage.
       if (!items.length && cached?.items.length) {
         cached = readAdrSnapshot({ ...cached, refreshFailed: true }, now);
@@ -62,8 +69,10 @@ export function createAdrService(fetchChart: (symbol: string, now: number) => Pr
 }
 let client: InstanceType<typeof YahooFinance> | undefined;
 const service = createAdrService(async (symbol, now) => {
-  client ||= new YahooFinance({ suppressNotices: ['yahooSurvey'], versionCheck: false,
+  client ||= new YahooFinance({ YF_QUERY_HOST: 'query1.finance.yahoo.com', queue: { concurrency: 5 },
+    suppressNotices: ['yahooSurvey'], versionCheck: false,
     fetch: (url, init) => fetch(url, { ...init, signal: AbortSignal.any([AbortSignal.timeout(8000), ...(init?.signal ? [init.signal] : [])]) }) });
-  return client.chart(symbol, { period1: new Date(now - 16 * 86400000), interval: '1d', includePrePost: false, events: 'splits' }, { fetchOptions: { signal: AbortSignal.timeout(14000) } });
+  // Five fixed ADRs fit one bounded batch. The source budget leaves room for the 15s website request.
+  return client.chart(symbol, { period1: new Date(now - 16 * 86400000), interval: '1d', includePrePost: false, events: 'splits' }, { fetchOptions: { signal: AbortSignal.timeout(10000) } });
 });
 export const getAdrSnapshot = () => service.load();

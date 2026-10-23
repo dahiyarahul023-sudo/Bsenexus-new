@@ -372,15 +372,15 @@ export function Layout({
                 whileHover={{ scale: 1.06 }}
                 whileTap={{ scale: 0.94 }}
                 transition={springSnappy}
-                onClick={() => handleTabClick('home')}
+                onClick={() => setStoryModalOpen(true)}
                 className={cn(
                   "relative rounded-full cursor-pointer select-none group shrink-0 transition-all duration-300",
                   hasSeenStory 
                     ? "p-[2px] border-2 border-slate-300/80 dark:border-slate-700/80 shadow-2xs" 
                     : "p-[2.5px] bg-gradient-to-tr from-amber-500 via-rose-500 to-emerald-500 shadow-xs hover:shadow-md"
                 )} 
-                aria-label="BSE Nexus — For You"
-                title="Open For You"
+                aria-label="View Today's Market Story (Daily Highlights)"
+                title={hasSeenStory ? "Today's Story (Viewed) • Click to replay" : "View Today's Market Story • Live Highlights"}
               >
                 <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white dark:bg-[#0E0C18] flex items-center justify-center overflow-hidden">
                   <BseNexusLogo className="w-5.5 h-5.5 sm:w-6.5 sm:h-6.5 transition-transform group-hover:scale-105 shrink-0" />

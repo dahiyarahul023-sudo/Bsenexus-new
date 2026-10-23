@@ -1250,6 +1250,7 @@ ${jsonLd}
     }
     .results-table {
       width: 100%;
+      table-layout: fixed;
       border-collapse: collapse;
       font-size: 0.875rem;
       text-align: left;
@@ -1266,18 +1267,28 @@ ${jsonLd}
       padding: 12px 16px;
       border-bottom: 1px solid var(--border);
       vertical-align: top;
+      overflow-wrap: anywhere;
     }
+    .results-table th:nth-child(1) { width: 26%; }
+    .results-table th:nth-child(2) { width: 22%; }
+    .results-table th:nth-child(3) { width: 15%; }
+    .results-table th:nth-child(4) { width: 37%; }
+    .results-table th { white-space: normal; }
+    .result-filing-details summary { cursor: pointer; line-height: 1.5; }
+    .result-filing-details summary span { display: block; color: #059669; font-size: .75rem; margin-top: 4px; }
+    .result-filing-details p { margin-top: 10px; line-height: 1.6; }
+    .result-filing-details summary:focus-visible { outline: 2px solid #059669; outline-offset: 3px; }
     .results-table tr:last-child td {
       border-bottom: none;
     }
     .cell-period {
       font-weight: 600;
       color: var(--brand);
-      white-space: nowrap;
+      white-space: normal;
     }
     .cell-date {
       color: var(--muted);
-      white-space: nowrap;
+      white-space: normal;
     }
     .status-pill {
       display: inline-block;
@@ -1304,6 +1315,16 @@ ${jsonLd}
       text-decoration: none;
     }
     .pdf-link:hover { text-decoration: underline; }
+    @media(max-width: 767px) {
+      .results-table, .results-table tbody { display: block; }
+      .results-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+      .results-table tr { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px 12px; padding: 16px; border-bottom: 1px solid var(--border); }
+      .results-table tr:last-child { border-bottom: 0; }
+      .results-table td { padding: 0; border: 0; min-width: 0; }
+      .results-table .cell-period { grid-column: 1 / -1; }
+      .results-table td:last-child { grid-column: 1 / -1; line-height: 1.5; }
+      .results-table td:nth-child(3) { justify-self: end; }
+    }
     .peer-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -1503,29 +1524,29 @@ ${jsonLd}
       <section class="section">
         <h2 class="section-label">Financial Results (Quarterly &amp; Annual)</h2>
         <div class="table-wrap">
-          <table class="results-table">
-            <thead>
-              <tr>
-                <th>Quarter / Period</th>
-                <th>Meeting / Outcome Date</th>
-                <th>Status</th>
-                <th>Filing Details</th>
+          <table class="results-table" role="table" aria-label="Quarterly and annual financial result filings">
+            <thead role="rowgroup">
+              <tr role="row">
+                <th scope="col" role="columnheader">Quarter / Period</th>
+                <th scope="col" role="columnheader">Meeting / Outcome Date</th>
+                <th scope="col" role="columnheader">Status</th>
+                <th scope="col" role="columnheader">Filing Details</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody role="rowgroup">
               ${quarterlyResults.slice(0, 12).map((q: any) => {
                 const period = q.periodOrMeeting || q.quarterKey || 'Quarter Result';
                 const date = q.declarationDate || q.meetingDate || '—';
                 const status = q.status || (q.isOutcome ? 'Declared' : 'Scheduled');
                 const sub = q.subject || q.details || 'Financial Results';
                 const pdf = q.pdfLink;
-                return `<tr>
-                  <td class="cell-period">${escapeHtmlText(period)}</td>
-                  <td class="cell-date">${escapeHtmlText(date)}</td>
-                  <td><span class="status-pill ${String(status).toLowerCase().includes('declared') ? 'status-declared' : 'status-upcoming'}">${escapeHtmlText(status)}</span></td>
-                  <td>
-                    ${escapeHtmlText(sub)}
-                    ${pdf ? `<br><a href="${escapeHtmlAttr(pdf)}" target="_blank" rel="noopener noreferrer" class="pdf-link">📄 View ${escapeHtmlText(period)} Results PDF &nearr;</a>` : ''}
+                return `<tr role="row">
+                  <td role="cell" class="cell-period">${escapeHtmlText(period)}</td>
+                  <td role="cell" class="cell-date">${escapeHtmlText(date)}</td>
+                  <td role="cell"><span class="status-pill ${String(status).toLowerCase().includes('declared') ? 'status-declared' : 'status-upcoming'}">${escapeHtmlText(status)}</span></td>
+                  <td role="cell">
+                    ${String(sub).length > 180 ? `<details class="result-filing-details"><summary>${escapeHtmlText(String(sub).slice(0, 160).trim())}…<span>Read full filing details</span></summary><p>${escapeHtmlText(sub)}</p></details>` : escapeHtmlText(sub)}
+                    ${pdf ? `<br><a href="${escapeHtmlAttr(pdf)}" target="_blank" rel="noopener noreferrer" class="pdf-link">📄 Results PDF &nearr;</a>` : ''}
                   </td>
                 </tr>`;
               }).join('\n')}

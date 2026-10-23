@@ -1,6 +1,13 @@
 /* Responsive controls: preserve actions, allow text and searches to shrink. */
 .watchlist-tab-wrap { min-width:0; }
 .watchlist-tabs { width:100%; min-width:0; }
+.watchlist-toolbar .watchlist-tab-wrap { flex-shrink:0; }
+.watchlist-toolbar .watchlist-actions { flex:1; }
+.watchlist-toolbar .watchlist-actions>div:first-child { width:100%; }
+.watchlist-toolbar .watchlist-actions input { min-height:40px; }
+.results-toolbar { flex-wrap:wrap; }
+.results-toolbar .results-search { flex:1 1 240px; max-width:none; }
+.results-toolbar>div:last-child { flex-wrap:wrap; gap:8px; max-width:100%; }
 .company-add-results { scrollbar-gutter:stable; }
 .company-add-result button { min-height:44px; }
 @media(max-width:767px) {
@@ -29,8 +36,7 @@
 .mobile-alert-tabs>div { flex-shrink:0; }
 @media(max-width:767px) {
   .results-toolbar { flex-wrap:wrap; }
-  .results-toolbar>div:first-child { width:100%; min-width:0; }
-  .results-search { flex:1 1 100%; max-width:none; order:3; }
+  .results-toolbar .results-search { flex:1 1 100%; max-width:none; order:0; }
   .results-search input { min-height:44px; font-size:16px; }
   .results-toolbar>div:last-child { flex-wrap:wrap; max-width:100%; }
   .results-toolbar button { min-height:44px; }
@@ -38,6 +44,12 @@
   .mobile-alert-header button { min-width:44px; min-height:44px; }
   .mobile-alert-tabs { flex-wrap:wrap; overflow:visible; }
   .mobile-alert-tabs>div { max-width:100%; overflow-x:auto; }
+}
+
+@media(min-width:768px) and (max-width:1279px) {
+  .watchlist-toolbar .watchlist-actions { justify-content:stretch; }
+  .results-toolbar .results-search { flex-basis:100%; }
+  .results-toolbar>div:last-child { width:100%; justify-content:space-between; }
 }
 
 @media(max-width:767px) {

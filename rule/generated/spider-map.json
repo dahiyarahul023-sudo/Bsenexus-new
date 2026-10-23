@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "b8f6bedbd9e6fc8b01a31e3dec27a8aab7a9e86e67c355eb1262a0cdb14d785c",
+  "sourceDigest": "e5a01e0f7bdba62147f4406ee4f0355c49068bfe8138c5d1193508da59998393",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -204,20 +204,19 @@
     },
     {
       "path": "server.ts",
-      "sha256": "94f6522fa72cc22716eb083e42afab7f46973acb2e429c5aefef6b1865e0e950",
+      "sha256": "c3aa8051601399698cc5142538d52d640f6478b7d2b4ac7a0e95a11ace32a402",
       "importedBy": [
         "server/tests/routeResolution.test.ts"
       ]
     },
     {
       "path": "server/ai/calendarRead.ts",
-      "sha256": "405383b59d95a6dc15fc2858a2939d3b329ff6177d47fb0e641576fc8f1c8b4e",
+      "sha256": "09206325874bdd17206c37fad614553a449ef6a0a250916b84a5f4d7507bd103",
       "importedBy": [
         "server/ai/market.ts",
         "server/ai/tools.ts",
         "server/services/publicCalendar.ts",
         "server/tests/aiConnectorQuality.test.ts",
-        "server/tests/calendarDiscovery.test.ts",
         "server/tests/mcpDirectoryQuality.test.ts",
         "server/tests/mcpToolMatrix.test.ts"
       ]
@@ -954,7 +953,6 @@
       "path": "server/services/calendarUniverse.ts",
       "sha256": "06fd315692eea278e2a9f31af0e830174167922f73b68f9afb8ab4f8b4c9bb3a",
       "importedBy": [
-        "server/ai/calendarRead.ts",
         "server/services/resultsCalendarService.ts",
         "server/tests/calendarFno.test.ts"
       ]
@@ -1079,12 +1077,11 @@
     },
     {
       "path": "server/services/marketGuidesService.ts",
-      "sha256": "2d13afa6ee49fe52ed30a2afa6e1d5abd53ed17756a15dd7b99963100e74d691",
+      "sha256": "34e495756c5f07b4fdf52dc330bf0e7caafcd8e6246cee53499df1bddbef7049",
       "importedBy": [
         "server.ts",
         "server/api/routes.ts",
         "server/services/guideIndexNow.ts",
-        "server/tests/calendarDiscovery.test.ts",
         "server/tests/keywordGuides.test.ts"
       ]
     },
@@ -1126,12 +1123,11 @@
     },
     {
       "path": "server/services/publicCalendar.ts",
-      "sha256": "92e1dac62a84b2911cda61aa3eb2703888e147fd930736a05a908cb3244c412f",
+      "sha256": "aa102f9fa0bf1e467391e7b35eb42d7940d9455d117dba3051c3d6870dc81c71",
       "importedBy": [
         "scripts/verify-public-calendar.mjs",
         "server.ts",
         "server/tests/aiEvidence.test.ts",
-        "server/tests/calendarDiscovery.test.ts",
         "server/tests/publicCalendarCoverage.test.ts"
       ]
     },
@@ -1216,7 +1212,6 @@
         "server/services/storyFeedService.ts",
         "server/tests/aiConnectorQuality.test.ts",
         "server/tests/aiEvidence.test.ts",
-        "server/tests/calendarDiscovery.test.ts",
         "server/tests/calendarRecovery.test.ts",
         "server/tests/calendarScope.test.ts",
         "server/tests/calendarSync.test.ts",
@@ -1448,11 +1443,6 @@
       "importedBy": []
     },
     {
-      "path": "server/tests/calendarDiscovery.test.ts",
-      "sha256": "604af1e9f54d11f953104a7618885cab3cb5404b707e36a2c6b04aff57626568",
-      "importedBy": []
-    },
-    {
       "path": "server/tests/calendarFno.test.ts",
       "sha256": "be1f3362d21c3e68f0ca6a139394982346c123e48852c6a9c8718a3bb999aeb1",
       "importedBy": []
@@ -1574,7 +1564,7 @@
     },
     {
       "path": "server/tests/keywordGuides.test.ts",
-      "sha256": "37037f9370cbc5704f5a67c60b2fd05f27a9850a97f4397a1edc421222e07d0a",
+      "sha256": "5c8d8462704ae4e0f024d23965a039ecab586e45892cd0501d79a8cd0d5b1373",
       "importedBy": []
     },
     {
@@ -4540,12 +4530,6 @@
       "line": 3
     },
     {
-      "source": "server/ai/calendarRead.ts",
-      "target": "server/services/calendarUniverse.ts",
-      "kind": "import",
-      "line": 4
-    },
-    {
       "source": "server/ai/docs.ts",
       "target": "server/ai/policy.ts",
       "kind": "import",
@@ -7430,30 +7414,6 @@
       "target": "server/utils/httpDeadline.ts",
       "kind": "import",
       "line": 2
-    },
-    {
-      "source": "server/tests/calendarDiscovery.test.ts",
-      "target": "server/ai/calendarRead.ts",
-      "kind": "import",
-      "line": 4
-    },
-    {
-      "source": "server/tests/calendarDiscovery.test.ts",
-      "target": "server/services/publicCalendar.ts",
-      "kind": "import",
-      "line": 5
-    },
-    {
-      "source": "server/tests/calendarDiscovery.test.ts",
-      "target": "server/services/marketGuidesService.ts",
-      "kind": "import",
-      "line": 6
-    },
-    {
-      "source": "server/tests/calendarDiscovery.test.ts",
-      "target": "server/services/resultsCalendarService.ts",
-      "kind": "import",
-      "line": 7
     },
     {
       "source": "server/tests/calendarFno.test.ts",
@@ -12682,8 +12642,7 @@
         "scripts/verify-oauth-routing.mjs",
         "server/tests/aiEvidence.test.ts",
         "scripts/verify-public-calendar.mjs",
-        "server/tests/publicCalendarCoverage.test.ts",
-        "server/tests/calendarDiscovery.test.ts"
+        "server/tests/publicCalendarCoverage.test.ts"
       ],
       "reason": "API responses, SSR routes, browser deep links, SEO and service-worker caching must remain compatible. User-specific responses must never enter shared public caches."
     },
@@ -12767,8 +12726,7 @@
         "server/tests/aiEvidence.test.ts",
         "scripts/verify-public-calendar.mjs",
         "server/tests/mcpDirectoryQuality.test.ts",
-        "server/tests/publicCalendarCoverage.test.ts",
-        "server/tests/calendarDiscovery.test.ts"
+        "server/tests/publicCalendarCoverage.test.ts"
       ],
       "reason": "Upstream timestamps, stock identity and market sessions affect cached API results, screen freshness and alert timing. Public market data availability does not establish trading-data accuracy. Verified security identities repair IndusInd/J&K and current Eternal naming; conflicting legacy cache entries cannot overwrite them. Watchlist, Story and F&O fallback maps use the shared verified codes. Connector read projections follow security code and mark legacy conflicts rather than silently rewriting personal lists."
     },
@@ -12829,8 +12787,7 @@
         "server/tests/indexNowKeyRoute.test.ts",
         "server/tests/mcpDirectoryQuality.test.ts",
         "server/tests/brandRefreshInbox.test.ts",
-        "server/tests/publicCalendarCoverage.test.ts",
-        "server/tests/calendarDiscovery.test.ts"
+        "server/tests/publicCalendarCoverage.test.ts"
       ],
       "reason": "Public copy and crawler metadata must agree with actual API/product contracts. Admin SEO mutations inherit mount guards; generated summaries are not evidence of source accuracy. BSE/NSE operator profiles, shared listing identity, directory/landing links and static/dynamic sitemaps agree; these records never expand intake or assign BSE Limited an invented BSE code. The shared directory count includes Nexus Select Trust (NXST/543913) and drives client/server metadata, badge, filters and schema. One configured primary IndexNow submitter batches canonical changed public URLs, dedupes 24 hours across instances and allows at most one later retry. Directory content-version changes enqueue once, not on every startup; Cloudflare configuration is external and not assumed. AI docs have canonical SSR content, static/dynamic sitemap discovery and content-version IndexNow notification. Legacy ZOMATO company links redirect to the current ETERNAL identity. Public metadata does not imply legal data-use permission or directory verification. Public BSE/NSE operators now use the regular cached company renderer/intelligence service. NSE uses 544937; BSE equity uses exact named/symbol NSE archive evidence with no BSE scrip. Verified pins reserve 540025 for Advanced Enzyme; read projections correct proven old BSE records without rewriting canonical evidence. New filing persistence retains source/symbol, invalidates company render cache and notifies the existing IndexNow path for NSE-only BSE too. The legacy standalone exchange renderer is compatibility code, no longer mounted on public company routes."
     },
@@ -13216,8 +13173,7 @@
         "server/tests/exchangeProfiles.test.ts",
         "server/tests/companyDirectory.test.ts",
         "server/tests/mcpDirectoryQuality.test.ts",
-        "server/tests/publicCalendarCoverage.test.ts",
-        "server/tests/calendarDiscovery.test.ts"
+        "server/tests/publicCalendarCoverage.test.ts"
       ],
       "reason": "Public links, pricing claims, server-rendered content and client views must agree. Lazy navigation, responsive composition, keyboard operation and motion require browser evidence beyond server discovery tests. BSE/NSE operator profiles, shared listing identity, directory/landing links and static/dynamic sitemaps agree; these records never expand intake or assign BSE Limited an invented BSE code. The ordered shared company/REIT/exchange directory drives live counts, landing links and SSR discovery; Nexus Select Trust is appended with verified code 543913 and does not expand filing intake. Public AI setup/tool/coverage documentation is linked from AI Connections. React and SSR privacy copy share actual provider/consent/retention disclosure, and current Eternal preset labels preserve the old name as a search alias."
     },
@@ -13411,8 +13367,7 @@
         "server/tests/mcpDirectoryQuality.test.ts",
         "server/tests/mcpPdfSummary.test.ts",
         "server/tests/mcpToolMatrix.test.ts",
-        "server/tests/publicCalendarCoverage.test.ts",
-        "server/tests/calendarDiscovery.test.ts"
+        "server/tests/publicCalendarCoverage.test.ts"
       ],
       "reason": "Website sign-in approves a public PKCE client with explicit permissions. External opaque credentials never accept website cookies or client-supplied owners/roles. Live durable entitlement and shared per-account quotas precede bounded tools; writes recheck grant and plan in a transaction with an idempotent receipt. Website watchlists use request-local revision CAS while enabled, and reads do not restore stale backups. Connection/consent responses bypass browser, CDN and SW caches. Profile/watchlist/notes refresh on return; account changes suppress late responses. Root OAuth endpoints, MCP and the four compatibility GET routes share the same authorization owner. The disabled-by-default flag is required until an approved service-only schema rollout and live client/browser checks; source tests do not certify deployment or marketplace publication. Connection discovery uses the configured Express trusted-proxy hostname while all issuer/resource URLs remain canonical. Exact browser-Origin checks cover MCP requests and preflights. Settings owns the sole visible entry; client-specific web setup distinguishes public URL copying, approved grants and completed client setup. Same-account refresh retains content and account/request changes hide obsolete responses. Approved-access cards use a minmax content column and non-wrapping action column, with permission rows and a single-column phone layout; confirmed revoke and account guards are unchanged. Every wire tool has a title and complete read/write hints; descriptions are factual. PDF analysis has an independent provenance cache, language/coverage validation and shared-quota refunds, with no heuristic success. Service-only owner predicates and request receipts survive guessed IDs; local wire/SQL tests and rolled-back staging checks are distinct from a clean deployed Claude/Inspector flow. DCR supports exact loopback hosts with port relaxation and rejects client_credentials. Public docs/privacy describe partial coverage, upstream processing and retention; reviewer fixtures/expiring UID-specific limits never grant a paid entitlement."
     },
@@ -13583,7 +13538,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5339,
+      "line": 5336,
       "receiver": "app",
       "method": "GET",
       "path": "['/health', '/healthz']",
@@ -13593,7 +13548,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5345,
+      "line": 5342,
       "receiver": "app",
       "method": "GET",
       "path": "/robots.txt",
@@ -13603,7 +13558,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5351,
+      "line": 5348,
       "receiver": "app",
       "method": "GET",
       "path": "['/sitemap.xml', '/sitemap', '/sitemap_index.xml', '/sitemap.txt']",
@@ -13613,7 +13568,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5360,
+      "line": 5357,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-core.xml",
@@ -13623,7 +13578,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5398,
+      "line": 5395,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-filings-hot.xml",
@@ -13633,7 +13588,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5435,
+      "line": 5432,
       "receiver": "app",
       "method": "GET",
       "path": "['/rss.xml', '/rss', '/feed.xml', '/feed']",
@@ -13643,7 +13598,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5501,
+      "line": 5498,
       "receiver": "app",
       "method": "GET",
       "path": "[/^\\/https?:\\/?\\/?(?:www\\.)?bsenexus\\.in\\/sitemap(?:\\.xml)?$/i]",
@@ -13653,7 +13608,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5506,
+      "line": 5503,
       "receiver": "app",
       "method": "GET",
       "path": "[`/${INDEXNOW_KEY}.txt`, '/indexnow-key.txt']",
@@ -13663,7 +13618,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5514,
+      "line": 5511,
       "receiver": "app",
       "method": "GET",
       "path": "/opensearch.xml",
@@ -13673,7 +13628,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5521,
+      "line": 5518,
       "receiver": "app",
       "method": "GET",
       "path": "['/.well-known/ai-plugin.json', '/ai-plugin.json']",
@@ -13683,7 +13638,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5541,
+      "line": 5538,
       "receiver": "app",
       "method": "GET",
       "path": "[sourcePath, sourcePath + '/']",
@@ -13693,7 +13648,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5548,
+      "line": 5545,
       "receiver": "app",
       "method": "GET",
       "path": "/filing/:symbol/:newsId",
@@ -13703,7 +13658,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5607,
+      "line": 5604,
       "receiver": "app",
       "method": "GET",
       "path": "/filing/:symbol",
@@ -13713,7 +13668,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5618,
+      "line": 5615,
       "receiver": "app",
       "method": "GET",
       "path": "['/filing', '/filing/']",
@@ -13723,7 +13678,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5624,
+      "line": 5621,
       "receiver": "app",
       "method": "GET",
       "path": "/announcement/:newsId",
@@ -13733,7 +13688,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5953,
+      "line": 5950,
       "receiver": "app",
       "method": "GET",
       "path": "/results/:symbol/:quarterKey",
@@ -13743,7 +13698,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6008,
+      "line": 6005,
       "receiver": "app",
       "method": "GET",
       "path": "/ai-docs",
@@ -13753,7 +13708,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6011,
+      "line": 6008,
       "receiver": "app",
       "method": "GET",
       "path": "['/company/:symbol', '/stock/:symbol']",
@@ -13763,7 +13718,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6086,
+      "line": 6083,
       "receiver": "app",
       "method": "GET",
       "path": "/guides/:slug",
@@ -13773,7 +13728,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6132,
+      "line": 6129,
       "receiver": "app",
       "method": "GET",
       "path": "['/faq', '/faqs']",
@@ -13783,7 +13738,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6139,
+      "line": 6136,
       "receiver": "app",
       "method": "GET",
       "path": "['/pricing', '/pricing/']",
@@ -13793,7 +13748,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6146,
+      "line": 6143,
       "receiver": "app",
       "method": "GET",
       "path": "['/plans', '/plans/']",
@@ -13803,7 +13758,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6151,
+      "line": 6148,
       "receiver": "app",
       "method": "GET",
       "path": "['/guides', '/guides/']",
@@ -13813,7 +13768,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6158,
+      "line": 6155,
       "receiver": "app",
       "method": "GET",
       "path": "['/market-guides', '/market-guides/']",
@@ -13823,7 +13778,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6163,
+      "line": 6160,
       "receiver": "app",
       "method": "GET",
       "path": "['/companies', '/companies/']",
@@ -13833,7 +13788,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6170,
+      "line": 6167,
       "receiver": "app",
       "method": "GET",
       "path": "['/company-directory', '/company-directory/']",
@@ -13843,7 +13798,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6175,
+      "line": 6172,
       "receiver": "app",
       "method": "GET",
       "path": "['/about', '/about/']",
@@ -13853,7 +13808,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6182,
+      "line": 6179,
       "receiver": "app",
       "method": "GET",
       "path": "['/contact', '/contact/']",
@@ -13863,7 +13818,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6189,
+      "line": 6186,
       "receiver": "app",
       "method": "GET",
       "path": "['/disclaimer', '/disclaimer/']",
@@ -13873,7 +13828,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6196,
+      "line": 6193,
       "receiver": "app",
       "method": "GET",
       "path": "['/privacy-policy', '/privacy-policy/']",
@@ -13883,7 +13838,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6203,
+      "line": 6200,
       "receiver": "app",
       "method": "GET",
       "path": "['/privacy', '/privacy/']",
@@ -13893,7 +13848,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6209,
+      "line": 6206,
       "receiver": "app",
       "method": "GET",
       "path": "['/terms', '/terms/']",
@@ -13903,7 +13858,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6216,
+      "line": 6213,
       "receiver": "app",
       "method": "GET",
       "path": "['/terms-of-service', '/terms-of-service/']",
@@ -13913,7 +13868,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6221,
+      "line": 6218,
       "receiver": "app",
       "method": "GET",
       "path": "/embed/widget",
@@ -13923,7 +13878,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6275,
+      "line": 6272,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-companies.xml",
@@ -13933,7 +13888,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6295,
+      "line": 6292,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-guides.xml",
@@ -13943,7 +13898,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6313,
+      "line": 6310,
       "receiver": "app",
       "method": "GET",
       "path": "/llms.txt",
@@ -13953,7 +13908,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6318,
+      "line": 6315,
       "receiver": "app",
       "method": "GET",
       "path": "/llms-full.txt",
@@ -13963,7 +13918,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6328,
+      "line": 6325,
       "receiver": "app",
       "method": "GET",
       "path": "/^\\/google([a-zA-Z0-9_-]+)\\.html$/",
@@ -13973,7 +13928,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6338,
+      "line": 6335,
       "receiver": "app",
       "method": "USE",
       "path": "express.static(path.join(process.cwd(), 'public'), { maxAge: '1d', immutable: false, setHeaders: (res, filePath) => { if (filePath.includes(`${path.sep}fonts${path.sep}`)) res.setHeader('Cache-Control', 'public, max-age=2592000'); if (fileP",
@@ -13981,7 +13936,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6348,
+      "line": 6345,
       "receiver": "app",
       "method": "USE",
       "path": "['/api', '/auth']",
@@ -13991,7 +13946,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6354,
+      "line": 6351,
       "receiver": "app",
       "method": "USE",
       "path": "/auth",
@@ -14001,7 +13956,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6357,
+      "line": 6354,
       "receiver": "app",
       "method": "POST",
       "path": "/api/security/verify-recaptcha",
@@ -14012,7 +13967,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6398,
+      "line": 6395,
       "receiver": "app",
       "method": "USE",
       "path": "/api",
@@ -14023,7 +13978,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6402,
+      "line": 6399,
       "receiver": "app",
       "method": "USE",
       "path": "['/api/*', '/auth/*']",
@@ -14033,7 +13988,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6407,
+      "line": 6404,
       "receiver": "app",
       "method": "USE",
       "path": "(err: any, req: express.Request, res: express.Response, next: express.NextFunction) => { if (req.path.startsWith('/api') || req.path.startsWith('/auth')) { console.error(\"API Error handler caught:\", err?.message || err); const isProd = proc",
@@ -14041,7 +13996,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6816,
+      "line": 6813,
       "receiver": "app",
       "method": "GET",
       "path": "SPA_PATHS",
@@ -14051,7 +14006,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6850,
+      "line": 6847,
       "receiver": "app",
       "method": "USE",
       "path": "(req, res, next) => { if (req.method !== 'GET' && req.method !== 'HEAD') return next(); const p = normalizeSpaPath(req.path); if ( p === '/' || p === '/announcements' || p === '/results-calendar' || p === '/watchlist' || p === '/watchlists'",
@@ -14059,7 +14014,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6888,
+      "line": 6885,
       "receiver": "app",
       "method": "USE",
       "path": "vite.middlewares",
@@ -14067,7 +14022,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6900,
+      "line": 6897,
       "receiver": "app",
       "method": "USE",
       "path": "express.static(distPath, { maxAge: '1y', immutable: true, index: false, setHeaders: (res, filePath) => { if (filePath.endsWith('.html')) { res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600'); } } }",
@@ -14075,7 +14030,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6920,
+      "line": 6917,
       "receiver": "app",
       "method": "GET",
       "path": "['/announcements', '/announcements/']",
@@ -14085,7 +14040,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6967,
+      "line": 6964,
       "receiver": "app",
       "method": "GET",
       "path": "*",
@@ -16587,7 +16542,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6520,
+      "line": 6517,
       "function": "fetch",
       "target": "`http://127.0.0.1:${port}/api/health`"
     },
@@ -20305,37 +20260,37 @@
     },
     {
       "file": "server.ts",
-      "line": 6326,
+      "line": 6323,
       "name": "GOOGLE_SITE_VERIFICATION_HASH"
     },
     {
       "file": "server.ts",
-      "line": 6326,
+      "line": 6323,
       "name": "GOOGLE_SITE_VERIFICATION_HASH"
     },
     {
       "file": "server.ts",
-      "line": 6410,
+      "line": 6407,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6805,
+      "line": 6802,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6810,
+      "line": 6807,
       "name": "DISABLE_HMR"
     },
     {
       "file": "server.ts",
-      "line": 7082,
+      "line": 7079,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 7082,
+      "line": 7079,
       "name": "TEST_RUNNER"
     },
     {

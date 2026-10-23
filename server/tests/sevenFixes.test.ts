@@ -29,6 +29,27 @@ function declarations(names: string[]) {
   }).map(node => node.getText(serverAst)).join('\n');
 }
 
+test('public company financial rows keep long filing evidence collapsed, with the period, date and PDF accessible', () => {
+  const ctx = load(declarations(['renderCompanyPage', 'escapeHtmlText', 'escapeHtmlAttr']), {
+    hasExactScripCode, AI_STUDIO_REDIRECT_SCRIPT: '', getAllStockEntries: () => [],
+  });
+  const sourceText = 'Original quarterly filing details & board approval. '.repeat(25);
+  const output = ctx.renderCompanyPage({ companyName: 'Wipro Limited', quarterlyResults: [{
+    scripCode: '507685', periodOrMeeting: 'Quarter Ended 30-Sep-2026 (Q2 FY27)', declarationDate: '15 Oct 2026',
+    status: 'Declared', subject: sourceText, pdfLink: 'https://www.bseindia.com/filing.pdf',
+  }] }, 'WIPRO', '507685');
+  const table = output.match(/<table class="results-table"[^>]*>[\s\S]*?<\/table>/)[0];
+  const disclosure = table.match(/<details\b([^>]*)>([\s\S]*?)<\/details>/);
+  assert.ok(disclosure, 'long filing evidence has an expandable disclosure');
+  assert.doesNotMatch(disclosure[1], /\bopen\b/, 'long evidence starts collapsed');
+  const summary = disclosure[2].match(/<summary>([\s\S]*?)<\/summary>/)[1].replace(/<[^>]+>/g, '');
+  assert.ok(summary.length < 220, 'visible filing summary is bounded');
+  assert.ok(disclosure[2].includes(sourceText.replace(/&/g, '&amp;')), 'full original evidence remains accessible');
+  assert.ok(table.includes('Quarter Ended 30-Sep-2026 (Q2 FY27)'));
+  assert.ok(table.includes('15 Oct 2026'));
+  assert.match(table, /href="https:\/\/www\.bseindia\.com\/filing\.pdf"/);
+});
+
 for (const [symbol, scrip] of targets) {
   test(`${symbol}: only its exact BSE scrip identifies a filing`, () => {
     assert.equal(getScripCode(symbol), scrip);

@@ -1178,8 +1178,8 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
       )}
       {/* Compact Streamlined Unified Toolbar: Sticky below navbar - Title, Search, Filter & Single Tab Row */}
       <div ref={toolbarRef} className="sticky top-14 md:top-[89px] z-30 bg-white/95 dark:bg-[#1A1926]/95 backdrop-blur-md border border-slate-200/90 dark:border-[#2D283E] rounded-xl p-2.5 sm:p-3 shadow-xs flex flex-col gap-2">
-        {/* Row 1: Title, Search Box & Filter Bottom Sheet Trigger */}
-        <div className="results-toolbar flex items-center gap-2 justify-between">
+        {/* Stable title row; search and coverage get their own space below. */}
+        <div className="results-heading flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
           
           {/* Left: Scope Title, Count & Timestamp */}
           <div className="flex items-center gap-1.5 shrink-0">
@@ -1190,12 +1190,11 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
             <span className="text-xs text-slate-500 font-mono">
               ({filteredAndSortedItems.length})
             </span>
-            {lastUpdated > 0 && (
-              <span className="hidden sm:inline text-[11px] text-slate-400 font-mono">
-                • Updated {formatTimeOnly(lastUpdated)}
-              </span>
-            )}
           </div>
+          {lastUpdated > 0 && <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">Updated {formatTimeOnly(lastUpdated)}</span>}
+        </div>
+
+        <div className="results-toolbar flex items-center gap-2 justify-between">
 
           {/* Center: Search Box (44px min height on mobile) */}
           <div className="results-search relative flex-1 min-w-0 max-w-lg min-h-[44px] sm:min-h-[36px] flex items-center">
@@ -1204,6 +1203,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
               type="text" 
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
+              aria-label="Search earnings calendar"
               placeholder="Search symbol, company, scrip..."
               className="w-full h-10 sm:h-9 pl-8 pr-7 bg-slate-50 dark:bg-[#15141E] border border-slate-200 dark:border-[#2D283E] rounded-lg text-xs font-medium focus:outline-none focus:ring-1 focus:ring-slate-400 text-slate-900 dark:text-white"
             />
@@ -1211,6 +1211,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
               <button 
                 type="button" 
                 onClick={() => setSearchQuery('')}
+                aria-label="Clear calendar search"
                 className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
               >
                 <X size={12} />

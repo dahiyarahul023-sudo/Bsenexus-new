@@ -1924,7 +1924,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
       {/* Consolidated High-Density Navigation & Filter Bar - Sticky below navbar */}
       <div className="sticky top-14 md:top-[89px] z-30 bg-white/95 dark:bg-[#1A1926]/95 backdrop-blur-md border border-slate-200/90 dark:border-[#2D283E] rounded-xl p-2 sm:p-2.5 shadow-xs space-y-2">
         {/* Row 1: Primary Controls */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5">
+        <div className="watchlist-toolbar flex flex-col xl:flex-row xl:items-center justify-between gap-3">
           <div className="watchlist-tab-wrap min-w-0 py-0.5">
             {/* View Switcher Tabs: My companies | Updates | Edit watchlist */}
             <div className="watchlist-tabs flex items-center p-0.5 bg-slate-100 dark:bg-[#15141F] rounded-lg border border-slate-200/80 dark:border-[#2D283E] shrink-0 select-none">
@@ -2025,12 +2025,13 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
             {watchlistSubTab === 'companies' && (
               <div className="flex items-center gap-2 w-full md:w-auto">
                 {/* Search My Companies */}
-                <div className="relative flex-1 md:w-56 min-w-[150px]">
+                <div className="relative flex-1 xl:w-64 min-w-0">
                   <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input 
                     type="text" 
                     value={companySearch}
                     onChange={e => setCompanySearch(e.target.value)}
+                    aria-label="Search my companies"
                     placeholder="Search my companies..."
                     className="pl-7 pr-7 py-1.5 bg-slate-50 dark:bg-[#201E2E] border border-slate-200 dark:border-[#2D283E] text-xs rounded-lg focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-900 dark:text-white w-full min-h-[36px]"
                   />
@@ -2038,6 +2039,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
                     <button
                       type="button"
                       onClick={() => setCompanySearch('')}
+                      aria-label="Clear company search"
                       className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5"
                     >
                       <X size={12} />
