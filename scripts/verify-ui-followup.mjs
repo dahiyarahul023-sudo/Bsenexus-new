@@ -5,6 +5,9 @@ import vm from 'node:vm';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import * as scripMatching from '../src/shared/scripMatching.ts';
+import * as exchangeCompanies from '../src/config/exchangeCompanies.ts';
+import * as companyDirectory from '../src/config/companyDirectory.ts';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(path.join(root, 'package.json'));
 const ts = require('typescript');
@@ -42,8 +45,7 @@ const server = ts.createSourceFile('server.ts', read('server.ts'), ts.ScriptTarg
 const names = ['renderCompanyPage', 'escapeHtmlText', 'escapeHtmlAttr'];
 const declarations = server.statements.filter(node => ts.isFunctionDeclaration(node) && names.includes(node.name?.text)).map(node => node.getText(server)).join('\n');
 const context = { console, getAllStockEntries: () => [], AI_STUDIO_REDIRECT_SCRIPT: '',
-  ...require('./src/shared/scripMatching.ts'), ...require('./src/config/exchangeCompanies.ts'),
-  ...require('./src/config/companyDirectory.ts'),
+  ...scripMatching, ...exchangeCompanies, ...companyDirectory,
 };
 vm.createContext(context);
 vm.runInContext(ts.transpileModule(declarations, { compilerOptions }).outputText, context);
