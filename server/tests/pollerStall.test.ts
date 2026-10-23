@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
+import { isBseFiling } from '../../src/shared/filingSource.js';
 
 function harness(hanging?: string, failing?: string) {
   let now = 1_000_000;
@@ -42,6 +43,7 @@ function harness(hanging?: string, failing?: string) {
   const cycle = load('../utils/pollCycle.ts');
   const settings = { isRunning: true, telegramAlertsEnabled: false };
   const monitor = load('../services/monitor.ts', {
+    '../../src/shared/filingSource.js': { isBseFiling },
     './indexNow': { indexNowQueue: { beginBatch() { indexBatchBalance++; return () => { indexBatchBalance--; }; } } },
     '../utils/pollCycle.js': cycle,
     '../database/logDao.js': { addLog: async (_level: string, _module: string, message: string) => { logs.push(message); logLevels.push({ level: _level, message }); } },
@@ -113,6 +115,13 @@ test('healthy monitor saves the filing and recipient inbox in order', async () =
   assert.equal(summary.level, 'log');
   assert.doesNotMatch(summary.message, /error/i);
   assert.equal(h.logLevels.find(x => x.message.startsWith('{'))!.level, 'INFO');
+});
+
+test('monitor never saves or delivers NSE filings even if an upstream adapter accidentally supplies one', async () => {
+  const h = harness();
+  h.rows[0].NEWSID = 'corp_nse_duplicate';
+  await h.poll();
+  assert.ok(!h.calls.includes('save')); assert.ok(!h.calls.includes('inbox'));
 });
 
 test('all monitor attempts emit one numbered IST summary; overlapping attempts skip without a queue', async () => {

@@ -11,6 +11,7 @@ import ts from 'typescript';
 function harness(pages: Record<number, any[] | null>, processed = new Set<string>(), options: { backup?: any[] | null; yesterday?: any[] | null; sample?: boolean; market?: boolean; failureStatus?: number } = {}) {
   let now = options.sample ? 61_000 : 1000; // Keep the unrelated periodic backup sample outside its 60s window.
   const calls: { page: number; at: number }[] = [];
+  const hosts: string[] = [];
   const delays: number[] = [];
   const logs: string[] = [];
   class Clock extends Date { static now() { return now; } }
@@ -28,6 +29,7 @@ function harness(pages: Record<number, any[] | null>, processed = new Set<string
     },
     clearTimeout(timer: { cancelled: boolean }) { timer.cancelled = true; },
     fetch: async (url: string) => {
+      hosts.push(new URL(url).hostname);
       if (new URL(url).hostname === 'www.nseindia.com') {
         return { ok: true, status: 200, headers: { getSetCookie: () => [] }, json: async () => [] };
       }
@@ -54,12 +56,21 @@ function harness(pages: Record<number, any[] | null>, processed = new Set<string
     module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022,
   } }).outputText;
   vm.runInContext(compiled, context, { filename: 'bse.cjs' });
-  return { poll: () => exports.fetchBSEAnnouncements(), calls, delays, logs, pages, processed, state: () => exports.getBseFeedStaleness() };
+  return { poll: () => exports.fetchBSEAnnouncements(), calls, hosts, delays, logs, pages, processed, state: () => exports.getBseFeedStaleness() };
 }
 
 function rows(page: number, count = 50) {
   return Array.from({ length: count }, (_, i) => ({ NEWSID: `page-${page}-${i}` }));
 }
+
+test('BSE success, empty, outage and cooldown never request the NSE filing feed', async () => {
+  for (const first of [rows(1), [], null]) {
+    const h = harness({ 1: first }, new Set(['page-1-0']), { backup: null, yesterday: [], failureStatus: 403 });
+    await h.poll(); await h.poll();
+    assert.ok(h.hosts.length > 0);
+    assert.ok(h.hosts.every(host => /(?:^|\.)bseindia\.com$/.test(host)));
+  }
+});
 
 test('boot walk caps at three pages and spaces requests by 2.5s; normal walk has the same pacing', async () => {
   const h = harness(Object.fromEntries(Array.from({ length: 10 }, (_, i) => [i + 1, rows(i + 1)])));

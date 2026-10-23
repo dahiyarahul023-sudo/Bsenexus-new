@@ -2,6 +2,7 @@ import { PollCycle, PollStageTimeout } from '../utils/pollCycle.js';
 import { getSettings } from '../database/settingsDao.js';
 import { addLog } from '../database/logDao.js';
 import { fetchBSEAnnouncements, getLastBseError } from './bse.js';
+import { isBseFiling } from '../../src/shared/filingSource.js';
 import { sendToTelegram } from './telegram.js';
 import { generateAndSendSummary } from './gemini.js';
 import { getActiveWatchlistSymbols, getActiveWatchlistSymbolMap } from '../database/watchlistDao.js';
@@ -217,6 +218,7 @@ export async function processAnnouncements(): Promise<AnnouncementPollResult> {
     const pendingAnnouncements = [];
     
     for (const item of announcements) {
+      if (!isBseFiling(item)) continue;
       const newsId = item.NEWSID;
       if (!newsId) continue;
       if (!(await cycle.step('dedupe-read', () => isAnnouncementProcessed(newsId)))) {

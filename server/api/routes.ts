@@ -7,6 +7,7 @@ import { getSettings, saveSettings } from "../database/settingsDao.js";
 import { getLogs, addLog, clearLogs } from "../database/logDao.js";
 import { saveFeedback, getAllFeedback, markFeedbackRead } from "../database/feedbackDao.js";
 import { getRecentAnnouncements, markAnnouncementSent, getAnnouncementById, processedBloomFilter, sentBloomFilter, isAnnouncementProcessed, isAnnouncementSent, getBloomFilterDiagnostics } from "../database/announcementDao.js";
+import { isBseFiling } from '../../src/shared/filingSource.js';
 import { generateDirectSummary, generateAndSendSummary, askAppHelpAI } from "../services/gemini.js";
 import { escapeHTML, isMarketHoursIST } from "../utils/helpers.js";
 import { resolvePersonalTelegramTarget } from '../utils/telegramTarget.js';
@@ -1262,7 +1263,7 @@ apiRouter.post("/users/profile", requireAuth, async (req, res) => {
         'muteInAppNotifications', 'stocksHighPriority', 'stocksMediumPriority',
         'stocksLowPriority', 'concallsAndInvestorMeets', 'boardMeetingsAndOutcomes',
         'insiderTradingAndSAST', 'creditRatingChanges', 'annualReportsAndAudits',
-        'telegramNewsAlerts', 'telegramAlertsEnabled', 'telegramAiSummaryEnabled', 'adrAlertsEnabled',
+        'telegramNewsAlerts', 'telegramAlertsEnabled', 'telegramAiSummaryEnabled', 'adrAlertsEnabled', 'storyNavigationButtons',
       ];
       for (const k of booleanKeys) {
         if (k in rawNp && typeof rawNp[k] === 'boolean') cleanedNp[k] = rawNp[k];
@@ -1480,6 +1481,7 @@ apiRouter.patch("/watchlists/:id/name", requireProOrAdmin, async (req, res) => {
 apiRouter.post("/send-to-telegram-manual", requireAdmin, telegramRateLimiter, async (req, res) => {
   try {
     const { newsId, companyName, subject, details, category, pdfLink, attachmentUrl, scripCode, calendarUrl } = req.body;
+    if (!isBseFiling({ newsId, pdfLink: pdfLink || attachmentUrl })) return res.status(400).json({ success: false, error: 'Telegram filing alerts use BSE filings only.' });
 
     if (!companyName || !subject) {
       return res.status(400).json({ success: false, error: "Missing required announcement fields" });

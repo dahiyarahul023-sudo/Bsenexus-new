@@ -30,6 +30,6 @@ export function isValidTelegramResultSummary(text: string): boolean {
   if (/\[(?:current|yoy|qoq|pending|[+\-]?x)|\bX(?:\.X)?\s*(?:%|bps)|please\s+(?:provide|upload|paste)|not\s+(?:attached|provided)|no\s+(?:financial\s+)?data|not available in filing|Fast Filing Summary|Heuristic extraction/i.test(text)) return false;
   const clean = text.replace(/\*\*|<[^>]*>/g, '');
   // A numerical revenue/income and net-profit/PAT metric are the minimum useful result.
-  return /(?:revenue|total\s+income|net\s+sales)[^\n]{0,60}[₹\d][\d,]+(?:\.\d+)?/i.test(clean) &&
-    /(?:PAT|net\s+profit|profit\s+after\s+tax)[^\n]{0,60}[₹\d][\d,]+(?:\.\d+)?/i.test(clean);
+  return /(?:revenue|total\s+income|net\s+sales)[^\n]{0,60}[₹]?\s*[-−]?\d[\d,]*(?:\.\d+)?/i.test(clean) &&
+    /(?:PAT|net\s+profit|profit\s+after\s+tax)[^\n]{0,60}[₹]?\s*[-−]?\d[\d,]*(?:\.\d+)?/i.test(clean);
 }

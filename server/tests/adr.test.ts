@@ -95,14 +95,67 @@ test('an unavailable or partial ADR batch retries after one minute and recovers 
   assert.equal(first.status, 'ready'); assert.deepEqual(first, second); assert.equal(calls, 10);
 });
 
+test('repeated provider failures back off exponentially instead of hammering every minute', async () => {
+  let time = now, calls = 0;
+  const service = createAdrService(async () => { calls++; throw Error('429'); }, () => time);
+  await service.load(); assert.equal(calls, 5);
+  time += 60001; await service.load(); assert.equal(calls, 10);
+  time += 60001; await service.load(); assert.equal(calls, 10);
+  time += 60001; await service.load(); assert.equal(calls, 15);
+});
+
 test('public client validates responses, shares reads and retains useful data on failure', async () => {
   let time = now; let calls = 0; let fail = false;
   const client = createAdrClient(async () => { calls++; if (fail) throw Error('offline'); return snapshot(); }, () => time);
   await Promise.all([client.load(), client.load()]); assert.equal(calls, 1);
   time += 61000; fail = true;
-  await assert.rejects(client.load()); assert.equal(client.peek()!.items.length, 5);
+  assert.equal((await client.load()).refreshFailed, true); assert.equal(client.peek()!.items.length, 5);
   const malformed = createAdrClient(async () => ({ checkedAt: now, items: [{ close: 0 }] }), () => now);
   await assert.rejects(malformed.load()); assert.equal(malformed.peek(), null);
+});
+
+test('partial refresh retains valid missing symbols and restart hydrates saved evidence without claiming freshness', async () => {
+  let time = now, partial = false; let saved: AdrSnapshot | null = null;
+  const storage = { read: async () => saved, save: async (value: AdrSnapshot) => { saved = value; } };
+  const service = createAdrService(async symbol => { if (partial && symbol === 'WIT') throw Error('timeout'); return chart(symbol); }, () => time, storage);
+  await service.load(); time += 301000; partial = true;
+  const result = await service.load();
+  assert.equal(result.items.length, 5); assert.equal(result.refreshFailed, true); assert.equal(result.checkedAt, now);
+  const cold = createAdrService(async () => { throw Error('provider rate limit'); }, () => time, storage);
+  const restored = await cold.load();
+  assert.equal(restored.items.length, 5); assert.equal(restored.refreshFailed, true);
+  assert.equal(buildAdrDigest(restored, user, lists, time), null);
+  const expired = createAdrService(async () => { throw Error('offline'); }, () => time + 8 * 86400000, storage);
+  assert.equal((await expired.load()).items.length, 0);
+});
+
+test('browser reload restores a public saved snapshot, handles denied storage, and rejects expired evidence', async () => {
+  let saved: unknown = snapshot();
+  const storage = { read: () => saved, save: (value: AdrSnapshot) => { saved = value; } };
+  const restored = createAdrClient(async () => { throw Error('503'); }, () => now, storage);
+  assert.equal(restored.peek()!.items.length, 5); assert.equal(restored.peek()!.refreshFailed, true);
+  assert.equal((await restored.load()).refreshFailed, true);
+  const expired = createAdrClient(async () => { throw Error('503'); }, () => now + 8 * 86400000, storage);
+  assert.equal(expired.peek(), null); await assert.rejects(expired.load());
+  const denied = createAdrClient(async () => snapshot(), () => now, { read() { throw Error('denied'); }, save() { throw Error('quota'); } });
+  assert.equal((await denied.load()).items.length, 5);
+});
+
+test('an older successful source/API session cannot downgrade saved quotes or reconfirm them', async () => {
+  const saved = snapshot();
+  const olderChart = (symbol: string) => {
+    const value = chart(symbol);
+    value.meta.currentTradingPeriod.regular.end = new Date('2026-10-20T20:00:00Z');
+    value.quotes.forEach(row => { row.date = new Date(row.date.getTime() - 86400000); });
+    return value;
+  };
+  const service = createAdrService(async symbol => olderChart(symbol), () => now, { read: async () => saved, save: async () => {} });
+  const restored = await service.load();
+  assert.equal(restored.items[0].sessionDate, '2026-10-21'); assert.equal(restored.refreshFailed, true);
+  const old = readAdrSnapshot({ checkedAt: now, items: ADR_COMPANIES.map(company => adrFromChart(company, olderChart(company.adrSymbol), now)) }, now)!;
+  const client = createAdrClient(async () => old, () => now, { read: () => saved, save() {} });
+  const result = await client.load();
+  assert.equal(result.items[0].sessionDate, '2026-10-21'); assert.equal(result.refreshFailed, true);
 });
 
 test('daily Home and Story use the same values, one existing chapter, and exact company actions', () => {

@@ -7,6 +7,7 @@ import { BloomFilter } from '../utils/bloomFilter.js';
 import { pageRenderCache, apiResponseCache } from '../utils/renderCache.js';
 import { notifySearchEnginesOfNewPages } from '../services/indexNow.js';
 import { publicFilingVersion, storedFilingIndexPages } from '../services/filingIndexNow';
+import { isBseFiling } from '../../src/shared/filingSource.js';
 
 const ANNOUNCEMENTS_TABLE = 'announcements';
 
@@ -686,6 +687,7 @@ export async function getRecentAnnouncements(limitNum: number = 1000, symbols?: 
       const counts = new Array<number>(cleanSymbols.length).fill(0);
       let allFull = false;
       for (const ann of announcementsMemoryCache) {
+        if (!isBseFiling(ann)) continue;
         const ts = (typeof ann.bseTimestamp === 'number' && !isNaN(ann.bseTimestamp) && ann.bseTimestamp > 0)
           ? ann.bseTimestamp : (ann.fetched_at || 0);
         if (ts > 0 && ts < cutoff) break; // older than the window; rest is older too
@@ -713,7 +715,7 @@ export async function getRecentAnnouncements(limitNum: number = 1000, symbols?: 
     }
   }
   // announcementsMemoryCache is already maintained sorted on insert
-  return announcementsMemoryCache.slice(0, limitNum);
+  return announcementsMemoryCache.filter(isBseFiling).slice(0, limitNum);
 }
 
 export function getTotalAnnouncementsCount(): number {
@@ -767,7 +769,7 @@ export async function getAnnouncementsForScrip(scripCode: string, limitNum: numb
     }
   }
 
-  return Array.from(byId.values());
+  return Array.from(byId.values()).filter(isBseFiling);
 }
 
 /** BSE equity has no BSE scrip. Read exact NSE identity, including verified legacy PDFs. */
