@@ -1,6 +1,8 @@
 import { resolveStockDetailsSync } from "../utils/stockResolver";
 import { AiError, publicOrigin } from "./policy.js";
 import type { ResultCalendarItem } from "../services/resultsCalendarService.js";
+import { FNO_CALENDAR_STOCKS } from "../services/calendarUniverse.js";
+const calendarIdentities = new Map(FNO_CALENDAR_STOCKS.map(stock => [stock.scripCode, stock]));
 const DAY = 86400000;
 export const istDay = (time: number) => new Date(time + 19800000).toISOString().slice(0, 10);
 const dayNumber = (day: string) => {
@@ -60,12 +62,20 @@ export function selectCalendarMeetings(
     .filter(({item, day}) => {const key = String(item.scripCode) + ":" + day;if(seen.has(key))return false;seen.add(key);return true;});
   const offset = args.offset ?? 0, limit = args.limit ?? 20;
   const page = matching.slice(offset, offset + limit);
-  const meetings = page.map(({item: m, day}) => ({
-    symbol: text(resolveStockDetailsSync(String(m.scripCode))?.symbol || m.symbol, 60), scripCode: String(m.scripCode),
-    companyName: text(resolveStockDetailsSync(String(m.scripCode))?.name || m.companyName, 160),
-    meetingDate: day, daysLeft: Math.round((dayNumber(day) - dayNumber(window.referenceDate)) / DAY),
-    purpose: text(m.purpose || "Results-related board meeting", 240),
-  }));
+  const meetings = page.map(({item: m, day}) => {
+    const code = String(m.scripCode);
+    const resolved = resolveStockDetailsSync(code);
+    const calendar = calendarIdentities.get(code);
+    // The resolver deliberately returns a code-only placeholder for unknown
+    // securities. That truthy placeholder must not hide a known calendar name.
+    const resolvedName = resolved?.name && !/^\d+$/.test(resolved.name.trim()) ? resolved.name : undefined;
+    return {
+      symbol: text(resolved?.symbol || calendar?.symbol || m.symbol, 60), scripCode: code,
+      companyName: text(resolvedName || calendar?.companyName || m.companyName, 160),
+      meetingDate: day, daysLeft: Math.round((dayNumber(day) - dayNumber(window.referenceDate)) / DAY),
+      purpose: text(m.purpose || "Results-related board meeting", 240),
+    };
+  });
   const updated = Number(snapshot.lastUpdated);
   return {
     success: true, count: meetings.length, totalMatches: matching.length, meetings,
