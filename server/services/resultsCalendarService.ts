@@ -22,6 +22,8 @@ import { determinePriority } from '../utils/helpers.js';
 import { getSupabase, isSupabaseConfigured } from '../database/supabase.js';
 import { getBseISTDate } from './bse.js';
 import { externalFeedsCircuitBreaker } from '../utils/circuitBreaker.js';
+import { readStoredCalendarMeetings } from '../database/calendarHistoryDao.js';
+import { calendarDayKey, calendarDayStart, projectCalendarTiming } from '../../src/shared/calendarTiming.js';
 
 export interface ResultCalendarItem {
   id: string;
@@ -185,6 +187,40 @@ function loadLocalCache() {
 
 loadLocalCache();
 
+let storedCalendarHydration: Promise<void> | null = null;
+let storedCalendarAttempt = 0;
+let storedCalendarLoaded = false;
+let calendarHistoryUnavailable = false;
+
+/** Recover durable meeting evidence after restart and from other instances, without reviving replaced future schedules. */
+async function hydrateStoredCalendar(): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+  if (storedCalendarHydration) return storedCalendarHydration;
+  if (storedCalendarAttempt && Date.now() - storedCalendarAttempt < 60_000) return;
+  storedCalendarAttempt = Date.now();
+  storedCalendarHydration = (async () => {
+    try {
+      const stored = await readStoredCalendarMeetings();
+      const today = calendarDayStart();
+      const cold = !storedCalendarLoaded && cachedCalendar.length === 0;
+      const existing = new Set(cachedCalendar.map(item => `${item.scripCode}:${item.meetingTimestamp}`));
+      const eligible = stored.filter(item => (cold || item.meetingTimestamp < today) && !existing.has(`${item.scripCode}:${item.meetingTimestamp}`));
+      const merged = mergeCalendarMeetings(eligible, cachedCalendar, new Set());
+      if (JSON.stringify(merged) !== JSON.stringify(cachedCalendar)) {
+        cachedCalendar = merged;
+        invalidateEnrichedCalendarCache();
+      }
+      for (const item of stored) if (item.isNotified) notifiedMeetingIds.add(item.id);
+      storedCalendarLoaded = true;
+      calendarHistoryUnavailable = false;
+    } catch {
+      calendarHistoryUnavailable = true;
+      console.warn('[ResultsCalendar] Stored history recovery unavailable; existing entries retained');
+    } finally { storedCalendarHydration = null; }
+  })();
+  return storedCalendarHydration;
+}
+
 const COMMON_HEADERS = {
   "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
   "Accept": "application/json, text/plain, */*",
@@ -309,6 +345,7 @@ export async function syncSingleStockResultsCalendar(
   scripCodeOverride?: string
 ): Promise<{ success: boolean; count: number; newlyFound: number; items: ResultCalendarItem[] }> {
   try {
+    await hydrateStoredCalendar();
     const identity = calendarIdentity({ symbol: symbolOrScrip, scripCode: scripCodeOverride });
     let resolvedSym = identity?.symbol || symbolOrScrip.toUpperCase().trim();
     let scripCode = identity?.scripCode;
@@ -396,9 +433,8 @@ export async function syncSingleStockResultsCalendar(
     }
     const finalStockItems = Array.from(uniqueStockItems.values());
 
-    // Merge into in-memory cachedCalendar (remove older items for this scripCode first)
-    loadLocalCache();
-    cachedCalendar = mergeCalendarMeetings(cachedCalendar, finalStockItems, new Set([scripCode]));
+    // A refreshed rolling source can replace future dates, but never delete the recorded archive.
+    cachedCalendar = mergeCalendarMeetings(cachedCalendar, finalStockItems, new Set([scripCode]), todayStartTs);
     lastCalendarFetchTime = Date.now();
 
     // Save to disk
@@ -452,6 +488,7 @@ async function performCalendarSync(
   isSyncing = true;
   lastCalendarAttemptTime = now;
   try {
+    await hydrateStoredCalendar();
     const subset = Boolean(options?.symbols?.length);
     const targets = buildCalendarTargets(subset ? options!.symbols! : await getCalendarWatchlistStocks(), !subset);
     const watchlistScrips = new Set([...targets.values()].filter(stock => stock.isWatchlist).map(stock => stock.scripCode));
@@ -554,7 +591,7 @@ async function performCalendarSync(
       }
     }
 
-    cachedCalendar = mergeCalendarMeetings(cachedCalendar, Array.from(uniqueMap.values()), successfulCodes);
+    cachedCalendar = mergeCalendarMeetings(cachedCalendar, Array.from(uniqueMap.values()), successfulCodes, todayStartTs);
     lastCalendarSyncIncomplete = successfulCodes.size < targets.size;
     if (!subset) calendarUniverseVersion = FNO_CALENDAR_VERSION;
     if (successfulCodes.size > 0) lastCalendarFetchTime = now;
@@ -663,6 +700,7 @@ async function performCalendarSync(
 // Memory cache for processed & enriched results calendar (invalidated on new fetch or after TTL)
 let enrichedCache: {
   ts: number;
+  day: number;
   items: ResultCalendarItem[];
   byWatchlist: Map<string, ResultCalendarItem[]>;
 } | null = null;
@@ -676,12 +714,13 @@ export function invalidateEnrichedCalendarCache() {
 export function readCachedResultsCalendar() {
   const items = enrichedCache && Date.now() - enrichedCache.ts < 45000
     ? enrichedCache.items : cachedCalendar;
-  return { items: [...items], lastUpdated: lastCalendarFetchTime };
+  return { items: items.map(item => projectCalendarTiming(item)), lastUpdated: lastCalendarFetchTime };
 }
 
 // Public calendar facts only. Account visibility remains in the caller;
 // website callers keep their original scope/filter semantics below.
 export async function getResultsCalendarSnapshot() {
+  await hydrateStoredCalendar();
   const now = Date.now();
   if (calendarUniverseVersion !== FNO_CALENDAR_VERSION || cachedCalendar.length === 0 ||
       (lastCalendarSyncIncomplete && now - lastCalendarAttemptTime >= 60000) || now - lastCalendarFetchTime > 12 * 60 * 60 * 1000) {
@@ -690,7 +729,7 @@ export async function getResultsCalendarSnapshot() {
 
   // Use cached enriched items if fresh (< 45s old)
   let allEnrichedItems: ResultCalendarItem[] = [];
-  if (enrichedCache && (now - enrichedCache.ts < 45000)) {
+  if (enrichedCache && enrichedCache.day === calendarDayKey(now) && (now - enrichedCache.ts < 45000)) {
     allEnrichedItems = enrichedCache.items;
   } else {
     const todayStartTs = getIstMidnightTs(new Date());
@@ -798,10 +837,6 @@ export async function getResultsCalendarSnapshot() {
         declarationSubject = matched.subject;
         aiSummary = matched.aiSummary;
         bseTimestamp = matched.bseTimestamp || (matched.bseTime ? parseBseDate(matched.bseTime) : undefined) || (matched.fetched_at ? new Date(matched.fetched_at).getTime() : undefined);
-      } else if (daysLeft < 0) {
-        // Past meeting with no specific filing in store - mark declared with clean meeting date
-        isDeclared = true;
-        resultDeclarationTime = item.meetingDate;
       }
 
       let companyName = item.companyName;
@@ -831,6 +866,7 @@ export async function getResultsCalendarSnapshot() {
 
     enrichedCache = {
       ts: now,
+      day: calendarDayKey(now),
       items: allEnrichedItems,
       byWatchlist: new Map()
     };
@@ -884,7 +920,7 @@ export async function getResultsCalendarData(
   const upcomingFutureItems = items.filter(i => i.status === 'UPCOMING' || i.daysLeft > 0);
   const upcomingFutureCount = upcomingFutureItems.length;
 
-  // Recent declared in past 30 days
+  // Recorded past meetings in the last 30 days, not necessarily declared results.
   const recentItems = items.filter(i => i.status === 'RECENT' || (i.daysLeft < 0 && i.daysLeft >= -30));
   const recentCount = recentItems.length;
 
@@ -915,6 +951,7 @@ export async function getResultsCalendarData(
   return {
     lastUpdated: lastCalendarFetchTime,
     calendarIncomplete: lastCalendarSyncIncomplete,
+    calendarHistoryUnavailable,
     totalCount: items.length,
     allCount: scopedCount,
     todayCount,

@@ -89,6 +89,7 @@ test('the actual company modal uses the same hook order when closed, opened and 
     useMemo(fn: () => any) { hooks.push('memo'); return fn(); },
     useCallback(fn: any) { hooks.push('callback'); return fn; },
     useEffect() { hooks.push('effect'); },
+    useLayoutEffect() { hooks.push('layout-effect'); },
   };
   const exports: any = {};
   const code = ts.transpileModule(readFileSync('src/components/CompanyIntelligenceModal.tsx', 'utf8'), { compilerOptions: {

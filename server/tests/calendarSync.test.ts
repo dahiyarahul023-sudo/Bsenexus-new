@@ -4,7 +4,8 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-test('BSE-only sync includes missing-master Vishal, coalesces refreshes, invalidates enrichment and retains failures', async () => {
+test('BSE-only sync includes missing-master Vishal, coalesces refreshes, invalidates enrichment and retains failures', async context => {
+  context.mock.timers.enable({ apis: ['Date'], now: Date.parse('2026-10-20T10:00:00+05:30') });
   const previousCwd = process.cwd();
   const temporary = mkdtempSync(path.join(tmpdir(), 'calendar-sync-test-'));
   const originalFetch = globalThis.fetch;

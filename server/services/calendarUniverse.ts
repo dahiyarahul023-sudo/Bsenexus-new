@@ -53,11 +53,11 @@ export function calendarWatchlistCodes(lists: any[], selectedId?: string): Set<s
 }
 
 interface Meeting { id: string; scripCode: string; meetingTimestamp: number; purpose: string; isNotified?: boolean }
-/** Replace only successfully fetched securities, preserving failed and concurrent single-stock reads. */
-export function mergeCalendarMeetings<T extends Meeting>(previous: T[], fetched: T[], successfulCodes: Set<string>): T[] {
+/** Replace future schedules for successful securities; a rolling source cannot erase recorded past meetings. */
+export function mergeCalendarMeetings<T extends Meeting>(previous: T[], fetched: T[], successfulCodes: Set<string>, retainBefore = 0): T[] {
   const old = new Map(previous.map(item => [`${item.scripCode}:${item.meetingTimestamp}`, item]));
   const result = new Map<string, T>();
-  for (const item of [...previous.filter(item => !successfulCodes.has(item.scripCode)), ...fetched]) {
+  for (const item of [...previous.filter(item => !successfulCodes.has(item.scripCode) || item.meetingTimestamp < retainBefore), ...fetched]) {
     const key = `${item.scripCode}:${item.meetingTimestamp}`;
     const existing = result.get(key);
     if (existing) {

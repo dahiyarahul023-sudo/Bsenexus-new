@@ -62,6 +62,17 @@ test('partial upstream failure preserves cached meetings; successful reschedule 
   assert.deepEqual(mergeCalendarMeetings(old, [], new Set(['500325'])).map(row => row.id), ['544307_1']);
 });
 
+test('a successful rolling-source refresh retains yesterday and older archive dates while replacing future schedules', () => {
+  const today = Date.parse('2026-10-23T00:00:00+05:30');
+  const past = { ...meeting('517354', today - 86400000), id: 'oct22-saved-id', isNotified: true };
+  const cancelled = meeting('517354', today + 86400000);
+  const next = meeting('517354', today + 3 * 86400000);
+  const merged = mergeCalendarMeetings([past, cancelled], [next], new Set(['517354']), today);
+  assert.deepEqual(merged.map(item => item.id), ['oct22-saved-id', next.id]);
+  assert.equal(merged[0].isNotified, true);
+  assert.deepEqual(mergeCalendarMeetings([past, cancelled], [], new Set(['517354']), today).map(item => item.id), ['oct22-saved-id']);
+});
+
 test('F&O-only calendar coverage cannot extend automatic Telegram recipients or trigger dates', () => {
   const items = [meeting('544307'), meeting('500325'), { ...meeting('507685'), daysLeft: -1 }];
   assert.deepEqual(automaticCalendarMeetings(items, new Set(['500325']), new Set()).map(row => row.scripCode), ['500325']);
