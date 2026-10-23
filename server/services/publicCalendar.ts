@@ -8,7 +8,10 @@ export function publicCalendarCacheControl(now = Date.now()) {
   return seconds ? `public, max-age=${Math.min(30, seconds)}, s-maxage=${seconds}` : "no-store";
 }
 export function renderPublicCalendarShell(html: string, snapshot: { items: ResultCalendarItem[]; lastUpdated: number }, now = Date.now()) {
-  const data = selectCalendarMeetings(snapshot, { limit: 25, daysAhead: 14 }, undefined, now);
+  // The public document has no next-page interaction. Include the whole cached
+  // window so later dates are present in the initial HTML and its ItemList.
+  const publicSnapshot = { ...snapshot, items: snapshot.items.filter(m => /^\d{6}$/.test(String(m.scripCode))) };
+  const data = selectCalendarMeetings(publicSnapshot, { limit: publicSnapshot.items.length, daysAhead: 14 }, undefined, now);
   const rows = data.meetings.filter(m => /^\d{6}$/.test(m.scripCode));
   const sourceUrl = (code: string) => "https://api.bseindia.com/BseIndiaAPI/api/BoardMeeting/w?scripcode=" + code + "&strPurpose=&fromdate=&todate=";
   const asOf = data.lastSyncedAt || "Not available";

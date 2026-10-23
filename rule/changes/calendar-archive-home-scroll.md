@@ -31,3 +31,9 @@
 - `npm run lint`: passed. `npm run build --ignore-scripts`: passed (prebuild version bump intentionally skipped; existing large-bundle warning remains). `npm run map:generate`, `npm run map:check` and `npm run test:map`: passed, six map tests. `git diff --check`: passed.
 - Browser/device gate blocked: Playwright Chromium executable is not installed in this environment. No browser/mobile/visual QA pass is claimed. Host `compile_applet` and `lint_applet` are unavailable; repository TypeScript/build checks are recorded separately.
 - Committed, remote PR/CI, merged and deployed states will be reported separately. Rules/map/tests are not proof of production behavior.
+
+## Merge reconciliation, 23 October
+
+- User authorized merging requested fixes automatically after checks pass. Original PR #14 CI passed all three jobs.
+- Main advanced to 8acddd8ad79e7da5fe730bbc4c91528d25c97247 with the independently verified public-calendar coverage change. Shared domain/map files conflict; preserve that change and all three PR #14 fixes, union the five domain test references, and regenerate both maps from the combined source. The public renderer's complete 14-day window and existing cache-only read remain compatible with history recovery and IST projection.
+- Combined full suite passed 690 tests with zero failures/skips (69.5 seconds). Production build/type check and regenerated map checks passed; all six map tests passed. The three copied public-coverage files match main's exact blob hashes. PR #14 is updated with both parents and the combined generated map before merging. Deployment remains separate.

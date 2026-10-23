@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "dca7f36d7378b23847a2b62a7d80afa998f0c489d1f3d075efd6cd08a32dd498",
+  "sourceDigest": "e5a01e0f7bdba62147f4406ee4f0355c49068bfe8138c5d1193508da59998393",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -1123,11 +1123,12 @@
     },
     {
       "path": "server/services/publicCalendar.ts",
-      "sha256": "273e0181a40a39bfacc0534f5f245a6bb20243fa0f608d563dc052508486ad11",
+      "sha256": "aa102f9fa0bf1e467391e7b35eb42d7940d9455d117dba3051c3d6870dc81c71",
       "importedBy": [
         "scripts/verify-public-calendar.mjs",
         "server.ts",
-        "server/tests/aiEvidence.test.ts"
+        "server/tests/aiEvidence.test.ts",
+        "server/tests/publicCalendarCoverage.test.ts"
       ]
     },
     {
@@ -1213,7 +1214,8 @@
         "server/tests/aiEvidence.test.ts",
         "server/tests/calendarRecovery.test.ts",
         "server/tests/calendarScope.test.ts",
-        "server/tests/calendarSync.test.ts"
+        "server/tests/calendarSync.test.ts",
+        "server/tests/publicCalendarCoverage.test.ts"
       ]
     },
     {
@@ -1628,6 +1630,11 @@
     {
       "path": "server/tests/productionAudit.test.ts",
       "sha256": "cfff38ee5461438ac9fec11c16f3fde39fd5fe6148bbb10fa530b40ddf7a7a2d",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/publicCalendarCoverage.test.ts",
+      "sha256": "db2ae4e0389e57a3c0146dd1a29b3e6fbffeef10305c24951c4bef83906087ae",
       "importedBy": []
     },
     {
@@ -7979,6 +7986,18 @@
       "line": 8
     },
     {
+      "source": "server/tests/publicCalendarCoverage.test.ts",
+      "target": "server/services/publicCalendar.ts",
+      "kind": "import",
+      "line": 4
+    },
+    {
+      "source": "server/tests/publicCalendarCoverage.test.ts",
+      "target": "server/services/resultsCalendarService.ts",
+      "kind": "import",
+      "line": 5
+    },
+    {
       "source": "server/tests/radarCompactRender.test.ts",
       "target": "src/shared/radarMovement.ts",
       "kind": "import",
@@ -12622,7 +12641,8 @@
         "server/tests/spaRouteParity.test.ts",
         "scripts/verify-oauth-routing.mjs",
         "server/tests/aiEvidence.test.ts",
-        "scripts/verify-public-calendar.mjs"
+        "scripts/verify-public-calendar.mjs",
+        "server/tests/publicCalendarCoverage.test.ts"
       ],
       "reason": "API responses, SSR routes, browser deep links, SEO and service-worker caching must remain compatible. User-specific responses must never enter shared public caches."
     },
@@ -12705,7 +12725,8 @@
         "server/tests/aiConnectorQuality.test.ts",
         "server/tests/aiEvidence.test.ts",
         "scripts/verify-public-calendar.mjs",
-        "server/tests/mcpDirectoryQuality.test.ts"
+        "server/tests/mcpDirectoryQuality.test.ts",
+        "server/tests/publicCalendarCoverage.test.ts"
       ],
       "reason": "Upstream timestamps, stock identity and market sessions affect cached API results, screen freshness and alert timing. Public market data availability does not establish trading-data accuracy. Verified security identities repair IndusInd/J&K and current Eternal naming; conflicting legacy cache entries cannot overwrite them. Watchlist, Story and F&O fallback maps use the shared verified codes. Connector read projections follow security code and mark legacy conflicts rather than silently rewriting personal lists."
     },
@@ -12765,7 +12786,8 @@
         "server/tests/indexNowIngestion.test.ts",
         "server/tests/indexNowKeyRoute.test.ts",
         "server/tests/mcpDirectoryQuality.test.ts",
-        "server/tests/brandRefreshInbox.test.ts"
+        "server/tests/brandRefreshInbox.test.ts",
+        "server/tests/publicCalendarCoverage.test.ts"
       ],
       "reason": "Public copy and crawler metadata must agree with actual API/product contracts. Admin SEO mutations inherit mount guards; generated summaries are not evidence of source accuracy. BSE/NSE operator profiles, shared listing identity, directory/landing links and static/dynamic sitemaps agree; these records never expand intake or assign BSE Limited an invented BSE code. The shared directory count includes Nexus Select Trust (NXST/543913) and drives client/server metadata, badge, filters and schema. One configured primary IndexNow submitter batches canonical changed public URLs, dedupes 24 hours across instances and allows at most one later retry. Directory content-version changes enqueue once, not on every startup; Cloudflare configuration is external and not assumed. AI docs have canonical SSR content, static/dynamic sitemap discovery and content-version IndexNow notification. Legacy ZOMATO company links redirect to the current ETERNAL identity. Public metadata does not imply legal data-use permission or directory verification. Public BSE/NSE operators now use the regular cached company renderer/intelligence service. NSE uses 544937; BSE equity uses exact named/symbol NSE archive evidence with no BSE scrip. Verified pins reserve 540025 for Advanced Enzyme; read projections correct proven old BSE records without rewriting canonical evidence. New filing persistence retains source/symbol, invalidates company render cache and notifies the existing IndexNow path for NSE-only BSE too. The legacy standalone exchange renderer is compatibility code, no longer mounted on public company routes."
     },
@@ -13150,7 +13172,8 @@
         "scripts/verify-public-calendar.mjs",
         "server/tests/exchangeProfiles.test.ts",
         "server/tests/companyDirectory.test.ts",
-        "server/tests/mcpDirectoryQuality.test.ts"
+        "server/tests/mcpDirectoryQuality.test.ts",
+        "server/tests/publicCalendarCoverage.test.ts"
       ],
       "reason": "Public links, pricing claims, server-rendered content and client views must agree. Lazy navigation, responsive composition, keyboard operation and motion require browser evidence beyond server discovery tests. BSE/NSE operator profiles, shared listing identity, directory/landing links and static/dynamic sitemaps agree; these records never expand intake or assign BSE Limited an invented BSE code. The ordered shared company/REIT/exchange directory drives live counts, landing links and SSR discovery; Nexus Select Trust is appended with verified code 543913 and does not expand filing intake. Public AI setup/tool/coverage documentation is linked from AI Connections. React and SSR privacy copy share actual provider/consent/retention disclosure, and current Eternal preset labels preserve the old name as a search alias."
     },
@@ -13343,7 +13366,8 @@
         "scripts/verify-public-calendar.mjs",
         "server/tests/mcpDirectoryQuality.test.ts",
         "server/tests/mcpPdfSummary.test.ts",
-        "server/tests/mcpToolMatrix.test.ts"
+        "server/tests/mcpToolMatrix.test.ts",
+        "server/tests/publicCalendarCoverage.test.ts"
       ],
       "reason": "Website sign-in approves a public PKCE client with explicit permissions. External opaque credentials never accept website cookies or client-supplied owners/roles. Live durable entitlement and shared per-account quotas precede bounded tools; writes recheck grant and plan in a transaction with an idempotent receipt. Website watchlists use request-local revision CAS while enabled, and reads do not restore stale backups. Connection/consent responses bypass browser, CDN and SW caches. Profile/watchlist/notes refresh on return; account changes suppress late responses. Root OAuth endpoints, MCP and the four compatibility GET routes share the same authorization owner. The disabled-by-default flag is required until an approved service-only schema rollout and live client/browser checks; source tests do not certify deployment or marketplace publication. Connection discovery uses the configured Express trusted-proxy hostname while all issuer/resource URLs remain canonical. Exact browser-Origin checks cover MCP requests and preflights. Settings owns the sole visible entry; client-specific web setup distinguishes public URL copying, approved grants and completed client setup. Same-account refresh retains content and account/request changes hide obsolete responses. Approved-access cards use a minmax content column and non-wrapping action column, with permission rows and a single-column phone layout; confirmed revoke and account guards are unchanged. Every wire tool has a title and complete read/write hints; descriptions are factual. PDF analysis has an independent provenance cache, language/coverage validation and shared-quota refunds, with no heuristic success. Service-only owner predicates and request receipts survive guessed IDs; local wire/SQL tests and rolled-back staging checks are distinct from a clean deployed Claude/Inspector flow. DCR supports exact loopback hosts with port relaxation and rejects client_credentials. Public docs/privacy describe partial coverage, upstream processing and retention; reviewer fixtures/expiring UID-specific limits never grant a paid entitlement."
     },
@@ -19115,6 +19139,24 @@
       "line": 185,
       "function": "Array.from",
       "key": "await exports.getLogs(2500)"
+    },
+    {
+      "file": "server/tests/publicCalendarCoverage.test.ts",
+      "line": 18,
+      "function": "Array.from",
+      "key": "{ length: 86 }"
+    },
+    {
+      "file": "server/tests/publicCalendarCoverage.test.ts",
+      "line": 28,
+      "function": "Array.from",
+      "key": "{ length: 86 }"
+    },
+    {
+      "file": "server/tests/publicCalendarCoverage.test.ts",
+      "line": 34,
+      "function": "Array.from",
+      "key": "{ length: 30 }"
     },
     {
       "file": "server/tests/radarFollowUp.test.ts",
