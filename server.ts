@@ -33,7 +33,7 @@ import { getPollingIntervalMs, parseBseDate } from "./server/utils/helpers.js";
 import { getAnnouncementById, getRecentAnnouncements } from "./server/database/announcementDao.js";
 import { getScripCode, getAllStockEntries } from "./server/utils/stockResolver.js";
 import { getCompanyIntelligence } from "./server/services/companyIntelService.js";
-import { MARKET_GUIDES, getMarketGuides, getMarketGuideBySlug, getIndexableMarketGuides } from "./server/services/marketGuidesService.js";
+import { MARKET_GUIDES, getMarketGuides, getMarketGuideBySlug, getIndexableMarketGuides, getGuidePrimaryAction } from "./server/services/marketGuidesService.js";
 import type { ServerMarketGuide as MarketGuide } from "./server/services/marketGuidesService.js";
 import { resumeFirestoreNetwork, startStorageRecoveryProbe } from "./server/database/firebase.js";
 import { isFirestoreQuotaExceeded, getManualStorageMode, resetAdminPermissionDenied } from "./server/database/localStore.js";
@@ -4634,6 +4634,7 @@ function getRelatedCompaniesForGuide(slug: string): Array<{ symbol: string; name
 
 function renderGuidePage(guide: MarketGuide): string {
   const slug = guide.slug || guide.id;
+  const primaryAction = getGuidePrimaryAction(slug);
   const keywordGuide = getKeywordGuide(slug);
   const pendingReview = guide.editorialStatus === "verification-pending";
   const pageTitle = keywordGuide ? guide.title : `${guide.title} | Bsenexus`;
@@ -5198,8 +5199,8 @@ ${faqJsonLd ? `  <script type="application/ld+json">\n${faqJsonLd}\n  </script>`
     <a href="https://bsenexus.in" class="top-brand">
       BSE <span>Nexus</span>
     </a>
-    <a href="https://bsenexus.in/?tab=guides" class="app-btn">
-      Open in Bsenexus App &rarr;
+    <a href="${escapeHtmlAttr(primaryAction.href)}" class="app-btn">
+      ${escapeHtmlText(primaryAction.label)} &rarr;
     </a>
   </nav>
 
@@ -5212,6 +5213,8 @@ ${faqJsonLd ? `  <script type="application/ld+json">\n${faqJsonLd}\n  </script>`
       </div>
 
       <h1 class="guide-title">${escapeHtmlText(guide.title)}</h1>
+
+      ${primaryAction.description ? `<aside class="callout callout-info" aria-label="Upcoming company dates"><p class="callout-text">${escapeHtmlText(primaryAction.description)}</p><a class="terminal-link" href="${escapeHtmlAttr(primaryAction.href)}">${escapeHtmlText(primaryAction.label)} &rarr;</a></aside>` : ''}
 
       ${guide.author ? `
       <div class="author-bar">
@@ -5242,8 +5245,8 @@ ${faqJsonLd ? `  <script type="application/ld+json">\n${faqJsonLd}\n  </script>`
       ${keywordGuide ? "" : relatedCompaniesHtml}
 
       <div class="cta-row">
-        <a href="https://bsenexus.in/?tab=guides" class="app-btn-large">
-          Open in Bsenexus App &rarr;
+        <a href="${escapeHtmlAttr(primaryAction.href)}" class="app-btn-large">
+          ${escapeHtmlText(primaryAction.label)} &rarr;
         </a>
         <a href="https://bsenexus.in/?tab=announcements" class="terminal-link">
           Explore Live BSE Corporate Disclosures on Bsenexus &rarr;

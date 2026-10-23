@@ -31,6 +31,7 @@ export function renderPublicCalendarShell(html: string, snapshot: { items: Resul
 <p><strong>Last calendar sync:</strong> <time>${escape(asOf)}</time>${data.stale ? " · Cached coverage is stale or unavailable." : ""}</p>
 <p>BSE Nexus is an independent aggregator. These are scheduled meeting dates, not confirmed financial-result declarations. Verify changes with the original exchange source.</p>
 <p>Showing ${rows.length} of ${data.totalMatches} matching cached dates. Coverage is incomplete; no match does not mean no result is scheduled.</p>
+<p><a style="color:#34D399" href="/guides/bse-quarterly-results-calendar-guide">How to read results dates and board-meeting notices</a></p>
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:12px">${cards || "<p>No scheduled dates are available in this cached window.</p>"}</div>
 </main></div>`;
   const structured = {
