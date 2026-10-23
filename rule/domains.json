@@ -101,6 +101,8 @@
         "server/database/telegramResultDao.ts",
         "server/services/telegramResultSummary.ts",
         "server/utils/telegramResultPolicy.ts",
+        "server/utils/resultAnalysis.ts",
+        "src/shared/filingSource.ts",
         "supabase/migrations/20261019065115_telegram_result_delivery.sql",
         "server/ai/filingSummary.ts",
         "server/ai/tools.ts",
@@ -108,13 +110,14 @@
       ],
       "tests": [
         "server/tests/aiGateway.test.ts",
+        "server/tests/resultAnalysis.test.ts",
         "server/tests/auditSecurity.test.ts",
         "server/tests/telegramResults.test.ts",
         "server/tests/telegramResultSql.test.ts",
         "server/tests/telegramResultDocument.test.ts",
         "server/tests/mcpPdfSummary.test.ts"
       ],
-      "reason": "Authenticated request \u2192 quota \u2192 allowlisted document fetch \u2192 provider budget/fallback \u2192 response/cache. Retrieved documents are untrusted content, not instructions. Telegram results require an official BSE/NSE PDF, supported v2 extraction for large files and numeric output validation before caching/sending; placeholders or missing-document responses are suppressed. Site-requested AI remains independent. The public BSE proxy retains its original BSE-only allowlist. Explicit connector PDF analysis uses the existing gateway and bounded official-document fetcher without changing website/Telegram fallback policy. Evidence stores language, coverage, input truncation and document hash; provider/extraction/output failure refunds the generation reservation."
+      "reason": "Authenticated request \u2192 quota \u2192 allowlisted document fetch \u2192 provider budget/fallback \u2192 response/cache. Retrieved documents are untrusted content, not instructions. Telegram filing delivery is BSE-only. Strict result summaries extract literal PDF rows, headings and units, validate numeric order and period/basis evidence, then compute YoY/QoQ and bounded prose in code. Unreadable or invalid evidence suppresses the AI reply, not the original filing alert. Website prose cache is separate; versioned summary keys retain unchanged per-chat delivery receipts. Site-requested AI remains independent. The public BSE proxy retains its original BSE-only allowlist. Explicit connector PDF analysis uses the existing gateway and bounded official-document fetcher without changing website/Telegram fallback policy. Evidence stores language, coverage, input truncation and document hash; provider/extraction/output failure refunds the generation reservation."
     },
     {
       "id": "feed-alerts",
@@ -146,6 +149,7 @@
         "src/components/WatchlistEditor.tsx",
         "src/shared/watchlistIdentity.ts",
         "server/services/filingIndexNow.ts",
+        "src/shared/filingSource.ts",
         "server/services/indexNow.ts",
         "server/services/indexNowQueue.ts",
         "src/shared/adr.ts",
@@ -169,6 +173,7 @@
         "server/tests/alertRulesReliability.test.ts",
         "server/tests/alertRulesApi.test.ts",
         "server/tests/pollerStall.test.ts",
+        "server/tests/filingSource.test.ts",
         "server/tests/announcementCron.test.ts",
         "server/tests/announcementCadence.test.ts",
         "server/tests/telegramResults.test.ts",
@@ -523,6 +528,7 @@
         "src/components/ui/SyncStatusBadge.tsx",
         "src/utils/preferenceSaveQueue.ts",
         "src/api.ts",
+        "src/components/story/StoryNavigationPreference.tsx",
         "src/firebase.ts",
         "src/config/avatars.ts",
         "src/utils/avatarSave.ts",
@@ -534,7 +540,8 @@
         "server/tests/recaptchaUiState.test.ts",
         "server/tests/apiCancellation.test.ts",
         "server/tests/avatar.test.ts",
-        "server/tests/appCheckStartup.test.ts"
+        "server/tests/appCheckStartup.test.ts",
+        "server/tests/storyButtons.test.ts"
       ],
       "reason": "Guest, restoring, signed-in and expired states must stay distinct. Late requests and saved preferences must not overwrite newer edits or leak between accounts. A success message requires the appropriate confirmed result."
     },
@@ -914,6 +921,8 @@
       "label": "Frontend: market stories and institutional identity",
       "files": [
         "src/components/TodayMarketStoryModal.tsx",
+        "src/components/story/StoryNavigationPreference.tsx",
+        "src/context/AuthContext.tsx",
         "src/components/story/storyTypes.ts",
         "src/components/story/storyBuilder.ts",
         "src/components/story/storyFeedClient.ts",
@@ -939,13 +948,14 @@
       "tests": [
         "server/tests/marketStories.test.ts",
         "server/tests/calendarNavigation.test.ts",
+        "server/tests/storyButtons.test.ts",
         "server/tests/companyStoryBudget.test.ts",
         "server/tests/followupAudit.test.ts",
         "server/tests/mcpDirectoryQuality.test.ts",
         "server/tests/adr.test.ts",
         "server/tests/adrInbox.test.ts"
       ],
-      "reason": "Public feed \u2192 validated content-led chapter adapter \u2192 Home carousel and both shared viewer entry points. Chapter selection uses stable IDs. Aggregate topics, especially FII/DII, have neutral symbols and no company CTA; only exact per-company records use the existing official-logo resolver and Company Intelligence callbacks. No sample facts on loading/error. News is bounded by sourced publication time and the existing 18-hour/session policy. Newer refreshes win cache races; stale/empty/error states remain distinct. The scoped reading canvas, proportional signed charts, native illustrations, pause clock, portal focus/inertness, scroll and reduced motion are one interaction contract. Browser/device verification and live deployment are separate from source/render/build evidence. Company news is one finite chapter: at most seven screens, two per company, complete explanations and adjacent company groups. Chapter-wide progress/count never reset per news sequence. Optional restrained sector art, clean text and unambiguous source-backed order metrics avoid a compulsory repeated illustration. Visible 46px Previous/Pause/Next controls supplement symmetric side taps, swipes and keyboard navigation; a contrast-visible 4px progress track remains present at zero elapsed time and under reduced motion. Story identity lookup reuses the same verified IndusInd code as watchlists and server resolution; story timing/navigation/style is unchanged. Overnight ADR adds one existing Market pulse screen and an opt-in private morning inbox digest; source dates and fetch times remain distinct, and durable insertion prevents per-session repeats."
+      "reason": "Public feed \u2192 validated content-led chapter adapter \u2192 Home carousel and both shared viewer entry points. Chapter selection uses stable IDs. Aggregate topics, especially FII/DII, have neutral symbols and no company CTA; only exact per-company records use the existing official-logo resolver and Company Intelligence callbacks. No sample facts on loading/error. News is bounded by sourced publication time and the existing 18-hour/session policy. Newer refreshes win cache races; stale/empty/error states remain distinct. The scoped reading canvas, proportional signed charts, native illustrations, pause clock, portal focus/inertness, scroll and reduced motion are one interaction contract. Browser/device verification and live deployment are separate from source/render/build evidence. Company news is one finite chapter: at most seven screens, two per company, complete explanations and adjacent company groups. Chapter-wide progress/count never reset per news sequence. Optional restrained sector art, clean text and unambiguous source-backed order metrics avoid a compulsory repeated illustration. Default-on 46px Previous/Pause/Next controls are optional via the account-saved Story navigation preference; side taps, swipes, header controls and keyboard navigation remain; a contrast-visible 4px progress track remains present at zero elapsed time and under reduced motion. Story identity lookup reuses the same verified IndusInd code as watchlists and server resolution; story timing/navigation/style is unchanged. Overnight ADR adds one existing Market pulse screen and an opt-in private morning inbox digest; source dates and fetch times remain distinct, and durable insertion prevents per-session repeats."
     },
     {
       "id": "ai-connections",
@@ -1027,6 +1037,7 @@
         "server/services/adrService.ts",
         "server/services/adrAlerts.ts",
         "server/services/adrRuntime.ts",
+        "server/database/adrSnapshotDao.ts",
         "server/api/adr.ts",
         "server/api/routes.ts",
         "server/database/notificationDao.ts",
@@ -1044,11 +1055,12 @@
         "server/tests/adr.test.ts",
         "server/tests/adrInbox.test.ts",
         "server/tests/announcementCadence.test.ts",
+        "server/tests/adrSnapshotStore.test.ts",
         "server/tests/marketStories.test.ts",
         "server/tests/companyStoryBudget.test.ts",
         "server/tests/notificationStartup.test.ts"
       ],
-      "reason": "One reviewed company registry and completed-US-session snapshot supplies Home, company intelligence, Market pulse and the opt-in watchlist inbox worker. Current US bars, pre/post market, bad identities/currency, stale/partial data and split/thin-volume alerts are guarded. Home uses shared Helios/density/actions and exact company navigation; Stories use one existing chapter. Morning alerts honor fresh owner/list/mute/priority checks and a durable private per-session insert-once key. The existing cron/watchdog supplies the execution lifetime without another timer, migration or public broadcast. Browser/device, live delivery, hosting and source redistribution evidence remain separate."
+      "reason": "One reviewed company registry and completed-US-session snapshot supplies Home, company intelligence, Market pulse and the opt-in watchlist inbox worker. Public validated snapshots persist under service-only immutable settings session keys and browser localStorage. Partial refresh retains missing symbols; restored, failed or older-source reads cannot renew freshness. Repeated failures back off from one to fifteen minutes. Current US bars, pre/post market, bad identities/currency, stale/partial data and split/thin-volume alerts are guarded. Home uses shared Helios/density/actions and exact company navigation; Stories use one existing chapter. Morning alerts honor fresh owner/list/mute/priority checks and a durable private per-session insert-once key. The existing cron/watchdog supplies the execution lifetime without another timer, migration or public broadcast. Browser/device, live delivery, hosting and source redistribution evidence remain separate."
     }
   ]
 }

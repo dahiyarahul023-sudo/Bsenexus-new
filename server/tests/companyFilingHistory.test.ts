@@ -6,6 +6,7 @@ import { readFileSync } from 'node:fs';
 import ts from 'typescript';
 import { companyFilingStats, pageItems } from '../../src/shared/companyFilings.js';
 import { hasExactScripCode } from '../../src/shared/scripMatching.js';
+import { isBseFiling } from '../../src/shared/filingSource.js';
 import { importHistoricalFilings } from '../services/historicalFilings.js';
 const now = Date.parse('2026-10-22T12:00:00Z');
 
@@ -26,6 +27,7 @@ function storedReader(rows: any[], unavailable = false) {
   const module = ts.transpileModule(readFileSync('server/database/announcementDao.ts','utf8'), {compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
   vm.runInNewContext(module,{exports,console,Date,AbortSignal,process:{env:{NODE_ENV:'production'}},require(path:string) {
     if (path.endsWith('/scripMatching.js')) return {hasExactScripCode,projectFilingIdentity:(row:any)=>row};
+    if (path.endsWith('/filingSource.js')) return {isBseFiling};
     if (path.endsWith('/localStore.js')) return {readLocalJson:()=>[]};
     if (path.endsWith('/bloomFilter.js')) return {BloomFilter:class {add() {}}};
     if (path.endsWith('/helpers.js')) return {parseBseDate:(value:string)=>Date.parse(value)||0};

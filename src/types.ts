@@ -33,6 +33,7 @@ export interface UserNotificationPreferences {  resultsAndEarnings: boolean;
   muteRoutineFilings: boolean;
   muteInAppNotifications?: boolean;
   adrAlertsEnabled?: boolean;
+  storyNavigationButtons?: boolean;
   // Granular notification toggles:
   stocksHighPriority: boolean;
   stocksMediumPriority: boolean;

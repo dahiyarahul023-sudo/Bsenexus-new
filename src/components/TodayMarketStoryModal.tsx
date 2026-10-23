@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useReducedMotion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, MoreHorizontal, Pause, Play, RotateCw, Share2, X } from 'lucide-react';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
+import { useAuth } from '../context/AuthContext';
 import { fetchLiveStoryChapters, getAllSlides, getInitialStoryChapters, getStorySessionStorageKey } from './story/storyData';
 import { getStoryDuration, resolveStorySelection, safeStoryUrl } from './story/storyBuilder';
 import type { StoryChapter, StoryCompany } from './story/storyTypes';
@@ -23,6 +24,8 @@ interface TodayMarketStoryModalProps {
 }
 
 export function TodayMarketStoryModal({ isOpen, onClose, initialChapterId, onStoryViewed, onOpenCompanyIntel }: TodayMarketStoryModalProps) {
+  const { profile, user } = useAuth();
+  const showNavigationButtons = profile?.uid === user?.uid ? profile?.notificationPreferences?.storyNavigationButtons !== false : true;
   const [chapters, setChapters] = useState<StoryChapter[]>(getInitialStoryChapters);
   const [activeId, setActiveId] = useState(() => resolveStorySelection(chapters, '', initialChapterId).activeId);
   const [missingTopic, setMissingTopic] = useState(() => resolveStorySelection(chapters, '', initialChapterId).missingTopic);
@@ -257,11 +260,11 @@ export function TodayMarketStoryModal({ isOpen, onClose, initialChapterId, onSto
       </main>
       <footer className="story-footer">
         {slide && <>
-          <nav className="story-navigation" aria-label="Story navigation">
+          {showNavigationButtons && <nav className="story-navigation" aria-label="Story navigation">
             <button type="button" disabled={index === 0} onClick={() => move(-1)}><ChevronLeft size={19} />Previous</button>
             <button type="button" aria-label={paused ? 'Resume story' : 'Pause story'} aria-pressed={paused} onClick={() => setPaused(value => !value)}>{paused ? <Play size={19} /> : <Pause size={19} />}</button>
             <button type="button" onClick={() => move(1)}>{index === slides.length - 1 ? 'Done' : 'Next'}<ChevronRight size={19} /></button>
-          </nav>
+          </nav>}
           {subjectCompany && onOpenCompanyIntel && <button type="button" className="story-company-link" onClick={() => openCompany(subjectCompany)}><CompanyBrandLogo {...subjectCompany} size="sm" /><span>{subjectCompany.name}</span><ChevronRight size={17} /></button>}
           <div className="story-source">{slide.source.url ? <a href={slide.source.url} target="_blank" rel="noopener noreferrer">{slide.source.name} ↗</a> : <span>{slide.source.name}</span>}{sourceDate && <span>{sourceDate}</span>}</div>
           {failed ? <button className="story-refresh-status" type="button" onClick={() => void load(true)}>Showing saved snapshot · Retry refresh</button> : loading ? <p className="story-refresh-status">Checking for updates…</p> : null}

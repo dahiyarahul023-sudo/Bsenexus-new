@@ -1,4 +1,5 @@
 import { AvatarPicker } from './AvatarPicker';
+import { StoryNavigationPreference } from './story/StoryNavigationPreference';
 import { UserAvatar } from './ui/UserAvatar';
 import { DeviceNotificationControl } from './DeviceNotificationControl';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
@@ -60,6 +61,7 @@ const SETTINGS_REGISTRY = [
   { id: 'appearance', title: 'Appearance & Theme', description: 'Dark/Light mode and the Pro-only Soft Glass design theme', category: 'Preferences', keywords: ['dark', 'light', 'theme', 'mode', 'appearance', 'color', 'soft glass', 'design theme', 'pro theme', 'glass'] },
   { id: 'density', title: 'Feed Display Density', description: 'Adjust spacing for disclosure feeds (Comfortable, Compact, Dense)', category: 'Preferences', keywords: ['density', 'compact', 'comfortable', 'dense', 'spacing', 'feed', 'layout'] },
   { id: 'sound', title: 'Audio alerts', description: 'Play chime on high-impact filing updates', category: 'Preferences', keywords: ['sound', 'audio', 'chime', 'bell', 'alert', 'volume', 'audio cue'] },
+  { id: 'story-buttons', title: 'Story navigation buttons', description: 'Show or hide Previous, Pause and Next below stories', category: 'Preferences', keywords: ['story', 'stories', 'buttons', 'navigation', 'pause', 'next', 'swipe'] },
   { id: 'filter', title: 'High impact filter', description: 'Highlight material price-sensitive disclosures (SEBI LODR 30)', category: 'Preferences', keywords: ['filter', 'materiality', 'high impact', 'sebi', 'lodr', 'price-sensitive'] },
   { id: 'profile', title: 'Profile & Display name', description: 'Profile avatar, investor name, and public @username handle', category: 'Account & Identity', keywords: ['profile', 'avatar', 'character', 'photo', 'display name', 'username', 'handle', 'account', 'identity'] },
   { id: 'telegram', title: 'Telegram Alert Delivery', description: 'Instant push notifications for watchlist disclosures', category: 'Account & Identity', keywords: ['telegram', 'chat id', 'push', 'notifications', 'phone', 'bot', 'mobile'] },
@@ -125,6 +127,7 @@ export function SettingsTab({
   } = useAuth();
 
   const isSuperAdmin = Boolean(isAdmin || isOwner || adminUnlocked || profile?.tier === 'admin' || user?.isAdmin);
+  const storyButtonsEnabled = profile?.notificationPreferences?.storyNavigationButtons !== false;
   // Telegram is Pro-only; the AI Summary Language picker stays visible for everyone.
   const isTelegramPro = Boolean(isPro || isAdmin || isOwner || profile?.tier === 'admin');
 
@@ -429,6 +432,7 @@ export function SettingsTab({
     handleResetSound(e);
     handleResetFilter(e);
     handleResetDensity(e);
+    if (profile) void updateNotificationPreferences({ storyNavigationButtons: true });
   };
 
   // Revert unsaved identity form values
@@ -939,7 +943,7 @@ export function SettingsTab({
     (isDesignThemeModified ? 1 : 0) +
     (isSoundModified ? 1 : 0) + 
     (isFilterModified ? 1 : 0) + 
-    (isDensityModified ? 1 : 0);
+    (isDensityModified ? 1 : 0) + (storyButtonsEnabled ? 0 : 1);
 
   // Render Section Breadcrumb when filtering via search
   const renderSearchBreadcrumb = (category: string) => {
@@ -972,7 +976,7 @@ export function SettingsTab({
       id: 'preferences', title: 'Preferences',
       subtitle: modifiedPreferencesCount > 0 ? `${modifiedPreferencesCount} customized · Theme, audio, density, filters` : 'Appearance, audio, feed density & filters',
       icon: SlidersHorizontal, iconClass: 'bg-slate-500/10 text-slate-600 dark:text-slate-300',
-      registryIds: ['appearance', 'density', 'sound', 'filter'],
+      registryIds: ['appearance', 'density', 'sound', 'filter', 'story-buttons'],
       badge: modifiedPreferencesCount > 0 ? (
         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-950/70 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
           {modifiedPreferencesCount}
@@ -1291,7 +1295,7 @@ export function SettingsTab({
         </div>
       )}
 
-      {visibleSection === 'preferences' && (isMatch('appearance') || isMatch('density') || isMatch('sound') || isMatch('filter')) && (
+      {visibleSection === 'preferences' && (isMatch('appearance') || isMatch('density') || isMatch('sound') || isMatch('filter') || isMatch('story-buttons')) && (
         <div className="space-y-2 select-none">
           <div className="flex items-center justify-between px-1">
             <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
@@ -1318,6 +1322,7 @@ export function SettingsTab({
           <div className="bg-white dark:bg-[#181626] border border-slate-200/90 dark:border-[#2D283E] rounded-2xl divide-y divide-slate-100 dark:divide-[#252236] overflow-hidden shadow-2xs">
             
             {/* 1.1 Theme Toggle Row */}
+            {isMatch('story-buttons') && <StoryNavigationPreference key={user?.uid || 'guest'} />}
             {isMatch('appearance') && (
               <div className="p-3.5 flex items-center justify-between gap-3 text-xs">
                 <div>

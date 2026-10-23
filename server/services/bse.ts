@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto';
 import { withHttpDeadline } from '../utils/httpDeadline.js';
 import { addLog } from '../database/logDao.js';
 import { isAnnouncementProcessed, saveAnnouncement, saveAnnouncementsBatch, flushLocalDiskSave, getTotalAnnouncementsCount } from '../database/announcementDao.js';
@@ -312,95 +311,6 @@ export async function fetchParallelBackupSource(signal?: AbortSignal): Promise<{
   return { items: backupItems, source: 'PARALLEL_BACKUP_SEARCH_P', latestTs };
 }
 
-let nseSessionCookie = '';
-let nseSessionExpiry = 0;
-let nseCooldownUntil = 0;
-
-async function getNSECorporateCookie(signal?: AbortSignal): Promise<string> {
-  const now = Date.now();
-  if (now < nseCooldownUntil) return '';
-  if (nseSessionCookie && now < nseSessionExpiry) {
-    return nseSessionCookie;
-  }
-  try {
-    const res = await withHttpDeadline(requestSignal => fetch('https://www.nseindia.com', {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-      },
-      signal: requestSignal
-    }), 2500, signal);
-    const raw = (res.headers as any).getSetCookie ? (res.headers as any).getSetCookie() : [res.headers.get('set-cookie')];
-    nseSessionCookie = (raw || []).map((c: any) => (c || '').split(';')[0]).filter(Boolean).join('; ');
-    nseSessionExpiry = now + (10 * 60 * 1000);
-    return nseSessionCookie;
-  } catch (_e) {
-    console.warn('[POLLER] NSE session timeout or network failure');
-    nseCooldownUntil = now + (5 * 60 * 1000);
-    signal?.throwIfAborted();
-    return nseSessionCookie;
-  }
-}
-
-export async function fetchNSECorporateAnnouncements(signal?: AbortSignal): Promise<any[]> {
-  const now = Date.now();
-  if (now < nseCooldownUntil) return [];
-  try {
-    const cookie = await getNSECorporateCookie(signal);
-    signal?.throwIfAborted();
-    const { res, items } = await withHttpDeadline(async requestSignal => {
-      const res = await fetch('https://www.nseindia.com/api/corporate-announcements?index=equities', {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
-        'Referer': 'https://www.nseindia.com/companies-listing/corporate-filings-announcements',
-        'Cookie': cookie,
-        'Accept': 'application/json, text/plain, */*'
-      },
-      signal: requestSignal
-      });
-      return { res, items: res.ok ? await res.json() : [] };
-    }, 3000, signal);
-    if (!res.ok) { 
-      console.warn(`[POLLER] NSE request failed: HTTP ${res.status}`); 
-      nseCooldownUntil = Date.now() + (5 * 60 * 1000);
-      return []; 
-    }
-    if (!Array.isArray(items)) return [];
-
-    return items.map((item: any) => {
-      const symbol = (item.symbol || '').trim();
-      const scrip_cd = getScripCodeForSymbolOrName(symbol) || '';
-      const fallbackId = createHash('sha256').update(JSON.stringify([item.symbol, item.sm_name, item.an_dt, item.sort_date, item.desc, item.attchmntText, item.attchmntFile])).digest('hex');
-      const newsId = `corp_nse_${item.seq_id || item.dt || fallbackId}`;
-      const companyName = item.sm_name || symbol || 'NSE Stock';
-      const subject = item.attchmntText || item.desc || 'Corporate Announcement';
-      const details = item.desc ? `${item.desc}${item.attchmntText ? ' - ' + item.attchmntText : ''}` : (item.attchmntText || '');
-      const pdfLink = item.attchmntFile || '';
-      const dateStr = item.an_dt || item.sort_date || '';
-
-      return {
-        NEWSID: newsId,
-        SCRIP_CD: scrip_cd,
-        scrip_cd,
-        symbol,
-        SLONGNAME: companyName,
-        NEWSSUB: subject,
-        HEADLINE: details,
-        ATTACHMENTNAME: pdfLink ? pdfLink.split('/').pop() : '',
-        pdfLink,
-        DT_TM: dateStr,
-        News_submission_dt: dateStr,
-        NEWS_DT: dateStr,
-        _source: 'NSE_LIVE_FEED'
-      };
-    });
-  } catch (_err) {
-    console.warn('[POLLER] NSE request timeout or network failure');
-    nseCooldownUntil = Date.now() + (5 * 60 * 1000);
-    signal?.throwIfAborted();
-    return [];
-  }
-}
 
 export async function fetchBSEAnnouncements(signal?: AbortSignal) {
   signal?.throwIfAborted();
@@ -413,18 +323,9 @@ export async function fetchBSEAnnouncements(signal?: AbortSignal) {
   const maxDeepPages = 3; // Bound restart bursts to the same window as normal polling.
 
   // If BSE is in an active WAF rate-limit cooldown, DO NOT hammer BSE with repeated requests.
-  // Directly attempt live NSE recovery feed to give BSE's Akamai edge block time to clear.
+  // BSE-only policy: a source outage must stay visible, not switch exchange.
   const cooldownRemaining = getBseCooldownRemainingMs();
   if (cooldownRemaining > 0) {
-    try {
-      const nseQuick = await fetchNSECorporateAnnouncements(signal);
-      if (nseQuick && nseQuick.length > 0) {
-        bseHealth = { status: 'degraded', latency: 450 };
-        return nseQuick;
-      }
-    } catch (_nseErr) {
-      signal?.throwIfAborted();
-    }
     bseHealth = { status: 'down', latency: -1 };
     return null;
   }
@@ -444,22 +345,6 @@ export async function fetchBSEAnnouncements(signal?: AbortSignal) {
     if (alternate !== null) table = alternate;
     if (alternate && alternate.length > 0) {
       await addLog('INFO', 'POLLER', `Primary BSE endpoint degraded; switched to BSE_FALLBACK_SEARCH_P in ${Date.now() - start}ms`);
-    }
-  }
-
-  // If primary and search=P failed or returned empty, try live NSE corporate feed immediately
-  // to avoid waiting through yesterday's BSE timeouts when BSE is blocked or lagging.
-  if (table === null || table.length === 0) {
-    try {
-      const nseQuick = await fetchNSECorporateAnnouncements(signal);
-      if (nseQuick && nseQuick.length > 0) {
-        table = nseQuick;
-        source = 'NSE_LIVE_RECOVERY';
-        clearBseBlock();
-        await addLog('INFO', 'POLLER', `BSE endpoint unavailable/slow; seamlessly recovered with NSE_LIVE_RECOVERY (${nseQuick.length} filings) in ${Date.now() - start}ms`);
-      }
-    } catch (_nseErr) {
-      signal?.throwIfAborted();
     }
   }
 
@@ -555,22 +440,6 @@ export async function fetchBSEAnnouncements(signal?: AbortSignal) {
       }
     }
 
-    // Live NSE corporate announcements merge: ensures zero-lag coverage even when
-    // BSE has an Akamai WAF block, edge delay, or late evening lull
-    try {
-      const nseRows = await fetchNSECorporateAnnouncements(signal);
-      if (nseRows && nseRows.length > 0) {
-        for (const item of nseRows) {
-          if (item.NEWSID && !uniqueMap.has(item.NEWSID)) {
-            uniqueMap.set(item.NEWSID, item);
-          }
-        }
-      }
-    } catch (_nseErr) {
-      signal?.throwIfAborted();
-      // NSE is an enhancement/fallback; network hiccups never crash monitor
-    }
-
     if (uniqueMap.size > 0) {
       bseHealth = { status: totalLatency > 4000 ? 'degraded' : 'stable', latency: Math.round(totalLatency) };
       if (source !== 'BSE_FALLBACK_YESTERDAY' && !bseSourceBlocked) lastSuccessfulFetchMs = Date.now();
@@ -578,17 +447,6 @@ export async function fetchBSEAnnouncements(signal?: AbortSignal) {
     }
   }
 
-  // If table had no rows or was null, attempt NSE feed directly before declaring source down
-  try {
-    const nseRows = await fetchNSECorporateAnnouncements(signal);
-    if (nseRows && nseRows.length > 0) {
-      clearBseBlock();
-      bseHealth = { status: 'stable', latency: 450 };
-      lastSuccessfulFetchMs = Date.now();
-      return nseRows;
-    }
-  } catch (_e) { signal?.throwIfAborted(); }
-  
   if (table !== null) {
     bseHealth = { status: bseSourceBlocked ? 'degraded' : 'stable', latency: Math.round(totalLatency) };
     if (source !== 'BSE_FALLBACK_YESTERDAY' && !bseSourceBlocked) lastSuccessfulFetchMs = Date.now();

@@ -1,5 +1,7 @@
 # Backend strategy and verified starting point
 
+2026-10-24 bounded reliability follow-up: BSE-only filing intake and Telegram gate replace NSE merge/recovery paths, with shared retained-feed filtering and no historical deletion. Strict Telegram results extract PDF evidence, validate units/period/row order, compute comparisons in code and keep delivery receipts unchanged. Public ADR session snapshots persist in existing private settings keys and browser cache, preserving valid partial evidence without reconfirming it. Live Yahoo 429/timeouts remain an upstream availability limit. See changes/adr-bse-story-results.md for exact checks and separate merge/deployment gates.
+
 Baseline reviewed: `3f35f3ba442d1571051c6f418c93ceaf8d0cf484` on 2026-10-06.
 This change establishes the engineering foundation. It does not certify or deploy a complete production backend.
 
