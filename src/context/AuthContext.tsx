@@ -295,11 +295,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (idToken && idToken.split('.').length === 3) {
         try {
+          const sessionSecurity = await executeRecaptcha('SESSION');
           const sessionRes = await customFetch('/auth/session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               idToken: idToken,
+              recaptchaToken: sessionSecurity.bypassed ? undefined : sessionSecurity.token,
               uid: uid,
               email: firebaseUser.email,
               displayName: firebaseUser.displayName || 'Trader'
@@ -895,11 +897,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           idToken = localStorage.getItem('bse_nexus_fb_id_token') || '';
         }
         if (idToken && idToken.split('.').length === 3) {
+          const sessionSecurity = await executeRecaptcha('SESSION');
           await customFetch('/auth/session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               idToken,
+              recaptchaToken: sessionSecurity.bypassed ? undefined : sessionSecurity.token,
               uid: user.uid,
               email: user.email,
               displayName: profile?.displayName

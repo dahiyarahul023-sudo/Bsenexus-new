@@ -1,3 +1,4 @@
+import { requireVerifiedTelegramTarget } from '../database/telegramLinksDao.js';
 import { fetchExchangeDocument, readBoundedDocument } from '../utils/bseDocument.js';
 import { isValidTelegramResultSummary, telegramResultIdentity } from '../utils/telegramResultPolicy.js';
 import { renderGroundedResult, RESULT_EXTRACTION_INSTRUCTION } from '../utils/resultAnalysis.js';
@@ -671,7 +672,8 @@ async function sendResultSummary(
   newsId?: string,
   customChatId?: string | null,
   lang: 'hinglish' | 'english' = 'english',
-  scripCode?: string
+  scripCode?: string,
+  personalUid?: string
 ) {
   // This gate applies to automatic, personal and manual Telegram sends alike.
   // The site's explicit generateDirectSummary entry point remains independent.
@@ -688,6 +690,10 @@ async function sendResultSummary(
         let msg = escapeHTML(summaryText).replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
         // Truncate plain text before formatting so HTML tags cannot be cut.
         if (msg.length > 3900) msg = escapeHTML(summaryText.slice(0, 3000)) + '\n\n<i>[Summary shortened]</i>';
+        if (personalUid) {
+          const settings = await getSettings();
+          await requireVerifiedTelegramTarget(personalUid, chatId, settings.chatId || process.env.TELEGRAM_CHAT_ID);
+        }
         return sendReplyToTelegram(msg, replyToMessageId, chatId);
       },
     });

@@ -1,3 +1,4 @@
+import { requireVerifiedTelegramTarget } from '../database/telegramLinksDao.js';
 import { PollCycle, PollStageTimeout } from '../utils/pollCycle.js';
 import { getSettings } from '../database/settingsDao.js';
 import { addLog } from '../database/logDao.js';
@@ -601,14 +602,15 @@ export async function processAnnouncements(): Promise<AnnouncementPollResult> {
                 sentTelegramChatIds.add(rawUserChatId);
                 dispatchPromises.push((async () => {
                   try {
-                    const userRes = await sendToTelegram(message, rawUserChatId);
+                    const verifiedChat = await requireVerifiedTelegramTarget(u.uid, rawUserChatId, settings.chatId || process.env.TELEGRAM_CHAT_ID);
+                    const userRes = await sendToTelegram(message, verifiedChat);
                     if (userRes.success && userRes.messageId) {
                       const viaRule = !prefsMatch && userRuleEval.shouldSendTelegram;
                       await addLog('SUCCESS', 'TELEGRAM', `Personal alert -> user ${u.uid}: ${companyName} [${priority.category}] via ${viaRule ? 'alert-rule(telegram-on)' : 'watchlist-prefs'}`);
                       const userWantsAiSummary = uPrefs?.telegramAiSummaryEnabled !== false;
                       if (priority.category === 'RESULTS' && userWantsAiSummary) {
                         const userSummaryLang = (uPrefs as any)?.aiSummaryLang === 'hinglish' ? 'hinglish' : 'english';
-                        generateAndSendSummary(userRes.messageId, companyName, subject, details, priority.category, pdfLink, newsId, rawUserChatId, userSummaryLang, scrip_cd)
+                        generateAndSendSummary(userRes.messageId, companyName, subject, details, priority.category, pdfLink, newsId, rawUserChatId, userSummaryLang, scrip_cd, u.uid)
                           .catch(() => {});
                       }
                     }

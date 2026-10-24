@@ -75,10 +75,10 @@ test('real middleware denies legacy privileged cookies and unverified owner toke
   });
 });
 
-test('real middleware permits a verified owner Firebase token', async t => {
+test('owner Firebase token without PIN cannot administer', async t => {
   t.mock.method(getFirebaseAuth(), 'verifyIdToken', async () => ({ uid: 'owner', email: owner, email_verified: true }));
   await withServer(async base => {
-    assert.equal((await fetch(`${base}/admin`, { headers: { Authorization: 'Bearer firebase.verified.token' } })).status, 200);
+    assert.equal((await fetch(`${base}/admin`, { headers: { Authorization: 'Bearer firebase.verified.token' } })).status, 403);
   });
 });
 

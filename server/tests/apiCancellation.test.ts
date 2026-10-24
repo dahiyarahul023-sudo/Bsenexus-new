@@ -7,7 +7,7 @@ import ts from 'typescript';
 // stubbed; do not make live authentication or network requests.
 function makeFetch(fetcher: typeof fetch, auth: any = { currentUser: null }) {
   const source = fs.readFileSync('src/api.ts', 'utf8')
-    .replace("import { auth } from './firebase';", '')
+    .replace("import { auth, initAppCheck } from './firebase';", '')
     .replace(/\(import\.meta as any\)/g, '({ env: {} })');
   const compiled = ts.transpileModule(source, {
     compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext },

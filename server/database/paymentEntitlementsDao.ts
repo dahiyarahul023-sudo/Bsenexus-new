@@ -19,20 +19,13 @@ import {
   runPaymentStore,
 } from './paymentStore.js';
 import {
-  getGrantedOrdersForUser,
   type PaymentOrder,
 } from './paymentOrdersDao.js';
 import {
-  getUserProfile,
   invalidateUserProfileCache,
-  saveUserProfile,
 } from './usersDao.js';
 import {
-  deriveEntitlementFromOrders,
-  deriveEntitlementFromProfile,
-  mergePaymentEntitlementCandidates,
   normalizePaymentEntitlement,
-  paymentEntitlementEquals,
   type PaymentEntitlement,
 } from '../services/paymentEntitlementLogic.js';
 
@@ -44,19 +37,6 @@ export {
 } from '../services/paymentEntitlementLogic.js';
 
 const ENTITLEMENTS_TABLE = 'payment_entitlements';
-
-function toRow(e: PaymentEntitlement): Record<string, any> {
-  return {
-    uid: e.uid,
-    pro_expires_at: e.proExpiresAt,
-    pro_plan_id: e.proPlanId,
-    last_payment_at: e.lastPaymentAt,
-    last_order_id: e.lastOrderId,
-    granted_order_ids: e.grantedOrderIds || [],
-    updated_at: e.updatedAt,
-    source: e.source,
-  };
-}
 
 function fromRow(r: any): Partial<PaymentEntitlement> {
   return {
@@ -89,89 +69,19 @@ export async function getPaymentEntitlement(uid: string): Promise<PaymentEntitle
   );
 }
 
-async function mirrorEntitlementToProfile(
-  entitlement: PaymentEntitlement,
-  knownProfile?: Awaited<ReturnType<typeof getUserProfile>>,
-): Promise<boolean> {
-  const profile = knownProfile ?? (await getUserProfile(entitlement.uid, { durable: true }).catch(() => null));
-  const matches =
-    profile &&
-    Number(profile.proExpiresAt || 0) === entitlement.proExpiresAt &&
-    String(profile.proPlanId || '') === entitlement.proPlanId &&
-    Number(profile.lastPaymentAt || 0) === entitlement.lastPaymentAt &&
-    String(profile.lastOrderId || '') === entitlement.lastOrderId &&
-    (profile.tier === 'admin' || profile.tier === 'pro');
-
-  if (matches) return false;
-
-  const patch: Record<string, unknown> = {
-    proExpiresAt: entitlement.proExpiresAt,
-    proPlanId: entitlement.proPlanId,
-    lastPaymentAt: entitlement.lastPaymentAt,
-    lastOrderId: entitlement.lastOrderId,
-    maxWatchlistStocks: 9999,
-  };
-  // Never demote an admin/owner account while mirroring payment data.
-  if (profile?.tier !== 'admin') patch.tier = 'pro';
-
-  await saveUserProfile(entitlement.uid, patch as any, true, { durable: true });
-  invalidateUserProfileCache(entitlement.uid);
-  return true;
-}
-
-/**
- * Reconcile the dedicated entitlement from every durable source:
- *   1. payment_entitlements/<uid>
- *   2. granted payment_orders for this uid
- *   3. legacy paid fields on users/<uid> (bridge for pre-isolation users)
- *
- * The furthest expiry wins. Any missing dedicated record or stale profile
- * mirror is repaired in Supabase. Local JSON is never consulted.
- */
+/** Read/repair from the dedicated store and granted ledger under the same user lock
+ * as purchases. Ordinary profile fields never constitute payment evidence. */
 export async function reconcilePaymentEntitlement(uid: string): Promise<{
   entitlement: PaymentEntitlement | null;
   repaired: boolean;
 }> {
-  const [existing, grantedOrders, profile] = await Promise.all([
-    getPaymentEntitlement(uid),
-    getGrantedOrdersForUser(uid),
-    getUserProfile(uid, { durable: true }).catch(() => null),
-  ]);
-
-  const merged = mergePaymentEntitlementCandidates(uid, [
-    existing,
-    deriveEntitlementFromOrders(uid, grantedOrders),
-    deriveEntitlementFromProfile(uid, profile),
-  ]);
-
-  if (!merged) return { entitlement: null, repaired: false };
-
-  let repaired = false;
-  if (!existing || !paymentEntitlementEquals(existing, merged)) {
-    const durable: PaymentEntitlement = {
-      ...merged,
-      // Preserve the stronger original provenance when the fields already
-      // came from an atomic grant.
-      source: existing && paymentEntitlementEquals(existing, merged) ? existing.source : merged.source,
-      updatedAt: Date.now(),
-    };
-    await runPaymentStore(
-      'repair payment entitlement',
-      (async () => {
-        const { error } = await getSupabase()
-          .from(ENTITLEMENTS_TABLE)
-          .upsert(toRow(durable), { onConflict: 'uid' });
-        if (error) throw error;
-      })(),
-      12_000,
-    );
-    repaired = true;
-    const profileRepaired = await mirrorEntitlementToProfile(durable, profile);
-    return { entitlement: durable, repaired: repaired || profileRepaired };
-  }
-
-  const profileRepaired = await mirrorEntitlementToProfile(existing, profile);
-  return { entitlement: existing, repaired: profileRepaired };
+  const entitlement = await runPaymentStore('reconcile payment entitlement', (async () => {
+    const { data, error } = await getSupabase().rpc('reconcile_payment_entitlement', { p_uid: uid });
+    if (error) throw error;
+    return normalizePaymentEntitlement(uid, data);
+  })(), 12_000);
+  invalidateUserProfileCache(uid);
+  return { entitlement, repaired: Boolean(entitlement) };
 }
 
 export interface AtomicPaymentGrantInput {

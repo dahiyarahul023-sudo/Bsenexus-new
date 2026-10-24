@@ -257,7 +257,7 @@ export function invalidateUserWatchlistCache(userId?: string) {
 }
 
 export async function migrateLegacyAdminWatchlists(targetRealUid: string): Promise<void> {
-  if (!targetRealUid || targetRealUid === 'admin' || targetRealUid === 'guest') return;
+  if (!process.env.LEGACY_ADMIN_UID || targetRealUid !== process.env.LEGACY_ADMIN_UID) return;
   
   try {
     const legacyFile = getWatchlistFilename('admin');
@@ -425,7 +425,7 @@ export async function getAllWatchlists(userId?: string, opts?: GetWatchlistsOpti
         // First check if there is legacy admin data that needs migration to this user
         const legacyFile = getWatchlistFilename('admin');
         const legacyDisk = readLocalJson<any[] | null>(legacyFile, null);
-        if (legacyDisk && Array.isArray(legacyDisk) && legacyDisk.some(l => Array.isArray(l.items) && l.items.length > 0)) {
+        if (process.env.LEGACY_ADMIN_UID === uid && legacyDisk && Array.isArray(legacyDisk) && legacyDisk.some(l => Array.isArray(l.items) && l.items.length > 0)) {
           await migrateLegacyAdminWatchlists(uid);
           if (userWatchlistsCache[uid]?.lists) {
             return JSON.parse(JSON.stringify(userWatchlistsCache[uid].lists));

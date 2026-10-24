@@ -246,7 +246,7 @@ export async function updateNote(userId: string, id: string, input: Partial<Note
       const { data, error } = await getSupabase()
         .from(NOTES_TABLE)
         .select('note')
-        .eq('id', id)
+        .eq('user_id', userId).eq('id', id)
         .maybeSingle();
       if (error) throw error;
       return data ? fromRow(data) : null;
@@ -265,7 +265,7 @@ export async function updateNote(userId: string, id: string, input: Partial<Note
 
     const updated: UserNote = { ...existing, text: v.note.text, icon: v.note.icon, tags: v.note.tags, link: v.note.link, updatedAt: Date.now() };
     await withRetry(async () => {
-      const { error } = await getSupabase().from(NOTES_TABLE).update(toRow(updated)).eq('id', id);
+      const { error } = await getSupabase().from(NOTES_TABLE).update(toRow(updated)).eq('user_id', userId).eq('id', id);
       if (error) throw error;
     }, { maxRetries: 1 });
     upsertCache(updated);
@@ -283,7 +283,7 @@ export async function deleteNote(userId: string, id: string): Promise<{ ok: true
       const { data, error } = await getSupabase()
         .from(NOTES_TABLE)
         .select('note')
-        .eq('id', id)
+        .eq('user_id', userId).eq('id', id)
         .maybeSingle();
       if (error) throw error;
       return data ? fromRow(data) : null;
@@ -291,7 +291,7 @@ export async function deleteNote(userId: string, id: string): Promise<{ ok: true
     if (!existing) return { ok: false, notFound: true };
     if (existing.userId !== userId) return { ok: false, notFound: true };
     await withRetry(async () => {
-      const { error } = await getSupabase().from(NOTES_TABLE).delete().eq('id', id);
+      const { error } = await getSupabase().from(NOTES_TABLE).delete().eq('user_id', userId).eq('id', id);
       if (error) throw error;
     }, { maxRetries: 1 });
     removeFromCache(id);
