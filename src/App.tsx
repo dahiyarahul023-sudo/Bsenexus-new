@@ -1,4 +1,5 @@
 import { parseReferralInput } from './utils/referralInput';
+import { safeSessionGetItem } from './utils/safeStorage';
 import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { PageSkeleton } from './components/ui/PageSkeleton';
 import { useScreenTransition } from './hooks/useScreenTransition';
@@ -220,7 +221,7 @@ function CashfreeReturnHandler() {
   // verification using the stashed orderId.
   useEffect(() => {
     if (user && needsLogin) {
-      const stashed = sessionStorage.getItem('cf_pending_order_id');
+      const stashed = safeSessionGetItem('cf_pending_order_id');
       if (stashed) {
         sessionStorage.removeItem('cf_pending_order_id');
         setNeedsLogin(false);
