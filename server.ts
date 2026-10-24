@@ -51,7 +51,7 @@ import { EXCHANGE_COMPANIES, exchangeCompany } from './src/config/exchangeCompan
 import { mountAiIntegration } from './server/ai/http.js';
 import { readCachedResultsCalendar } from './server/services/resultsCalendarService.js';
 import { renderPublicCalendarShell, publicCalendarCacheControl } from './server/services/publicCalendar.js';
-import { SPA_PATHS, normalizeSpaPath } from './server/utils/spaRoutes.js';
+import { SPA_PATHS, normalizeSpaPath, redirectLegacyCalendar } from './server/utils/spaRoutes.js';
 import { getAiPluginManifest } from "./server/api/aiPlugin.js";
 
 // Global error handlers to prevent background quota/network exceptions from crashing the process
@@ -2030,7 +2030,7 @@ ${jsonLd}
       <p>Launch the free Bsenexus live terminal, set up custom watchlists, and get instant Telegram alerts for every corporate disclosure.</p>
       <div class="cta-btns">
         <a href="https://bsenexus.in/?tab=announcements" class="btn-white">Open Live Terminal &rarr;</a>
-        <a href="https://bsenexus.in/?tab=results-calendar" class="btn-outline">Earnings Calendar</a>
+        <a href="https://bsenexus.in/results-calendar" class="btn-outline">Earnings Calendar</a>
         <a href="https://bsenexus.in/?tab=guides" class="btn-outline">Market Guides</a>
       </div>
     </div>
@@ -6354,6 +6354,9 @@ app.get(/^\/google([a-zA-Z0-9_-]+)\.html$/, (req, res) => {
   }
   res.status(404).send('Not Found');
 });
+
+// Legacy calendar links must reach the source-backed document in either mode.
+app.get('/', redirectLegacyCalendar);
 
 // Serve static assets from public directory (favicons, apple-touch-icons, manifest, etc.)
 app.use(express.static(path.join(process.cwd(), 'public'), {
