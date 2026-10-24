@@ -4,6 +4,7 @@ import { PlanCard } from './ui/PlanCard';
 import { Sparkles, Tag } from 'lucide-react';
 import { customFetch } from '../api';
 import { useAuth } from '../context/AuthContext';
+import { safeGetItem } from '../utils/safeStorage';
 
 export function PricingPage({ onChoosePlan }: { onChoosePlan: (planId: string) => void }) {
   const {user}=useAuth();
@@ -17,7 +18,7 @@ export function PricingPage({ onChoosePlan }: { onChoosePlan: (planId: string) =
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
-      const ref = urlParams.get('ref') || localStorage.getItem('bse_referral_code') || '';
+      const ref = urlParams.get('ref') || safeGetItem('bse_referral_code') || '';
       if (ref) {
         setReferralCode(ref.toUpperCase());
         setInputCode(ref.toUpperCase());
