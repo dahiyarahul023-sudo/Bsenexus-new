@@ -446,6 +446,10 @@
         "server/security/hardening.ts",
         "server/security/recaptchaService.ts",
         "server/database/diagnosticsDao.ts",
+        "src/shared/performanceSummary.ts",
+        "src/utils/navigationMetrics.ts",
+        "src/utils/telemetry.ts",
+        "src/components/AdminDiagnostics.tsx",
         "server/database/logDao.ts",
         "server/database/feedbackDao.ts",
         "server/database/settingsDao.ts",
@@ -459,10 +463,14 @@
         "server/services/indexNowConfig.ts",
         "server/services/indexNowQueue.ts",
         "server/ai/http.ts",
-        "server/database/aiConnectionsDao.ts"
+        "server/database/aiConnectionsDao.ts",
+        "scripts/offline-tests.mjs"
       ],
       "tests": [
         "server/tests/startupRecovery.test.ts",
+        "server/tests/navigationMetrics.test.ts",
+        "server/tests/performanceSummary.test.ts",
+        "server/tests/diagnosticsPopulation.test.ts",
         "server/tests/accountProtection.test.ts",
         "server/tests/circuitBreaker.test.ts",
         "server/tests/recaptchaSecurity.test.ts",
@@ -470,7 +478,9 @@
         "server/tests/announcementCadence.test.ts",
         "server/tests/indexNowQueue.test.ts",
         "server/tests/indexNowSql.test.ts",
-        "server/tests/mcpToolMatrix.test.ts"
+        "server/tests/mcpToolMatrix.test.ts",
+        "server/tests/sentryIsolation.test.ts",
+        "server/tests/offlineTests.test.ts"
       ],
       "reason": "Startup and settings influence background jobs, provider calls, abuse limits and logs. A live HTTP listener does not establish that durable stores or external providers are ready. Poller stage deadlines release the monitor lock without resuming abandoned workers; dedicated local poller history is not cloud deployment durability. IndexNow starts only after listen, uses the existing provider circuit and reports configured primary mode/HTTP status in diagnostics. Its background failures never fail filing storage; production Crawler Hints state requires independent inspection. MCP request logs expose only generated trace IDs, bounded operation/error labels and irreversible connection tags; no tool arguments, tokens or private text. Quota/idempotency errors provide actionable recovery. A failed docs fingerprint cannot interrupt other indexing/startup."
     },
@@ -840,13 +850,34 @@
         "src/lib/sentry.ts",
         "src/firebase.ts",
         "src/utils/oneSignal.ts",
+        "src/App.tsx",
+        "src/components/landing/CreativeHero.tsx",
+        "src/components/AdminDiagnostics.tsx",
+        "src/hooks/usePaymentDialog.ts",
+        "src/utils/telemetry.ts",
+        "src/components/ui/TabErrorBoundary.tsx",
+        "src/utils/navigationMetrics.ts",
+        "src/shared/performanceSummary.ts",
+        "server/database/diagnosticsDao.ts",
+        "vite.config.ts",
+        "package.json",
+        "scripts/check-performance-budget.mjs",
         "index.html",
-        "src/lib/sentrySdk.ts"
+        "src/lib/sentrySdk.ts",
+        "server/sentry.ts",
+        "src/styles/payment.css",
+        "scripts/offline-tests.mjs"
       ],
       "tests": [
         "server/tests/responseHeaders.test.ts",
         "server/tests/recaptchaSecurity.test.ts",
-        "server/tests/appCheckStartup.test.ts"
+        "server/tests/appCheckStartup.test.ts",
+        "server/tests/performanceBudget.test.ts",
+        "server/tests/navigationMetrics.test.ts",
+        "server/tests/performanceSummary.test.ts",
+        "server/tests/diagnosticsPopulation.test.ts",
+        "server/tests/sentryIsolation.test.ts",
+        "server/tests/offlineTests.test.ts"
       ],
       "reason": "Canonical document headers preserve OAuth popups, AI Studio preview and public embeds. Deferred optional SDKs preserve authentication assessment, configured monitoring and explicit push requests without blocking public paint. Generic HTML has a neutral brand/loading root, never synthetic filings or an unrelated directory. Real announcements use an explicit route-only insertion marker and public calendar SSR retains its own source-backed document."
     },

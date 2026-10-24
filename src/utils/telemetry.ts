@@ -1,3 +1,5 @@
+import { navigationMetrics } from './navigationMetrics';
+
 export interface Breadcrumb {
   action: string;
   category: string;
@@ -190,35 +192,9 @@ export function initClientTelemetry() {
     try {
       setTimeout(() => {
         const navEntries = performance.getEntriesByType('navigation');
-        let pageLoadTimeMs = 450;
-        let ttfbMs = 80;
-        let domContentLoadedMs = 300;
-
-        if (navEntries.length > 0) {
-          const nav: any = navEntries[0];
-          pageLoadTimeMs = Math.round(nav.loadEventEnd || nav.duration || 450);
-          ttfbMs = Math.round(nav.responseStart - nav.requestStart || 80);
-          domContentLoadedMs = Math.round(nav.domContentLoadedEventEnd || 300);
-        } else if (performance.timing) {
-          const t = performance.timing;
-          if (t.loadEventEnd > 0) {
-            pageLoadTimeMs = t.loadEventEnd - t.navigationStart;
-            ttfbMs = t.responseStart - t.requestStart;
-            domContentLoadedMs = t.domContentLoadedEventEnd - t.navigationStart;
-          }
-        }
-
-        if (pageLoadTimeMs > 0 && pageLoadTimeMs < 60000) {
-          sendTelemetryEvent({
-            type: 'PERFORMANCE',
-            performance: {
-              pageLoadTimeMs,
-              ttfbMs,
-              domContentLoadedMs,
-              path: window.location.pathname
-            }
-          });
-        }
+        const metrics = navigationMetrics(navEntries[0] as PerformanceNavigationTiming | undefined, window.location.pathname);
+        // Do not invent fast fallback values or drop the >=60s slow tail.
+        if (metrics) sendTelemetryEvent({ type: 'PERFORMANCE', performance: metrics });
       }, 1500);
     } catch {}
   };

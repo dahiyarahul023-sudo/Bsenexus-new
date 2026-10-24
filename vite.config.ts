@@ -42,6 +42,7 @@ export default defineConfig(() => {
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
     build: {
+      manifest: true,
       minify: 'esbuild' as const,
       target: 'es2020',
       chunkSizeWarningLimit: 1200,
