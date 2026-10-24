@@ -18,6 +18,7 @@ import { twMerge } from 'tailwind-merge';
 import { formatFullDateTime, formatShortDateTime, formatTimeOnly, formatDateOnly, formatCleanDateTime, formatCleanTime, formatFilingRelativeTime } from '../utils/timeFormat';
 import { cleanBseSubject } from '../utils/cleanBseSubject';
 import { getSafePdfUrl } from '../utils/pdfHelper';
+import { safeGetItem } from '../utils/safeStorage';
 import { StockPriority, WatchlistStockItem } from '../types';
 import { useAiQuota, syncQuotaFromResponse } from '../utils/aiQuota';
 import { mergeAnnouncementFeed } from '../utils/announcementFeed';
@@ -641,7 +642,7 @@ export function WatchlistManager() {
   // Responsive Grid / List view mode (Default Grid on PC/Tablet, List on Mobile)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('nexus_watchlist_view_mode');
+      const saved = safeGetItem('nexus_watchlist_view_mode');
       if (saved === 'grid' || saved === 'list') return saved;
       return window.innerWidth >= 768 ? 'grid' : 'list';
     }
