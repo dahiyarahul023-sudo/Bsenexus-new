@@ -2,6 +2,7 @@ import { readLocalJson, writeLocalJson } from './localStore.js';
 import { getSettings } from './settingsDao.js';
 import { sendToTelegram } from '../services/telegram.js';
 import { getBloomFilterDiagnostics } from './announcementDao.js';
+import { summarizeLoadTimes } from '../../src/shared/performanceSummary.js';
 
 export interface DeviceInfo {
   type: 'MOBILE' | 'TABLET' | 'DESKTOP' | 'UNKNOWN';
@@ -14,6 +15,7 @@ export interface DeviceInfo {
 }
 
 export interface PerformanceMetrics {
+  measurementVersion?: 2;
   pageLoadTimeMs?: number;
   ttfbMs?: number;
   domContentLoadedMs?: number;
@@ -331,7 +333,10 @@ export interface DiagnosticsSummary {
     totalErrors: number;
     totalPageViews: number;
     crashFreeRate: number; // percentage e.g. 99.4%
-    averageLoadTimeMs: number;
+    averageLoadTimeMs: number | null;
+    loadSamples: number;
+    p75LoadTimeMs: number | null;
+    p95LoadTimeMs: number | null;
   };
   deviceBreakdown: {
     mobileCount: number;
@@ -345,11 +350,11 @@ export interface DiagnosticsSummary {
   browserDistribution: Record<string, number>;
   networkDistribution: Record<string, number>;
   performanceByDevice: {
-    mobileAvgMs: number;
-    desktopAvgMs: number;
-    tabletAvgMs: number;
-    fastConnectionAvgMs: number;
-    slowConnectionAvgMs: number;
+    mobileAvgMs: number | null;
+    desktopAvgMs: number | null;
+    tabletAvgMs: number | null;
+    fastConnectionAvgMs: number | null;
+    slowConnectionAvgMs: number | null;
   };
   slowestPages: Array<{ path: string; avgLoadMs: number; samples: number }>;
   recentErrors: TelemetryEvent[];
@@ -378,7 +383,6 @@ export async function getDiagnosticsSummary(): Promise<DiagnosticsSummary> {
   const pageLoadMap: Record<string, { totalMs: number; count: number }> = {};
   const recentErrors: TelemetryEvent[] = [];
 
-  let totalLoadSum = 0;
   let loadSampleCount = 0;
   let totalErrors = 0;
 
@@ -398,13 +402,14 @@ export async function getDiagnosticsSummary(): Promise<DiagnosticsSummary> {
     browserMap[browser] = (browserMap[browser] || 0) + 1;
 
     // Network
-    const conn = (ev.device?.connection || '4g').toUpperCase();
+    const conn = (ev.device?.connection || 'unknown').toUpperCase();
     networkMap[conn] = (networkMap[conn] || 0) + 1;
 
     // Performance
-    if (ev.performance?.pageLoadTimeMs && ev.performance.pageLoadTimeMs > 0) {
+    // Older clients used synthetic defaults and discarded >=60s loads. Start a
+    // measured series without rewriting history or treating old fallbacks as RUM.
+    if (ev.performance?.measurementVersion === 2 && Number.isFinite(ev.performance.pageLoadTimeMs) && ev.performance.pageLoadTimeMs! > 0) {
       const ms = ev.performance.pageLoadTimeMs;
-      totalLoadSum += ms;
       loadSampleCount++;
 
       if (dtype === 'MOBILE') mobileLoads.push(ms);
@@ -413,7 +418,7 @@ export async function getDiagnosticsSummary(): Promise<DiagnosticsSummary> {
 
       if (conn === '4G' || conn === '5G' || conn === 'WIFI') {
         fastLoads.push(ms);
-      } else {
+      } else if (['SLOW-2G', '2G', '3G'].includes(conn)) {
         slowLoads.push(ms);
       }
 
@@ -441,10 +446,9 @@ export async function getDiagnosticsSummary(): Promise<DiagnosticsSummary> {
   }
 
   const totalDevices = Math.max(1, mobileCount + desktopCount + tabletCount);
-  const avgLoadTime = loadSampleCount > 0 ? Math.round(totalLoadSum / loadSampleCount) : 480;
-  
-  const avg = (arr: number[], fallback: number) => 
-    arr.length > 0 ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : fallback;
+  const loadSummary = summarizeLoadTimes([...mobileLoads, ...desktopLoads, ...tabletLoads]);
+  const avgLoadTime = loadSummary.averageMs;
+  const avg = (arr: number[]) => summarizeLoadTimes(arr).averageMs;
 
   const totalViews = Math.max(loadSampleCount, 1);
   const crashFreeRate = Math.max(0, Math.min(100, Number((((totalViews - totalErrors) / totalViews) * 100).toFixed(1))));
@@ -477,7 +481,10 @@ export async function getDiagnosticsSummary(): Promise<DiagnosticsSummary> {
       totalErrors,
       totalPageViews: loadSampleCount,
       crashFreeRate,
-      averageLoadTimeMs: avgLoadTime
+      averageLoadTimeMs: avgLoadTime,
+      loadSamples: loadSummary.samples,
+      p75LoadTimeMs: loadSummary.p75Ms,
+      p95LoadTimeMs: loadSummary.p95Ms,
     },
     deviceBreakdown: {
       mobileCount,
@@ -491,11 +498,11 @@ export async function getDiagnosticsSummary(): Promise<DiagnosticsSummary> {
     browserDistribution: browserMap,
     networkDistribution: networkMap,
     performanceByDevice: {
-      mobileAvgMs: avg(mobileLoads, 620),
-      desktopAvgMs: avg(desktopLoads, 340),
-      tabletAvgMs: avg(tabletLoads, 490),
-      fastConnectionAvgMs: avg(fastLoads, 390),
-      slowConnectionAvgMs: avg(slowLoads, 1150)
+      mobileAvgMs: avg(mobileLoads),
+      desktopAvgMs: avg(desktopLoads),
+      tabletAvgMs: avg(tabletLoads),
+      fastConnectionAvgMs: avg(fastLoads),
+      slowConnectionAvgMs: avg(slowLoads)
     },
     slowestPages,
     recentErrors,

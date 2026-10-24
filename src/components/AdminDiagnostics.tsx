@@ -44,7 +44,10 @@ interface DiagnosticsData {
     totalErrors: number;
     totalPageViews: number;
     crashFreeRate: number;
-    averageLoadTimeMs: number;
+    averageLoadTimeMs: number | null;
+    loadSamples?: number;
+    p75LoadTimeMs?: number | null;
+    p95LoadTimeMs?: number | null;
   };
   deviceBreakdown: {
     mobileCount: number;
@@ -58,11 +61,11 @@ interface DiagnosticsData {
   browserDistribution: Record<string, number>;
   networkDistribution: Record<string, number>;
   performanceByDevice: {
-    mobileAvgMs: number;
-    desktopAvgMs: number;
-    tabletAvgMs: number;
-    fastConnectionAvgMs: number;
-    slowConnectionAvgMs: number;
+    mobileAvgMs: number | null;
+    desktopAvgMs: number | null;
+    tabletAvgMs: number | null;
+    fastConnectionAvgMs: number | null;
+    slowConnectionAvgMs: number | null;
   };
   slowestPages: Array<{ path: string; avgLoadMs: number; samples: number }>;
   recentErrors: any[];
@@ -482,14 +485,14 @@ export function AdminDiagnostics() {
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-black text-slate-900 dark:text-white">
-              {data?.systemHealth?.averageLoadTimeMs ?? 420}<span className="text-sm font-bold text-slate-400">ms</span>
+              {data?.systemHealth?.averageLoadTimeMs ?? '—'}{data?.systemHealth?.averageLoadTimeMs != null && <span className="text-sm font-bold text-slate-400">ms</span>}
             </span>
             <span className="text-[11px] font-bold px-1.5 py-0.2 rounded text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40">
-              ⚡ Fast
+              {data?.systemHealth?.averageLoadTimeMs != null ? 'Measured' : 'No samples'}
             </span>
           </div>
           <p className="text-[11px] text-slate-500 dark:text-slate-400">
-            Navigation Timing & DOM Interactive
+            {data?.systemHealth?.loadSamples ? `p75 ${data.systemHealth.p75LoadTimeMs ?? '—'} ms · p95 ${data.systemHealth.p95LoadTimeMs ?? '—'} ms · ${data.systemHealth.loadSamples} retained samples` : 'Waiting for measured navigation samples'}
           </p>
         </div>
 

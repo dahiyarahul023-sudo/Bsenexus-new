@@ -51,8 +51,9 @@ function WatchlistCard() {
           <div className="h-[7px] rounded-full bg-slate-200/80 overflow-hidden">
             <motion.i
               className="block h-full rounded-full bg-gradient-to-r from-sky-400 to-sky-600"
-              initial={reduced ? false : { width: 0 }}
-              animate={{ width: r.width }}
+              style={{ width: r.width, transformOrigin: 'left' }}
+              initial={reduced ? false : { scaleX: 0 }}
+              animate={{ scaleX: 1 }}
               transition={{ delay: 0.9 + i * 0.2, duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
             />
           </div>
@@ -231,25 +232,25 @@ export function CreativeHero({ onEnterTerminal }: CreativeHeroProps) {
 
         <div className="relative z-[5] text-center px-5 pt-[52px]">
           <motion.span
-            initial={reduced ? false : { opacity: 0, y: 26 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            initial={false}
             className="inline-flex items-center gap-2 bg-white/95 rounded-full px-[18px] py-2 text-xs font-bold text-[#1e3a5f] shadow-[0_10px_26px_rgba(2,32,71,0.25)]"
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-500" /> Live BSE Intelligence Platform
           </motion.span>
           <motion.h1
-            initial={reduced ? false : { opacity: 0, y: 26 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+            initial={false}
             className="font-serif mx-auto mt-6 max-w-[840px] font-semibold text-white leading-[1.08] tracking-[-1.5px] text-[clamp(40px,7.2vw,82px)] [text-shadow:0_3px_26px_rgba(2,32,71,0.35)]"
           >
             Every BSE filing,<br /><em className="font-medium">decoded</em> in seconds.
           </motion.h1>
           <motion.p
-            initial={reduced ? false : { opacity: 0, y: 26 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            initial={false}
             className="mx-auto mt-[18px] max-w-[600px] text-[clamp(13px,2.2vw,17px)] text-white/95 leading-[1.65] font-medium [text-shadow:0_1px_10px_rgba(2,32,71,0.3)]"
           >
             AI summaries, YoY metric breakdowns, results calendar, watchlists and Telegram alerts — straight from official BSE India disclosures.
           </motion.p>
           <motion.div
-            initial={reduced ? false : { opacity: 0, y: 26 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            initial={false}
             className="mt-7 flex gap-3 justify-center flex-wrap"
           >
             <ActionButton

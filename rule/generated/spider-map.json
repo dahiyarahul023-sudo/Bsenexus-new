@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "6bbf1cdd0b1203cf75f5f54e59fb721ae07bc5326abd3cf75d2a882180eeedda",
+  "sourceDigest": "a3ef8de96c1662cb2776698f9b129c8575b526d142a78f0af9f2c62a568d1d2d",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -45,7 +45,7 @@
     },
     {
       "path": "package.json",
-      "sha256": "f1f170f570b0300087cbbca2ca63e902d38ee2a30845fc348f1794e921a24940",
+      "sha256": "d1b41e72dcab53a86abce1db4c7c209b258de5eeb997802bb192cd8c07019dd7",
       "importedBy": []
     },
     {
@@ -137,6 +137,13 @@
       "path": "scripts/bump-version.mjs",
       "sha256": "24a2274060f648b3d4d712ff3ead08ff7179bbe600b300c007814601c29fb00f",
       "importedBy": []
+    },
+    {
+      "path": "scripts/check-performance-budget.mjs",
+      "sha256": "10d3e0934fff91d6b685782f51643b992cdac970e3ade79388e3935808aa33c2",
+      "importedBy": [
+        "server/tests/performanceBudget.test.ts"
+      ]
     },
     {
       "path": "scripts/generateIcons.ts",
@@ -500,7 +507,7 @@
     },
     {
       "path": "server/database/diagnosticsDao.ts",
-      "sha256": "8eaed65ff975b7a86c34aeec211abf9212d065fd5727a2f05c58da61734c56fd",
+      "sha256": "596f0622600504c3d5b5321009088d32176d5a3136fd63994e5e6af359ec0963",
       "importedBy": [
         "server/api/routes.ts"
       ]
@@ -1627,6 +1634,11 @@
       "importedBy": []
     },
     {
+      "path": "server/tests/navigationMetrics.test.ts",
+      "sha256": "2e81d39562738e8f72c96f6376c4a9ecec1725183a6490d8b0518bde924fa288",
+      "importedBy": []
+    },
+    {
       "path": "server/tests/notes.test.ts",
       "sha256": "43f6dbd96eb874458d4c91218fb9c2f37ec8ae03353e32ad45591d304bc4aa44",
       "importedBy": []
@@ -1649,6 +1661,16 @@
     {
       "path": "server/tests/paymentEntitlement.test.ts",
       "sha256": "aba3fadd58aaa6d624352bc9ae836eaab351aa4a25c5fea670fbf8e33327b8f0",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/performanceBudget.test.ts",
+      "sha256": "754593deb8374b409acfab0fd769cbad1c3b25c73c3cd6151cd257bd1f925e47",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/performanceSummary.test.ts",
+      "sha256": "3a4e7aeb75e262e231d793547139789c0fca12d2997edafea9dd845a42c5494c",
       "importedBy": []
     },
     {
@@ -2111,7 +2133,7 @@
     },
     {
       "path": "src/App.tsx",
-      "sha256": "eda54633aeabc5855e85ab36e8d7a190269d3a34312520b6f4047b96ec2cf09d",
+      "sha256": "8bea84db911272c102965a3eb5fe426f4c15bacf3efbd4a155d4f77a47efa95c",
       "importedBy": [
         "src/main.tsx"
       ]
@@ -2174,7 +2196,7 @@
     },
     {
       "path": "src/components/AdminDiagnostics.tsx",
-      "sha256": "4b9695db6065e4f535f5779c4fbbcc2263a00c6074bb99b3ba8cff4c56193de2",
+      "sha256": "2cf084eb25908af5049378b0d411e74ac6380ecf2f75bfb78b44eb2c25299bab",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -2570,7 +2592,7 @@
     },
     {
       "path": "src/components/landing/CreativeHero.tsx",
-      "sha256": "fb526ebf7a166b1f837caa51ff5a2c76732dafbee88d24a1e052ea0c25c9cbd1",
+      "sha256": "72b65007154e2239eeb535c15e9291d8e4515c1a7204f55192035e31de5cb69c",
       "importedBy": [
         "src/components/LandingPage.tsx"
       ]
@@ -3121,7 +3143,7 @@
     },
     {
       "path": "src/components/ui/TabErrorBoundary.tsx",
-      "sha256": "d57c37ae401f1cfcbbf16d191cf468ee073f804590735bcb53a44ef9ce7ea8a1",
+      "sha256": "900af704751d31d98249105cacf73d219f80acb1ea7ddc8502794e70bc512378",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -3423,11 +3445,13 @@
       "path": "src/hooks/usePaymentDialog.ts",
       "sha256": "98e21c3fc04dba37a2bc085433cfc13169429a17542b9064c46284557a583068",
       "importedBy": [
+        "src/App.tsx",
         "src/components/ProCheckoutView.tsx",
         "src/components/ProReceiptView.tsx",
         "src/components/ProUpgradeModal.tsx",
         "src/components/ReferralDashboardModal.tsx",
-        "src/components/SubscriptionCard.tsx"
+        "src/components/SubscriptionCard.tsx",
+        "src/components/ui/TabErrorBoundary.tsx"
       ]
     },
     {
@@ -3658,6 +3682,14 @@
         "src/shared/radarMovement.ts",
         "src/utils/impactRadarFeed.ts",
         "src/utils/radarCompanyGroups.ts"
+      ]
+    },
+    {
+      "path": "src/shared/performanceSummary.ts",
+      "sha256": "61d52fbed22893708357fe91f55a9fdf55a843e8f057267d2babac2e0ffada59",
+      "importedBy": [
+        "server/database/diagnosticsDao.ts",
+        "server/tests/performanceSummary.test.ts"
       ]
     },
     {
@@ -4013,6 +4045,14 @@
       ]
     },
     {
+      "path": "src/utils/navigationMetrics.ts",
+      "sha256": "4b450b4fdb8cbc46e4b1c1ce201f166ae653e08fdd2b45e9b0cf56756ca7b4ce",
+      "importedBy": [
+        "server/tests/navigationMetrics.test.ts",
+        "src/utils/telemetry.ts"
+      ]
+    },
+    {
       "path": "src/utils/noiseFilter.ts",
       "sha256": "0a862bdd3fb8fd577a681f34dd2b65918675f0cdd288654859d5998bd853a342",
       "importedBy": [
@@ -4146,7 +4186,7 @@
     },
     {
       "path": "src/utils/telemetry.ts",
-      "sha256": "5579974828ffaa8eeab080eb7613199bb8413f0e8bbf230c9f78d0174e7ac802",
+      "sha256": "c1faadc32da1424bc8a5a3a4359f9fafb3016f9b9cd1d16e1d97ee55347ccb62",
       "importedBy": [
         "src/components/ui/TabErrorBoundary.tsx",
         "src/main.tsx"
@@ -4279,7 +4319,7 @@
     },
     {
       "path": "vite.config.ts",
-      "sha256": "771f7caa7d9ee566189265614f49e5c21d6cdf5cc726cefcdf6dd3280d17b3a9",
+      "sha256": "5b99fd2154a4fd61c5f1be79ab2a54cf0040df368f069b7caa0cb3c29106afb0",
       "importedBy": []
     }
   ],
@@ -5591,6 +5631,12 @@
       "target": "server/database/announcementDao.ts",
       "kind": "import",
       "line": 4
+    },
+    {
+      "source": "server/database/diagnosticsDao.ts",
+      "target": "src/shared/performanceSummary.ts",
+      "kind": "import",
+      "line": 5
     },
     {
       "source": "server/database/feedbackDao.ts",
@@ -8131,6 +8177,12 @@
       "line": 15
     },
     {
+      "source": "server/tests/navigationMetrics.test.ts",
+      "target": "src/utils/navigationMetrics.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
       "source": "server/tests/notes.test.ts",
       "target": "server/database/notesDao.ts",
       "kind": "import",
@@ -8165,6 +8217,18 @@
       "target": "server/services/paymentEntitlementLogic.ts",
       "kind": "import",
       "line": 5
+    },
+    {
+      "source": "server/tests/performanceBudget.test.ts",
+      "target": "scripts/check-performance-budget.mjs",
+      "kind": "import",
+      "line": 6
+    },
+    {
+      "source": "server/tests/performanceSummary.test.ts",
+      "target": "src/shared/performanceSummary.ts",
+      "kind": "import",
+      "line": 3
     },
     {
       "source": "server/tests/pollerStall.test.ts",
@@ -8822,189 +8886,195 @@
     },
     {
       "source": "src/App.tsx",
-      "target": "src/types.ts",
+      "target": "src/hooks/usePaymentDialog.ts",
       "kind": "import",
       "line": 12
     },
     {
       "source": "src/App.tsx",
-      "target": "src/components/LandingPage.tsx",
+      "target": "src/types.ts",
       "kind": "import",
-      "line": 14
+      "line": 13
     },
     {
       "source": "src/App.tsx",
-      "target": "src/components/Layout.tsx",
+      "target": "src/components/LandingPage.tsx",
       "kind": "import",
       "line": 15
     },
     {
       "source": "src/App.tsx",
-      "target": "src/components/AuthModal.tsx",
-      "kind": "import",
-      "line": 16
-    },
-    {
-      "source": "src/App.tsx",
-      "target": "src/components/ProUpgradeModal.tsx",
-      "kind": "import",
-      "line": 17
-    },
-    {
-      "source": "src/App.tsx",
-      "target": "src/components/ProCheckoutView.tsx",
-      "kind": "import",
-      "line": 18
-    },
-    {
-      "source": "src/App.tsx",
-      "target": "src/components/ProReceiptView.tsx",
-      "kind": "import",
-      "line": 19
-    },
-    {
-      "source": "src/App.tsx",
-      "target": "src/components/AdminPinModal.tsx",
-      "kind": "import",
-      "line": 20
-    },
-    {
-      "source": "src/App.tsx",
       "target": "src/components/Announcements.tsx",
       "kind": "dynamic",
-      "line": 58
+      "line": 53
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/HomeForYou.tsx",
       "kind": "dynamic",
-      "line": 59
+      "line": 54
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/WatchlistManager.tsx",
       "kind": "dynamic",
-      "line": 62
+      "line": 57
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/ResultsCalendar.tsx",
       "kind": "dynamic",
-      "line": 63
+      "line": 58
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/NewsPortal.tsx",
       "kind": "dynamic",
-      "line": 64
+      "line": 59
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/StorageManager.tsx",
       "kind": "dynamic",
-      "line": 65
+      "line": 60
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/AdminDiagnostics.tsx",
       "kind": "dynamic",
-      "line": 66
+      "line": 61
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/LogsTab.tsx",
       "kind": "dynamic",
-      "line": 67
+      "line": 62
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/SettingsTab.tsx",
       "kind": "dynamic",
-      "line": 68
+      "line": 63
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/seo/SeoStudio.tsx",
       "kind": "dynamic",
-      "line": 69
+      "line": 64
+    },
+    {
+      "source": "src/App.tsx",
+      "target": "src/components/Layout.tsx",
+      "kind": "dynamic",
+      "line": 124
+    },
+    {
+      "source": "src/App.tsx",
+      "target": "src/components/AuthModal.tsx",
+      "kind": "dynamic",
+      "line": 125
+    },
+    {
+      "source": "src/App.tsx",
+      "target": "src/components/ProUpgradeModal.tsx",
+      "kind": "dynamic",
+      "line": 126
+    },
+    {
+      "source": "src/App.tsx",
+      "target": "src/components/AdminPinModal.tsx",
+      "kind": "dynamic",
+      "line": 127
+    },
+    {
+      "source": "src/App.tsx",
+      "target": "src/components/ProCheckoutView.tsx",
+      "kind": "dynamic",
+      "line": 128
+    },
+    {
+      "source": "src/App.tsx",
+      "target": "src/components/ProReceiptView.tsx",
+      "kind": "dynamic",
+      "line": 129
+    },
+    {
+      "source": "src/App.tsx",
+      "target": "src/components/filing/FilingPage.tsx",
+      "kind": "dynamic",
+      "line": 130
+    },
+    {
+      "source": "src/App.tsx",
+      "target": "src/components/results/ResultsPage.tsx",
+      "kind": "dynamic",
+      "line": 131
+    },
+    {
+      "source": "src/App.tsx",
+      "target": "src/components/notes/NoteEditor.tsx",
+      "kind": "dynamic",
+      "line": 132
     },
     {
       "source": "src/App.tsx",
       "target": "src/hooks/useScrollRestoration.ts",
       "kind": "import",
-      "line": 80
+      "line": 150
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/ui/TabErrorBoundary.tsx",
       "kind": "import",
-      "line": 81
+      "line": 151
     },
     {
       "source": "src/App.tsx",
       "target": "src/utils/scrollState.ts",
       "kind": "import",
-      "line": 82
+      "line": 152
     },
     {
       "source": "src/App.tsx",
       "target": "src/utils/shareUrls.ts",
       "kind": "import",
-      "line": 83
-    },
-    {
-      "source": "src/App.tsx",
-      "target": "src/components/filing/FilingPage.tsx",
-      "kind": "import",
-      "line": 84
-    },
-    {
-      "source": "src/App.tsx",
-      "target": "src/components/results/ResultsPage.tsx",
-      "kind": "import",
-      "line": 85
-    },
-    {
-      "source": "src/App.tsx",
-      "target": "src/components/notes/NoteEditor.tsx",
-      "kind": "import",
-      "line": 86
+      "line": 153
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/PricingPage.tsx",
       "kind": "dynamic",
-      "line": 87
+      "line": 154
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/GuidesPage.tsx",
       "kind": "dynamic",
-      "line": 88
+      "line": 155
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/CompaniesPage.tsx",
       "kind": "dynamic",
-      "line": 89
+      "line": 156
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/TrustPages.tsx",
       "kind": "dynamic",
-      "line": 90
+      "line": 157
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/AiPluginPage.tsx",
       "kind": "dynamic",
-      "line": 91
+      "line": 158
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/NotFoundPage.tsx",
       "kind": "dynamic",
-      "line": 92
+      "line": 159
     },
     {
       "source": "src/api.ts",
@@ -12307,6 +12377,12 @@
       "line": 3
     },
     {
+      "source": "src/components/ui/TabErrorBoundary.tsx",
+      "target": "src/hooks/usePaymentDialog.ts",
+      "kind": "import",
+      "line": 4
+    },
+    {
       "source": "src/components/ui/UserAvatar.tsx",
       "target": "src/config/avatars.ts",
       "kind": "import",
@@ -12633,6 +12709,12 @@
     {
       "source": "src/utils/radarCompanyGroups.ts",
       "target": "src/shared/impactRadar.ts",
+      "kind": "import",
+      "line": 1
+    },
+    {
+      "source": "src/utils/telemetry.ts",
+      "target": "src/utils/navigationMetrics.ts",
       "kind": "import",
       "line": 1
     },
@@ -13094,6 +13176,10 @@
         "server/security/hardening.ts",
         "server/security/recaptchaService.ts",
         "server/database/diagnosticsDao.ts",
+        "src/shared/performanceSummary.ts",
+        "src/utils/navigationMetrics.ts",
+        "src/utils/telemetry.ts",
+        "src/components/AdminDiagnostics.tsx",
         "server/database/logDao.ts",
         "server/database/feedbackDao.ts",
         "server/database/settingsDao.ts",
@@ -13111,6 +13197,8 @@
       ],
       "tests": [
         "server/tests/startupRecovery.test.ts",
+        "server/tests/navigationMetrics.test.ts",
+        "server/tests/performanceSummary.test.ts",
         "server/tests/accountProtection.test.ts",
         "server/tests/circuitBreaker.test.ts",
         "server/tests/recaptchaSecurity.test.ts",
@@ -13488,13 +13576,28 @@
         "src/lib/sentry.ts",
         "src/firebase.ts",
         "src/utils/oneSignal.ts",
+        "src/App.tsx",
+        "src/components/landing/CreativeHero.tsx",
+        "src/components/AdminDiagnostics.tsx",
+        "src/hooks/usePaymentDialog.ts",
+        "src/utils/telemetry.ts",
+        "src/components/ui/TabErrorBoundary.tsx",
+        "src/utils/navigationMetrics.ts",
+        "src/shared/performanceSummary.ts",
+        "server/database/diagnosticsDao.ts",
+        "vite.config.ts",
+        "package.json",
+        "scripts/check-performance-budget.mjs",
         "index.html",
         "src/lib/sentrySdk.ts"
       ],
       "tests": [
         "server/tests/responseHeaders.test.ts",
         "server/tests/recaptchaSecurity.test.ts",
-        "server/tests/appCheckStartup.test.ts"
+        "server/tests/appCheckStartup.test.ts",
+        "server/tests/performanceBudget.test.ts",
+        "server/tests/navigationMetrics.test.ts",
+        "server/tests/performanceSummary.test.ts"
       ],
       "reason": "Canonical document headers preserve OAuth popups, AI Studio preview and public embeds. Deferred optional SDKs preserve authentication assessment, configured monitoring and explicit push requests without blocking public paint. Generic HTML has a neutral brand/loading root, never synthetic filings or an unrelated directory. Real announcements use an explicit route-only insertion marker and public calendar SSR retains its own source-backed document."
     },
@@ -17386,37 +17489,37 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 368,
+      "line": 435,
       "function": "fetch",
       "target": "'/api/referrals/track-visit'"
     },
     {
       "file": "src/App.tsx",
-      "line": 759,
+      "line": 826,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/App.tsx",
-      "line": 769,
+      "line": 836,
       "function": "customFetch",
       "target": "'/auth/status'"
     },
     {
       "file": "src/App.tsx",
-      "line": 792,
+      "line": 859,
       "function": "customFetch",
       "target": "'/api/settings'"
     },
     {
       "file": "src/App.tsx",
-      "line": 802,
+      "line": 869,
       "function": "customFetch",
       "target": "'/api/logs?limit=400'"
     },
     {
       "file": "src/App.tsx",
-      "line": 834,
+      "line": 901,
       "function": "customFetch",
       "target": "'/api/toggle'"
     },
@@ -17458,55 +17561,55 @@
     },
     {
       "file": "src/components/AdminDiagnostics.tsx",
-      "line": 120,
+      "line": 123,
       "function": "customFetch",
       "target": "`/api/admin/bloom-test?id=${encodeURIComponent(targetId)}`"
     },
     {
       "file": "src/components/AdminDiagnostics.tsx",
-      "line": 137,
+      "line": 140,
       "function": "customFetch",
       "target": "'/api/admin/diagnostics'"
     },
     {
       "file": "src/components/AdminDiagnostics.tsx",
-      "line": 147,
+      "line": 150,
       "function": "customFetch",
       "target": "'/api/settings'"
     },
     {
       "file": "src/components/AdminDiagnostics.tsx",
-      "line": 163,
+      "line": 166,
       "function": "customFetch",
       "target": "'/api/admin/diagnostics/approved-bugs'"
     },
     {
       "file": "src/components/AdminDiagnostics.tsx",
-      "line": 188,
+      "line": 191,
       "function": "customFetch",
       "target": "'/api/admin/diagnostics/toggle-mute-alerts'"
     },
     {
       "file": "src/components/AdminDiagnostics.tsx",
-      "line": 232,
+      "line": 235,
       "function": "customFetch",
       "target": "'/api/admin/diagnostics/approved-bugs'"
     },
     {
       "file": "src/components/AdminDiagnostics.tsx",
-      "line": 262,
+      "line": 265,
       "function": "customFetch",
       "target": "`/api/admin/diagnostics/approved-bugs/${ruleId}`"
     },
     {
       "file": "src/components/AdminDiagnostics.tsx",
-      "line": 277,
+      "line": 280,
       "function": "customFetch",
       "target": "'/api/admin/diagnostics/clear'"
     },
     {
       "file": "src/components/AdminDiagnostics.tsx",
-      "line": 289,
+      "line": 292,
       "function": "customFetch",
       "target": "'/api/admin/diagnostics/test-alert'"
     },
@@ -18430,7 +18533,7 @@
     },
     {
       "file": "src/utils/telemetry.ts",
-      "line": 251,
+      "line": 227,
       "function": "fetch",
       "target": "'/api/telemetry/event'"
     }
@@ -19656,73 +19759,73 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 181,
+      "line": 248,
       "function": "sessionStorage.setItem",
       "key": "'cf_pending_order_id'"
     },
     {
       "file": "src/App.tsx",
-      "line": 222,
+      "line": 289,
       "function": "sessionStorage.getItem",
       "key": "'cf_pending_order_id'"
     },
     {
       "file": "src/App.tsx",
-      "line": 224,
+      "line": 291,
       "function": "sessionStorage.removeItem",
       "key": "'cf_pending_order_id'"
     },
     {
       "file": "src/App.tsx",
-      "line": 343,
+      "line": 410,
       "function": "localStorage.getItem",
       "key": "'theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 367,
+      "line": 434,
       "function": "localStorage.setItem",
       "key": "'bse_referral_code'"
     },
     {
       "file": "src/App.tsx",
-      "line": 536,
+      "line": 603,
       "function": "sessionStorage.setItem",
       "key": "'bse_shared_query'"
     },
     {
       "file": "src/App.tsx",
-      "line": 678,
+      "line": 745,
       "function": "localStorage.setItem",
       "key": "'theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 693,
+      "line": 760,
       "function": "localStorage.getItem",
       "key": "'bse_design_theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 710,
+      "line": 777,
       "function": "localStorage.setItem",
       "key": "'bse_design_theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 711,
+      "line": 778,
       "function": "localStorage.setItem",
       "key": "`bse_design_theme_${user.uid}`"
     },
     {
       "file": "src/App.tsx",
-      "line": 743,
+      "line": 810,
       "function": "localStorage.getItem",
       "key": "user?.uid ? `bse_design_theme_${user.uid}` : 'bse_design_theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 752,
+      "line": 819,
       "function": "localStorage.setItem",
       "key": "user?.uid ? `bse_design_theme_${user.uid}` : 'bse_design_theme'"
     },
@@ -20100,19 +20203,19 @@
     },
     {
       "file": "src/components/ui/TabErrorBoundary.tsx",
-      "line": 59,
+      "line": 74,
       "function": "sessionStorage.getItem",
       "key": "RELOAD_FLAG"
     },
     {
       "file": "src/components/ui/TabErrorBoundary.tsx",
-      "line": 60,
+      "line": 75,
       "function": "sessionStorage.setItem",
       "key": "RELOAD_FLAG"
     },
     {
       "file": "src/components/ui/TabErrorBoundary.tsx",
-      "line": 72,
+      "line": 87,
       "function": "sessionStorage.removeItem",
       "key": "RELOAD_FLAG"
     },
@@ -22093,12 +22196,12 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 685,
+      "line": 752,
       "name": "DEV"
     },
     {
       "file": "src/App.tsx",
-      "line": 692,
+      "line": 759,
       "name": "DEV"
     },
     {
@@ -22125,7 +22228,7 @@
   "browserEvents": [
     {
       "file": "src/App.tsx",
-      "line": 537,
+      "line": 604,
       "target": "window",
       "kind": "dispatch",
       "name": "bse-share-target",
@@ -22133,7 +22236,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 546,
+      "line": 613,
       "target": "window",
       "kind": "listen",
       "name": "popstate",
@@ -22141,7 +22244,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 547,
+      "line": 614,
       "target": "window",
       "kind": "remove",
       "name": "popstate",
@@ -22149,7 +22252,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 660,
+      "line": 727,
       "target": "window",
       "kind": "listen",
       "name": "popstate",
@@ -22157,7 +22260,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 662,
+      "line": 729,
       "target": "window",
       "kind": "remove",
       "name": "popstate",
@@ -22165,7 +22268,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 786,
+      "line": 853,
       "target": "window",
       "kind": "listen",
       "name": "auth-expired",
@@ -22173,7 +22276,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 787,
+      "line": 854,
       "target": "window",
       "kind": "remove",
       "name": "auth-expired",
@@ -23845,7 +23948,7 @@
     },
     {
       "file": "src/utils/telemetry.ts",
-      "line": 110,
+      "line": 112,
       "target": "document",
       "kind": "listen",
       "name": "click",
@@ -23853,7 +23956,7 @@
     },
     {
       "file": "src/utils/telemetry.ts",
-      "line": 123,
+      "line": 125,
       "target": "window",
       "kind": "listen",
       "name": "error",
@@ -23861,7 +23964,7 @@
     },
     {
       "file": "src/utils/telemetry.ts",
-      "line": 158,
+      "line": 160,
       "target": "window",
       "kind": "listen",
       "name": "unhandledrejection",
@@ -23869,7 +23972,7 @@
     },
     {
       "file": "src/utils/telemetry.ts",
-      "line": 229,
+      "line": 205,
       "target": "window",
       "kind": "listen",
       "name": "load",

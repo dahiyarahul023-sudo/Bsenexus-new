@@ -1,5 +1,16 @@
 # Research and official guidance for frontend work
 
+## Performance follow-up checked 24 October 2026
+
+| Primary source | Applied lesson and boundary |
+|---|---|
+| Wang et al., *Demystifying Page Load Performance with WProf*, NSDI 2013, https://www.usenix.org/system/files/conference/nsdi13/nsdi13-final177.pdf | Inspect dependencies among network, parsing, computation and rendering before selecting a fix. We apply that method to the actual Vite import closure; this is not a replication of their older browser measurements. |
+| Netravali et al., *Polaris: Faster Page Loads Using Fine-grained Dependency Tracking*, NSDI 2016, https://www.usenix.org/system/files/conference/nsdi16/nsdi16-paper-netravali.pdf | Dependencies hidden behind other imports can keep work on the critical path. Trace transitive eager imports instead of assuming a React.lazy label proves isolation. We do not install Polaris or promise its reported gains. |
+| Dean and Barroso, *The Tail at Scale*, CACM 2013, https://research.google/pubs/the-tail-at-scale/ | The publisher-hosted abstract motivates attending to occasional long delays. We retain >=60s measurements and show nearest-rank p75/p95 plus counts. These 500-event retained authenticated samples are not a population-wide SLO. Full ACM text was unavailable; no full-paper review is claimed. |
+| Google web.dev, https://web.dev/articles/optimize-lcp and https://web.dev/articles/optimize-long-tasks | Make critical content render without a JS entry fade, reduce avoidable eager work and use browser profiles for actual long-task attribution. Bundle reduction alone does not prove a new LCP/INP. |
+| Google web.dev, https://web.dev/articles/performance-budgets-101 ; React, https://react.dev/reference/react/lazy | Enforce the startup import closure in production builds and mount lazy features on demand, with Suspense and error recovery. A build budget is a regression guard, not a speed certificate. |
+| Cloudflare, https://developers.cloudflare.com/cache/concepts/cache-control/ | A private response cannot be stored by a shared cache; Set-Cookie can prevent default caching. Live hashed JS returned private/BYPASS while source requests public immutable caching. Hosting/proxy origin must be inspected before changing rules; private API/auth responses must remain private. |
+
 Primary-source abstracts and metadata checked on 2026-10-07. Paper findings are limited to their evaluated models/tasks; they are not universal failure rates for today's assistants. The rules are this project's engineering response, not a guarantee supplied by the papers. Official documentation below is guidance, not empirical research.
 
 | Primary research | Relevant finding | Project response |
