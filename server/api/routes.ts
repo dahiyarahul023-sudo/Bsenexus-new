@@ -1,3 +1,5 @@
+import { telegramLinksRouter } from './telegramLinks.js';
+import { requireVerifiedTelegramTarget, telegramLinkCommand } from '../database/telegramLinksDao.js';
 import { startHistorySync, historySyncStatus } from '../services/historicalFilings.js';
 import { createAdrHandler } from './adr.js';
 import express from "express";
@@ -109,6 +111,7 @@ import { connectionsEnabled } from '../ai/policy.js';
 import { aiPluginRouter } from "./aiPlugin.js";
 
 export const apiRouter = express.Router();
+apiRouter.use(telegramLinksRouter);
 
 // Universal AI Plugin & OpenAPI Action Gateway (ChatGPT, Gemini, Agents)
 apiRouter.use("/ai/connections", aiConnectionsRouter);
@@ -1105,7 +1108,7 @@ apiRouter.post("/users/test-telegram", requireProOrAdmin, telegramRateLimiter, a
       });
     }
 
-    const cleanChatId = rawTargetChatId;
+    const cleanChatId = await requireVerifiedTelegramTarget(uid, rawTargetChatId, settings.chatId || process.env.TELEGRAM_CHAT_ID);
     const userName = (req as any).user?.displayName || (req as any).user?.email?.split('@')[0] || userProf?.displayName || 'Trader';
     const isAiSummaryOn = userProf?.notificationPreferences?.telegramAiSummaryEnabled !== false;
     const isAlertsOn = userProf?.notificationPreferences?.telegramAlertsEnabled !== false;
@@ -1132,7 +1135,7 @@ apiRouter.post("/users/test-telegram", requireProOrAdmin, telegramRateLimiter, a
       });
     }
   } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(err.status === 403 ? 403 : 500).json({ success: false, error: err.message });
   }
 });
 
@@ -1328,7 +1331,13 @@ apiRouter.post("/users/profile", requireAuth, async (req, res) => {
       }
     }
 
-    const updatedProfile = await saveUserProfile(uid, { ...sanitizedPatch, uid });
+    if (sanitizedPatch.telegramChatId) {
+      const settings = await getSettings();
+      sanitizedPatch.telegramChatId = await requireVerifiedTelegramTarget(uid, sanitizedPatch.telegramChatId, settings.chatId || process.env.TELEGRAM_CHAT_ID);
+    } else if (sanitizedPatch.telegramChatId === null || sanitizedPatch.telegramChatId === '') {
+      await telegramLinkCommand('unlink', uid);
+    }
+    const updatedProfile = await saveUserProfile(uid, { ...sanitizedPatch, uid }, false, { durable: true });
     invalidateMonitorConfigCache(uid);
     res.json({ success: true, profile: updatedProfile });
   } catch (err: any) {
@@ -1347,7 +1356,7 @@ apiRouter.post("/users/profile", requireAuth, async (req, res) => {
         suggestion: err.suggestion 
       });
     }
-    return res.status(500).json({ success: false, error: err.message });
+    return res.status(err.status === 403 ? 403 : 500).json({ success: false, error: err.message });
   }
 });
 
@@ -1427,7 +1436,13 @@ apiRouter.post("/users/telegram/settings", requireAuth, async (req, res) => {
       }
     }
 
-    const updatedProfile = await saveUserProfile(uid, patch);
+    if (patch.telegramChatId) {
+      const settings = await getSettings();
+      patch.telegramChatId = await requireVerifiedTelegramTarget(uid, patch.telegramChatId, settings.chatId || process.env.TELEGRAM_CHAT_ID);
+    } else if (unlink || patch.telegramChatId === null || patch.telegramChatId === '') {
+      await telegramLinkCommand('unlink', uid);
+    }
+    const updatedProfile = await saveUserProfile(uid, patch, false, { durable: true });
     invalidateMonitorConfigCache(uid);
 
     res.json({
@@ -1447,7 +1462,7 @@ apiRouter.post("/users/telegram/settings", requireAuth, async (req, res) => {
         error: 'Profile is temporarily unavailable. Please retry in a moment.',
       });
     }
-    return res.status(500).json({ success: false, error: err.message });
+    return res.status(err.status === 403 ? 403 : 500).json({ success: false, error: err.message });
   }
 });
 
@@ -1810,7 +1825,7 @@ apiRouter.post("/news/telegram/send", requireProOrAdmin, telegramRateLimiter, as
     let destination = chatId;
     if ((req as any).user?.isAdmin !== true) {
       const [profile, settings] = await Promise.all([getUserProfile(getReqUserId(req)), getSettings()]);
-      try { destination = resolvePersonalTelegramTarget(profile?.telegramChatId, chatId, settings.chatId || process.env.TELEGRAM_CHAT_ID); }
+      try { destination = await requireVerifiedTelegramTarget(getReqUserId(req), resolvePersonalTelegramTarget(profile?.telegramChatId, chatId, settings.chatId || process.env.TELEGRAM_CHAT_ID), settings.chatId || process.env.TELEGRAM_CHAT_ID); }
       catch (error: any) { return res.status(403).json({ success: false, error: error.message }); }
     }
     const result = await sendNewsToTelegram(newsItem, destination);
@@ -1827,7 +1842,7 @@ apiRouter.post("/news/telegram/digest", requireProOrAdmin, telegramRateLimiter, 
     let destination = chatId;
     if ((req as any).user?.isAdmin !== true) {
       const [profile, settings] = await Promise.all([getUserProfile(uid), getSettings()]);
-      try { destination = resolvePersonalTelegramTarget(profile?.telegramChatId, chatId, settings.chatId || process.env.TELEGRAM_CHAT_ID); }
+      try { destination = await requireVerifiedTelegramTarget(getReqUserId(req), resolvePersonalTelegramTarget(profile?.telegramChatId, chatId, settings.chatId || process.env.TELEGRAM_CHAT_ID), settings.chatId || process.env.TELEGRAM_CHAT_ID); }
       catch (error: any) { return res.status(403).json({ success: false, error: error.message }); }
     }
     const result = await sendWatchlistNewsDigestToTelegram(uid, destination);

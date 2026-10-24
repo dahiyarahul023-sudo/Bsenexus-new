@@ -209,7 +209,7 @@ describe('Per-Account Rate Limiting & Protection Suite', () => {
         'x-forwarded-for': '198.51.100.77, 10.0.0.1, 10.0.0.2'
       }
     } as any;
-    assert.strictEqual(getSanitizedClientIp(req2), '198.51.100.77');
+    assert.strictEqual(getSanitizedClientIp(req2), '10.0.0.1', 'use Express proxy-vetted IP; ignore raw spoofable XFF');
 
     // 3. IPv6 localhost mapping
     const req3 = { ip: '::ffff:127.0.0.1', headers: {} } as any;

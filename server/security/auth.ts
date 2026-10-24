@@ -5,7 +5,7 @@ import rateLimit from 'express-rate-limit';
 import { getSettings, saveSettings } from '../database/settingsDao.js';
 import { addLog } from '../database/logDao.js';
 import { getFirebaseAuth, getFirebaseAppCheck } from './firebaseAdmin.js';
-import { getUserProfile, saveUserProfile } from '../database/usersDao.js';
+import { getUserProfile, claimTrialAtomically } from '../database/usersDao.js';
 import { reconcilePaymentEntitlement } from '../database/paymentEntitlementsDao.js';
 import { isPaymentStoreUnavailable } from '../database/paymentStore.js';
 import { verifyRecaptchaToken } from './recaptchaService.js';
@@ -17,7 +17,8 @@ import {
   resetAccountProtection, 
   simulateCredentialVerificationDelay, 
   getSanitizedClientIp,
-  getAccountProtectionConfig
+  getAccountProtectionConfig,
+  isAccountProtectionUnavailable
 } from './accountRateLimiter.js';
 
 import crypto from 'node:crypto';
@@ -37,6 +38,14 @@ const JWT_SECRET = (process.env.JWT_SECRET && process.env.JWT_SECRET.trim())
       return devFallbackSecret;
     })();
 const ADMIN_EMAIL = 'dahiyarahul023@gmail.com';
+function getCookieElevation(req: express.Request, uid: string): number {
+  try {
+    const claims: any = jwt.verify(req.cookies?.authToken || '', JWT_SECRET);
+    return hasTrustedSessionRoles(claims, ADMIN_EMAIL) && claims.uid === uid && claims.emailVerified === true
+      ? Number(claims.adminElevatedUntil || 0) : 0;
+  } catch { return 0; }
+}
+
 
 // Rate limiter for authentication attempts
 export const authRateLimiter = rateLimit({
@@ -110,7 +119,7 @@ export const authMiddleware = async (req: express.Request, _res: express.Respons
         if (!hasTrustedSessionRoles(decoded, ADMIN_EMAIL)) {
           throw new Error('Privileged session requires a verified owner email. Sign in again.');
         }
-        (req as any).user = decoded;
+        (req as any).user = { ...decoded, isAdmin: decoded.emailVerified === true && decoded.email?.toLowerCase() === ADMIN_EMAIL && Number(decoded.adminElevatedUntil || 0) > Date.now() };
         return next();
       } catch (jwtErr) {
         // If not signed by local JWT_SECRET, verify as Firebase ID Token
@@ -131,7 +140,8 @@ export const authMiddleware = async (req: express.Request, _res: express.Respons
                   emailVerified: identity?.emailVerified === true,
                   name: fbDecoded.name || (fbDecoded as any).displayName || (isAnonymous ? 'Guest Trader' : 'User'),
                   isOwner,
-                  isAdmin: isOwner,
+                  isAdmin: isOwner && getCookieElevation(req, fbDecoded.uid) > Date.now(),
+                  adminElevatedUntil: getCookieElevation(req, fbDecoded.uid),
                   isAnonymous
                 };
                 return next();
@@ -218,13 +228,14 @@ export const requireAuth = (req: express.Request, res: express.Response, next: e
 // Resilient Admin Authorization Guard (Checks verified JWT or verified Owner session)
 export const requireAdmin = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
   const user = (req as any).user;
-  if (user && !user.isAnonymous && (user.isAdmin || (user.isOwner && user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()))) {
+  if (user && !user.isAnonymous && user.emailVerified === true && user.email?.toLowerCase() === ADMIN_EMAIL && Number(user.adminElevatedUntil || 0) > Date.now()) {
     return next();
   }
 
   return res.status(403).json({ 
     success: false, 
-    error: "Forbidden: Admin privileges required. Please verify Master PIN in Settings -> Root Ops." 
+    adminElevationRequired: true,
+    error: "Forbidden: Verify Master PIN in Settings -> Root Ops. Elevation lasts 15 minutes."
   });
 };
 
@@ -289,7 +300,7 @@ export const requireProOrAdmin = async (req: express.Request, res: express.Respo
 export const authRouter = express.Router();
 
 // Session login for Firebase-authenticated users: Verifies Firebase ID Token
-authRouter.post('/session', authRateLimiter, async (req, res) => {
+authRouter.post('/session', authRateLimiter, requireAppCheck, async (req, res) => {
   try {
     // Before token verification, only the sanitized IP is a trustworthy risk key.
     // Unverified body emails must never lock or reset another user's account.
@@ -314,7 +325,7 @@ authRouter.post('/session', authRateLimiter, async (req, res) => {
     }
 
     const { recaptchaToken, recaptchaAction } = req.body || {};
-    if (recaptchaToken) {
+    if (recaptchaToken || process.env.NODE_ENV === 'production' || process.env.RECAPTCHA_ENFORCE === 'true') {
       const context = {
         ip: getSanitizedClientIp(req),
         userAgent: req.headers['user-agent'] as string,
@@ -322,7 +333,7 @@ authRouter.post('/session', authRateLimiter, async (req, res) => {
       };
       const assessment = await verifyRecaptchaToken(
         recaptchaToken,
-        recaptchaAction || 'SESSION',
+        'SESSION',
         context
       );
       if (!assessment.valid) {
@@ -401,7 +412,7 @@ authRouter.post('/session', authRateLimiter, async (req, res) => {
     const { uid, email, displayName, emailVerified, isOwner } = identity;
 
     const cleanUid = uid.trim().replace(/[^a-zA-Z0-9_-]/g, '_');
-    const existingIsAdmin = isOwner;
+    const existingIsAdmin = false;
 
     // Restore any durable paid entitlement before trial/profile logic runs.
     // If the payment store cannot be read, do not mint a session that could
@@ -434,26 +445,9 @@ authRouter.post('/session', authRateLimiter, async (req, res) => {
       throw profileErr;
     }
     const now = Date.now();
-    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
-
-    if (!profile) {
-      // New user registering via Google: Grant 1-week (7-day) Free Pro trial
-      profile = await saveUserProfile(cleanUid, {
-        uid: cleanUid,
-        email,
-        displayName: displayName || (email ? email.split('@')[0] : 'Trader'),
-        tier: isOwner ? 'admin' : 'pro',
-        proExpiresAt: isOwner ? (now + 365 * 24 * 60 * 60 * 1000) : (now + SEVEN_DAYS_MS),
-        createdAt: now,
-        maxWatchlistStocks: 50
-      }, true);
-    } else if (!profile.proExpiresAt) {
-      // Existing user profile without trial timestamp: initialize 1-week (7-day) trial from now
-      profile = await saveUserProfile(cleanUid, {
-        proExpiresAt: now + SEVEN_DAYS_MS,
-        tier: profile.tier === 'admin' || isOwner ? 'admin' : 'pro'
-      }, true);
-    }
+    // Server-only RPC atomically records first use; expiry loss is not eligibility.
+    await claimTrialAtomically(cleanUid, email, displayName || email.split('@')[0]);
+    profile = await getUserProfile(cleanUid, { durable: true });
 
     const isPro = Boolean(isOwner || profile?.tier === 'admin' || (profile?.proExpiresAt && profile.proExpiresAt > now));
     const proDaysLeft = profile?.proExpiresAt ? Math.max(0, Math.ceil((profile.proExpiresAt - now) / (24 * 60 * 60 * 1000))) : 0;
@@ -485,6 +479,7 @@ authRouter.post('/session', authRateLimiter, async (req, res) => {
       profile 
     });
   } catch (error: any) {
+    if (isAccountProtectionUnavailable(error)) return res.status(503).json({ success: false, error: 'Sign-in protection is temporarily unavailable. Please retry.' });
     if (isPaymentStoreUnavailable(error)) {
       return res.status(503).json({
         success: false,
@@ -496,8 +491,15 @@ authRouter.post('/session', authRateLimiter, async (req, res) => {
   }
 });
 
+const authAttempt = (handler: (req: express.Request, res: express.Response) => Promise<any>) => (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  handler(req, res).catch(error => {
+    if (isAccountProtectionUnavailable(error)) return res.status(503).json({ success: false, error: 'Sign-in protection is temporarily unavailable. Please retry.' });
+    next(error);
+  });
+};
+
 // Master PIN Login / 2FA Elevation (Fail-Closed: Standalone PIN login without Admin identity is strictly forbidden)
-authRouter.post('/login', authRateLimiter, async (req, res) => {
+authRouter.post('/login', authRateLimiter, requireAppCheck, authAttempt(async (req, res) => {
   const { pin, recaptchaToken, recaptchaAction, email, identifier, username } = req.body || {};
   const settings = await getSettings();
 
@@ -539,7 +541,7 @@ authRouter.post('/login', authRateLimiter, async (req, res) => {
   }
 
   // 2. Validate reCAPTCHA with safe client IP (honoring trust proxy without trusting client-supplied headers blindly)
-  if (recaptchaToken) {
+  if (recaptchaToken || process.env.NODE_ENV === 'production' || process.env.RECAPTCHA_ENFORCE === 'true') {
     const context = {
       ip: getSanitizedClientIp(req),
       userAgent: req.headers['user-agent'] as string,
@@ -547,7 +549,7 @@ authRouter.post('/login', authRateLimiter, async (req, res) => {
     };
     const assessment = await verifyRecaptchaToken(
       recaptchaToken,
-      recaptchaAction || 'ADMIN_PIN',
+      'ADMIN_PIN',
       context
     );
     if (!assessment.valid) {
@@ -606,7 +608,7 @@ authRouter.post('/login', authRateLimiter, async (req, res) => {
       return res.status(401).json({ success: false, error: "PIN entry requires prior Firebase authentication." });
     }
     const token = jwt.sign(
-      { auth: true, isAdmin: true, uid: elevatedUid, rawUid: elevatedUid, email: ADMIN_EMAIL, emailVerified: true, isOwner: true },
+      { auth: true, isAdmin: true, uid: elevatedUid, rawUid: elevatedUid, email: ADMIN_EMAIL, emailVerified: true, isOwner: true, adminElevatedUntil: Date.now() + 15 * 60 * 1000 },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -636,10 +638,10 @@ authRouter.post('/login', authRateLimiter, async (req, res) => {
     // Generic error response that does not disclose account existence or internal state
     return res.status(401).json({ success: false, error: "Invalid credentials. Please verify your details and try again." });
   }
-});
+}));
 
 // Verify Master PIN (for elevating authenticated admin sessions)
-authRouter.post('/verify-pin', authRateLimiter, async (req, res) => {
+authRouter.post('/verify-pin', authRateLimiter, requireAppCheck, authAttempt(async (req, res) => {
   const { pin, recaptchaToken, recaptchaAction, email, identifier } = req.body || {};
   const settings = await getSettings();
 
@@ -676,7 +678,7 @@ authRouter.post('/verify-pin', authRateLimiter, async (req, res) => {
     await new Promise((resolve) => setTimeout(resolve, acctProtection.delayMs));
   }
 
-  if (recaptchaToken) {
+  if (recaptchaToken || process.env.NODE_ENV === 'production' || process.env.RECAPTCHA_ENFORCE === 'true') {
     const context = {
       ip: getSanitizedClientIp(req),
       userAgent: req.headers['user-agent'] as string,
@@ -684,7 +686,7 @@ authRouter.post('/verify-pin', authRateLimiter, async (req, res) => {
     };
     const assessment = await verifyRecaptchaToken(
       recaptchaToken,
-      recaptchaAction || 'ADMIN_PIN',
+      'ADMIN_PIN',
       context
     );
     if (!assessment.valid) {
@@ -742,7 +744,7 @@ authRouter.post('/verify-pin', authRateLimiter, async (req, res) => {
       return res.status(401).json({ success: false, error: "PIN entry requires prior Firebase authentication." });
     }
     const token = jwt.sign(
-      { auth: true, isAdmin: true, uid: elevatedUid, rawUid: elevatedUid, email: ADMIN_EMAIL, emailVerified: true, isOwner: true },
+      { auth: true, isAdmin: true, uid: elevatedUid, rawUid: elevatedUid, email: ADMIN_EMAIL, emailVerified: true, isOwner: true, adminElevatedUntil: Date.now() + 15 * 60 * 1000 },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -769,7 +771,7 @@ authRouter.post('/verify-pin', authRateLimiter, async (req, res) => {
     }
     return res.status(401).json({ success: false, error: "Invalid credentials. Please verify your details and try again." });
   }
-});
+}));
 
 authRouter.post('/logout', (_req, res) => {
   res.clearCookie('authToken', { path: '/' });
@@ -800,7 +802,7 @@ authRouter.get('/status', async (req, res) => {
       isAuthenticated: true, 
       hasPin, 
       user: decoded, 
-      isAdmin: Boolean(decoded.isAdmin)
+      isAdmin: decoded.emailVerified === true && decoded.email?.toLowerCase() === ADMIN_EMAIL && Number(decoded.adminElevatedUntil || 0) > Date.now()
     });
   } catch (e) {
     res.json({ 

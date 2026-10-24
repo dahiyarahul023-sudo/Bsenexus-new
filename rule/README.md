@@ -55,3 +55,7 @@ Use docs/MCP_DIRECTORY_REVIEW.md for the 21 October connector checklist, reviewe
 ## Retained panels and operator identity
 
 Closing a dialog must not discard its confirmed same-owner snapshots: check the mounting parent as well as the child reset effect. NotificationInbox stays owner-keyed under Layout while closed and keeps ephemeral filter snapshots; account switches remount and clear them. Unknown watchlists render the shared content skeleton until an actual response, including confirmed empty. Pull indicators must sit below controls that stay stable. BSE equity has no BSE security code; 540025 is Advanced Enzyme. Keep public company render, intelligence, legacy evidence projection, ingestion symbol/source and IndexNow identity aligned through shared exact matchers and verified master pins. See changes/brand-refresh-inbox.md.
+
+## Deep security audit repair — release prerequisite
+
+See changes/deep-audit-repair.md before deploying its branch. The forward migration requires the verified modern payment contract; payment/trial/reconcile and shared auth counters are service-only transactions. Do not auto-promote profile plan fields to paid provenance. Owner administration needs a same-UID PIN elevation valid for 15 minutes. Personal Telegram linking is bot-proven with expiring one-use challenges; an old typed chat ID cannot authorize a send. This code is not deployed and the database migration was blocked by automatic approval review.
