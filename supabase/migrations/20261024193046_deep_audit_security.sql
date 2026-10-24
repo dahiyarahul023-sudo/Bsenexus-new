@@ -39,8 +39,17 @@ begin
  update public.users set email=p_email,display_name=coalesce(nullif(display_name,''),left(p_display_name,100)),last_login_at=n where uid=p_uid;
 end $$;
 
+-- Existing installations use either void or jsonb for this RPC. Its callers
+-- ignore the return value; preserve that existing DB contract during hardening.
+do $pending_contract$
+declare result_type text;
+begin
+ select pg_get_function_result(to_regprocedure('public.record_pending_order_atomic(text,text,text,text,bigint,text)')) into result_type;
+ result_type:=coalesce(result_type,'void');
+ if result_type not in ('void','jsonb') then raise exception 'PAYMENT_PENDING_RETURN_REVIEW_REQUIRED'; end if;
+ execute replace(replace($definition$
 create or replace function public.record_pending_order_atomic(p_order_id text,p_uid text,p_email text,p_plan_id text,p_amount_paise bigint,p_currency text)
-returns void language plpgsql security invoker set search_path='' as $$
+returns __RETURN_TYPE__ language plpgsql security invoker set search_path='' as $pending_body$
 declare o public.payment_orders%rowtype; n bigint := (extract(epoch from now())*1000)::bigint;
 begin
  if p_amount_paise is null or p_amount_paise<=0 or nullif(p_plan_id,'') is null or p_currency<>'INR' or nullif(p_order_id,'') is null then raise exception 'PAYMENT_INPUT'; end if;
@@ -50,7 +59,11 @@ begin
  select * into strict o from public.payment_orders where order_id=p_order_id for update;
  if o.uid is distinct from p_uid then raise exception 'OWNERSHIP:%',p_order_id; end if;
  if o.plan_id is distinct from p_plan_id or o.amount_paise is distinct from p_amount_paise or o.currency is distinct from p_currency then raise exception 'PAYMENT_ORDER_MISMATCH'; end if;
-end $$;
+__RETURN_STATEMENT__
+end $pending_body$;
+$definition$,'__RETURN_TYPE__',result_type),'__RETURN_STATEMENT__',case when result_type='jsonb' then 'return jsonb_build_object(''ok'',true);' else '' end);
+end $pending_contract$;
+
 
 create or replace function public.grant_payment_atomic(p_order_id text,p_uid text,p_email text,p_plan_id text,p_validity_days integer,p_amount_paise bigint,p_currency text,p_paid_at bigint,p_grant_source text)
 returns jsonb language plpgsql security invoker set search_path='' as $$

@@ -20,7 +20,8 @@
         "supabase/migrations/20261011031315_restrict_user_skeleton_rpc.sql",
         "supabase/migrations/20261024193046_deep_audit_security.sql",
         "server/api/telegramLinks.ts",
-        "server/database/telegramLinksDao.ts"
+        "server/database/telegramLinksDao.ts",
+        "scripts/verify-deep-audit-staging.sql"
       ],
       "tests": [
         "server/tests/authIdentity.test.ts",
@@ -57,7 +58,8 @@
         "src/components/HelpModal.tsx",
         "src/components/TermsModal.tsx",
         "src/components/LandingPage.tsx",
-        "supabase/migrations/20261024193046_deep_audit_security.sql"
+        "supabase/migrations/20261024193046_deep_audit_security.sql",
+        "scripts/verify-deep-audit-staging.sql"
       ],
       "tests": [
         "server/tests/paymentEntitlement.test.ts",
@@ -86,7 +88,8 @@
         "src/components/TermsModal.tsx",
         "src/components/LandingPage.tsx",
         "supabase/migrations/003_durable_ai_quota.sql",
-        "supabase/migrations/20261024193046_deep_audit_security.sql"
+        "supabase/migrations/20261024193046_deep_audit_security.sql",
+        "scripts/verify-deep-audit-staging.sql"
       ],
       "tests": [
         "server/tests/aiQuotaFrontend.test.ts",

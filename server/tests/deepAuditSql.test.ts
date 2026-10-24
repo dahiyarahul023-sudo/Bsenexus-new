@@ -83,3 +83,15 @@ test('browser roles cannot call privileged RPCs or read Telegram proofs',async()
   finally{await db.exec('reset role');}
  }
 });
+
+test('pending-order hardening preserves the staging jsonb return contract',async()=>{
+ await db.exec(`drop function public.record_pending_order_atomic(text,text,text,text,bigint,text);
+ create function public.record_pending_order_atomic(p_order_id text,p_uid text,p_email text,p_plan_id text,p_amount_paise bigint,p_currency text)
+ returns jsonb language sql as $$select '{}'::jsonb$$;`);
+ const start=sql.indexOf('do $pending_contract$');
+ const end=sql.indexOf('end $pending_contract$;',start)+'end $pending_contract$;'.length;
+ await db.exec(sql.slice(start,end));
+ await trial();await pending();
+ assert.equal((await command("select pg_get_function_result('public.record_pending_order_atomic(text,text,text,text,bigint,text)'::regprocedure) result")).result,'jsonb');
+ await assert.rejects(pending('order','buyer',1),/MISMATCH/);
+});

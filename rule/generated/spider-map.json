@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "ac3b27fde7fb15ce6466724eee9cfb94089634e89af860f87d2dd1af307cd04a",
+  "sourceDigest": "45fe90455dc060fa5ea4c80d49e2abde31d014bdcca9d7c32e9509934374fcb0",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -199,6 +199,11 @@
     {
       "path": "scripts/verify-ai-models.ts",
       "sha256": "5f5650fdabfbfa5d6473d774c3eae3cca8bbc1a05967d78a74b4af595ecb4488",
+      "importedBy": []
+    },
+    {
+      "path": "scripts/verify-deep-audit-staging.sql",
+      "sha256": "ed86b12aa9dfee640987274fa9e1eaeb68cd69171870956b347386ff05508360",
       "importedBy": []
     },
     {
@@ -1581,7 +1586,7 @@
     },
     {
       "path": "server/tests/deepAuditSql.test.ts",
-      "sha256": "1a9bdc5e3d652ad5409abc0fd1a5fd6f113fce09deb703158b5adce1c28e4de9",
+      "sha256": "ae71fee397415d8c2d3c35e0cf9bfda17ac560381ba3c6b7ca886cf8d28ab48d",
       "importedBy": []
     },
     {
@@ -4386,7 +4391,7 @@
     },
     {
       "path": "supabase/migrations/20261024193046_deep_audit_security.sql",
-      "sha256": "8a67c7368df9ce65e37b12186460c6f00f8c8661bdda59a35a5750ae95fd0390",
+      "sha256": "511020393603c90a31f4fc00dd72d606ef9abb554f09a6a0c1c3ec6bc5457aef",
       "importedBy": []
     },
     {
@@ -12965,7 +12970,8 @@
         "supabase/migrations/20261011031315_restrict_user_skeleton_rpc.sql",
         "supabase/migrations/20261024193046_deep_audit_security.sql",
         "server/api/telegramLinks.ts",
-        "server/database/telegramLinksDao.ts"
+        "server/database/telegramLinksDao.ts",
+        "scripts/verify-deep-audit-staging.sql"
       ],
       "tests": [
         "server/tests/authIdentity.test.ts",
@@ -13002,7 +13008,8 @@
         "src/components/HelpModal.tsx",
         "src/components/TermsModal.tsx",
         "src/components/LandingPage.tsx",
-        "supabase/migrations/20261024193046_deep_audit_security.sql"
+        "supabase/migrations/20261024193046_deep_audit_security.sql",
+        "scripts/verify-deep-audit-staging.sql"
       ],
       "tests": [
         "server/tests/paymentEntitlement.test.ts",
@@ -13031,7 +13038,8 @@
         "src/components/TermsModal.tsx",
         "src/components/LandingPage.tsx",
         "supabase/migrations/003_durable_ai_quota.sql",
-        "supabase/migrations/20261024193046_deep_audit_security.sql"
+        "supabase/migrations/20261024193046_deep_audit_security.sql",
+        "scripts/verify-deep-audit-staging.sql"
       ],
       "tests": [
         "server/tests/aiQuotaFrontend.test.ts",

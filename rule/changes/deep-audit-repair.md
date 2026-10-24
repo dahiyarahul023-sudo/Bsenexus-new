@@ -1,5 +1,7 @@
 # Deep audit repair
 
+Current status: approved staging migration applied and service-role/permission tests passed. Production and runtime rollout remain pending.
+
 Starting upstream main: 7ba693c046509e8ae7bce55f3419bd98383dc375 (2026-10-25 IST).
 User objective: verify and repair all three uploaded deep audit portions without changing prices or referral rewards.
 
@@ -55,3 +57,9 @@ No local Chromium/Firefox/Playwright or required host compile_applet/lint_applet
 Delivery: implementation and forward migration prepared for a GitHub review branch/PR; main remains unchanged. Database release remains blocked by automatic approval review and requires explicit approval before staging rehearsal. CI and deployment are separate from the local checks above.
 
 GitHub upload review initially rejected the existing watchlist source as a possible disclosure to an unverified repository. Read-only repository metadata then confirmed the same private Bsenexus-new repository with owner/admin/push access; the flagged identifier and storage code were already present in that repository. Upload of the hardened watchlist file was subsequently approved after that verification. No other destination was used.
+
+## Approved staging rehearsal — 25 October 2026 IST
+
+The user explicitly approved staging application. Fresh inspection confirmed Bsenexus-staging (`vjjdjzehecrdgtonzakv`) and zero user rows. The first migration attempt failed atomically because staging's record_pending_order_atomic returns jsonb whereas production's previously inspected definition returns void. A follow-up query confirmed no new trial RPC or Telegram tables remained after failure. The migration now preserves either existing return contract, with a regression for the JSONB variant; all nine SQL tests pass.
+
+The corrected migration was successfully applied to staging. `scripts/verify-deep-audit-staging.sql` then passed under service_role: first-trial idempotency, amount rejection, duplicate/cumulative grants, stale-profile protection, exactly-once referral settlement, Telegram proof replay/unlink, shared lockout counters and authenticated-role RPC denial. All synthetic rows/writes were rolled back. Follow-up table/function ACL and RLS checks confirm service-only privileged entry points and no retained test users/proofs/links. Production was not mutated. Real simultaneous connections, live provider/bot delivery and runtime deployment remain separate checks.
