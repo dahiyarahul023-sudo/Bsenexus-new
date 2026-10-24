@@ -224,8 +224,6 @@ export function CompanyIntelligenceModal({
     setTimeout(() => setCopiedAi(false), 2000);
   };
 
-  if (!isOpen) return null;
-
   const quote = intelData?.quote;
   const price = quote?.price;
   const change = quote?.change || 0;
@@ -338,6 +336,10 @@ export function CompanyIntelligenceModal({
     }
     return { buckets, max, callout };
   }, [recentFilings]);
+
+  // Hooks above must run unconditionally (React invariant); the closed-state
+  // early return lives here, after every hook call.
+  if (!isOpen) return null;
 
   return (
     <div 
