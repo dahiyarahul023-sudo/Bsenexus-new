@@ -4,6 +4,7 @@ import { RichIcon } from './ui/RichVisual';
 import { BseNexusLogo } from './ui/BseNexusLogo';
 import { customFetch } from '../api';
 import { useAuth } from '../context/AuthContext';
+import { safeGetItem } from '../utils/safeStorage';
 import { startProPayment, formatReceiptDate, PRO_PLAN_LIST, getPlanDisplay } from '../utils/cashfree';
 import { usePaymentDialog } from '../hooks/usePaymentDialog';
 import { paymentFeedback } from '../utils/paymentFeedback';
@@ -40,7 +41,7 @@ export function ProCheckoutView() {
   useEffect(() => {
     if(!isCheckoutOpen||!user||user.isAnonymous)return;
     const controller=new AbortController();
-    const stored=localStorage.getItem('bse_referral_code')||'';
+    const stored=safeGetItem('bse_referral_code')||'';
     setIsReferralApplied(false);
     if(stored){setReferralInput((parseReferralInput(stored) || stored).toLowerCase());void handleApplyReferral(stored,controller.signal);}
     return()=>controller.abort();
