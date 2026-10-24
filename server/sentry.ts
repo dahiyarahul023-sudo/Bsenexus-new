@@ -19,6 +19,8 @@ export function getServerSentryDsn(): string {
 let isServerInitialized = false;
 
 export function initServerSentry(): void {
+  // Importing SSR renderers in tests must never start the production transport.
+  if (process.env.NODE_ENV === 'test' || process.env.TEST_RUNNER || process.env.NODE_TEST_CONTEXT) return;
   if (isServerInitialized) return;
 
   const dsn = getServerSentryDsn();

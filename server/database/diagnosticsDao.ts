@@ -383,10 +383,13 @@ export async function getDiagnosticsSummary(): Promise<DiagnosticsSummary> {
   const pageLoadMap: Record<string, { totalMs: number; count: number }> = {};
   const recentErrors: TelemetryEvent[] = [];
 
-  let loadSampleCount = 0;
+  let pageViewCount = 0;
   let totalErrors = 0;
 
   for (const ev of events) {
+    // A navigation is still a page view when its timing is legacy or missing.
+    // Error rates and timing percentiles intentionally use different populations.
+    if (ev.type === 'PERFORMANCE') pageViewCount++;
     // Device categorization
     const dtype = (ev.device?.type || '').toUpperCase();
     if (dtype === 'MOBILE') mobileCount++;
@@ -410,7 +413,6 @@ export async function getDiagnosticsSummary(): Promise<DiagnosticsSummary> {
     // measured series without rewriting history or treating old fallbacks as RUM.
     if (ev.performance?.measurementVersion === 2 && Number.isFinite(ev.performance.pageLoadTimeMs) && ev.performance.pageLoadTimeMs! > 0) {
       const ms = ev.performance.pageLoadTimeMs;
-      loadSampleCount++;
 
       if (dtype === 'MOBILE') mobileLoads.push(ms);
       else if (dtype === 'TABLET') tabletLoads.push(ms);
@@ -450,7 +452,7 @@ export async function getDiagnosticsSummary(): Promise<DiagnosticsSummary> {
   const avgLoadTime = loadSummary.averageMs;
   const avg = (arr: number[]) => summarizeLoadTimes(arr).averageMs;
 
-  const totalViews = Math.max(loadSampleCount, 1);
+  const totalViews = Math.max(pageViewCount, 1);
   const crashFreeRate = Math.max(0, Math.min(100, Number((((totalViews - totalErrors) / totalViews) * 100).toFixed(1))));
 
   let status: 'OPTIMAL' | 'DEGRADED' | 'CRITICAL' = 'OPTIMAL';
@@ -479,7 +481,7 @@ export async function getDiagnosticsSummary(): Promise<DiagnosticsSummary> {
       score,
       totalEvents: events.length,
       totalErrors,
-      totalPageViews: loadSampleCount,
+      totalPageViews: pageViewCount,
       crashFreeRate,
       averageLoadTimeMs: avgLoadTime,
       loadSamples: loadSummary.samples,

@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-process.env.SUPABASE_URL = 'https://radar-scope-test.invalid';
+// Responses are mocked below; a missed mock must remain on loopback.
+process.env.SUPABASE_URL = 'http://127.0.0.1:54321';
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-only-service-role';
 const { listRadarEvents, getRadarEvent, getRadarFollowing, publishRadarRecords } = await import('../database/impactRadarDao.js');
 const { radarRecordFromSource } = await import('../services/impactRadarService.js');

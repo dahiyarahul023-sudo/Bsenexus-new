@@ -222,7 +222,7 @@ function Dashboard({ bseHealth, telegramHealth, isRunning, handleToggle }: any) 
  * Runs on every route so a payment return always lands in the React app.
  */
 function CashfreeReturnHandler() {
-  const { user, refreshProfile, setReceipt, setIsAuthModalOpen } = useAuth();
+  const { user, refreshProfile, setReceipt, setIsAuthModalOpen, isAuthModalOpen } = useAuth();
   const { success, warning } = useToast();
   const handledRef = useRef<string | null>(null);
   // While our server confirms the payment with Cashfree, show a processing
@@ -304,6 +304,9 @@ function CashfreeReturnHandler() {
   }, [user, needsLogin]);
 
   if (needsLogin) {
+    // Preserve recovery intent while the sign-in dialog owns focus/visibility.
+    // Cancelling sign-in exposes this prompt again; no payment is confirmed here.
+    if (isAuthModalOpen) return null;
     return (
       <div
         className="payment-ui payment-overlay" style={{ zIndex: 96 }}

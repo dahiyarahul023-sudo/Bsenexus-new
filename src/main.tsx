@@ -5,6 +5,8 @@ import App from './App.tsx';
 import './index.css';
 import './styles/rich-ui.css';
 import './styles/avatars.css';
+// Payment-return recovery is eager even when checkout/receipt chunks are closed.
+import './styles/payment.css';
 import { initClientTelemetry } from './utils/telemetry.ts';
 import { initOneSignal } from './utils/oneSignal.ts';
 

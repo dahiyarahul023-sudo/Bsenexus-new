@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "f0591899d256b5118b07e77600710ea887bdb1675eed296c462f7639c76d1ff6",
+  "sourceDigest": "a34db471ca96c4f252c4ae635528ff8298046010b551da4eb84dbfe401bded72",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -45,7 +45,7 @@
     },
     {
       "path": "package.json",
-      "sha256": "d1b41e72dcab53a86abce1db4c7c209b258de5eeb997802bb192cd8c07019dd7",
+      "sha256": "2f124212d75a3fc0b0c250d99e7f18be7d3f66ca9c3989897718aafc390fb07e",
       "importedBy": []
     },
     {
@@ -154,6 +154,13 @@
       "path": "scripts/generateScreenshots.ts",
       "sha256": "31e302abd3690c037f26166026099ed51c3e2d77f72ae442c7e0a873ff6aefe9",
       "importedBy": []
+    },
+    {
+      "path": "scripts/offline-tests.mjs",
+      "sha256": "cb05f493dbaaace106f6d00bff335454a0987902e0ad25b305a1c236d01fe680",
+      "importedBy": [
+        "server/tests/offlineTests.test.ts"
+      ]
     },
     {
       "path": "scripts/patch-firebase-auth.cjs",
@@ -507,7 +514,7 @@
     },
     {
       "path": "server/database/diagnosticsDao.ts",
-      "sha256": "596f0622600504c3d5b5321009088d32176d5a3136fd63994e5e6af359ec0963",
+      "sha256": "9f45c046f74c21f5d59a435cb1365ac67b3df5d866ae0cb306d1225ce98fcc86",
       "importedBy": [
         "server/api/routes.ts"
       ]
@@ -865,7 +872,7 @@
     },
     {
       "path": "server/sentry.ts",
-      "sha256": "6ac1c514f08cafbe918492822d3c06bbe8b2b2628f53497f1b7d94a090e5e06d",
+      "sha256": "78e930235a0b597a16dadd032f6ae31a54e66d5dd410b0dce649fdc47eaff37b",
       "importedBy": [
         "server.ts"
       ]
@@ -1539,6 +1546,11 @@
       "importedBy": []
     },
     {
+      "path": "server/tests/diagnosticsPopulation.test.ts",
+      "sha256": "b60724b58d39e403bb65e3340ef2b55b4984bb25f45a7078d144d1d9d3f84e31",
+      "importedBy": []
+    },
+    {
       "path": "server/tests/exchangeProfiles.test.ts",
       "sha256": "c6dc172d7e1d6c4860b57c64f867abef87196cb50bc1987481e3257607eb5030",
       "importedBy": []
@@ -1654,6 +1666,11 @@
       "importedBy": []
     },
     {
+      "path": "server/tests/offlineTests.test.ts",
+      "sha256": "14a33a750fd909810f068767a79b1cef3f4c53b6a8c41210dfefbcfac942e514",
+      "importedBy": []
+    },
+    {
       "path": "server/tests/oneSignal.test.ts",
       "sha256": "0049ec20143c5262e70f3a57e28f6c19b3ffe78bc58da022a77cee9cc905f865",
       "importedBy": []
@@ -1765,7 +1782,7 @@
     },
     {
       "path": "server/tests/radarScopeRead.test.ts",
-      "sha256": "e209a3a7cc515df026fb8823f8f2bccf992e471dfeb0d8e231603cfd20e561b6",
+      "sha256": "b66a2afb4f84950d9760579139494e9706ca46eca5c86617d531b96367ea2108",
       "importedBy": []
     },
     {
@@ -1831,6 +1848,11 @@
     {
       "path": "server/tests/searchEngineDiscovery.test.ts",
       "sha256": "3656e5a93eb11f0047ab744e371149c01b2e8af061d1277e1f84ecd15bb1cce6",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/sentryIsolation.test.ts",
+      "sha256": "46c8448c46fe99c87194682f95aaa96fd4b911e5c061276a771a565c61420233",
       "importedBy": []
     },
     {
@@ -2133,7 +2155,7 @@
     },
     {
       "path": "src/App.tsx",
-      "sha256": "12e4831ac685dbade2378d6b468adbd439eb8dc486a7563d137a4f1aad2e92f2",
+      "sha256": "33acb7f654b94ac1d57738600e3713b51ec72682268b923c57689371deca65c5",
       "importedBy": [
         "src/main.tsx"
       ]
@@ -3550,7 +3572,7 @@
     },
     {
       "path": "src/main.tsx",
-      "sha256": "565f5dc79462036af9a7f93947c88af3c9ec578e60e601ff87de85eeb105f310",
+      "sha256": "92fdfd793c54607a1bd050ccaf05ebe9caf7e760b569c5b95be380a8c76023ea",
       "importedBy": []
     },
     {
@@ -3689,6 +3711,7 @@
       "sha256": "61d52fbed22893708357fe91f55a9fdf55a843e8f057267d2babac2e0ffada59",
       "importedBy": [
         "server/database/diagnosticsDao.ts",
+        "server/tests/diagnosticsPopulation.test.ts",
         "server/tests/performanceSummary.test.ts"
       ]
     },
@@ -3820,7 +3843,8 @@
         "src/components/ProCheckoutView.tsx",
         "src/components/ProReceiptView.tsx",
         "src/components/ProUpgradeModal.tsx",
-        "src/components/SubscriptionCard.tsx"
+        "src/components/SubscriptionCard.tsx",
+        "src/main.tsx"
       ]
     },
     {
@@ -7769,6 +7793,12 @@
       "line": 7
     },
     {
+      "source": "server/tests/diagnosticsPopulation.test.ts",
+      "target": "src/shared/performanceSummary.ts",
+      "kind": "import",
+      "line": 6
+    },
+    {
       "source": "server/tests/exchangeProfiles.test.ts",
       "target": "src/config/exchangeCompanies.ts",
       "kind": "import",
@@ -8207,6 +8237,12 @@
       "line": 6
     },
     {
+      "source": "server/tests/offlineTests.test.ts",
+      "target": "scripts/offline-tests.mjs",
+      "kind": "import",
+      "line": 4
+    },
+    {
       "source": "server/tests/oneSignal.test.ts",
       "target": "server/services/oneSignal.ts",
       "kind": "import",
@@ -8522,13 +8558,13 @@
       "source": "server/tests/radarScopeRead.test.ts",
       "target": "server/database/impactRadarDao.ts",
       "kind": "dynamic",
-      "line": 5
+      "line": 6
     },
     {
       "source": "server/tests/radarScopeRead.test.ts",
       "target": "server/services/impactRadarService.ts",
       "kind": "dynamic",
-      "line": 6
+      "line": 7
     },
     {
       "source": "server/tests/radarSourceChecks.test.ts",
@@ -12618,15 +12654,21 @@
     },
     {
       "source": "src/main.tsx",
+      "target": "src/styles/payment.css",
+      "kind": "import",
+      "line": 9
+    },
+    {
+      "source": "src/main.tsx",
       "target": "src/utils/telemetry.ts",
       "kind": "import",
-      "line": 8
+      "line": 10
     },
     {
       "source": "src/main.tsx",
       "target": "src/utils/oneSignal.ts",
       "kind": "import",
-      "line": 9
+      "line": 11
     },
     {
       "source": "src/services/adrClient.ts",
@@ -13193,12 +13235,14 @@
         "server/services/indexNowConfig.ts",
         "server/services/indexNowQueue.ts",
         "server/ai/http.ts",
-        "server/database/aiConnectionsDao.ts"
+        "server/database/aiConnectionsDao.ts",
+        "scripts/offline-tests.mjs"
       ],
       "tests": [
         "server/tests/startupRecovery.test.ts",
         "server/tests/navigationMetrics.test.ts",
         "server/tests/performanceSummary.test.ts",
+        "server/tests/diagnosticsPopulation.test.ts",
         "server/tests/accountProtection.test.ts",
         "server/tests/circuitBreaker.test.ts",
         "server/tests/recaptchaSecurity.test.ts",
@@ -13206,7 +13250,9 @@
         "server/tests/announcementCadence.test.ts",
         "server/tests/indexNowQueue.test.ts",
         "server/tests/indexNowSql.test.ts",
-        "server/tests/mcpToolMatrix.test.ts"
+        "server/tests/mcpToolMatrix.test.ts",
+        "server/tests/sentryIsolation.test.ts",
+        "server/tests/offlineTests.test.ts"
       ],
       "reason": "Startup and settings influence background jobs, provider calls, abuse limits and logs. A live HTTP listener does not establish that durable stores or external providers are ready. Poller stage deadlines release the monitor lock without resuming abandoned workers; dedicated local poller history is not cloud deployment durability. IndexNow starts only after listen, uses the existing provider circuit and reports configured primary mode/HTTP status in diagnostics. Its background failures never fail filing storage; production Crawler Hints state requires independent inspection. MCP request logs expose only generated trace IDs, bounded operation/error labels and irreversible connection tags; no tool arguments, tokens or private text. Quota/idempotency errors provide actionable recovery. A failed docs fingerprint cannot interrupt other indexing/startup."
     },
@@ -13589,7 +13635,10 @@
         "package.json",
         "scripts/check-performance-budget.mjs",
         "index.html",
-        "src/lib/sentrySdk.ts"
+        "src/lib/sentrySdk.ts",
+        "server/sentry.ts",
+        "src/styles/payment.css",
+        "scripts/offline-tests.mjs"
       ],
       "tests": [
         "server/tests/responseHeaders.test.ts",
@@ -13597,7 +13646,10 @@
         "server/tests/appCheckStartup.test.ts",
         "server/tests/performanceBudget.test.ts",
         "server/tests/navigationMetrics.test.ts",
-        "server/tests/performanceSummary.test.ts"
+        "server/tests/performanceSummary.test.ts",
+        "server/tests/diagnosticsPopulation.test.ts",
+        "server/tests/sentryIsolation.test.ts",
+        "server/tests/offlineTests.test.ts"
       ],
       "reason": "Canonical document headers preserve OAuth popups, AI Studio preview and public embeds. Deferred optional SDKs preserve authentication assessment, configured monitoring and explicit push requests without blocking public paint. Generic HTML has a neutral brand/loading root, never synthetic filings or an unrelated directory. Real announcements use an explicit route-only insertion marker and public calendar SSR retains its own source-backed document."
     },
@@ -16984,6 +17036,12 @@
       "target": "'/api/announcements'"
     },
     {
+      "file": "scripts/offline-tests.mjs",
+      "line": 13,
+      "function": "fetch",
+      "target": "input"
+    },
+    {
       "file": "scripts/verify-oauth-routing.mjs",
       "line": 43,
       "function": "fetch",
@@ -17458,6 +17516,12 @@
       "target": "base + suffix"
     },
     {
+      "file": "server/tests/offlineTests.test.ts",
+      "line": 7,
+      "function": "fetch",
+      "target": "'https://fixture.invalid/private-test-body'"
+    },
+    {
       "file": "server/tests/startupRecovery.test.ts",
       "line": 28,
       "function": "fetch",
@@ -17489,37 +17553,37 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 440,
+      "line": 443,
       "function": "fetch",
       "target": "'/api/referrals/track-visit'"
     },
     {
       "file": "src/App.tsx",
-      "line": 831,
+      "line": 834,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/App.tsx",
-      "line": 841,
+      "line": 844,
       "function": "customFetch",
       "target": "'/auth/status'"
     },
     {
       "file": "src/App.tsx",
-      "line": 864,
+      "line": 867,
       "function": "customFetch",
       "target": "'/api/settings'"
     },
     {
       "file": "src/App.tsx",
-      "line": 874,
+      "line": 877,
       "function": "customFetch",
       "target": "'/api/logs?limit=400'"
     },
     {
       "file": "src/App.tsx",
-      "line": 906,
+      "line": 909,
       "function": "customFetch",
       "target": "'/api/toggle'"
     },
@@ -19584,6 +19648,18 @@
       "key": "{ length: 3 }"
     },
     {
+      "file": "server/tests/diagnosticsPopulation.test.ts",
+      "line": 30,
+      "function": "Array.from",
+      "key": "{ length: 100 }"
+    },
+    {
+      "file": "server/tests/diagnosticsPopulation.test.ts",
+      "line": 40,
+      "function": "Array.from",
+      "key": "{ length: 100 }"
+    },
+    {
       "file": "server/tests/impactRadarRender.test.ts",
       "line": 40,
       "function": "Array.from",
@@ -19777,55 +19853,55 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 415,
+      "line": 418,
       "function": "localStorage.getItem",
       "key": "'theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 439,
+      "line": 442,
       "function": "localStorage.setItem",
       "key": "'bse_referral_code'"
     },
     {
       "file": "src/App.tsx",
-      "line": 608,
+      "line": 611,
       "function": "sessionStorage.setItem",
       "key": "'bse_shared_query'"
     },
     {
       "file": "src/App.tsx",
-      "line": 750,
+      "line": 753,
       "function": "localStorage.setItem",
       "key": "'theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 765,
+      "line": 768,
       "function": "localStorage.getItem",
       "key": "'bse_design_theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 782,
+      "line": 785,
       "function": "localStorage.setItem",
       "key": "'bse_design_theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 783,
+      "line": 786,
       "function": "localStorage.setItem",
       "key": "`bse_design_theme_${user.uid}`"
     },
     {
       "file": "src/App.tsx",
-      "line": 815,
+      "line": 818,
       "function": "localStorage.getItem",
       "key": "user?.uid ? `bse_design_theme_${user.uid}` : 'bse_design_theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 824,
+      "line": 827,
       "function": "localStorage.setItem",
       "key": "user?.uid ? `bse_design_theme_${user.uid}` : 'bse_design_theme'"
     },
@@ -21426,7 +21502,22 @@
     },
     {
       "file": "server/sentry.ts",
-      "line": 30,
+      "line": 23,
+      "name": "NODE_ENV"
+    },
+    {
+      "file": "server/sentry.ts",
+      "line": 23,
+      "name": "TEST_RUNNER"
+    },
+    {
+      "file": "server/sentry.ts",
+      "line": 23,
+      "name": "NODE_TEST_CONTEXT"
+    },
+    {
+      "file": "server/sentry.ts",
+      "line": 32,
       "name": "NODE_ENV"
     },
     {
@@ -22111,12 +22202,12 @@
     },
     {
       "file": "server/tests/radarScopeRead.test.ts",
-      "line": 3,
+      "line": 4,
       "name": "SUPABASE_URL"
     },
     {
       "file": "server/tests/radarScopeRead.test.ts",
-      "line": 4,
+      "line": 5,
       "name": "SUPABASE_SERVICE_ROLE_KEY"
     },
     {
@@ -22196,12 +22287,12 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 757,
+      "line": 760,
       "name": "DEV"
     },
     {
       "file": "src/App.tsx",
-      "line": 764,
+      "line": 767,
       "name": "DEV"
     },
     {
@@ -22228,7 +22319,7 @@
   "browserEvents": [
     {
       "file": "src/App.tsx",
-      "line": 609,
+      "line": 612,
       "target": "window",
       "kind": "dispatch",
       "name": "bse-share-target",
@@ -22236,7 +22327,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 618,
+      "line": 621,
       "target": "window",
       "kind": "listen",
       "name": "popstate",
@@ -22244,7 +22335,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 619,
+      "line": 622,
       "target": "window",
       "kind": "remove",
       "name": "popstate",
@@ -22252,7 +22343,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 732,
+      "line": 735,
       "target": "window",
       "kind": "listen",
       "name": "popstate",
@@ -22260,7 +22351,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 734,
+      "line": 737,
       "target": "window",
       "kind": "remove",
       "name": "popstate",
@@ -22268,7 +22359,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 858,
+      "line": 861,
       "target": "window",
       "kind": "listen",
       "name": "auth-expired",
@@ -22276,7 +22367,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 859,
+      "line": 862,
       "target": "window",
       "kind": "remove",
       "name": "auth-expired",
