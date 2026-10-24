@@ -1,3 +1,4 @@
+import { readResultHistory } from '../services/resultHistoryRead.js';
 import { telegramLinksRouter } from './telegramLinks.js';
 import { requireVerifiedTelegramTarget, telegramLinkCommand } from '../database/telegramLinksDao.js';
 import { startHistorySync, historySyncStatus } from '../services/historicalFilings.js';
@@ -2084,22 +2085,9 @@ apiRouter.get("/stock-results-history", async (req, res) => {
     if (!symbol && !scripCode && !companyName) {
       return res.status(400).json({ error: "Missing symbol or scripCode" });
     }
-    let history = await getStockResultsHistory(symbol, scripCode, companyName);
-    // Empty history for a real stock almost always means its filings sit
-    // outside the recent cache window — pull one year from BSE once, then
-    // re-read, so the tab never opens blank for a listed company. The pull
-    // is bounded (autoFetchDeepHistoricalResults): a fast fetch still
-    // lands in this same response; a slow/blocked BSE finishes in the
-    // background instead of freezing the page.
-    if (history.length === 0 && scripCode) {
-      try {
-        const fetchedInTime = await autoFetchDeepHistoricalResults(scripCode, symbol, 1);
-        if (fetchedInTime) {
-          history = await getStockResultsHistory(symbol, scripCode, companyName);
-        }
-      } catch (e) {}
-    }
-    res.json({ success: true, symbol, scripCode, history });
+    res.setHeader('Cache-Control', 'no-store');
+    const result = await readResultHistory(symbol, scripCode, companyName, req.query.autoSync !== '0');
+    res.json(result);
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }

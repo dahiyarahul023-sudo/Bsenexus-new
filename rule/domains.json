@@ -183,7 +183,9 @@
         "server/database/telegramLinksDao.ts",
         "server/database/calendarTelegramDao.ts",
         "server/services/calendarTelegramDelivery.ts",
-        "supabase/migrations/20261024171520_calendar_telegram_delivery_ledger.sql"
+        "supabase/migrations/20261024171520_calendar_telegram_delivery_ledger.sql",
+        "server/services/resultHistoryRead.ts",
+        "src/utils/resultHistoryClient.ts"
       ],
       "tests": [
         "server/tests/bseBackfill.test.ts",
@@ -213,7 +215,8 @@
         "server/tests/calendarAlertTiming.test.ts",
         "server/tests/calendarBroadcast.test.ts",
         "server/tests/calendarTelegramDelivery.test.ts",
-        "server/tests/calendarTelegramSql.test.ts"
+        "server/tests/calendarTelegramSql.test.ts",
+        "server/tests/resultHistory.test.ts"
       ],
       "reason": "Poll \u2192 normalize/dedupe \u2192 persistence \u2192 feed and alert decisions \u2192 recipient-specific delivery/inbox. Global and personal recipients must remain distinct. Preset saves replace stable per-owner IDs atomically; confirmed cloud settings feed every poll. Personal channels supersede inherited defaults once presets are saved. Live polling has a CRON_SECRET bearer-protected HTTP trigger, a 60-second in-container watchdog timer, a continuous 15-second active poller, and a 15-second-stale traffic trigger. The shared process-local monitor lock skips running cycles without queueing. Request lifetime covers bounded ingestion, raw delivery/write drain and then result AI after releasing the ingestion lock; cron source failure eligibility is capped at 60 seconds. External Scheduler remains necessary for idle request-based Cloud Run; legacy cron returns 410. Numbered IST worker summaries and cron request summaries have distinct event fields. Automatic Telegram AI applies only to actual financial results with a stable security-code/period identity. Private durable claims share one valid analysis per period/language and reserve one reply per chat across exchange copies, languages and restart. Failed evidence uses a bounded newer-source retry; uncertain send acceptance never replays. Private admin delivery timings retain exchange, observed, processed and Telegram acceptance dates without recipient identity. Migration must precede runtime release. Confirmed public filing changes queue company/announcements IndexNow URLs after successful upsert; the poll collection hold is idempotently released in finally. Indexing I/O runs outside ingestion and does not change alert recipients or intake. Overnight ADR adds one existing Market pulse screen and an opt-in private morning inbox digest; source dates and fetch times remain distinct, and durable insertion prevents per-session repeats. Stored 30-day filing counts share one exact-company projection with company detail, independently of the seven-day updates feed. Durable per-company history uses keyset pages; company Filings and Material Actions expose numbered pages. Explicit paid archive imports all categories over selected years with bounded workers, source failure and storage confirmation, and does not download PDFs. Process restart or another instance may make worker status unavailable; saved evidence remains and no success is invented."
     },
@@ -387,7 +390,9 @@
         "src/components/story/StoryVisuals.tsx",
         "server/database/calendarTelegramDao.ts",
         "server/services/calendarTelegramDelivery.ts",
-        "supabase/migrations/20261024171520_calendar_telegram_delivery_ledger.sql"
+        "supabase/migrations/20261024171520_calendar_telegram_delivery_ledger.sql",
+        "server/services/resultHistoryRead.ts",
+        "src/utils/resultHistoryClient.ts"
       ],
       "tests": [
         "server/tests/core.test.ts",
@@ -407,7 +412,8 @@
         "server/tests/calendarAlertTiming.test.ts",
         "server/tests/calendarBroadcast.test.ts",
         "server/tests/calendarTelegramDelivery.test.ts",
-        "server/tests/calendarTelegramSql.test.ts"
+        "server/tests/calendarTelegramSql.test.ts",
+        "server/tests/resultHistory.test.ts"
       ],
       "reason": "Upstream timestamps, stock identity and market sessions affect cached API results, screen freshness and alert timing. Public market data availability does not establish trading-data accuracy. Verified security identities repair IndusInd/J&K and current Eternal naming; conflicting legacy cache entries cannot overwrite them. Watchlist, Story and F&O fallback maps use the shared verified codes. Connector read projections follow security code and mark legacy conflicts rather than silently rewriting personal lists."
     },
@@ -709,7 +715,9 @@
         "server/services/companyIntelService.ts",
         "server/services/resultsCalendarService.ts",
         "server/database/calendarHistoryDao.ts",
-        "src/shared/calendarTiming.ts"
+        "src/shared/calendarTiming.ts",
+        "server/services/resultHistoryRead.ts",
+        "src/utils/resultHistoryClient.ts"
       ],
       "tests": [
         "server/tests/core.test.ts",
@@ -731,7 +739,8 @@
         "server/tests/watchlistPreview.test.ts",
         "server/tests/mcpDirectoryQuality.test.ts",
         "server/tests/brandRefreshInbox.test.ts",
-        "server/tests/companyFilingHistory.test.ts"
+        "server/tests/companyFilingHistory.test.ts",
+        "server/tests/resultHistory.test.ts"
       ],
       "reason": "List/detail identity, filters, watchlist membership, badge counts and timestamps must agree. Background refresh preserves content, density, selection and scroll. Rapid filter changes must not render older responses. Home membership uses active-list exact identities. The responsive watchlist editor preserves company metadata, page scrolling and four visible priority filters. Inbox presents unread items first, while device push delivery has an independent persistent control. Calendar labels use company names when symbols are numeric; sticky date headings share measured toolbar offsets. Home previews select the newest filing per exact watchlist security before limiting, without changing the full filing feed. Static Watchlist identity fallback uses the shared verified IndusInd code; existing list state, revisions and editor behavior are preserved. Inbox now has All/Watchlist/Results only, with unread-first ordering, read action below/right of filters and ephemeral per-owner/filter snapshots retained across close. Confirmed read/clear reconciles all cached filters; loading/error never erases saved content. Watchlist first-read readiness separates unknown from confirmed empty. Calendar/News/Watchlist pull indicators occupy flow below stable controls. Watchlist and Story symbol-to-code fallback maps also use the shared blank BSE code, preventing the old Advanced Enzyme mapping from returning through a client fallback. Stored 30-day filing counts share one exact-company projection with company detail, independently of the seven-day updates feed. Durable per-company history uses keyset pages; company Filings and Material Actions expose numbered pages. Explicit paid archive imports all categories over selected years with bounded workers, source failure and storage confirmation, and does not download PDFs. Process restart or another instance may make worker status unavailable; saved evidence remains and no success is invented."
     },

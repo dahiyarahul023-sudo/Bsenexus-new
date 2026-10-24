@@ -1,3 +1,5 @@
+2026-10-25 result history: Calendar Details -> stock-results-history -> exact-code durable filings + public calendar snapshot. Meeting notices never prove declaration. API returns the actual one-year archive receipt; Calendar follows running receipts and refreshes saved results, with selection/account/unmount cancellation and read-error retry. Manual 1–5Y Sync follows its receipt through the existing Pro-gated status route before reloading and notifying filing-count readers. Stock 360 retains its existing receipt owner and consumes the same canonical history/ledger. See changes/result-history-timing.md for evidence and release limits.
+
 # Frontend spider web: where changes travel
 
 2026-10-25 follow-up: eager animation components use m with main-owned LazyMotion/domAnimation; full-motion dynamic screens remain separate. Canvas curve points are reused with identical drawing-command evidence. Calendar Telegram uses current Indian-day eligibility and a separate service-only code/day ledger across restarts; legacy cutover and uncertain outcomes do not replay automatically. See changes/performance-calendar-followup.md for validation and publication boundaries.

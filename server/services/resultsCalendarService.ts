@@ -680,12 +680,11 @@ function isCalendarOutcome(item: ResultCalendarItem, a: any, meetingStartTs = it
   const isPreNotice = isIntimationOrNoticeFiling(a.subject || '', a.details || '');
   if (isPreNotice) return false;
 
-  const isResultOrOutcome = a.category === 'RESULTS' ||
-    /financial result|quarterly result|audited result|unaudited result|q1 result|q2 result|q3 result|q4 result|statement of financial|outcome of board|board meeting outcome|outcome of the board/i.test(fullText);
+  const isResultOrOutcome = isPureResultOutcomeFiling(a.subject || '', a.details || '');
   if (!isResultOrOutcome) return false;
 
-  const annTs = parseBseDate(a.bseTime) || (a.fetched_at ? new Date(a.fetched_at).getTime() : 0);
-  if (annTs <= 0) return false;
+  const annTs = parseBseDate(a.bseTime) || Number(a.bseTimestamp || 0);
+  if (!Number.isFinite(annTs) || annTs <= 0 || annTs > Date.now()) return false;
 
   // Check if filing explicitly mentions this exact meeting date text in subject/details
   const parsedMeetingDateStr = item.meetingDate ? item.meetingDate.toLowerCase().trim() : '';
@@ -780,18 +779,10 @@ export async function getResultsCalendarSnapshot() {
 
       const validMatches = candidates.filter(a => isCalendarOutcome(item, a, meetingStartTs));
 
-      // Earliest result announcement on/around meeting date, prioritizing exact board outcome & closest timestamp
-      validMatches.sort((a, b) => {
-        const tsA = parseBseDate(a.bseTime) || (a.fetched_at ? new Date(a.fetched_at).getTime() : 0);
-        const tsB = parseBseDate(b.bseTime) || (b.fetched_at ? new Date(b.fetched_at).getTime() : 0);
-
-        const isOutcomeA = /outcome of board|board meeting outcome|outcome of the board|financial results/i.test((a.subject || ''));
-        const isOutcomeB = /outcome of board|board meeting outcome|outcome of the board|financial results/i.test((b.subject || ''));
-        if (isOutcomeA && !isOutcomeB) return -1;
-        if (!isOutcomeA && isOutcomeB) return 1;
-
-        return Math.abs(tsA - meetingStartTs) - Math.abs(tsB - meetingStartTs);
-      });
+      // Every remaining candidate is a genuine result; use its first publication.
+      validMatches.sort((a, b) =>
+        (parseBseDate(a.bseTime) || Number(a.bseTimestamp || 0)) -
+        (parseBseDate(b.bseTime) || Number(b.bseTimestamp || 0)));
 
       const matched = validMatches[0];
       let isDeclared = false;
@@ -804,12 +795,12 @@ export async function getResultsCalendarSnapshot() {
 
       if (matched) {
         isDeclared = true;
-        resultDeclarationTime = matched.bseTime || (matched.fetched_at ? new Date(matched.fetched_at).toISOString() : undefined);
+        resultDeclarationTime = matched.bseTime || (matched.bseTimestamp ? new Date(matched.bseTimestamp).toISOString() : undefined);
         declarationAnnouncementId = matched.id;
         declarationPdfLink = matched.pdfLink;
         declarationSubject = matched.subject;
         aiSummary = matched.aiSummary;
-        bseTimestamp = matched.bseTimestamp || (matched.bseTime ? parseBseDate(matched.bseTime) : undefined) || (matched.fetched_at ? new Date(matched.fetched_at).getTime() : undefined);
+        bseTimestamp = matched.bseTimestamp || (matched.bseTime ? parseBseDate(matched.bseTime) : undefined);
       }
 
       let companyName = item.companyName;
@@ -983,12 +974,14 @@ export function isPureResultOutcomeFiling(subject: string = '', details: string 
   const lower = combined.toLowerCase();
 
   // 1. Strictly reject non-financial result filings (Regulation 30 intimations, investor meets, analyst calls, press releases, etc.)
-  const isCorporateNoticeOrIntimation =
+  const isCorporateNoticeOrIntimation = 
     /analyst\s*\/\s*investor\s*meet|investor\s*meet|analyst\s*meet|institutional\s*investor|conference\s*call|earnings\s*call/i.test(lower) ||
     /investor\s*presentation|analyst\s*presentation|corporate\s*presentation|audio\s*recording|transcript\s*of|press\s*release/i.test(lower) ||
     /newspaper\s*publication|loss\s*of\s*share|duplicate\s*share|credit\s*rating|change\s*in\s*(?:director|kmp|management|auditor)|resignation|appointment/i.test(lower) ||
     /closure\s*of\s*trading\s*window|trading\s*window\s*closure|prior\s*intimation|intimation\s*of\s*board\s*meeting|notice\s*of\s*board\s*meeting|meeting\s*scheduled\s*to\s*be\s*held|to\s*consider\s*and\s*approve/i.test(lower) ||
     /postal\s*ballot|scrutinizer|voting\s*results|record\s*date\s*intimation|allotment\s*of\s*shares|reconstitution/i.test(lower);
+
+  if (isIntimationOrNoticeFiling(subject, details)) return false;
 
   if (isCorporateNoticeOrIntimation) {
     const hasStrictReg33 = /\b(?:regulation 33|reg\s*33|reg\.\s*33|lodr\s*33)\b/i.test(lower);
@@ -1032,7 +1025,11 @@ export function isIntimationOrNoticeFiling(subject: string = '', details: string
 
   // 1. Explicit OUTCOME / RESULTS indicators override any notice keywords
   // (Regulation 33 is specifically Financial Results submission under SEBI LODR)
-  const isDefinitiveOutcome =
+  // A notice remains a notice even when it names the financial results to be considered.
+  if (/to\s*consider\s*(?:and\s*approve)?|meeting\s*(?:is\s*)?scheduled|intimation.*board\s*meeting|notice\s*of\s*board|trading\s*window|regulation\s*29/i.test(fullText) &&
+      !/considered\s*and\s*approved|approved\s*(?:the\s*)?(?:un-?audited|audited|financial)\s*results/i.test(fullText)) return true;
+
+  const isDefinitiveOutcome = 
     /^(?:financial results?|results?|results\s*\/\s*dividend|financial results\s*\/\s*dividend)[\.\s\-:]*$/i.test(fullText.trim()) ||
     /\b(?:regulation 33|reg\s*33|reg\.\s*33|lodr\s*33)\b/i.test(fullText) ||
     /\b(?:financial results?|financial result|un-?audited financial results?|audited financial results?|statement of (?:standalone|consolidated|financial) results)\b/i.test(fullText) ||
@@ -1044,7 +1041,7 @@ export function isIntimationOrNoticeFiling(subject: string = '', details: string
   }
 
   // 2. True Prior Notice / Intimations
-  const hasIntimationKeywords =
+  const hasIntimationKeywords = 
     /\b(?:prior intimation|notice of board|board meeting intimation|intimation of board|to consider and approve|meeting scheduled|meeting will be held|update on board meeting|rescheduled|trading window|closure of window|closure of trading|regulation 29|reg\s*29|reg\.\s*29)\b/i.test(fullText);
 
   if (hasIntimationKeywords) {
@@ -1071,9 +1068,9 @@ export function parseQuarterPeriod(text: string, timestamp: number): {
 } {
   const clean = (text || '').toLowerCase();
   const isPriorNotice = isIntimationOrNoticeFiling(text);
-  const filingDate = new Date(timestamp || Date.now());
-  const filingYear = filingDate.getFullYear();
-  const filingMonth = filingDate.getMonth(); // 0 = Jan, 11 = Dec
+  const filingDate = new Date((timestamp || Date.now()) + 5.5 * 3_600_000);
+  const filingYear = filingDate.getUTCFullYear();
+  const filingMonth = filingDate.getUTCMonth(); // 0 = Jan, 11 = Dec
 
   // Standalone vs Consolidated tags
   const hasConsol = /\b(?:consolidated|consol)\b/i.test(clean);
@@ -1118,7 +1115,8 @@ export function parseQuarterPeriod(text: string, timestamp: number): {
   }
 
   // Extract year near period ended if present
-  const yearNearPeriod = text.match(/(?:period|quarter|half\s*year|nine\s*months?|year)\s*ended[^\d\n\r]{0,30}(\d{4})/i) ||
+  const explicitPeriodYear = text.match(/(?:quarter|period|half\s*year|nine\s*months?|year)\s*ended[^;\n]{0,60}?\b((?:19|20)\d{2})\b/i);
+  const yearNearPeriod = explicitPeriodYear || text.match(/(?:period|quarter|half\s*year|nine\s*months?|year)\s*ended[^\d\n\r]{0,30}(\d{4})/i) ||
     text.match(/(?:30[\s\.\-\/]*(?:jun|sep)|31[\s\.\-\/]*(?:dec|mar))[\s\.\-\/,]*(\d{4})/i);
   if (yearNearPeriod && yearNearPeriod[1]) {
     detectedPeriodYear = parseInt(yearNearPeriod[1], 10);
@@ -1196,8 +1194,8 @@ export function parseQuarterPeriod(text: string, timestamp: number): {
 }
 
 export async function getStockResultsHistory(
-  param1: string,
-  param2?: string,
+  param1: string, 
+  param2?: string, 
   companyName?: string
 ): Promise<StockHistoricalResultItem[]> {
   const p1 = String(param1 || '').trim();
@@ -1220,7 +1218,7 @@ export async function getStockResultsHistory(
   let resolvedEntry: any = null;
   if (targetScrip) {
     resolvedEntry = await resolveStockDetails(targetScrip);
-    if (!sym && resolvedEntry?.symbol) sym = resolvedEntry.symbol.toUpperCase();
+    if ((!sym || /^\d+$/.test(sym)) && resolvedEntry?.symbol) sym = resolvedEntry.symbol.toUpperCase();
   } else if (sym) {
     resolvedEntry = await resolveStockDetails(sym);
     if (resolvedEntry?.scripCode) targetScrip = resolvedEntry.scripCode;
@@ -1234,21 +1232,22 @@ export async function getStockResultsHistory(
   const todayStartTs = getIstMidnightTs(new Date());
 
   // 1. Fetch announcements for this stock from Dao
-  const recentAnnouncements = await getAnnouncementsForScrip(targetScrip);
+  const recentAnnouncements = await getAnnouncementsForScrip(targetScrip, Number.MAX_SAFE_INTEGER, true);
   const stockAnns = recentAnnouncements.filter((ann: any) => hasExactScripCode(ann, targetScrip));
 
   // Group announcements strictly by calendar date in IST
   const dateMap = new Map<string, any[]>();
   for (const ann of stockAnns) {
     const rawTime = ann.bseTime || ann.News_submission_dt || ann.DT_TM || ann.NEWS_DT || '';
-    let ts = ann.bseTimestamp || ann.timestamp || (rawTime ? parseBseDate(rawTime) : 0);
-    if (!ts && ann.fetched_at) ts = ann.fetched_at;
-    if (!ts) continue;
+    const ts = rawTime ? parseBseDate(rawTime) : Number(ann.bseTimestamp || 0);
+    // Fetch/ingestion time is never the company's publication time.
+    if (!Number.isFinite(ts) || ts <= 0 || ts > Date.now()) continue;
 
     const d = new Date(ts);
     const dateStr = d.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' });
-    const timeStr = d.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-    const formattedExact = `${dateStr}, ${timeStr} IST`;
+    const hasClock = rawTime ? /[T\s]\d{1,2}:\d{2}/.test(rawTime) : Boolean(ann.bseTimestamp);
+    const timeStr = hasClock ? d.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }) : '';
+    const formattedExact = timeStr ? `${dateStr}, ${timeStr} IST` : dateStr;
 
     if (!dateMap.has(dateStr)) dateMap.set(dateStr, []);
     dateMap.get(dateStr)!.push({
@@ -1283,6 +1282,9 @@ export async function getStockResultsHistory(
           category: f.category || 'Results'
         }));
 
+      // Later corrections cannot replace the first verified result release.
+      const earlier = quarterOutcomesMap.get(quarterKey);
+      if (earlier && (earlier.submissionTimestamp || 0) <= outcomeFiling.ts) continue;
       quarterOutcomesMap.set(quarterKey, {
         id: outcomeFiling.id || outcomeFiling.NEWSID || `decl_${quarterKey}`,
         symbol: sym,
@@ -1342,7 +1344,7 @@ export async function getStockResultsHistory(
     const isPast = daysLeft < 0;
     let statusText = 'Scheduled Upcoming';
     if (daysLeft === 0) statusText = 'Meeting Today';
-    else if (isPast) statusText = 'Declared';
+    else if (isPast) statusText = 'Past Meeting';
 
     quarterOutcomesMap.set(quarterKey, {
       id: `nse_${sym}_${meetingTs}_${quarterKey}`,
@@ -1354,13 +1356,10 @@ export async function getStockResultsHistory(
       periodOrMeeting: periodLabel,
       meetingDate: dateStr,
       boardMeetingDate: dateStr,
-      declarationDate: dateStr,
-      declaredAtFormatted: isPast ? `${dateStr} IST` : undefined,
-      exactDateTimeStr: isPast ? `${dateStr} IST` : undefined,
       submissionTimestamp: meetingTs,
       subject: nseItem.bm_desc || nseItem.purpose || 'Financial Results',
       details: nseItem.purpose,
-      isOutcome: isPast ? true : false,
+      isOutcome: false,
       status: statusText,
       priority: 'HIGH',
       category: 'Results',
@@ -1370,7 +1369,7 @@ export async function getStockResultsHistory(
   }
 
   // 4. Also check active Results Calendar items for upcoming / today meetings
-  const calendarData = await getResultsCalendarData('all');
+  const calendarData = await getResultsCalendarSnapshot();
   for (const calItem of calendarData.items || []) {
     const isCalMatch = hasExactScripCode(calItem, targetScrip);
 
@@ -1378,9 +1377,15 @@ export async function getStockResultsHistory(
       const meetingTs = calItem.meetingTimestamp || parseMeetingDateToIstMidnight(calItem.meetingDate || '');
       const { quarterKey, periodLabel } = parseQuarterPeriod(`${calItem.purpose} ${calItem.declarationSubject || ''}`, meetingTs);
 
-      if (calItem.isDeclared) {
-        if (!quarterOutcomesMap.has(quarterKey) || !quarterOutcomesMap.get(quarterKey)?.pdfLink) {
-          const declTimeStr = calItem.resultDeclarationTime || '';
+      if (calItem.isDeclared && calItem.declarationAnnouncementId &&
+          isPureResultOutcomeFiling(calItem.declarationSubject || '', '') && calItem.resultDeclarationTime) {
+        if (!quarterOutcomesMap.get(quarterKey)?.isOutcome) {
+          const declarationTs = parseBseDate(calItem.resultDeclarationTime || '');
+          if (!declarationTs || declarationTs > Date.now()) continue;
+          const declarationDate = new Date(declarationTs).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' });
+          const declTimeStr = /[T\s]\d{1,2}:\d{2}/.test(calItem.resultDeclarationTime || '')
+            ? new Date(declarationTs).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }) : '';
+          const declaredAt = declTimeStr ? `${declarationDate}, ${declTimeStr} IST` : declarationDate;
           quarterOutcomesMap.set(quarterKey, {
             id: calItem.declarationAnnouncementId || calItem.id,
             symbol: sym,
@@ -1391,11 +1396,11 @@ export async function getStockResultsHistory(
             periodOrMeeting: periodLabel,
             meetingDate: calItem.meetingDate,
             boardMeetingDate: calItem.meetingDate,
-            declarationDate: calItem.meetingDate,
+            declarationDate,
             declarationTime: declTimeStr,
-            declaredAtFormatted: declTimeStr.includes('IST') ? declTimeStr : `${declTimeStr} IST`,
-            exactDateTimeStr: declTimeStr,
-            submissionTimestamp: calItem.meetingTimestamp || meetingTs,
+            declaredAtFormatted: declaredAt,
+            exactDateTimeStr: declaredAt,
+            submissionTimestamp: declarationTs,
             subject: calItem.declarationSubject || calItem.purpose,
             details: calItem.purpose,
             pdfLink: calItem.declarationPdfLink,
@@ -1408,7 +1413,7 @@ export async function getStockResultsHistory(
             followUpCount: quarterOutcomesMap.get(quarterKey)?.followUpCount || 0
           });
         }
-      } else if (!quarterOutcomesMap.has(quarterKey)) {
+      } else if (!quarterOutcomesMap.has(quarterKey) && /result|financial|audited|quarter/i.test(calItem.purpose)) {
         const diffTime = meetingTs - todayStartTs;
         const daysLeft = Math.round(diffTime / (1000 * 60 * 60 * 24));
         let statusText = 'Scheduled Upcoming';
