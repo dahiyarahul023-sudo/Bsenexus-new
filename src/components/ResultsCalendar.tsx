@@ -12,6 +12,7 @@ import {
   History, BellRing, LayoutGrid, List, Bell
 } from 'lucide-react';
 import { customFetch } from '../api';
+import { watchResultHistory, waitForResultArchive } from '../utils/resultHistoryClient';
 import { getLowestPlanPrice } from '../utils/cashfree';
 import { useAuth } from '../context/AuthContext';
 import { useIntelModal } from '../context/IntelModalContext';
@@ -265,6 +266,12 @@ function ResultsCalendarView() {
   const [modalTab, setModalTab] = useState<'results' | 'meetings'>('results');
   const [stockHistory, setStockHistory] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState<boolean>(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const [historyRetry, setHistoryRetry] = useState(0);
+  const historyRevision = useRef(0);
+  const historySelectionRef = useRef('');
+  const historyController = useRef<AbortController | null>(null);
+  const manualHistoryController = useRef<AbortController | null>(null);
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
   const [aiStepIndex, setAiStepIndex] = useState(0);
   const [isSendingTelegram, setIsSendingTelegram] = useState(false);
@@ -279,7 +286,7 @@ function ResultsCalendarView() {
   useBodyScrollLock(Boolean(selectedModalItem || showMarketHolidaysModal || isFilterSheetOpen));
 
   // Deep History (1-5 Years) & Pre-Result Window (10-20 Days) Priority Boost State
-  const [selectedYears, setSelectedYears] = useState<number>(3);
+  const [selectedYears, setSelectedYears] = useState<number>(1);
   const [isFetchingDeepHistory, setIsFetchingDeepHistory] = useState<boolean>(false);
   const [deepHistoryMsg, setDeepHistoryMsg] = useState<string | null>(null);
 
@@ -304,34 +311,37 @@ function ResultsCalendarView() {
   // Deep History Fetcher for Single Stock (1-5 Years)
   const handleFetchDeepHistory = async (scripCode: string, symbol: string, years: number) => {
     if (!scripCode) return;
-    setIsFetchingDeepHistory(true);
-    setDeepHistoryMsg(null);
-
+    if (isFetchingDeepHistory) return;
+    historyController.current?.abort();
+    const revision = ++historyRevision.current;
+    const controller = new AbortController();
+    manualHistoryController.current?.abort(); manualHistoryController.current = controller;
+    const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(12 * 60_000)]);
+    const current = () => revision === historyRevision.current && !controller.signal.aborted;
+    setIsFetchingDeepHistory(true); setLoadingHistory(false); setHistoryError(null);
+    setDeepHistoryMsg('Starting BSE archive sync...');
     try {
       const res = await customFetch(`/api/stocks/${encodeURIComponent(scripCode)}/fetch-deep-history`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ symbol, years })
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ symbol, years }), signal
       });
       const data = await res.json();
-      if (data && data.success) {
-        setDeepHistoryMsg(data.message || `History sync requested for ${years} year(s). Completion and new filing counts are not confirmed yet.`);
-        // Reload stock history
-        const histRes = await customFetch(`/api/stock-results-history?symbol=${encodeURIComponent(symbol)}&scripCode=${encodeURIComponent(scripCode)}`);
-        const histData = await histRes.json();
-        if (histData && Array.isArray(histData.history)) {
-          setStockHistory(histData.history);
-        }
-        // Refresh general calendar
-        fetchCalendar(false);
-      } else {
-        setDeepHistoryMsg(`⚠️ Sync notice: ${data?.error || 'Unable to fetch historical filings from BSE'}`);
-      }
+      if (!res.ok || !data.success || !data.job) throw new Error(data.error || 'Unable to start BSE archive sync');
+      const job = await waitForResultArchive(data.job, signal, job => {
+        if (current()) setDeepHistoryMsg(`Syncing BSE archive: ${job.processed} filings saved so far...`);
+      });
+      if (!current()) return;
+      await watchResultHistory({ symbol, scripCode }, signal, rows => {
+        if (current()) setStockHistory(rows);
+      }, false);
+      if (!current()) return;
+      setDeepHistoryMsg(`Archive complete: ${job.processed} filings checked and saved across ${job.years} year(s).`);
+      window.dispatchEvent(new Event('company-filings-changed'));
+      void fetchCalendar(false);
     } catch (err: any) {
-      setDeepHistoryMsg(`❌ Error fetching deep history: ${err.message}`);
+      if (current()) setHistoryError(err.message);
     } finally {
-      setIsFetchingDeepHistory(false);
-      setTimeout(() => setDeepHistoryMsg(null), 7000);
+      if (revision === historyRevision.current) setIsFetchingDeepHistory(false);
     }
   };
 
@@ -427,25 +437,28 @@ function ResultsCalendarView() {
     }
   };
 
-  // Fetch previous results history whenever a company is opened
+  // One selection owns the read and archive polling; closed/old-company responses are ignored.
   useEffect(() => {
-    if (selectedModalItem) {
-      setLoadingHistory(true);
-      customFetch(`/api/stock-results-history?symbol=${encodeURIComponent(selectedModalItem.symbol)}&scripCode=${encodeURIComponent(selectedModalItem.scripCode || '')}&companyName=${encodeURIComponent(selectedModalItem.companyName || '')}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data && Array.isArray(data.history)) {
-            setStockHistory(data.history);
-          } else {
-            setStockHistory([]);
-          }
-        })
-        .catch(() => setStockHistory([]))
-        .finally(() => setLoadingHistory(false));
-    } else {
-      setStockHistory([]);
-    }
-  }, [selectedModalItem]);
+    const revision = ++historyRevision.current;
+    const controller = new AbortController(); historyController.current = controller;
+    const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(12 * 60_000)]);
+    const selectionKey = `${user?.uid || 'guest'}:${selectedModalItem?.scripCode || ''}:${selectedModalItem?.symbol || ''}`;
+    if (historySelectionRef.current !== selectionKey) setStockHistory([]);
+    historySelectionRef.current = selectionKey;
+    setHistoryError(null); setDeepHistoryMsg(null); setIsFetchingDeepHistory(false);
+    if (!selectedModalItem) { setLoadingHistory(false); return; }
+    setLoadingHistory(true);
+    void watchResultHistory(selectedModalItem, signal, (rows, sync) => {
+      if (revision !== historyRevision.current) return;
+      setStockHistory(rows); setLoadingHistory(false);
+      setDeepHistoryMsg(sync?.state === 'running' ? `Loading BSE archive: ${sync.processed} filings saved so far...` : null);
+    }).catch(error => {
+      if (revision === historyRevision.current && !controller.signal.aborted) setHistoryError(error.message);
+    }).finally(() => {
+      if (revision === historyRevision.current) setLoadingHistory(false);
+    });
+    return () => { ++historyRevision.current; controller.abort(); manualHistoryController.current?.abort(); };
+  }, [selectedModalItem, user?.uid, historyRetry]);
 
   // Cycle through AI thinking steps
   useEffect(() => {
@@ -1102,7 +1115,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
 
   // Split history into Financial Results (1 canonical Result per Quarter) vs Board Meetings
   const financialResultsHistory = useMemo(() => {
-    const rawResults = stockHistory.filter(h => (h.isOutcome || h.status === 'Declared' || h.status === 'Outcome Declared') && !h.periodOrMeeting?.toLowerCase().startsWith('board meeting:'));
+    const rawResults = stockHistory.filter(h => String(h.scripCode) === String(selectedModalItem?.scripCode) && (h.isOutcome || h.status === 'Declared' || h.status === 'Outcome Declared') && !h.periodOrMeeting?.toLowerCase().startsWith('board meeting:'));
     const map = new Map<string, any>();
     
     rawResults.forEach(item => {
@@ -1118,52 +1131,12 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
       }
     });
 
-    if (selectedModalItem && selectedModalItem.isDeclared) {
-      const modalQuarterKey = selectedModalItem.quarterKey || `current-${selectedModalItem.meetingDate}`;
-      const existing = map.get(modalQuarterKey) || Array.from(map.values()).find(x => 
-        (x.quarterKey && selectedModalItem.quarterKey && x.quarterKey === selectedModalItem.quarterKey) ||
-        x.meetingDate === selectedModalItem.meetingDate || 
-        x.declarationDate === selectedModalItem.meetingDate
-      );
-      if (existing) {
-        if (!existing.declarationTime && selectedModalItem.resultDeclarationTime) {
-          existing.declarationTime = formatTimeOnly(selectedModalItem.resultDeclarationTime);
-          existing.declaredAtFormatted = selectedModalItem.resultDeclarationTime;
-        }
-        if (!existing.pdfLink && selectedModalItem.declarationPdfLink) {
-          existing.pdfLink = selectedModalItem.declarationPdfLink;
-        }
-      } else {
-        map.set(modalQuarterKey, {
-          id: selectedModalItem.id,
-          quarterKey: selectedModalItem.quarterKey,
-          periodOrMeeting: selectedModalItem.purpose || `Financial Results (${selectedModalItem.meetingDate})`,
-          meetingDate: selectedModalItem.meetingDate,
-          boardMeetingDate: selectedModalItem.meetingDate,
-          declarationDate: selectedModalItem.resultDeclarationTime ? formatDateOnly(selectedModalItem.resultDeclarationTime) : selectedModalItem.meetingDate,
-          declarationTime: selectedModalItem.resultDeclarationTime ? formatTimeOnly(selectedModalItem.resultDeclarationTime) : '',
-          declaredAtFormatted: selectedModalItem.resultDeclarationTime || `${selectedModalItem.meetingDate} IST`,
-          exactDateTimeStr: selectedModalItem.resultDeclarationTime ? formatFullDateTime(selectedModalItem.resultDeclarationTime) : selectedModalItem.meetingDate,
-          submissionTimestamp: selectedModalItem.meetingTimestamp || Date.now(),
-          subject: selectedModalItem.declarationSubject || selectedModalItem.purpose,
-          details: selectedModalItem.purpose,
-          pdfLink: selectedModalItem.declarationPdfLink,
-          aiSummary: selectedModalItem.aiSummary,
-          isOutcome: true,
-          status: "Declared",
-          priority: 'HIGH',
-          followUpFilings: [],
-          followUpCount: 0
-        });
-      }
-    }
-
     return Array.from(map.values()).sort((a, b) => (b.submissionTimestamp || 0) - (a.submissionTimestamp || 0));
   }, [stockHistory, selectedModalItem]);
 
   const boardMeetingsHistory = useMemo(() => {
-    return stockHistory.filter(h => !h.isOutcome || h.periodOrMeeting?.toLowerCase().includes('board meeting') || h.status?.includes('Upcoming') || h.status?.includes('Meeting'));
-  }, [stockHistory]);
+    return stockHistory.filter(h => String(h.scripCode) === String(selectedModalItem?.scripCode) && (!h.isOutcome || h.periodOrMeeting?.toLowerCase().includes('board meeting') || h.status?.includes('Upcoming') || h.status?.includes('Meeting')));
+  }, [stockHistory, selectedModalItem]);
 
   return (
     <div ref={calendarContainerRef} className="space-y-2 overscroll-y-contain relative">
@@ -2863,7 +2836,9 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                       symbol={selectedModalItem.symbol}
                       scripCode={selectedModalItem.scripCode}
                       companyName={selectedModalItem.companyName}
-                      isLoading={loadingHistory}
+                      isLoading={loadingHistory && stockHistory.length === 0}
+                      errorMessage={historyError}
+                      onRefresh={() => setHistoryRetry(value => value + 1)}
                       onFetchDeepHistory={(years) => handleFetchDeepHistory(selectedModalItem.scripCode, selectedModalItem.symbol, years)}
                       isFetchingDeep={isFetchingDeepHistory}
                       deepHistoryMsg={deepHistoryMsg}

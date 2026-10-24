@@ -34,3 +34,5 @@ These are project engineering requirements, not claims that every control alread
 | Alert/inbox | Monitor, preferences/watchlists, rules, audience selection, delivery, receipts/clear cutoff, UI | Wrong recipient, duplicate event, restart, muted user, out-of-order read/clear |
 
 Use the relevant cases; do not claim all were executed merely because this checklist exists.
+
+Result-history evidence (2026-10-25): elapsed scheduled meetings stay Past Meeting; only a matching result filing can declare a quarter. Publication time is distinct from ingestion and meeting time. Read failures cannot become confirmed zero history; public history must not depend on an unspecified user watchlist. Archive starts return receipts, polling does not start new work, and completed/failed receipts prevent read-triggered retry loops. See changes/result-history-timing.md.
