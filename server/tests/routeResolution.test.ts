@@ -121,6 +121,26 @@ describe('Route Resolution & Dedicated Pages Architecture (/pricing, /guides, 40
     assert.ok(faqHtml.includes('FAQPage'), 'FAQ page must preserve schema.org FAQPage JSON-LD');
   });
 
+  // Test 8: dead legacy UUID announcement IDs get 410 Gone (not 404)
+  test('Legacy UUID-shaped announcement IDs are classified as permanently dead', async () => {
+    const { LEGACY_UUID_ID_RE } = await import('../../server.ts');
+    // Strict 8-4-4-4-12 hex UUIDs — the retired ID scheme (Bing's 3 dead URLs)
+    assert.ok(LEGACY_UUID_ID_RE.test('123e4567-e89b-12d3-a456-426614174000'), 'lowercase UUID matches');
+    assert.ok(LEGACY_UUID_ID_RE.test('123E4567-E89B-12D3-A456-426614174000'), 'uppercase UUID matches');
+    // Current newsId shapes must NOT match — they stay on the 404 path when unknown
+    assert.ok(!LEGACY_UUID_ID_RE.test('20261019123456'), 'numeric BSE NEWSID does not match');
+    assert.ok(!LEGACY_UUID_ID_RE.test('corp_nse_12345_1760000000000_XYZ'), 'corp_nse_ newsId does not match');
+    assert.ok(!LEGACY_UUID_ID_RE.test('batch_test_abc123'), 'batch_test_ id does not match UUID pattern');
+    assert.ok(!LEGACY_UUID_ID_RE.test('RELIANCE'), 'symbol does not match');
+    assert.ok(!LEGACY_UUID_ID_RE.test(''), 'empty string does not match');
+
+    // Both dead-id branches must route through the UUID check before falling back to 404
+    const serverPath = path.join(process.cwd(), 'server.ts');
+    const serverCode = fs.readFileSync(serverPath, 'utf8');
+    assert.ok(serverCode.includes('LEGACY_UUID_ID_RE.test(newsId)'), '/filing/:symbol/:newsId must 410 dead UUIDs');
+    assert.ok(serverCode.includes('LEGACY_UUID_ID_RE.test(cleanId)'), '/announcement/:newsId must 410 dead UUIDs');
+  });
+
   after(() => {
     setTimeout(() => process.exit(0), 100);
   });
