@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "45fe90455dc060fa5ea4c80d49e2abde31d014bdcca9d7c32e9509934374fcb0",
+  "sourceDigest": "14545c0bc762ab4cf3d9173a1ea3bd48eadccbbbbeb60f4783b2ad010e886f0c",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -140,7 +140,7 @@
     },
     {
       "path": "scripts/check-performance-budget.mjs",
-      "sha256": "10d3e0934fff91d6b685782f51643b992cdac970e3ade79388e3935808aa33c2",
+      "sha256": "c6c0e3c80bcac72720021b0015d915cf14b5ec6077b3b1e0fd54ef2f7b5330fd",
       "importedBy": [
         "server/tests/performanceBudget.test.ts"
       ]
@@ -526,6 +526,14 @@
       ]
     },
     {
+      "path": "server/database/calendarTelegramDao.ts",
+      "sha256": "6fc160c079d4b938294f9e12c864223f641e2353ed0266bb8f03c20c6f471f6f",
+      "importedBy": [
+        "server/services/calendarTelegramDelivery.ts",
+        "server/services/resultsCalendarService.ts"
+      ]
+    },
+    {
       "path": "server/database/diagnosticsDao.ts",
       "sha256": "9f45c046f74c21f5d59a435cb1365ac67b3df5d866ae0cb306d1225ce98fcc86",
       "importedBy": [
@@ -719,6 +727,7 @@
         "server/database/diagnosticsDao.ts",
         "server/security/auth.ts",
         "server/services/adrRuntime.ts",
+        "server/services/calendarTelegramDelivery.ts",
         "server/services/gemini.ts",
         "server/services/monitor.ts",
         "server/services/resultsCalendarService.ts",
@@ -739,6 +748,7 @@
         "server/database/alertRulesDao.ts",
         "server/database/announcementDao.ts",
         "server/database/calendarHistoryDao.ts",
+        "server/database/calendarTelegramDao.ts",
         "server/database/feedbackDao.ts",
         "server/database/impactRadarDao.ts",
         "server/database/indexNowDao.ts",
@@ -1013,12 +1023,23 @@
       ]
     },
     {
+      "path": "server/services/calendarTelegramDelivery.ts",
+      "sha256": "9dbae35a26164dc18dce9c6bf80021b24c0aed4d5128b680f65685a40949e0cb",
+      "importedBy": [
+        "server/services/resultsCalendarService.ts"
+      ]
+    },
+    {
       "path": "server/services/calendarUniverse.ts",
-      "sha256": "06fd315692eea278e2a9f31af0e830174167922f73b68f9afb8ab4f8b4c9bb3a",
+      "sha256": "fe8d61ed7c44b6cbeeb8cb6fe910bb952069b6cc75698f165f697b48cd5c629e",
       "importedBy": [
         "server/ai/calendarRead.ts",
+        "server/services/calendarTelegramDelivery.ts",
         "server/services/resultsCalendarService.ts",
-        "server/tests/calendarFno.test.ts"
+        "server/tests/calendarAlertTiming.test.ts",
+        "server/tests/calendarBroadcast.test.ts",
+        "server/tests/calendarFno.test.ts",
+        "server/tests/calendarTelegramDelivery.test.ts"
       ]
     },
     {
@@ -1264,7 +1285,7 @@
     },
     {
       "path": "server/services/resultsCalendarService.ts",
-      "sha256": "65163af9671fc3a6796200b12e86d0e93bc3ad0c50bf8f8bdba755671a023e85",
+      "sha256": "06c404140524a2b230a68defb66ee1854f0c023f061be60a89af27876d9a8c16",
       "importedBy": [
         "server.ts",
         "server/ai/calendarRead.ts",
@@ -1335,9 +1356,9 @@
         "server.ts",
         "server/api/routes.ts",
         "server/database/diagnosticsDao.ts",
+        "server/services/calendarTelegramDelivery.ts",
         "server/services/gemini.ts",
         "server/services/monitor.ts",
-        "server/services/resultsCalendarService.ts",
         "server/services/stockNewsService.ts",
         "server/services/storageMonitor.ts"
       ]
@@ -1515,6 +1536,16 @@
       "importedBy": []
     },
     {
+      "path": "server/tests/calendarAlertTiming.test.ts",
+      "sha256": "eeff02cfb69b90a1278c58a5aa9c179cd2107ac4bbd06b7982f16dbe2e788424",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/calendarBroadcast.test.ts",
+      "sha256": "110dc514f3b4efabcdcd62666d597f8f4ec5f1bccf183806d5f06e23f1f94b8b",
+      "importedBy": []
+    },
+    {
       "path": "server/tests/calendarDiscovery.test.ts",
       "sha256": "604af1e9f54d11f953104a7618885cab3cb5404b707e36a2c6b04aff57626568",
       "importedBy": []
@@ -1526,7 +1557,7 @@
     },
     {
       "path": "server/tests/calendarFno.test.ts",
-      "sha256": "be1f3362d21c3e68f0ca6a139394982346c123e48852c6a9c8718a3bb999aeb1",
+      "sha256": "68cee4414c676c25854069c114c87cbbd08f95a963da1bcaa13890700692e711",
       "importedBy": []
     },
     {
@@ -1552,6 +1583,16 @@
     {
       "path": "server/tests/calendarSync.test.ts",
       "sha256": "d10a313a474c95dd7d72a612e0a8b6a578a37f129a6b3f0628753bcf49b0cbb2",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/calendarTelegramDelivery.test.ts",
+      "sha256": "5ab61ef002ae965cf5fdad2b905221071e34fb78db1611831eab6a7c3bc81a6f",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/calendarTelegramSql.test.ts",
+      "sha256": "899870220df2d89903278c8de8e4e9cc6b4100b6e3f74489a247a92128f0826d",
       "importedBy": []
     },
     {
@@ -2405,7 +2446,7 @@
     },
     {
       "path": "src/components/LandingPage.tsx",
-      "sha256": "359f245134dfdf0bae375a9becea1499cfad9e2e75f13e020a160905ecea8740",
+      "sha256": "cd35abc43e8a869336efd0f4723b9e99868d3b9fcb71de1a324ce6fb5f75021b",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -2666,7 +2707,7 @@
     },
     {
       "path": "src/components/landing/CreativeHero.tsx",
-      "sha256": "72b65007154e2239eeb535c15e9291d8e4515c1a7204f55192035e31de5cb69c",
+      "sha256": "b75e402fc2f6fe9d48f051313054745231e1662645ae1b702d6cc31b344b7922",
       "importedBy": [
         "src/components/LandingPage.tsx"
       ]
@@ -2681,14 +2722,14 @@
     },
     {
       "path": "src/components/landing/FeatureTabs.tsx",
-      "sha256": "9b53f577d9deba53a7799acf24df9c23220e5325f540a97d5966cb57ab2182ee",
+      "sha256": "555920147f0bbafdbddf52f5f11a754ca7e64d0d573fc1fbd94edc1e288c8a01",
       "importedBy": [
         "src/components/LandingPage.tsx"
       ]
     },
     {
       "path": "src/components/landing/FilingJourney.tsx",
-      "sha256": "d392b14f9445d984e83c32eba07a1ad2013f42446974786f1b86dfff20a2920d",
+      "sha256": "e6adee018313b399bcf880118d34700479af1a62809ea1395bdf742220183748",
       "importedBy": [
         "src/components/LandingPage.tsx"
       ]
@@ -3113,7 +3154,7 @@
     },
     {
       "path": "src/components/ui/ParticleRibbons.tsx",
-      "sha256": "9ff41e9c3187f0f66eeb9afefe60497f4eda1b21ac20019642d3d9821c67a7c1",
+      "sha256": "3377c0bba068ef7febb4ea8f910603ca90e9e957fffe65d83c7c21c6d3135ddd",
       "importedBy": [
         "src/components/LandingPage.tsx"
       ]
@@ -3147,7 +3188,7 @@
     },
     {
       "path": "src/components/ui/Reveal.tsx",
-      "sha256": "2c54c3a4be92c734c9eaee1836e9ad48d5414411510e51690e47e45fca3d6f19",
+      "sha256": "80eea6e160cc116f258559755e16d3b315972c7a385b61d87603a87f541c10a3",
       "importedBy": [
         "src/components/LandingPage.tsx"
       ]
@@ -3436,7 +3477,7 @@
     },
     {
       "path": "src/context/ToastContext.tsx",
-      "sha256": "6a09ce5aeab5008a5305111e13baf7e5787838f0acb85bd372b1e315eab66551",
+      "sha256": "450649cd6626fec920b9e7243a68e544959f1b4c63c7b707cd8873844b4e2ac8",
       "importedBy": [
         "src/App.tsx",
         "src/components/ui/SupportFloat.tsx"
@@ -3625,7 +3666,7 @@
     },
     {
       "path": "src/main.tsx",
-      "sha256": "92fdfd793c54607a1bd050ccaf05ebe9caf7e760b569c5b95be380a8c76023ea",
+      "sha256": "5193ade45fae3bb70b3b5f13ffb9d8f67e632f5d4fa119eca7ba11ded6429cdf",
       "importedBy": []
     },
     {
@@ -3697,6 +3738,8 @@
       "path": "src/shared/calendarTiming.ts",
       "sha256": "26014cc02aabed9eb26f3f7c1aaa35fe9157fbb2e5c063c52416b8b6ca20af75",
       "importedBy": [
+        "server/database/calendarTelegramDao.ts",
+        "server/services/calendarUniverse.ts",
         "server/services/resultsCalendarService.ts",
         "server/tests/calendarRecovery.test.ts",
         "src/components/ResultsCalendar.tsx"
@@ -4387,6 +4430,11 @@
     {
       "path": "supabase/migrations/20261021133613_indexnow_url_cooldown.sql",
       "sha256": "439f6875930edafa925a5049dac922f33efb65cc094694b4498b043a6ca235b2",
+      "importedBy": []
+    },
+    {
+      "path": "supabase/migrations/20261024171520_calendar_telegram_delivery_ledger.sql",
+      "sha256": "fa5b51ed5e9444f92fe474b360fd97bc12784cb75b8d1061e96de38df743c382",
       "importedBy": []
     },
     {
@@ -5727,6 +5775,18 @@
       "line": 1
     },
     {
+      "source": "server/database/calendarTelegramDao.ts",
+      "target": "server/database/supabase.ts",
+      "kind": "import",
+      "line": 2
+    },
+    {
+      "source": "server/database/calendarTelegramDao.ts",
+      "target": "src/shared/calendarTiming.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
       "source": "server/database/diagnosticsDao.ts",
       "target": "server/database/localStore.ts",
       "kind": "import",
@@ -6387,6 +6447,30 @@
       "line": 8
     },
     {
+      "source": "server/services/calendarTelegramDelivery.ts",
+      "target": "server/database/calendarTelegramDao.ts",
+      "kind": "import",
+      "line": 1
+    },
+    {
+      "source": "server/services/calendarTelegramDelivery.ts",
+      "target": "server/services/telegram.ts",
+      "kind": "import",
+      "line": 2
+    },
+    {
+      "source": "server/services/calendarTelegramDelivery.ts",
+      "target": "server/database/settingsDao.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "server/services/calendarTelegramDelivery.ts",
+      "target": "server/services/calendarUniverse.ts",
+      "kind": "import",
+      "line": 4
+    },
+    {
       "source": "server/services/calendarUniverse.ts",
       "target": "server/config/fnoCalendarStocks.json",
       "kind": "import",
@@ -6403,6 +6487,12 @@
       "target": "src/shared/calendarScope.ts",
       "kind": "import",
       "line": 3
+    },
+    {
+      "source": "server/services/calendarUniverse.ts",
+      "target": "src/shared/calendarTiming.ts",
+      "kind": "import",
+      "line": 4
     },
     {
       "source": "server/services/companyIntelService.ts",
@@ -7006,51 +7096,57 @@
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "server/services/telegram.ts",
+      "target": "server/services/calendarTelegramDelivery.ts",
       "kind": "import",
       "line": 19
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "server/database/settingsDao.ts",
+      "target": "server/database/calendarTelegramDao.ts",
       "kind": "import",
       "line": 20
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "server/utils/helpers.ts",
+      "target": "server/database/settingsDao.ts",
       "kind": "import",
       "line": 21
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "server/database/supabase.ts",
+      "target": "server/utils/helpers.ts",
       "kind": "import",
       "line": 22
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "server/services/bse.ts",
+      "target": "server/database/supabase.ts",
       "kind": "import",
       "line": 23
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "server/utils/circuitBreaker.ts",
+      "target": "server/services/bse.ts",
       "kind": "import",
       "line": 24
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "server/database/calendarHistoryDao.ts",
+      "target": "server/utils/circuitBreaker.ts",
       "kind": "import",
       "line": 25
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "src/shared/calendarTiming.ts",
+      "target": "server/database/calendarHistoryDao.ts",
       "kind": "import",
       "line": 26
+    },
+    {
+      "source": "server/services/resultsCalendarService.ts",
+      "target": "src/shared/calendarTiming.ts",
+      "kind": "import",
+      "line": 27
     },
     {
       "source": "server/services/seoPrerender.ts",
@@ -7791,6 +7887,18 @@
       "line": 2
     },
     {
+      "source": "server/tests/calendarAlertTiming.test.ts",
+      "target": "server/services/calendarUniverse.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "server/tests/calendarBroadcast.test.ts",
+      "target": "server/services/calendarUniverse.ts",
+      "kind": "import",
+      "line": 6
+    },
+    {
       "source": "server/tests/calendarDiscovery.test.ts",
       "target": "server/ai/calendarRead.ts",
       "kind": "import",
@@ -7867,6 +7975,12 @@
       "target": "server/services/resultsCalendarService.ts",
       "kind": "dynamic",
       "line": 26
+    },
+    {
+      "source": "server/tests/calendarTelegramDelivery.test.ts",
+      "target": "server/services/calendarUniverse.ts",
+      "kind": "import",
+      "line": 6
     },
     {
       "source": "server/tests/circuitBreaker.test.ts",
@@ -10188,133 +10302,133 @@
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/ui/BseNexusLogo.tsx",
       "kind": "import",
-      "line": 13
+      "line": 14
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/landing/FeatureIcons.tsx",
       "kind": "import",
-      "line": 14
+      "line": 15
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/ui/MarketClock.tsx",
       "kind": "import",
-      "line": 18
+      "line": 19
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/ui/MarketTickerTape.tsx",
       "kind": "import",
-      "line": 19
+      "line": 20
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/types.ts",
       "kind": "import",
-      "line": 20
+      "line": 21
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/ui/ComponentSkeleton.tsx",
       "kind": "import",
-      "line": 21
+      "line": 22
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/context/AuthContext.tsx",
       "kind": "import",
-      "line": 22
+      "line": 23
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/hooks/useBodyScrollLock.ts",
       "kind": "import",
-      "line": 23
+      "line": 24
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/MarketGuidesSection.tsx",
       "kind": "import",
-      "line": 27
+      "line": 28
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/BlogReaderModal.tsx",
       "kind": "import",
-      "line": 28
+      "line": 29
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/utils/scrollState.ts",
       "kind": "import",
-      "line": 29
+      "line": 30
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/ui/SocialLinks.tsx",
       "kind": "import",
-      "line": 30
+      "line": 31
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/ui/CommonQuestionsFAQ.tsx",
       "kind": "import",
-      "line": 31
+      "line": 32
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/ui/AiFaqSection.tsx",
       "kind": "import",
-      "line": 32
+      "line": 33
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/utils/cashfree.ts",
       "kind": "import",
-      "line": 33
+      "line": 34
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/ui/PlanCard.tsx",
       "kind": "import",
-      "line": 34
+      "line": 35
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/ui/ParticleRibbons.tsx",
       "kind": "import",
-      "line": 35
+      "line": 36
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/ui/MagneticButton.tsx",
       "kind": "import",
-      "line": 36
+      "line": 37
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/ui/Reveal.tsx",
       "kind": "import",
-      "line": 37
+      "line": 38
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/landing/CreativeHero.tsx",
       "kind": "import",
-      "line": 38
+      "line": 39
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/landing/FeatureTabs.tsx",
       "kind": "import",
-      "line": 39
+      "line": 40
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/landing/FilingJourney.tsx",
       "kind": "import",
-      "line": 40
+      "line": 41
     },
     {
       "source": "src/components/Layout.tsx",
@@ -11892,25 +12006,25 @@
       "source": "src/components/landing/CreativeHero.tsx",
       "target": "src/utils/scrollState.ts",
       "kind": "import",
-      "line": 3
+      "line": 4
     },
     {
       "source": "src/components/landing/CreativeHero.tsx",
       "target": "src/components/ui/BseNexusLogo.tsx",
       "kind": "import",
-      "line": 8
+      "line": 9
     },
     {
       "source": "src/components/landing/CreativeHero.tsx",
       "target": "src/components/landing/CompanyLogos.tsx",
       "kind": "import",
-      "line": 9
+      "line": 10
     },
     {
       "source": "src/components/landing/CreativeHero.tsx",
       "target": "src/components/landing/ActionButton.tsx",
       "kind": "import",
-      "line": 10
+      "line": 11
     },
     {
       "source": "src/components/landing/FeatureIcons.tsx",
@@ -11922,25 +12036,25 @@
       "source": "src/components/landing/FeatureTabs.tsx",
       "target": "src/components/landing/FeatureIcons.tsx",
       "kind": "import",
-      "line": 6
+      "line": 7
     },
     {
       "source": "src/components/landing/FeatureTabs.tsx",
       "target": "src/components/landing/CompanyLogos.tsx",
       "kind": "import",
-      "line": 9
+      "line": 10
     },
     {
       "source": "src/components/landing/FeatureTabs.tsx",
       "target": "src/components/landing/ActionButton.tsx",
       "kind": "import",
-      "line": 10
+      "line": 11
     },
     {
       "source": "src/components/landing/FilingJourney.tsx",
       "target": "src/components/landing/CompanyLogos.tsx",
       "kind": "import",
-      "line": 4
+      "line": 5
     },
     {
       "source": "src/components/notes/NoteCharacter.tsx",
@@ -12726,7 +12840,7 @@
       "source": "src/context/ToastContext.tsx",
       "target": "src/utils/motionTokens.ts",
       "kind": "import",
-      "line": 4
+      "line": 5
     },
     {
       "source": "src/hooks/useCompanyFilingCounts.ts",
@@ -12816,37 +12930,37 @@
       "source": "src/main.tsx",
       "target": "src/index.css",
       "kind": "import",
-      "line": 5
+      "line": 6
     },
     {
       "source": "src/main.tsx",
       "target": "src/styles/rich-ui.css",
       "kind": "import",
-      "line": 6
+      "line": 7
     },
     {
       "source": "src/main.tsx",
       "target": "src/styles/avatars.css",
       "kind": "import",
-      "line": 7
+      "line": 8
     },
     {
       "source": "src/main.tsx",
       "target": "src/styles/payment.css",
       "kind": "import",
-      "line": 9
+      "line": 10
     },
     {
       "source": "src/main.tsx",
       "target": "src/utils/telemetry.ts",
       "kind": "import",
-      "line": 10
+      "line": 11
     },
     {
       "source": "src/main.tsx",
       "target": "src/utils/oneSignal.ts",
       "kind": "import",
-      "line": 11
+      "line": 12
     },
     {
       "source": "src/services/adrClient.ts",
@@ -13130,7 +13244,10 @@
         "src/components/CompanyIntelligenceModal.tsx",
         "supabase/migrations/20261024193046_deep_audit_security.sql",
         "server/api/telegramLinks.ts",
-        "server/database/telegramLinksDao.ts"
+        "server/database/telegramLinksDao.ts",
+        "server/database/calendarTelegramDao.ts",
+        "server/services/calendarTelegramDelivery.ts",
+        "supabase/migrations/20261024171520_calendar_telegram_delivery_ledger.sql"
       ],
       "tests": [
         "server/tests/bseBackfill.test.ts",
@@ -13156,7 +13273,11 @@
         "server/tests/calendarNavigation.test.ts",
         "server/tests/companyFilingHistory.test.ts",
         "server/tests/deepAuditSql.test.ts",
-        "server/tests/deepAuditAuth.test.ts"
+        "server/tests/deepAuditAuth.test.ts",
+        "server/tests/calendarAlertTiming.test.ts",
+        "server/tests/calendarBroadcast.test.ts",
+        "server/tests/calendarTelegramDelivery.test.ts",
+        "server/tests/calendarTelegramSql.test.ts"
       ],
       "reason": "Poll → normalize/dedupe → persistence → feed and alert decisions → recipient-specific delivery/inbox. Global and personal recipients must remain distinct. Preset saves replace stable per-owner IDs atomically; confirmed cloud settings feed every poll. Personal channels supersede inherited defaults once presets are saved. Live polling has a CRON_SECRET bearer-protected HTTP trigger, a 60-second in-container watchdog timer, a continuous 15-second active poller, and a 15-second-stale traffic trigger. The shared process-local monitor lock skips running cycles without queueing. Request lifetime covers bounded ingestion, raw delivery/write drain and then result AI after releasing the ingestion lock; cron source failure eligibility is capped at 60 seconds. External Scheduler remains necessary for idle request-based Cloud Run; legacy cron returns 410. Numbered IST worker summaries and cron request summaries have distinct event fields. Automatic Telegram AI applies only to actual financial results with a stable security-code/period identity. Private durable claims share one valid analysis per period/language and reserve one reply per chat across exchange copies, languages and restart. Failed evidence uses a bounded newer-source retry; uncertain send acceptance never replays. Private admin delivery timings retain exchange, observed, processed and Telegram acceptance dates without recipient identity. Migration must precede runtime release. Confirmed public filing changes queue company/announcements IndexNow URLs after successful upsert; the poll collection hold is idempotently released in finally. Indexing I/O runs outside ingestion and does not change alert recipients or intake. Overnight ADR adds one existing Market pulse screen and an opt-in private morning inbox digest; source dates and fetch times remain distinct, and durable insertion prevents per-session repeats. Stored 30-day filing counts share one exact-company projection with company detail, independently of the seven-day updates feed. Durable per-company history uses keyset pages; company Filings and Material Actions expose numbered pages. Explicit paid archive imports all categories over selected years with bounded workers, source failure and storage confirmation, and does not download PDFs. Process restart or another instance may make worker status unavailable; saved evidence remains and no success is invented."
     },
@@ -13327,7 +13448,10 @@
         "server/utils/fnoStocks.ts",
         "server/ai/market.ts",
         "src/components/WatchlistManager.tsx",
-        "src/components/story/StoryVisuals.tsx"
+        "src/components/story/StoryVisuals.tsx",
+        "server/database/calendarTelegramDao.ts",
+        "server/services/calendarTelegramDelivery.ts",
+        "supabase/migrations/20261024171520_calendar_telegram_delivery_ledger.sql"
       ],
       "tests": [
         "server/tests/core.test.ts",
@@ -13343,7 +13467,11 @@
         "scripts/verify-public-calendar.mjs",
         "server/tests/mcpDirectoryQuality.test.ts",
         "server/tests/publicCalendarCoverage.test.ts",
-        "server/tests/calendarDiscovery.test.ts"
+        "server/tests/calendarDiscovery.test.ts",
+        "server/tests/calendarAlertTiming.test.ts",
+        "server/tests/calendarBroadcast.test.ts",
+        "server/tests/calendarTelegramDelivery.test.ts",
+        "server/tests/calendarTelegramSql.test.ts"
       ],
       "reason": "Upstream timestamps, stock identity and market sessions affect cached API results, screen freshness and alert timing. Public market data availability does not establish trading-data accuracy. Verified security identities repair IndusInd/J&K and current Eternal naming; conflicting legacy cache entries cannot overwrite them. Watchlist, Story and F&O fallback maps use the shared verified codes. Connector read projections follow security code and mark legacy conflicts rather than silently rewriting personal lists."
     },
@@ -13438,7 +13566,10 @@
         "server/services/indexNowQueue.ts",
         "server/ai/http.ts",
         "server/database/aiConnectionsDao.ts",
-        "scripts/offline-tests.mjs"
+        "scripts/offline-tests.mjs",
+        "server/database/calendarTelegramDao.ts",
+        "server/services/calendarTelegramDelivery.ts",
+        "supabase/migrations/20261024171520_calendar_telegram_delivery_ledger.sql"
       ],
       "tests": [
         "server/tests/startupRecovery.test.ts",
@@ -13454,7 +13585,11 @@
         "server/tests/indexNowSql.test.ts",
         "server/tests/mcpToolMatrix.test.ts",
         "server/tests/sentryIsolation.test.ts",
-        "server/tests/offlineTests.test.ts"
+        "server/tests/offlineTests.test.ts",
+        "server/tests/calendarAlertTiming.test.ts",
+        "server/tests/calendarBroadcast.test.ts",
+        "server/tests/calendarTelegramDelivery.test.ts",
+        "server/tests/calendarTelegramSql.test.ts"
       ],
       "reason": "Startup and settings influence background jobs, provider calls, abuse limits and logs. A live HTTP listener does not establish that durable stores or external providers are ready. Poller stage deadlines release the monitor lock without resuming abandoned workers; dedicated local poller history is not cloud deployment durability. IndexNow starts only after listen, uses the existing provider circuit and reports configured primary mode/HTTP status in diagnostics. Its background failures never fail filing storage; production Crawler Hints state requires independent inspection. MCP request logs expose only generated trace IDs, bounded operation/error labels and irreversible connection tags; no tool arguments, tokens or private text. Quota/idempotency errors provide actionable recovery. A failed docs fingerprint cannot interrupt other indexing/startup."
     },
@@ -17494,25 +17629,25 @@
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 253,
+      "line": 239,
       "function": "fetch",
       "target": "url"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 270,
+      "line": 256,
       "function": "fetch",
       "target": "url"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 366,
+      "line": 352,
       "function": "fetch",
       "target": "url"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 508,
+      "line": 494,
       "function": "fetch",
       "target": "url"
     },
@@ -19379,6 +19514,24 @@
       "key": "'results_calendar'"
     },
     {
+      "file": "server/database/calendarTelegramDao.ts",
+      "line": 12,
+      "function": "getSupabase().from",
+      "key": "'calendar_telegram_deliveries'"
+    },
+    {
+      "file": "server/database/calendarTelegramDao.ts",
+      "line": 27,
+      "function": "getSupabase().from",
+      "key": "'calendar_telegram_deliveries'"
+    },
+    {
+      "file": "server/database/calendarTelegramDao.ts",
+      "line": 37,
+      "function": "getSupabase().from",
+      "key": "'calendar_telegram_deliveries'"
+    },
+    {
       "file": "server/database/feedbackDao.ts",
       "line": 50,
       "function": "getSupabase()\n      .from",
@@ -19908,43 +20061,37 @@
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 127,
-      "function": "getSupabase()\n        .from",
-      "key": "'results_calendar'"
-    },
-    {
-      "file": "server/services/resultsCalendarService.ts",
-      "line": 146,
+      "line": 132,
       "function": "Array.from",
       "key": "notifiedMeetingIds"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 434,
+      "line": 420,
       "function": "Array.from",
       "key": "uniqueStockItems.values()"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 499,
+      "line": 485,
       "function": "Array.from",
       "key": "targets.entries()"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 594,
+      "line": 580,
       "function": "Array.from",
       "key": "uniqueMap.values()"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 632,
+      "line": 618,
       "function": "getSupabase()\n              .from",
       "key": "'results_calendar'"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 1470,
+      "line": 1443,
       "function": "Array.from",
       "key": "quarterOutcomesMap.values()"
     },
@@ -20009,8 +20156,20 @@
       "key": "{ length: 10 }"
     },
     {
+      "file": "server/tests/calendarAlertTiming.test.ts",
+      "line": 14,
+      "function": "Array.from",
+      "key": "{length: 4}"
+    },
+    {
+      "file": "server/tests/calendarAlertTiming.test.ts",
+      "line": 43,
+      "function": "Array.from",
+      "key": "{length: 5}"
+    },
+    {
       "file": "server/tests/calendarFno.test.ts",
-      "line": 90,
+      "line": 91,
       "function": "storage.setItem",
       "key": "calendarPreferenceKey('rahul')"
     },
@@ -20019,6 +20178,18 @@
       "line": 69,
       "function": "Array.from",
       "key": "{ length: 60 }"
+    },
+    {
+      "file": "server/tests/calendarTelegramDelivery.test.ts",
+      "line": 37,
+      "function": "Array.from",
+      "key": "{length:6}"
+    },
+    {
+      "file": "server/tests/calendarTelegramSql.test.ts",
+      "line": 29,
+      "function": "Array.from",
+      "key": "{length: 8}"
     },
     {
       "file": "server/tests/companyFilingHistory.test.ts",
@@ -20616,13 +20787,13 @@
     },
     {
       "file": "src/components/landing/FeatureTabs.tsx",
-      "line": 107,
+      "line": 108,
       "function": "Array.from",
       "key": "{ length: 3 }"
     },
     {
       "file": "src/components/landing/FeatureTabs.tsx",
-      "line": 108,
+      "line": 109,
       "function": "Array.from",
       "key": "{ length: 31 }"
     },
@@ -20697,6 +20868,12 @@
       "line": 61,
       "function": "Array.from",
       "key": "{ length: rows }"
+    },
+    {
+      "file": "src/components/ui/ParticleRibbons.tsx",
+      "line": 187,
+      "function": "Array.from",
+      "key": "{ length: SEG + 1 }"
     },
     {
       "file": "src/components/ui/TabErrorBoundary.tsx",
@@ -22110,6 +22287,16 @@
       "file": "server/services/ai/verifyModels.ts",
       "line": 64,
       "name": "GROQ_API_KEY"
+    },
+    {
+      "file": "server/services/calendarTelegramDelivery.ts",
+      "line": 15,
+      "name": "TELEGRAM_BOT_TOKEN"
+    },
+    {
+      "file": "server/services/calendarTelegramDelivery.ts",
+      "line": 15,
+      "name": "TELEGRAM_CHAT_ID"
     },
     {
       "file": "server/services/gemini.ts",
@@ -24019,7 +24206,7 @@
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 263,
+      "line": 265,
       "target": "window",
       "kind": "remove",
       "name": "resize",
@@ -24027,7 +24214,7 @@
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 264,
+      "line": 266,
       "target": "window",
       "kind": "remove",
       "name": "mousemove",
@@ -24035,7 +24222,7 @@
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 265,
+      "line": 267,
       "target": "document",
       "kind": "remove",
       "name": "visibilitychange",
@@ -24043,7 +24230,7 @@
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 277,
+      "line": 279,
       "target": "window",
       "kind": "remove",
       "name": "resize",
@@ -24051,7 +24238,7 @@
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 278,
+      "line": 280,
       "target": "window",
       "kind": "remove",
       "name": "mousemove",
@@ -24059,7 +24246,7 @@
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 279,
+      "line": 281,
       "target": "document",
       "kind": "remove",
       "name": "visibilitychange",
@@ -24211,7 +24398,7 @@
     },
     {
       "file": "src/context/ToastContext.tsx",
-      "line": 85,
+      "line": 86,
       "target": "window",
       "kind": "listen",
       "name": "app-toast",
@@ -24219,7 +24406,7 @@
     },
     {
       "file": "src/context/ToastContext.tsx",
-      "line": 86,
+      "line": 87,
       "target": "window",
       "kind": "remove",
       "name": "app-toast",
@@ -24227,7 +24414,7 @@
     },
     {
       "file": "src/context/ToastContext.tsx",
-      "line": 237,
+      "line": 238,
       "target": "window",
       "kind": "dispatch",
       "name": "app-toast",
@@ -24235,7 +24422,7 @@
     },
     {
       "file": "src/context/ToastContext.tsx",
-      "line": 243,
+      "line": 244,
       "target": "window",
       "kind": "dispatch",
       "name": "app-toast",
@@ -24243,7 +24430,7 @@
     },
     {
       "file": "src/context/ToastContext.tsx",
-      "line": 249,
+      "line": 250,
       "target": "window",
       "kind": "dispatch",
       "name": "app-toast",
@@ -24251,7 +24438,7 @@
     },
     {
       "file": "src/context/ToastContext.tsx",
-      "line": 255,
+      "line": 256,
       "target": "window",
       "kind": "dispatch",
       "name": "app-toast",
@@ -24259,7 +24446,7 @@
     },
     {
       "file": "src/context/ToastContext.tsx",
-      "line": 261,
+      "line": 262,
       "target": "window",
       "kind": "dispatch",
       "name": "app-toast",

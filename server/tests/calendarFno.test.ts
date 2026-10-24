@@ -74,9 +74,10 @@ test('a successful rolling-source refresh retains yesterday and older archive da
 });
 
 test('F&O-only calendar coverage cannot extend automatic Telegram recipients or trigger dates', () => {
-  const items = [meeting('544307'), meeting('500325'), { ...meeting('507685'), daysLeft: -1 }];
+  const time = Date.now();
+  const items = [meeting('544307', time), meeting('500325', time), { ...meeting('507685', time - 86400000), daysLeft: -1 }];
   assert.deepEqual(automaticCalendarMeetings(items, new Set(['500325']), new Set()).map(row => row.scripCode), ['500325']);
-  assert.deepEqual(automaticCalendarMeetings(items, new Set(['500325']), new Set(['500325_1'])), []);
+  assert.deepEqual(automaticCalendarMeetings(items, new Set(['500325']), new Set([items[1].id])), []);
   assert.deepEqual(automaticCalendarMeetings(items, new Set(), new Set()), []);
 });
 
