@@ -153,6 +153,12 @@ function escapeHtmlAttr(str: string): string {
   return str.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+// Legacy UUID-style announcement IDs predate the newsId URL scheme and are
+// never minted by the current write path (BSE NEWSID / corp_nse_*). A UUID
+// that misses the DB lookup can never become real content, so it gets the
+// same 410 treatment as confirmed-dead batch_test_ URLs.
+export const LEGACY_UUID_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 // In-memory cache for dynamic sitemap (15-minute TTL)
 let sitemapMemoryCache: { xml: string; expiresAt: number } | null = null;
 
@@ -5563,7 +5569,8 @@ app.get('/filing/:symbol/:newsId', async (req, res) => {
     if (!announcement) {
       // Confirmed-dead test URLs can never become real content: 410 Gone so
       // Google drops them from the index faster instead of retrying them as 404.
-      if (isBatchTest) {
+      // Legacy UUID-style IDs are likewise permanent misses (never minted now).
+      if (isBatchTest || LEGACY_UUID_ID_RE.test(newsId)) {
         return res.status(410).setHeader('Content-Type', 'text/html; charset=utf-8').send(renderAnnouncement404Page(true));
       }
       return res.status(404).setHeader('Content-Type', 'text/html; charset=utf-8').send(renderAnnouncement404Page(isBatchTest));
@@ -5637,7 +5644,8 @@ app.get('/announcement/:newsId', async (req, res) => {
     if (!announcement) {
       // Confirmed-dead test URLs can never become real content: 410 Gone so
       // Google drops them from the index faster instead of retrying them as 404.
-      if (isBatchTest) {
+      // Legacy UUID-style IDs are likewise permanent misses (never minted now).
+      if (isBatchTest || LEGACY_UUID_ID_RE.test(cleanId)) {
         return res.status(410).setHeader('Content-Type', 'text/html; charset=utf-8').send(renderAnnouncement404Page(true));
       }
       return res.status(404).setHeader('Content-Type', 'text/html; charset=utf-8').send(renderAnnouncement404Page(isBatchTest));
