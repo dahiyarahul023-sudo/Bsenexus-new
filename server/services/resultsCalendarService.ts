@@ -1,3 +1,5 @@
+import { isPureResultOutcomeFiling, isIntimationOrNoticeFiling, isVerifiedResultFiling, resultFilingText } from '../../src/shared/resultFiling.js';
+export { isPureResultOutcomeFiling, isIntimationOrNoticeFiling } from '../../src/shared/resultFiling.js';
 import { startHistorySync, waitHistorySync, historySyncStatus } from './historicalFilings.js';
 import { hasExactScripCode } from '../../src/shared/scripMatching.js';
 import fs from 'fs';
@@ -676,11 +678,11 @@ function isCalendarOutcome(item: ResultCalendarItem, a: any, meetingStartTs = it
   const windowStartTs = meetingStartTs - 6 * 60 * 60 * 1000;
   const windowEndTs = meetingStartTs + (3 * 24 + 12) * 60 * 60 * 1000;
   if (!hasExactScripCode(a, item.scripCode)) return false;
-  const fullText = `${a.subject || ''} ${a.details || ''}`.toLowerCase();
+  const fullText = resultFilingText(a).toLowerCase();
   const isPreNotice = isIntimationOrNoticeFiling(a.subject || '', a.details || '');
   if (isPreNotice) return false;
 
-  const isResultOrOutcome = isPureResultOutcomeFiling(a.subject || '', a.details || '');
+  const isResultOrOutcome = isVerifiedResultFiling(a);
   if (!isResultOrOutcome) return false;
 
   const annTs = parseBseDate(a.bseTime) || Number(a.bseTimestamp || 0);
@@ -968,97 +970,6 @@ export interface StockHistoricalResultItem {
   followUpCount?: number;
 }
 
-export function isPureResultOutcomeFiling(subject: string = '', details: string = ''): boolean {
-  const combined = `${subject || ''} ${details || ''}`.trim();
-  if (!combined) return false;
-  const lower = combined.toLowerCase();
-
-  // 1. Strictly reject non-financial result filings (Regulation 30 intimations, investor meets, analyst calls, press releases, etc.)
-  const isCorporateNoticeOrIntimation = 
-    /analyst\s*\/\s*investor\s*meet|investor\s*meet|analyst\s*meet|institutional\s*investor|conference\s*call|earnings\s*call/i.test(lower) ||
-    /investor\s*presentation|analyst\s*presentation|corporate\s*presentation|audio\s*recording|transcript\s*of|press\s*release/i.test(lower) ||
-    /newspaper\s*publication|loss\s*of\s*share|duplicate\s*share|credit\s*rating|change\s*in\s*(?:director|kmp|management|auditor)|resignation|appointment/i.test(lower) ||
-    /closure\s*of\s*trading\s*window|trading\s*window\s*closure|prior\s*intimation|intimation\s*of\s*board\s*meeting|notice\s*of\s*board\s*meeting|meeting\s*scheduled\s*to\s*be\s*held|to\s*consider\s*and\s*approve/i.test(lower) ||
-    /postal\s*ballot|scrutinizer|voting\s*results|record\s*date\s*intimation|allotment\s*of\s*shares|reconstitution/i.test(lower);
-
-  if (isIntimationOrNoticeFiling(subject, details)) return false;
-
-  if (isCorporateNoticeOrIntimation) {
-    const hasStrictReg33 = /\b(?:regulation 33|reg\s*33|reg\.\s*33|lodr\s*33)\b/i.test(lower);
-    const hasApprovedResults = /\b(?:considered and approved the (?:un-?audited|audited|financial)|approved the (?:un-?audited|audited|financial) results)\b/i.test(lower);
-    if (!hasStrictReg33 && !hasApprovedResults) {
-      return false;
-    }
-  }
-
-  // 2. Definitive Regulation 33 Financial Results Outcome Matches
-  if (/\b(?:regulation 33|reg\s*33|reg\.\s*33|lodr\s*33)\b/i.test(lower)) {
-    return true;
-  }
-
-  // 3. Exact and simple Financial Results / Results phrases (e.g. Shriram Finance "Financial Results", "Results", "Results/Dividend")
-  if (
-    /^(?:financial results?|results?|results\s*\/\s*dividend|financial results\s*\/\s*dividend)[\.\s\-:]*$/i.test(combined.trim()) ||
-    /\b(?:financial results?|financial result|un-?audited financial results?|audited financial results?|statement of (?:standalone|consolidated|financial) results)\b/i.test(lower) ||
-    /\b(?:financial results \(standalone|financial results - standalone|financial results \(consolidated|financial results - consolidated)\b/i.test(lower) ||
-    /\b(?:standalone and consolidated financial results|financial results for the (?:quarter|half year|nine months|year ended))\b/i.test(lower) ||
-    /\b(?:considered and approved (?:the )?(?:un-?audited|audited|financial)|approved (?:the )?(?:un-?audited|audited|financial) results|approval of (?:un-?audited|audited|financial) results)\b/i.test(lower)
-  ) {
-    return true;
-  }
-
-  // 4. Board meeting outcome specifically mentioning financial results
-  if (/\b(?:outcome of board|board meeting outcome|outcome of the board)\b/i.test(lower)) {
-    if (/\b(?:financial results?|un-?audited|audited|quarter ended|half year ended|year ended|profit and loss|balance sheet)\b/i.test(lower)) {
-      return true;
-    }
-    // Generic outcome of board meeting without financial results is NOT a financial result
-    return false;
-  }
-
-  return false;
-}
-
-export function isIntimationOrNoticeFiling(subject: string = '', details: string = ''): boolean {
-  const fullText = `${subject || ''} ${details || ''}`.toLowerCase();
-  if (!fullText.trim()) return false;
-
-  // 1. Explicit OUTCOME / RESULTS indicators override any notice keywords
-  // (Regulation 33 is specifically Financial Results submission under SEBI LODR)
-  // A notice remains a notice even when it names the financial results to be considered.
-  if (/to\s*consider\s*(?:and\s*approve)?|meeting\s*(?:is\s*)?scheduled|intimation.*board\s*meeting|notice\s*of\s*board|trading\s*window|regulation\s*29/i.test(fullText) &&
-      !/considered\s*and\s*approved|approved\s*(?:the\s*)?(?:un-?audited|audited|financial)\s*results/i.test(fullText)) return true;
-
-  const isDefinitiveOutcome = 
-    /^(?:financial results?|results?|results\s*\/\s*dividend|financial results\s*\/\s*dividend)[\.\s\-:]*$/i.test(fullText.trim()) ||
-    /\b(?:regulation 33|reg\s*33|reg\.\s*33|lodr\s*33)\b/i.test(fullText) ||
-    /\b(?:financial results?|financial result|un-?audited financial results?|audited financial results?|statement of (?:standalone|consolidated|financial) results)\b/i.test(fullText) ||
-    /\b(?:considered and approved the (?:un-?audited|audited|financial)|approved the (?:un-?audited|audited|financial) results|approval of (?:un-?audited|audited|financial) results)\b/i.test(fullText) ||
-    /\b(?:financial results \(standalone|financial results - standalone|financial results \(consolidated|financial results - consolidated)\b/i.test(fullText);
-
-  if (isDefinitiveOutcome) {
-    return false; // It is a genuine OUTCOME, NOT a prior intimation/notice
-  }
-
-  // 2. True Prior Notice / Intimations
-  const hasIntimationKeywords = 
-    /\b(?:prior intimation|notice of board|board meeting intimation|intimation of board|to consider and approve|meeting scheduled|meeting will be held|update on board meeting|rescheduled|trading window|closure of window|closure of trading|regulation 29|reg\s*29|reg\.\s*29)\b/i.test(fullText);
-
-  if (hasIntimationKeywords) {
-    return true;
-  }
-
-  if (/intimation.*(?:to consider|meeting to be held|scheduled on)/i.test(fullText)) {
-    return true;
-  }
-
-  if (/newspaper publication|press release|investor presentation|audio recording|transcript|analyst.*meet.*intimation|loss of share|duplicate share|scrutinizer/i.test(fullText)) {
-    return true;
-  }
-
-  return false;
-}
-
 export function parseQuarterPeriod(text: string, timestamp: number): {
   quarterKey: string;
   quarterDisplay: string;
@@ -1266,9 +1177,9 @@ export async function getStockResultsHistory(
   for (const [dateStr, filings] of dateMap.entries()) {
     filings.sort((a, b) => a.ts - b.ts);
 
-    const outcomeFiling = filings.find(f => isPureResultOutcomeFiling(f.subject, f.details));
+    const outcomeFiling = filings.find(f => isVerifiedResultFiling(f));
     if (outcomeFiling) {
-      const { quarterKey, periodLabel } = parseQuarterPeriod(`${outcomeFiling.subject} ${outcomeFiling.details}`, outcomeFiling.ts);
+      const { quarterKey, periodLabel } = parseQuarterPeriod(resultFilingText(outcomeFiling), outcomeFiling.ts);
 
       const followUps: StockHistoricalFollowUpFiling[] = filings
         .filter(f => f !== outcomeFiling)

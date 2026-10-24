@@ -162,10 +162,10 @@ export const QuarterlyResultsLedger: React.FC<QuarterlyResultsLedgerProps> = ({
           <div className="flex items-center gap-2">
             <CustomDropdown
               options={[
-                { value: 1, label: '1 Year (4 Qtrs)' },
-                { value: 2, label: '2 Years (8 Qtrs)' },
-                { value: 3, label: '3 Years (12 Qtrs)' },
-                { value: 5, label: '5 Years (20 Qtrs)' }
+                { value: 1, label: 'Last 1 Year' },
+                { value: 2, label: 'Last 2 Years' },
+                { value: 3, label: 'Last 3 Years' },
+                { value: 5, label: 'Last 5 Years' }
               ]}
               value={selectedYears}
               onChange={(val) => {
@@ -193,6 +193,8 @@ export const QuarterlyResultsLedger: React.FC<QuarterlyResultsLedgerProps> = ({
         )}
       </div>
 
+      {onFetchDeepHistory && scripCode && <p className="text-xs text-slate-500 dark:text-slate-400">Sync imports all BSE filings for the selected period. Result cards require financial disclosure evidence; meeting notices stay in the meetings tab.</p>}
+
       {isFetchingDeep && (
         <div className="animate-in fade-in duration-200">
           <HonestProgressBar
@@ -202,7 +204,7 @@ export const QuarterlyResultsLedger: React.FC<QuarterlyResultsLedgerProps> = ({
               { label: `Accessing BSE financial registry for ${selectedYears}Y records...`, durationMs: 1500 },
               { label: 'Reading official filing dates and document links...', durationMs: 2500 },
               { label: 'Saving verified BSE filing records...', durationMs: 2200 },
-              { label: 'Indexing board meeting timestamps & release latency...', durationMs: 1200 }
+              { label: 'Checking result filing evidence...', durationMs: 1200 }
             ]}
           />
         </div>

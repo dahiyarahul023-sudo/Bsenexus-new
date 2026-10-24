@@ -1,3 +1,4 @@
+import * as resultFiling from '../../src/shared/resultFiling.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -19,6 +20,7 @@ function load(file: string, require: (path: string) => any, extra: any = {}) {
 function service(rows: any[], events: any[] = [], meetings: any[] = [], fail = false) {
   const clock = Date.now();
   return load('server/services/resultsCalendarService.ts', path => {
+    if (path.endsWith('/resultFiling.js')) return resultFiling;
     if (path === 'fs') return { existsSync: () => true, readFileSync: () => JSON.stringify({ items: meetings, lastUpdated: clock, lastAttempt: clock, universeVersion: 'fixture' }) };
     if (path === 'path') return { join: (...parts: string[]) => parts.join('/'), dirname: () => '/tmp' };
     if (path.endsWith('/scripMatching.js')) return { hasExactScripCode };
@@ -143,4 +145,44 @@ test('a lost or different instance receipt cannot silently finish a running hist
   const api = load('src/utils/resultHistoryClient.ts', () => ({})); let calls = 0;
   await assert.rejects(api.watchResultHistory({ symbol: 'BEL', scripCode: '500049' }, new AbortController().signal, () => {}, true,
     async () => Response.json({ success: true, history: [], historySync: ++calls === 1 ? { id: 'original', state: 'running' } : null }), async () => {}), /Archive status unavailable/);
+});
+
+test('stored HUL and KPIT disclosure title formats are actual results, unlike notices and voting results', () => {
+  const api = service([]);
+  for (const title of [
+    'Results For The Quarter And Nine Months Ended 31St December, 2025 Is Enclosed',
+    'Results For The Quarter And Financial Year Ended 31St March, 2026 Is Enclosed',
+    'Results For The Quarter Ended 30Th June, 2026 Is Enclosed',
+    'Outcome Of Board Meeting Held On November 10, 2025 - Results',
+    'Outcome Of Board Meeting Held On January 29, 2026 - Results',
+    'Outcome Of Board Meeting May 6, 2026 - Results',
+    'Results For Q1 FY 2026-27',
+  ]) assert.equal(api.isPureResultOutcomeFiling(title, title), true, title);
+  for (const title of ['Board Meeting Intimation to consider Results for Q1 FY 2026-27', 'Voting results for the quarter ended June 2026', 'Outcome Of Board Meeting'])
+    assert.equal(api.isPureResultOutcomeFiling(title, title), false, title);
+});
+
+test('verified generic board outcome retains its original earliest release time and reporting quarter', () => {
+  const first = { ...filing('generic','2026-01-30T17:31:21+05:30','Outcome Of Board Meeting'),scrip_cd:'511243' };
+  const proof = { version:1,filingId:'generic',scripCode:'511243',pdfUrl:first.pdfLink,documentSha256:'a'.repeat(64),checkedAt:new Date().toISOString(),verdict:'result',excerpt:'The Board considered and approved the unaudited financial results for the quarter and nine months ended 31 December, 2025.' };
+  first.pdfLink='https://www.bseindia.com/xml-data/corpfiling/AttachLive/generic.pdf'; proof.pdfUrl=first.pdfLink;
+  return service([{...first,resultDocumentCheck:proof}, {...filing('later','2026-02-01T18:00:00+05:30','Financial Results for quarter ended 31 December 2025'),scrip_cd:'511243'}])
+    .getStockResultsHistory('CHOLAFIN','511243').then((rows: any[]) => {
+      assert.equal(rows.length,1); assert.equal(rows[0].id,'generic'); assert.equal(rows[0].quarterKey,'FY26-Q3');
+      assert.equal(rows[0].declarationTime,'17:31:21'); assert.equal(rows[0].pdfLink,first.pdfLink);
+    });
+});
+
+test('manual completion read cannot inherit an older automatic one-year worker failure', async () => {
+  const api = load('src/utils/resultHistoryClient.ts', path => path.endsWith('/resultFiling') ? resultFiling : {});
+  let calls = 0, count = 0;
+  await api.watchResultHistory({symbol:'CHOLAFIN',scripCode:'511243'},new AbortController().signal,(rows:any[])=>count=rows.length,false,
+    async()=>{calls++;return Response.json({success:true,history:[{id:'verified'}],historySync:{state:'failed',id:'old-1y',error:'old failure'}});},async()=>{});
+  assert.equal(calls,1);assert.equal(count,1);
+});
+
+test('ancillary disclosures never become a result even when their text quotes an approval or Regulation 33', () => {
+  const api = service([]);
+  for (const subject of ['Announcement under Regulation 30 (LODR)-Investor Presentation','Press Release','Newspaper Publication','Voting Results'])
+    assert.equal(api.isPureResultOutcomeFiling(subject,'The Board considered and approved the financial results under Regulation 33 for quarter ended June 30, 2026'),false);
 });

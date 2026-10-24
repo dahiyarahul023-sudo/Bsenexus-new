@@ -1,3 +1,4 @@
+import { archiveCompletionMessage } from '../shared/resultFiling';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { calendarCacheKey, readCalendarScope, saveCalendarScope, type CalendarScope } from '../shared/calendarScope';
 import { calendarDayKey, projectCalendarTiming } from '../shared/calendarTiming';
@@ -286,7 +287,6 @@ function ResultsCalendarView() {
   useBodyScrollLock(Boolean(selectedModalItem || showMarketHolidaysModal || isFilterSheetOpen));
 
   // Deep History (1-5 Years) & Pre-Result Window (10-20 Days) Priority Boost State
-  const [selectedYears, setSelectedYears] = useState<number>(1);
   const [isFetchingDeepHistory, setIsFetchingDeepHistory] = useState<boolean>(false);
   const [deepHistoryMsg, setDeepHistoryMsg] = useState<string | null>(null);
 
@@ -335,7 +335,7 @@ function ResultsCalendarView() {
         if (current()) setStockHistory(rows);
       }, false);
       if (!current()) return;
-      setDeepHistoryMsg(`Archive complete: ${job.processed} filings checked and saved across ${job.years} year(s).`);
+      setDeepHistoryMsg(archiveCompletionMessage(job));
       window.dispatchEvent(new Event('company-filings-changed'));
       void fetchCalendar(false);
     } catch (err: any) {
@@ -451,7 +451,7 @@ function ResultsCalendarView() {
     void watchResultHistory(selectedModalItem, signal, (rows, sync) => {
       if (revision !== historyRevision.current) return;
       setStockHistory(rows); setLoadingHistory(false);
-      setDeepHistoryMsg(sync?.state === 'running' ? `Loading BSE archive: ${sync.processed} filings saved so far...` : null);
+      setDeepHistoryMsg(sync?.state === 'running' ? `Loading BSE archive: ${sync.processed} filings saved so far...` : sync?.state === 'complete' ? archiveCompletionMessage(sync) : null);
     }).catch(error => {
       if (revision === historyRevision.current && !controller.signal.aborted) setHistoryError(error.message);
     }).finally(() => {
@@ -2683,7 +2683,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                           </div>
                         ) : (
                           <div className="py-2 text-center text-xs text-slate-400">
-                            No separate corporate filings recorded in this {runupWindowDays}-day pre-result window yet. Use <strong>Fetch 1-5 Yr History</strong> below to pull past filings directly from BSE.
+                            No separate corporate filings recorded in this {runupWindowDays}-day pre-result window yet. Use <strong>Sync BSE History</strong> below to pull past filings directly from BSE.
                           </div>
                         )}
                       </div>
@@ -2691,65 +2691,6 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                   </div>
 
                   {/* 1-5 Years Historical BSE Filings Fetcher Card */}
-                  <div className={cn(heliosCard, "p-4 space-y-3")}>
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div className="flex items-start gap-2.5">
-                        <div className="p-2 rounded-lg bg-emerald-600 text-white shadow-2xs shrink-0 mt-0.5">
-                          <History size={16} />
-                        </div>
-                        <div>
-                          <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                            <span>BSE 1–5 Year Historical Results & Filings Sync</span>
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">
-                              Deep History
-                            </span>
-                          </div>
-                          <div className="text-[11px] text-slate-500 mt-0.5">
-                            Fetch 1 to 5 years of historical quarterly financial results, board meetings & time-stamped outcomes for <strong>{selectedModalItem.symbol}</strong>.
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                        <CustomDropdown
-                          options={[
-                            { value: 1, label: '1 Year (1 yr)' },
-                            { value: 2, label: '2 Years (2 yrs)' },
-                            { value: 3, label: '3 Years (3 yrs)' },
-                            { value: 5, label: '5 Years (5 yrs)' }
-                          ]}
-                          value={selectedYears}
-                          onChange={(val) => {
-                            const y = Number(val);
-                            setSelectedYears(y);
-                            handleFetchDeepHistory(selectedModalItem.scripCode, selectedModalItem.symbol, y);
-                          }}
-                          size="sm"
-                          menuWidth="w-36"
-                          align="right"
-                        />
-
-                        <button
-                          type="button"
-                          onClick={() => handleFetchDeepHistory(selectedModalItem.scripCode, selectedModalItem.symbol, selectedYears)}
-                          disabled={isFetchingDeepHistory}
-                          className="rich-action rich-action-primary px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold rounded-lg shadow-2xs flex items-center gap-1.5 disabled:opacity-50 transition-all cursor-pointer"
-                        >
-                          <Download size={13} className={cn(isFetchingDeepHistory && "animate-bounce")} />
-                          <span>{isFetchingDeepHistory ? "Fetching History..." : `Fetch ${selectedYears} Yr History`}</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Deep History Feedback Message */}
-                    {deepHistoryMsg && (
-                      <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 text-xs rounded-lg flex items-center gap-2 animate-in fade-in">
-                        <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
-                        <span className="font-semibold">{deepHistoryMsg}</span>
-                      </div>
-                    )}
-                  </div>
-
                   {/* Gemini AI Financial Metrics Breakdown */}
                   <div className="p-4 bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-800/60 rounded-xl space-y-2.5">
                     <div className="flex items-center justify-between">
