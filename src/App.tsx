@@ -129,15 +129,20 @@ const ProCheckoutView = deferredComponent('checkout', () => import('./components
 const ProReceiptView = deferredComponent('receipt', () => import('./components/ProReceiptView').then(m => ({ default: m.ProReceiptView })), true);
 const FilingPage = deferredComponent('filing', () => import('./components/filing/FilingPage').then(m => ({ default: m.FilingPage })));
 const ResultsPage = deferredComponent('results', () => import('./components/results/ResultsPage').then(m => ({ default: m.ResultsPage })));
-const NoteEditorChunk = deferredComponent('note editor', () => import('./components/notes/NoteEditor').then(m => ({ default: m.NoteEditorHost })), true);
+const NoteEditorChunk = deferredComponent('note editor', () => import('./components/notes/NoteEditor').then(m => ({
+  default: function LoadedNoteEditor({ onReady }: { onReady: () => void }) {
+    useEffect(onReady, [onReady]);
+    return <m.NoteEditorHost />;
+  },
+})), true);
 
 function NoteEditorHost() {
   const { isOpen } = useNoteEditor();
-  // Retain the host after its first opening so its existing exit animation and
-  // draft lifecycle continue to own closing. Never load it just to return null.
-  const [hasOpened, setHasOpened] = useState(false);
-  useEffect(() => { if (isOpen) setHasOpened(true); }, [isOpen]);
-  return isOpen || hasOpened ? <NoteEditorChunk /> : null;
+  // Retain only a host that actually mounted. Cancelling its first cold load
+  // must remove the fallback, including any later load failure.
+  const [hasMounted, setHasMounted] = useState(false);
+  const onReady = useCallback(() => { setHasMounted(true); }, []);
+  return isOpen || hasMounted ? <NoteEditorChunk onReady={onReady} /> : null;
 }
 
 function PaymentOverlays() {

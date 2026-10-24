@@ -30,14 +30,14 @@ Same local installed dependencies, actual final output files and Node gzip setti
 
 | Initial static JavaScript | Before | After | Reduction |
 |---|---:|---:|---:|
-| Raw bytes | 1,523,525 | 1,007,797 | 33.85% |
-| Gzip bytes | 402,836 | 272,454 | 32.37% |
+| Raw bytes | 1,523,525 | 1,007,865 | 33.85% |
+| Gzip bytes | 402,836 | 272,484 | 32.36% |
 
 The complete static closure contains one file in both builds. Dynamic chunks are intentionally excluded until requested; this is not a reduction in all eventual terminal downloads or a measured 34% user-speed gain.
 
 - Old built manifest fails the new guard because Layout is eager. New build passes. Negative fixtures prove summed static dependencies, cycle deduplication, deferred exclusion, separate gzip gate, missing-dependency failure and eager-feature failure.
 - npm test: 719 tests passed, zero skipped/failed (includes seven new measurement/budget tests). Subsequent targeted source checks after the shared-error-surface update: 18 passed including route resolution and App Check startup. Six map-tool tests passed.
-- npm run lint passed. npm run build --ignore-scripts passed with startup budget 1,007,797 raw / 272,454 gzip. No package dependency or lockfile change. Existing server bundle-size notice remains.
+- npm run lint passed. npm run build --ignore-scripts passed with final startup budget 1,007,865 raw / 272,484 gzip. No package dependency or lockfile change. Existing server bundle-size notice remains.
 - Generated map/check passed: 522 files, 1401 import edges, 26 semantic domains; computed edges retain manual limitations. Final git diff --check passed. compile_applet/lint_applet are not available in this host; npm typecheck/build are recorded separately rather than renaming them as host checks.
 - Live requests from this execution host: health 200 / 4.79s TTFB, announcements 200 / 4.84s, indices 200 / 14.22s. Upstream-service header observations were ~1.07s, .69s and 3.83s respectively. These include network/proxy effects and do not establish Indian user percentiles or a single server bottleneck. Source fetchLiveMarketIndices coalesces concurrent refreshes but makes expired-cache readers await the upstream refresh; safe stale-while-revalidate is a next bounded candidate with explicit source timestamps, not a change claimed in this patch.
 - Public PSI API returned 429 with quota 0. A fresh browser report was started at 21:08:26 IST on 24 October: https://pagespeed.web.dev/analysis/https-bsenexus-in/gtg1qci8e1?form_factor=mobile . Both lab panels remained loading during inspection; CrUX says No Data. No fresh Lighthouse score or before/after LCP/TBT is claimed.
@@ -49,6 +49,7 @@ The complete static closure contains one file in both builds. Dynamic chunks are
 - Normal sign-in chunk loaded actual ModernAuthCard with visible Guest choice. Escape closed it; light/dark theme controls retained the heading. No credentials entered, guest account created or payment sent.
 - QA-only delayed module: the actual PendingOverlay showed Opening sign in and Cancel, cancellation left the homepage visible, returned focus to Sign In and restored body overflow. After the delayed module settled, the cancelled dialog remained closed; explicit reopening worked and Escape dismissed it.
 - QA-only throwing module: after the existing single-reload recovery, the overlay error stayed at viewport top/left 0 with fixed positioning, recovery controls inside focus containment and visible Close. Close preserved the homepage and restored Sign In focus. Test mutations affected copied preview assets only, never repository source. Restoring exact production asset bytes allowed normal sign-in again.
+- Additional notes regression: an isolated fixture extracts the actual App note-host/deferred definitions, uses the actual NoteEditorProvider/editor and labels synthetic auth/unavailable API. A 12s delayed module reproduced the earlier host-retention bug: Requested false after Cancel but Opening note editor remained visible. The correction marks retention only after the real editor mounts. The corrected fixture cancelled cleanly, remained closed after late resolution and reopened the actual New note sheet. This is module lifecycle evidence, not a saved-note/real-account certification.
 - API-unavailable preview does not establish live login, payment, private data writes, saved-note durability, physical-device animation performance or the Google audit outcome. Remaining detailed share/payment smoke checks are explicitly unverified.
 
 ## Delivery and rollback
