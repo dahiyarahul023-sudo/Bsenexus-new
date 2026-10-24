@@ -27,6 +27,7 @@ import { customFetch } from '../api';
 import { useVisibilityInterval } from '../hooks/useVisibilityInterval';
 import { useUnreadNotificationCount } from '../hooks/useUnreadNotificationCount';
 import { notificationCountOwner } from '../utils/unreadNotificationCount';
+import { safeGetItem } from '../utils/safeStorage';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { 
@@ -108,14 +109,14 @@ export function Layout({
   const [hasSeenStory, setHasSeenStory] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     const sessionKey = getStorySessionStorageKey();
-    return localStorage.getItem(sessionKey) === 'true';
+    return safeGetItem(sessionKey) === 'true';
   });
 
   // Periodically check if a fresh market story edition has arrived (9:00 AM or 3:00 PM IST)
   useEffect(() => {
     const checkFreshStory = () => {
       const sessionKey = getStorySessionStorageKey();
-      const viewed = localStorage.getItem(sessionKey) === 'true';
+      const viewed = safeGetItem(sessionKey) === 'true';
       setHasSeenStory(viewed);
     };
 
