@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 // Count every statically imported chunk, not just the entry filename. Splitting
 // the same startup work into several chunks must not bypass the budget.
-export const STARTUP_BUDGET = { raw: 1_100_000, gzip: 300_000 };
+export const STARTUP_BUDGET = { raw: 980_000, gzip: 266_000 };
 export const DEFERRED_FEATURES = [
   'src/components/Layout.tsx',
   'src/components/AuthModal.tsx',

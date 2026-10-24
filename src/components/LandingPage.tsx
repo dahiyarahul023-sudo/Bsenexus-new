@@ -1,6 +1,7 @@
 import { TOP_COMPANIES } from '../config/topCompanies';
 import React, { useState } from 'react';
-import { motion, AnimatePresence, MotionConfig, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, MotionConfig, useReducedMotion } from 'framer-motion';
+import * as motion from 'framer-motion/m';
 import { 
   Zap, Sparkles, Activity, Bell, Send, Shield, List, Calendar,
   ArrowRight, ArrowUpRight, CheckCircle2, ChevronRight, FileText,

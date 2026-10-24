@@ -58,3 +58,9 @@ Existing CustomDropdown/ActionButton/Helios text/motion/body lock are retained; 
 - `npm run map:generate`, `npm run map:check`, `npm run test:map`: passed; six map tests. `git diff --check`: passed.
 - An earlier focused run failed only because the initially reconstructed source checkout omitted existing PNG assets; restoring the original assets resolved that fixture limitation. Final full suite has no failures.
 - Final review also covers an import start with no worker receipt, a receipt lost across instances, and stock-code filtering before rendering a newly selected company. No production backfill or post-deployment result-time verification is claimed.
+
+### Integration with concurrent main
+
+Main advanced through PR22 to b1a4e8f4a81312d1405a112d0f1d715d0e4ef3a5 while PR23 was prepared. Retained its lighter eager animation setup, tighter startup budget, cached canvas geometry, Indian-day alert filtering and durable calendar Telegram ledger. Its extracted isCalendarOutcome now shares this change's corrected genuine-result/publication evidence; recipient policy, durable claims and explicit force-resend controls are preserved. Unioned semantic domain entries and regenerated both maps from the combined source.
+
+Final integrated validation: 765/765 application tests passed (31.3 seconds), zero failed/skipped; TypeScript, production build, startup budget (968942 raw / 260911 gzip), map check and all six map tests passed. This is combined-source verification, not a runtime deployment or a live historical backfill.

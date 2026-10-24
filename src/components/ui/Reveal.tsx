@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { useReducedMotion } from 'framer-motion';
+import * as motion from 'framer-motion/m';
 
 /**
  * Reveal — scroll-triggered entrance: fades in while scaling up

@@ -3,20 +3,21 @@ import { hasExactScripCode } from '../../src/shared/scripMatching.js';
 import fs from 'fs';
 import path from 'path';
 import { getActiveWatchlistSymbols, getAllWatchlists, extractSymbol, getCalendarWatchlistStocks } from '../database/watchlistDao.js';
-import { automaticCalendarMeetings, buildCalendarTargets, calendarIdentity, calendarWatchlistCodes, FNO_CALENDAR_VERSION, isFnoCalendarCode, mergeCalendarMeetings, selectCalendarScope } from './calendarUniverse.js';
+import { automaticCalendarMeetings, buildCalendarTargets, calendarIdentity, calendarWatchlistCodes, currentUpcomingMeetings, FNO_CALENDAR_VERSION, isFnoCalendarCode, mergeCalendarMeetings, selectCalendarScope } from './calendarUniverse.js';
 import type { CalendarScope } from '../../src/shared/calendarScope.js';
 import { getScripCodeForSymbolOrName, parseBseDate, resolveStockDetails } from '../utils/helpers.js';
 import { addLog } from '../database/logDao.js';
-import { 
-  getRecentAnnouncements, 
+import {
+  getRecentAnnouncements,
   getAnnouncementsForScrip,
-  saveAnnouncement, 
+  saveAnnouncement,
   saveAnnouncementsBatch,
-  flushLocalDiskSave, 
+  flushLocalDiskSave,
   boostAnnouncementsPriorityForWindow,
   getAnnouncementsForStockInWindow
 } from '../database/announcementDao.js';
-import { sendToTelegram } from './telegram.js';
+import { deliverCalendarTelegram } from './calendarTelegramDelivery.js';
+import { readCalendarTelegramClaims } from '../database/calendarTelegramDao.js';
 import { getSettings } from '../database/settingsDao.js';
 import { determinePriority } from '../utils/helpers.js';
 import { getSupabase, isSupabaseConfigured } from '../database/supabase.js';
@@ -121,23 +122,8 @@ async function loadNotifiedMeetings() {
     console.error('Error loading notified meetings cache:', e.message);
   }
 
-  // Hydrate from Supabase so notified status survives container rebuilds/republishes
-  if (isSupabaseConfigured()) {
-    try {
-      const { data, error } = await getSupabase()
-        .from('results_calendar')
-        .select('id, data');
-      if (!error && Array.isArray(data)) {
-        for (const row of data) {
-          if (row.data?.isNotified) {
-            notifiedMeetingIds.add(row.id);
-          }
-        }
-      }
-    } catch (sbErr: any) {
-      console.warn('[ResultsCalendar] Supabase notified hydration notice:', sbErr?.message || sbErr);
-    }
-  }
+  // Legacy local hints only. The separate durable delivery ledger owns replay protection.
+
 }
 
 function saveNotifiedMeetings() {
@@ -299,7 +285,7 @@ function parseMeetingDateToIstMidnight(dateStr: string): number {
   if (!dateStr) return 0;
   const clean = dateStr.trim();
   const pad = (n: number | string) => String(n).padStart(2, '0');
-  
+
   // Format: DD-MM-YYYY or DD/MM/YYYY
   const dmyMatch = clean.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
   if (dmyMatch) {
@@ -640,51 +626,39 @@ async function performCalendarSync(
       console.warn('Supabase results calendar sync notice:', syncErr?.message || syncErr);
     }
 
-    // Auto-notify Telegram for newly discovered upcoming board meetings
+    // Automatic sends use current Indian dates and a durable per-meeting claim.
     try {
       const settings = await getSettings();
       if (settings.autoTelegramCalendar !== false) {
-        // Cold boot protection: if notified cache is completely empty, seed existing items
-        // to prevent blasting 15+ meetings to Telegram whenever container restarts or republishes
-        if (notifiedMeetingIds.size === 0 && cachedCalendar.length > 0) {
-          for (const item of cachedCalendar) {
-            if (item.id) {
-              notifiedMeetingIds.add(item.id);
-              item.isNotified = true;
-            }
-          }
-          saveNotifiedMeetings();
-          console.info(`[ResultsCalendar] Initialized notified cache with ${notifiedMeetingIds.size} existing items (cold boot blast suppressed).`);
-        } else {
-          const newlyFoundUpcoming = automaticCalendarMeetings(cachedCalendar, watchlistScrips, notifiedMeetingIds);
-
-          if (newlyFoundUpcoming.length > 0) {
-            for (const item of newlyFoundUpcoming) {
-              const daysText = item.daysLeft === 0 ? '🔥 <b>TODAY (आज)</b>' : `⏳ <b>${item.daysLeft} days remaining</b>`;
-              const telegramMsg = 
-                `📅 <b>UPCOMING BOARD MEETING SCHEDULED</b>\n\n` +
-                `🏢 <b>${item.companyName} (${item.symbol})</b>\n` +
-                `📌 BSE Scrip Code: <code>${item.scripCode}</code>\n` +
-                `🗓️ Meeting Date: <b>${item.meetingDate}</b>\n` +
-                `🎯 Purpose: <i>${item.purpose}</i>\n` +
-                `⏰ Schedule: ${daysText}\n\n` +
-                `🔗 <a href="https://www.bseindia.com/corporates/Comp_Resultsnew.aspx?scrip_cd=${item.scripCode}">View BSE Filings & Outcomes</a>\n` +
-                `⚡ <i>Auto-synced from Watchlist Results Calendar</i>`;
-
-              await sendToTelegram(telegramMsg).catch(e => console.error('Telegram calendar send err:', e));
-              notifiedMeetingIds.add(item.id);
-              item.isNotified = true;
-
-              // Gentle 1s spacing between messages so Telegram doesn't hit rate limits or trip circuit breaker
-              await new Promise(r => setTimeout(r, 1000));
-            }
-            saveNotifiedMeetings();
-            await addLog('INFO', 'TELEGRAM', `Auto-dispatched ${newlyFoundUpcoming.length} upcoming board meeting alert(s) to Telegram channel`);
+        const claimed = await readCalendarTelegramClaims();
+        const candidates = automaticCalendarMeetings(cachedCalendar, watchlistScrips, notifiedMeetingIds, claimed);
+        const announcements = candidates.length ? await getRecentAnnouncements(10000) : [];
+        let sent = 0;
+        for (const item of candidates) {
+          // The same exact-code/date outcome test drives the calendar UI below.
+          if (announcements.some(a => isCalendarOutcome(item, a))) continue;
+          const delivered = await deliverCalendarTelegram(item, current => {
+            const daysText = current.daysLeft === 0 ? '🔥 <b>TODAY (आज)</b>' : `⏳ <b>${current.daysLeft} days remaining</b>`;
+            return `📅 <b>UPCOMING BOARD MEETING SCHEDULED</b>\n\n` +
+              `🏢 <b>${current.companyName} (${current.symbol})</b>\n` +
+              `📌 BSE Scrip Code: <code>${current.scripCode}</code>\n` +
+              `🗓️ Meeting Date: <b>${current.meetingDate}</b>\n` +
+              `🎯 Purpose: <i>${current.purpose}</i>\n⏰ Schedule: ${daysText}\n\n` +
+              `🔗 <a href="https://www.bseindia.com/corporates/Comp_Resultsnew.aspx?scrip_cd=${current.scripCode}">View BSE Filings & Outcomes</a>\n` +
+              `⚡ <i>Auto-synced from Watchlist Results Calendar</i>`;
+          });
+          if (delivered) {
+            notifiedMeetingIds.add(item.id);
+            item.isNotified = true;
+            sent++;
+            await new Promise(r => setTimeout(r, 1000));
           }
         }
+        saveNotifiedMeetings();
+        if (sent) await addLog('INFO', 'TELEGRAM', `Auto-dispatched ${sent} upcoming board meeting alert(s) to Telegram channel`);
       }
-    } catch (tgErr: any) {
-      console.error('Failed to auto-dispatch calendar meetings to Telegram:', tgErr.message);
+    } catch {
+      console.warn('[ResultsCalendar] Automatic calendar delivery unavailable; no unclaimed messages sent');
     }
 
     await addLog('INFO', 'RESULTS_CALENDAR', `Updated results calendar for ${cachedCalendar.length} items across active watchlists`);
@@ -695,6 +669,29 @@ async function performCalendarSync(
   } finally {
     isSyncing = false;
   }
+}
+
+/** Shared declaration evidence for calendar projection and automatic alerts. */
+function isCalendarOutcome(item: ResultCalendarItem, a: any, meetingStartTs = item.meetingTimestamp): boolean {
+  const windowStartTs = meetingStartTs - 6 * 60 * 60 * 1000;
+  const windowEndTs = meetingStartTs + (3 * 24 + 12) * 60 * 60 * 1000;
+  if (!hasExactScripCode(a, item.scripCode)) return false;
+  const fullText = `${a.subject || ''} ${a.details || ''}`.toLowerCase();
+  const isPreNotice = isIntimationOrNoticeFiling(a.subject || '', a.details || '');
+  if (isPreNotice) return false;
+
+  const isResultOrOutcome = isPureResultOutcomeFiling(a.subject || '', a.details || '');
+  if (!isResultOrOutcome) return false;
+
+  const annTs = parseBseDate(a.bseTime) || Number(a.bseTimestamp || 0);
+  if (!Number.isFinite(annTs) || annTs <= 0 || annTs > Date.now()) return false;
+
+  // Check if filing explicitly mentions this exact meeting date text in subject/details
+  const parsedMeetingDateStr = item.meetingDate ? item.meetingDate.toLowerCase().trim() : '';
+  const hasExplicitMeetingDateMention = parsedMeetingDateStr && fullText.includes(parsedMeetingDateStr);
+
+  // Strict Window match OR Explicit meeting date mention
+  return Boolean((annTs >= windowStartTs && annTs <= windowEndTs) || hasExplicitMeetingDateMention);
 }
 
 // Memory cache for processed & enriched results calendar (invalidated on new fetch or after TTL)
@@ -780,31 +777,7 @@ export async function getResultsCalendarSnapshot() {
         }
       }
 
-      // STRICT WINDOW: Meeting Day start (-6 hours for evening filings / timezone buffer) to Meeting Day + 3 days (72 hours buffer)
-      // This strictly prevents an old meeting (e.g. Feb 2026 or Nov 2025) from ever grabbing an unrelated future quarter's filing (e.g. May 2026)!
-      const windowStartTs = meetingStartTs - (6 * 60 * 60 * 1000);
-      const windowEndTs = meetingStartTs + (3 * 24 * 60 * 60 * 1000) + (12 * 60 * 60 * 1000);
-
-      // Filter candidate matches for actual Board Outcome / Result
-      const validMatches = candidates.filter(a => {
-        if (!hasExactScripCode(a, item.scripCode)) return false;
-        const fullText = `${a.subject || ''} ${a.details || ''}`.toLowerCase();
-        const isPreNotice = isIntimationOrNoticeFiling(a.subject || '', a.details || '');
-        if (isPreNotice) return false;
-
-        const isResultOrOutcome = isPureResultOutcomeFiling(a.subject || '', a.details || '');
-        if (!isResultOrOutcome) return false;
-
-        const annTs = parseBseDate(a.bseTime) || Number(a.bseTimestamp || 0);
-        if (!Number.isFinite(annTs) || annTs <= 0 || annTs > Date.now()) return false;
-
-        // Check if filing explicitly mentions this exact meeting date text in subject/details
-        const parsedMeetingDateStr = item.meetingDate ? item.meetingDate.toLowerCase().trim() : '';
-        const hasExplicitMeetingDateMention = parsedMeetingDateStr && fullText.includes(parsedMeetingDateStr);
-
-        // Strict Window match OR Explicit meeting date mention
-        return (annTs >= windowStartTs && annTs <= windowEndTs) || hasExplicitMeetingDateMention;
-      });
+      const validMatches = candidates.filter(a => isCalendarOutcome(item, a, meetingStartTs));
 
       // Every remaining candidate is a genuine result; use its first publication.
       validMatches.sort((a, b) =>
@@ -838,15 +811,15 @@ export async function getResultsCalendarSnapshot() {
       const derivedBseTs = bseTimestamp || item.bseTimestamp || item.meetingTimestamp || meetingStartTs;
       const derivedMeetingDate = item.meetingDate || (meetingStartTs ? new Date(meetingStartTs).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' }) : '');
 
-      return { 
-        ...item, 
+      return {
+        ...item,
         companyName,
         meetingDate: derivedMeetingDate,
         meetingTimestamp: meetingStartTs,
         bseTimestamp: derivedBseTs,
-        daysLeft, 
-        status, 
-        isDeclared, 
+        daysLeft,
+        status,
+        isDeclared,
         resultDeclarationTime,
         declarationAnnouncementId,
         declarationPdfLink,
@@ -867,7 +840,7 @@ export async function getResultsCalendarSnapshot() {
 }
 
 export async function getResultsCalendarData(
-  filterStatus: 'all' | 'today' | 'upcoming' | 'recent' = 'all', 
+  filterStatus: 'all' | 'today' | 'upcoming' | 'recent' = 'all',
   watchlistId?: string,
   userId?: string,
   scope: CalendarScope | 'market' = 'watchlist'
@@ -1529,8 +1502,8 @@ export async function fetchDeepHistoricalResultsForWatchlist(
   }
 
   await addLog(
-    'INFO', 
-    'BSE', 
+    'INFO',
+    'BSE',
     `Watchlist ${validYears}-Year deep sync complete across ${activeSymbols.length} stocks (+${totalSaved} total historical filings)`
   );
 
@@ -1644,9 +1617,9 @@ function generateServerGoogleCalUrl(item: { symbol: string; companyName: string;
 export async function broadcastUpcomingMeetingsToTelegram(options: { forceAll?: boolean } = {}) {
   const data = await getResultsCalendarData('all');
   const items = data.items || [];
-  
+
   // Filter for upcoming / today meetings
-  const upcoming = items.filter(i => i.daysLeft >= 0 || i.status === 'TODAY' || i.status === 'UPCOMING');
+  const upcoming = currentUpcomingMeetings(items);
   if (upcoming.length === 0) {
     return { success: true, count: 0, message: 'No upcoming board meetings found in watchlist schedule.' };
   }
@@ -1660,24 +1633,23 @@ export async function broadcastUpcomingMeetingsToTelegram(options: { forceAll?: 
       continue;
     }
 
-    notifiedMeetingIds.add(item.id);
-    const daysText = item.daysLeft === 0 ? '🔥 <b>TODAY (आज)</b>' : `⏳ <b>${item.daysLeft} days remaining</b>`;
-    const isDeclared = item.isDeclared ? ' (Outcome Declared)' : '';
-    const calUrl = generateServerGoogleCalUrl(item);
-    
-    const telegramMsg = 
-      `📅 <b>UPCOMING BOARD MEETING ALERT</b>\n\n` +
-      `🏢 <b>${item.companyName} (${item.symbol})</b>\n` +
-      `📌 BSE Scrip Code: <code>${item.scripCode}</code>\n` +
-      `🗓️ Meeting Date: <b>${item.meetingDate}</b>${isDeclared}\n` +
-      `🎯 Purpose: <i>${item.purpose}</i>\n` +
-      `⏰ Timeline: ${daysText}\n\n` +
-      `📅 <a href="${calUrl}">Add to Google Calendar (1-Click)</a>\n` +
-      `🔗 <a href="https://www.bseindia.com/corporates/Comp_Resultsnew.aspx?scrip_cd=${item.scripCode}">View BSE Corporate Filings</a>\n` +
-      `⚡ <i>Dispatched via BSE Results Calendar</i>`;
+    const delivered = await deliverCalendarTelegram(item, current => {
+      const daysText = current.daysLeft === 0 ? '🔥 <b>TODAY (आज)</b>' : `⏳ <b>${current.daysLeft} days remaining</b>`;
+      const isDeclared = current.isDeclared ? ' (Outcome Declared)' : '';
+      const calUrl = generateServerGoogleCalUrl(current);
 
-    const res = await sendToTelegram(telegramMsg).catch(e => ({ success: false, error: e.message }));
-    if (res && res.success) {
+      return `📅 <b>UPCOMING BOARD MEETING ALERT</b>\n\n` +
+        `🏢 <b>${current.companyName} (${current.symbol})</b>\n` +
+        `📌 BSE Scrip Code: <code>${current.scripCode}</code>\n` +
+        `🗓️ Meeting Date: <b>${current.meetingDate}</b>${isDeclared}\n` +
+        `🎯 Purpose: <i>${current.purpose}</i>\n` +
+        `⏰ Timeline: ${daysText}\n\n` +
+        `📅 <a href="${calUrl}">Add to Google Calendar (1-Click)</a>\n` +
+        `🔗 <a href="https://www.bseindia.com/corporates/Comp_Resultsnew.aspx?scrip_cd=${current.scripCode}">View BSE Corporate Filings</a>\n` +
+        `⚡ <i>Dispatched via BSE Results Calendar</i>`;
+
+    }, { force: options.forceAll, allowDeclared: true });
+    if (delivered) {
       notifiedMeetingIds.add(item.id);
       sentCount++;
     }
@@ -1685,11 +1657,11 @@ export async function broadcastUpcomingMeetingsToTelegram(options: { forceAll?: 
 
   saveNotifiedMeetings();
   await addLog('INFO', 'TELEGRAM', `Broadcast ${sentCount} upcoming board meeting(s) to Telegram`);
-  return { 
-    success: true, 
-    count: sentCount, 
+  return {
+    success: true,
+    count: sentCount,
     totalUpcoming: upcoming.length,
-    message: `Successfully broadcast ${sentCount} upcoming board meeting(s) to Telegram channel.` 
+    message: `Successfully broadcast ${sentCount} upcoming board meeting(s) to Telegram channel.`
   };
 }
 
