@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
-import { AnimatePresence, motion, useMotionValueEvent, useReducedMotion, useScroll } from 'framer-motion';
+import { AnimatePresence, useMotionValueEvent, useReducedMotion, useScroll } from 'framer-motion';
+import * as motion from 'framer-motion/m';
 import { ArrowRight, Bell, Check, FileText, Sparkles, TrendingUp } from 'lucide-react';
 import { CompanyLogo } from './CompanyLogos';
 

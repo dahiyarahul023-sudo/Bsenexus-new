@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
-import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion';
+import { useReducedMotion, useScroll, useTransform } from 'framer-motion';
+import * as motion from 'framer-motion/m';
 import { scrollToElementWithOffset } from '../../utils/scrollState';
 import {
   ArrowUpRight, Sparkles, Bell, Home, Newspaper, Star, User,

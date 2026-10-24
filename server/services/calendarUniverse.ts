@@ -1,6 +1,7 @@
 import source from '../config/fnoCalendarStocks.json' with { type: 'json' };
 import { getAllStockEntries, resolveStockDetailsSync } from '../utils/stockResolver.js';
 import { isCalendarWatchlistActive, type CalendarScope } from '../../src/shared/calendarScope.js';
+import { projectCalendarTiming } from '../../src/shared/calendarTiming.js';
 
 const codeOf = (v: unknown) => /^\d{6}$/.test(String(v ?? '').trim()) ? String(v).trim() : '';
 const nameKey = (v: string) => v.toUpperCase().replace(/\b(?:LIMITED|LTD)\.?$/g, '').replace(/[^A-Z0-9]/g, '');
@@ -77,6 +78,12 @@ export function selectCalendarScope<T extends Meeting>(items: T[], scope: Calend
   return mergeCalendarMeetings([], selected, new Set());
 }
 
-export function automaticCalendarMeetings<T extends Meeting & { daysLeft: number }>(items: T[], watchlistCodes: Set<string>, notifiedIds: Set<string>): T[] {
-  return items.filter(item => item.daysLeft >= 0 && watchlistCodes.has(item.scripCode) && !notifiedIds.has(item.id)).slice(0, 3);
+export function currentUpcomingMeetings<T extends Meeting & { daysLeft: number; status?: string; isDeclared?: boolean }>(items: T[], now = Date.now()): T[] {
+  return items.filter(item => /^\d{6}$/.test(item.scripCode) && Number.isFinite(new Date(item.meetingTimestamp).getTime()) && item.meetingTimestamp >= 86400000)
+    .map(item => projectCalendarTiming({ ...item, status: item.status || '', meetingDate: new Date(item.meetingTimestamp).toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' }) }, now))
+    .filter(item => item.daysLeft >= 0);
+}
+
+export function automaticCalendarMeetings<T extends Meeting & { daysLeft: number; status?: string; isDeclared?: boolean }>(items: T[], watchlistCodes: Set<string>, notifiedIds: Set<string>): T[] {
+  return currentUpcomingMeetings(items).filter(item => !item.isDeclared && watchlistCodes.has(item.scripCode) && !notifiedIds.has(item.id)).slice(0, 3);
 }
