@@ -283,7 +283,8 @@
         "server/tests/aiEvidence.test.ts",
         "scripts/verify-public-calendar.mjs",
         "server/tests/publicCalendarCoverage.test.ts",
-        "server/tests/calendarDiscovery.test.ts"
+        "server/tests/calendarDiscovery.test.ts",
+        "server/tests/calendarEntry.test.ts"
       ],
       "reason": "API responses, SSR routes, browser deep links, SEO and service-worker caching must remain compatible. User-specific responses must never enter shared public caches."
     },
@@ -430,7 +431,8 @@
         "server/tests/mcpDirectoryQuality.test.ts",
         "server/tests/brandRefreshInbox.test.ts",
         "server/tests/publicCalendarCoverage.test.ts",
-        "server/tests/calendarDiscovery.test.ts"
+        "server/tests/calendarDiscovery.test.ts",
+        "server/tests/calendarEntry.test.ts"
       ],
       "reason": "Public copy and crawler metadata must agree with actual API/product contracts. Admin SEO mutations inherit mount guards; generated summaries are not evidence of source accuracy. BSE/NSE operator profiles, shared listing identity, directory/landing links and static/dynamic sitemaps agree; these records never expand intake or assign BSE Limited an invented BSE code. The shared directory count includes Nexus Select Trust (NXST/543913) and drives client/server metadata, badge, filters and schema. One configured primary IndexNow submitter batches canonical changed public URLs, dedupes 24 hours across instances and allows at most one later retry. Directory content-version changes enqueue once, not on every startup; Cloudflare configuration is external and not assumed. AI docs have canonical SSR content, static/dynamic sitemap discovery and content-version IndexNow notification. Legacy ZOMATO company links redirect to the current ETERNAL identity. Public metadata does not imply legal data-use permission or directory verification. Public BSE/NSE operators now use the regular cached company renderer/intelligence service. NSE uses 544937; BSE equity uses exact named/symbol NSE archive evidence with no BSE scrip. Verified pins reserve 540025 for Advanced Enzyme; read projections correct proven old BSE records without rewriting canonical evidence. New filing persistence retains source/symbol, invalidates company render cache and notifies the existing IndexNow path for NSE-only BSE too. The legacy standalone exchange renderer is compatibility code, no longer mounted on public company routes."
     },
@@ -511,7 +513,8 @@
         "scripts/verify-oauth-routing.mjs",
         "server/tests/companyDirectory.test.ts",
         "server/tests/sevenFixes.test.ts",
-        "server/tests/brandRefreshInbox.test.ts"
+        "server/tests/brandRefreshInbox.test.ts",
+        "server/tests/calendarEntry.test.ts"
       ],
       "reason": "URL and active tab must agree across direct links, refresh, browser Back/Forward and share pages. Loading, focus and scroll restoration are part of navigation; route tests do not prove browser behavior. Saved scroll positions restore silently; App does not mount the restored-position notification. Settings Companies/AI entries use the App route owner and existing PageSkeleton during cold lazy imports; native history/popstate preserves Back/Forward without a full document reload. Ordinary login and generic app launch retain For You; explicit feed/calendar/watchlist/share intents remain. Original Nexus branding replaces text tiles. The shell keeps the same-owner inbox mounted while closed, and Settings supplies quiet vibration plus visual pressed/focus feedback."
     },
@@ -822,7 +825,8 @@
         "server/tests/companyDirectory.test.ts",
         "server/tests/mcpDirectoryQuality.test.ts",
         "server/tests/publicCalendarCoverage.test.ts",
-        "server/tests/calendarDiscovery.test.ts"
+        "server/tests/calendarDiscovery.test.ts",
+        "server/tests/calendarEntry.test.ts"
       ],
       "reason": "Public links, pricing claims, server-rendered content and client views must agree. Lazy navigation, responsive composition, keyboard operation and motion require browser evidence beyond server discovery tests. BSE/NSE operator profiles, shared listing identity, directory/landing links and static/dynamic sitemaps agree; these records never expand intake or assign BSE Limited an invented BSE code. The ordered shared company/REIT/exchange directory drives live counts, landing links and SSR discovery; Nexus Select Trust is appended with verified code 543913 and does not expand filing intake. Public AI setup/tool/coverage documentation is linked from AI Connections. React and SSR privacy copy share actual provider/consent/retention disclosure, and current Eternal preset labels preserve the old name as a search alias."
     },

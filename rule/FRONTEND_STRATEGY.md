@@ -1,5 +1,7 @@
 # Frontend strategy and evidence-based priorities
 
+2026-10-24 calendar legacy entry: root ?tab=results-calendar and ?tab=results now redirect to the source-backed /results-calendar document before either server fallback. Other URL state survives; private/ambiguous tabs and non-root routes stay with existing owners. Public company footer links directly. PR 16 names/guide links were observed live today; the new alias correction still needs separate release verification. See changes/calendar-legacy-entry.md.
+
 2026-10-24 bounded ADR/Story follow-up: optional account-saved bottom Story navigation uses the existing queue, Switch and failure feedback; gesture navigation remains tested when hidden. Public ADR cache survives browser reload/server restart, retains missing symbols on partial refresh and distinguishes unconfirmed evidence. Unit/callback tests do not certify device layout or deployment, and an ongoing upstream rate limit is not called repaired. See changes/adr-bse-story-results.md.
 
 2026-10-23 calendar discovery: standalone results/board-meeting guide actions now lead directly to /results-calendar from header, intro and footer. Existing native routing and callout/button styles remain owners. The public calendar links back to its explanation. Exact-code F&O names supplement the resolver in calendar read HTML/schema and connected tools; unknown cached names remain intact. Product copy no longer promises zero-latency or millisecond delivery. See changes/calendar-discovery-identity.md for tests and separate browser/merge/publication status.

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "5baa9d3cf77914f9f1eaaa17a490f9cf803a21580783f35fd55c901611ba3243",
+  "sourceDigest": "6bbf1cdd0b1203cf75f5f54e59fb721ae07bc5326abd3cf75d2a882180eeedda",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -209,7 +209,7 @@
     },
     {
       "path": "server.ts",
-      "sha256": "1626ad6083555e1e729d6190e3ac21e3cb3f640a1d479e3760a24eab4d524377",
+      "sha256": "7c9d2d8916c31aba21bb2ad32b2889452cb24a61c323727a1e04cd145848abfd",
       "importedBy": [
         "server/tests/routeResolution.test.ts"
       ]
@@ -1472,6 +1472,11 @@
       "importedBy": []
     },
     {
+      "path": "server/tests/calendarEntry.test.ts",
+      "sha256": "8654ea29636ed9987543e7a79341bc5b436551cc888972ce0a4a7daf3a0f13f0",
+      "importedBy": []
+    },
+    {
       "path": "server/tests/calendarFno.test.ts",
       "sha256": "be1f3362d21c3e68f0ca6a139394982346c123e48852c6a9c8718a3bb999aeb1",
       "importedBy": []
@@ -2044,10 +2049,11 @@
     },
     {
       "path": "server/utils/spaRoutes.ts",
-      "sha256": "55b1c873a6eb9712b5905d91e83afde650ecf7075d2f56e0c5c8d54866d750a6",
+      "sha256": "c17f0ce04bbcd18033bb50af089cd8d19bd3e9f7d8c549a9c81c76e27344bc5f",
       "importedBy": [
         "scripts/verify-oauth-routing.mjs",
         "server.ts",
+        "server/tests/calendarEntry.test.ts",
         "server/tests/spaRouteParity.test.ts"
       ]
     },
@@ -7609,6 +7615,12 @@
       "line": 7
     },
     {
+      "source": "server/tests/calendarEntry.test.ts",
+      "target": "server/utils/spaRoutes.ts",
+      "kind": "import",
+      "line": 5
+    },
+    {
       "source": "server/tests/calendarFno.test.ts",
       "target": "server/services/calendarUniverse.ts",
       "kind": "import",
@@ -12919,7 +12931,8 @@
         "server/tests/aiEvidence.test.ts",
         "scripts/verify-public-calendar.mjs",
         "server/tests/publicCalendarCoverage.test.ts",
-        "server/tests/calendarDiscovery.test.ts"
+        "server/tests/calendarDiscovery.test.ts",
+        "server/tests/calendarEntry.test.ts"
       ],
       "reason": "API responses, SSR routes, browser deep links, SEO and service-worker caching must remain compatible. User-specific responses must never enter shared public caches."
     },
@@ -13066,7 +13079,8 @@
         "server/tests/mcpDirectoryQuality.test.ts",
         "server/tests/brandRefreshInbox.test.ts",
         "server/tests/publicCalendarCoverage.test.ts",
-        "server/tests/calendarDiscovery.test.ts"
+        "server/tests/calendarDiscovery.test.ts",
+        "server/tests/calendarEntry.test.ts"
       ],
       "reason": "Public copy and crawler metadata must agree with actual API/product contracts. Admin SEO mutations inherit mount guards; generated summaries are not evidence of source accuracy. BSE/NSE operator profiles, shared listing identity, directory/landing links and static/dynamic sitemaps agree; these records never expand intake or assign BSE Limited an invented BSE code. The shared directory count includes Nexus Select Trust (NXST/543913) and drives client/server metadata, badge, filters and schema. One configured primary IndexNow submitter batches canonical changed public URLs, dedupes 24 hours across instances and allows at most one later retry. Directory content-version changes enqueue once, not on every startup; Cloudflare configuration is external and not assumed. AI docs have canonical SSR content, static/dynamic sitemap discovery and content-version IndexNow notification. Legacy ZOMATO company links redirect to the current ETERNAL identity. Public metadata does not imply legal data-use permission or directory verification. Public BSE/NSE operators now use the regular cached company renderer/intelligence service. NSE uses 544937; BSE equity uses exact named/symbol NSE archive evidence with no BSE scrip. Verified pins reserve 540025 for Advanced Enzyme; read projections correct proven old BSE records without rewriting canonical evidence. New filing persistence retains source/symbol, invalidates company render cache and notifies the existing IndexNow path for NSE-only BSE too. The legacy standalone exchange renderer is compatibility code, no longer mounted on public company routes."
     },
@@ -13147,7 +13161,8 @@
         "scripts/verify-oauth-routing.mjs",
         "server/tests/companyDirectory.test.ts",
         "server/tests/sevenFixes.test.ts",
-        "server/tests/brandRefreshInbox.test.ts"
+        "server/tests/brandRefreshInbox.test.ts",
+        "server/tests/calendarEntry.test.ts"
       ],
       "reason": "URL and active tab must agree across direct links, refresh, browser Back/Forward and share pages. Loading, focus and scroll restoration are part of navigation; route tests do not prove browser behavior. Saved scroll positions restore silently; App does not mount the restored-position notification. Settings Companies/AI entries use the App route owner and existing PageSkeleton during cold lazy imports; native history/popstate preserves Back/Forward without a full document reload. Ordinary login and generic app launch retain For You; explicit feed/calendar/watchlist/share intents remain. Original Nexus branding replaces text tiles. The shell keeps the same-owner inbox mounted while closed, and Settings supplies quiet vibration plus visual pressed/focus feedback."
     },
@@ -13458,7 +13473,8 @@
         "server/tests/companyDirectory.test.ts",
         "server/tests/mcpDirectoryQuality.test.ts",
         "server/tests/publicCalendarCoverage.test.ts",
-        "server/tests/calendarDiscovery.test.ts"
+        "server/tests/calendarDiscovery.test.ts",
+        "server/tests/calendarEntry.test.ts"
       ],
       "reason": "Public links, pricing claims, server-rendered content and client views must agree. Lazy navigation, responsive composition, keyboard operation and motion require browser evidence beyond server discovery tests. BSE/NSE operator profiles, shared listing identity, directory/landing links and static/dynamic sitemaps agree; these records never expand intake or assign BSE Limited an invented BSE code. The ordered shared company/REIT/exchange directory drives live counts, landing links and SSR discovery; Nexus Select Trust is appended with verified code 543913 and does not expand filing intake. Public AI setup/tool/coverage documentation is linked from AI Connections. React and SSR privacy copy share actual provider/consent/retention disclosure, and current Eternal preset labels preserve the old name as a search alias."
     },
@@ -14222,13 +14238,23 @@
       "file": "server.ts",
       "line": 6359,
       "receiver": "app",
+      "method": "GET",
+      "path": "/",
+      "middleware": [
+        "redirectLegacyCalendar"
+      ]
+    },
+    {
+      "file": "server.ts",
+      "line": 6362,
+      "receiver": "app",
       "method": "USE",
       "path": "express.static(path.join(process.cwd(), 'public'), { maxAge: '1d', immutable: false, setHeaders: (res, filePath) => { if (filePath.includes(`${path.sep}fonts${path.sep}`)) res.setHeader('Cache-Control', 'public, max-age=2592000'); if (fileP",
       "middleware": []
     },
     {
       "file": "server.ts",
-      "line": 6369,
+      "line": 6372,
       "receiver": "app",
       "method": "USE",
       "path": "['/api', '/auth']",
@@ -14238,7 +14264,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6375,
+      "line": 6378,
       "receiver": "app",
       "method": "USE",
       "path": "/auth",
@@ -14248,7 +14274,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6378,
+      "line": 6381,
       "receiver": "app",
       "method": "POST",
       "path": "/api/security/verify-recaptcha",
@@ -14259,7 +14285,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6419,
+      "line": 6422,
       "receiver": "app",
       "method": "USE",
       "path": "/api",
@@ -14270,7 +14296,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6423,
+      "line": 6426,
       "receiver": "app",
       "method": "USE",
       "path": "['/api/*', '/auth/*']",
@@ -14280,7 +14306,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6428,
+      "line": 6431,
       "receiver": "app",
       "method": "USE",
       "path": "(err: any, req: express.Request, res: express.Response, next: express.NextFunction) => { if (req.path.startsWith('/api') || req.path.startsWith('/auth')) { console.error(\"API Error handler caught:\", err?.message || err); const isProd = proc",
@@ -14288,7 +14314,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6837,
+      "line": 6840,
       "receiver": "app",
       "method": "GET",
       "path": "SPA_PATHS",
@@ -14298,7 +14324,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6871,
+      "line": 6874,
       "receiver": "app",
       "method": "USE",
       "path": "(req, res, next) => { if (req.method !== 'GET' && req.method !== 'HEAD') return next(); const p = normalizeSpaPath(req.path); if ( p === '/' || p === '/announcements' || p === '/results-calendar' || p === '/watchlist' || p === '/watchlists'",
@@ -14306,7 +14332,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6909,
+      "line": 6912,
       "receiver": "app",
       "method": "USE",
       "path": "vite.middlewares",
@@ -14314,7 +14340,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6921,
+      "line": 6924,
       "receiver": "app",
       "method": "USE",
       "path": "express.static(distPath, { maxAge: '1y', immutable: true, index: false, setHeaders: (res, filePath) => { if (filePath.endsWith('.html')) { res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600'); } } }",
@@ -14322,7 +14348,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6941,
+      "line": 6944,
       "receiver": "app",
       "method": "GET",
       "path": "['/announcements', '/announcements/']",
@@ -14332,7 +14358,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6988,
+      "line": 6991,
       "receiver": "app",
       "method": "GET",
       "path": "*",
@@ -16660,6 +16686,34 @@
       ]
     },
     {
+      "file": "server/tests/calendarEntry.test.ts",
+      "line": 9,
+      "receiver": "app",
+      "method": "GET",
+      "path": "/",
+      "middleware": [
+        "redirectLegacyCalendar"
+      ]
+    },
+    {
+      "file": "server/tests/calendarEntry.test.ts",
+      "line": 10,
+      "receiver": "app",
+      "method": "GET",
+      "path": "/results-calendar",
+      "middleware": [
+        "<handler>"
+      ]
+    },
+    {
+      "file": "server/tests/calendarEntry.test.ts",
+      "line": 11,
+      "receiver": "app",
+      "method": "USE",
+      "path": "(_req, res) => res.send('Unchanged shell')",
+      "middleware": []
+    },
+    {
       "file": "server/tests/followupAudit.test.ts",
       "line": 108,
       "receiver": "app",
@@ -16834,7 +16888,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6541,
+      "line": 6544,
       "function": "fetch",
       "target": "`http://127.0.0.1:${port}/api/health`"
     },
@@ -17233,6 +17287,30 @@
       "line": 92,
       "function": "fetch",
       "target": "base+'/auth/session'"
+    },
+    {
+      "file": "server/tests/calendarEntry.test.ts",
+      "line": 20,
+      "function": "fetch",
+      "target": "`${origin}/?tab=${alias}&ref=Rahul&filter=A%26B&filter=C&next=https%3A%2F%2Fexample.com`"
+    },
+    {
+      "file": "server/tests/calendarEntry.test.ts",
+      "line": 31,
+      "function": "fetch",
+      "target": "origin + '/?tab=results-calendar'"
+    },
+    {
+      "file": "server/tests/calendarEntry.test.ts",
+      "line": 35,
+      "function": "fetch",
+      "target": "origin + path"
+    },
+    {
+      "file": "server/tests/calendarEntry.test.ts",
+      "line": 39,
+      "function": "fetch",
+      "target": "origin + '/?tab=results'"
     },
     {
       "file": "server/tests/followupAudit.test.ts",
@@ -20580,27 +20658,27 @@
     },
     {
       "file": "server.ts",
-      "line": 6431,
+      "line": 6434,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6826,
+      "line": 6829,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6831,
+      "line": 6834,
       "name": "DISABLE_HMR"
     },
     {
       "file": "server.ts",
-      "line": 7103,
+      "line": 7106,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 7103,
+      "line": 7106,
       "name": "TEST_RUNNER"
     },
     {
