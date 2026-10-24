@@ -4,6 +4,20 @@ import { calendarDayStart } from '../../src/shared/calendarTiming.js';
 
 export interface CalendarTelegramClaim { scripCode: string; meetingDay: number; token: string }
 
+/** Paginated read keeps already claimed meetings out of the three-new-alert cap. */
+export async function readCalendarTelegramClaims(): Promise<Set<string>> {
+  const claimed = new Set<string>();
+  const signal = AbortSignal.timeout(10000);
+  for (let offset = 0; ; offset += 500) {
+    const { data, error } = await getSupabase().from('calendar_telegram_deliveries')
+      .select('scrip_code,meeting_day').gte('meeting_day', calendarDayStart())
+      .order('scrip_code').order('meeting_day').range(offset, offset + 499).abortSignal(signal);
+    if (error || !Array.isArray(data)) throw new Error('Calendar delivery history unavailable');
+    for (const row of data) claimed.add(`${row.scrip_code}:${row.meeting_day}`);
+    if (data.length < 500) return claimed;
+  }
+}
+
 /** The unique code/day constraint elects one worker, independent of cache IDs. */
 export async function claimCalendarTelegram(scripCode: string, timestamp: number, force = false): Promise<CalendarTelegramClaim | null> {
   if (!/^\d{6}$/.test(scripCode) || !Number.isFinite(new Date(timestamp).getTime()) || timestamp < 86400000) {

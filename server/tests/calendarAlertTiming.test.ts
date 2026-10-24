@@ -9,6 +9,15 @@ const meeting = (date: string, changes: Record<string, unknown> = {}) => ({
 });
 const own = new Set(['500325']);
 
+test('legacy durable claims do not consume the cap and starve a new meeting after restart', context => {
+  context.mock.timers.enable({ apis: ['Date'], now });
+  const rows = Array.from({length: 4}, (_, i) => meeting('2026-10-24T00:00:00+05:30', {
+    id: `row-${i}`, meetingTimestamp: now + i * 86400000,
+  }));
+  const claims = new Set(rows.slice(0,3).map(row => `${row.scripCode}:${row.meetingTimestamp}`));
+  assert.deepEqual(automaticCalendarMeetings(rows, own, new Set(), claims).map(row => row.id), ['row-3']);
+});
+
 test('yesterday cannot be a Today alert after an Indian midnight or restart', context => {
   context.mock.timers.enable({ apis: ['Date'], now });
   assert.deepEqual(automaticCalendarMeetings([meeting('2026-10-23T00:00:00+05:30')], own, new Set()), []);

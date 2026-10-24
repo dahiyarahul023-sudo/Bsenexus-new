@@ -17,6 +17,7 @@ import {
   getAnnouncementsForStockInWindow
 } from '../database/announcementDao.js';
 import { deliverCalendarTelegram } from './calendarTelegramDelivery.js';
+import { readCalendarTelegramClaims } from '../database/calendarTelegramDao.js';
 import { getSettings } from '../database/settingsDao.js';
 import { determinePriority } from '../utils/helpers.js';
 import { getSupabase, isSupabaseConfigured } from '../database/supabase.js';
@@ -629,7 +630,8 @@ async function performCalendarSync(
     try {
       const settings = await getSettings();
       if (settings.autoTelegramCalendar !== false) {
-        const candidates = automaticCalendarMeetings(cachedCalendar, watchlistScrips, notifiedMeetingIds);
+        const claimed = await readCalendarTelegramClaims();
+        const candidates = automaticCalendarMeetings(cachedCalendar, watchlistScrips, notifiedMeetingIds, claimed);
         const announcements = candidates.length ? await getRecentAnnouncements(10000) : [];
         let sent = 0;
         for (const item of candidates) {

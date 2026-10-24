@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "23e9998a7bab6ede3ab6fd521ad545e81149bf154d04716406a981676adda627",
+  "sourceDigest": "14545c0bc762ab4cf3d9173a1ea3bd48eadccbbbbeb60f4783b2ad010e886f0c",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -527,9 +527,10 @@
     },
     {
       "path": "server/database/calendarTelegramDao.ts",
-      "sha256": "64414c8df06441bac0829a86ddf668e0d6eb183ee2a0ac553c5eb82fefb7a452",
+      "sha256": "6fc160c079d4b938294f9e12c864223f641e2353ed0266bb8f03c20c6f471f6f",
       "importedBy": [
-        "server/services/calendarTelegramDelivery.ts"
+        "server/services/calendarTelegramDelivery.ts",
+        "server/services/resultsCalendarService.ts"
       ]
     },
     {
@@ -1030,7 +1031,7 @@
     },
     {
       "path": "server/services/calendarUniverse.ts",
-      "sha256": "b7cc04cd2f768178331877cd0cd7cc74e8f8cceda53c42df2570b382a53b5572",
+      "sha256": "fe8d61ed7c44b6cbeeb8cb6fe910bb952069b6cc75698f165f697b48cd5c629e",
       "importedBy": [
         "server/ai/calendarRead.ts",
         "server/services/calendarTelegramDelivery.ts",
@@ -1284,7 +1285,7 @@
     },
     {
       "path": "server/services/resultsCalendarService.ts",
-      "sha256": "105f4541cef940e430d3e5dcde1795023b07064a38be2059130a8c10bb1114dd",
+      "sha256": "06c404140524a2b230a68defb66ee1854f0c023f061be60a89af27876d9a8c16",
       "importedBy": [
         "server.ts",
         "server/ai/calendarRead.ts",
@@ -1536,7 +1537,7 @@
     },
     {
       "path": "server/tests/calendarAlertTiming.test.ts",
-      "sha256": "5425416f709372d732196398b47bed9a852e28996703bd01709610d26973a2a1",
+      "sha256": "eeff02cfb69b90a1278c58a5aa9c179cd2107ac4bbd06b7982f16dbe2e788424",
       "importedBy": []
     },
     {
@@ -7101,45 +7102,51 @@
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "server/database/settingsDao.ts",
+      "target": "server/database/calendarTelegramDao.ts",
       "kind": "import",
       "line": 20
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "server/utils/helpers.ts",
+      "target": "server/database/settingsDao.ts",
       "kind": "import",
       "line": 21
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "server/database/supabase.ts",
+      "target": "server/utils/helpers.ts",
       "kind": "import",
       "line": 22
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "server/services/bse.ts",
+      "target": "server/database/supabase.ts",
       "kind": "import",
       "line": 23
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "server/utils/circuitBreaker.ts",
+      "target": "server/services/bse.ts",
       "kind": "import",
       "line": 24
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "server/database/calendarHistoryDao.ts",
+      "target": "server/utils/circuitBreaker.ts",
       "kind": "import",
       "line": 25
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "src/shared/calendarTiming.ts",
+      "target": "server/database/calendarHistoryDao.ts",
       "kind": "import",
       "line": 26
+    },
+    {
+      "source": "server/services/resultsCalendarService.ts",
+      "target": "src/shared/calendarTiming.ts",
+      "kind": "import",
+      "line": 27
     },
     {
       "source": "server/services/seoPrerender.ts",
@@ -17622,25 +17629,25 @@
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 238,
+      "line": 239,
       "function": "fetch",
       "target": "url"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 255,
+      "line": 256,
       "function": "fetch",
       "target": "url"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 351,
+      "line": 352,
       "function": "fetch",
       "target": "url"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 493,
+      "line": 494,
       "function": "fetch",
       "target": "url"
     },
@@ -19508,13 +19515,19 @@
     },
     {
       "file": "server/database/calendarTelegramDao.ts",
-      "line": 13,
+      "line": 12,
       "function": "getSupabase().from",
       "key": "'calendar_telegram_deliveries'"
     },
     {
       "file": "server/database/calendarTelegramDao.ts",
-      "line": 23,
+      "line": 27,
+      "function": "getSupabase().from",
+      "key": "'calendar_telegram_deliveries'"
+    },
+    {
+      "file": "server/database/calendarTelegramDao.ts",
+      "line": 37,
       "function": "getSupabase().from",
       "key": "'calendar_telegram_deliveries'"
     },
@@ -20048,37 +20061,37 @@
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 131,
+      "line": 132,
       "function": "Array.from",
       "key": "notifiedMeetingIds"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 419,
+      "line": 420,
       "function": "Array.from",
       "key": "uniqueStockItems.values()"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 484,
+      "line": 485,
       "function": "Array.from",
       "key": "targets.entries()"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 579,
+      "line": 580,
       "function": "Array.from",
       "key": "uniqueMap.values()"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 617,
+      "line": 618,
       "function": "getSupabase()\n              .from",
       "key": "'results_calendar'"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 1441,
+      "line": 1443,
       "function": "Array.from",
       "key": "quarterOutcomesMap.values()"
     },
@@ -20144,7 +20157,13 @@
     },
     {
       "file": "server/tests/calendarAlertTiming.test.ts",
-      "line": 34,
+      "line": 14,
+      "function": "Array.from",
+      "key": "{length: 4}"
+    },
+    {
+      "file": "server/tests/calendarAlertTiming.test.ts",
+      "line": 43,
       "function": "Array.from",
       "key": "{length: 5}"
     },

@@ -1,7 +1,7 @@
 import source from '../config/fnoCalendarStocks.json' with { type: 'json' };
 import { getAllStockEntries, resolveStockDetailsSync } from '../utils/stockResolver.js';
 import { isCalendarWatchlistActive, type CalendarScope } from '../../src/shared/calendarScope.js';
-import { projectCalendarTiming } from '../../src/shared/calendarTiming.js';
+import { calendarDayStart, projectCalendarTiming } from '../../src/shared/calendarTiming.js';
 
 const codeOf = (v: unknown) => /^\d{6}$/.test(String(v ?? '').trim()) ? String(v).trim() : '';
 const nameKey = (v: string) => v.toUpperCase().replace(/\b(?:LIMITED|LTD)\.?$/g, '').replace(/[^A-Z0-9]/g, '');
@@ -84,6 +84,7 @@ export function currentUpcomingMeetings<T extends Meeting & { daysLeft: number; 
     .filter(item => item.daysLeft >= 0);
 }
 
-export function automaticCalendarMeetings<T extends Meeting & { daysLeft: number; status?: string; isDeclared?: boolean }>(items: T[], watchlistCodes: Set<string>, notifiedIds: Set<string>): T[] {
-  return currentUpcomingMeetings(items).filter(item => !item.isDeclared && watchlistCodes.has(item.scripCode) && !notifiedIds.has(item.id)).slice(0, 3);
+export function automaticCalendarMeetings<T extends Meeting & { daysLeft: number; status?: string; isDeclared?: boolean }>(items: T[], watchlistCodes: Set<string>, notifiedIds: Set<string>, claimed = new Set<string>()): T[] {
+  return currentUpcomingMeetings(items).filter(item => !item.isDeclared && watchlistCodes.has(item.scripCode) && !notifiedIds.has(item.id)
+    && !claimed.has(`${item.scripCode}:${calendarDayStart(item.meetingTimestamp)}`)).slice(0, 3);
 }
