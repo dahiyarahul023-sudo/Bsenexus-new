@@ -1,3 +1,4 @@
+import { buildPrehydratedHtml } from '../services/seoPrerender.js';
 import { directoryDescription, directoryBadge } from '../../src/config/companyDirectory.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -59,4 +60,13 @@ test('watchlist content and denied-access title both use the same single-heading
     const html = renderToStaticMarkup(React.createElement(PageHeading, { className: 'existing-title' }, title));
     assert.equal(h1s(html).length, 1); assert.ok(html.includes(title)); assert.match(html, /class="existing-title"/);
   }
+});
+
+
+test('existing filing/company prerendering replaces the real bootstrap heading rather than adding a second one', () => {
+  const html = buildPrehydratedHtml({ title: 'Verified filing', description: 'Official disclosure', canonical: 'https://bsenexus.in/filing/FIXTURE/1', rootInnerHtml: '<main><h1>Verified filing</h1></main>' }, template);
+  assert.equal(h1s(html).length, 1);
+  assert.match(html, /<h1>Verified filing<\/h1>/);
+  const body = html.slice(html.indexOf('<body>'));
+  assert.doesNotMatch(body, /app-boot-copy|Every BSE filing, decoded in seconds/);
 });

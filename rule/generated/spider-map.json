@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "db72cd9b486a5faba5cb92c7a970721e7db7c4ce1922b073f4051cc461695868",
+  "sourceDigest": "9bd670b19f83a67fe339af6ea23ab973862f7467ba83157e7a1837476fbd76fd",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -30,7 +30,7 @@
     },
     {
       "path": "index.html",
-      "sha256": "42a9b4d7ce16faec5352ec60025501ea87a49171bdb17441b5813f195c62b38c",
+      "sha256": "cb4a3d8bdadeadc8d764ce78342489d59bb878d2e57e715fe8d5ec0aac07f32a",
       "importedBy": []
     },
     {
@@ -1331,6 +1331,7 @@
       "sha256": "45aa4c87333a91b23e74fc3443dc98838af936aa352bfcd9ec50afed9524c9da",
       "importedBy": [
         "server.ts",
+        "server/tests/routeHeading.test.ts",
         "server/tests/seoPrehydration.test.ts"
       ]
     },
@@ -1967,7 +1968,7 @@
     },
     {
       "path": "server/tests/routeHeading.test.ts",
-      "sha256": "bd265e6075b850260d8eff8428701f8ac848daf1046142acb2d48285943b11a1",
+      "sha256": "3c6717927466f3613433e11ca9391ffe2a789b61b9fdfb2d06dde885a763c19a",
       "importedBy": []
     },
     {
@@ -9184,21 +9185,27 @@
     },
     {
       "source": "server/tests/routeHeading.test.ts",
-      "target": "src/config/companyDirectory.ts",
+      "target": "server/services/seoPrerender.ts",
       "kind": "import",
       "line": 1
     },
     {
       "source": "server/tests/routeHeading.test.ts",
+      "target": "src/config/companyDirectory.ts",
+      "kind": "import",
+      "line": 2
+    },
+    {
+      "source": "server/tests/routeHeading.test.ts",
       "target": "server/utils/routeHeading.ts",
       "kind": "import",
-      "line": 9
+      "line": 10
     },
     {
       "source": "server/tests/routeHeading.test.ts",
       "target": "src/components/ui/PageHeading.tsx",
       "kind": "import",
-      "line": 10
+      "line": 11
     },
     {
       "source": "server/tests/routeResolution.test.ts",
