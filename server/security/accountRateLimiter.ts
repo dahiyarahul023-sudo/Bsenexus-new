@@ -414,16 +414,12 @@ export async function simulateCredentialVerificationDelay(): Promise<void> {
 export function getSanitizedClientIp(req: express.Request | any): string {
   if (!req) return 'unknown';
 
-  // For upstream reverse proxy chains (Cloud Run / Nginx reverse proxy), extract client IP safely
-  const forwarded = req.headers?.['x-forwarded-for'];
-  if (typeof forwarded === 'string' && forwarded.trim()) {
-    const parts = forwarded.split(',').map((p: string) => p.trim()).filter(Boolean);
-    if (parts.length > 0) {
-      return parts[0].replace(/^::ffff:/, '');
-    }
-  }
-
-  // Express req.ip is computed safely according to app.set('trust proxy', 1)
+  // SECURITY (24 Oct 2026 audit AUTH-1 / FAQ-1): never read X-Forwarded-For
+  // directly. Its LEFT-most entry is written by the client, so using it let any
+  // caller mint a fresh "IP" per request and bypass the anonymous FAQ AI quota,
+  // the /auth/session lockout and the reCAPTCHA IP context. Express derives
+  // req.ip from the proxy hops listed in app.set('trust proxy', ...), which
+  // only trusts entries appended by our own infrastructure.
   const rawIp = (req.ip || req.socket?.remoteAddress || 'unknown').trim();
   // Strip IPv4-mapped IPv6 notation (::ffff:192.0.2.1 -> 192.0.2.1)
   if (rawIp.startsWith('::ffff:')) {

@@ -1012,7 +1012,14 @@ paymentsRouter.post('/webhook', async (req, res) => {
 
     const expectedBase64 = crypto.createHmac('sha256', cfg.secret).update(timestamp + rawBody).digest('base64');
     const expectedHex = crypto.createHmac('sha256', cfg.secret).update(timestamp + rawBody).digest('hex');
-    const valid = signature === expectedBase64 || signature === expectedHex;
+    // Constant-time comparison: a plain === leaks how many leading characters
+    // matched. Lengths are compared first because timingSafeEqual throws on mismatch.
+    const sigBuf = Buffer.from(signature);
+    const safeEqual = (expected: string) => {
+      const expBuf = Buffer.from(expected);
+      return sigBuf.length === expBuf.length && crypto.timingSafeEqual(sigBuf, expBuf);
+    };
+    const valid = safeEqual(expectedBase64) || safeEqual(expectedHex);
     if (!valid) {
       console.warn('[Payments] webhook signature mismatch');
       return res.status(200).json({ ok: false, reason: 'bad-signature' });

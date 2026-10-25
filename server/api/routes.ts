@@ -160,9 +160,15 @@ apiRouter.get("/config/public", (_req, res) => {
 });
 
 // Health Check Endpoint with Circuit Breakers & Cache Telemetry
-apiRouter.get("/health", (_req, res) => {
+apiRouter.get("/health", (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
-  res.json({ 
+  // SECURITY (24 Oct 2026 audit INFO-1): anonymous callers only learn that the
+  // process is alive. Upstream health, cache and circuit-breaker internals help
+  // an attacker time attacks, so they are admin-only.
+  if ((req as any).user?.isAdmin !== true) {
+    return res.json({ status: "ok", timestamp: Date.now() });
+  }
+  res.json({
     status: "ok", 
     uptime: process.uptime(),
     bseSource: { ...getBseHealth(), ...getBseFeedStaleness() },
@@ -188,7 +194,7 @@ apiRouter.get("/ping", (_req, res) => {
 });
 
 // Cache Telemetry & Diagnostics API
-apiRouter.get("/cache/stats", (_req, res) => {
+apiRouter.get("/cache/stats", requireAdmin, (_req, res) => {
   res.json({
     success: true,
     pages: pageRenderCache.getStats(),
@@ -219,7 +225,7 @@ apiRouter.post("/cache/clear", requireAdmin, (req, res) => {
 });
 
 // Circuit Breaker Telemetry & Status API
-apiRouter.get("/circuit-breakers", (_req, res) => {
+apiRouter.get("/circuit-breakers", requireAdmin, (_req, res) => {
   res.json({
     success: true,
     circuitBreakers: circuitRegistry.getAllStatuses()

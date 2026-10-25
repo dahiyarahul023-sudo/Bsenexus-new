@@ -67,7 +67,12 @@ process.on('uncaughtException', (err: any) => {
 const app = express();
 
 // Trust reverse proxy (Cloud Run / Nginx) so client IP and rate-limiting work properly
-app.set('trust proxy', 1);
+// Number of reverse-proxy hops in front of the app. Default 1 (Cloud Run's
+// front end). If another proxy/CDN (e.g. Cloudflare) sits in front of Cloud Run,
+// set TRUST_PROXY_HOPS=2 so req.ip is the real visitor, not the CDN edge.
+// Never trust X-Forwarded-For entries beyond the hops we actually operate.
+const trustProxyHops = Number.parseInt(process.env.TRUST_PROXY_HOPS || '1', 10);
+app.set('trust proxy', Number.isInteger(trustProxyHops) && trustProxyHops >= 0 && trustProxyHops <= 5 ? trustProxyHops : 1);
 
 // Enable Gzip compression in transit for JSON, text, HTML, and API responses (> 1KB threshold)
 app.use(compression({
