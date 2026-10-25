@@ -13,7 +13,7 @@ const originalCss = moduleRequire.extensions['.css'];
 moduleRequire.extensions['.css'] = () => {};
 after(() => { if (originalCss) moduleRequire.extensions['.css'] = originalCss; else delete moduleRequire.extensions['.css']; });
 
-function renderScope(scope?: CalendarScope, owner = 'rahul', now = '2026-10-21T10:00:00+05:30', archive = false, details = false, stateOverrides: Record<string, any> = {}, admin = false) {
+function renderScope(scope?: CalendarScope, owner = 'rahul', now = '2026-10-21T10:00:00+05:30', archive = false, details = false, stateOverrides: Record<string, any> = {}, admin = false, query = '') {
   const file = 'src/components/ResultsCalendar.tsx';
   const actual = createRequire(new URL('../../' + file, import.meta.url));
   const exports: any = {};
@@ -35,11 +35,11 @@ function renderScope(scope?: CalendarScope, owner = 'rahul', now = '2026-10-21T1
   visit(view);let stateIndex=0;
   const code = ts.transpileModule(sourceText, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText;
   vm.runInNewContext(code, {
-    exports, Date: Clock, localStorage: storage, window: { localStorage: storage, innerWidth: 390 }, console, setTimeout, clearTimeout,
+    exports, Date: Clock, localStorage: storage, URLSearchParams, window: { localStorage: storage, innerWidth: 390, location: { search:query } }, console, setTimeout, clearTimeout,
     require(spec: string) {
       if (spec === 'react' && (archive || details)) return { ...React, useState: (value: any) => {
         const stateName=stateNames[stateIndex++];
-        return React.useState(Object.hasOwn(stateOverrides,stateName)?stateOverrides[stateName]:details&&stateName==='selectedModalItem'?raw[0]:archive&&value==='upcoming'?'declared':value);
+        return React.useState(Object.hasOwn(stateOverrides,stateName)?stateOverrides[stateName]:details&&stateName==='selectedModalItem'?raw[0]:archive&&stateName==='statusFilter'?'declared':value);
       } };
       if (spec.endsWith('/AuthContext')) return { useAuth: () => ({ user: { uid: owner }, profile: { tier: 'pro' }, isPro: true, isPaidPro: true, isAdmin:admin, setIsAdminPinModalOpen(){} }) };
       if (spec.endsWith('/IntelModalContext')) return { useIntelModal: () => ({ openIntelModal() {} }) };
@@ -103,4 +103,37 @@ test('partial archive notice appears once beside four preserved cards, with admi
   assert.equal(html.split('Archive saved:').length-1,1);assert.match(html,/DECLARED \(4\)/);assert.doesNotMatch(html,/Retry history|Set 10D to HIGH/);
   const admin=renderScope('all','rahul','2026-10-21T10:00:00+05:30',false,true,states,true);
   assert.match(admin,/Set 10D to HIGH/);
+});
+
+
+test('English-only AI summaries participate in AI filter, counts and cards', () => {
+  const states={statusFilter:'ai',storedItems:[{id:'english-result',symbol:'RELIANCE',scripCode:'500325',companyName:'Reliance Industries Ltd',purpose:'Financial Results',meetingDate:'21 Oct 2026',meetingTimestamp:Date.parse('2026-10-21T00:00:00+05:30'),daysLeft:0,status:'TODAY',isDeclared:true,aiSummaryEn:'English-only confirmed summary'}]};
+  const html=renderScope('all','rahul','2026-10-21T10:00:00+05:30',true,false,states);
+  assert.match(html,/English-only confirmed summary/);assert.match(html,/Reliance Industries Ltd/);
+});
+
+test('background data shrink renders the last available page immediately rather than a blank page', () => {
+  const html=renderScope('all','rahul','2026-10-21T10:00:00+05:30',true,false,{statusFilter:'all',currentPage:8});
+  assert.match(html,/Reliance Industries Ltd/);assert.doesNotMatch(html,/Page 8 of 1/);
+});
+
+test('runup failure shows retry without a false zero-disclosures or empty-window claim', () => {
+  const html=renderScope('all','rahul','2026-10-21T10:00:00+05:30',false,true,{expandedRunupDate:'22/10/2026',runupError:'Pre-result filings could not load. Please retry.'});
+  assert.match(html,/Retry pre-result filings/);assert.doesNotMatch(html,/0 Disclosures Found|No separate corporate filings recorded/);
+});
+
+
+test('shared Telegram actions stay admin-only and Details has an accessible dialog and close control', () => {
+  const regular=renderScope('all','rahul','2026-10-21T10:00:00+05:30',false,true);
+  assert.doesNotMatch(regular,/Dispatch to Telegram|Telegram Alert|Broadcast to Telegram/);
+  assert.match(regular,/aria-label="Close calendar details"/);assert.match(regular,/role="dialog"/);
+  assert.match(renderScope('all','rahul','2026-10-21T10:00:00+05:30',false,true,{},true),/Dispatch to Telegram/);
+});
+
+
+test('shared company calendar link searches the exact BSE code across date tabs on entry', () => {
+  const html=renderScope('all','rahul','2026-10-21T10:00:00+05:30',false,false,{},false,'?scrip=500325');
+  assert.match(html,/value="500325"/);assert.match(html,/Reliance Industries Ltd/);assert.doesNotMatch(html,/Vishal Mega Mart Limited/);
+  const invalid=renderScope('all','rahul','2026-10-21T10:00:00+05:30',false,false,{},false,'?scrip=wrong');
+  assert.match(invalid,/Vishal Mega Mart Limited/);
 });

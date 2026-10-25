@@ -205,3 +205,8 @@ test('completed archive with pending PDF checks is a successful history read and
   assert.match(notice,/role="status"/);assert.doesNotMatch(notice,/Retry history/);
   assert.equal(notice.split('Archive saved:').length-1,1);
 });
+
+test('saved English result summary survives canonical history reads', async () => {
+  const rows=await service([{...filing('english-saved','2026-07-29T11:30:45+05:30'),aiSummaryEn:'Verified English summary'}]).getStockResultsHistory('509930');
+  assert.equal(rows[0].aiSummaryEn,'Verified English summary');
+});
