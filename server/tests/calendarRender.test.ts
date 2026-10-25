@@ -13,7 +13,7 @@ const originalCss = moduleRequire.extensions['.css'];
 moduleRequire.extensions['.css'] = () => {};
 after(() => { if (originalCss) moduleRequire.extensions['.css'] = originalCss; else delete moduleRequire.extensions['.css']; });
 
-function renderScope(scope?: CalendarScope, owner = 'rahul', now = '2026-10-21T10:00:00+05:30', archive = false, details = false) {
+function renderScope(scope?: CalendarScope, owner = 'rahul', now = '2026-10-21T10:00:00+05:30', archive = false, details = false, stateOverrides: Record<string, any> = {}, admin = false) {
   const file = 'src/components/ResultsCalendar.tsx';
   const actual = createRequire(new URL('../../' + file, import.meta.url));
   const exports: any = {};
@@ -39,9 +39,9 @@ function renderScope(scope?: CalendarScope, owner = 'rahul', now = '2026-10-21T1
     require(spec: string) {
       if (spec === 'react' && (archive || details)) return { ...React, useState: (value: any) => {
         const stateName=stateNames[stateIndex++];
-        return React.useState(details&&stateName==='selectedModalItem'?raw[0]:archive&&value==='upcoming'?'declared':value);
+        return React.useState(Object.hasOwn(stateOverrides,stateName)?stateOverrides[stateName]:details&&stateName==='selectedModalItem'?raw[0]:archive&&value==='upcoming'?'declared':value);
       } };
-      if (spec.endsWith('/AuthContext')) return { useAuth: () => ({ user: { uid: owner }, profile: { tier: 'pro' }, isPro: true, isPaidPro: true }) };
+      if (spec.endsWith('/AuthContext')) return { useAuth: () => ({ user: { uid: owner }, profile: { tier: 'pro' }, isPro: true, isPaidPro: true, isAdmin:admin, setIsAdminPinModalOpen(){} }) };
       if (spec.endsWith('/IntelModalContext')) return { useIntelModal: () => ({ openIntelModal() {} }) };
       if (spec.endsWith('/aiQuota')) return { useAiQuota: () => ({ canGenerate: true }), syncQuotaFromResponse() {} };
       if (spec.endsWith('/useFeedDensity')) return { useFeedDensity: () => ['comfortable'] };
@@ -94,4 +94,13 @@ test('cached October 22 meetings rebase into Archive after IST rollover and rema
   assert.doesNotMatch(html,/Fetch 1 Yr History|Historical Results &amp; Filings Sync|4 Qtrs/);
   assert.match(html,/Last 1 Year/);
   assert.match(html,/Sync imports all BSE filings for the selected period/);
+});
+
+test('partial archive notice appears once beside four preserved cards, with admin-only shared priority control', () => {
+  const history=[1,2,3,4].map(n=>({id:'r'+n,scripCode:'500325',symbol:'RELIANCE',isOutcome:true,status:'Declared',quarterKey:'FY26-Q'+n,periodOrMeeting:'Quarter '+n,subject:'Financial Results'}));
+  const states={stockHistory:history,deepHistoryMsg:'Archive saved: 156 filings. 4 verified results. 3 additional board outcomes await verification.',historyError:null};
+  const html=renderScope('all','rahul','2026-10-21T10:00:00+05:30',false,true,states);
+  assert.equal(html.split('Archive saved:').length-1,1);assert.match(html,/DECLARED \(4\)/);assert.doesNotMatch(html,/Retry history|Set 10D to HIGH/);
+  const admin=renderScope('all','rahul','2026-10-21T10:00:00+05:30',false,true,states,true);
+  assert.match(admin,/Set 10D to HIGH/);
 });

@@ -1,3 +1,4 @@
+import { changeRunupPriority, RunupPriorityError } from '../utils/runupPriorityClient';
 import { archiveCompletionMessage } from '../shared/resultFiling';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { calendarCacheKey, readCalendarScope, saveCalendarScope, type CalendarScope } from '../shared/calendarScope';
@@ -163,7 +164,7 @@ function ResultsCalendarView() {
     observer.observe(toolbar); measure();
     return () => observer.disconnect();
   }, []);
-  const { user, profile, isAdmin, isPro, isPaidPro, adminUnlocked, setIsAuthModalOpen, setIsProModalOpen } = useAuth();
+  const { user, profile, isAdmin, isPro, isPaidPro, adminUnlocked, setIsAuthModalOpen, setIsProModalOpen, setIsAdminPinModalOpen } = useAuth();
   const owner = user && !user.isAnonymous ? user.uid : 'guest';
   const [calendarScope, setCalendarScope] = useState<CalendarScope>(() => readCalendarScope(calendarStorage(), owner));
   const [selectedWatchlistId, setSelectedWatchlistId] = useState<string>('');
@@ -292,7 +293,7 @@ function ResultsCalendarView() {
 
   const [runupWindowDays, setRunupWindowDays] = useState<number>(10);
   const [isBoostingRunup, setIsBoostingRunup] = useState<boolean>(false);
-  const [boostRunupMsg, setBoostRunupMsg] = useState<string | null>(null);
+  const [boostRunupMsg, setBoostRunupMsg] = useState<{ type: 'success' | 'warning' | 'error'; message: string; requiresPin?: boolean } | null>(null);
   const [expandedRunupDate, setExpandedRunupDate] = useState<string | null>(null);
   const [runupAnnouncements, setRunupAnnouncements] = useState<any[]>([]);
   const [loadingRunupAnnouncements, setLoadingRunupAnnouncements] = useState<boolean>(false);
@@ -307,6 +308,16 @@ function ResultsCalendarView() {
   const isProOrAdmin = Boolean(isAdmin || (isPro && !user?.isAnonymous) || profile?.tier === 'admin');
   const aiQuota = useAiQuota(user, profile, isPro, isAdmin);
   const isTelegramConnected = Boolean(profile?.telegramChatId || user?.telegramChatId);
+
+  const runupSelectionKey = `${owner}:${selectedModalItem?.scripCode || ''}:${selectedModalItem?.meetingDate || ''}`;
+  const runupSelectionRef = useRef(runupSelectionKey);
+  runupSelectionRef.current = runupSelectionKey;
+  const boostRunupController = useRef<AbortController | null>(null);
+  useEffect(() => {
+    boostRunupController.current?.abort(); boostRunupController.current = null;
+    setBoostRunupMsg(null); setIsBoostingRunup(false);
+    return () => { boostRunupController.current?.abort(); boostRunupController.current = null; };
+  }, [runupSelectionKey]);
 
   // Deep History Fetcher for Single Stock (1-5 Years)
   const handleFetchDeepHistory = async (scripCode: string, symbol: string, years: number) => {
@@ -331,11 +342,12 @@ function ResultsCalendarView() {
         if (current()) setDeepHistoryMsg(`Syncing BSE archive: ${job.processed} filings saved so far...`);
       });
       if (!current()) return;
+      let verifiedResults = 0;
       await watchResultHistory({ symbol, scripCode }, signal, rows => {
-        if (current()) setStockHistory(rows);
+        if (current()) { setStockHistory(rows); verifiedResults = rows.filter(row => row.isOutcome).length; }
       }, false);
       if (!current()) return;
-      setDeepHistoryMsg(archiveCompletionMessage(job));
+      setDeepHistoryMsg(archiveCompletionMessage(job, verifiedResults));
       window.dispatchEvent(new Event('company-filings-changed'));
       void fetchCalendar(false);
     } catch (err: any) {
@@ -345,43 +357,37 @@ function ResultsCalendarView() {
     }
   };
 
-  // Boost Priority for 10/20-day Pre-Result Window
+  // The existing admin endpoint owns this shared mutation; recovery never retries it automatically.
   const handleBoostRunupPriority = async (scripCode: string, symbol: string, resultDateStr: string, customDays?: number) => {
-    if (!scripCode || !resultDateStr) return;
-    if (!isAdmin) { setBoostRunupMsg('Shared filing priority changes require an administrator.'); return; }
+    if (!scripCode || !resultDateStr || boostRunupController.current) return;
+    if (!isAdmin) { setBoostRunupMsg({ type: 'error', message: 'Shared filing priority changes require an administrator.' }); return; }
     const daysToUse = customDays || runupWindowDays || 10;
-    setIsBoostingRunup(true);
-    setBoostRunupMsg(null);
-
+    const selection = runupSelectionRef.current;
+    const controller = new AbortController(); boostRunupController.current = controller;
+    const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(30000)]);
+    const current = () => !controller.signal.aborted && runupSelectionRef.current === selection && boostRunupController.current === controller;
+    setIsBoostingRunup(true); setBoostRunupMsg(null);
     try {
-      const res = await customFetch(`/api/stocks/${encodeURIComponent(scripCode)}/boost-runup-priority`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ symbol, resultDate: resultDateStr, windowDays: daysToUse })
-      });
-      const data = await res.json();
-      if (data && data.success) {
-        setBoostRunupMsg(`🔥 Set ${data.boostedCount || 0} announcements from ${daysToUse} days before ${resultDateStr} to HIGH Priority!`);
-        // Refresh runup list if expanded
-        if (expandedRunupDate === resultDateStr) {
-          setRunupAnnouncements(data.announcements || []);
-        }
-        // Reload stock history
-        const histRes = await customFetch(`/api/stock-results-history?symbol=${encodeURIComponent(symbol)}&scripCode=${encodeURIComponent(scripCode)}`);
-        const histData = await histRes.json();
-        if (histData && Array.isArray(histData.history)) {
-          setStockHistory(histData.history);
-        }
-        // Refresh main calendar
-        fetchCalendar(false);
-      } else {
-        setBoostRunupMsg(`⚠️ ${data?.error || 'Could not boost pre-result priority'}`);
+      const data = await changeRunupPriority({ scripCode, symbol, resultDate: resultDateStr, windowDays: daysToUse }, signal);
+      if (!current()) return;
+      const message = `Set ${data.boostedCount} announcements from the ${daysToUse}-day window before ${resultDateStr} to HIGH priority.`;
+      setBoostRunupMsg({ type: 'success', message });
+      if (expandedRunupDate === resultDateStr) setRunupAnnouncements(data.announcements);
+      // A failed optional read does not turn a confirmed mutation into a failed update.
+      try {
+        await watchResultHistory({ symbol, scripCode }, signal, rows => { if (current()) setStockHistory(rows); }, false);
+      } catch {
+        if (current()) setBoostRunupMsg({ type: 'warning', message: `${message} Result cards could not refresh; reopen Details to reload them.` });
       }
-    } catch (err: any) {
-      setBoostRunupMsg(`❌ Boost error: ${err.message}`);
+      if (current()) void fetchCalendar(false);
+    } catch (error: any) {
+      if (!current()) return;
+      const requiresPin = error instanceof RunupPriorityError && error.recovery === 'admin-pin';
+      setBoostRunupMsg({ type: 'error', message: error.message || 'Priority update unavailable. Please retry.', requiresPin });
+      if (requiresPin) setIsAdminPinModalOpen(true);
+      else if (error instanceof RunupPriorityError && error.recovery === 'sign-in') setIsAuthModalOpen(true);
     } finally {
-      setIsBoostingRunup(false);
-      setTimeout(() => setBoostRunupMsg(null), 6000);
+      if (current()) { setIsBoostingRunup(false); boostRunupController.current = null; }
     }
   };
 
@@ -451,7 +457,7 @@ function ResultsCalendarView() {
     void watchResultHistory(selectedModalItem, signal, (rows, sync) => {
       if (revision !== historyRevision.current) return;
       setStockHistory(rows); setLoadingHistory(false);
-      setDeepHistoryMsg(sync?.state === 'running' ? `Loading BSE archive: ${sync.processed} filings saved so far...` : sync?.state === 'complete' ? archiveCompletionMessage(sync) : null);
+      setDeepHistoryMsg(sync?.state === 'running' ? `Loading BSE archive: ${sync.processed} filings saved so far...` : sync?.state === 'complete' ? archiveCompletionMessage(sync, rows.filter(row => row.isOutcome).length) : null);
     }).catch(error => {
       if (revision === historyRevision.current && !controller.signal.aborted) setHistoryError(error.message);
     }).finally(() => {
@@ -2607,7 +2613,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                           <span>{expandedRunupDate === selectedModalItem.meetingDate ? `Hide ${runupWindowDays}D Filings` : `View ${runupWindowDays}D Filings`}</span>
                         </button>
 
-                        <ActionButton
+                        {isAdmin && <ActionButton
                           onClick={() => handleBoostRunupPriority(selectedModalItem.scripCode, selectedModalItem.symbol, selectedModalItem.meetingDate, runupWindowDays)}
                           isLoading={isBoostingRunup}
                           loadingText="Boosting..."
@@ -2617,15 +2623,20 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                           icon={<Zap size={13} />}
                         >
                           Set {runupWindowDays}D to HIGH
-                        </ActionButton>
+                        </ActionButton>}
                       </div>
                     </div>
 
-                    {/* Pre-Result Boost Alert Notice */}
+                    {/* A denied update must never display a success checkmark. */}
                     {boostRunupMsg && (
-                      <div className="p-2.5 bg-amber-100/90 dark:bg-amber-950/80 border border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-200 text-xs rounded-lg flex items-center gap-2 animate-in fade-in">
-                        <CheckCircle2 size={15} className="text-amber-600 shrink-0" />
-                        <span className="font-bold">{boostRunupMsg}</span>
+                      <div role={boostRunupMsg.type === 'error' ? 'alert' : 'status'} className={cn('p-2.5 rounded-lg text-xs flex items-start gap-2 border',
+                        boostRunupMsg.type === 'success'
+                          ? 'bg-emerald-50 border-emerald-200 text-emerald-900 dark:bg-emerald-950/60 dark:border-emerald-800 dark:text-emerald-200'
+                          : 'bg-amber-50 border-amber-300 text-amber-900 dark:bg-amber-950/60 dark:border-amber-700 dark:text-amber-200')}>
+                        {boostRunupMsg.type === 'success' ? <CheckCircle2 size={15} className="shrink-0 mt-0.5" /> : <AlertTriangle size={15} className="shrink-0 mt-0.5" />}
+                        <div><p className="font-semibold">{boostRunupMsg.message}</p>
+                          {boostRunupMsg.requiresPin && <button type="button" onClick={() => setIsAdminPinModalOpen(true)} className="mt-2 font-semibold underline">Verify admin PIN</button>}
+                        </div>
                       </div>
                     )}
 

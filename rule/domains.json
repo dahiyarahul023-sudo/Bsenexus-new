@@ -605,7 +605,8 @@
         "src/components/AvatarPicker.tsx",
         "src/components/ui/UserAvatar.tsx",
         "supabase/migrations/20261024193046_deep_audit_security.sql",
-        "src/components/TelegramLinkControl.tsx"
+        "src/components/TelegramLinkControl.tsx",
+        "src/utils/runupPriorityClient.ts"
       ],
       "tests": [
         "server/tests/preferenceSaveQueue.test.ts",
@@ -615,9 +616,10 @@
         "server/tests/appCheckStartup.test.ts",
         "server/tests/storyButtons.test.ts",
         "server/tests/deepAuditSql.test.ts",
-        "server/tests/deepAuditAuth.test.ts"
+        "server/tests/deepAuditAuth.test.ts",
+        "server/tests/calendarFeedback.test.ts"
       ],
-      "reason": "Guest, restoring, signed-in and expired states must stay distinct. Late requests and saved preferences must not overwrite newer edits or leak between accounts. A success message requires the appropriate confirmed result."
+      "reason": "Guest, restoring, signed-in and expired states must stay distinct. Late requests and saved preferences must not overwrite newer edits or leak between accounts. A success message requires the appropriate confirmed result. Completed archive receipts with pending documents remain successful reads and have one ledger status owner. Shared pre-result priority updates require existing admin authorization; explicit server PIN denial opens the existing PIN dialog. HTML/preview denial remains an unconfirmed blocker. No automatic mutation retry or client role expansion is permitted."
     },
     {
       "id": "frontend-design",
@@ -725,7 +727,8 @@
         "server/services/resultHistoryRead.ts",
         "src/utils/resultHistoryClient.ts",
         "src/shared/resultFiling.ts",
-        "server/services/resultDocumentEvidence.ts"
+        "server/services/resultDocumentEvidence.ts",
+        "src/utils/runupPriorityClient.ts"
       ],
       "tests": [
         "server/tests/core.test.ts",
@@ -749,9 +752,10 @@
         "server/tests/brandRefreshInbox.test.ts",
         "server/tests/companyFilingHistory.test.ts",
         "server/tests/resultHistory.test.ts",
-        "server/tests/resultDocumentEvidence.test.ts"
+        "server/tests/resultDocumentEvidence.test.ts",
+        "server/tests/calendarFeedback.test.ts"
       ],
-      "reason": "List/detail identity, filters, watchlist membership, badge counts and timestamps must agree. Background refresh preserves content, density, selection and scroll. Rapid filter changes must not render older responses. Home membership uses active-list exact identities. The responsive watchlist editor preserves company metadata, page scrolling and four visible priority filters. Inbox presents unread items first, while device push delivery has an independent persistent control. Calendar labels use company names when symbols are numeric; sticky date headings share measured toolbar offsets. Home previews select the newest filing per exact watchlist security before limiting, without changing the full filing feed. Static Watchlist identity fallback uses the shared verified IndusInd code; existing list state, revisions and editor behavior are preserved. Inbox now has All/Watchlist/Results only, with unread-first ordering, read action below/right of filters and ephemeral per-owner/filter snapshots retained across close. Confirmed read/clear reconciles all cached filters; loading/error never erases saved content. Watchlist first-read readiness separates unknown from confirmed empty. Calendar/News/Watchlist pull indicators occupy flow below stable controls. Watchlist and Story symbol-to-code fallback maps also use the shared blank BSE code, preventing the old Advanced Enzyme mapping from returning through a client fallback. Stored 30-day filing counts share one exact-company projection with company detail, independently of the seven-day updates feed. Durable per-company history uses keyset pages; company Filings and Material Actions expose numbered pages. Explicit paid archive imports all categories over selected years with bounded workers, source failure and storage confirmation, and does not persist PDFs. Process restart or another instance may make worker status unavailable; saved evidence remains and no success is invented. Financial result titles include Results For Quarter/Q1 and board Outcome - Results. Generic outcomes need identity-bound proof from bounded official BSE PDF text; no PDF is persisted. Archive receipts distinguish saved filings from documents awaiting verification. Calendar retains one lower history control; Stock 360 and automatic readers share completion copy."
+      "reason": "List/detail identity, filters, watchlist membership, badge counts and timestamps must agree. Background refresh preserves content, density, selection and scroll. Rapid filter changes must not render older responses. Home membership uses active-list exact identities. The responsive watchlist editor preserves company metadata, page scrolling and four visible priority filters. Inbox presents unread items first, while device push delivery has an independent persistent control. Calendar labels use company names when symbols are numeric; sticky date headings share measured toolbar offsets. Home previews select the newest filing per exact watchlist security before limiting, without changing the full filing feed. Static Watchlist identity fallback uses the shared verified IndusInd code; existing list state, revisions and editor behavior are preserved. Inbox now has All/Watchlist/Results only, with unread-first ordering, read action below/right of filters and ephemeral per-owner/filter snapshots retained across close. Confirmed read/clear reconciles all cached filters; loading/error never erases saved content. Watchlist first-read readiness separates unknown from confirmed empty. Calendar/News/Watchlist pull indicators occupy flow below stable controls. Watchlist and Story symbol-to-code fallback maps also use the shared blank BSE code, preventing the old Advanced Enzyme mapping from returning through a client fallback. Stored 30-day filing counts share one exact-company projection with company detail, independently of the seven-day updates feed. Durable per-company history uses keyset pages; company Filings and Material Actions expose numbered pages. Explicit paid archive imports all categories over selected years with bounded workers, source failure and storage confirmation, and does not persist PDFs. Process restart or another instance may make worker status unavailable; saved evidence remains and no success is invented. Financial result titles include Results For Quarter/Q1 and board Outcome - Results. Generic outcomes need identity-bound proof from bounded official BSE PDF text; no PDF is persisted. Archive receipts distinguish saved filings from documents awaiting verification. Calendar retains one lower history control; Stock 360 and automatic readers share completion copy. Completed archive receipts with pending documents remain successful reads and have one ledger status owner. Shared pre-result priority updates require existing admin authorization; explicit server PIN denial opens the existing PIN dialog. HTML/preview denial remains an unconfirmed blocker. No automatic mutation retry or client role expansion is permitted."
     },
     {
       "id": "frontend-notes",

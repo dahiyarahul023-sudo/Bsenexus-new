@@ -186,3 +186,22 @@ test('ancillary disclosures never become a result even when their text quotes an
   for (const subject of ['Announcement under Regulation 30 (LODR)-Investor Presentation','Press Release','Newspaper Publication','Voting Results'])
     assert.equal(api.isPureResultOutcomeFiling(subject,'The Board considered and approved the financial results under Regulation 33 for quarter ended June 30, 2026'),false);
 });
+
+test('completed archive with pending PDF checks is a successful history read and produces one notice', async () => {
+  const api = load('src/utils/resultHistoryClient.ts', path => path.endsWith('/resultFiling') ? resultFiling : {});
+  const receipt={id:'finished',state:'complete',processed:156,years:1,unverifiedDocuments:3};
+  let calls=0,updates=0;
+  await api.watchResultHistory({symbol:'BAJAJ-AUTO',scripCode:'532977'},new AbortController().signal,(rows:any[],job:any)=>{
+    updates++;assert.equal(rows.length,4);assert.equal(job.unverifiedDocuments,3);
+  },true,async()=>{calls++;return Response.json({success:true,history:[{},{},{},{}],historySync:receipt});},async()=>{});
+  assert.equal(calls,1);assert.equal(updates,1);
+  const React=await import('react');const {renderToStaticMarkup}=await import('react-dom/server');
+  const {QuarterlyResultsLedger}=await import('../../src/components/QuarterlyResultsLedger.js');
+  const text=resultFiling.archiveCompletionMessage(receipt,4);
+  assert.match(text,/4 verified result/);assert.match(text,/3 additional board outcome/);
+  const html=renderToStaticMarkup(React.createElement(QuarterlyResultsLedger,{results:[],deepHistoryMsg:text,errorMessage:text,onRefresh(){}}));
+  assert.equal(html.split('Archive saved:').length-1,1);
+  const notice=renderToStaticMarkup(React.createElement(QuarterlyResultsLedger,{results:[],deepHistoryMsg:text,onRefresh(){}}));
+  assert.match(notice,/role="status"/);assert.doesNotMatch(notice,/Retry history/);
+  assert.equal(notice.split('Archive saved:').length-1,1);
+});
