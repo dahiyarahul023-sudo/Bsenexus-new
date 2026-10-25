@@ -30,7 +30,8 @@
         "server/tests/avatar.test.ts",
         "server/tests/userSkeletonPrivileges.test.ts",
         "server/tests/deepAuditSql.test.ts",
-        "server/tests/deepAuditAuth.test.ts"
+        "server/tests/deepAuditAuth.test.ts",
+        "server/tests/clientIpSpoofing.test.ts"
       ],
       "reason": "Verified token \u2192 server session \u2192 current durable profile \u2192 route authorization. Browser roles are display state; never authority. The server-only ensure_user_skeleton RPC denies browser EXECUTE, uses SECURITY INVOKER and a fixed empty search path with a qualified users relation. Its narrow production permission repair preserves existing paid rows on retry."
     },
