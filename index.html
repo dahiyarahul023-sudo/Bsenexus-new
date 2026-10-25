@@ -318,7 +318,10 @@
         font-display: swap;
       }
       .app-boot { min-height: 100dvh; display: flex; align-items: center; justify-content: center; gap: 12px; background: #f8fafc; color: #172033; font: 600 18px system-ui, sans-serif; }
-      .app-boot-mark { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; }
+      .app-boot-heading { margin: 0; font: inherit; line-height: 1.4; overflow-wrap: anywhere; }
+      .app-boot-copy { max-width: 36rem; }
+      .app-boot { padding: 24px; box-sizing: border-box; }
+      .app-boot-mark { flex-shrink: 0; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; }
       .app-boot-label { display: block; margin-top: 5px; color: #64748b; font-size: 12px; font-weight: 400; }
       @media (prefers-color-scheme: dark) { .app-boot { background: #100e19; color: #f0f3f8; } .app-boot-label { color: #b2b9c9; } }
       .critical-preloader {
@@ -419,7 +422,7 @@
     <div id="root">
       <div class="app-boot" role="status" aria-label="Loading BSE Nexus">
         <img class="app-boot-mark" src="/icon.svg" alt="" width="40" height="40">
-        <span>BSE Nexus<span class="app-boot-label">Loading…</span></span>
+        <div class="app-boot-copy"><!--route-heading--><h1 class="app-boot-heading">Every BSE filing, decoded in seconds.</h1><!--/route-heading--><span class="app-boot-label">Loading BSE Nexus…</span></div>
       </div>
       <!--announcements-feed-->
     </div>

@@ -1,3 +1,4 @@
+import { PageHeading } from './ui/PageHeading';
 import '../styles/overnight-adr.css';
 import { OvernightAdr } from './adr/OvernightAdr';
 import { HomeMarketNews } from './HomeMarketNews';
@@ -229,9 +230,9 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
       {/* 1. Top Header: Calm Page Title & ONLY Primary Action Button */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-200/80 dark:border-[#262335]">
         <div className="space-y-0.5">
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight font-display">
+          <PageHeading active={isActive} className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight font-display">
             For You
-          </h1>
+          </PageHeading>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-normal">
             Your market. Your watchlist. One place.
           </p>

@@ -1,3 +1,4 @@
+import { injectRouteHeading } from './server/utils/routeHeading.js';
 import { matchesCompanyFiling } from './src/shared/scripMatching.js';
 import { getKeywordGuide, KEYWORD_GUIDE_CSS } from './src/content/keywordGuides.js';
 import 'dotenv/config';
@@ -6795,7 +6796,7 @@ function injectTabSeoMetadata(html: string, tabQuery?: string): string {
     }
   }
 
-  return transformed;
+  return injectRouteHeading(transformed, normalizedKey || 'default');
 }
 
 // Helper to compute Cloudflare edge and browser Cache-Control headers for SPA routes

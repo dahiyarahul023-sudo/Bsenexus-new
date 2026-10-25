@@ -1,3 +1,4 @@
+import { PageHeading } from './ui/PageHeading';
 import { useCompanyFilingCounts } from '../hooks/useCompanyFilingCounts';
 import { matchesCompanyFiling } from '../shared/scripMatching';
 import { ComponentSkeleton } from './ui/ComponentSkeleton';
@@ -513,7 +514,7 @@ const SwipeableFilingCard: React.FC<{
   );
 };
 
-export function WatchlistManager() {
+export function WatchlistManager({ isActive = true }: { isActive?: boolean } = {}) {
   // Shared feed density (Settings screen) — visibly resizes stock cards.
   const [density] = useFeedDensity();
   const wlCardPad = density === 'comfortable' ? 'p-6' : density === 'dense' ? 'p-4' : 'p-5';
@@ -1901,7 +1902,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
     return (
       <div className="rich-pro-gate flex flex-col items-center justify-center text-center px-6 py-16 space-y-4">
         <RichIllustration kind="pro" />
-        <h2 className="text-lg font-black text-slate-900 dark:text-white">Watchlists are a Pro feature</h2>
+        <PageHeading active={isActive} className="text-lg font-black text-slate-900 dark:text-white">Watchlists are a Pro feature</PageHeading>
         <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xs leading-relaxed">
           Track unlimited stocks with priority tiers and instant Telegram alerts. Upgrade to Pro — one-time plans from ₹{getLowestPlanPrice()}.
         </p>
@@ -1920,6 +1921,8 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
     <div ref={watchlistContainerRef} className="space-y-2 overscroll-y-contain relative">
       {/* Pull to Refresh Animated Indicator for Watchlists */}
 
+
+      <PageHeading active={isActive} className="text-base sm:text-lg font-bold text-slate-900 dark:text-white font-display">Your Stock Watchlist</PageHeading>
 
       {/* Consolidated High-Density Navigation & Filter Bar - Sticky below navbar */}
       <div className="sticky top-14 md:top-[89px] z-30 bg-white/95 dark:bg-[#1A1926]/95 backdrop-blur-md border border-slate-200/90 dark:border-[#2D283E] rounded-xl p-2 sm:p-2.5 shadow-xs space-y-2">
