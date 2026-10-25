@@ -1,3 +1,4 @@
+import { requireVerifiedTelegramTarget } from '../database/telegramLinksDao.js';
 import { createHash } from 'crypto';
 import { getAllWatchlists, extractSymbol } from '../database/watchlistDao.js';
 import { sendToTelegram } from './telegram.js';
@@ -702,6 +703,7 @@ export async function processAutomatedNewsAlerts(): Promise<{ checked: number; d
         // Check if this news item was already sent to this recipient
         if (!isNewsAlertSentToTarget(rec.targetId, news.id)) {
           // Send Telegram notification
+          if (rec.userId) await requireVerifiedTelegramTarget(rec.userId, rec.chatId, settings.chatId || process.env.TELEGRAM_CHAT_ID);
           const sendRes = await sendNewsToTelegram(news, rec.chatId);
           if (sendRes.success) {
             await markNewsAlertSentToTarget(rec.targetId, news.id);

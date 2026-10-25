@@ -548,6 +548,7 @@ export interface AnnouncementInput {
   aiSummaryEn?: string;
   scrip_cd?: string;
   isWatchlist?: boolean;
+  resultDocumentCheck?: import('../../src/shared/resultFiling.js').ResultDocumentCheck;
 }
 
 export async function saveAnnouncementsBatch(items: AnnouncementInput[]): Promise<{ total: number; inserted: number; updated: number; skipped: number }> {
@@ -618,6 +619,7 @@ export async function saveAnnouncementsBatch(items: AnnouncementInput[]): Promis
     if (existingIdx !== undefined && existingIdx >= 0) {
       const existing = announcementsMemoryCache[existingIdx];
       const isIdentical = 
+        JSON.stringify(existing.resultDocumentCheck || null) === JSON.stringify(safeData.resultDocumentCheck || existing.resultDocumentCheck || null) &&
         existing.subject === safeData.subject &&
         existing.details === safeData.details &&
         existing.companyName === safeData.companyName &&

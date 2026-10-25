@@ -1,0 +1,35 @@
+# Second performance pass and calendar Telegram replay — 24 October 2026
+
+Starting remote main: 7ba693c046509e8ae7bce55f3419bd98383dc375 (PR20). Isolated local worktree starts at its source-equivalent 8b375ea. User asks for researched, measured further speed improvements and reports stale Oct23 Today calendar alerts replayed on every publish on Oct24.
+
+## Evidence and acceptance
+
+- Uploaded images are only 93–94px wide. Readable scores: desktop73 (previous57), mobile64 (previous48); readable mobile LCP3.8s/TBT1000ms, desktop TBT560ms. Fine audit attribution/bytes are illegible; no invented detailed diagnosis from those pixels. These are separate lab runs; screenshots do not prove all changes caused the gain or provide field INP.
+- Actual Rollup output inspection on unchanged main: the eager closure includes drag/projection modules although the six eager animation-component modules use no drag/layout props. Module renderedLength is pre-minification attribution, not resource transfer bytes. A fresh full static-closure byte measurement and production browser checks must follow.
+- ParticleRibbons repeats the same geometry calculations for adjacent endpoints and glow passes. Precompute identical per-frame points, preserve canvas drawing commands, and compare deterministic before/after canvas traces and math-call counts; do not equate this with device frame-time improvement.
+- Calendar UI reprojects Indian civil dates, but automaticCalendarMeetings trusts saved daysLeft. Reproduce stale Yesterday/TODAY rows, IST midnight, invalid/future dates and declarations. Both automatic and manual upcoming selection must use current timestamps, not status OR tests.
+- Calendar notified hydration is unawaited and unpaginated; JSON flag updates occur after calendar upsert and only local notified IDs are then saved. Production read-only aggregate: 1479 stored rows, only4 data.isNotified true; this supports a persistence gap but does not prove each reported Telegram receipt came from this path. No live send is authorized for testing.
+- Replace automatic replay protection with service-only durable per-meeting (security code + Indian meeting day) claims. One atomic winner across instances, no send if storage is unavailable, and no automatic retry after an uncertain provider outcome. Telegram has no shared transaction with Postgres; exactly-once delivery cannot be promised. Existing explicit admin force-resend remains distinct from automatic scheduling. Seed legacy stored meetings during schema cutover to prevent a rollout backlog.
+
+## Scope and consumers
+
+Changed/reviewed dispositions and final checks will be recorded below. map:impact inspected resultsCalendarService/calendarUniverse and LandingPage/ParticleRibbons; read API admin broadcast, UI broadcast entry, calendar cache/history read projection, storage and feed-alert/public/frontend startup domains. Authentication/payment providers, existing exchange intake, prices, watchlist scope and user data are not targets. Required host compile_applet/lint_applet unavailable; record actual typecheck/build separately. Schema must be staged and verified before production publication. No real Telegram transmission in tests.
+
+## Research
+
+Goel & Steiner (2020), https://arxiv.org/pdf/2003.07396: single controlled coverage run can miss device/session-dependent behavior; remove only source-proven unused capabilities and validate actions. Do not copy reported speedups or install a proxy/elide arbitrary function bodies. RIFL (SOSP2015), https://web.stanford.edu/~ouster/cgi-bin/papers/rifl.pdf: stable request identity and durable completion/retry metadata matter across crashes. Our external Telegram boundary cannot inherit RIFL exactly-once semantics. Official Motion LazyMotion/reduced-bundle documentation and locally installed exports guide the smaller animation feature set.
+
+## Verified follow-through
+
+- Date regression: three failing cases before correction now pass. Current Indian day drives automatic/manual eligibility and message dates. Automatic alerts exclude known declared outcomes through the same exact-code/date predicate as UI enrichment.
+- Durable code/day reservation precedes Telegram HTTP. Missing ledger fails closed; uncertain sends and failed receipts retain reservations. Explicit admin force remains explicit and records its own reservation. Manual renderer tests execute the actual production function and verify nonempty current-date messages and accurate success counts.
+- Local SQL tests pass for legacy backfill, duplicate claims, cache updates not erasing delivery history, and denied browser-role privileges. Staging claim/duplicate/receipt assertions passed in a rolled-back transaction; no test rows remained. Production migration calendar_telegram_delivery_ledger version20261024171520 applied:1478 distinct legacy identities suppressed,1479 original calendar rows retained; RLS enabled, anon insert/authenticated select denied, service insert allowed. No Telegram test messages were sent. CLI-created source file was aligned to the provider's actual production version after tracing references.
+- Six eager animation components now use framer-motion/m under synchronous LazyMotion/domAnimation. Dynamic full-motion screens remain compatible (strict is intentionally not enabled). Actual build:963243 raw/260224 gzip startup bytes versus1007826/272481. Tightened budget980000/266000 rejects the previous build.
+- Deterministic actual ParticleRibbons before/after execution produced identical canvas commands at390/768/1440 widths in both themes, and identical reduced-motion static output. Desktop dark tracked math calls6620→2076; this is a call-count reduction, not a measured device CPU/INP improvement.
+- Earlier full suite737 passed; final suite including actual manual renderer tests pending below. Build passed; physical-device speed, comparable fresh Lighthouse, hosting cache correction and live runtime publication remain separate.
+
+## Integration with newer main and final review
+
+Remote main advanced to ccbf1df (security PR21). Its source, auth/PIN/Telegram protections and domains were integrated without reverting any security change. Integrated CI-environment local suite:753 passed. A final review added paginated durable-claim filtering BEFORE the three-new-alert cap, preventing seeded legacy candidates from starving new meetings after restart; a behavioral regression covers this case. Latest tests/CI are reported on PR22.
+
+A clean isolated production build of the integrated source measures968942 raw/260915 gzip bytes. Browser smoke checks cover the critical heading, full-motion sign-in chunk opening/dismissal and feature-tab changes; no actual credentials/provider transaction was submitted. Earlier local dist contained a stale entry/manifest, so final attribution uses the clean output and served script hash C1ajXRLP. Physical device responsiveness and new Lighthouse scores remain unmeasured. Security PR21's separate production migration prerequisite remains in force; this merge does not publish runtime.

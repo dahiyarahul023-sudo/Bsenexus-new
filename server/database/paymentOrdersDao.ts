@@ -243,7 +243,7 @@ export async function markOrderGranted(
   await runPaymentStore(
     'mark payment order granted',
     (async () => {
-      const { error } = await getSupabase().from(ORDERS_TABLE).update(patch).eq('order_id', orderId);
+      const { error } = await getSupabase().from(ORDERS_TABLE).update(patch).eq('order_id', orderId).neq('status', 'granted');
       if (error) throw error;
     })(),
     10_000,
@@ -263,7 +263,7 @@ export async function markOrderFailed(orderId: string, lastError: string): Promi
   await runPaymentStore(
     'mark payment order failed',
     (async () => {
-      const { error } = await getSupabase().from(ORDERS_TABLE).update(patch).eq('order_id', orderId);
+      const { error } = await getSupabase().from(ORDERS_TABLE).update(patch).eq('order_id', orderId).neq('status', 'granted');
       if (error) throw error;
     })(),
     10_000,

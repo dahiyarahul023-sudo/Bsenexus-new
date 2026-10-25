@@ -1,3 +1,4 @@
+import { TelegramLinkControl } from './TelegramLinkControl';
 import { AvatarPicker } from './AvatarPicker';
 import { StoryNavigationPreference } from './story/StoryNavigationPreference';
 import { UserAvatar } from './ui/UserAvatar';
@@ -123,7 +124,8 @@ export function SettingsTab({
     verifyAdminPin,
     lockAdminSession,
     setIsAuthModalOpen,
-    setIsProModalOpen
+    setIsProModalOpen,
+    refreshProfile,
   } = useAuth();
 
   const isSuperAdmin = Boolean(isAdmin || isOwner || adminUnlocked || profile?.tier === 'admin' || user?.isAdmin);
@@ -615,7 +617,7 @@ export function SettingsTab({
     }
     const targetChatId = tgChatIdInput.trim() || profile?.telegramChatId;
     if (!targetChatId) {
-      setTestTgResult('Please enter your Telegram Chat ID first.');
+      setTestTgResult('Verify your Telegram connection first.');
       return;
     }
     setIsTestingTelegram(true);
@@ -2737,51 +2739,11 @@ export function SettingsTab({
                   </div>
                 </div>
 
-                {/* 4. HOW TO CONNECT TELEGRAM INSTRUCTIONS */}
-                <div className="p-3 bg-blue-50/50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/60 rounded-xl space-y-1.5 text-[11px] text-slate-700 dark:text-slate-300">
-                  <div className="font-bold text-blue-900 dark:text-blue-200">How to connect your personal Telegram:</div>
-                  <div className="flex items-start gap-1.5">
-                    <span className="font-bold text-blue-600 dark:text-blue-400">1.</span>
-                    <span>Open <a href="https://t.me/userinfobot" target="_blank" rel="noopener noreferrer" className="font-mono font-bold text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-0.5">@userinfobot <ArrowUpRight size={11} /></a> and press <strong>Start</strong> to see your numeric <strong>Id</strong>.</span>
-                  </div>
-                  <div className="flex items-start gap-1.5">
-                    <span className="font-bold text-blue-600 dark:text-blue-400">2.</span>
-                    <span>Open alert bot <a href={`https://t.me/${settings?.botUsername || 'Dahiyastockbot'}`} target="_blank" rel="noopener noreferrer" className="font-mono font-bold text-emerald-600 dark:text-emerald-400 hover:underline inline-flex items-center gap-0.5">@{settings?.botUsername || 'Dahiyastockbot'} <ArrowUpRight size={11} /></a> and tap <strong className="text-emerald-700 dark:text-emerald-300">Start (/start)</strong>.</span>
-                  </div>
-                  <div className="flex items-start gap-1.5">
-                    <span className="font-bold text-blue-600 dark:text-blue-400">3.</span>
-                    <span>Paste your numeric Chat ID below, tap <strong>Send test alert</strong>, then tap <strong>Save Settings</strong>.</span>
-                  </div>
-                </div>
-
-                {/* 5. CHAT ID INPUT & USERNAME */}
-                <div className="space-y-2">
-                  <div>
-                    <label className="block text-slate-600 dark:text-slate-400 font-semibold mb-1">
-                      Your Telegram Chat ID <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={tgChatIdInput}
-                      onChange={e => setTgChatIdInput(e.target.value)}
-                      placeholder="e.g. 987654321"
-                      className="w-full px-3 py-2 bg-slate-50 dark:bg-[#201E2E] border border-slate-200 dark:border-[#2D283E] rounded-lg text-slate-900 dark:text-white text-xs font-mono outline-none focus:ring-1 focus:ring-purple-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-slate-600 dark:text-slate-400 font-semibold mb-1">
-                      Telegram Username (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      value={tgUsernameInput}
-                      onChange={e => setTgUsernameInput(e.target.value)}
-                      placeholder="e.g. your_telegram_handle"
-                      className="w-full px-3 py-2 bg-slate-50 dark:bg-[#201E2E] border border-slate-200 dark:border-[#2D283E] rounded-lg text-slate-900 dark:text-white text-xs font-mono outline-none focus:ring-1 focus:ring-purple-500"
-                    />
-                  </div>
-                </div>
+                {user && !user.isAnonymous && <TelegramLinkControl key={user.uid} uid={user.uid} onVerified={async chatId => {
+                  setTgChatIdInput(chatId);
+                  await refreshProfile();
+                }} />}
+                <p className="text-xs text-slate-500">Connected destination: {profile?.telegramChatId || 'Not connected'}. Personal linking supports private chats.</p>
 
                 {/* TEST ALERT STATUS FEEDBACK */}
                 {testTgResult && (

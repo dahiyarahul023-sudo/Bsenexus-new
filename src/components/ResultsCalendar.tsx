@@ -1,3 +1,6 @@
+import { useCalendarDialog } from '../hooks/useCalendarDialog';
+import { changeRunupPriority, RunupPriorityError } from '../utils/runupPriorityClient';
+import { archiveCompletionMessage } from '../shared/resultFiling';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { calendarCacheKey, readCalendarScope, saveCalendarScope, type CalendarScope } from '../shared/calendarScope';
 import { calendarDayKey, projectCalendarTiming } from '../shared/calendarTiming';
@@ -12,6 +15,7 @@ import {
   History, BellRing, LayoutGrid, List, Bell
 } from 'lucide-react';
 import { customFetch } from '../api';
+import { watchResultHistory, waitForResultArchive } from '../utils/resultHistoryClient';
 import { getLowestPlanPrice } from '../utils/cashfree';
 import { useAuth } from '../context/AuthContext';
 import { useIntelModal } from '../context/IntelModalContext';
@@ -82,6 +86,7 @@ export interface ResultCalendarItem {
   declarationPdfLink?: string;
   declarationSubject?: string;
   aiSummary?: string;
+  aiSummaryEn?: string;
   quarterKey?: string;
   bseTimestamp?: number;
   filing?: any;
@@ -145,6 +150,11 @@ function calendarStorage() {
   try { return typeof window === 'undefined' ? undefined : window.localStorage; } catch { return undefined; }
 }
 
+export function calendarLinkedScrip(): string {
+  try { const code = new URLSearchParams(window.location.search).get('scrip') || ''; return /^\d{6}$/.test(code) ? code : ''; }
+  catch { return ''; }
+}
+
 export function ResultsCalendar() {
   const { user } = useAuth();
   return <ResultsCalendarView key={user && !user.isAnonymous ? user.uid : 'guest'} />;
@@ -161,7 +171,7 @@ function ResultsCalendarView() {
     observer.observe(toolbar); measure();
     return () => observer.disconnect();
   }, []);
-  const { user, profile, isAdmin, isPro, isPaidPro, adminUnlocked, setIsAuthModalOpen, setIsProModalOpen } = useAuth();
+  const { user, profile, isAdmin, isPro, isPaidPro, adminUnlocked, setIsAuthModalOpen, setIsProModalOpen, setIsAdminPinModalOpen } = useAuth();
   const owner = user && !user.isAnonymous ? user.uid : 'guest';
   const [calendarScope, setCalendarScope] = useState<CalendarScope>(() => readCalendarScope(calendarStorage(), owner));
   const [selectedWatchlistId, setSelectedWatchlistId] = useState<string>('');
@@ -182,8 +192,8 @@ function ResultsCalendarView() {
   // AI summary language (Settings → Telegram Alerts & AI Summaries); English variant lives in aiSummaryEn
   const summaryLang: 'hinglish' | 'english' = profile?.notificationPreferences?.aiSummaryLang === 'hinglish' ? 'hinglish' : 'english';
   const displaySummary = (item: any): string | undefined =>
-    summaryLang === 'english' ? (item?.aiSummaryEn || item?.aiSummary) : item?.aiSummary;
-  const isSuperAdmin = Boolean(isAdmin || adminUnlocked || profile?.tier === 'admin' || user?.isAdmin);
+    summaryLang === 'english' ? (item?.aiSummaryEn || item?.aiSummary) : (item?.aiSummary || item?.aiSummaryEn);
+  const isSuperAdmin = isAdmin;
   const { isDeveloperMode } = useDeveloperMode();
   // SWR: Initialize calendar items immediately from client cache for 0ms transition
   // (12h TTL — survives app restarts via localStorage; fresh data loads in background)
@@ -204,9 +214,9 @@ function ResultsCalendarView() {
   });
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<number>(0);
-  const [statusFilter, setStatusFilter] = useState<'today' | 'upcoming' | 'declared' | 'ai' | 'all'>('upcoming');
+  const [statusFilter, setStatusFilter] = useState<'today' | 'upcoming' | 'declared' | 'ai' | 'all'>(() => calendarLinkedScrip() ? 'all' : 'upcoming');
   const [declarationFilter, setDeclarationFilter] = useState<'all' | 'declared' | 'pending' | 'urgent_3d' | 'week_7d' | 'month_30d' | 'has_ai'>('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(calendarLinkedScrip);
   const [watchlists, setWatchlists] = useState<any[]>([]);
   const [sortBy, setSortBy] = useState<'date_asc' | 'date_desc' | 'status' | 'alpha'>('date_asc');
   
@@ -248,9 +258,9 @@ function ResultsCalendarView() {
       todayDeclaredCount: today.filter(item => item.isDeclared).length,
       todayPendingCount: today.filter(item => !item.isDeclared).length,
       recentCount: items.filter(item => item.daysLeft < 0 && item.daysLeft >= -30).length,
-      aiSummaryCount: items.filter(item => Boolean(item.aiSummary)).length,
+      aiSummaryCount: items.filter(item => Boolean(displaySummary(item))).length,
     };
-  }, [items]);
+  }, [items, summaryLang]);
 
   // Modal inspection state & animations
   const [selectedModalItem, setSelectedModalItem] = useState<ResultCalendarItem | null>(null);
@@ -265,9 +275,19 @@ function ResultsCalendarView() {
   const [modalTab, setModalTab] = useState<'results' | 'meetings'>('results');
   const [stockHistory, setStockHistory] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState<boolean>(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const [historyRetry, setHistoryRetry] = useState(0);
+  const historyRevision = useRef(0);
+  const historySelectionRef = useRef('');
+  const historyController = useRef<AbortController | null>(null);
+  const manualHistoryController = useRef<AbortController | null>(null);
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
+  const aiRequest = useRef<AbortController | null>(null);
   const [aiStepIndex, setAiStepIndex] = useState(0);
   const [isSendingTelegram, setIsSendingTelegram] = useState(false);
+  const telegramRequest = useRef<AbortController | null>(null);
+  const bulkTelegramRequest = useRef<AbortController | null>(null);
+  useEffect(() => () => { bulkTelegramRequest.current?.abort(); bulkTelegramRequest.current = null; }, []);
   const [isPlaneFlying, setIsPlaneFlying] = useState(false);
   const [telegramStatus, setTelegramStatus] = useState<string | null>(null);
   const [lightningId, setLightningId] = useState<string | null>(null);
@@ -275,20 +295,24 @@ function ResultsCalendarView() {
   const [copiedCalendarId, setCopiedCalendarId] = useState<string | null>(null);
   const [showMarketHolidaysModal, setShowMarketHolidaysModal] = useState<boolean>(false);
 
+  const detailsDialog = useCalendarDialog(Boolean(selectedModalItem), () => setSelectedModalItem(null));
+  const filtersDialog = useCalendarDialog(isFilterSheetOpen, () => setIsFilterSheetOpen(false));
+
   // Lock body scroll whenever modal or filter sheet is opened to prevent background movement / scroll chaining
   useBodyScrollLock(Boolean(selectedModalItem || showMarketHolidaysModal || isFilterSheetOpen));
 
   // Deep History (1-5 Years) & Pre-Result Window (10-20 Days) Priority Boost State
-  const [selectedYears, setSelectedYears] = useState<number>(3);
   const [isFetchingDeepHistory, setIsFetchingDeepHistory] = useState<boolean>(false);
   const [deepHistoryMsg, setDeepHistoryMsg] = useState<string | null>(null);
 
   const [runupWindowDays, setRunupWindowDays] = useState<number>(10);
   const [isBoostingRunup, setIsBoostingRunup] = useState<boolean>(false);
-  const [boostRunupMsg, setBoostRunupMsg] = useState<string | null>(null);
+  const [boostRunupMsg, setBoostRunupMsg] = useState<{ type: 'success' | 'warning' | 'error'; message: string; requiresPin?: boolean } | null>(null);
   const [expandedRunupDate, setExpandedRunupDate] = useState<string | null>(null);
   const [runupAnnouncements, setRunupAnnouncements] = useState<any[]>([]);
   const [loadingRunupAnnouncements, setLoadingRunupAnnouncements] = useState<boolean>(false);
+  const [runupError, setRunupError] = useState<string | null>(null);
+  const runupReadController = useRef<AbortController | null>(null);
 
   // Watchlist Deep Sync (1-5 Years) State
   const [isSyncingWatchlistHistory, setIsSyncingWatchlistHistory] = useState<boolean>(false);
@@ -301,103 +325,121 @@ function ResultsCalendarView() {
   const aiQuota = useAiQuota(user, profile, isPro, isAdmin);
   const isTelegramConnected = Boolean(profile?.telegramChatId || user?.telegramChatId);
 
+  const runupSelectionKey = `${owner}:${selectedModalItem?.scripCode || ''}:${selectedModalItem?.meetingDate || ''}:${runupWindowDays}`;
+  const runupSelectionRef = useRef(runupSelectionKey);
+  runupSelectionRef.current = runupSelectionKey;
+  const boostRunupController = useRef<AbortController | null>(null);
+  useEffect(() => {
+    boostRunupController.current?.abort(); boostRunupController.current = null;
+    setBoostRunupMsg(null); setIsBoostingRunup(false);
+    return () => { boostRunupController.current?.abort(); boostRunupController.current = null; };
+  }, [runupSelectionKey]);
+
+  useEffect(() => {
+    runupReadController.current?.abort(); runupReadController.current = null;
+    setExpandedRunupDate(null); setRunupAnnouncements([]); setRunupError(null); setLoadingRunupAnnouncements(false);
+    aiRequest.current?.abort(); aiRequest.current = null;
+    telegramRequest.current?.abort(); telegramRequest.current = null;
+    setIsSendingTelegram(false); setIsPlaneFlying(false);
+    setIsGeneratingAi(false); setTelegramStatus(null); setCopiedSummary(false);
+    return () => { runupReadController.current?.abort(); runupReadController.current = null; aiRequest.current?.abort(); aiRequest.current = null; telegramRequest.current?.abort(); telegramRequest.current = null; };
+  }, [owner, selectedModalItem?.scripCode, selectedModalItem?.meetingDate]);
+
   // Deep History Fetcher for Single Stock (1-5 Years)
   const handleFetchDeepHistory = async (scripCode: string, symbol: string, years: number) => {
     if (!scripCode) return;
-    setIsFetchingDeepHistory(true);
-    setDeepHistoryMsg(null);
-
+    if (isFetchingDeepHistory) return;
+    historyController.current?.abort();
+    const revision = ++historyRevision.current;
+    const controller = new AbortController();
+    manualHistoryController.current?.abort(); manualHistoryController.current = controller;
+    const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(12 * 60_000)]);
+    const current = () => revision === historyRevision.current && !controller.signal.aborted;
+    setIsFetchingDeepHistory(true); setLoadingHistory(false); setHistoryError(null);
+    setDeepHistoryMsg('Starting BSE archive sync...');
     try {
       const res = await customFetch(`/api/stocks/${encodeURIComponent(scripCode)}/fetch-deep-history`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ symbol, years })
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ symbol, years }), signal
       });
       const data = await res.json();
-      if (data && data.success) {
-        setDeepHistoryMsg(data.message || `History sync requested for ${years} year(s). Completion and new filing counts are not confirmed yet.`);
-        // Reload stock history
-        const histRes = await customFetch(`/api/stock-results-history?symbol=${encodeURIComponent(symbol)}&scripCode=${encodeURIComponent(scripCode)}`);
-        const histData = await histRes.json();
-        if (histData && Array.isArray(histData.history)) {
-          setStockHistory(histData.history);
-        }
-        // Refresh general calendar
-        fetchCalendar(false);
-      } else {
-        setDeepHistoryMsg(`⚠️ Sync notice: ${data?.error || 'Unable to fetch historical filings from BSE'}`);
-      }
+      if (!res.ok || !data.success || !data.job) throw new Error(data.error || 'Unable to start BSE archive sync');
+      const job = await waitForResultArchive(data.job, signal, job => {
+        if (current()) setDeepHistoryMsg(`Syncing BSE archive: ${job.processed} filings saved so far...`);
+      });
+      if (!current()) return;
+      let verifiedResults = 0;
+      await watchResultHistory({ symbol, scripCode }, signal, rows => {
+        if (current()) { setStockHistory(rows); verifiedResults = rows.filter(row => row.isOutcome).length; }
+      }, false);
+      if (!current()) return;
+      setDeepHistoryMsg(archiveCompletionMessage(job, verifiedResults));
+      window.dispatchEvent(new Event('company-filings-changed'));
+      void fetchCalendar(false);
     } catch (err: any) {
-      setDeepHistoryMsg(`❌ Error fetching deep history: ${err.message}`);
+      if (current()) setHistoryError(err.message);
     } finally {
-      setIsFetchingDeepHistory(false);
-      setTimeout(() => setDeepHistoryMsg(null), 7000);
+      if (revision === historyRevision.current) setIsFetchingDeepHistory(false);
     }
   };
 
-  // Boost Priority for 10/20-day Pre-Result Window
+  // The existing admin endpoint owns this shared mutation; recovery never retries it automatically.
   const handleBoostRunupPriority = async (scripCode: string, symbol: string, resultDateStr: string, customDays?: number) => {
-    if (!scripCode || !resultDateStr) return;
-    if (!isAdmin) { setBoostRunupMsg('Shared filing priority changes require an administrator.'); return; }
+    if (!scripCode || !resultDateStr || boostRunupController.current) return;
+    if (!isAdmin) { setBoostRunupMsg({ type: 'error', message: 'Shared filing priority changes require an administrator.' }); return; }
     const daysToUse = customDays || runupWindowDays || 10;
-    setIsBoostingRunup(true);
-    setBoostRunupMsg(null);
-
+    const selection = runupSelectionRef.current;
+    const controller = new AbortController(); boostRunupController.current = controller;
+    const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(30000)]);
+    const current = () => !controller.signal.aborted && runupSelectionRef.current === selection && boostRunupController.current === controller;
+    setIsBoostingRunup(true); setBoostRunupMsg(null);
     try {
-      const res = await customFetch(`/api/stocks/${encodeURIComponent(scripCode)}/boost-runup-priority`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ symbol, resultDate: resultDateStr, windowDays: daysToUse })
-      });
-      const data = await res.json();
-      if (data && data.success) {
-        setBoostRunupMsg(`🔥 Set ${data.boostedCount || 0} announcements from ${daysToUse} days before ${resultDateStr} to HIGH Priority!`);
-        // Refresh runup list if expanded
-        if (expandedRunupDate === resultDateStr) {
-          setRunupAnnouncements(data.announcements || []);
-        }
-        // Reload stock history
-        const histRes = await customFetch(`/api/stock-results-history?symbol=${encodeURIComponent(symbol)}&scripCode=${encodeURIComponent(scripCode)}`);
-        const histData = await histRes.json();
-        if (histData && Array.isArray(histData.history)) {
-          setStockHistory(histData.history);
-        }
-        // Refresh main calendar
-        fetchCalendar(false);
-      } else {
-        setBoostRunupMsg(`⚠️ ${data?.error || 'Could not boost pre-result priority'}`);
+      const data = await changeRunupPriority({ scripCode, symbol, resultDate: resultDateStr, windowDays: daysToUse }, signal);
+      if (!current()) return;
+      const message = `Set ${data.boostedCount} announcements from the ${daysToUse}-day window before ${resultDateStr} to HIGH priority.`;
+      setBoostRunupMsg({ type: 'success', message });
+      if (expandedRunupDate === resultDateStr) setRunupAnnouncements(data.announcements);
+      // A failed optional read does not turn a confirmed mutation into a failed update.
+      try {
+        await watchResultHistory({ symbol, scripCode }, signal, rows => { if (current()) setStockHistory(rows); }, false);
+      } catch {
+        if (current()) setBoostRunupMsg({ type: 'warning', message: `${message} Result cards could not refresh; reopen Details to reload them.` });
       }
-    } catch (err: any) {
-      setBoostRunupMsg(`❌ Boost error: ${err.message}`);
+      if (current()) void fetchCalendar(false);
+    } catch (error: any) {
+      if (!current()) return;
+      const requiresPin = error instanceof RunupPriorityError && error.recovery === 'admin-pin';
+      setBoostRunupMsg({ type: 'error', message: error.message || 'Priority update unavailable. Please retry.', requiresPin });
+      if (requiresPin) setIsAdminPinModalOpen(true);
+      else if (error instanceof RunupPriorityError && error.recovery === 'sign-in') setIsAuthModalOpen(true);
     } finally {
-      setIsBoostingRunup(false);
-      setTimeout(() => setBoostRunupMsg(null), 6000);
+      if (current()) { setIsBoostingRunup(false); boostRunupController.current = null; }
     }
   };
 
   // Toggle & Load Pre-Result 10/20-Day Runup Announcements
-  const toggleRunupAnnouncements = async (scripCode: string, symbol: string, resultDateStr: string, customDays?: number) => {
+  const toggleRunupAnnouncements = async (scripCode: string, symbol: string, resultDateStr: string, customDays?: number, reload = false) => {
     const daysToUse = customDays || runupWindowDays || 10;
-    if (expandedRunupDate === resultDateStr) {
-      setExpandedRunupDate(null);
-      setRunupAnnouncements([]);
+    runupReadController.current?.abort(); runupReadController.current = null;
+    if (expandedRunupDate === resultDateStr && !reload) {
+      setExpandedRunupDate(null); setRunupAnnouncements([]); setRunupError(null); setLoadingRunupAnnouncements(false);
       return;
     }
-
-    setExpandedRunupDate(resultDateStr);
-    setLoadingRunupAnnouncements(true);
+    const controller = new AbortController(); runupReadController.current = controller;
+    const selection = runupSelectionRef.current;
+    const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(30000)]);
+    const current = () => !controller.signal.aborted && runupReadController.current === controller && runupSelectionRef.current === selection;
+    setExpandedRunupDate(resultDateStr); setRunupAnnouncements([]); setRunupError(null); setLoadingRunupAnnouncements(true);
     try {
-      const res = await customFetch(`/api/stocks/${encodeURIComponent(scripCode)}/runup-announcements?symbol=${encodeURIComponent(symbol)}&resultDate=${encodeURIComponent(resultDateStr)}&windowDays=${daysToUse}`);
+      const res = await customFetch(`/api/stocks/${encodeURIComponent(scripCode)}/runup-announcements?symbol=${encodeURIComponent(symbol)}&resultDate=${encodeURIComponent(resultDateStr)}&windowDays=${daysToUse}`, { signal });
       const data = await res.json();
-      if (data && Array.isArray(data.announcements)) {
-        setRunupAnnouncements(data.announcements);
-      } else {
-        setRunupAnnouncements([]);
-      }
+      if (!current()) return;
+      if (!res.ok || data?.success !== true || !Array.isArray(data.announcements)) throw new Error('Pre-result filings could not load. Please retry.');
+      setRunupAnnouncements(data.announcements);
     } catch {
-      setRunupAnnouncements([]);
+      if (current()) setRunupError('Pre-result filings could not load. Please retry.');
     } finally {
-      setLoadingRunupAnnouncements(false);
+      if (current()) { setLoadingRunupAnnouncements(false); runupReadController.current = null; }
     }
   };
 
@@ -413,11 +455,12 @@ function ResultsCalendarView() {
         body: JSON.stringify({ years })
       });
       const data = await res.json();
-      if (data && data.success) {
-        setWatchlistSyncFeedback(`✅ Successfully synced ${years}-Year history across ${data.symbolsCount || 0} watchlist stocks (+${data.newlySaved || 0} historical filings)!`);
+      if (res.ok && data?.success === true) {
+        setWatchlistSyncFeedback(`Archive complete: ${years}-year range, ${data.completedCount ?? data.symbolsCount ?? 0} stocks, ${data.newlySaved || 0} filings processed.`);
         fetchCalendar(true);
       } else {
-        setWatchlistSyncFeedback(`⚠️ Notice: ${data?.error || 'Sync completed with warnings'}`);
+        setWatchlistSyncFeedback(`Notice: ${data?.error || 'Archive completion could not be confirmed'}`);
+        if (res.ok && data?.completedCount > 0) void fetchCalendar(false);
       }
     } catch (err: any) {
       setWatchlistSyncFeedback(`❌ Sync failed: ${err.message}`);
@@ -427,25 +470,28 @@ function ResultsCalendarView() {
     }
   };
 
-  // Fetch previous results history whenever a company is opened
+  // One selection owns the read and archive polling; closed/old-company responses are ignored.
   useEffect(() => {
-    if (selectedModalItem) {
-      setLoadingHistory(true);
-      customFetch(`/api/stock-results-history?symbol=${encodeURIComponent(selectedModalItem.symbol)}&scripCode=${encodeURIComponent(selectedModalItem.scripCode || '')}&companyName=${encodeURIComponent(selectedModalItem.companyName || '')}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data && Array.isArray(data.history)) {
-            setStockHistory(data.history);
-          } else {
-            setStockHistory([]);
-          }
-        })
-        .catch(() => setStockHistory([]))
-        .finally(() => setLoadingHistory(false));
-    } else {
-      setStockHistory([]);
-    }
-  }, [selectedModalItem]);
+    const revision = ++historyRevision.current;
+    const controller = new AbortController(); historyController.current = controller;
+    const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(12 * 60_000)]);
+    const selectionKey = `${user?.uid || 'guest'}:${selectedModalItem?.scripCode || ''}:${selectedModalItem?.symbol || ''}`;
+    if (historySelectionRef.current !== selectionKey) setStockHistory([]);
+    historySelectionRef.current = selectionKey;
+    setHistoryError(null); setDeepHistoryMsg(null); setIsFetchingDeepHistory(false);
+    if (!selectedModalItem) { setLoadingHistory(false); return; }
+    setLoadingHistory(true);
+    void watchResultHistory(selectedModalItem, signal, (rows, sync) => {
+      if (revision !== historyRevision.current) return;
+      setStockHistory(rows); setLoadingHistory(false);
+      setDeepHistoryMsg(sync?.state === 'running' ? `Loading BSE archive: ${sync.processed} filings saved so far...` : sync?.state === 'complete' ? archiveCompletionMessage(sync, rows.filter(row => row.isOutcome).length) : null);
+    }).catch(error => {
+      if (revision === historyRevision.current && !controller.signal.aborted) setHistoryError(error.message);
+    }).finally(() => {
+      if (revision === historyRevision.current) setLoadingHistory(false);
+    });
+    return () => { ++historyRevision.current; controller.abort(); manualHistoryController.current?.abort(); };
+  }, [selectedModalItem, user?.uid, historyRetry]);
 
   // Cycle through AI thinking steps
   useEffect(() => {
@@ -470,10 +516,12 @@ function ResultsCalendarView() {
     setTimeout(() => setLightningId(null), 850);
   };
 
-  const handleCopySummary = (text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedSummary(true);
-    setTimeout(() => setCopiedSummary(false), 2000);
+  const handleCopySummary = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedSummary(true);
+      setTimeout(() => setCopiedSummary(false), 2000);
+    } catch { setCopiedSummary(false); alert('Copy failed. Check clipboard permission and try again.'); }
   };
 
   const { openIntelModal } = useIntelModal();
@@ -512,7 +560,7 @@ function ResultsCalendarView() {
       if (res.ok) {
         const data = await res.json();
         if (!isCurrent()) return;
-        if (!Array.isArray(data.items)) throw new Error('Invalid calendar response');
+        if (data.success === false || !Array.isArray(data.items)) throw new Error('Invalid calendar response');
         const rawFetched = data.items;
         const fetchedItems = rawFetched.map((it: any) => ({
           ...it,
@@ -525,30 +573,23 @@ function ResultsCalendarView() {
         if (data.calendarIncomplete) setCalendarError('Some BSE dates could not be refreshed. Previously available dates are retained.');
         if (data.calendarHistoryUnavailable) setCalendarError('Stored calendar history could not be fully recovered. Retry to check missing archive dates.');
         
-        const todayCount = data.todayCount ?? 0;
-        const upcomingFutureCount = data.upcomingFutureCount ?? (data.upcomingCount ? Math.max(0, data.upcomingCount - todayCount) : 0);
+        const currentItems = fetchedItems.map((item: ResultCalendarItem) => projectCalendarTiming(item));
+        const todayCount = currentItems.filter((item: ResultCalendarItem) => item.daysLeft === 0).length;
+        const upcomingFutureCount = currentItems.filter((item: ResultCalendarItem) => item.daysLeft > 0).length;
 
         if (data.background) {
           setWatchlistSyncFeedback("⚡ Full library deep scan running seamlessly in the background. Calendar is live and accessible!");
           setTimeout(() => setWatchlistSyncFeedback(null), 6000);
         }
 
-        // Automatically default to Results Archive (declared) if both Today and Upcoming are empty
-        if (todayCount === 0 && upcomingFutureCount === 0) {
-          setStatusFilter('declared');
-        } else if (statusFilter === 'today' && todayCount === 0) {
-          if (upcomingFutureCount > 0) {
-            setStatusFilter('upcoming');
-          } else {
-            setStatusFilter('declared');
-          }
-        } else if (statusFilter === 'upcoming' && upcomingFutureCount === 0) {
-          if (todayCount > 0) {
-            setStatusFilter('today');
-          } else {
-            setStatusFilter('declared');
-          }
-        }
+        // Reconcile with the view selected when the response arrives, not the old request closure.
+        setStatusFilter(selected => {
+          if (selected === 'all' || selected === 'declared' || selected === 'ai') return selected;
+          if (todayCount === 0 && upcomingFutureCount === 0) return 'declared';
+          if (selected === 'today' && todayCount === 0) return upcomingFutureCount > 0 ? 'upcoming' : 'declared';
+          if (selected === 'upcoming' && upcomingFutureCount === 0) return todayCount > 0 ? 'today' : 'declared';
+          return selected;
+        });
       }
     } catch (err) {
       if (!isCurrent()) return;
@@ -631,7 +672,7 @@ function ResultsCalendarView() {
   });
 
   const handleGenerateSummary = async (announcementId?: string) => {
-    if (!announcementId) return;
+    if (!announcementId || aiRequest.current) return;
 
     const isGuestUser = !user || user.isAnonymous;
     if (isGuestUser) {
@@ -653,15 +694,19 @@ function ResultsCalendarView() {
       return;
     }
 
+    const controller = new AbortController(); aiRequest.current = controller;
+    const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(120000)]);
+    const current = () => !controller.signal.aborted && aiRequest.current === controller;
     setIsGeneratingAi(true);
     setAiStepIndex(0);
     try {
       const res = await customFetch(`/api/announcements/${announcementId}/generate-summary`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lang: profile?.notificationPreferences?.aiSummaryLang === 'hinglish' ? 'hinglish' : 'english' })
+        body: JSON.stringify({ lang: profile?.notificationPreferences?.aiSummaryLang === 'hinglish' ? 'hinglish' : 'english' }), signal
       });
       const data = await res.json().catch(() => null);
+      if (!current()) return;
 
       if (res.status === 401 || data?.authRequired) {
         setIsAuthModalOpen(true);
@@ -688,17 +733,18 @@ function ResultsCalendarView() {
         const summaryPatch = data.aiSummaryLang === 'english'
           ? { aiSummaryEn: data.aiSummary }
           : { aiSummary: data.aiSummary };
-        setSelectedModalItem(prev => prev ? { ...prev, ...summaryPatch } : prev);
+        setSelectedModalItem(prev => prev?.declarationAnnouncementId === announcementId ? { ...prev, ...summaryPatch } : prev);
         setItems(prev => prev.map(i => i.declarationAnnouncementId === announcementId ? { ...i, ...summaryPatch } : i));
       } else {
         const errMsg = data?.error || 'Failed to generate AI summary';
         alert(`⚠️ AI Summary Alert: ${errMsg}`);
       }
     } catch (e: any) {
+      if (!current()) return;
       console.error('Failed to generate summary:', e);
       alert(`⚠️ AI processing error: ${e?.message || 'Connection error'}`);
     } finally {
-      setIsGeneratingAi(false);
+      if (current()) { setIsGeneratingAi(false); aiRequest.current = null; }
     }
   };
 
@@ -710,36 +756,18 @@ function ResultsCalendarView() {
     });
   };
 
-  const handleManualSendTelegram = async (item: ResultCalendarItem) => {
-    if (!item) return;
-
-    const isGuestUser = !user || user.isAnonymous;
-    if (isGuestUser) {
-      setIsAuthModalOpen(true);
-      alert('🔒 Google Sign-In Required: Sign in with Google to activate your 1-Week Free Pro trial to broadcast to Telegram!');
-      return;
-    }
-
-    if (!isProOrAdmin) {
-      setIsProModalOpen(true);
-      alert(isPaidPro ? `🔒 Direct Telegram Broadcasting is a Pro & Admin feature.
-
-Your Pro subscription has expired. Renew Pro (one-time plans from ₹${getLowestPlanPrice()}) to dispatch alerts to Telegram!` : `🔒 Direct Telegram Broadcasting is a Pro & Admin feature.
-
-Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to dispatch alerts to Telegram!`);
-      return;
-    }
-
-    setIsSendingTelegram(true);
-    setIsPlaneFlying(true);
-    setTelegramStatus(null);
-
-    const randomMsg = TELEGRAM_SUCCESS_MESSAGES[Math.floor(Math.random() * TELEGRAM_SUCCESS_MESSAGES.length)];
+  const handleManualSendTelegram = async (item: ResultCalendarItem): Promise<boolean> => {
+    if (!item || telegramRequest.current) return false;
+    if (!user || user.isAnonymous) { setIsAuthModalOpen(true); return false; }
+    if (!isAdmin) { alert('Shared channel broadcasting requires an administrator.'); return false; }
+    const controller = new AbortController(); telegramRequest.current = controller;
+    const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(30000)]);
+    const current = () => !controller.signal.aborted && telegramRequest.current === controller;
+    setIsSendingTelegram(true); setIsPlaneFlying(true); setTelegramStatus(null);
     const calendarLink = getCalendarLink(item);
-
     try {
       const res = await customFetch('/api/send-to-telegram-manual', {
-        method: 'POST',
+        method: 'POST', signal,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           newsId: item.declarationAnnouncementId || item.id,
@@ -753,16 +781,19 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
         })
       });
       const data = await res.json();
-      if (res.ok && data.success) {
-        setTelegramStatus(randomMsg);
-      } else {
-        alert(data.error || 'Failed to dispatch to Telegram');
+      if (!current()) return false;
+      if (res.status === 403 && data?.adminElevationRequired) setIsAdminPinModalOpen(true);
+      if (!res.ok || data?.success !== true || !data.messageId) {
+        alert(data?.error || 'Telegram delivery could not be confirmed. Check the channel before retrying.');
+        return false;
       }
-    } catch (err: any) {
-      alert('Failed to dispatch: ' + err.message);
+      setTelegramStatus('Telegram accepted the alert.');
+      return true;
+    } catch {
+      if (current()) alert('Telegram delivery could not be confirmed. Check the channel before retrying.');
+      return false;
     } finally {
-      setIsSendingTelegram(false);
-      setTimeout(() => setIsPlaneFlying(false), 1200);
+      if (current()) { telegramRequest.current = null; setIsSendingTelegram(false); setIsPlaneFlying(false); }
     }
   };
 
@@ -783,11 +814,13 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
     window.location.href = `mailto:?subject=${subject}&body=${body}`;
   };
 
-  const handleCopyCalendarLink = (item: ResultCalendarItem) => {
-    const calendarLink = getCalendarLink(item);
-    navigator.clipboard.writeText(calendarLink);
-    setCopiedCalendarId(item.id);
-    setTimeout(() => setCopiedCalendarId(null), 2000);
+  const handleCopyCalendarLink = async (item: ResultCalendarItem): Promise<boolean> => {
+    try {
+      await navigator.clipboard.writeText(getCalendarLink(item));
+      setCopiedCalendarId(item.id);
+      setTimeout(() => setCopiedCalendarId(null), 2000);
+      return true;
+    } catch { alert('Copy failed. Check clipboard permission and try again.'); return false; }
   };
 
   // Selection handlers
@@ -854,23 +887,22 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
       return;
     }
 
-    if (!isProOrAdmin) {
-      setIsProModalOpen(true);
-      alert(`🔒 Telegram Broadcasting is a Pro feature.
-
-Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to broadcast to Telegram!`);
-      return;
-    }
+    if (!isAdmin) { alert('Shared channel broadcasting requires an administrator.'); return; }
+    if (bulkTelegramRequest.current) return;
+    const controller = new AbortController(); bulkTelegramRequest.current = controller;
+    const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(120000)]);
+    const current = () => !controller.signal.aborted && bulkTelegramRequest.current === controller;
 
     setIsBulkBroadcasting(true);
     setBulkBroadcastMsg(`Broadcasting ${selectedItems.length} selected board meeting(s) to Telegram...`);
 
     let sent = 0;
     for (const item of selectedItems) {
+      if (!current()) return;
       try {
         const calLink = getCalendarLink(item);
         const res = await customFetch('/api/send-to-telegram-manual', {
-          method: 'POST',
+          method: 'POST', signal,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             newsId: item.declarationAnnouncementId || item.id,
@@ -883,15 +915,24 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
             calendarUrl: calLink
           })
         });
-        if (res.ok) sent++;
+        const data = await res.json();
+        if (!current()) return;
+        if (res.ok && data?.success === true && data.messageId) sent++;
+        else {
+          if (res.status === 403 && data?.adminElevationRequired) setIsAdminPinModalOpen(true);
+          break;
+        }
       } catch (e) {
         console.error('Error sending item in bulk:', e);
+        break;
       }
     }
 
+    if (!current()) return;
+    bulkTelegramRequest.current = null;
     setIsBulkBroadcasting(false);
-    setBulkBroadcastMsg(`✅ Successfully sent ${sent}/${selectedItems.length} selected meeting(s) to Telegram!`);
-    setTimeout(() => setBulkBroadcastMsg(null), 4000);
+    setBulkBroadcastMsg(sent === selectedItems.length ? `Telegram accepted ${sent}/${selectedItems.length} selected alerts.` : `Telegram accepted ${sent}/${selectedItems.length} alerts. Remaining deliveries are unconfirmed; check the channel before retrying.`);
+
   };
 
   // Broadcast All Upcoming Board Meetings to Telegram
@@ -903,24 +944,24 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
       return;
     }
 
-    if (!isProOrAdmin) {
-      setIsProModalOpen(true);
-      alert(`🔒 Telegram Broadcasting is a Pro feature.
-
-Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to broadcast to Telegram!`);
-      return;
-    }
+    if (!isAdmin) { alert('Shared channel broadcasting requires an administrator.'); return; }
+    if (bulkTelegramRequest.current) return;
+    const controller = new AbortController(); bulkTelegramRequest.current = controller;
+    const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(120000)]);
+    const current = () => !controller.signal.aborted && bulkTelegramRequest.current === controller;
 
     setIsBulkBroadcasting(true);
     setBulkBroadcastMsg('Broadcasting upcoming board meetings schedule to Telegram...');
 
     try {
       const res = await customFetch('/api/results-calendar/telegram-broadcast', {
-        method: 'POST',
+        method: 'POST', signal,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ forceAll })
       });
       const data = await res.json();
+      if (!current()) return;
+      if (res.status === 403 && data?.adminElevationRequired) setIsAdminPinModalOpen(true);
       if (res.ok && data.success) {
         setBulkBroadcastMsg(`✅ ${data.message || `Broadcast ${data.count} meetings to Telegram.`}`);
       } else {
@@ -928,11 +969,11 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
         setBulkBroadcastMsg(null);
       }
     } catch (err: any) {
+      if (!current()) return;
       alert('Error broadcasting to Telegram: ' + err.message);
       setBulkBroadcastMsg(null);
     } finally {
-      setIsBulkBroadcasting(false);
-      setTimeout(() => setBulkBroadcastMsg(null), 4500);
+      if (current()) { bulkTelegramRequest.current = null; setIsBulkBroadcasting(false); }
     }
   };
 
@@ -951,7 +992,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
       // Keep all recorded past meetings accessible without inventing a declaration.
       result = result.filter(i => i.isDeclared || i.daysLeft < 0);
     } else if (statusFilter === 'ai') {
-      result = result.filter(i => Boolean(i.aiSummary));
+      result = result.filter(i => Boolean(displaySummary(i)));
     }
 
     // 2. Contextual Sub-Filter
@@ -966,7 +1007,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
     } else if (declarationFilter === 'month_30d') {
       result = result.filter(i => i.daysLeft >= 1 && i.daysLeft <= 30);
     } else if (declarationFilter === 'has_ai') {
-      result = result.filter(i => Boolean(i.aiSummary));
+      result = result.filter(i => Boolean(displaySummary(i)));
     }
 
     // 3. Search Query
@@ -1003,12 +1044,12 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
     }
 
     return result;
-  }, [items, statusFilter, declarationFilter, searchQuery, sortBy, calendarScope]);
+  }, [items, statusFilter, declarationFilter, searchQuery, sortBy, calendarScope, summaryLang]);
 
   // Reset page when filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [statusFilter, declarationFilter, searchQuery, selectedWatchlistId, sortBy, calendarScope]);
+  }, [statusFilter, declarationFilter, searchQuery, selectedWatchlistId, sortBy, calendarScope, summaryLang]);
 
   // Dynamic live horizon counts for upcoming tab
   const upcomingItems = useMemo(() => items.filter(i => i.status === 'UPCOMING' || i.daysLeft > 0), [items]);
@@ -1018,19 +1059,21 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
 
   // Dynamic counts for recent & all sub-filters
   const recentItems = useMemo(() => items.filter(i => i.status === 'RECENT' || (i.daysLeft < 0 && i.daysLeft >= -30)), [items]);
-  const recentAiCount = useMemo(() => recentItems.filter(i => Boolean(i.aiSummary)).length, [recentItems]);
+  const recentAiCount = useMemo(() => recentItems.filter(i => Boolean(displaySummary(i))).length, [recentItems, summaryLang]);
   const recentDeclaredCount = useMemo(() => recentItems.filter(i => i.isDeclared === true).length, [recentItems]);
 
-  const allAiCount = useMemo(() => items.filter(i => Boolean(i.aiSummary)).length, [items]);
+  const allAiCount = useMemo(() => items.filter(i => Boolean(displaySummary(i))).length, [items, summaryLang]);
   const allDeclaredCount = useMemo(() => items.filter(i => i.isDeclared === true).length, [items]);
   const allPendingCount = useMemo(() => items.filter(i => !i.isDeclared && i.daysLeft >= 0).length, [items]);
 
   // Pagination calculation
   const totalPages = Math.max(1, Math.ceil(filteredAndSortedItems.length / itemsPerPage));
+  const visiblePage = Math.min(currentPage, totalPages);
+  useEffect(() => { setCurrentPage(page => Math.min(page, totalPages)); }, [totalPages]);
   const paginatedItems = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
+    const startIndex = (visiblePage - 1) * itemsPerPage;
     return filteredAndSortedItems.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredAndSortedItems, currentPage, itemsPerPage]);
+  }, [filteredAndSortedItems, visiblePage, itemsPerPage]);
 
   const formatLastUpdated = (ts: number) => {
     if (!ts) return 'Never';
@@ -1102,7 +1145,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
 
   // Split history into Financial Results (1 canonical Result per Quarter) vs Board Meetings
   const financialResultsHistory = useMemo(() => {
-    const rawResults = stockHistory.filter(h => (h.isOutcome || h.status === 'Declared' || h.status === 'Outcome Declared') && !h.periodOrMeeting?.toLowerCase().startsWith('board meeting:'));
+    const rawResults = stockHistory.filter(h => String(h.scripCode) === String(selectedModalItem?.scripCode) && (h.isOutcome || h.status === 'Declared' || h.status === 'Outcome Declared') && !h.periodOrMeeting?.toLowerCase().startsWith('board meeting:'));
     const map = new Map<string, any>();
     
     rawResults.forEach(item => {
@@ -1118,52 +1161,12 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
       }
     });
 
-    if (selectedModalItem && selectedModalItem.isDeclared) {
-      const modalQuarterKey = selectedModalItem.quarterKey || `current-${selectedModalItem.meetingDate}`;
-      const existing = map.get(modalQuarterKey) || Array.from(map.values()).find(x => 
-        (x.quarterKey && selectedModalItem.quarterKey && x.quarterKey === selectedModalItem.quarterKey) ||
-        x.meetingDate === selectedModalItem.meetingDate || 
-        x.declarationDate === selectedModalItem.meetingDate
-      );
-      if (existing) {
-        if (!existing.declarationTime && selectedModalItem.resultDeclarationTime) {
-          existing.declarationTime = formatTimeOnly(selectedModalItem.resultDeclarationTime);
-          existing.declaredAtFormatted = selectedModalItem.resultDeclarationTime;
-        }
-        if (!existing.pdfLink && selectedModalItem.declarationPdfLink) {
-          existing.pdfLink = selectedModalItem.declarationPdfLink;
-        }
-      } else {
-        map.set(modalQuarterKey, {
-          id: selectedModalItem.id,
-          quarterKey: selectedModalItem.quarterKey,
-          periodOrMeeting: selectedModalItem.purpose || `Financial Results (${selectedModalItem.meetingDate})`,
-          meetingDate: selectedModalItem.meetingDate,
-          boardMeetingDate: selectedModalItem.meetingDate,
-          declarationDate: selectedModalItem.resultDeclarationTime ? formatDateOnly(selectedModalItem.resultDeclarationTime) : selectedModalItem.meetingDate,
-          declarationTime: selectedModalItem.resultDeclarationTime ? formatTimeOnly(selectedModalItem.resultDeclarationTime) : '',
-          declaredAtFormatted: selectedModalItem.resultDeclarationTime || `${selectedModalItem.meetingDate} IST`,
-          exactDateTimeStr: selectedModalItem.resultDeclarationTime ? formatFullDateTime(selectedModalItem.resultDeclarationTime) : selectedModalItem.meetingDate,
-          submissionTimestamp: selectedModalItem.meetingTimestamp || Date.now(),
-          subject: selectedModalItem.declarationSubject || selectedModalItem.purpose,
-          details: selectedModalItem.purpose,
-          pdfLink: selectedModalItem.declarationPdfLink,
-          aiSummary: selectedModalItem.aiSummary,
-          isOutcome: true,
-          status: "Declared",
-          priority: 'HIGH',
-          followUpFilings: [],
-          followUpCount: 0
-        });
-      }
-    }
-
     return Array.from(map.values()).sort((a, b) => (b.submissionTimestamp || 0) - (a.submissionTimestamp || 0));
   }, [stockHistory, selectedModalItem]);
 
   const boardMeetingsHistory = useMemo(() => {
-    return stockHistory.filter(h => !h.isOutcome || h.periodOrMeeting?.toLowerCase().includes('board meeting') || h.status?.includes('Upcoming') || h.status?.includes('Meeting'));
-  }, [stockHistory]);
+    return stockHistory.filter(h => String(h.scripCode) === String(selectedModalItem?.scripCode) && (!h.isOutcome || h.periodOrMeeting?.toLowerCase().includes('board meeting') || h.status?.includes('Upcoming') || h.status?.includes('Meeting')));
+  }, [stockHistory, selectedModalItem]);
 
   return (
     <div ref={calendarContainerRef} className="space-y-2 overscroll-y-contain relative">
@@ -1366,6 +1369,8 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
 
             {/* Sheet Content */}
             <motion.div
+              {...filtersDialog}
+              aria-label="Calendar filters and operations"
               initial={{ y: "100%", opacity: 0.5 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: "100%", opacity: 0 }}
@@ -1425,7 +1430,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                       onClick={() => handleBroadcastAllUpcoming(false)}
                       isLoading={isBulkBroadcasting}
                       loadingText="Broadcasting..."
-                      disabled={summaryStats.upcomingFutureCount === 0}
+                      disabled={summaryStats.upcomingCount === 0}
                       variant="secondary"
                       size="md"
                       className="min-h-[44px] justify-center col-span-2 sm:col-span-1 bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800"
@@ -1738,7 +1743,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                 <span>Add Selected ({selectedIds.size}) to Calendar</span>
               </button>
 
-              <ActionButton
+              {isAdmin && <ActionButton
                 type="button"
                 onClick={handleBulkSendSelectedTelegram}
                 isLoading={isBulkBroadcasting}
@@ -1750,7 +1755,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                 title="Broadcast selected board meetings to Telegram channel"
               >
                 Broadcast to Telegram ({selectedIds.size})
-              </ActionButton>
+              </ActionButton>}
 
               <button
                 type="button"
@@ -2109,10 +2114,10 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                       </span>
                     </div>
 
-                    {isDeclared && item.aiSummary && (
+                    {isDeclared && displaySummary(item) && (
                       <div className="p-1.5 bg-slate-50 dark:bg-[#201E2E] border border-slate-200/80 dark:border-[#2D283E] rounded text-[11px] text-slate-700 dark:text-slate-300 mt-1 flex items-start gap-1">
                         <Sparkles size={11} className="text-amber-500 shrink-0 mt-0.5" />
-                        <span className={cn(viewMode === 'grid' ? "line-clamp-2" : "line-clamp-1")}>{item.aiSummary}</span>
+                        <span className={cn(viewMode === 'grid' ? "line-clamp-2" : "line-clamp-1")}>{displaySummary(item)}</span>
                       </div>
                     )}
                   </div>
@@ -2265,24 +2270,23 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                               <span>Apple / Outlook (.ICS)</span>
                             </button>
 
-                            <button
+                            {isAdmin && <button
                               type="button"
-                              onClick={() => {
-                                handleManualSendTelegram(item);
-                                setActionFeedback('Sent to Telegram');
+                              onClick={async () => {
+                                if (!await handleManualSendTelegram(item)) return;
+                                setActionFeedback('Telegram accepted the alert');
                                 setTimeout(() => { setActionFeedback(null); setActiveActionMenuId(null); }, 1500);
                               }}
                               className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#252236] transition-colors cursor-pointer text-left"
                             >
                               <Send size={13} className="text-blue-500" />
                               <span>Telegram Alert</span>
-                            </button>
+                            </button>}
 
                             <button
                               type="button"
-                              onClick={() => {
-                                const calUrl = getCalendarLink(item);
-                                navigator.clipboard.writeText(calUrl);
+                              onClick={async () => {
+                                if (!await handleCopyCalendarLink(item)) return;
                                 setActionFeedback('Calendar link copied');
                                 setTimeout(() => { setActionFeedback(null); setActiveActionMenuId(null); }, 1500);
                               }}
@@ -2294,18 +2298,18 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                           </>
                         ) : (
                           <>
-                            <button
+                            {isAdmin && <button
                               type="button"
-                              onClick={() => {
-                                handleManualSendTelegram(item);
-                                setActionFeedback('Broadcasted to Telegram');
+                              onClick={async () => {
+                                if (!await handleManualSendTelegram(item)) return;
+                                setActionFeedback('Telegram accepted the alert');
                                 setTimeout(() => { setActionFeedback(null); setActiveActionMenuId(null); }, 1500);
                               }}
                               className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#252236] transition-colors cursor-pointer text-left"
                             >
                               <Send size={13} className="text-blue-500" />
                               <span>Broadcast to Telegram</span>
-                            </button>
+                            </button>}
 
                             {item.declaredDetails?.pdfUrl && (
                               <button
@@ -2381,20 +2385,20 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
 
             <div className="flex items-center gap-1.5 w-full sm:w-auto justify-between sm:justify-end">
               <button 
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(Math.max(1, visiblePage - 1))}
+                disabled={visiblePage === 1}
                 className="px-2.5 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 rounded text-[11px] font-bold text-slate-700 dark:text-slate-300 transition-colors cursor-pointer shadow-2xs"
               >
                 Prev
               </button>
               
               <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 px-1">
-                Page {currentPage} of {totalPages}
+                Page {visiblePage} of {totalPages}
               </span>
 
               <button 
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(Math.min(totalPages, visiblePage + 1))}
+                disabled={visiblePage === totalPages}
                 className="px-2.5 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 rounded text-[11px] font-bold text-slate-700 dark:text-slate-300 transition-colors cursor-pointer shadow-2xs"
               >
                 Next
@@ -2420,7 +2424,9 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
             className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 z-50 overscroll-contain"
             onClick={() => setSelectedModalItem(null)}
           >
-            <motion.div 
+            <motion.div
+              {...detailsDialog}
+              aria-labelledby="calendar-details-title"
               initial={{ scale: 0.96, opacity: 0, y: 16 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.96, opacity: 0, y: 16 }}
@@ -2435,7 +2441,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
               <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-start justify-between gap-3 bg-slate-50/50 dark:bg-slate-900/40">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-base font-extrabold text-slate-900 dark:text-white truncate">
+                    <h3 id="calendar-details-title" className="text-base font-extrabold text-slate-900 dark:text-white truncate">
                       {getCorrectCompanyName(selectedModalItem)} ({selectedModalItem.symbol})
                     </h3>
                     <span className="text-[10px] font-mono px-1.5 py-0.5 bg-slate-200/80 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded font-bold shrink-0">
@@ -2482,6 +2488,8 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                 </div>
 
                 <button
+                  type="button"
+                  aria-label="Close calendar details"
                   onClick={() => setSelectedModalItem(null)}
                   className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
                 >
@@ -2519,9 +2527,9 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                   )}
                 >
                   <CalendarDays size={15} />
-                  <span>Upcoming Board Meetings</span>
+                  <span>Board Meetings &amp; History</span>
                   <span className="text-[10px] font-mono px-1.5 py-0.2 bg-slate-200 dark:bg-slate-700 rounded-full">
-                    {boardMeetingsHistory.length || 1}
+                    {boardMeetingsHistory.length}
                   </span>
                 </button>
               </div>
@@ -2592,9 +2600,11 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                           <button
                             type="button"
                             onClick={() => {
+                              if (runupWindowDays === 10) return;
+                              runupSelectionRef.current = `${owner}:${selectedModalItem.scripCode}:${selectedModalItem.meetingDate}:10`;
                               setRunupWindowDays(10);
                               if (expandedRunupDate) {
-                                toggleRunupAnnouncements(selectedModalItem.scripCode, selectedModalItem.symbol, selectedModalItem.meetingDate, 10);
+                                toggleRunupAnnouncements(selectedModalItem.scripCode, selectedModalItem.symbol, selectedModalItem.meetingDate, 10, true);
                               }
                             }}
                             className={cn(
@@ -2609,9 +2619,11 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                           <button
                             type="button"
                             onClick={() => {
+                              if (runupWindowDays === 20) return;
+                              runupSelectionRef.current = `${owner}:${selectedModalItem.scripCode}:${selectedModalItem.meetingDate}:20`;
                               setRunupWindowDays(20);
                               if (expandedRunupDate) {
-                                toggleRunupAnnouncements(selectedModalItem.scripCode, selectedModalItem.symbol, selectedModalItem.meetingDate, 20);
+                                toggleRunupAnnouncements(selectedModalItem.scripCode, selectedModalItem.symbol, selectedModalItem.meetingDate, 20, true);
                               }
                             }}
                             className={cn(
@@ -2634,7 +2646,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                           <span>{expandedRunupDate === selectedModalItem.meetingDate ? `Hide ${runupWindowDays}D Filings` : `View ${runupWindowDays}D Filings`}</span>
                         </button>
 
-                        <ActionButton
+                        {isAdmin && <ActionButton
                           onClick={() => handleBoostRunupPriority(selectedModalItem.scripCode, selectedModalItem.symbol, selectedModalItem.meetingDate, runupWindowDays)}
                           isLoading={isBoostingRunup}
                           loadingText="Boosting..."
@@ -2644,15 +2656,20 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                           icon={<Zap size={13} />}
                         >
                           Set {runupWindowDays}D to HIGH
-                        </ActionButton>
+                        </ActionButton>}
                       </div>
                     </div>
 
-                    {/* Pre-Result Boost Alert Notice */}
+                    {/* A denied update must never display a success checkmark. */}
                     {boostRunupMsg && (
-                      <div className="p-2.5 bg-amber-100/90 dark:bg-amber-950/80 border border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-200 text-xs rounded-lg flex items-center gap-2 animate-in fade-in">
-                        <CheckCircle2 size={15} className="text-amber-600 shrink-0" />
-                        <span className="font-bold">{boostRunupMsg}</span>
+                      <div role={boostRunupMsg.type === 'error' ? 'alert' : 'status'} className={cn('p-2.5 rounded-lg text-xs flex items-start gap-2 border',
+                        boostRunupMsg.type === 'success'
+                          ? 'bg-emerald-50 border-emerald-200 text-emerald-900 dark:bg-emerald-950/60 dark:border-emerald-800 dark:text-emerald-200'
+                          : 'bg-amber-50 border-amber-300 text-amber-900 dark:bg-amber-950/60 dark:border-amber-700 dark:text-amber-200')}>
+                        {boostRunupMsg.type === 'success' ? <CheckCircle2 size={15} className="shrink-0 mt-0.5" /> : <AlertTriangle size={15} className="shrink-0 mt-0.5" />}
+                        <div><p className="font-semibold">{boostRunupMsg.message}</p>
+                          {boostRunupMsg.requiresPin && <button type="button" onClick={() => setIsAdminPinModalOpen(true)} className="mt-2 font-semibold underline">Verify admin PIN</button>}
+                        </div>
                       </div>
                     )}
 
@@ -2665,7 +2682,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                             <span>Pre-Result Filings ({runupWindowDays} Days before {selectedModalItem.meetingDate})</span>
                           </span>
                           <span className="text-[10px] font-mono px-2 py-0.5 bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 rounded-full font-bold">
-                            {runupAnnouncements.length} Disclosures Found
+                            {loadingRunupAnnouncements ? 'Loading…' : runupError ? 'Unavailable' : `${runupAnnouncements.length} Disclosures Found`}
                           </span>
                         </div>
 
@@ -2677,6 +2694,11 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                                 <div className="h-2.5 w-1/3 bg-slate-200/70 dark:bg-slate-700/70 rounded" />
                               </div>
                             ))}
+                          </div>
+                        ) : runupError ? (
+                          <div role="alert" className="py-2 text-xs text-amber-800 dark:text-amber-200">
+                            <p>{runupError}</p>
+                            <button type="button" className="mt-2 underline font-semibold" onClick={() => toggleRunupAnnouncements(selectedModalItem.scripCode, selectedModalItem.symbol, selectedModalItem.meetingDate, runupWindowDays, true)}>Retry pre-result filings</button>
                           </div>
                         ) : runupAnnouncements.length > 0 ? (
                           <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
@@ -2710,7 +2732,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                           </div>
                         ) : (
                           <div className="py-2 text-center text-xs text-slate-400">
-                            No separate corporate filings recorded in this {runupWindowDays}-day pre-result window yet. Use <strong>Fetch 1-5 Yr History</strong> below to pull past filings directly from BSE.
+                            No separate corporate filings recorded in this {runupWindowDays}-day pre-result window yet. Use <strong>Sync BSE History</strong> below to pull past filings directly from BSE.
                           </div>
                         )}
                       </div>
@@ -2718,65 +2740,6 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                   </div>
 
                   {/* 1-5 Years Historical BSE Filings Fetcher Card */}
-                  <div className={cn(heliosCard, "p-4 space-y-3")}>
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div className="flex items-start gap-2.5">
-                        <div className="p-2 rounded-lg bg-emerald-600 text-white shadow-2xs shrink-0 mt-0.5">
-                          <History size={16} />
-                        </div>
-                        <div>
-                          <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                            <span>BSE 1–5 Year Historical Results & Filings Sync</span>
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">
-                              Deep History
-                            </span>
-                          </div>
-                          <div className="text-[11px] text-slate-500 mt-0.5">
-                            Fetch 1 to 5 years of historical quarterly financial results, board meetings & time-stamped outcomes for <strong>{selectedModalItem.symbol}</strong>.
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                        <CustomDropdown
-                          options={[
-                            { value: 1, label: '1 Year (1 yr)' },
-                            { value: 2, label: '2 Years (2 yrs)' },
-                            { value: 3, label: '3 Years (3 yrs)' },
-                            { value: 5, label: '5 Years (5 yrs)' }
-                          ]}
-                          value={selectedYears}
-                          onChange={(val) => {
-                            const y = Number(val);
-                            setSelectedYears(y);
-                            handleFetchDeepHistory(selectedModalItem.scripCode, selectedModalItem.symbol, y);
-                          }}
-                          size="sm"
-                          menuWidth="w-36"
-                          align="right"
-                        />
-
-                        <button
-                          type="button"
-                          onClick={() => handleFetchDeepHistory(selectedModalItem.scripCode, selectedModalItem.symbol, selectedYears)}
-                          disabled={isFetchingDeepHistory}
-                          className="rich-action rich-action-primary px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold rounded-lg shadow-2xs flex items-center gap-1.5 disabled:opacity-50 transition-all cursor-pointer"
-                        >
-                          <Download size={13} className={cn(isFetchingDeepHistory && "animate-bounce")} />
-                          <span>{isFetchingDeepHistory ? "Fetching History..." : `Fetch ${selectedYears} Yr History`}</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Deep History Feedback Message */}
-                    {deepHistoryMsg && (
-                      <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 text-xs rounded-lg flex items-center gap-2 animate-in fade-in">
-                        <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
-                        <span className="font-semibold">{deepHistoryMsg}</span>
-                      </div>
-                    )}
-                  </div>
-
                   {/* Gemini AI Financial Metrics Breakdown */}
                   <div className="p-4 bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-800/60 rounded-xl space-y-2.5">
                     <div className="flex items-center justify-between">
@@ -2863,7 +2826,9 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                       symbol={selectedModalItem.symbol}
                       scripCode={selectedModalItem.scripCode}
                       companyName={selectedModalItem.companyName}
-                      isLoading={loadingHistory}
+                      isLoading={loadingHistory && stockHistory.length === 0}
+                      errorMessage={historyError}
+                      onRefresh={() => setHistoryRetry(value => value + 1)}
                       onFetchDeepHistory={(years) => handleFetchDeepHistory(selectedModalItem.scripCode, selectedModalItem.symbol, years)}
                       isFetchingDeep={isFetchingDeepHistory}
                       deepHistoryMsg={deepHistoryMsg}
@@ -2878,7 +2843,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                   {/* Meeting Scheduled Card */}
                   {(() => {
                     const holidayCheck = checkIfDateIsTradingHoliday(selectedModalItem.meetingDate);
-                    const isPast = !selectedModalItem.isDeclared && selectedModalItem.daysLeft < 0;
+                    const isPast = selectedModalItem.daysLeft < 0;
                     const isToday = selectedModalItem.status === 'TODAY' || selectedModalItem.daysLeft === 0;
 
                     return (
@@ -3080,7 +3045,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
             <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 flex items-center justify-between gap-3 flex-wrap">
               {selectedModalItem.declarationPdfLink ? (
                 <a
-                  href={selectedModalItem.declarationPdfLink}
+                  href={getSafePdfUrl(selectedModalItem.declarationPdfLink, undefined, selectedModalItem.declarationAnnouncementId, selectedModalItem.scripCode)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-800 dark:text-slate-200 text-xs font-bold rounded-lg transition-colors"
@@ -3137,9 +3102,9 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                 </motion.button>
 
                 {/* Dispatch to Telegram with Calendar Link */}
-                <ActionButton
+                {isAdmin && <ActionButton
                   type="button"
-                  onClick={() => handleManualSendTelegram(selectedModalItem)}
+                  onClick={async () => { await handleManualSendTelegram(selectedModalItem); }}
                   isLoading={isSendingTelegram}
                   loadingText="Broadcasting..."
                   variant="primary"
@@ -3153,7 +3118,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                   title="Broadcast to Telegram with 1-Click Calendar Link"
                 >
                   Dispatch to Telegram
-                </ActionButton>
+                </ActionButton>}
               </div>
             </div>
           </motion.div>

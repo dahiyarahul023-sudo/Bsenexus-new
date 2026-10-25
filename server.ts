@@ -1,3 +1,4 @@
+import { injectRouteHeading } from './server/utils/routeHeading.js';
 import { matchesCompanyFiling } from './src/shared/scripMatching.js';
 import { getKeywordGuide, KEYWORD_GUIDE_CSS } from './src/content/keywordGuides.js';
 import 'dotenv/config';
@@ -67,10 +68,10 @@ process.on('uncaughtException', (err: any) => {
 const app = express();
 
 // Trust reverse proxy (Cloud Run / Nginx) so client IP and rate-limiting work properly
-// Number of reverse-proxy hops in front of the app. Default 1 (Cloud Run's
-// front end). If another proxy/CDN (e.g. Cloudflare) sits in front of Cloud Run,
-// set TRUST_PROXY_HOPS=2 so req.ip is the real visitor, not the CDN edge.
-// Never trust X-Forwarded-For entries beyond the hops we actually operate.
+// Preserve the existing one-hop policy by default. Override only after verifying
+// the actual ingress/header chain and restricting any shorter origin path;
+// another CDN alone does not establish a safe hop count.
+// Never trust X-Forwarded-For entries beyond the verified proxy boundary.
 const trustProxyHops = Number.parseInt(process.env.TRUST_PROXY_HOPS || '1', 10);
 app.set('trust proxy', Number.isInteger(trustProxyHops) && trustProxyHops >= 0 && trustProxyHops <= 5 ? trustProxyHops : 1);
 
@@ -6800,7 +6801,7 @@ function injectTabSeoMetadata(html: string, tabQuery?: string): string {
     }
   }
 
-  return transformed;
+  return injectRouteHeading(transformed, normalizedKey || 'default');
 }
 
 // Helper to compute Cloudflare edge and browser Cache-Control headers for SPA routes

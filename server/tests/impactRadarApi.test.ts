@@ -19,7 +19,7 @@ globalThis.fetch = (async (input: any, init: any) => {
 const { impactRadarRouter } = await import('../api/impactRadar.js');
 const { radarRecordFromSource, classifyRadarEvent } = await import('../services/impactRadarService.js');
 const app = express(); app.use(express.json());
-app.use((req, _res, next) => { if (req.headers.authorization === 'Bearer alice') (req as any).user = { uid: 'alice', isAnonymous: false }; if (req.headers.authorization === 'Bearer admin') (req as any).user = { uid: 'admin', isAnonymous: false, isAdmin: true }; next(); });
+app.use((req, _res, next) => { if (req.headers.authorization === 'Bearer alice') (req as any).user = { uid: 'alice', isAnonymous: false }; if (req.headers.authorization === 'Bearer admin') (req as any).user = { uid: 'admin', email: 'dahiyarahul023@gmail.com', emailVerified: true, isAnonymous: false, isAdmin: true, adminElevatedUntil: Date.now()+60000 }; next(); });
 app.use('/api/impact-radar', impactRadarRouter);
 const server = app.listen(0, '127.0.0.1'); await once(server, 'listening');
 const url = `http://127.0.0.1:${(server.address() as any).port}/api/impact-radar`;

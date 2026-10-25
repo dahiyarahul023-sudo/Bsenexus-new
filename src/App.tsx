@@ -4,20 +4,15 @@ import { PageSkeleton } from './components/ui/PageSkeleton';
 import { useScreenTransition } from './hooks/useScreenTransition';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { IntelModalProvider } from './context/IntelModalContext';
-import { NoteEditorProvider } from './context/NoteEditorContext';
+import { NoteEditorProvider, useNoteEditor } from './context/NoteEditorContext';
 import { ToastProvider, useToast } from './context/ToastContext';
 import { customFetch } from './api';
 import { verifyProPayment, clearPendingOrderId, getPlanDisplayFromOrderId, isValidPlanId } from './utils/cashfree';
 import { useVisibilityInterval } from './hooks/useVisibilityInterval';
+import { usePaymentDialog } from './hooks/usePaymentDialog';
 import type { DesignTheme } from './types';
 
 import { LandingPage } from './components/LandingPage';
-import { Layout } from './components/Layout';
-import { AuthModal } from './components/AuthModal';
-import { ProUpgradeModal } from './components/ProUpgradeModal';
-import { ProCheckoutView } from './components/ProCheckoutView';
-import { ProReceiptView } from './components/ProReceiptView';
-import { AdminPinModal } from './components/AdminPinModal';
 
 /**
  * Wraps dynamic React.lazy imports with automated retry logic to seamlessly recover
@@ -77,13 +72,90 @@ function TabFallback() {
     </div>
   );
 }
+
+// A lazy import only saves startup work when no eager import reaches the same
+// module. Keep the entire terminal shell and closed dialogs outside the public
+// landing dependency graph. Each boundary preserves the existing page and gives
+// a failed chunk the same reload/recovery path as a failed tab.
+function deferredComponent<Props extends object>(
+  label: string,
+  load: () => Promise<{ default: React.ComponentType<Props> }>,
+  overlay = false,
+) {
+  const Content = lazyWithRetry(load);
+  return function DeferredComponent(props: Props) {
+    const cancel = useDeferredCancel(label);
+    return (
+      <TabErrorBoundary label={label} overlay={overlay} onBack={overlay ? cancel : undefined} backLabel="Close">
+        <Suspense fallback={overlay ? <PendingOverlay label={label} /> : <PageSkeleton page="home" />}>
+          <Content {...props} />
+        </Suspense>
+      </TabErrorBoundary>
+    );
+  };
+}
+
+function useDeferredCancel(label: string) {
+  const { setIsAuthModalOpen, setIsProModalOpen, setIsAdminPinModalOpen, setIsCheckoutOpen, setReceipt } = useAuth();
+  const { closeNoteEditor } = useNoteEditor();
+  return () => {
+    if (label === 'sign in') setIsAuthModalOpen(false);
+    else if (label === 'plans') setIsProModalOpen(false);
+    else if (label === 'admin access') setIsAdminPinModalOpen(false);
+    else if (label === 'checkout') setIsCheckoutOpen(false);
+    else if (label === 'receipt') setReceipt(null);
+    else closeNoteEditor();
+  };
+}
+
+function PendingOverlay({ label }: { label: string }) {
+  const cancel = useDeferredCancel(label);
+  const dialog = usePaymentDialog(true, cancel);
+  return (
+    <div ref={dialog} className="fixed inset-0 z-[150] grid place-items-center bg-slate-950/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={`Opening ${label}`}>
+      <div className="rounded-2xl bg-white dark:bg-slate-900 px-8 py-5 text-sm text-slate-700 dark:text-slate-200">
+        <p role="status">Opening {label}…</p>
+        <button type="button" onClick={cancel} className="mt-4 min-h-11 rounded-full px-4 border border-slate-300 dark:border-slate-600">Cancel</button>
+      </div>
+    </div>
+  );
+}
+
+const Layout = deferredComponent('terminal', () => import('./components/Layout').then(m => ({ default: m.Layout })));
+const AuthModal = deferredComponent('sign in', () => import('./components/AuthModal').then(m => ({ default: m.AuthModal })), true);
+const ProUpgradeModal = deferredComponent('plans', () => import('./components/ProUpgradeModal').then(m => ({ default: m.ProUpgradeModal })), true);
+const AdminPinModal = deferredComponent('admin access', () => import('./components/AdminPinModal').then(m => ({ default: m.AdminPinModal })), true);
+const ProCheckoutView = deferredComponent('checkout', () => import('./components/ProCheckoutView').then(m => ({ default: m.ProCheckoutView })), true);
+const ProReceiptView = deferredComponent('receipt', () => import('./components/ProReceiptView').then(m => ({ default: m.ProReceiptView })), true);
+const FilingPage = deferredComponent('filing', () => import('./components/filing/FilingPage').then(m => ({ default: m.FilingPage })));
+const ResultsPage = deferredComponent('results', () => import('./components/results/ResultsPage').then(m => ({ default: m.ResultsPage })));
+const NoteEditorChunk = deferredComponent('note editor', () => import('./components/notes/NoteEditor').then(m => ({
+  default: function LoadedNoteEditor({ onReady }: { onReady: () => void }) {
+    useEffect(onReady, [onReady]);
+    return <m.NoteEditorHost />;
+  },
+})), true);
+
+function NoteEditorHost() {
+  const { isOpen } = useNoteEditor();
+  // Retain only a host that actually mounted. Cancelling its first cold load
+  // must remove the fallback, including any later load failure.
+  const [hasMounted, setHasMounted] = useState(false);
+  const onReady = useCallback(() => { setHasMounted(true); }, []);
+  return isOpen || hasMounted ? <NoteEditorChunk onReady={onReady} /> : null;
+}
+
+function PaymentOverlays() {
+  const { isCheckoutOpen, receipt } = useAuth();
+  return <>
+    {isCheckoutOpen && <ProCheckoutView />}
+    {receipt && <ProReceiptView />}
+  </>;
+}
 import { useScrollRestoration } from './hooks/useScrollRestoration';
 import { TabErrorBoundary } from './components/ui/TabErrorBoundary';
 import { saveScrollPosition } from './utils/scrollState';
 import { parseShareablePath } from './utils/shareUrls';
-import { FilingPage } from './components/filing/FilingPage';
-import { ResultsPage } from './components/results/ResultsPage';
-import { NoteEditorHost } from './components/notes/NoteEditor';
 const PricingPage = lazy(() => import('./components/PricingPage').then(m => ({ default: m.PricingPage })));
 const GuidesPage = lazy(() => import('./components/GuidesPage').then(m => ({ default: m.GuidesPage })));
 const CompaniesPage = lazy(() => import('./components/CompaniesPage').then(m => ({ default: m.CompaniesPage })));
@@ -129,11 +201,12 @@ function getAppPathRoute(): 'home' | 'pricing' | 'guides' | 'companies' | 'about
   return '404';
 }
 
-function Dashboard({ bseHealth, telegramHealth, isRunning, handleToggle }: any) {
+function Dashboard({ bseHealth, telegramHealth, isRunning, handleToggle, isActive = true }: any) {
   return (
     <div className="space-y-2">
       {/* Main Announcements Feed */}
       <Suspense fallback={<PageSkeleton page="announcements" />}><Announcements
+        isActive={isActive}
         isRunning={isRunning}
         onToggleEngine={handleToggle}
         bseHealth={bseHealth}
@@ -150,7 +223,7 @@ function Dashboard({ bseHealth, telegramHealth, isRunning, handleToggle }: any) 
  * Runs on every route so a payment return always lands in the React app.
  */
 function CashfreeReturnHandler() {
-  const { user, refreshProfile, setReceipt, setIsAuthModalOpen } = useAuth();
+  const { user, refreshProfile, setReceipt, setIsAuthModalOpen, isAuthModalOpen } = useAuth();
   const { success, warning } = useToast();
   const handledRef = useRef<string | null>(null);
   // While our server confirms the payment with Cashfree, show a processing
@@ -232,6 +305,9 @@ function CashfreeReturnHandler() {
   }, [user, needsLogin]);
 
   if (needsLogin) {
+    // Preserve recovery intent while the sign-in dialog owns focus/visibility.
+    // Cancelling sign-in exposes this prompt again; no payment is confirmed here.
+    if (isAuthModalOpen) return null;
     return (
       <div
         className="payment-ui payment-overlay" style={{ zIndex: 96 }}
@@ -1099,6 +1175,7 @@ function AppContent() {
         {(visitedTabs.has('dashboard') || activeTab === 'dashboard') && (
           <div data-screen-page="dashboard" hidden={tabMotion.displayedKey !== 'dashboard'}>
             <TabErrorBoundary label="announcements"><Dashboard
+              isActive={tabMotion.displayedKey === 'dashboard'}
               bseHealth={health.bse} 
               telegramHealth={health.telegram} 
               isRunning={settings.isRunning} 
@@ -1110,7 +1187,7 @@ function AppContent() {
           <div data-screen-page="watchlists" hidden={tabMotion.displayedKey !== 'watchlists'}>
             <TabErrorBoundary label="watchlists">
             <Suspense fallback={<PageSkeleton page="watchlists" />}>
-              <WatchlistManager key={user?.uid || profile?.uid || 'guest'} />
+              <WatchlistManager key={user?.uid || profile?.uid || 'guest'} isActive={tabMotion.displayedKey === 'watchlists'} />
             </Suspense>
             </TabErrorBoundary>
           </div>
@@ -1208,8 +1285,7 @@ export default function App() {
         <ToastProvider>
           <AppContent />
           <CashfreeReturnHandler />
-          <ProCheckoutView />
-          <ProReceiptView />
+          <PaymentOverlays />
         </ToastProvider>
         </NoteEditorProvider>
       </IntelModalProvider>

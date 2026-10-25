@@ -1,13 +1,28 @@
 import React from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { sendTelemetryEvent, getBreadcrumbs } from '../../utils/telemetry';
+import { usePaymentDialog } from '../../hooks/usePaymentDialog';
 
 interface TabErrorBoundaryProps {
   /** Short label for telemetry (e.g. "settings", "watchlists"). */
   label: string;
   /** Optional "back to safety" action (e.g. switch to the Filings tab). */
   onBack?: () => void;
+  backLabel?: string;
   children: React.ReactNode;
+  /** Dialog-chunk errors must stay in the viewport, above the underlying page. */
+  overlay?: boolean;
+}
+
+function ErrorSurface({ overlay, onClose, children }: { overlay?: boolean; onClose: () => void; children: React.ReactNode }) {
+  const dialog = usePaymentDialog(Boolean(overlay), onClose);
+  return <div
+    ref={dialog}
+    className={`flex flex-col items-center justify-center px-6 py-16 text-center ${overlay ? 'fixed inset-0 z-[160] bg-white/95 dark:bg-slate-950/95' : ''}`}
+    role={overlay ? 'alertdialog' : 'alert'}
+    aria-modal={overlay || undefined}
+    aria-label={overlay ? 'Section could not load' : undefined}
+  >{children}</div>;
 }
 
 interface TabErrorBoundaryState {
@@ -86,7 +101,7 @@ export class TabErrorBoundary extends React.Component<TabErrorBoundaryProps, Tab
     if (!this.state.hasError) return this.props.children;
 
     return (
-      <div className="flex flex-col items-center justify-center px-6 py-16 text-center" role="alert">
+      <ErrorSurface overlay={this.props.overlay} onClose={this.handleBack}>
         <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-400">
           <AlertTriangle className="h-6 w-6" aria-hidden="true" />
         </div>
@@ -122,11 +137,11 @@ export class TabErrorBoundary extends React.Component<TabErrorBoundaryProps, Tab
               disabled={this.state.reloading}
               className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:opacity-60 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
             >
-              Back to Filings
+              {this.props.backLabel || 'Back to Filings'}
             </button>
           )}
         </div>
-      </div>
+      </ErrorSurface>
     );
   }
 }

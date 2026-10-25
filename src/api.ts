@@ -1,4 +1,4 @@
-import { auth } from './firebase';
+import { auth, initAppCheck } from './firebase';
 
 export async function customFetch(url: string, options: RequestInit = {}) {
   try {
@@ -31,6 +31,13 @@ export async function customFetch(url: string, options: RequestInit = {}) {
       }
     } catch {}
 
+    if (url.startsWith('/auth/') && (import.meta as any).env?.VITE_APPCHECK_ENFORCE === 'true') {
+      const appCheck = initAppCheck();
+      if (!appCheck) throw new Error('Security verification is unavailable. Please retry.');
+      const { getToken } = await import('firebase/app-check');
+      const token = await getToken(appCheck);
+      headers.set('X-Firebase-AppCheck', token.token);
+    }
     let res = await fetch(resolvedUrl, {
       credentials: 'include',
       ...options,

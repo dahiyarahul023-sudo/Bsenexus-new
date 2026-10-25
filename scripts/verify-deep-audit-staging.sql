@@ -1,0 +1,54 @@
+-- Synthetic service-role checks only. Always rollback; no Cashfree/Telegram calls.
+begin;
+set local role service_role;
+do $$
+declare u text:='audit_'||replace(gen_random_uuid()::text,'-',''); r text:='audit_'||replace(gen_random_uuid()::text,'-','');
+ o1 text:=gen_random_uuid()::text; o2 text:=gen_random_uuid()::text; o3 text:=gen_random_uuid()::text;
+ code text:='T'||upper(substr(replace(gen_random_uuid()::text,'-',''),1,12));
+ n bigint:=(extract(epoch from now())*1000)::bigint; base bigint; expiry bigint; v jsonb; denied boolean;
+begin
+ perform public.claim_trial_atomic(u,'synthetic@example.invalid','Synthetic audit');
+ select pro_expires_at into base from public.users where uid=u;
+ perform public.claim_trial_atomic(u,'synthetic@example.invalid','Synthetic audit');
+ if (select pro_expires_at from public.users where uid=u) is distinct from base then raise exception 'trial replay'; end if;
+ perform public.record_pending_order_atomic(o1,u,'synthetic@example.invalid','pro_monthly',29900,'INR');
+ denied:=false;
+ begin perform public.grant_payment_atomic(o1,u,'synthetic@example.invalid','pro_monthly',30,1,'INR',n,'verify'); exception when others then if sqlerrm like '%PAYMENT_ORDER_MISMATCH%' then denied:=true; else raise; end if; end;
+ if not denied then raise exception 'amount mismatch accepted'; end if;
+ v:=public.grant_payment_atomic(o1,u,'synthetic@example.invalid','pro_monthly',30,29900,'INR',n,'verify');
+ if (v->>'pro_expires_at')::bigint is distinct from base+30*86400000::bigint then raise exception 'first grant expiry'; end if;
+ v:=public.grant_payment_atomic(o1,u,'synthetic@example.invalid','pro_monthly',30,29900,'INR',n,'verify');
+ if (v->>'already_granted')::boolean is distinct from true then raise exception 'duplicate grant'; end if;
+ perform public.record_pending_order_atomic(o2,u,'synthetic@example.invalid','pro_monthly',29900,'INR');
+ v:=public.grant_payment_atomic(o2,u,'synthetic@example.invalid','pro_monthly',30,29900,'INR',n,'verify');expiry:=(v->>'pro_expires_at')::bigint;
+ if expiry is distinct from base+60*86400000::bigint then raise exception 'cumulative purchase expiry'; end if;
+ perform public.reconcile_payment_entitlement(u);
+ update public.users set pro_expires_at=1,trial_used=false where uid=u;
+ if (select pro_expires_at from public.users where uid=u) is distinct from expiry or (select trial_used from public.users where uid=u) is distinct from true then raise exception 'stale profile erased access'; end if;
+ perform public.claim_trial_atomic(r,'synthetic-referrer@example.invalid','Synthetic referrer');
+ perform public.referral_command('ensure',r,jsonb_build_object('code',code));
+ perform public.record_pending_order_atomic(o3,u,'synthetic@example.invalid','pro_monthly',19900,'INR');
+ perform public.referral_command('bind',u,jsonb_build_object('orderId',o3,'code',code,'planId','pro_monthly','basePaise',29900,'paidPaise',19900,'currency','INR'));
+ perform public.grant_payment_atomic(o3,u,'synthetic@example.invalid','pro_monthly',30,19900,'INR',n,'verify');
+ perform public.grant_payment_atomic(o3,u,'synthetic@example.invalid','pro_monthly',30,19900,'INR',n,'verify');
+ if (select conversions from public.referral_accounts_v2 where uid=r) is distinct from 1 or (select free_days from public.referral_accounts_v2 where uid=r) is distinct from 14 then raise exception 'referral settlement'; end if;
+ perform public.telegram_link_command('start',u,'synthetic-proof','');
+ v:=public.telegram_link_command('consume','','synthetic-proof','123456789');
+ if v->>'chatId' is distinct from '123456789' then raise exception 'telegram binding'; end if;
+ if public.telegram_link_command('consume','','synthetic-proof','123456788') is not null then raise exception 'nonce replay'; end if;
+ perform public.telegram_link_command('unlink',u,'','');
+ v:=public.telegram_link_command('status',u,'','');
+ if v->>'chatId' is not null then raise exception 'unlink'; end if;
+ for i in 1..5 loop perform public.auth_account_command('fail',u,5,900000,900000); end loop;
+ v:=public.auth_account_command('check',u,5,900000,900000);
+ if (v->>'failedAttempts')::int is distinct from 5 or (v->>'remainingLockoutSec')::int<=0 then raise exception 'shared login counter'; end if;
+end $$;
+reset role;
+set local role authenticated;
+do $$ declare denied boolean:=false; begin
+ begin perform public.claim_trial_atomic('forbidden','forbidden@example.invalid','Forbidden'); exception when insufficient_privilege then denied:=true; end;
+ if not denied then raise exception 'browser RPC access'; end if;
+end $$;
+reset role;
+rollback;
+select 'passed: synthetic trial/payment/referral/Telegram/auth checks, all changes rolled back' as verification;

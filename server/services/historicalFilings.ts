@@ -1,13 +1,15 @@
+import { cachedResultDocumentCheck, isAmbiguousBoardOutcome } from '../../src/shared/resultFiling.js';
+import { checkResultDocument } from './resultDocumentEvidence.js';
 import { withHttpDeadline } from '../utils/httpDeadline.js';
 import { randomUUID } from 'node:crypto';
 import { hasExactScripCode } from '../../src/shared/scripMatching.js';
-import { saveAnnouncementsBatch, flushLocalDiskSave, flushSupabaseWriteQueue } from '../database/announcementDao.js';
+import { saveAnnouncementsBatch, getAnnouncementsForScrip, flushLocalDiskSave, flushSupabaseWriteQueue } from '../database/announcementDao.js';
 import { getSupabase, isSupabaseConfigured } from '../database/supabase.js';
 import { parseBseDate, determinePriority } from '../utils/helpers.js';
 
 export interface HistorySyncStatus {
   id: string; scripCode: string; years: number; state: 'running' | 'complete' | 'failed';
-  processed: number; pages: number; startedAt: number; updatedAt: number; error?: string;
+  processed: number; pages: number; unverifiedDocuments?: number; startedAt: number; updatedAt: number; error?: string;
 }
 const jobs = new Map<string, { status: HistorySyncStatus; promise: Promise<void> }>();
 // Retain the existing calendar adapter's exchange request headers.
@@ -18,9 +20,9 @@ const headers = {
 };
 const dateKey = (ts: number) => new Date(ts).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }).replaceAll('-', '');
 
-/** All categories, exact identity, actual requested years, paced pages and no PDF downloads. */
+/** All categories, exact identity, actual requested years, paced pages and bounded ambiguous-outcome PDF checks; no PDFs are persisted. */
 export async function importHistoricalFilings(scripCode: string, years: number, progress: (count: number) => void,
-  dependencies: { request?: typeof fetch; save?: typeof saveAnnouncementsBatch; confirm?: (ids: string[]) => Promise<void>; pause?: () => Promise<void>; now?: () => number } = {}) {
+  dependencies: { request?: typeof fetch; save?: typeof saveAnnouncementsBatch; confirm?: (ids: string[]) => Promise<void>; pause?: () => Promise<void>; now?: () => number; verify?: typeof checkResultDocument; existing?: () => Promise<any[]>; unverified?: () => void } = {}) {
   if (!/^\d{6}$/.test(scripCode) || !Number.isInteger(years) || years < 1 || years > 5) throw new Error('Valid BSE code and 1–5 whole years required');
   const now = (dependencies.now || Date.now)();
   const cutoff = now - years * 365.25 * 86_400_000;
@@ -28,15 +30,24 @@ export async function importHistoricalFilings(scripCode: string, years: number, 
   const request = dependencies.request || fetch;
   const save = dependencies.save || saveAnnouncementsBatch;
   const pause = dependencies.pause || (() => new Promise<void>(resolve => setTimeout(resolve, 2500)));
+  const proofsToConfirm = new Map<string, any>();
   const confirm = dependencies.confirm || (async (ids: string[]) => {
     if (!isSupabaseConfigured()) {
       if (process.env.NODE_ENV === 'production') throw new Error('Durable archive storage unavailable');
       flushLocalDiskSave(); return;
     }
     await flushSupabaseWriteQueue(8000);
-    const { data, error } = await getSupabase().from('announcements').select('id').in('id', ids).abortSignal(AbortSignal.timeout(4000));
+    const { data, error } = await getSupabase().from('announcements').select('id,data').in('id', ids).abortSignal(AbortSignal.timeout(4000));
     if (error || new Set((data || []).map(row => row.id)).size !== new Set(ids).size) throw new Error('Archive storage confirmation pending; retry to verify saved records');
+    for (const row of data || []) {
+      const expected = proofsToConfirm.get(row.id);
+      if (expected && (row.data?.resultDocumentCheck?.documentSha256 !== expected.documentSha256 ||
+          row.data?.resultDocumentCheck?.checkedAt !== expected.checkedAt || row.data?.resultDocumentCheck?.excerpt !== expected.excerpt))
+        throw new Error('Result evidence storage confirmation pending; retry sync');
+    }
   });
+  const existing = new Map((await (dependencies.existing || (() => getAnnouncementsForScrip(scripCode)))()).map(item => [String(item.id || item.newsId), item]));
+  let documentChecks = 0;
   const seen = new Set<string>();
   let firstRequest = true;
   // Six-month windows respect the existing exchange archive date limits.
@@ -79,6 +90,21 @@ export async function importHistoricalFilings(scripCode: string, years: number, 
           priority: priority.level, category: priority.category, isWatchlist: true }];
       });
       if (items.length) {
+        for (const item of items) {
+          if (!isAmbiguousBoardOutcome(item)) continue;
+          const proof = cachedResultDocumentCheck({ ...item, resultDocumentCheck: existing.get(item.newsId)?.resultDocumentCheck });
+          if (proof) { Object.assign(item, { resultDocumentCheck: proof }); continue; }
+          if (documentChecks >= 16 * years || (dependencies.now || Date.now)() > deadline - 20000) {
+            dependencies.unverified?.(); continue;
+          }
+          documentChecks++;
+          try {
+            const evidence = await (dependencies.verify || checkResultDocument)(item);
+            if (evidence) Object.assign(item, { resultDocumentCheck: evidence });
+            else dependencies.unverified?.();
+          } catch { dependencies.unverified?.(); }
+        }
+        for (const item of items) { const proof = cachedResultDocumentCheck(item); if (proof) proofsToConfirm.set(item.newsId, proof); }
         await save(items);
         await confirm(items.map((item: any) => item.newsId));
         progress(items.length);
@@ -105,7 +131,10 @@ export function startHistorySync(scripCode: string, years: number): HistorySyncS
   job.promise = importHistoricalFilings(scripCode, years, count => {
     if (count === 0) status.pages++; else status.processed += count;
     status.updatedAt = Date.now();
-  }).then(() => { status.state = 'complete'; }).catch((error: Error) => {
+  }, { unverified: () => { status.unverifiedDocuments = (status.unverifiedDocuments || 0) + 1; } }).then(async () => {
+    const { invalidateEnrichedCalendarCache } = await import('./resultsCalendarService.js');
+    invalidateEnrichedCalendarCache(); status.state = 'complete';
+  }).catch((error: Error) => {
     status.state = 'failed'; status.error = error.message;
   }).finally(() => { status.updatedAt = Date.now(); });
   return { ...status };

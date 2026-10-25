@@ -1,3 +1,4 @@
+import { archiveCompletionMessage } from '../shared/resultFiling';
 import { pageItems } from '../shared/companyFilings';
 import { ListPagination } from './ui/ListPagination';
 import '../styles/overnight-adr.css';
@@ -143,7 +144,7 @@ export function CompanyIntelligenceModal({
         setHistoryJob(data.job);
         if (data.job.state === 'running') { timer = setTimeout(poll, 3000); return; }
         setIsFetchingHistory(false); setHistoryError(data.job.state !== 'complete');
-        setHistorySuccessMsg(data.job.state === 'complete' ? `Archive complete: ${data.job.processed} filings checked and saved across ${data.job.years} year(s).` : data.job.error || 'Archive incomplete; saved pages remain available.');
+        setHistorySuccessMsg(data.job.state === 'complete' ? archiveCompletionMessage(data.job) : data.job.error || 'Archive incomplete; saved pages remain available.');
         await loadIntelligence();
         if (alive) window.dispatchEvent(new Event('company-filings-changed'));
       } catch (error: any) {
@@ -244,7 +245,7 @@ export function CompanyIntelligenceModal({
       setHistoryJob(data.job);
       if (data.job.state !== 'running') {
         setIsFetchingHistory(false); setHistoryError(data.job.state !== 'complete');
-        setHistorySuccessMsg(data.job.state === 'complete' ? `Archive complete: ${data.job.processed} filings checked and saved.` : data.job.error);
+        setHistorySuccessMsg(data.job.state === 'complete' ? archiveCompletionMessage(data.job) : data.job.error);
         await loadIntelligence(); window.dispatchEvent(new Event('company-filings-changed'));
       }
     } catch (error: any) {
