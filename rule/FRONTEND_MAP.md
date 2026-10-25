@@ -1,3 +1,5 @@
+2026-10-25 check-first H1 repair: server injectTabSeoMetadata -> injectRouteHeading -> marked visible initial document heading for Home, Announcements, Plugin and Watchlist. createRoot replaces that initial heading. Home/Filings/Watchlist use PageHeading with the active screen flag; retained inactive headings become H2. Watchlist keeps an H1 for its guest gate and Pro manager. Existing privacy metadata and access checks remain. See changes/public-route-headings.md.
+
 2026-10-25 result history: Calendar Details -> stock-results-history -> exact-code durable filings + public calendar snapshot. Meeting notices never prove declaration. API returns the actual one-year archive receipt; Calendar follows running receipts and refreshes saved results, with selection/account/unmount cancellation and read-error retry. Manual 1–5Y Sync follows its receipt through the existing Pro-gated status route before reloading and notifying filing-count readers. Stock 360 retains its existing receipt owner and consumes the same canonical history/ledger. See changes/result-history-timing.md for evidence and release limits.
 
 # Frontend spider web: where changes travel

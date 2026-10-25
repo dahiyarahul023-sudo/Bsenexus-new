@@ -201,11 +201,12 @@ function getAppPathRoute(): 'home' | 'pricing' | 'guides' | 'companies' | 'about
   return '404';
 }
 
-function Dashboard({ bseHealth, telegramHealth, isRunning, handleToggle }: any) {
+function Dashboard({ bseHealth, telegramHealth, isRunning, handleToggle, isActive = true }: any) {
   return (
     <div className="space-y-2">
       {/* Main Announcements Feed */}
       <Suspense fallback={<PageSkeleton page="announcements" />}><Announcements
+        isActive={isActive}
         isRunning={isRunning}
         onToggleEngine={handleToggle}
         bseHealth={bseHealth}
@@ -1174,6 +1175,7 @@ function AppContent() {
         {(visitedTabs.has('dashboard') || activeTab === 'dashboard') && (
           <div data-screen-page="dashboard" hidden={tabMotion.displayedKey !== 'dashboard'}>
             <TabErrorBoundary label="announcements"><Dashboard
+              isActive={tabMotion.displayedKey === 'dashboard'}
               bseHealth={health.bse} 
               telegramHealth={health.telegram} 
               isRunning={settings.isRunning} 
@@ -1185,7 +1187,7 @@ function AppContent() {
           <div data-screen-page="watchlists" hidden={tabMotion.displayedKey !== 'watchlists'}>
             <TabErrorBoundary label="watchlists">
             <Suspense fallback={<PageSkeleton page="watchlists" />}>
-              <WatchlistManager key={user?.uid || profile?.uid || 'guest'} />
+              <WatchlistManager key={user?.uid || profile?.uid || 'guest'} isActive={tabMotion.displayedKey === 'watchlists'} />
             </Suspense>
             </TabErrorBoundary>
           </div>

@@ -1,3 +1,4 @@
+import { injectRouteHeading } from '../utils/routeHeading.js';
 import { companyFilingStats } from '../../src/shared/companyFilings.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -15,7 +16,7 @@ import { isSymbolMatch } from '../utils/helpers.js';
 const targets = [['RELIANCE', '500325'], ['CLEAN', '543318'], ['CONCOR', '531344'], ['HAL', '541154'], ['IDEA', '532822'], ['OIL', '533106']];
 function load(source: string, globals: any = {}) {
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-  const context = vm.createContext({ exports: {}, console, DIRECTORY_COMPANIES, directoryDescription, directoryBadge, exchangeCompany, matchesCompanyFiling, ...globals });
+  const context = vm.createContext({ exports: {}, console, injectRouteHeading, DIRECTORY_COMPANIES, directoryDescription, directoryBadge, exchangeCompany, matchesCompanyFiling, ...globals });
   vm.runInContext(code, context);
   return context;
 }
