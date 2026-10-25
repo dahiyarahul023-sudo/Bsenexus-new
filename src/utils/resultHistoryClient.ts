@@ -1,4 +1,3 @@
-import { archiveCompletionMessage } from '../shared/resultFiling';
 import { customFetch } from '../api';
 
 type Job = { id: string; scripCode: string; years: number; state: string; processed: number; unverifiedDocuments?: number; error?: string };
@@ -42,7 +41,6 @@ export async function watchResultHistory(identity: { symbol: string; scripCode: 
     if (receiptId && data.historySync?.id !== receiptId) throw new Error('Archive status unavailable on this instance. Saved results are shown; retry sync.');
     receiptId = data.historySync?.id || '';
     if (data.historySync?.state === 'failed') throw new Error(data.historySync.error || 'BSE archive unavailable. Saved results are shown.');
-    if (data.historySync?.state === 'complete' && data.historySync.unverifiedDocuments) throw new Error(archiveCompletionMessage(data.historySync));
     if (data.historySync?.state !== 'running') return;
     if (Date.now() > deadline) throw new Error('Archive still pending. Retry to check saved records.');
     await pause(signal);

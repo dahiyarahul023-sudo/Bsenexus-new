@@ -210,16 +210,17 @@ export const QuarterlyResultsLedger: React.FC<QuarterlyResultsLedgerProps> = ({
         </div>
       )}
 
-      {deepHistoryMsg && (
-        <div className="p-3 bg-amber-950/40 border border-amber-800/80 rounded-xl text-xs text-amber-300 flex items-center gap-2 animate-in fade-in">
-          <AlertCircle size={14} className="shrink-0 text-amber-400" />
-          <span>{deepHistoryMsg}</span>
+      {(errorMessage || deepHistoryMsg) && <div
+        role={errorMessage ? 'alert' : 'status'}
+        className={cn('rounded-xl border p-3 text-sm flex items-start gap-2', errorMessage
+          ? 'border-amber-500/40 bg-amber-500/10 text-amber-800 dark:text-amber-200'
+          : 'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-200')}
+      >
+        <AlertCircle size={14} className="shrink-0 mt-0.5" />
+        <div>
+          <p>{errorMessage || deepHistoryMsg}</p>
+          {errorMessage && onRefresh && <button type="button" onClick={onRefresh} className="mt-2 underline font-semibold">Retry history</button>}
         </div>
-      )}
-
-      {errorMessage && <div role="alert" className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-700 dark:text-amber-300">
-        <p>{errorMessage}</p>
-        {onRefresh && <button type="button" onClick={onRefresh} className="mt-2 underline font-semibold">Retry history</button>}
       </div>}
       {/* Loading state - Show shape not spin */}
       {isLoading ? (

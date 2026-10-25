@@ -132,9 +132,10 @@ export function isVerifiedResultFiling(item: any): boolean {
     (isAmbiguousBoardOutcome(item) && cachedResultDocumentCheck(item)?.verdict === 'result');
 }
 
-export function archiveCompletionMessage(job: { processed: number; years?: number; unverifiedDocuments?: number }): string {
-  const range = job.years ? ` across the last ${job.years} year(s)` : '';
-  return `Archive saved: ${job.processed} filings${range}.` + (job.unverifiedDocuments
-    ? ` ${job.unverifiedDocuments} board outcome PDF(s) still need result verification; retry sync. Verified result cards remain available.`
+export function archiveCompletionMessage(job: { processed: number; years?: number; unverifiedDocuments?: number }, verifiedResults?: number): string {
+  const range = job.years ? ` across the last ${job.years} year${job.years === 1 ? '' : 's'}` : '';
+  const results = typeof verifiedResults === 'number' && Number.isInteger(verifiedResults) && verifiedResults >= 0 ? ` ${verifiedResults} verified result${verifiedResults === 1 ? '' : 's'} in saved history.` : '';
+  return `Archive saved: ${job.processed} filing${job.processed === 1 ? '' : 's'}${range}.` + results + (job.unverifiedDocuments
+    ? ` ${job.unverifiedDocuments} additional board outcome PDF${job.unverifiedDocuments === 1 ? '' : 's'} still need result verification. Verified result cards remain available.`
     : ' Result cards show verified financial disclosures.');
 }

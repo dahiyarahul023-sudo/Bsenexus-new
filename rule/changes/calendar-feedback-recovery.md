@@ -1,0 +1,34 @@
+# Calendar feedback and pre-result action recovery
+
+- Starting upstream commit: a7fbde6890dbe076bc16d8be3b1b5e1eec2f1cf8 (PR24). Local source checkpoint matches that change.
+- User supplied follow-up screenshots: Bajaj Auto has four verified results plus a completed archive with three unresolved document checks; identical notice and Retry history error both appear. Cholafin pre-result priority action shows an HTML/non-JSON 403.
+- Verified source cause: watchResultHistory throws after emitting a completed receipt with unverifiedDocuments, so ResultsCalendar sets both deepHistoryMsg and historyError. QuarterlyResultsLedger renders both independently. A successful stored-history read must retain a single partial-verification notice; Retry history is for actual read/worker failures.
+- Verified live read-only checks (25 October 2026): GET /api/stocks/511243/runup-announcements?symbol=CHOLAFIN&resultDate=28%20Oct%202026&windowDays=10 returned JSON 200 with two disclosures. An unauthenticated POST with an empty body to boost-runup-priority returned JSON 403, adminElevationRequired=true, and the existing instruction to verify Master PIN in Settings -> Root Ops (15 minutes). It did not mutate data. This does not establish the origin of the screenshot's preview HTML response; preview/proxy denial is a separate hypothesis.
+- Auth guard remains unchanged. A generic/HTML 403 cannot be treated as proof of a PIN failure or retried as an authorized mutation. Explicit server adminElevationRequired should open the existing PIN flow; no PIN collection, automated verification or auth bypass is planned.
+- Intended change: one readable ledger feedback owner; successful partial reads resolve normally; accurate pre-result action feedback and explicit existing PIN recovery on structured auth denial; cancellation/late-response protection on the edited action.
+- Impact before edits: npm run map:impact -- src/utils/resultHistoryClient.ts src/components/ResultsCalendar.tsx src/components/QuarterlyResultsLedger.tsx. Review Stock 360 shared ledger, admin modal/context, read-only runup drawer, storage/count events and mutation guards. No schema, source classification, background import cadence or entitlement change.
+- Host compile_applet/lint_applet unavailable. Existing cloud browser cannot preview this local checkout through a supported forwarding mechanism; SSR/client behavior and post-deployment device acceptance are separate.
+- Validation, dispositions and delivery recorded below after execution. Prior main security migration prerequisite is separate from this bounded frontend repair; no deployment is claimed.
+
+## Implementation and consumer dispositions
+
+- Changed: watchResultHistory resolves completed receipts with unresolved document checks. Real failed/missing receipts, read failures and cancellation retain their existing behavior. No new source retry or import is started.
+- Changed: shared QuarterlyResultsLedger owns one feedback region, preferring an actual error when present. Partial notices have status semantics and readable light/dark colors; actual errors retain Retry history. Source-rendered regression retains four declared cards with one notice.
+- Changed: ResultsCalendar completion copy states verified result count separately from unresolved extra documents. Manual receipts and automatic reads use the same formatter. No classifying or promoting unverified PDFs changed.
+- Changed: pre-result command validates HTTP success, result shape and confirmed count. Structured adminElevationRequired opens the existing PIN modal; 401 opens existing sign-in. Generic HTML/preview 403 remains a separate readable blocker. No uncertain mutation is automatically retried.
+- Changed: admin-only boost control and feedback severity. Errors use an alert icon instead of a success check. Feedback remains until the next action/selection; old six-second clearing cannot erase another company's notice. The pending action owns a selection/account/date controller and synchronous duplicate-click guard. A failed optional card refresh retains the confirmed mutation as a warning.
+- Reviewed-and-compatible: requireAdmin, same-owner PIN elevation, protected route, permissions, subscriber entitlements, server priority policy and stored announcements are unchanged. No real authorized mutation or PIN verification was attempted.
+- Reviewed-and-compatible: Stock 360 shares the corrected ledger and completion copy. Read-only runup View 10D/20D and priority details remain separate; the verified live GET returned two rows. Company/date navigation and history request guards retain their owners.
+- Reviewed-and-compatible: public company/AI results, calendar universe, result classification/proof storage, background imports and notifications have no business-policy change.
+
+Actions: calendar.result-history.read -> saved rows plus one diagnostic notice, or actual failure/retry; calendar.runup.priority -> captured company/date/account -> one existing protected POST -> confirmed feedback -> optional saved-history read and calendar refresh. Explicit auth denial alone selects the existing credential UI. Closing/switching aborts pending work and obsolete results cannot alter another company.
+
+## Verification boundary
+
+- Before-fix regression reproduced the completed partial archive exception. New focused tests cover successful partial reads, single actual rendered feedback, retained four cards, normal-user/admin control visibility, explicit PIN denial, HTML/normalized 403, malformed success, duplicate taps, optional read failure and late-company responses.
+- Targeted runs passed; full suite/build/map results appended after completion. Host compile_applet/lint_applet are unavailable.
+- No post-change browser/device/keyboard acceptance is claimed: no supported local-checkout forwarding to the remote browser is exposed. Actual React SSR and executed client/handler tests are recorded separately.
+- The screenshot's HTML-403 origin remains unverified. The live app's structured PIN denial and successful read route are established; this repair does not claim that an upstream preview restriction was removed.
+- Rollback: revert this bounded frontend commit; no schema or production data rollback is required. Commit/CI/merge and deployment are separate delivery states.
+
+Final local validation: Python-captured TAP runner completed with exit 0 and a verified summary: 784 tests, 31 suites, 784 passed, zero failed/cancelled/skipped (30.3 seconds). Focused client/actual handler/SSR/history cases passed (27 cases, plus six document-proof tests in the combined focused run). TypeScript and production build passed; startup budget 968942 raw / 260911 gzip. Map generation/freshness, six map tests and git diff --check passed. Source upload hashes are checked against local file blobs; CI/merge will be verified separately. Deployment and authenticated preview/admin behavior remain unverified.
