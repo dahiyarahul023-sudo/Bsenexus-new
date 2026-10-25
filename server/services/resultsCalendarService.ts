@@ -46,6 +46,7 @@ export interface ResultCalendarItem {
   declarationPdfLink?: string;
   declarationSubject?: string;
   aiSummary?: string;
+  aiSummaryEn?: string;
   bseTimestamp?: number;
   /** True when this item's scrip was synced via the market-wide calendar universe
    *  (not only via watchlists). Used by the market scope filter. */
@@ -793,6 +794,7 @@ export async function getResultsCalendarSnapshot() {
       let declarationPdfLink: string | undefined = undefined;
       let declarationSubject: string | undefined = undefined;
       let aiSummary: string | undefined = undefined;
+      let aiSummaryEn: string | undefined = undefined;
       let bseTimestamp: number | undefined = undefined;
 
       if (matched) {
@@ -802,6 +804,7 @@ export async function getResultsCalendarSnapshot() {
         declarationPdfLink = matched.pdfLink;
         declarationSubject = matched.subject;
         aiSummary = matched.aiSummary;
+        aiSummaryEn = matched.aiSummaryEn;
         bseTimestamp = matched.bseTimestamp || (matched.bseTime ? parseBseDate(matched.bseTime) : undefined);
       }
 
@@ -826,7 +829,7 @@ export async function getResultsCalendarSnapshot() {
         declarationAnnouncementId,
         declarationPdfLink,
         declarationSubject,
-        aiSummary
+        aiSummary, aiSummaryEn
       };
     });
 
@@ -891,7 +894,7 @@ export async function getResultsCalendarData(
   const recentCount = recentItems.length;
 
   // Total filings with AI summary
-  const aiSummaryCount = items.filter(i => Boolean(i.aiSummary)).length;
+  const aiSummaryCount = items.filter(i => Boolean(i.aiSummary || i.aiSummaryEn)).length;
 
   // Apply requested tab filter cleanly
   if (filterStatus === 'today') {
@@ -960,6 +963,7 @@ export interface StockHistoricalResultItem {
   details?: string;
   pdfLink?: string;
   aiSummary?: string;
+  aiSummaryEn?: string;
   isOutcome: boolean;
   status: string;
   priority?: string;
@@ -1215,6 +1219,7 @@ export async function getStockResultsHistory(
         details: outcomeFiling.details,
         pdfLink: outcomeFiling.pdfLink,
         aiSummary: outcomeFiling.aiSummary,
+        aiSummaryEn: outcomeFiling.aiSummaryEn,
         isOutcome: true,
         status: 'Declared',
         priority: outcomeFiling.priority || 'HIGH',
@@ -1316,6 +1321,7 @@ export async function getStockResultsHistory(
             details: calItem.purpose,
             pdfLink: calItem.declarationPdfLink,
             aiSummary: calItem.aiSummary,
+            aiSummaryEn: calItem.aiSummaryEn,
             isOutcome: true,
             status: 'Declared',
             priority: 'HIGH',
@@ -1382,15 +1388,16 @@ export async function autoFetchDeepHistoricalResults(scripCode: string, symbol?:
 
 export async function fetchDeepHistoricalResultsForWatchlist(
   years: number = 1
-): Promise<{ success: boolean; newlySaved: number; symbolsCount: number; years: number }> {
+): Promise<{ success: boolean; newlySaved: number; symbolsCount: number; years: number; completedCount: number; failedCount: number; error?: string }> {
   const activeSymbols = await getActiveWatchlistSymbols();
   if (!activeSymbols || activeSymbols.length === 0) {
-    return { success: true, newlySaved: 0, symbolsCount: 0, years };
+    return { success: true, newlySaved: 0, symbolsCount: 0, years, completedCount: 0, failedCount: 0 };
   }
 
   const validYears = Math.max(1, Math.min(5, years || 1));
   let totalSaved = 0;
   const processedScrips = new Set<string>();
+  let completedCount = 0, failedCount = 0;
 
   // Process in batches of 4 to respect BSE API rate limits while maintaining fast sync
   const batchSize = 4;
@@ -1398,29 +1405,35 @@ export async function fetchDeepHistoricalResultsForWatchlist(
     const batch = activeSymbols.slice(i, i + batchSize);
     await Promise.all(batch.map(async (sym) => {
       const scripCode = getScripCodeForSymbolOrName(sym);
-      if (!scripCode || processedScrips.has(scripCode)) return;
+      if (!scripCode) { failedCount++; return; }
+      if (processedScrips.has(scripCode)) return;
       processedScrips.add(scripCode);
 
       try {
         const res = await fetchDeepHistoricalResultsForStock(scripCode, sym, validYears);
-        if (res && res.newlySaved) {
+        if (!res?.success) throw new Error('Archive did not confirm completion');
+        completedCount++;
+        if (res.newlySaved) {
           totalSaved += res.newlySaved;
         }
       } catch (err: any) {
+        failedCount++;
         console.warn(`Error during deep sync for ${sym} (${scripCode}):`, err.message);
       }
     }));
   }
 
   await addLog(
-    'INFO',
+    failedCount ? 'WARN' : 'INFO',
     'BSE',
-    `Watchlist ${validYears}-Year deep sync complete across ${activeSymbols.length} stocks (+${totalSaved} total historical filings)`
+    `Watchlist ${validYears}-Year archive: ${completedCount} completed, ${failedCount} failed or unresolved, ${totalSaved} filings processed`
   );
 
   return {
-    success: true,
+    success: failedCount === 0,
     newlySaved: totalSaved,
+    completedCount, failedCount,
+    ...(failedCount ? { error: `${failedCount} stock imports failed or could not resolve. ${completedCount} completed; saved filings remain available.` } : {}),
     symbolsCount: activeSymbols.length,
     years: validYears
   };

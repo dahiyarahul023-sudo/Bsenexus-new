@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "c40f11fec74425a89d75a31c583d274e9e3dbe802c46a82eef32f903aaf0958e",
+  "sourceDigest": "5ba4916ea08683a0b706687c8b854d16c0acc43e4bec33ed4e7b22e2d3d44528",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -1303,7 +1303,7 @@
     },
     {
       "path": "server/services/resultsCalendarService.ts",
-      "sha256": "88dc0acbba52ba77235f01200bb93b6d46163a1fe9c53f92dfbaa1e425c4c64d",
+      "sha256": "5b2d6f3332c6e039b4661cbd1c5641e0110d1904266c3b1781de0968fc394ab8",
       "importedBy": [
         "server.ts",
         "server/ai/calendarRead.ts",
@@ -1561,6 +1561,11 @@
       "importedBy": []
     },
     {
+      "path": "server/tests/calendarAudit.test.ts",
+      "sha256": "ade64292baf1eb906cd7596fe6daf9593abaf1b9fc0c80a77569093274620d90",
+      "importedBy": []
+    },
+    {
       "path": "server/tests/calendarBroadcast.test.ts",
       "sha256": "110dc514f3b4efabcdcd62666d597f8f4ec5f1bccf183806d5f06e23f1f94b8b",
       "importedBy": []
@@ -1597,7 +1602,7 @@
     },
     {
       "path": "server/tests/calendarRender.test.ts",
-      "sha256": "037590552d001e7504bf52a996931f4646a58795c579e2f1982e87c2ac4dddbb",
+      "sha256": "1858628f67e715c58fd00cf4bcf24af126a1f8891c7385f3d03a3ac43ac6939d",
       "importedBy": []
     },
     {
@@ -1957,7 +1962,7 @@
     },
     {
       "path": "server/tests/resultHistory.test.ts",
-      "sha256": "bfbd82cb35a900d8efd816edd835351e06e119960fc8df6400b302767b4751da",
+      "sha256": "1166f085944d3f29ac864991cf8b0503b937907f11b507c50720d30f006c3650",
       "importedBy": []
     },
     {
@@ -2614,7 +2619,7 @@
     },
     {
       "path": "src/components/ResultsCalendar.tsx",
-      "sha256": "6cf1c46ff4199cf5cf4636f0a54fcc9edd46783e72b425cdb96aec4de9d5970c",
+      "sha256": "45cc261cbfb950f22415c42a94614f5d9cfa8fe9cd24969390bcc9344b9b8524",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -3561,6 +3566,13 @@
         "src/components/ui/MarketHolidaysModal.tsx",
         "src/components/ui/SupportFloat.tsx",
         "src/hooks/usePaymentDialog.ts"
+      ]
+    },
+    {
+      "path": "src/hooks/useCalendarDialog.ts",
+      "sha256": "5b05720c509a6e9a1b75e16269ccaa17cecd0147eb653b42c556680936e55810",
+      "importedBy": [
+        "src/components/ResultsCalendar.tsx"
       ]
     },
     {
@@ -11355,207 +11367,213 @@
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
-      "target": "src/utils/runupPriorityClient.ts",
+      "target": "src/hooks/useCalendarDialog.ts",
       "kind": "import",
       "line": 1
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
-      "target": "src/shared/resultFiling.ts",
+      "target": "src/utils/runupPriorityClient.ts",
       "kind": "import",
       "line": 2
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
-      "target": "src/shared/calendarScope.ts",
+      "target": "src/shared/resultFiling.ts",
       "kind": "import",
-      "line": 4
+      "line": 3
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
-      "target": "src/shared/calendarTiming.ts",
+      "target": "src/shared/calendarScope.ts",
       "kind": "import",
       "line": 5
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
-      "target": "src/api.ts",
+      "target": "src/shared/calendarTiming.ts",
       "kind": "import",
-      "line": 16
+      "line": 6
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
-      "target": "src/utils/resultHistoryClient.ts",
+      "target": "src/api.ts",
       "kind": "import",
       "line": 17
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
-      "target": "src/utils/cashfree.ts",
+      "target": "src/utils/resultHistoryClient.ts",
       "kind": "import",
       "line": 18
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
-      "target": "src/context/AuthContext.tsx",
+      "target": "src/utils/cashfree.ts",
       "kind": "import",
       "line": 19
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
-      "target": "src/context/IntelModalContext.tsx",
+      "target": "src/context/AuthContext.tsx",
       "kind": "import",
       "line": 20
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
-      "target": "src/utils/aiQuota.ts",
+      "target": "src/context/IntelModalContext.tsx",
       "kind": "import",
       "line": 21
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
-      "target": "src/utils/developerMode.ts",
+      "target": "src/utils/aiQuota.ts",
       "kind": "import",
       "line": 22
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
-      "target": "src/utils/timeFormat.ts",
+      "target": "src/utils/developerMode.ts",
       "kind": "import",
       "line": 23
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
-      "target": "src/utils/pdfHelper.ts",
+      "target": "src/utils/timeFormat.ts",
       "kind": "import",
       "line": 24
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
-      "target": "src/utils/shareUrls.ts",
+      "target": "src/utils/pdfHelper.ts",
       "kind": "import",
       "line": 25
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
-      "target": "src/utils/marketHolidays.ts",
+      "target": "src/utils/shareUrls.ts",
       "kind": "import",
       "line": 26
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
-      "target": "src/components/ui/MarketHolidaysModal.tsx",
+      "target": "src/utils/marketHolidays.ts",
       "kind": "import",
       "line": 27
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
-      "target": "src/components/ui/CustomDropdown.tsx",
+      "target": "src/components/ui/MarketHolidaysModal.tsx",
       "kind": "import",
       "line": 28
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
-      "target": "src/components/ui/ActionButton.tsx",
+      "target": "src/components/ui/CustomDropdown.tsx",
       "kind": "import",
       "line": 29
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
-      "target": "src/components/ui/HonestProgressBar.tsx",
+      "target": "src/components/ui/ActionButton.tsx",
       "kind": "import",
       "line": 30
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
-      "target": "src/components/QuarterlyResultsLedger.tsx",
+      "target": "src/components/ui/HonestProgressBar.tsx",
       "kind": "import",
       "line": 31
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
-      "target": "src/components/ui/CommonQuestionsFAQ.tsx",
+      "target": "src/components/QuarterlyResultsLedger.tsx",
       "kind": "import",
       "line": 32
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
-      "target": "src/components/ui/motion/ShareActionMenu.tsx",
+      "target": "src/components/ui/CommonQuestionsFAQ.tsx",
       "kind": "import",
       "line": 33
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
-      "target": "src/hooks/useBodyScrollLock.ts",
+      "target": "src/components/ui/motion/ShareActionMenu.tsx",
       "kind": "import",
       "line": 34
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
-      "target": "src/hooks/useFeedDensity.ts",
+      "target": "src/hooks/useBodyScrollLock.ts",
       "kind": "import",
       "line": 35
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
-      "target": "src/hooks/usePullToRefresh.ts",
+      "target": "src/hooks/useFeedDensity.ts",
       "kind": "import",
       "line": 36
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
-      "target": "src/hooks/useVisibilityInterval.ts",
+      "target": "src/hooks/usePullToRefresh.ts",
       "kind": "import",
       "line": 37
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
-      "target": "src/hooks/useSwipeGesture.ts",
+      "target": "src/hooks/useVisibilityInterval.ts",
       "kind": "import",
       "line": 38
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
-      "target": "src/components/ui/PullToRefreshIndicator.tsx",
+      "target": "src/hooks/useSwipeGesture.ts",
       "kind": "import",
       "line": 39
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
-      "target": "src/components/ui/helios.tsx",
+      "target": "src/components/ui/PullToRefreshIndicator.tsx",
       "kind": "import",
       "line": 40
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
-      "target": "src/components/notes/SaveNoteButton.tsx",
+      "target": "src/components/ui/helios.tsx",
       "kind": "import",
       "line": 41
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
-      "target": "src/utils/motionTokens.ts",
+      "target": "src/components/notes/SaveNoteButton.tsx",
       "kind": "import",
-      "line": 45
+      "line": 42
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
-      "target": "src/utils/cache.ts",
+      "target": "src/utils/motionTokens.ts",
       "kind": "import",
       "line": 46
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
+      "target": "src/utils/cache.ts",
+      "kind": "import",
+      "line": 47
+    },
+    {
+      "source": "src/components/ResultsCalendar.tsx",
       "target": "src/utils/calendarDateTile.ts",
       "kind": "import",
-      "line": 52
+      "line": 53
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
       "target": "src/components/ui/RichVisual.tsx",
       "kind": "import",
-      "line": 53
+      "line": 54
     },
     {
       "source": "src/components/SecurityAuditModal.tsx",
@@ -13728,9 +13746,10 @@
         "server/tests/calendarTelegramDelivery.test.ts",
         "server/tests/calendarTelegramSql.test.ts",
         "server/tests/resultHistory.test.ts",
-        "server/tests/resultDocumentEvidence.test.ts"
+        "server/tests/resultDocumentEvidence.test.ts",
+        "server/tests/calendarAudit.test.ts"
       ],
-      "reason": "Upstream timestamps, stock identity and market sessions affect cached API results, screen freshness and alert timing. Public market data availability does not establish trading-data accuracy. Verified security identities repair IndusInd/J&K and current Eternal naming; conflicting legacy cache entries cannot overwrite them. Watchlist, Story and F&O fallback maps use the shared verified codes. Connector read projections follow security code and mark legacy conflicts rather than silently rewriting personal lists. Financial result titles include Results For Quarter/Q1 and board Outcome - Results. Generic outcomes need identity-bound proof from bounded official BSE PDF text; no PDF is persisted. Archive receipts distinguish saved filings from documents awaiting verification. Calendar retains one lower history control; Stock 360 and automatic readers share completion copy."
+      "reason": "Upstream timestamps, stock identity and market sessions affect cached API results, screen freshness and alert timing. Public market data availability does not establish trading-data accuracy. Verified security identities repair IndusInd/J&K and current Eternal naming; conflicting legacy cache entries cannot overwrite them. Watchlist, Story and F&O fallback maps use the shared verified codes. Connector read projections follow security code and mark legacy conflicts rather than silently rewriting personal lists. Financial result titles include Results For Quarter/Q1 and board Outcome - Results. Generic outcomes need identity-bound proof from bounded official BSE PDF text; no PDF is persisted. Archive receipts distinguish saved filings from documents awaiting verification. Calendar retains one lower history control; Stock 360 and automatic readers share completion copy. Global watchlist archive counts completed and failed/unresolved imports separately; partial source failure cannot become an all-success receipt. English summary variants survive calendar/history reads."
     },
     {
       "id": "faq-search-seo",
@@ -14037,7 +14056,8 @@
         "src/utils/resultHistoryClient.ts",
         "src/shared/resultFiling.ts",
         "server/services/resultDocumentEvidence.ts",
-        "src/utils/runupPriorityClient.ts"
+        "src/utils/runupPriorityClient.ts",
+        "src/hooks/useCalendarDialog.ts"
       ],
       "tests": [
         "server/tests/core.test.ts",
@@ -14062,9 +14082,10 @@
         "server/tests/companyFilingHistory.test.ts",
         "server/tests/resultHistory.test.ts",
         "server/tests/resultDocumentEvidence.test.ts",
-        "server/tests/calendarFeedback.test.ts"
+        "server/tests/calendarFeedback.test.ts",
+        "server/tests/calendarAudit.test.ts"
       ],
-      "reason": "List/detail identity, filters, watchlist membership, badge counts and timestamps must agree. Background refresh preserves content, density, selection and scroll. Rapid filter changes must not render older responses. Home membership uses active-list exact identities. The responsive watchlist editor preserves company metadata, page scrolling and four visible priority filters. Inbox presents unread items first, while device push delivery has an independent persistent control. Calendar labels use company names when symbols are numeric; sticky date headings share measured toolbar offsets. Home previews select the newest filing per exact watchlist security before limiting, without changing the full filing feed. Static Watchlist identity fallback uses the shared verified IndusInd code; existing list state, revisions and editor behavior are preserved. Inbox now has All/Watchlist/Results only, with unread-first ordering, read action below/right of filters and ephemeral per-owner/filter snapshots retained across close. Confirmed read/clear reconciles all cached filters; loading/error never erases saved content. Watchlist first-read readiness separates unknown from confirmed empty. Calendar/News/Watchlist pull indicators occupy flow below stable controls. Watchlist and Story symbol-to-code fallback maps also use the shared blank BSE code, preventing the old Advanced Enzyme mapping from returning through a client fallback. Stored 30-day filing counts share one exact-company projection with company detail, independently of the seven-day updates feed. Durable per-company history uses keyset pages; company Filings and Material Actions expose numbered pages. Explicit paid archive imports all categories over selected years with bounded workers, source failure and storage confirmation, and does not persist PDFs. Process restart or another instance may make worker status unavailable; saved evidence remains and no success is invented. Financial result titles include Results For Quarter/Q1 and board Outcome - Results. Generic outcomes need identity-bound proof from bounded official BSE PDF text; no PDF is persisted. Archive receipts distinguish saved filings from documents awaiting verification. Calendar retains one lower history control; Stock 360 and automatic readers share completion copy. Completed archive receipts with pending documents remain successful reads and have one ledger status owner. Shared pre-result priority updates require existing admin authorization; explicit server PIN denial opens the existing PIN dialog. HTML/preview denial remains an unconfirmed blocker. No automatic mutation retry or client role expansion is permitted."
+      "reason": "List/detail identity, filters, watchlist membership, badge counts and timestamps must agree. Background refresh preserves content, density, selection and scroll. Rapid filter changes must not render older responses. Home membership uses active-list exact identities. The responsive watchlist editor preserves company metadata, page scrolling and four visible priority filters. Inbox presents unread items first, while device push delivery has an independent persistent control. Calendar labels use company names when symbols are numeric; sticky date headings share measured toolbar offsets. Home previews select the newest filing per exact watchlist security before limiting, without changing the full filing feed. Static Watchlist identity fallback uses the shared verified IndusInd code; existing list state, revisions and editor behavior are preserved. Inbox now has All/Watchlist/Results only, with unread-first ordering, read action below/right of filters and ephemeral per-owner/filter snapshots retained across close. Confirmed read/clear reconciles all cached filters; loading/error never erases saved content. Watchlist first-read readiness separates unknown from confirmed empty. Calendar/News/Watchlist pull indicators occupy flow below stable controls. Watchlist and Story symbol-to-code fallback maps also use the shared blank BSE code, preventing the old Advanced Enzyme mapping from returning through a client fallback. Stored 30-day filing counts share one exact-company projection with company detail, independently of the seven-day updates feed. Durable per-company history uses keyset pages; company Filings and Material Actions expose numbered pages. Explicit paid archive imports all categories over selected years with bounded workers, source failure and storage confirmation, and does not persist PDFs. Process restart or another instance may make worker status unavailable; saved evidence remains and no success is invented. Financial result titles include Results For Quarter/Q1 and board Outcome - Results. Generic outcomes need identity-bound proof from bounded official BSE PDF text; no PDF is persisted. Archive receipts distinguish saved filings from documents awaiting verification. Calendar retains one lower history control; Stock 360 and automatic readers share completion copy. Completed archive receipts with pending documents remain successful reads and have one ledger status owner. Shared pre-result priority updates require existing admin authorization; explicit server PIN denial opens the existing PIN dialog. HTML/preview denial remains an unconfirmed blocker. No automatic mutation retry or client role expansion is permitted. Calendar window reads cancel superseded company/window requests and expose retry on failure. English summary fields survive server projections and share AI counts/filter/render. Pagination clamps after refresh. Details/filter keyboard ownership is element-local; shared Telegram controls mirror server admin-only policy and wait for confirmed message IDs."
     },
     {
       "id": "frontend-notes",
@@ -17896,25 +17917,25 @@
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 241,
+      "line": 242,
       "function": "fetch",
       "target": "url"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 258,
+      "line": 259,
       "function": "fetch",
       "target": "url"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 354,
+      "line": 355,
       "function": "fetch",
       "target": "url"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 496,
+      "line": 497,
       "function": "fetch",
       "target": "url"
     },
@@ -18784,55 +18805,55 @@
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 335,
+      "line": 361,
       "function": "customFetch",
       "target": "`/api/stocks/${encodeURIComponent(scripCode)}/fetch-deep-history`"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 406,
+      "line": 434,
       "function": "customFetch",
       "target": "`/api/stocks/${encodeURIComponent(scripCode)}/runup-announcements?symbol=${encodeURIComponent(symbol)}&resultDate=${encodeURIComponent(resultDateStr)}&windowDays=${daysToUse}`"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 426,
+      "line": 452,
       "function": "customFetch",
       "target": "'/api/watchlist/fetch-deep-history'"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 528,
+      "line": 557,
       "function": "customFetch",
       "target": "url"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 600,
+      "line": 622,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 678,
+      "line": 703,
       "function": "customFetch",
       "target": "`/api/announcements/${announcementId}/generate-summary`"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 760,
+      "line": 769,
       "function": "customFetch",
       "target": "'/api/send-to-telegram-manual'"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 891,
+      "line": 904,
       "function": "customFetch",
       "target": "'/api/send-to-telegram-manual'"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 937,
+      "line": 957,
       "function": "customFetch",
       "target": "'/api/results-calendar/telegram-broadcast'"
     },
@@ -20304,37 +20325,37 @@
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 134,
+      "line": 135,
       "function": "Array.from",
       "key": "notifiedMeetingIds"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 422,
+      "line": 423,
       "function": "Array.from",
       "key": "uniqueStockItems.values()"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 487,
+      "line": 488,
       "function": "Array.from",
       "key": "targets.entries()"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 582,
+      "line": 583,
       "function": "Array.from",
       "key": "uniqueMap.values()"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 620,
+      "line": 621,
       "function": "getSupabase()\n              .from",
       "key": "'results_calendar'"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 1359,
+      "line": 1365,
       "function": "Array.from",
       "key": "quarterOutcomesMap.values()"
     },
@@ -20916,19 +20937,19 @@
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 219,
+      "line": 226,
       "function": "localStorage.getItem",
       "key": "'nexus_calendar_view_mode'"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 230,
+      "line": 237,
       "function": "localStorage.setItem",
       "key": "'nexus_calendar_view_mode'"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 1140,
+      "line": 1164,
       "function": "Array.from",
       "key": "map.values()"
     },
@@ -21375,6 +21396,12 @@
       "line": 50,
       "function": "localStorage.removeItem",
       "key": "'bse_nexus_fb_id_token'"
+    },
+    {
+      "file": "src/hooks/useCalendarDialog.ts",
+      "line": 16,
+      "function": "Array.from",
+      "key": "ref.current?.querySelectorAll<HTMLElement>('button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex=\"0\"]') || []"
     },
     {
       "file": "src/hooks/useFeedDensity.ts",
@@ -23947,7 +23974,7 @@
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 351,
+      "line": 377,
       "target": "window",
       "kind": "dispatch",
       "name": "company-filings-changed",
