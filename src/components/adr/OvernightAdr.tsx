@@ -52,13 +52,14 @@ export function AdrRows({ items, watched = [], onOpenCompany, now = Date.now(), 
   })}</div>;
 }
 
-export function OvernightAdrView({ snapshot, watched = [], onOpenCompany, onOpenStory, now = Date.now(), density = 'compact' }: {
-  snapshot: AdrSnapshot; watched?: string[]; onOpenCompany: (company: StoryCompany) => void; onOpenStory?: () => void; now?: number; density?: FeedDensity;
+export function OvernightAdrView({ snapshot, watched = [], onOpenCompany, onOpenStory, now = Date.now(), density = 'compact', watchlistOnly = false }: {
+  snapshot: AdrSnapshot; watched?: string[]; onOpenCompany: (company: StoryCompany) => void; onOpenStory?: () => void; now?: number; density?: FeedDensity; watchlistOnly?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const items = rankAdrs(snapshot.items, watched);
+  const items = rankAdrs(snapshot.items, watched).filter(item=>!watchlistOnly || watched.includes(item.symbol) || watched.includes(adrCompanyFor(item.symbol)?.scripCode || ''));
   const confirmed = !snapshot.refreshFailed && now - snapshot.checkedAt <= 10 * 60000;
   const lead = items.find(item => confirmed && adrIsRecent(item, now) && !item.corporateAction && adrSeverity(item.changePercent) !== 'normal');
+  if (watchlistOnly && !items.length) return null;
   return <section className={`adr-panel ${heliosCard}`} data-density={density} data-prominent={Boolean(lead)} aria-label="Overnight ADR">
     <header className="adr-header"><div><h2><Globe2 size={16} aria-hidden="true" /> Overnight ADR</h2><p>{lead ? `${lead.name} ${lead.changePercent < 0 ? 'fell' : 'rose'} ${Math.abs(lead.changePercent).toFixed(2)}% in the US session` : 'Indian companies in the US market'}</p></div>{onOpenStory && <ActionButton size="sm" variant="ghost" onClick={onOpenStory}>Story <ChevronRight size={13} /></ActionButton>}</header>
     <AdrRows items={expanded ? items : items.slice(0, 3)} watched={watched} onOpenCompany={onOpenCompany} now={now} confirmed={confirmed} />
@@ -69,12 +70,13 @@ export function OvernightAdrView({ snapshot, watched = [], onOpenCompany, onOpen
   </section>;
 }
 
-export function OvernightAdr({ active = true, watched, onOpenCompany, onOpenStory, density = 'compact' }: {
-  active?: boolean; watched?: string[]; onOpenCompany: (company: StoryCompany) => void; onOpenStory: () => void; density?: FeedDensity;
+export function OvernightAdr({ active = true, watched, onOpenCompany, onOpenStory, density = 'compact', watchlistOnly = false }: {
+  active?: boolean; watched?: string[]; onOpenCompany: (company: StoryCompany) => void; onOpenStory: () => void; density?: FeedDensity; watchlistOnly?: boolean;
 }) {
   const state = useAdrSnapshot(active);
+  if (watchlistOnly && !watched?.length) return null;
   return <div className="adr-owner">
-    {state.snapshot ? <OvernightAdrView snapshot={state.snapshot} density={density} watched={watched} onOpenCompany={onOpenCompany} onOpenStory={onOpenStory} />
+    {state.snapshot ? <OvernightAdrView watchlistOnly={watchlistOnly} snapshot={state.snapshot} density={density} watched={watched} onOpenCompany={onOpenCompany} onOpenStory={watchlistOnly ? undefined : onOpenStory} />
       : <section className={`adr-panel ${heliosCard}`} aria-label="Overnight ADR"><h2 className="adr-loading-title">Overnight ADR</h2>{state.loading ? <div className="adr-skeleton" role="status" aria-label="Loading ADR quotes"><span /><span /><span /></div> : <p className="adr-status">ADR quotes are unavailable.</p>}</section>}
     {state.error && <div className="adr-recovery" role="status"><span>{state.error}</span><ActionButton size="sm" variant="ghost" disabled={state.loading} onClick={() => void state.retry()}><RefreshCw size={12} /> Retry</ActionButton></div>}
   </div>;

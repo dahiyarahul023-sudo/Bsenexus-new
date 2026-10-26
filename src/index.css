@@ -767,3 +767,7 @@ body {
 .calendar-action-popover { background:var(--rich-surface,#fff); color:var(--rich-ink,#162333); border-color:var(--rich-border,#dce4e9); }
 .calendar-action-popover :is(button,a) { min-height:40px; }
 @media(max-width:767px) { .calendar-action-popover :is(button,a) { min-height:44px; } }
+.calendar-declared-today,[data-result-status="declared-today"] { border-left:3px solid #059669; background-image:linear-gradient(100deg,#10b9810b,transparent 70%); }
+.calendar-declared-today .calendar-list-status { color:var(--rich-selected-ink,#065f46); font-weight:750; }
+.result-timing { color:var(--rich-ink,#162333); }
+.result-timing svg { width:100%; max-width:640px; height:auto; display:block; min-height:110px; }

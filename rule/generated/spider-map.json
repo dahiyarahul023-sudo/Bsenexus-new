@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "fc37fdd3bf58625f40439268298d8d8892b9732243087f622beb54b7fe758758",
+  "sourceDigest": "e85d7967ba4b39a9a43071953f708f64193b75fdfaa1b5ddffdbb7374b05c641",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -1721,6 +1721,11 @@
       "importedBy": []
     },
     {
+      "path": "server/tests/forYouPersonal.test.ts",
+      "sha256": "9c1d12e61920b8c0926450feadc77bfa1daf651402d22510add0f2bf85b33cd7",
+      "importedBy": []
+    },
+    {
       "path": "server/tests/homeNews.test.ts",
       "sha256": "ab91efd702c2ad1baa579605d92f8dac3e6058f58f6c544a5b0a985063c9abdd",
       "importedBy": []
@@ -2042,7 +2047,7 @@
     },
     {
       "path": "server/tests/storyButtons.test.ts",
-      "sha256": "418332ce66673be6f57d5f4e4fa5c3d73fea5f5e74567fd68c3223dbf181e040",
+      "sha256": "083acbb9ee359eeb89e5fc1c2e4b9b08b997d2540867770a84fe12d9b5ef367b",
       "importedBy": []
     },
     {
@@ -2337,7 +2342,7 @@
     },
     {
       "path": "src/App.tsx",
-      "sha256": "8b2bfc0daeb8b8c60ca7dbd44b819a52d5469e0240cc74938a0281ad9ab5bc08",
+      "sha256": "a8672c1293897b202e80e165b4bf0357a125c6044c5bdbe45cee7b84f28eaf82",
       "importedBy": [
         "src/main.tsx"
       ]
@@ -2524,21 +2529,21 @@
     },
     {
       "path": "src/components/HomeForYou.tsx",
-      "sha256": "31f8509135da56df47016f4f4d4eec09fae5ef092de44b7b4e183900345bb327",
+      "sha256": "29530a70196961fb48f4b0fcaeffa8078ab017773c5428e76b054a3c17efba9d",
       "importedBy": [
         "src/App.tsx"
       ]
     },
     {
       "path": "src/components/HomeMarketNews.tsx",
-      "sha256": "f4a46e1ffff3498e219cf1f0a7d6b01c07256ee2e99a50107d5f427c50d31634",
+      "sha256": "39e399dcbbd33f1040ce0e4a14dadb5d2edbd2032b06092f2a244aa97470bf58",
       "importedBy": [
         "src/components/HomeForYou.tsx"
       ]
     },
     {
       "path": "src/components/ImpactRadar.tsx",
-      "sha256": "020e19acca20079888446c2677b6e78fc24b6bd5c37c9fe2806c9026216ec687",
+      "sha256": "faacbbc66643552258bebee67b4055e8ed691edd242ed572578e6303b20b2223",
       "importedBy": [
         "src/components/HomeForYou.tsx"
       ]
@@ -2643,7 +2648,7 @@
     },
     {
       "path": "src/components/QuarterlyResultsLedger.tsx",
-      "sha256": "0b628d8a37e690c1c9cbb904f851f9d9786317c2795ae8bfd502139656175d71",
+      "sha256": "e58933b1af9d5d6a7bddf3011cafa2544833719d46d16f95ca045f66ee27c623",
       "importedBy": [
         "server/tests/resultHistory.test.ts",
         "src/components/CompanyIntelligenceModal.tsx",
@@ -2672,8 +2677,15 @@
       ]
     },
     {
+      "path": "src/components/ResultTimingPanel.tsx",
+      "sha256": "c0b7c004c8459fed1586006c02cc3b8f0d6caed4766a005d68acbd9bfac11067",
+      "importedBy": [
+        "src/components/QuarterlyResultsLedger.tsx"
+      ]
+    },
+    {
       "path": "src/components/ResultsCalendar.tsx",
-      "sha256": "60de53348f4e54f774df125a5ae6ac6f8abd79e6f3bac387bb0dfa2ca15cf069",
+      "sha256": "2b874ec536881bdd3bc3c2857329be34be3b2882e7b2c3dc250f89a0083a6b75",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -2731,7 +2743,7 @@
     },
     {
       "path": "src/components/TodayMarketStoryModal.tsx",
-      "sha256": "2e52171f251066a79cdb446f3d252e92a185e0540d6afec5b3ec9779010451ab",
+      "sha256": "cd73224f24c4aa59d43d6f6b3c43abb4833aec08b168c83668cfe7a1cafe32c1",
       "importedBy": [
         "src/components/HomeForYou.tsx",
         "src/components/Layout.tsx"
@@ -2760,7 +2772,7 @@
     },
     {
       "path": "src/components/WatchlistManager.tsx",
-      "sha256": "5ea2acc0f9773cfb9c09ed347a10d78824686da47f858de230eb20b074ce80e5",
+      "sha256": "7821dede3d17f83553331b2bb9bffc12c5001619c9b04f47dcbdc7e01280b0a8",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -2774,7 +2786,7 @@
     },
     {
       "path": "src/components/adr/OvernightAdr.tsx",
-      "sha256": "ac2c254a4d3f0764753e78d7fba8f19e944e8cc1e13a317452b0aa6c1fb7f802",
+      "sha256": "3e46823d638b9024cab0be586bbca649c820fda0cb84f284daaca6be6e99a09b",
       "importedBy": [
         "server/tests/adr.test.ts",
         "src/components/CompanyIntelligenceModal.tsx",
@@ -2966,7 +2978,7 @@
     },
     {
       "path": "src/components/story/StoryCarouselBar.tsx",
-      "sha256": "d27e0b9d98d2a4846137ff8e8bf2a35787c14758147e20fe1ec96bf85b308c57",
+      "sha256": "58a3ea339b2639100f88aa9dcd13a149e62f1beca22acb103fa808e68f443491",
       "importedBy": [
         "src/components/HomeForYou.tsx"
       ]
@@ -3057,7 +3069,8 @@
         "src/components/story/StorySlideView.tsx",
         "src/components/story/storyBuilder.ts",
         "src/components/story/storyData.ts",
-        "src/components/story/storyFeedClient.ts"
+        "src/components/story/storyFeedClient.ts",
+        "src/utils/forYou.ts"
       ]
     },
     {
@@ -3144,7 +3157,6 @@
       "path": "src/components/ui/CommonQuestionsFAQ.tsx",
       "sha256": "1792a16db7680b877e874a7569d9d86d06d62d0cee47ccccb385ca6e4fc4ad67",
       "importedBy": [
-        "src/components/HomeForYou.tsx",
         "src/components/LandingPage.tsx",
         "src/components/ResultsCalendar.tsx"
       ]
@@ -3417,6 +3429,7 @@
         "src/components/CompanyIntelligenceModal.tsx",
         "src/components/HomeForYou.tsx",
         "src/components/NewsPortal.tsx",
+        "src/components/ResultTimingPanel.tsx",
         "src/components/ResultsCalendar.tsx",
         "src/components/WatchlistManager.tsx",
         "src/components/adr/OvernightAdr.tsx"
@@ -3645,6 +3658,7 @@
       "path": "src/hooks/useCalendarDialog.ts",
       "sha256": "5b05720c509a6e9a1b75e16269ccaa17cecd0147eb653b42c556680936e55810",
       "importedBy": [
+        "src/components/HomeForYou.tsx",
         "src/components/ResultsCalendar.tsx"
       ]
     },
@@ -3742,6 +3756,7 @@
         "src/App.tsx",
         "src/components/AdminDiagnostics.tsx",
         "src/components/Announcements.tsx",
+        "src/components/HomeForYou.tsx",
         "src/components/HomeMarketNews.tsx",
         "src/components/ImpactRadar.tsx",
         "src/components/Layout.tsx",
@@ -3755,7 +3770,7 @@
     },
     {
       "path": "src/index.css",
-      "sha256": "3f5ab6053d98dd15aeae49226b2ae4c27cf69d22675c4a2422f660ebca0de7ef",
+      "sha256": "8bf9892b8dc5923fdae02614502973b5ec99f2c86f5f3cd9c34af28cba8dc3c4",
       "importedBy": [
         "src/main.tsx"
       ]
@@ -3815,6 +3830,7 @@
         "server/tests/adr.test.ts",
         "server/tests/adrInbox.test.ts",
         "server/tests/adrSnapshotStore.test.ts",
+        "src/components/HomeForYou.tsx",
         "src/components/adr/OvernightAdr.tsx",
         "src/components/story/storyBuilder.ts",
         "src/services/adrClient.ts"
@@ -3869,7 +3885,8 @@
         "server/services/resultsCalendarService.ts",
         "server/tests/calendarRecovery.test.ts",
         "server/tests/resultHistory.test.ts",
-        "src/components/ResultsCalendar.tsx"
+        "src/components/ResultsCalendar.tsx",
+        "src/utils/forYou.ts"
       ]
     },
     {
@@ -4013,6 +4030,7 @@
         "server/tests/watchlistMetadata.test.ts",
         "src/components/HomeForYou.tsx",
         "src/components/WatchlistEditor.tsx",
+        "src/utils/forYou.ts",
         "src/utils/watchlistPreview.ts"
       ]
     },
@@ -4242,6 +4260,17 @@
       ]
     },
     {
+      "path": "src/utils/forYou.ts",
+      "sha256": "ed3aa25ef97d37bce302f435e5054b2983e90f26c1a4c70984e7868fd1c9a49d",
+      "importedBy": [
+        "server/tests/forYouPersonal.test.ts",
+        "server/tests/storyButtons.test.ts",
+        "src/components/HomeForYou.tsx",
+        "src/components/TodayMarketStoryModal.tsx",
+        "src/components/story/StoryCarouselBar.tsx"
+      ]
+    },
+    {
       "path": "src/utils/haptics.ts",
       "sha256": "d5e16c97fbfb777eb4affdfbeef0d1f241cf6e54c2524ce76abff61653397421",
       "importedBy": [
@@ -4251,8 +4280,9 @@
     },
     {
       "path": "src/utils/homeNews.ts",
-      "sha256": "4d1584d0c9b396ea80d7c15fc30255b23f491c389300c9ada9243fdce02c1af9",
+      "sha256": "ef0083ba901ee4e5dcc5e865aff6f463694973950ef8882d7acc5cfdce8fcd63",
       "importedBy": [
+        "server/tests/forYouPersonal.test.ts",
         "server/tests/homeNews.test.ts",
         "src/components/HomeMarketNews.tsx"
       ]
@@ -4415,6 +4445,14 @@
       ]
     },
     {
+      "path": "src/utils/resultTiming.ts",
+      "sha256": "72250f9cbd28e742ead099322df0c25334726c66302ef6a50e9476638813afeb",
+      "importedBy": [
+        "server/tests/forYouPersonal.test.ts",
+        "src/components/ResultTimingPanel.tsx"
+      ]
+    },
+    {
       "path": "src/utils/retry.ts",
       "sha256": "2d6cf56e92db37a282dd1128cf72f322fed1e49da5666b890025b4211007c26f",
       "importedBy": [
@@ -4480,7 +4518,8 @@
         "src/components/ResultsCalendar.tsx",
         "src/components/WatchlistManager.tsx",
         "src/components/results/ResultsPage.tsx",
-        "src/utils/announcementFeed.ts"
+        "src/utils/announcementFeed.ts",
+        "src/utils/resultTiming.ts"
       ]
     },
     {
@@ -8475,6 +8514,24 @@
       "line": 185
     },
     {
+      "source": "server/tests/forYouPersonal.test.ts",
+      "target": "src/utils/forYou.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "server/tests/forYouPersonal.test.ts",
+      "target": "src/utils/homeNews.ts",
+      "kind": "import",
+      "line": 4
+    },
+    {
+      "source": "server/tests/forYouPersonal.test.ts",
+      "target": "src/utils/resultTiming.ts",
+      "kind": "import",
+      "line": 5
+    },
+    {
       "source": "server/tests/homeNews.test.ts",
       "target": "src/utils/homeNews.ts",
       "kind": "import",
@@ -9367,6 +9424,12 @@
       "target": "server/database/localStore.ts",
       "kind": "import",
       "line": 3
+    },
+    {
+      "source": "server/tests/storyButtons.test.ts",
+      "target": "src/utils/forYou.ts",
+      "kind": "import",
+      "line": 1
     },
     {
       "source": "server/tests/subjectCleaner.test.ts",
@@ -10438,141 +10501,159 @@
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/components/ui/PageHeading.tsx",
+      "target": "src/hooks/useVisibilityInterval.ts",
       "kind": "import",
       "line": 1
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/styles/overnight-adr.css",
+      "target": "src/shared/adr.ts",
       "kind": "import",
       "line": 2
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/components/adr/OvernightAdr.tsx",
+      "target": "src/utils/forYou.ts",
       "kind": "import",
       "line": 3
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/components/HomeMarketNews.tsx",
+      "target": "src/hooks/useCalendarDialog.ts",
       "kind": "import",
       "line": 4
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/components/ImpactRadar.tsx",
+      "target": "src/components/ui/PageHeading.tsx",
       "kind": "import",
       "line": 5
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/components/ui/PageSkeleton.tsx",
+      "target": "src/styles/overnight-adr.css",
       "kind": "import",
       "line": 6
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/components/story/StoryCarouselBar.tsx",
+      "target": "src/components/adr/OvernightAdr.tsx",
       "kind": "import",
       "line": 7
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/components/TodayMarketStoryModal.tsx",
+      "target": "src/components/HomeMarketNews.tsx",
       "kind": "import",
       "line": 8
     },
     {
       "source": "src/components/HomeForYou.tsx",
+      "target": "src/components/ImpactRadar.tsx",
+      "kind": "import",
+      "line": 9
+    },
+    {
+      "source": "src/components/HomeForYou.tsx",
+      "target": "src/components/ui/PageSkeleton.tsx",
+      "kind": "import",
+      "line": 10
+    },
+    {
+      "source": "src/components/HomeForYou.tsx",
+      "target": "src/components/story/StoryCarouselBar.tsx",
+      "kind": "import",
+      "line": 11
+    },
+    {
+      "source": "src/components/HomeForYou.tsx",
+      "target": "src/components/TodayMarketStoryModal.tsx",
+      "kind": "import",
+      "line": 12
+    },
+    {
+      "source": "src/components/HomeForYou.tsx",
       "target": "src/api.ts",
-      "kind": "import",
-      "line": 26
-    },
-    {
-      "source": "src/components/HomeForYou.tsx",
-      "target": "src/shared/watchlistIdentity.ts",
-      "kind": "import",
-      "line": 27
-    },
-    {
-      "source": "src/components/HomeForYou.tsx",
-      "target": "src/utils/watchlistPreview.ts",
-      "kind": "import",
-      "line": 28
-    },
-    {
-      "source": "src/components/HomeForYou.tsx",
-      "target": "src/context/AuthContext.tsx",
-      "kind": "import",
-      "line": 29
-    },
-    {
-      "source": "src/components/HomeForYou.tsx",
-      "target": "src/context/IntelModalContext.tsx",
       "kind": "import",
       "line": 30
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/utils/timeFormat.ts",
+      "target": "src/shared/watchlistIdentity.ts",
       "kind": "import",
       "line": 31
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/utils/cleanBseSubject.ts",
+      "target": "src/utils/watchlistPreview.ts",
       "kind": "import",
       "line": 32
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/utils/pdfHelper.ts",
+      "target": "src/context/AuthContext.tsx",
       "kind": "import",
       "line": 33
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/utils/calendarDateTile.ts",
+      "target": "src/context/IntelModalContext.tsx",
       "kind": "import",
       "line": 34
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/hooks/useBodyScrollLock.ts",
+      "target": "src/utils/timeFormat.ts",
       "kind": "import",
       "line": 35
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/hooks/useFeedDensity.ts",
+      "target": "src/utils/cleanBseSubject.ts",
       "kind": "import",
       "line": 36
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/components/ui/helios.tsx",
+      "target": "src/utils/pdfHelper.ts",
       "kind": "import",
       "line": 37
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/utils/motionTokens.ts",
+      "target": "src/utils/calendarDateTile.ts",
       "kind": "import",
       "line": 38
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/components/ui/ActionButton.tsx",
+      "target": "src/hooks/useBodyScrollLock.ts",
       "kind": "import",
       "line": 39
     },
     {
       "source": "src/components/HomeForYou.tsx",
-      "target": "src/components/ui/CommonQuestionsFAQ.tsx",
+      "target": "src/hooks/useFeedDensity.ts",
       "kind": "import",
       "line": 40
+    },
+    {
+      "source": "src/components/HomeForYou.tsx",
+      "target": "src/components/ui/helios.tsx",
+      "kind": "import",
+      "line": 41
+    },
+    {
+      "source": "src/components/HomeForYou.tsx",
+      "target": "src/utils/motionTokens.ts",
+      "kind": "import",
+      "line": 42
+    },
+    {
+      "source": "src/components/HomeForYou.tsx",
+      "target": "src/components/ui/ActionButton.tsx",
+      "kind": "import",
+      "line": 43
     },
     {
       "source": "src/components/HomeMarketNews.tsx",
@@ -11434,33 +11515,39 @@
     },
     {
       "source": "src/components/QuarterlyResultsLedger.tsx",
+      "target": "src/components/ResultTimingPanel.tsx",
+      "kind": "import",
+      "line": 1
+    },
+    {
+      "source": "src/components/QuarterlyResultsLedger.tsx",
       "target": "src/utils/motionTokens.ts",
       "kind": "import",
-      "line": 17
+      "line": 18
     },
     {
       "source": "src/components/QuarterlyResultsLedger.tsx",
       "target": "src/utils/pdfHelper.ts",
       "kind": "import",
-      "line": 24
+      "line": 25
     },
     {
       "source": "src/components/QuarterlyResultsLedger.tsx",
       "target": "src/components/ui/CustomDropdown.tsx",
       "kind": "import",
-      "line": 25
+      "line": 26
     },
     {
       "source": "src/components/QuarterlyResultsLedger.tsx",
       "target": "src/components/ui/HonestProgressBar.tsx",
       "kind": "import",
-      "line": 26
+      "line": 27
     },
     {
       "source": "src/components/QuarterlyResultsLedger.tsx",
       "target": "src/components/ui/ActionButton.tsx",
       "kind": "import",
-      "line": 27
+      "line": 28
     },
     {
       "source": "src/components/RadarMovementPanel.tsx",
@@ -11521,6 +11608,18 @@
       "target": "src/context/AuthContext.tsx",
       "kind": "import",
       "line": 27
+    },
+    {
+      "source": "src/components/ResultTimingPanel.tsx",
+      "target": "src/utils/resultTiming.ts",
+      "kind": "import",
+      "line": 1
+    },
+    {
+      "source": "src/components/ResultTimingPanel.tsx",
+      "target": "src/components/ui/helios.tsx",
+      "kind": "import",
+      "line": 2
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
@@ -12010,31 +12109,31 @@
     },
     {
       "source": "src/components/TodayMarketStoryModal.tsx",
-      "target": "src/hooks/useBodyScrollLock.ts",
+      "target": "src/utils/forYou.ts",
       "kind": "import",
-      "line": 5
+      "line": 1
     },
     {
       "source": "src/components/TodayMarketStoryModal.tsx",
-      "target": "src/context/AuthContext.tsx",
+      "target": "src/hooks/useBodyScrollLock.ts",
       "kind": "import",
       "line": 6
     },
     {
       "source": "src/components/TodayMarketStoryModal.tsx",
-      "target": "src/components/story/storyData.ts",
+      "target": "src/context/AuthContext.tsx",
       "kind": "import",
       "line": 7
     },
     {
       "source": "src/components/TodayMarketStoryModal.tsx",
-      "target": "src/components/story/storyBuilder.ts",
+      "target": "src/components/story/storyData.ts",
       "kind": "import",
       "line": 8
     },
     {
       "source": "src/components/TodayMarketStoryModal.tsx",
-      "target": "src/components/story/storyTypes.ts",
+      "target": "src/components/story/storyBuilder.ts",
       "kind": "import",
       "line": 9
     },
@@ -12046,39 +12145,45 @@
     },
     {
       "source": "src/components/TodayMarketStoryModal.tsx",
-      "target": "src/components/story/StorySlideView.tsx",
+      "target": "src/components/story/storyTypes.ts",
       "kind": "import",
       "line": 11
     },
     {
       "source": "src/components/TodayMarketStoryModal.tsx",
-      "target": "src/components/story/StoryChapterProgress.tsx",
+      "target": "src/components/story/StorySlideView.tsx",
       "kind": "import",
       "line": 12
     },
     {
       "source": "src/components/TodayMarketStoryModal.tsx",
-      "target": "src/components/story/StoryArtwork.tsx",
+      "target": "src/components/story/StoryChapterProgress.tsx",
       "kind": "import",
       "line": 13
     },
     {
       "source": "src/components/TodayMarketStoryModal.tsx",
-      "target": "src/components/story/StoryVisuals.tsx",
+      "target": "src/components/story/StoryArtwork.tsx",
       "kind": "import",
       "line": 14
     },
     {
       "source": "src/components/TodayMarketStoryModal.tsx",
-      "target": "src/components/ui/BseNexusLogo.tsx",
+      "target": "src/components/story/StoryVisuals.tsx",
       "kind": "import",
       "line": 15
     },
     {
       "source": "src/components/TodayMarketStoryModal.tsx",
-      "target": "src/styles/market-stories.css",
+      "target": "src/components/ui/BseNexusLogo.tsx",
       "kind": "import",
       "line": 16
+    },
+    {
+      "source": "src/components/TodayMarketStoryModal.tsx",
+      "target": "src/styles/market-stories.css",
+      "kind": "import",
+      "line": 17
     },
     {
       "source": "src/components/TrustPages.tsx",
@@ -12748,13 +12853,13 @@
     },
     {
       "source": "src/components/story/StoryCarouselBar.tsx",
-      "target": "src/components/story/storyData.ts",
+      "target": "src/utils/forYou.ts",
       "kind": "import",
-      "line": 3
+      "line": 1
     },
     {
       "source": "src/components/story/StoryCarouselBar.tsx",
-      "target": "src/components/story/storyTypes.ts",
+      "target": "src/components/story/storyData.ts",
       "kind": "import",
       "line": 4
     },
@@ -12766,21 +12871,27 @@
     },
     {
       "source": "src/components/story/StoryCarouselBar.tsx",
-      "target": "src/components/story/storyBuilder.ts",
+      "target": "src/components/story/storyTypes.ts",
       "kind": "import",
       "line": 6
     },
     {
       "source": "src/components/story/StoryCarouselBar.tsx",
-      "target": "src/components/story/StoryArtwork.tsx",
+      "target": "src/components/story/storyBuilder.ts",
       "kind": "import",
       "line": 7
     },
     {
       "source": "src/components/story/StoryCarouselBar.tsx",
-      "target": "src/styles/market-stories.css",
+      "target": "src/components/story/StoryArtwork.tsx",
       "kind": "import",
       "line": 8
+    },
+    {
+      "source": "src/components/story/StoryCarouselBar.tsx",
+      "target": "src/styles/market-stories.css",
+      "kind": "import",
+      "line": 9
     },
     {
       "source": "src/components/story/StoryChapterProgress.tsx",
@@ -13455,6 +13566,24 @@
       "line": 39
     },
     {
+      "source": "src/utils/forYou.ts",
+      "target": "src/shared/watchlistIdentity.ts",
+      "kind": "import",
+      "line": 1
+    },
+    {
+      "source": "src/utils/forYou.ts",
+      "target": "src/shared/calendarTiming.ts",
+      "kind": "import",
+      "line": 2
+    },
+    {
+      "source": "src/utils/forYou.ts",
+      "target": "src/components/story/storyTypes.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
       "source": "src/utils/impactRadarFeed.ts",
       "target": "src/shared/impactRadar.ts",
       "kind": "import",
@@ -13469,6 +13598,12 @@
     {
       "source": "src/utils/resultHistoryClient.ts",
       "target": "src/api.ts",
+      "kind": "import",
+      "line": 1
+    },
+    {
+      "source": "src/utils/resultTiming.ts",
+      "target": "src/utils/timeFormat.ts",
       "kind": "import",
       "line": 1
     },
@@ -13903,7 +14038,10 @@
         "src/utils/resultHistoryClient.ts",
         "src/shared/resultFiling.ts",
         "server/services/resultDocumentEvidence.ts",
-        "server/utils/companyPeers.ts"
+        "server/utils/companyPeers.ts",
+        "src/utils/forYou.ts",
+        "src/utils/resultTiming.ts",
+        "src/components/ResultTimingPanel.tsx"
       ],
       "tests": [
         "server/tests/core.test.ts",
@@ -13927,9 +14065,10 @@
         "server/tests/resultHistory.test.ts",
         "server/tests/resultDocumentEvidence.test.ts",
         "server/tests/calendarAudit.test.ts",
-        "server/tests/companyPeers.test.ts"
+        "server/tests/companyPeers.test.ts",
+        "server/tests/forYouPersonal.test.ts"
       ],
-      "reason": "Upstream timestamps, stock identity and market sessions affect cached API results, screen freshness and alert timing. Public market data availability does not establish trading-data accuracy. Verified security identities repair IndusInd/J&K and current Eternal naming; conflicting legacy cache entries cannot overwrite them. Watchlist, Story and F&O fallback maps use the shared verified codes. Connector read projections follow security code and mark legacy conflicts rather than silently rewriting personal lists. Financial result titles include Results For Quarter/Q1 and board Outcome - Results. Generic outcomes need identity-bound proof from bounded official BSE PDF text; no PDF is persisted. Archive receipts distinguish saved filings from documents awaiting verification. Calendar retains one lower history control; Stock 360 and automatic readers share completion copy. Global watchlist archive counts completed and failed/unresolved imports separately; partial source failure cannot become an all-success receipt. English summary variants survive calendar/history reads. Company Hub peers reuse catalogue identities and explicit industry membership, with exact-sector fallback and a four-stock limit. Calendar email/reminder-copy actions live inside both shared Share menus; other share consumers keep their existing options."
+      "reason": "Upstream timestamps, stock identity and market sessions affect cached API results, screen freshness and alert timing. Public market data availability does not establish trading-data accuracy. Verified security identities repair IndusInd/J&K and current Eternal naming; conflicting legacy cache entries cannot overwrite them. Watchlist, Story and F&O fallback maps use the shared verified codes. Connector read projections follow security code and mark legacy conflicts rather than silently rewriting personal lists. Financial result titles include Results For Quarter/Q1 and board Outcome - Results. Generic outcomes need identity-bound proof from bounded official BSE PDF text; no PDF is persisted. Archive receipts distinguish saved filings from documents awaiting verification. Calendar retains one lower history control; Stock 360 and automatic readers share completion copy. Global watchlist archive counts completed and failed/unresolved imports separately; partial source failure cannot become an all-success receipt. English summary variants survive calendar/history reads. Company Hub peers reuse catalogue identities and explicit industry membership, with exact-sector fallback and a four-stock limit. Calendar email/reminder-copy actions live inside both shared Share menus; other share consumers keep their existing options. For You uses exact active-watchlist projections for results, news, Radar, ADR and company Stories, with explicit target/new-list stock additions through existing guarded routes. Canonical result history supplies first-declaration IST timing dots, a supported one/two-hour concentration and labelled exceptions; no scheduled or ingestion clocks imply release times. Today preserves declared results with distinct wording and accent."
     },
     {
       "id": "faq-search-seo",
@@ -14176,15 +14315,19 @@
         "src/utils/haptics.ts",
         "src/components/ui/BseNexusLogo.tsx",
         "src/utils/notificationSnapshots.ts",
-        "src/components/ui/AnchoredPopover.tsx"
+        "src/components/ui/AnchoredPopover.tsx",
+        "src/utils/forYou.ts",
+        "src/utils/resultTiming.ts",
+        "src/components/ResultTimingPanel.tsx"
       ],
       "tests": [
         "server/tests/homeNews.test.ts",
         "server/tests/avatar.test.ts",
         "server/tests/watchlistEditorRender.test.ts",
-        "server/tests/brandRefreshInbox.test.ts"
+        "server/tests/brandRefreshInbox.test.ts",
+        "server/tests/forYouPersonal.test.ts"
       ],
-      "reason": "Global CSS, inherited theme tokens, shared controls, focus, z-index and scroll locks connect screens without direct imports. Review all changed selector/token consumers; this seed list is not every affected screen. No browser accessibility or screenshot test suite is established by this domain. Original Nexus identity uses the shared logo or public icon.svg. Settings quiet haptics are optional hardware feedback; visible pressed/focus states and reduced-motion support remain. Inbox read actions sit below/right of three wrapping-safe filter targets and confirmed content avoids entrance hiding on reopen. Calendar uses the same company/purpose hierarchy for numeric F&O and symbolic rows, one normalized full-date heading, and wrapping action-only footers. Semantic segmented/control radius tokens cover Classic and Soft Glass; Watchlist compact labels retain inline counts and readable mobile search. Calendar reminder popovers portal outside blurred/transformed cards and own viewport placement, keyboard dismissal and focus return."
+      "reason": "Global CSS, inherited theme tokens, shared controls, focus, z-index and scroll locks connect screens without direct imports. Review all changed selector/token consumers; this seed list is not every affected screen. No browser accessibility or screenshot test suite is established by this domain. Original Nexus identity uses the shared logo or public icon.svg. Settings quiet haptics are optional hardware feedback; visible pressed/focus states and reduced-motion support remain. Inbox read actions sit below/right of three wrapping-safe filter targets and confirmed content avoids entrance hiding on reopen. Calendar uses the same company/purpose hierarchy for numeric F&O and symbolic rows, one normalized full-date heading, and wrapping action-only footers. Semantic segmented/control radius tokens cover Classic and Soft Glass; Watchlist compact labels retain inline counts and readable mobile search. Calendar reminder popovers portal outside blurred/transformed cards and own viewport placement, keyboard dismissal and focus return. For You uses exact active-watchlist projections for results, news, Radar, ADR and company Stories, with explicit target/new-list stock additions through existing guarded routes. Canonical result history supplies first-declaration IST timing dots, a supported one/two-hour concentration and labelled exceptions; no scheduled or ingestion clocks imply release times. Today preserves declared results with distinct wording and accent."
     },
     {
       "id": "frontend-feed",
@@ -14245,7 +14388,10 @@
         "src/hooks/useCalendarDialog.ts",
         "src/components/ui/PageHeading.tsx",
         "server/utils/companyPeers.ts",
-        "src/components/ui/AnchoredPopover.tsx"
+        "src/components/ui/AnchoredPopover.tsx",
+        "src/utils/forYou.ts",
+        "src/utils/resultTiming.ts",
+        "src/components/ResultTimingPanel.tsx"
       ],
       "tests": [
         "server/tests/core.test.ts",
@@ -14273,9 +14419,10 @@
         "server/tests/calendarFeedback.test.ts",
         "server/tests/calendarAudit.test.ts",
         "server/tests/routeHeading.test.ts",
-        "server/tests/companyPeers.test.ts"
+        "server/tests/companyPeers.test.ts",
+        "server/tests/forYouPersonal.test.ts"
       ],
-      "reason": "List/detail identity, filters, watchlist membership, badge counts and timestamps must agree. Background refresh preserves content, density, selection and scroll. Rapid filter changes must not render older responses. Home membership uses active-list exact identities. The responsive watchlist editor preserves company metadata, page scrolling and four visible priority filters. Inbox presents unread items first, while device push delivery has an independent persistent control. Calendar labels use company names when symbols are numeric; sticky date headings share measured toolbar offsets. Home previews select the newest filing per exact watchlist security before limiting, without changing the full filing feed. Static Watchlist identity fallback uses the shared verified IndusInd code; existing list state, revisions and editor behavior are preserved. Inbox now has All/Watchlist/Results only, with unread-first ordering, read action below/right of filters and ephemeral per-owner/filter snapshots retained across close. Confirmed read/clear reconciles all cached filters; loading/error never erases saved content. Watchlist first-read readiness separates unknown from confirmed empty. Calendar/News/Watchlist pull indicators occupy flow below stable controls. Watchlist and Story symbol-to-code fallback maps also use the shared blank BSE code, preventing the old Advanced Enzyme mapping from returning through a client fallback. Stored 30-day filing counts share one exact-company projection with company detail, independently of the seven-day updates feed. Durable per-company history uses keyset pages; company Filings and Material Actions expose numbered pages. Explicit paid archive imports all categories over selected years with bounded workers, source failure and storage confirmation, and does not persist PDFs. Process restart or another instance may make worker status unavailable; saved evidence remains and no success is invented. Financial result titles include Results For Quarter/Q1 and board Outcome - Results. Generic outcomes need identity-bound proof from bounded official BSE PDF text; no PDF is persisted. Archive receipts distinguish saved filings from documents awaiting verification. Calendar retains one lower history control; Stock 360 and automatic readers share completion copy. Completed archive receipts with pending documents remain successful reads and have one ledger status owner. Shared pre-result priority updates require existing admin authorization; explicit server PIN denial opens the existing PIN dialog. HTML/preview denial remains an unconfirmed blocker. No automatic mutation retry or client role expansion is permitted. Calendar window reads cancel superseded company/window requests and expose retry on failure. English summary fields survive server projections and share AI counts/filter/render. Pagination clamps after refresh. Details/filter keyboard ownership is element-local; shared Telegram controls mirror server admin-only policy and wait for confirmed message IDs. Company Hub peer cards replace redundant result teasers and navigate through IntelModalContext with exact identities; shared calendar Share actions retain the existing email/clipboard handlers. Calendar uses the same company/purpose hierarchy for numeric F&O and symbolic rows, one normalized full-date heading, and wrapping action-only footers. Semantic segmented/control radius tokens cover Classic and Soft Glass; Watchlist compact labels retain inline counts and readable mobile search. Calendar reminder popovers portal outside blurred/transformed cards and own viewport placement, keyboard dismissal and focus return."
+      "reason": "List/detail identity, filters, watchlist membership, badge counts and timestamps must agree. Background refresh preserves content, density, selection and scroll. Rapid filter changes must not render older responses. Home membership uses active-list exact identities. The responsive watchlist editor preserves company metadata, page scrolling and four visible priority filters. Inbox presents unread items first, while device push delivery has an independent persistent control. Calendar labels use company names when symbols are numeric; sticky date headings share measured toolbar offsets. Home previews select the newest filing per exact watchlist security before limiting, without changing the full filing feed. Static Watchlist identity fallback uses the shared verified IndusInd code; existing list state, revisions and editor behavior are preserved. Inbox now has All/Watchlist/Results only, with unread-first ordering, read action below/right of filters and ephemeral per-owner/filter snapshots retained across close. Confirmed read/clear reconciles all cached filters; loading/error never erases saved content. Watchlist first-read readiness separates unknown from confirmed empty. Calendar/News/Watchlist pull indicators occupy flow below stable controls. Watchlist and Story symbol-to-code fallback maps also use the shared blank BSE code, preventing the old Advanced Enzyme mapping from returning through a client fallback. Stored 30-day filing counts share one exact-company projection with company detail, independently of the seven-day updates feed. Durable per-company history uses keyset pages; company Filings and Material Actions expose numbered pages. Explicit paid archive imports all categories over selected years with bounded workers, source failure and storage confirmation, and does not persist PDFs. Process restart or another instance may make worker status unavailable; saved evidence remains and no success is invented. Financial result titles include Results For Quarter/Q1 and board Outcome - Results. Generic outcomes need identity-bound proof from bounded official BSE PDF text; no PDF is persisted. Archive receipts distinguish saved filings from documents awaiting verification. Calendar retains one lower history control; Stock 360 and automatic readers share completion copy. Completed archive receipts with pending documents remain successful reads and have one ledger status owner. Shared pre-result priority updates require existing admin authorization; explicit server PIN denial opens the existing PIN dialog. HTML/preview denial remains an unconfirmed blocker. No automatic mutation retry or client role expansion is permitted. Calendar window reads cancel superseded company/window requests and expose retry on failure. English summary fields survive server projections and share AI counts/filter/render. Pagination clamps after refresh. Details/filter keyboard ownership is element-local; shared Telegram controls mirror server admin-only policy and wait for confirmed message IDs. Company Hub peer cards replace redundant result teasers and navigate through IntelModalContext with exact identities; shared calendar Share actions retain the existing email/clipboard handlers. Calendar uses the same company/purpose hierarchy for numeric F&O and symbolic rows, one normalized full-date heading, and wrapping action-only footers. Semantic segmented/control radius tokens cover Classic and Soft Glass; Watchlist compact labels retain inline counts and readable mobile search. Calendar reminder popovers portal outside blurred/transformed cards and own viewport placement, keyboard dismissal and focus return. For You uses exact active-watchlist projections for results, news, Radar, ADR and company Stories, with explicit target/new-list stock additions through existing guarded routes. Canonical result history supplies first-declaration IST timing dots, a supported one/two-hour concentration and labelled exceptions; no scheduled or ingestion clocks imply release times. Today preserves declared results with distinct wording and accent."
     },
     {
       "id": "frontend-notes",
@@ -18552,37 +18699,37 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 444,
+      "line": 448,
       "function": "fetch",
       "target": "'/api/referrals/track-visit'"
     },
     {
       "file": "src/App.tsx",
-      "line": 835,
+      "line": 844,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/App.tsx",
-      "line": 845,
+      "line": 861,
       "function": "customFetch",
       "target": "'/auth/status'"
     },
     {
       "file": "src/App.tsx",
-      "line": 868,
+      "line": 881,
       "function": "customFetch",
       "target": "'/api/settings'"
     },
     {
       "file": "src/App.tsx",
-      "line": 878,
+      "line": 891,
       "function": "customFetch",
       "target": "'/api/logs?limit=400'"
     },
     {
       "file": "src/App.tsx",
-      "line": 910,
+      "line": 922,
       "function": "customFetch",
       "target": "'/api/toggle'"
     },
@@ -18792,33 +18939,39 @@
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 116,
+      "line": 137,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 117,
+      "line": 138,
       "function": "customFetch",
-      "target": "'/api/results-calendar?filter=upcoming&limit=8'"
+      "target": "'/api/results-calendar?filter=all&scope=watchlist'"
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 145,
+      "line": 165,
       "function": "customFetch",
       "target": "`/api/announcements?limit=100&symbols=${encodeURIComponent([...syms].join(','))}`"
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 180,
+      "line": 198,
+      "function": "customFetch",
+      "target": "`/api/search-company?q=${encodeURIComponent(modalSearch.trim())}`"
+    },
+    {
+      "file": "src/components/HomeForYou.tsx",
+      "line": 222,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 192,
+      "line": 231,
       "function": "customFetch",
-      "target": "`/api/watchlists/${targetList.id}/symbols`"
+      "target": "`/api/watchlists/${encodeURIComponent(target.id)}/symbols`"
     },
     {
       "file": "src/components/HomeMarketNews.tsx",
@@ -19002,55 +19155,55 @@
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 363,
+      "line": 365,
       "function": "customFetch",
       "target": "`/api/stocks/${encodeURIComponent(scripCode)}/fetch-deep-history`"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 436,
+      "line": 438,
       "function": "customFetch",
       "target": "`/api/stocks/${encodeURIComponent(scripCode)}/runup-announcements?symbol=${encodeURIComponent(symbol)}&resultDate=${encodeURIComponent(resultDateStr)}&windowDays=${daysToUse}`"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 454,
+      "line": 456,
       "function": "customFetch",
       "target": "'/api/watchlist/fetch-deep-history'"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 559,
+      "line": 561,
       "function": "customFetch",
       "target": "url"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 624,
+      "line": 630,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 705,
+      "line": 721,
       "function": "customFetch",
       "target": "`/api/announcements/${announcementId}/generate-summary`"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 771,
+      "line": 787,
       "function": "customFetch",
       "target": "'/api/send-to-telegram-manual'"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 906,
+      "line": 922,
       "function": "customFetch",
       "target": "'/api/send-to-telegram-manual'"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 959,
+      "line": 975,
       "function": "customFetch",
       "target": "'/api/results-calendar/telegram-broadcast'"
     },
@@ -19218,97 +19371,97 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 959,
+      "line": 963,
       "function": "customFetch",
       "target": "'/api/stock-master'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 989,
+      "line": 993,
       "function": "customFetch",
       "target": "`/api/search-company?q=${encodeURIComponent(query)}`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1028,
+      "line": 1032,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1051,
+      "line": 1055,
       "function": "customFetch",
       "target": "`/api/watchlists/${id}/name`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1071,
+      "line": 1075,
       "function": "customFetch",
       "target": "`/api/watchlists/${id}`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1083,
+      "line": 1087,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1096,
+      "line": 1100,
       "function": "customFetch",
       "target": "`/api/watchlists/${created.id}/symbols`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1136,
+      "line": 1140,
       "function": "customFetch",
       "target": "`/api/watchlists/${id}/toggle`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1234,
+      "line": 1238,
       "function": "customFetch",
       "target": "`/api/watchlists/${targetList.id}/symbols`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1264,
+      "line": 1268,
       "function": "customFetch",
       "target": "'/api/watchlists/sync-stock'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1324,
+      "line": 1328,
       "function": "customFetch",
       "target": "`/api/watchlists/${targetId}/symbols/bulk`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1351,
+      "line": 1355,
       "function": "customFetch",
       "target": "'/api/watchlists/sync-stock'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1392,
+      "line": 1396,
       "function": "customFetch",
       "target": "`/api/watchlists/symbols/${encodeURIComponent(currentItem.symbol)}/priority-sync`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1438,
+      "line": 1442,
       "function": "customFetch",
       "target": "`/api/watchlists/${listId}/symbols`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1458,
+      "line": 1462,
       "function": "customFetch",
       "target": "`/api/watchlists/${listId}/symbols/${encodeURIComponent(symbol)}`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 3456,
+      "line": 3460,
       "function": "customFetch",
       "target": "url"
     },
@@ -20755,6 +20908,12 @@
       "key": "{ length: 100 }"
     },
     {
+      "file": "server/tests/forYouPersonal.test.ts",
+      "line": 9,
+      "function": "Array.from",
+      "key": "{length:10}"
+    },
+    {
       "file": "server/tests/impactRadarRender.test.ts",
       "line": 40,
       "function": "Array.from",
@@ -20954,49 +21113,49 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 443,
+      "line": 447,
       "function": "localStorage.setItem",
       "key": "'bse_referral_code'"
     },
     {
       "file": "src/App.tsx",
-      "line": 612,
+      "line": 616,
       "function": "sessionStorage.setItem",
       "key": "'bse_shared_query'"
     },
     {
       "file": "src/App.tsx",
-      "line": 754,
+      "line": 758,
       "function": "localStorage.setItem",
       "key": "'theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 769,
+      "line": 773,
       "function": "localStorage.getItem",
       "key": "'bse_design_theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 786,
+      "line": 790,
       "function": "localStorage.setItem",
       "key": "'bse_design_theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 787,
+      "line": 791,
       "function": "localStorage.setItem",
       "key": "`bse_design_theme_${user.uid}`"
     },
     {
       "file": "src/App.tsx",
-      "line": 819,
+      "line": 823,
       "function": "localStorage.getItem",
       "key": "user?.uid ? `bse_design_theme_${user.uid}` : 'bse_design_theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 828,
+      "line": 832,
       "function": "localStorage.setItem",
       "key": "user?.uid ? `bse_design_theme_${user.uid}` : 'bse_design_theme'"
     },
@@ -21086,7 +21245,7 @@
     },
     {
       "file": "src/components/ImpactRadar.tsx",
-      "line": 170,
+      "line": 171,
       "function": "Array.from",
       "key": "{ length: count }"
     },
@@ -21176,19 +21335,19 @@
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 227,
+      "line": 229,
       "function": "localStorage.getItem",
       "key": "'nexus_calendar_view_mode'"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 238,
+      "line": 240,
       "function": "localStorage.setItem",
       "key": "'nexus_calendar_view_mode'"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 1166,
+      "line": 1182,
       "function": "Array.from",
       "key": "map.values()"
     },
@@ -21224,7 +21383,7 @@
     },
     {
       "file": "src/components/TodayMarketStoryModal.tsx",
-      "line": 98,
+      "line": 101,
       "function": "localStorage.setItem",
       "key": "getStorySessionStorageKey()"
     },
@@ -21278,7 +21437,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1180,
+      "line": 1184,
       "function": "Array.from",
       "key": "new Set(watchlists.flatMap(l => (l.items || []).map((it: any) => parseSymbolItem(it).symbol)))"
     },
@@ -21302,7 +21461,7 @@
     },
     {
       "file": "src/components/story/StoryCarouselBar.tsx",
-      "line": 25,
+      "line": 27,
       "function": "localStorage.getItem",
       "key": "getStorySessionStorageKey()"
     },
@@ -23710,12 +23869,12 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 761,
+      "line": 765,
       "name": "DEV"
     },
     {
       "file": "src/App.tsx",
-      "line": 768,
+      "line": 772,
       "name": "DEV"
     },
     {
@@ -23742,7 +23901,7 @@
   "browserEvents": [
     {
       "file": "src/App.tsx",
-      "line": 613,
+      "line": 617,
       "target": "window",
       "kind": "dispatch",
       "name": "bse-share-target",
@@ -23750,7 +23909,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 622,
+      "line": 626,
       "target": "window",
       "kind": "listen",
       "name": "popstate",
@@ -23758,7 +23917,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 623,
+      "line": 627,
       "target": "window",
       "kind": "remove",
       "name": "popstate",
@@ -23766,7 +23925,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 736,
+      "line": 740,
       "target": "window",
       "kind": "listen",
       "name": "popstate",
@@ -23774,7 +23933,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 738,
+      "line": 742,
       "target": "window",
       "kind": "remove",
       "name": "popstate",
@@ -23782,7 +23941,23 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 862,
+      "line": 855,
+      "target": "window",
+      "kind": "listen",
+      "name": "watchlists-changed",
+      "expression": "window.addEventListener('watchlists-changed', changed)"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 856,
+      "target": "window",
+      "kind": "remove",
+      "name": "watchlists-changed",
+      "expression": "window.removeEventListener('watchlists-changed', changed)"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 875,
       "target": "window",
       "kind": "listen",
       "name": "auth-expired",
@@ -23790,7 +23965,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 863,
+      "line": 876,
       "target": "window",
       "kind": "remove",
       "name": "auth-expired",
@@ -23990,7 +24165,7 @@
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 100,
+      "line": 121,
       "target": "window",
       "kind": "listen",
       "name": "bse_nav_tab_refresh",
@@ -23998,7 +24173,7 @@
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 101,
+      "line": 122,
       "target": "window",
       "kind": "listen",
       "name": "watchlists-changed",
@@ -24006,7 +24181,7 @@
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 102,
+      "line": 123,
       "target": "window",
       "kind": "remove",
       "name": "bse_nav_tab_refresh",
@@ -24014,11 +24189,27 @@
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 102,
+      "line": 123,
       "target": "window",
       "kind": "remove",
       "name": "watchlists-changed",
       "expression": "window.removeEventListener('watchlists-changed', changed)"
+    },
+    {
+      "file": "src/components/HomeForYou.tsx",
+      "line": 228,
+      "target": "window",
+      "kind": "dispatch",
+      "name": "watchlists-changed",
+      "expression": "window.dispatchEvent(new Event('watchlists-changed'))"
+    },
+    {
+      "file": "src/components/HomeForYou.tsx",
+      "line": 237,
+      "target": "window",
+      "kind": "dispatch",
+      "name": "watchlists-changed",
+      "expression": "window.dispatchEvent(new Event('watchlists-changed'))"
     },
     {
       "file": "src/components/HomeMarketNews.tsx",
@@ -24054,7 +24245,7 @@
     },
     {
       "file": "src/components/ImpactRadar.tsx",
-      "line": 141,
+      "line": 142,
       "target": "document",
       "kind": "listen",
       "name": "visibilitychange",
@@ -24062,7 +24253,7 @@
     },
     {
       "file": "src/components/ImpactRadar.tsx",
-      "line": 141,
+      "line": 142,
       "target": "window",
       "kind": "listen",
       "name": "bse_nav_tab_refresh",
@@ -24070,7 +24261,7 @@
     },
     {
       "file": "src/components/ImpactRadar.tsx",
-      "line": 142,
+      "line": 143,
       "target": "window",
       "kind": "listen",
       "name": "online",
@@ -24078,7 +24269,7 @@
     },
     {
       "file": "src/components/ImpactRadar.tsx",
-      "line": 142,
+      "line": 143,
       "target": "window",
       "kind": "listen",
       "name": "pageshow",
@@ -24086,7 +24277,7 @@
     },
     {
       "file": "src/components/ImpactRadar.tsx",
-      "line": 143,
+      "line": 144,
       "target": "document",
       "kind": "remove",
       "name": "visibilitychange",
@@ -24094,7 +24285,7 @@
     },
     {
       "file": "src/components/ImpactRadar.tsx",
-      "line": 143,
+      "line": 144,
       "target": "window",
       "kind": "remove",
       "name": "bse_nav_tab_refresh",
@@ -24102,7 +24293,7 @@
     },
     {
       "file": "src/components/ImpactRadar.tsx",
-      "line": 143,
+      "line": 144,
       "target": "window",
       "kind": "remove",
       "name": "online",
@@ -24110,7 +24301,7 @@
     },
     {
       "file": "src/components/ImpactRadar.tsx",
-      "line": 143,
+      "line": 144,
       "target": "window",
       "kind": "remove",
       "name": "pageshow",
@@ -24270,11 +24461,27 @@
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 379,
+      "line": 381,
       "target": "window",
       "kind": "dispatch",
       "name": "company-filings-changed",
       "expression": "window.dispatchEvent(new Event('company-filings-changed'))"
+    },
+    {
+      "file": "src/components/ResultsCalendar.tsx",
+      "line": 647,
+      "target": "window",
+      "kind": "listen",
+      "name": "watchlists-changed",
+      "expression": "window.addEventListener('watchlists-changed', changed)"
+    },
+    {
+      "file": "src/components/ResultsCalendar.tsx",
+      "line": 648,
+      "target": "window",
+      "kind": "remove",
+      "name": "watchlists-changed",
+      "expression": "window.removeEventListener('watchlists-changed', changed)"
     },
     {
       "file": "src/components/SettingsTab.tsx",
@@ -24374,7 +24581,7 @@
     },
     {
       "file": "src/components/TodayMarketStoryModal.tsx",
-      "line": 114,
+      "line": 117,
       "target": "document",
       "kind": "listen",
       "name": "visibilitychange",
@@ -24382,7 +24589,7 @@
     },
     {
       "file": "src/components/TodayMarketStoryModal.tsx",
-      "line": 116,
+      "line": 119,
       "target": "document",
       "kind": "remove",
       "name": "visibilitychange",
@@ -24390,7 +24597,7 @@
     },
     {
       "file": "src/components/TodayMarketStoryModal.tsx",
-      "line": 180,
+      "line": 183,
       "target": "document",
       "kind": "listen",
       "name": "keydown",
@@ -24398,7 +24605,7 @@
     },
     {
       "file": "src/components/TodayMarketStoryModal.tsx",
-      "line": 181,
+      "line": 184,
       "target": "document",
       "kind": "remove",
       "name": "keydown",
@@ -24458,11 +24665,11 @@
       "target": "window",
       "kind": "dispatch",
       "name": "watchlists-changed",
-      "expression": "window.dispatchEvent(new Event('watchlists-changed'))"
+      "expression": "window.dispatchEvent(new CustomEvent('watchlists-changed', { detail: { source: 'watchlist-manager' } }))"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 939,
+      "line": 942,
       "target": "window",
       "kind": "listen",
       "name": "focus",
@@ -24470,7 +24677,15 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 940,
+      "line": 943,
+      "target": "window",
+      "kind": "listen",
+      "name": "watchlists-changed",
+      "expression": "window.addEventListener('watchlists-changed', membershipChanged)"
+    },
+    {
+      "file": "src/components/WatchlistManager.tsx",
+      "line": 944,
       "target": "document",
       "kind": "listen",
       "name": "visibilitychange",
@@ -24478,7 +24693,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 941,
+      "line": 945,
       "target": "window",
       "kind": "remove",
       "name": "focus",
@@ -24486,7 +24701,15 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 941,
+      "line": 945,
+      "target": "window",
+      "kind": "remove",
+      "name": "watchlists-changed",
+      "expression": "window.removeEventListener('watchlists-changed', membershipChanged)"
+    },
+    {
+      "file": "src/components/WatchlistManager.tsx",
+      "line": 945,
       "target": "document",
       "kind": "remove",
       "name": "visibilitychange",
@@ -24494,7 +24717,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 952,
+      "line": 956,
       "target": "window",
       "kind": "listen",
       "name": "auth-state-changed",
@@ -24502,7 +24725,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 953,
+      "line": 957,
       "target": "window",
       "kind": "remove",
       "name": "auth-state-changed",
@@ -24590,7 +24813,7 @@
     },
     {
       "file": "src/components/story/StoryCarouselBar.tsx",
-      "line": 34,
+      "line": 36,
       "target": "document",
       "kind": "listen",
       "name": "visibilitychange",
@@ -24598,7 +24821,7 @@
     },
     {
       "file": "src/components/story/StoryCarouselBar.tsx",
-      "line": 35,
+      "line": 37,
       "target": "document",
       "kind": "remove",
       "name": "visibilitychange",

@@ -424,6 +424,7 @@ function AppContent() {
   const [settings, setSettings] = useState<any>({});
   const [logs, setLogs] = useState([]);
   const [watchlists, setWatchlists] = useState<any[]>([]);
+  const [watchlistDataOwner, setWatchlistDataOwner] = useState('');
   const [health, setHealth] = useState({ bse: { status: 'unknown', latency: 0 }, telegram: { status: 'unknown', latency: 0 } });
   
   const { user, profile, authLoading, isAdmin, isPro, adminUnlocked, logout, 
@@ -432,6 +433,9 @@ function AppContent() {
     isPaidProActive, updateNotificationPreferences, openCheckout
   } = useAuth();
   const { showToast } = useToast();
+  const watchlistsRequest = useRef<AbortController | null>(null);
+  const watchlistAccount = user?.uid || profile?.uid || 'guest';
+  const watchlistOwner = useRef(watchlistAccount); watchlistOwner.current = watchlistAccount;
   const [serverAuth, setServerAuth] = useState<{ isAuthenticated: boolean; hasPin: boolean } | null>(null);
 
   // Capture ?ref=CODE referral links across all entry points
@@ -831,14 +835,26 @@ function AppContent() {
   }, [authLoading, user?.uid, profile?.notificationPreferences?.designTheme, isPaidProActive]);
 
   const fetchWatchlists = async () => {
+    watchlistsRequest.current?.abort();
+    if (!user && !profile) { setWatchlists([]); return; }
+    const controller = new AbortController(); watchlistsRequest.current = controller;
+    const requestedOwner = watchlistAccount;
+    const current = () => !controller.signal.aborted && watchlistOwner.current === requestedOwner;
     try {
-      const res = await customFetch('/api/watchlists');
-      if (res.ok) {
-        const data = await res.json();
-        setWatchlists(Array.isArray(data) ? data : []);
-      }
-    } catch (e) {}
+      const res = await customFetch('/api/watchlists', { signal: controller.signal });
+      if (!res.ok) throw new Error('Watchlists unavailable');
+      const data = await res.json();
+      if (current()) { setWatchlists(Array.isArray(data) ? data : []); setWatchlistDataOwner(requestedOwner); }
+    } catch { if (current()) setWatchlists([]); }
   };
+
+  useEffect(() => {
+    setWatchlists([]);
+    void fetchWatchlists();
+    const changed = () => { void fetchWatchlists(); };
+    window.addEventListener('watchlists-changed', changed);
+    return () => { watchlistsRequest.current?.abort(); window.removeEventListener('watchlists-changed', changed); };
+  }, [watchlistAccount]);
 
   const checkAuth = async () => {
     try {
@@ -853,9 +869,6 @@ function AppContent() {
 
   useEffect(() => {
     checkAuth();
-    if (user) {
-      fetchWatchlists();
-    }
     const handleAuthExpired = () => {
       checkAuth();
     };
@@ -888,7 +901,6 @@ function AppContent() {
 
   useEffect(() => {
     fetchSettings();
-    fetchWatchlists();
   }, []);
 
   useEffect(() => {
@@ -1206,7 +1218,7 @@ function AppContent() {
             <TabErrorBoundary label="news">
             <Suspense fallback={<PageSkeleton page="news" />}>
               <NewsPortal
-                watchlists={watchlists}
+                watchlists={watchlistDataOwner === watchlistAccount ? watchlists : []}
                 user={user}
                 onOpenWatchlists={() => handleTabChange('watchlists')}
                 onOpenSettings={() => handleTabChange('settings')}

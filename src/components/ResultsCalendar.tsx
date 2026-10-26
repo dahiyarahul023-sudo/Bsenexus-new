@@ -219,6 +219,8 @@ function ResultsCalendarView() {
   const [declarationFilter, setDeclarationFilter] = useState<'all' | 'declared' | 'pending' | 'urgent_3d' | 'week_7d' | 'month_30d' | 'has_ai'>('all');
   const [searchQuery, setSearchQuery] = useState(calendarLinkedScrip);
   const [watchlists, setWatchlists] = useState<any[]>([]);
+  const watchlistsRequest = useRef<AbortController | null>(null);
+  const watchlistOwner = useRef(owner); watchlistOwner.current = owner;
   const [sortBy, setSortBy] = useState<'date_asc' | 'date_desc' | 'status' | 'alpha'>('date_asc');
   
   // View Mode: 'grid' (default on PC/tablet) vs 'list' (default on mobile)
@@ -616,20 +618,35 @@ function ResultsCalendarView() {
   }, 30_000);
 
   const fetchWatchlists = async () => {
+    watchlistsRequest.current?.abort();
     if (!user && !profile) {
       setWatchlists([]);
       return;
     }
+    const controller = new AbortController(); watchlistsRequest.current = controller;
+    const requestedOwner = owner;
+    const current = () => !controller.signal.aborted && watchlistOwner.current === requestedOwner;
     try {
-      const res = await customFetch('/api/watchlists');
-      if (res.ok) {
-        const data = await res.json();
-        setWatchlists(data || []);
-      }
+      const res = await customFetch('/api/watchlists', { signal: controller.signal });
+      if (!res.ok) throw new Error('Watchlists unavailable');
+      const data = await res.json();
+      if (!Array.isArray(data)) throw new Error('Invalid watchlist response');
+      if (current()) setWatchlists(data);
     } catch (err) {
-      console.error('Error loading watchlists:', err);
+      if (current()) setWatchlists([]);
     }
   };
+
+  useEffect(() => {
+    setWatchlists([]);
+    void fetchWatchlists();
+    const changed = () => {
+      void fetchWatchlists();
+      if (calendarScope === 'watchlist') void fetchCalendar(false);
+    };
+    window.addEventListener('watchlists-changed', changed);
+    return () => { watchlistsRequest.current?.abort(); window.removeEventListener('watchlists-changed', changed); };
+  }, [owner, calendarScope, selectedWatchlistId]);
 
   useEffect(() => {
     document.title = 'BSE Results Calendar — Upcoming Quarterly Results & Earnings Dates | Bsenexus';
@@ -644,7 +661,6 @@ function ResultsCalendarView() {
       document.head.appendChild(canonical);
     }
     canonical.setAttribute('href', 'https://bsenexus.in/results-calendar');
-    fetchWatchlists();
   }, []);
 
   useEffect(() => {
@@ -2013,6 +2029,7 @@ function ResultsCalendarView() {
                   onClick={() => handleSelectItem(item)}
                   className={cn(
                     "calendar-entry",
+                    isToday && isDeclared && "calendar-declared-today",
                     viewMode === 'grid'
                       ? cn(heliosCard, calCardPad, calCardGap, "transition-all flex flex-col cursor-pointer relative group hover:shadow-[0_16px_40px_rgba(15,23,42,0.10)] dark:hover:shadow-[0_16px_40px_rgba(0,0,0,0.55)]")
                       : cn(heliosCard, calCardPad, "transition-all flex flex-col md:flex-row md:items-center justify-between gap-2.5 cursor-pointer relative group hover:shadow-[0_12px_28px_rgba(15,23,42,0.09)] dark:hover:shadow-[0_12px_28px_rgba(0,0,0,0.5)]"),
@@ -2097,10 +2114,10 @@ function ResultsCalendarView() {
                     {/* Status Badge in Grid View top corner */}
                     {viewMode === 'grid' && (
                       <div className="shrink-0">
-                        {isDeclared && item.resultDeclarationTime ? (
-                          <HeliosPill tone="emerald">Declared</HeliosPill>
+                        {isDeclared ? (
+                          <HeliosPill tone="emerald">{isToday ? 'Declared today' : 'Declared'}</HeliosPill>
                         ) : isToday ? (
-                          <HeliosPill tone="amber" pulseDot>Today</HeliosPill>
+                          <HeliosPill tone="amber" pulseDot>Today · Awaiting filing</HeliosPill>
                         ) : isUpcoming ? (
                           <HeliosPill tone="sky" dot={false} className="font-mono">
                             {item.daysLeft === 1 ? 'Tomorrow' : `In ${item.daysLeft}d`}
@@ -2122,7 +2139,7 @@ function ResultsCalendarView() {
 
                 {/* Full date/year remains in the sticky date heading and Details. */}
                 <div className="calendar-card-footer border-t border-slate-100 dark:border-[#2D283E] pt-2">
-                  {viewMode !== 'grid' && <span className="calendar-list-status text-[11px] text-slate-500 dark:text-slate-400">{isDeclared ? 'Declared' : isToday ? 'Today' : isUpcoming ? (item.daysLeft === 1 ? 'Tomorrow' : `In ${item.daysLeft}d`) : 'Past'}</span>}
+                  {viewMode !== 'grid' && <span className="calendar-list-status text-[11px] text-slate-500 dark:text-slate-400">{isDeclared ? (isToday ? '✓ Declared today' : 'Declared') : isToday ? 'Awaiting filing' : isUpcoming ? (item.daysLeft === 1 ? 'Tomorrow' : `In ${item.daysLeft}d`) : 'Past'}</span>}
                   <div ref={activeActionMenuId === item.id ? activeMenuAnchor : undefined} className="calendar-card-actions relative" onClick={(e) => e.stopPropagation()}>
                     {isDeclared ? (
                       <button

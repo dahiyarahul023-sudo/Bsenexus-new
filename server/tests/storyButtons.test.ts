@@ -1,3 +1,4 @@
+import { personalStoryChapters } from '../../src/utils/forYou';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -17,6 +18,7 @@ function harness(file: string, auth: any) {
     if (name === 'react') return fake;
     if (name === 'react-dom') return { createPortal: (tree: any) => tree };
     if (name === 'framer-motion') return { useReducedMotion: () => false };
+    if (name.endsWith('/forYou')) return {personalStoryChapters};
     if (name.endsWith('/AuthContext')) return { useAuth: () => auth };
     if (name.endsWith('/storyData')) return { getInitialStoryChapters: () => chapters, getAllSlides: () => slides };
     if (name.endsWith('/storyBuilder')) return { resolveStorySelection: () => ({ activeId: 'one', missingTopic: false }), getStoryDuration: () => 10000 };
