@@ -35,6 +35,7 @@ test('production monitoring still initializes once with the configured DSN and r
   assert.equal(calls.length, 1);
   assert.equal(calls[0].dsn, 'configured-project-dsn');
   assert.equal(calls[0].environment, 'production');
+  assert.equal(calls[0].traceLifecycle, 'static', 'Sentry 11 must actually execute the transaction redactor');
   assert.equal(typeof calls[0].beforeSend, 'function');
   assert.equal(typeof calls[0].beforeSendTransaction, 'function');
 });

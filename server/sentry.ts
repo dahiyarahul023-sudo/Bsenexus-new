@@ -31,6 +31,8 @@ export function initServerSentry(): void {
       dsn,
       environment: process.env.NODE_ENV || 'production',
       tracesSampleRate: 0.1,
+      // Keep beforeSendTransaction active under Sentry 11's streaming default.
+      traceLifecycle: 'static',
       beforeSend: event => redactAiTelemetry(event),
       beforeSendTransaction: event => redactAiTelemetry(event),
     });

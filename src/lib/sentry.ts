@@ -27,6 +27,8 @@ async function startSentry(dsn: string) {
       release: `bsenexus@${APP_VERSION}`,
       // Free-tier friendly: a small sample of transactions, all errors captured.
       tracesSampleRate: 0.1,
+      // The transaction redactor below requires the static lifecycle in SDK 11.
+      traceLifecycle: 'static',
       beforeSend(event) {
         try {
           const msg =

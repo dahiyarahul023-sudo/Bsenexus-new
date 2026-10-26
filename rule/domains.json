@@ -951,7 +951,9 @@
         "src/lib/sentrySdk.ts",
         "server/sentry.ts",
         "src/styles/payment.css",
-        "scripts/offline-tests.mjs"
+        "scripts/offline-tests.mjs",
+        "scripts/vite-preview-client.mjs",
+        "scripts/check-dev-runtime.mjs"
       ],
       "tests": [
         "server/tests/responseHeaders.test.ts",
@@ -962,9 +964,10 @@
         "server/tests/performanceSummary.test.ts",
         "server/tests/diagnosticsPopulation.test.ts",
         "server/tests/sentryIsolation.test.ts",
-        "server/tests/offlineTests.test.ts"
+        "server/tests/offlineTests.test.ts",
+        "server/tests/devRuntime.test.ts"
       ],
-      "reason": "Canonical document headers preserve OAuth popups, AI Studio preview and public embeds. Deferred optional SDKs preserve authentication assessment, configured monitoring and explicit push requests without blocking public paint. Generic HTML has a neutral brand/loading root, never synthetic filings or an unrelated directory. Real announcements use an explicit route-only insertion marker and public calendar SSR retains its own source-backed document."
+      "reason": "Canonical document headers preserve OAuth popups, AI Studio preview and public embeds. Deferred optional SDKs preserve authentication assessment, configured monitoring and explicit push requests without blocking public paint. Generic HTML has a neutral brand/loading root, never synthetic filings or an unrelated directory. Real announcements use an explicit route-only insertion marker and public calendar SSR retains its own source-backed document. Static development previews prepare an explicit complete browser dependency set before serving React; disabled HMR keeps CSS helpers without opening a socket. Sentry uses the static trace lifecycle so OAuth redaction is executed. A cold Chromium smoke checks real lazy screens separately from the production build."
     },
     {
       "id": "impact-radar",
