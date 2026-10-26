@@ -1,3 +1,7 @@
+import { useVisibilityInterval } from '../hooks/useVisibilityInterval';
+import { ADR_COMPANIES } from '../shared/adr';
+import { selectPersonalResults, watchlistTerms } from '../utils/forYou';
+import { useCalendarDialog } from '../hooks/useCalendarDialog';
 import { PageHeading } from './ui/PageHeading';
 import '../styles/overnight-adr.css';
 import { OvernightAdr } from './adr/OvernightAdr';
@@ -37,7 +41,6 @@ import { useFeedDensity } from '../hooks/useFeedDensity';
 import { HeliosPill, heliosCard } from './ui/helios';
 import { springSnappy, containerStaggerVariants, itemFadeUpVariants, buttonTap } from '../utils/motionTokens';
 import { ActionButton } from './ui/ActionButton';
-import { CommonQuestionsFAQ } from './ui/CommonQuestionsFAQ';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -73,6 +76,7 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
   const [homeRefresh, setHomeRefresh] = useState(0);
   const [watchlistStatus, setWatchlistStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [watchlistSymbols, setWatchlistSymbols] = useState<Set<string>>(new Set());
+  const [resultError, setResultError] = useState(false);
   const [upcomingResults, setUpcomingResults] = useState<any[]>([]);
   const [allAnnouncements, setAllAnnouncements] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -80,6 +84,21 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
   const [modalSearch, setModalSearch] = useState<string>('');
   const [addingStock, setAddingStock] = useState<string | null>(null);
+  const [targetListId, setTargetListId] = useState('');
+  const [newWatchlistName, setNewWatchlistName] = useState('');
+  const [addError, setAddError] = useState('');
+  const [addSuccess, setAddSuccess] = useState('');
+  const [searchResults, setSearchResults] = useState<typeof STARTER_STOCKS>([]);
+  const [searching, setSearching] = useState(false);
+  const addingRef = useRef<string | null>(null);
+  const mutationVersion = useRef(0);
+  const ownerRef = useRef('');
+  const mounted = useRef(true);
+  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;};},[]);
+  const addDialog = useCalendarDialog(isAddModalOpen, () => setIsAddModalOpen(false));
+  useEffect(() => {
+    if (isAddModalOpen && (addSuccess || addError)) addDialog.ref.current?.focus({ preventScroll: true });
+  }, [isAddModalOpen, addSuccess, addError]);
 
   // Detail sheets
   const [selectedFiling, setSelectedFiling] = useState<any | null>(null);
@@ -93,7 +112,9 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
   useBodyScrollLock(Boolean(isAddModalOpen || selectedFiling || selectedResult));
 
   const identity = user?.uid || profile?.uid || 'guest';
-  const loadedIdentity = useRef(identity);
+  const loadedIdentity = useRef(identity); ownerRef.current = identity;
+  useEffect(() => { ++mutationVersion.current; addingRef.current=null; setAddingStock(null);setModalSearch('');setSearchResults([]);setIsAddModalOpen(false); setTargetListId(''); setNewWatchlistName(''); setAddError(''); setAddSuccess(''); }, [identity]);
+  useEffect(() => { if (!targetListId && watchlists.length) setTargetListId(String((watchlists.find(w=>w.is_active===1||w.is_active===true)||watchlists[0]).id)); }, [watchlists,targetListId]);
   useEffect(() => {
     const refresh = (event: Event) => { if (isActive && (event as CustomEvent).detail?.tab === 'home') setHomeRefresh(v => v + 1); };
     const changed = () => { if (isActive) setHomeRefresh(v => v + 1); };
@@ -111,19 +132,20 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
     }
     const fetchHomeData = async () => {
       try {
-        setLoading(true); setWatchlistStatus('loading');
+        setLoading(true); setWatchlistStatus(previous=>previous==='ready'?'ready':'loading');
         const [wlRes, calRes] = await Promise.all([
           (user || profile) ? customFetch('/api/watchlists', { signal }).catch(() => null) : Promise.resolve(null),
-          customFetch('/api/results-calendar?filter=upcoming&limit=8', { signal }).catch(() => null),
+          (user || profile) ? customFetch('/api/results-calendar?filter=all&scope=watchlist', { signal }).catch(() => null) : Promise.resolve(null),
         ]);
 
         if (signal.aborted) return;
         const syms = new Set<string>();
+        let currentLists: any[] = [];
         if (wlRes && wlRes.ok) {
           const wlData = await wlRes.json();
           if (signal.aborted) return;
           if (!Array.isArray(wlData)) throw new Error('Invalid watchlist response');
-          const list = wlData;
+          const list = wlData; currentLists = list;
           setWatchlists(list); setWatchlistStatus('ready');
           activeWatchlistIdentities(list).forEach(stock => { syms.add(stock.symbol); if (stock.scripCode) syms.add(stock.scripCode); });
         }
@@ -132,16 +154,14 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
 
         if (calRes && calRes.ok) {
           const calData = await calRes.json();
+          const valid = calData.success!==false && Array.isArray(calData.items);
+          setResultError(!valid);
           if (signal.aborted) return;
-          const items = calData.items || [];
-          // Keep meetings scheduled in the next 7 days
-          const weekUpcoming = items.filter((i: any) => {
-            if (i.daysLeft !== undefined) return i.daysLeft >= 0 && i.daysLeft <= 7;
-            return !i.isDeclared;
-          });
-          setUpcomingResults(weekUpcoming.slice(0, 4));
+          const items = valid ? calData.items : [];
+          setUpcomingResults(selectPersonalResults(items, currentLists));
         }
 
+        if (!calRes?.ok) { setUpcomingResults([]); setResultError(Boolean(user||profile)); }
         const filRes = syms.size ? await customFetch(`/api/announcements?limit=100&symbols=${encodeURIComponent([...syms].join(','))}`, {signal}).catch(() => null) : null;
         if (signal.aborted) return;
         if (filRes && filRes.ok) {
@@ -153,7 +173,12 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
         }
 
       } catch (e) {
-        if (!signal.aborted) setWatchlistStatus('error');
+        if (!signal.aborted) {
+          setWatchlistStatus('error');
+          setWatchlistSymbols(new Set());
+          setUpcomingResults([]);
+          setAllAnnouncements([]);
+        }
         console.warn("Error loading Home For You data:", e);
       } finally {
         if (!signal.aborted) { setLoading(false); setHasLoaded(true); }
@@ -164,50 +189,63 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
     return () => controller.abort();
   }, [identity, isActive, homeRefresh]);
 
+  useEffect(() => {
+    if (!isAddModalOpen || !modalSearch.trim()) { setSearchResults([]); setSearching(false); return; }
+    const controller = new AbortController();
+    setSearching(true);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await customFetch(`/api/search-company?q=${encodeURIComponent(modalSearch.trim())}`, {signal:controller.signal});
+        const rows = await res.json();
+        if (!res.ok || !Array.isArray(rows)) throw new Error('Company search is unavailable.');
+        if (!controller.signal.aborted) setSearchResults(rows.map(row=>({symbol:row.symbol,scripCode:row.scripCode,name:row.name||row.companyName||row.symbol})));
+      } catch { if (!controller.signal.aborted) { setSearchResults([]); setAddError('Company search could not load. Try again.'); } }
+      finally { if (!controller.signal.aborted) setSearching(false); }
+    }, 250);
+    return () => { clearTimeout(timer); controller.abort(); };
+  }, [isAddModalOpen,modalSearch]);
+
   const handleAddStock = async (symbol: string, scripCode?: string, name?: string) => {
-    if (!user && !profile) {
-      setIsAuthModalOpen(true);
-      return;
-    }
-
-    const upperSym = symbol.trim().toUpperCase();
-    if (!upperSym) return;
-
-    setAddingStock(upperSym);
+    if (!user || user.isAnonymous) { setIsAuthModalOpen(true); return; }
+    if (addingRef.current) return;
+    const upperSym = symbol.trim().toUpperCase(); if (!upperSym) return;
+    const owner = identity;
+    const version=mutationVersion.current; const token=`${owner}:${version}`;
+    const current = () => mounted.current && ownerRef.current === owner && mutationVersion.current===version;
+    const controller = new AbortController(); const timeout = setTimeout(()=>controller.abort(),20000);
+    addingRef.current = token; setAddingStock(upperSym); setAddError(''); setAddSuccess('');
     try {
-      let targetList = watchlists.find(w => w.is_active === 1) || watchlists[0];
-      if (!targetList) {
-        const createRes = await customFetch('/api/watchlists', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: 'My Watchlist' })
-        });
-        if (createRes.ok) {
-          targetList = await createRes.json();
-          setWatchlists([targetList]);
-        }
+      let target = watchlists.find(list=>String(list.id)===targetListId);
+      if (targetListId === 'new' || !watchlists.length) {
+        const name = newWatchlistName.trim();
+        if (!name) throw new Error('Enter a name for the new watchlist.');
+        const response = await customFetch('/api/watchlists', {method:'POST',signal:controller.signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({name})});
+        const data = await response.json();
+        if (!current()) return;
+        if (!response.ok || !data.id) throw new Error(data.error || 'Watchlist could not be created.');
+        target = data;
+        setWatchlists(previous=>[...previous,data]); setTargetListId(String(data.id)); setNewWatchlistName('');
+        window.dispatchEvent(new Event('watchlists-changed'));
       }
-
-      if (targetList) {
-        const addRes = await customFetch(`/api/watchlists/${targetList.id}/symbols`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ symbol: upperSym, scripCode: scripCode || undefined, companyName: name, priority: 'HIGH' })
-        });
-        if (addRes.ok) {
-          setHomeRefresh(value => value + 1);
-        }
-      }
-    } catch (e) {
-      console.warn("Could not add stock to watchlist:", e);
-    } finally {
-      setAddingStock(null);
-    }
+      if (!target) throw new Error('Choose a watchlist first.');
+      const response = await customFetch(`/api/watchlists/${encodeURIComponent(target.id)}/symbols`, {method:'POST',signal:controller.signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({symbol:upperSym,scripCode:scripCode||undefined,companyName:name,priority:'HIGH'})});
+      const data = await response.json().catch(()=>null);
+      if (!current()) return;
+      if (!response.ok || data?.success===false) throw new Error(data?.error || 'Stock could not be added.');
+      setWatchlists(previous=>previous.map(list=>String(list.id)===String(target.id)?{...list,items:[...(list.items||[]),{symbol:upperSym,scripCode,companyName:name}]}:list));
+      setAddSuccess(`Added to ${target.name}.`); setHomeRefresh(value=>value+1);
+      window.dispatchEvent(new Event('watchlists-changed'));
+    } catch(error) { if (current()) setAddError(controller.signal.aborted ? 'Update timed out. Check your watchlist before retrying.' : error instanceof Error ? error.message : 'Could not confirm the update. Check your watchlist before retrying.'); }
+    finally { clearTimeout(timeout); if(addingRef.current===token)addingRef.current=null; if (current()) setAddingStock(null); }
   };
 
+  useVisibilityInterval(()=>setHomeRefresh(value=>value+1),60000,isActive);
   const sameIdentity = loadedIdentity.current === identity;
   const trackedCompanyCount = activeWatchlistIdentities(watchlists).length;
-  const hasWatchlist = sameIdentity && watchlistSymbols.size > 0;
+  const personalTerms = sameIdentity && watchlistStatus==='ready' ? watchlistTerms(watchlists) : [];
+  const selectedList = watchlists.find(list=>String(list.id)===targetListId);
+  const selectedStocks = new Set((selectedList?.items||[]).flatMap((item:any)=>typeof item==='string'?[item]:[item.symbol,item.scripCode]).filter(Boolean));
+  const hasWatchlist = sameIdentity && watchlistStatus === 'ready' && watchlistSymbols.size > 0;
 
   // 1. Filtered Watchlist Filings
   const watchlistFilings = useMemo(() => {
@@ -217,12 +255,8 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
 
   // Starter stocks filtered by search query in modal
   const filteredStarterStocks = useMemo(() => {
-    if (!modalSearch.trim()) return STARTER_STOCKS;
-    const q = modalSearch.trim().toLowerCase();
-    return STARTER_STOCKS.filter(s => 
-      s.symbol.toLowerCase().includes(q) || s.name.toLowerCase().includes(q) || s.scripCode.includes(q)
-    );
-  }, [modalSearch]);
+    return modalSearch.trim() ? searchResults : STARTER_STOCKS;
+  }, [modalSearch,searchResults]);
 
   return (
     <div className="max-w-6xl mx-auto px-3.5 sm:px-6 py-4 sm:py-6 space-y-6">
@@ -243,7 +277,7 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
           type="button"
           whileTap={buttonTap}
           transition={springSnappy}
-          onClick={() => setIsAddModalOpen(true)}
+          onClick={() => {setIsAddModalOpen(true);setAddError('');setAddSuccess('');}}
           className="min-h-[44px] sm:min-h-[38px] px-4 py-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer shrink-0 select-none"
         >
           <Plus size={15} />
@@ -252,7 +286,7 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
       </div>
 
       {/* Groww-Style Live Market Story Top Carousel Bar */}
-      <StoryCarouselBar 
+      <StoryCarouselBar watched={personalTerms}
         onOpenStory={(chapterId) => {
           setSelectedStoryChapter(chapterId);
           setStoryModalOpen(true);
@@ -260,11 +294,11 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
         className="pt-0 pb-1"
       />
 
-      <OvernightAdr key={`adr-${identity}`} active={isActive} density={density} watched={sameIdentity ? [...watchlistSymbols] : []}
+      {ADR_COMPANIES.some(company=>watchlistSymbols.has(company.symbol)||watchlistSymbols.has(company.scripCode)) && <OvernightAdr key={`adr-${identity}`} active={isActive && watchlistStatus==='ready'} watchlistOnly density={density} watched={sameIdentity && watchlistStatus==='ready' ? [...watchlistSymbols] : []}
         onOpenCompany={company => openIntelModal({ scripCode: company.scripCode, symbol: company.symbol, companyName: company.name })}
-        onOpenStory={() => { setSelectedStoryChapter('market-pulse'); setStoryModalOpen(true); }} />
-      <ImpactRadar key={identity} active={isActive} identity={identity} onNavigate={onNavigate} density={density} watched={sameIdentity ? [...watchlistSymbols] : []} watchlistStatus={sameIdentity ? watchlistStatus : 'loading'} onRefreshWatchlist={() => setHomeRefresh(v => v + 1)} />
-      <HomeMarketNews key={`news-${identity}`} active={isActive} identity={identity} watched={sameIdentity ? [...watchlistSymbols] : []} onNavigate={onNavigate} density={density} />
+        onOpenStory={() => { setSelectedStoryChapter(undefined); setStoryModalOpen(true); }} />}
+      <ImpactRadar key={identity} watchlistOnly active={isActive} identity={identity} onNavigate={onNavigate} density={density} watched={sameIdentity && watchlistStatus==='ready' ? [...watchlistSymbols] : []} watchlistStatus={sameIdentity ? watchlistStatus : 'loading'} onRefreshWatchlist={() => setHomeRefresh(v => v + 1)} />
+      <HomeMarketNews key={`news-${identity}`} watchlistOnly watchlistStatus={sameIdentity ? watchlistStatus : 'loading'} active={isActive} identity={identity} watched={personalTerms} onNavigate={onNavigate} density={density} />
 
       {/* 2. Focused Sections or Calm Summary */}
       {!sameIdentity || (loading && !hasLoaded) ? <HomeSkeleton /> : (
@@ -366,11 +400,12 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
         )}
 
         {/* SECTION 2: Upcoming Results / Upcoming earnings date */}
-        {upcomingResults.length > 0 && (
+        {!upcomingResults.length && hasWatchlist && <section className="space-y-2"><h2 className="text-sm font-bold">Your Results · Today &amp; Upcoming</h2><p role="status" className="text-xs text-slate-500">{resultError ? 'Result dates could not be checked. Try refreshing.' : 'No saved result dates in the next 7 days for your watchlist.'}</p></section>}
+        {hasWatchlist && upcomingResults.length > 0 && (
           <section className="space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white font-display">
-                Upcoming Results
+                Your Results · Today & Upcoming
               </h2>
               <button
                 type="button"
@@ -387,12 +422,14 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
                 const meetingDateStr = item.meetingDate || (item.bseTimestamp ? formatDateOnly(item.bseTimestamp) : (item.meetingTimestamp ? formatDateOnly(item.meetingTimestamp) : ''));
                 const tile = parseMeetingDateTile(meetingDateStr || undefined);
                 const isToday = item.daysLeft === 0;
-                const daysLabel = isToday ? 'Today' : item.daysLeft === 1 ? 'Tomorrow' : `In ${item.daysLeft} days`;
+                const declaredToday = isToday && item.isDeclared===true;
+                const daysLabel = declaredToday ? 'Declared today' : isToday ? 'Today · Awaiting filing' : item.daysLeft === 1 ? 'Tomorrow' : `In ${item.daysLeft} days`;
                 const companyName = (item.scripCode === '500034' || item.symbol === 'BAJFINANCE' || item.companyName === 'BAJAJ AUTO F') ? 'Bajaj Finance Ltd' : item.companyName;
 
                 return (
                   <div
                     key={item.id || idx}
+                    data-result-status={declaredToday ? 'declared-today' : isToday ? 'pending' : 'upcoming'}
                     onClick={() => setSelectedResult({ ...item, companyName, meetingDate: meetingDateStr || item.meetingDate })}
                     className={cn(heliosCard, homeCardPad, "transition-all cursor-pointer flex items-center justify-between gap-3 hover:shadow-[0_12px_28px_rgba(15,23,42,0.09)] dark:hover:shadow-[0_12px_28px_rgba(0,0,0,0.5)]")}
                   >
@@ -420,23 +457,18 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
                           )}
                         </div>
                         <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                          {item.purpose || 'Financial Results'}
+                          {declaredToday ? `Result filed${item.resultDeclarationTime ? ' · '+formatCleanTime(item.resultDeclarationTime) : ''}` : item.purpose || 'Financial Results'}
                         </p>
                       </div>
                     </div>
 
-                    <HeliosPill tone={isToday ? "emerald" : "slate"} pulseDot={isToday} className="shrink-0">{daysLabel}</HeliosPill>
+                    <HeliosPill tone={declaredToday ? "emerald" : isToday ? "amber" : "slate"} pulseDot={isToday && !declaredToday} className="shrink-0">{daysLabel}</HeliosPill>
                   </div>
                 );
               })}
             </div>
           </section>
         )}
-
-        {/* Common questions FAQ Section */}
-        <section className="pt-2">
-          <CommonQuestionsFAQ id="home-for-you-faq" compact />
-        </section>
 
       </div>
       )}
@@ -458,7 +490,9 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               transition={springSnappy}
-              className="relative w-full max-w-md bg-white dark:bg-[#181624] rounded-2xl border border-slate-200 dark:border-[#262335] shadow-2xl p-5 space-y-4 z-10 overscroll-contain"
+              {...addDialog}
+              aria-label="Add company to watchlist"
+              className="relative w-full max-w-md max-h-[90dvh] overflow-y-auto bg-white dark:bg-[#181624] rounded-2xl border border-slate-200 dark:border-[#262335] shadow-2xl p-5 space-y-4 z-10 overscroll-contain"
             >
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#262335] pb-3">
                 <div>
@@ -471,6 +505,7 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
                 </div>
                 <button
                   type="button"
+                  aria-label="Close add company"
                   onClick={() => setIsAddModalOpen(false)}
                   className="min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
                 >
@@ -478,6 +513,16 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
                 </button>
               </div>
 
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold" htmlFor="home-watchlist-target">Add to watchlist</label>
+                <select id="home-watchlist-target" value={watchlists.length ? targetListId : 'new'} disabled={!!addingStock || watchlistStatus!=='ready'} onChange={event=>{setTargetListId(event.target.value);setAddError('');setAddSuccess('');}} className="w-full min-h-11 border rounded-xl px-3 bg-white dark:bg-slate-900 text-sm">
+                  {watchlists.map(list=><option key={list.id} value={String(list.id)}>{list.name}{list.is_active===false||list.is_active===0?' (inactive)':''}</option>)}
+                  <option value="new">+ Create new watchlist</option>
+                </select>
+                {(targetListId==='new'||!watchlists.length) && <input aria-label="New watchlist name" value={newWatchlistName} maxLength={60} disabled={!!addingStock} onChange={event=>setNewWatchlistName(event.target.value)} placeholder="New watchlist name" className="w-full min-h-11 border rounded-xl px-3 bg-white dark:bg-slate-900 text-base"/>}
+                {addError && <p role="alert" className="text-xs text-rose-600 dark:text-rose-300">{addError}</p>}
+                {addSuccess && <p role="status" className="text-xs text-emerald-700 dark:text-emerald-300">{addSuccess}</p>}
+              </div>
               {/* Search input */}
               <div className="relative">
                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -485,7 +530,8 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
                   type="text"
                   value={modalSearch}
                   onChange={e => setModalSearch(e.target.value)}
-                  placeholder="Search symbol (e.g. RELIANCE, INFY)..."
+                  aria-label="Find stock to add"
+                  placeholder="Search any company or symbol"
                   className="w-full h-10 pl-9 pr-3 bg-slate-50 dark:bg-[#201E2E] border border-slate-200 dark:border-[#2D283E] rounded-xl text-xs font-medium focus:outline-none focus:ring-1 focus:ring-slate-400 text-slate-900 dark:text-white"
                 />
               </div>
@@ -493,11 +539,11 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
               {/* Quick Starter Picks */}
               <div className="space-y-2">
                 <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                  Popular Indian Companies
+                  {searching ? 'Searching…' : modalSearch.trim() ? 'Search results' : 'Popular Indian Companies'}
                 </div>
                 <div className="max-h-60 overflow-y-auto space-y-1.5 pr-1">
                   {filteredStarterStocks.map(stk => {
-                    const isTracked = watchlistSymbols.has(stk.symbol.toUpperCase());
+                    const isTracked = selectedStocks.has(stk.symbol.toUpperCase()) || selectedStocks.has(stk.scripCode);
                     const isBusy = addingStock === stk.symbol;
 
                     return (
@@ -518,7 +564,7 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
                           onClick={() => handleAddStock(stk.symbol, stk.scripCode, stk.name)}
                           isLoading={isBusy}
                           loadingText="Adding..."
-                          disabled={isTracked}
+                          disabled={isTracked || !!addingStock || watchlistStatus!=='ready' || ((targetListId==='new'||!watchlists.length) && !newWatchlistName.trim())}
                           variant={isTracked ? "secondary" : "primary"}
                           size="sm"
                           className={cn(
@@ -698,7 +744,7 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
 
       {/* Groww-Style Market Story Viewer Modal */}
       {storyModalOpen && (
-        <TodayMarketStoryModal
+        <TodayMarketStoryModal watched={personalTerms}
           isOpen={storyModalOpen}
           initialChapterId={selectedStoryChapter}
           onClose={() => {

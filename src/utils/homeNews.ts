@@ -31,8 +31,14 @@ export function readHomeNews(payload: unknown): HomeNewsItem[] {
 // Editorial ordering, not a verified severity or stock recommendation.
 // Prefer fresh market/regulatory/results news; give material policy headlines
 // and exact watchlist terms a bounded boost. Unknown dates get no freshness.
-export function selectHomeNews(items: HomeNewsItem[], watched: string[] = [], now = Date.now()): HomeNewsItem[] {
-  const scored = items.map(item => {
+export function selectHomeNews(items: HomeNewsItem[], watched: string[] = [], now = Date.now(), watchlistOnly = false): HomeNewsItem[] {
+  const relevant = (item: HomeNewsItem) => watched.some(term => {
+    if (item.symbol?.toUpperCase()===term.toUpperCase()) return true;
+    if (term.trim().length < 3) return false;
+    const escaped = term.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return item.symbol?.toUpperCase() === term.toUpperCase() || new RegExp(`\\b${escaped}\\b`, 'i').test(item.title);
+  });
+  const scored = (watchlistOnly ? items.filter(relevant) : items).map(item => {
     const ts = Date.parse(item.publishedAt);
     const validDate = Number.isFinite(ts) && ts <= now + 5 * 60_000;
     const ageHours = validDate ? Math.max(0, (now - ts) / 3_600_000) : Infinity;

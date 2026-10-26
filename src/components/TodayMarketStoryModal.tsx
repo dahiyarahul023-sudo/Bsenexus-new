@@ -1,3 +1,4 @@
+import { personalStoryChapters } from '../utils/forYou';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useReducedMotion } from 'framer-motion';
@@ -16,6 +17,7 @@ import { BseNexusLogo } from './ui/BseNexusLogo';
 import '../styles/market-stories.css';
 
 interface TodayMarketStoryModalProps {
+  watched?: string[];
   isOpen: boolean;
   onClose: () => void;
   initialChapterId?: string;
@@ -23,10 +25,11 @@ interface TodayMarketStoryModalProps {
   onOpenCompanyIntel?: (scripCode?: string, symbol?: string, companyName?: string) => void;
 }
 
-export function TodayMarketStoryModal({ isOpen, onClose, initialChapterId, onStoryViewed, onOpenCompanyIntel }: TodayMarketStoryModalProps) {
+export function TodayMarketStoryModal({ isOpen, onClose, initialChapterId, onStoryViewed, onOpenCompanyIntel, watched }: TodayMarketStoryModalProps) {
   const { profile, user } = useAuth();
   const showNavigationButtons = profile?.uid === user?.uid ? profile?.notificationPreferences?.storyNavigationButtons !== false : true;
-  const [chapters, setChapters] = useState<StoryChapter[]>(getInitialStoryChapters);
+  const [rawChapters, setChapters] = useState<StoryChapter[]>(getInitialStoryChapters);
+  const chapters=useMemo(()=>personalStoryChapters(rawChapters,watched),[rawChapters,watched?.join('|')]);
   const [activeId, setActiveId] = useState(() => resolveStorySelection(chapters, '', initialChapterId).activeId);
   const [missingTopic, setMissingTopic] = useState(() => resolveStorySelection(chapters, '', initialChapterId).missingTopic);
   const [loading, setLoading] = useState(true);
@@ -67,7 +70,7 @@ export function TodayMarketStoryModal({ isOpen, onClose, initialChapterId, onSto
     const version = ++loadVersion.current;
     setLoading(true); setFailed(false);
     try {
-      const data = await fetchLiveStoryChapters(force);
+      const data = personalStoryChapters(await fetchLiveStoryChapters(force), watched);
       if (version !== loadVersion.current) return;
       setChapters(data);
       const requested = topicRef.current;
@@ -77,11 +80,11 @@ export function TodayMarketStoryModal({ isOpen, onClose, initialChapterId, onSto
     } catch {
       if (version === loadVersion.current) setFailed(true);
     } finally { if (version === loadVersion.current) setLoading(false); }
-  }, []);
+  }, [watched?.join('|')]);
 
   useEffect(() => {
     if (!isOpen) return;
-    const cached = getInitialStoryChapters();
+    const cached = personalStoryChapters(getInitialStoryChapters(),watched);
     const selection = resolveStorySelection(cached, '', initialChapterId);
     topicRef.current = selection.missingTopic ? initialChapterId : undefined;
     setChapters(cached); setActiveId(selection.activeId); setMissingTopic(selection.missingTopic);

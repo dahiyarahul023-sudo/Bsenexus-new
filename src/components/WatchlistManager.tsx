@@ -880,7 +880,7 @@ export function WatchlistManager({ isActive = true }: { isActive?: boolean } = {
       if (controller.signal.aborted || accountRef.current !== owner) return;
       setWatchlists(data); setWatchlistOwner(owner); setWatchlistsReady(true);
       try { localStorage.setItem(`bsenexus_watchlists_cache:${owner}`, JSON.stringify({ ts: Date.now(), items: data })); } catch {}
-      window.dispatchEvent(new Event('watchlists-changed'));
+      window.dispatchEvent(new CustomEvent('watchlists-changed', { detail: { source: 'watchlist-manager' } }));
     } catch (error) {
       if (!controller.signal.aborted && accountRef.current === owner) setWatchlistsError('Your watchlists could not be loaded. Please retry.');
     } finally { if (watchlistsRead.current === controller) watchlistsRead.current = null; }
@@ -936,9 +936,13 @@ export function WatchlistManager({ isActive = true }: { isActive?: boolean } = {
 
   useEffect(() => {
     const refresh = () => { if (document.visibilityState === 'visible') void fetchWatchlists(); };
+    const membershipChanged = (event: Event) => {
+      if ((event as CustomEvent).detail?.source !== 'watchlist-manager') void fetchWatchlists();
+    };
     window.addEventListener('focus', refresh);
+    window.addEventListener('watchlists-changed', membershipChanged);
     document.addEventListener('visibilitychange', refresh);
-    return () => { window.removeEventListener('focus', refresh); document.removeEventListener('visibilitychange', refresh); };
+    return () => { window.removeEventListener('focus', refresh); window.removeEventListener('watchlists-changed', membershipChanged); document.removeEventListener('visibilitychange', refresh); };
   }, [user?.uid, isPro, isAdmin]);
 
   useEffect(() => {

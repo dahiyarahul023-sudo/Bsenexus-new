@@ -1,3 +1,4 @@
+import { ResultTimingPanel } from './ResultTimingPanel';
 import React, { useState } from 'react';
 import { 
   FileText, 
@@ -119,6 +120,7 @@ export const QuarterlyResultsLedger: React.FC<QuarterlyResultsLedgerProps> = ({
 
   return (
     <div className="w-full space-y-4 font-sans text-slate-200">
+      <ResultTimingPanel results={results} />
       {/* Top Controls & Sync Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-slate-900/90 rounded-xl border border-slate-800 backdrop-blur-md">
         <div className="flex items-center gap-2">
