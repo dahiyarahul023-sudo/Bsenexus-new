@@ -12,7 +12,7 @@ import { useVisibilityInterval } from './hooks/useVisibilityInterval';
 import { usePaymentDialog } from './hooks/usePaymentDialog';
 import type { DesignTheme } from './types';
 
-import { LandingPage } from './components/LandingPage';
+const LandingPage = lazyWithRetry(() => import('./components/LandingPage').then(m => ({ default: m.LandingPage })));
 
 /**
  * Wraps dynamic React.lazy imports with automated retry logic to seamlessly recover
@@ -1083,29 +1083,31 @@ function AppContent() {
   if (!user && activeTab === 'home' && !authLoading) {
     return (
       <>
-        <LandingPage
-          onEnterTerminal={(tab) => {
-            // No silent entry for logged-out visitors: open the auth modal so they
-            // explicitly choose Sign in / Create account / Continue as Guest.
-            if (!user) {
-              pendingTerminalTabRef.current = tab || 'home';
-              setIsAuthModalOpen(true);
-              return;
-            }
-            if (tab) {
-              const safeTab = (tab === 'diagnostics' || tab === 'logs' || tab === 'storage' || tab === 'seo-suite') && !isAdmin
-                ? 'dashboard'
-                : tab;
-              handleTabChange(safeTab);
-            } else {
-              setIsAuthModalOpen(true);
-            }
-          }}
-          theme={theme}
-          setTheme={setTheme}
-          bseHealth={health.bse}
-          telegramHealth={health.telegram}
-        />
+        <Suspense fallback={<PageSkeleton page="home" />}>
+          <LandingPage
+            onEnterTerminal={(tab) => {
+              // No silent entry for logged-out visitors: open the auth modal so they
+              // explicitly choose Sign in / Create account / Continue as Guest.
+              if (!user) {
+                pendingTerminalTabRef.current = tab || 'home';
+                setIsAuthModalOpen(true);
+                return;
+              }
+              if (tab) {
+                const safeTab = (tab === 'diagnostics' || tab === 'logs' || tab === 'storage' || tab === 'seo-suite') && !isAdmin
+                  ? 'dashboard'
+                  : tab;
+                handleTabChange(safeTab);
+              } else {
+                setIsAuthModalOpen(true);
+              }
+            }}
+            theme={theme}
+            setTheme={setTheme}
+            bseHealth={health.bse}
+            telegramHealth={health.telegram}
+          />
+        </Suspense>
         {isAuthModalOpen && (
           <AuthModal
             onSuccess={() => {
@@ -1126,29 +1128,31 @@ function AppContent() {
   if (!user && activeTab === 'home') {
     return (
       <>
-        <LandingPage
-          onEnterTerminal={(tab) => {
-            // No silent entry for logged-out visitors: open the auth modal so they
-            // explicitly choose Sign in / Create account / Continue as Guest.
-            if (!user) {
-              pendingTerminalTabRef.current = tab || 'home';
-              setIsAuthModalOpen(true);
-              return;
-            }
-            if (tab) {
-              const safeTab = (tab === 'diagnostics' || tab === 'logs' || tab === 'storage' || tab === 'seo-suite') && !isAdmin
-                ? 'dashboard'
-                : tab;
-              handleTabChange(safeTab);
-            } else {
-              setIsAuthModalOpen(true);
-            }
-          }}
-          theme={theme}
-          setTheme={setTheme}
-          bseHealth={health.bse}
-          telegramHealth={health.telegram}
-        />
+        <Suspense fallback={<PageSkeleton page="home" />}>
+          <LandingPage
+            onEnterTerminal={(tab) => {
+              // No silent entry for logged-out visitors: open the auth modal so they
+              // explicitly choose Sign in / Create account / Continue as Guest.
+              if (!user) {
+                pendingTerminalTabRef.current = tab || 'home';
+                setIsAuthModalOpen(true);
+                return;
+              }
+              if (tab) {
+                const safeTab = (tab === 'diagnostics' || tab === 'logs' || tab === 'storage' || tab === 'seo-suite') && !isAdmin
+                  ? 'dashboard'
+                  : tab;
+                handleTabChange(safeTab);
+              } else {
+                setIsAuthModalOpen(true);
+              }
+            }}
+            theme={theme}
+            setTheme={setTheme}
+            bseHealth={health.bse}
+            telegramHealth={health.telegram}
+          />
+        </Suspense>
         {isAuthModalOpen && (
           <AuthModal
             onSuccess={() => {

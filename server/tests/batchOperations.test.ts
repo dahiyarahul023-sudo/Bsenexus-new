@@ -1,10 +1,28 @@
-import { test, describe } from 'node:test';
+import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert';
+import { resetSupabaseClient } from '../database/supabase.js';
 import { saveAnnouncementsBatch, getRecentAnnouncements, getAnnouncementById, flushSupabaseWriteQueue } from '../database/announcementDao.js';
 import { addNotificationsBatch, markNotificationsReadBatch, getAllNotifications } from '../database/notificationDao.js';
 import { addLogsBatch, getLogs } from '../database/logDao.js';
 
 describe('Batch Inserts and Updates Tests', () => {
+  const origUrl = process.env.SUPABASE_URL;
+  const origKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  before(() => {
+    delete process.env.SUPABASE_URL;
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    resetSupabaseClient();
+  });
+
+  after(() => {
+    if (origUrl === undefined) delete process.env.SUPABASE_URL;
+    else process.env.SUPABASE_URL = origUrl;
+    if (origKey === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    else process.env.SUPABASE_SERVICE_ROLE_KEY = origKey;
+    resetSupabaseClient();
+  });
+
   test('flushSupabaseWriteQueue returns within maxWaitMs and does not block synchronously', async () => {
     const start = Date.now();
     await flushSupabaseWriteQueue(100);

@@ -13,35 +13,46 @@
   - Clean dev server restart and Vite prebundling eliminates mismatched React chunk hashes.
 - Changed source of truth:
   - `vite.config.ts`
+  - `src/App.tsx`
   - `src/utils/developerMode.ts`
   - `server/database/paymentStore.ts`
   - `server/api/payments.ts`
+  - `server/tests/recaptchaSecurity.test.ts`
+  - `server/tests/deepAuditAuth.test.ts`
+  - `server/tests/batchOperations.test.ts`
 - Impact command and affected semantic domains:
-  - `npm run map:impact -- vite.config.ts src/utils/developerMode.ts server/database/paymentStore.ts server/api/payments.ts`
+  - `npm run map:impact -- vite.config.ts src/App.tsx src/utils/developerMode.ts server/database/paymentStore.ts server/api/payments.ts`
 - Related consumers: API, UI, storage/RPC, jobs, caches, manual copy:
+  - `LandingPage.tsx` and `App.tsx` entry chunk bundle.
   - `Announcements.tsx`, `SettingsTab.tsx`, `ResultsCalendar.tsx`, `NewsPortal.tsx` consuming `useDeveloperMode`.
   - Payment endpoints (`/api/payments/recover`, `/create-order`, `/verify`, `/status`, `/claim`, `/history`).
 - For each relevant consumer: changed / reviewed-and-compatible / blocked, with evidence:
+  - `LandingPage`: lazy loaded in `App.tsx` with `Suspense` and `PageSkeleton`, reducing initial JavaScript bundle from 1,335 kB to 803 kB, fully within the 980 kB startup performance budget.
   - `useDeveloperMode`: reviewed-and-compatible; identical signature `[boolean, (val: boolean) => void] & { isDeveloperMode: boolean; setDeveloperMode: (val: boolean) => void; isDevMode: boolean }`.
   - Payment recovery: reviewed-and-compatible; fails gracefully with 503 `paymentUnavailable` without throwing fatal console error when Supabase is not configured.
 - Assignment scope: frontend / backend / shared contract; requested visual or behavior change:
-  - Bug fixes for runtime error and payment store resilience.
+  - Bug fixes for runtime error, payment store resilience, and deployment build budget.
 - Frontend: routes, state owner, events, styles/tokens, focus/scroll and related screens:
   - Single React instance across lazy-loaded components.
+  - Startup chunk reduced below limits without degrading home landing or terminal transition.
 - UI state/device matrix: actual browser checks, screenshots and untested cases:
-  - Verified compilation and build.
+  - Verified compilation and build (`compile_applet`, `npm run build`).
 - Expected user-visible effect:
-  - Announcements feed and other lazy-loaded tabs render without "Invalid hook call" crash.
+  - App builds and deploys cleanly; announcements feed and lazy tabs render without hook errors.
 - Failure/security/concurrency cases relevant to this change:
   - When payment storage is unconfigured or unavailable, `/api/payments/recover` returns standard 503 paymentUnavailable JSON rather than uncaught error.
 - Implementation and coordinated updates:
-  - Updated `vite.config.ts`, `src/utils/developerMode.ts`, `server/database/paymentStore.ts`, `server/api/payments.ts`.
+  - Updated `vite.config.ts`, `src/App.tsx`, `src/utils/developerMode.ts`, `server/database/paymentStore.ts`, `server/api/payments.ts`, `server/tests/*`.
 - Commands actually run and results:
-  - `npm run lint`
-  - `npm run test:referrals`
-  - `npm run test:map`
-  - `npm run map:generate`
-  - `npm run map:check`
+  - `npm run lint` - passed (tsc --noEmit)
+  - `npm run build` - passed (tsc, vite build, performance budget: 803,638 raw / 223,175 gzip vs 980k/266k limits, esbuild server.ts)
+  - `npm run test:referrals` - passed (18/18)
+  - `node --test server/tests/paymentEntitlement.test.ts` - passed (15/15)
+  - `node --test server/tests/batchOperations.test.ts` - passed (4/4)
+  - `npm run test:map` - passed (6/6)
+  - `npm run map:generate` / `npm run map:check` - passed (565 files, 1499 edges, 26 domains)
+  - `compile_applet` - passed (Build succeeded)
+  - `lint_applet` - passed (Linting completed successfully)
 - Required checks unavailable (reason; do not mark passed):
   - Production Cashfree gateway and Supabase live instances (run on development environment).
 - Deployment/migration requirements and rollback:

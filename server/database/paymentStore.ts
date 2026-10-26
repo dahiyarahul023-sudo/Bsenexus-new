@@ -39,7 +39,8 @@ export function isPaymentStoreUnavailable(error: unknown): boolean {
       error !== null &&
       ((error as { code?: unknown }).code === 'PAYMENT_STORE_UNAVAILABLE' ||
         (error as { name?: unknown }).name === 'PaymentStoreUnavailableError' ||
-        String((error as Error)?.message || '').startsWith('Payment store unavailable')))
+        String((error as Error)?.message || '').includes('Payment store unavailable') ||
+        String(error).includes('Payment store unavailable')))
   );
 }
 

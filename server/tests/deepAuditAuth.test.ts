@@ -5,7 +5,7 @@ import cookieParser from 'cookie-parser';
 import jwt from 'jsonwebtoken';
 import { getFirebaseAuth } from '../security/firebaseAdmin.js';
 import { telegramLinksRouter, telegramStartProof, validTelegramWebhookSecret } from '../api/telegramLinks.js';
-import { getSupabase } from '../database/supabase.js';
+import { getSupabase, resetSupabaseClient } from '../database/supabase.js';
 import { checkAccountProtection, isAccountProtectionUnavailable } from '../security/accountRateLimiter.js';
 process.env.JWT_SECRET ||= 'offline-test-audit-secret';
 const { authMiddleware, authRouter, requireAdmin } = await import('../security/auth.js');
@@ -71,5 +71,5 @@ test('actual Telegram routes reject forged webhooks and issue only hashed, owner
   assert.equal(response.status,200);const data=await response.json();const nonce=new URL(data.url).searchParams.get('start')!;
   assert.equal(new URL(data.url).pathname,'/VerifiedAuditBot');assert.equal(nonce.length,43);
   assert.equal(calls[0].args.p_uid,'audit-owner');assert.equal(calls[0].args.p_action,'start');assert.equal(calls[0].args.p_hash.length,64);assert.notEqual(calls[0].args.p_hash,nonce);
- });}finally{for(const k of keys){if(old[k]===undefined)delete process.env[k];else process.env[k]=old[k];}}
+ });}finally{for(const k of keys){if(old[k]===undefined)delete process.env[k];else process.env[k]=old[k];}resetSupabaseClient();}
 });

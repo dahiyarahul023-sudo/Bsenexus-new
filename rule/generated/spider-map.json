@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "e85d7967ba4b39a9a43071953f708f64193b75fdfaa1b5ddffdbb7374b05c641",
+  "sourceDigest": "bcc6c0198f601b786a0712f8a8d7d8073d6f0f39b5a14d6fb540d68a84f23352",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -16,6 +16,11 @@
     {
       "path": "eslint.config.mjs",
       "sha256": "19401d83b4bcfbc08fdc003ad77af6a28667ffbdae86258af06a0b8b48c55e18",
+      "importedBy": []
+    },
+    {
+      "path": "firebase-applet-config.json",
+      "sha256": "b259e6ecadd726427194a15673d71624cfc5cba229b12a96763c7069f3440f5f",
       "importedBy": []
     },
     {
@@ -40,7 +45,7 @@
     },
     {
       "path": "package-lock.json",
-      "sha256": "7e3c08f22015f3fd874dfb9c22876cce63663b5eb1ef5dfde770a0efc27b68f9",
+      "sha256": "3ed7c0e163b71c467a5c9faaba90f4b3d3de15cb13b87cb2b30c61db650fc258",
       "importedBy": []
     },
     {
@@ -691,7 +696,7 @@
     },
     {
       "path": "server/database/paymentStore.ts",
-      "sha256": "2bb665343ae5694e4e67d7de4c4213aadef39483adcb1e15f17a743d2dc94ace",
+      "sha256": "4bae55333ba6c6a4e66362ece409db48c1484b9efe0b433cb1ea7665200142f5",
       "importedBy": [
         "server/api/payments.ts",
         "server/api/routes.ts",
@@ -789,6 +794,7 @@
         "server/tests/adrInbox.test.ts",
         "server/tests/aiAuthorize.test.ts",
         "server/tests/aiWatchlistConcurrency.test.ts",
+        "server/tests/batchOperations.test.ts",
         "server/tests/deepAuditAuth.test.ts",
         "server/tests/followupAudit.test.ts"
       ]
@@ -1557,7 +1563,7 @@
     },
     {
       "path": "server/tests/batchOperations.test.ts",
-      "sha256": "704a3978cd827f56e6e44724df17f28141047f434c4827275a77c7f1a90ea660",
+      "sha256": "40e13d716515ec57d8ac95ea697b74c533344606d0de53273a4773c27c5df385",
       "importedBy": []
     },
     {
@@ -1677,7 +1683,7 @@
     },
     {
       "path": "server/tests/deepAuditAuth.test.ts",
-      "sha256": "c9e61f10d53ebe787065647a8312608baab376a07bd6439c644681756a294b2a",
+      "sha256": "648d147a2adb9f52e2d26f71b2d2250157a72603e0a367b77ab392a26a73832c",
       "importedBy": []
     },
     {
@@ -1942,7 +1948,7 @@
     },
     {
       "path": "server/tests/recaptchaSecurity.test.ts",
-      "sha256": "24fe5ed949924964d9c6463e4547f13e0a8a6e7f6af85619afe93645bb838d22",
+      "sha256": "1660399f3d8aa75f2e5d54cfc68aae1a1f4ef1fefec1eb810cf96cccafde1e33",
       "importedBy": []
     },
     {
@@ -2342,7 +2348,7 @@
     },
     {
       "path": "src/App.tsx",
-      "sha256": "a8672c1293897b202e80e165b4bf0357a125c6044c5bdbe45cee7b84f28eaf82",
+      "sha256": "82728c547a95aa51f2483b10a74356bdc3083bd16e945caf8b171dc8ba2bd375",
       "importedBy": [
         "src/main.tsx"
       ]
@@ -4541,7 +4547,7 @@
     },
     {
       "path": "src/version.ts",
-      "sha256": "3aedb7916656c362e715bf2094e91758300d04aa2311d3a735acc7f4df28926d",
+      "sha256": "d3163192df619fb1892d25a7b39bb46a84b3dde25d9ae865de5658c0676c0a95",
       "importedBy": [
         "src/components/SettingsTab.tsx",
         "src/lib/sentry.ts"
@@ -4644,7 +4650,7 @@
     },
     {
       "path": "vite.config.ts",
-      "sha256": "6239a0e67fae678ad9283c69a2dfd0493aa3381868b65ddbffcc67798ef2669f",
+      "sha256": "5d161b5e2d9328e7fd14316f911176fc3a00cbac56c7b280f1cbe8e1bf21d0cf",
       "importedBy": []
     }
   ],
@@ -6183,7 +6189,7 @@
       "source": "server/database/paymentStore.ts",
       "target": "server/database/supabase.ts",
       "kind": "import",
-      "line": 55
+      "line": 56
     },
     {
       "source": "server/database/radarPriceDao.ts",
@@ -8089,21 +8095,27 @@
     },
     {
       "source": "server/tests/batchOperations.test.ts",
-      "target": "server/database/announcementDao.ts",
+      "target": "server/database/supabase.ts",
       "kind": "import",
       "line": 3
     },
     {
       "source": "server/tests/batchOperations.test.ts",
-      "target": "server/database/notificationDao.ts",
+      "target": "server/database/announcementDao.ts",
       "kind": "import",
       "line": 4
     },
     {
       "source": "server/tests/batchOperations.test.ts",
-      "target": "server/database/logDao.ts",
+      "target": "server/database/notificationDao.ts",
       "kind": "import",
       "line": 5
+    },
+    {
+      "source": "server/tests/batchOperations.test.ts",
+      "target": "server/database/logDao.ts",
+      "kind": "import",
+      "line": 6
     },
     {
       "source": "server/tests/brandRefreshInbox.test.ts",
@@ -9632,7 +9644,7 @@
     {
       "source": "src/App.tsx",
       "target": "src/components/LandingPage.tsx",
-      "kind": "import",
+      "kind": "dynamic",
       "line": 15
     },
     {
@@ -23403,6 +23415,46 @@
       "name": "JWT_SECRET"
     },
     {
+      "file": "server/tests/batchOperations.test.ts",
+      "line": 9,
+      "name": "SUPABASE_URL"
+    },
+    {
+      "file": "server/tests/batchOperations.test.ts",
+      "line": 10,
+      "name": "SUPABASE_SERVICE_ROLE_KEY"
+    },
+    {
+      "file": "server/tests/batchOperations.test.ts",
+      "line": 13,
+      "name": "SUPABASE_URL"
+    },
+    {
+      "file": "server/tests/batchOperations.test.ts",
+      "line": 14,
+      "name": "SUPABASE_SERVICE_ROLE_KEY"
+    },
+    {
+      "file": "server/tests/batchOperations.test.ts",
+      "line": 19,
+      "name": "SUPABASE_URL"
+    },
+    {
+      "file": "server/tests/batchOperations.test.ts",
+      "line": 20,
+      "name": "SUPABASE_URL"
+    },
+    {
+      "file": "server/tests/batchOperations.test.ts",
+      "line": 21,
+      "name": "SUPABASE_SERVICE_ROLE_KEY"
+    },
+    {
+      "file": "server/tests/batchOperations.test.ts",
+      "line": 22,
+      "name": "SUPABASE_SERVICE_ROLE_KEY"
+    },
+    {
       "file": "server/tests/calendarRecovery.test.ts",
       "line": 23,
       "name": "SUPABASE_URL"
@@ -23825,26 +23877,41 @@
     {
       "file": "server/tests/recaptchaSecurity.test.ts",
       "line": 274,
-      "name": "RECAPTCHA_API_KEY"
-    },
-    {
-      "file": "server/tests/recaptchaSecurity.test.ts",
-      "line": 275,
-      "name": "GEMINI_API_KEY"
-    },
-    {
-      "file": "server/tests/recaptchaSecurity.test.ts",
-      "line": 276,
-      "name": "GOOGLE_API_KEY"
-    },
-    {
-      "file": "server/tests/recaptchaSecurity.test.ts",
-      "line": 279,
       "name": "NODE_ENV"
     },
     {
       "file": "server/tests/recaptchaSecurity.test.ts",
-      "line": 286,
+      "line": 276,
+      "name": "RECAPTCHA_API_KEY"
+    },
+    {
+      "file": "server/tests/recaptchaSecurity.test.ts",
+      "line": 277,
+      "name": "GEMINI_API_KEY"
+    },
+    {
+      "file": "server/tests/recaptchaSecurity.test.ts",
+      "line": 278,
+      "name": "GOOGLE_API_KEY"
+    },
+    {
+      "file": "server/tests/recaptchaSecurity.test.ts",
+      "line": 281,
+      "name": "NODE_ENV"
+    },
+    {
+      "file": "server/tests/recaptchaSecurity.test.ts",
+      "line": 288,
+      "name": "NODE_ENV"
+    },
+    {
+      "file": "server/tests/recaptchaSecurity.test.ts",
+      "line": 294,
+      "name": "NODE_ENV"
+    },
+    {
+      "file": "server/tests/recaptchaSecurity.test.ts",
+      "line": 295,
       "name": "NODE_ENV"
     },
     {
