@@ -1,3 +1,4 @@
+import { selectCompanyPeers } from '../utils/companyPeers.js';
 import { injectRouteHeading } from '../utils/routeHeading.js';
 import { companyFilingStats } from '../../src/shared/companyFilings.js';
 import { test } from 'node:test';
@@ -76,6 +77,7 @@ for (const [symbol, scrip] of targets) {
     const ctx = load(readFileSync('server/services/companyIntelService.ts', 'utf8'), {
       setTimeout: () => 0,
       require(path: string) {
+        if (path.endsWith('/companyPeers.js')) return { selectCompanyPeers };
         if (path.endsWith('/companyFilings.js')) return { companyFilingStats };
         if (path.endsWith('/scripMatching.js')) return { hasExactScripCode, matchesCompanyFiling };
         if (path === 'yahoo-finance2') return { default: class { async quote() { return { regularMarketPrice: 100, shortName: symbol }; } } };
@@ -173,6 +175,7 @@ test('BSE and NSE render stored official disclosures through the regular company
   const ctx = load(readFileSync('server/services/companyIntelService.ts','utf8'), {
     setTimeout:()=>0,
     require(path:string) {
+      if(path.endsWith('/companyPeers.js')) return {selectCompanyPeers};
       if(path.endsWith('/companyFilings.js')) return {companyFilingStats};
       if(path.endsWith('/helpers.js')) return {parseBseDate:(value:string)=>Date.parse(value)||0};
       if(path.endsWith('/scripMatching.js'))return {hasExactScripCode,matchesCompanyFiling};

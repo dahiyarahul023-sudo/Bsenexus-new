@@ -22,6 +22,7 @@ import { getSafePdfUrl } from '../utils/pdfHelper';
 import { formatFullDateTime, formatShortDateTime, formatTimeOnly, formatDateOnly } from '../utils/timeFormat';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { useIntelModal } from '../context/IntelModalContext';
 import { useAuth } from '../context/AuthContext';
 import { useAiQuota, syncQuotaFromResponse } from '../utils/aiQuota';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
@@ -54,6 +55,7 @@ export function CompanyIntelligenceModal({
   symbol = '',
   companyName = ''
 }: CompanyIntelligenceModalProps) {
+  const { openIntelModal } = useIntelModal();
   const { user, profile, isAdmin, isPro, adminUnlocked, setIsAuthModalOpen, setIsProModalOpen } = useAuth();
   const [activeTab, setActiveTab] = useState<'hub' | 'timeline' | 'results' | 'filings' | 'research'>('hub');
   const [timelineFilter, setTimelineFilter] = useState<string>('ALL');
@@ -123,6 +125,7 @@ export function CompanyIntelligenceModal({
     }
   }, [scripCode, symbol, user?.uid]);
   useEffect(() => {
+    setActiveTab('hub'); contentRef.current?.scrollTo({ top: 0 });
     setIntelData(null); setAiOverview(''); setHistoryJob(null); setHistorySuccessMsg(null); setHistoryError(false);
     setIsFetchingHistory(false); setListPages({ filings: 1, timeline: 1 });
     ++syncRevision.current; syncController.current?.abort();
@@ -798,53 +801,27 @@ export function CompanyIntelligenceModal({
                         </div>
                       )}
 
-                      {/* Recent Financial Results Highlight */}
-                      {quarterlyResults.length > 0 && (
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                              Recent Results ({quarterlyResults.length} quarters)
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => setActiveTab('results')}
-                              className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-0.5 cursor-pointer"
-                            >
-                              <span>View complete ledger</span>
-                              <ChevronRight size={12} />
-                            </button>
-                          </div>
-
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                            {quarterlyResults.slice(0, 2).map((qr: any, qIdx: number) => (
-                              <div key={qIdx} className={cn(heliosCard, "p-3 space-y-1 text-xs")}>
-                                <div className="flex items-center justify-between">
-                                  <span className="font-bold text-slate-900 dark:text-white">
-                                    {qr.quarter || `Quarter ended ${formatDateOnly(qr.date)}`}
-                                  </span>
-                                  <span className="font-mono text-[10px] text-slate-400">
-                                    {formatDateOnly(qr.date)}
-                                  </span>
-                                </div>
-                                {qr.revenue && (
-                                  <div className="text-slate-600 dark:text-slate-300 flex items-center justify-between">
-                                    <span>Revenue:</span>
-                                    <strong className="font-mono text-slate-900 dark:text-white">₹{qr.revenue} Cr</strong>
-                                  </div>
-                                )}
-                                {qr.netProfit && (
-                                  <div className="text-slate-600 dark:text-slate-300 flex items-center justify-between">
-                                    <span>Net Profit:</span>
-                                    <strong className="font-mono text-slate-900 dark:text-white">₹{qr.netProfit} Cr</strong>
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
                     </>
                   )}
+                      <section aria-label="Similar Stocks" className={cn(heliosCard, "p-3 space-y-2")}>
+                        <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                          <h3 className="text-xs font-bold text-slate-700 dark:text-slate-200">Similar Stocks</h3>
+                          {visibleIntel?.similarStocks?.industry && <span className="text-[10px] text-slate-500 dark:text-slate-400">{visibleIntel.similarStocks.industry}</span>}
+                        </div>
+                        {visibleIntel?.similarStocks?.stocks?.length ? (
+                          <div className="grid grid-cols-1 min-[480px]:grid-cols-2 gap-2">
+                            {visibleIntel.similarStocks.stocks.map((peer: { symbol: string; scripCode: string; name: string }) => (
+                              <button key={peer.scripCode} type="button"
+                                onClick={() => openIntelModal({ symbol: peer.symbol, scripCode: peer.scripCode, companyName: peer.name })}
+                                className="flex items-center justify-between gap-2 min-h-11 px-3 py-2 rounded-xl text-left border border-slate-200 dark:border-slate-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 focus-visible:outline-2 focus-visible:outline-emerald-500 transition-colors">
+                                <span className="min-w-0"><span className="block text-xs font-semibold text-slate-800 dark:text-slate-200">{peer.name}</span><span className="block text-[10px] text-slate-500 dark:text-slate-400">{peer.symbol}</span></span>
+                                <ChevronRight size={14} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
+                              </button>
+                            ))}
+                          </div>
+                        ) : <p className="text-xs text-slate-500 dark:text-slate-400">Same-industry stocks are not available for this company yet.</p>}
+                      </section>
+
                 </div>
               )}
 
