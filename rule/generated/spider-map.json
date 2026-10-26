@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "2eb37f6470a406a3bfc0d100e41db5ebb2f4b01068fb6ed27ab6a027bf30de6c",
+  "sourceDigest": "51f9830e0ea7ad380e99f5d9f9542ac3eae8342953824e4a253692bd0c865b88",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -10,7 +10,7 @@
   "files": [
     {
       "path": ".env.example",
-      "sha256": "7701846a4e31855ea5ecf7a2ca306717cd9ec58d8208b60f58beb9c20fe18e21",
+      "sha256": "f92fa281155786a4dfdd3c12eda90a4d24a7f9a139d1aa7f7f48719a62cdab30",
       "importedBy": []
     },
     {
@@ -40,12 +40,12 @@
     },
     {
       "path": "package-lock.json",
-      "sha256": "2d7ae8bc660fa82829d8dcc4a79fb878e7cca05f3da3958f0b4cdd1b492e7e45",
+      "sha256": "7e3c08f22015f3fd874dfb9c22876cce63663b5eb1ef5dfde770a0efc27b68f9",
       "importedBy": []
     },
     {
       "path": "package.json",
-      "sha256": "2f124212d75a3fc0b0c250d99e7f18be7d3f66ca9c3989897718aafc390fb07e",
+      "sha256": "d24117939ad4fd070c6c279b64bdc2af2c2d1c4b875fe1a732b25588997cfefa",
       "importedBy": []
     },
     {
@@ -139,6 +139,11 @@
       "importedBy": []
     },
     {
+      "path": "scripts/check-dev-runtime.mjs",
+      "sha256": "85d3704258d12fe5785bdeb12fa5ab6f5b00f9859274bcdc5b85982244809f64",
+      "importedBy": []
+    },
+    {
       "path": "scripts/check-performance-budget.mjs",
       "sha256": "c6c0e3c80bcac72720021b0015d915cf14b5ec6077b3b1e0fd54ef2f7b5330fd",
       "importedBy": [
@@ -227,6 +232,14 @@
       "importedBy": []
     },
     {
+      "path": "scripts/vite-preview-client.mjs",
+      "sha256": "4c0f807374cb7d2d8f2d91fa8ead5e18517143b955f513f071bcd349b72229cb",
+      "importedBy": [
+        "server/tests/devRuntime.test.ts",
+        "vite.config.ts"
+      ]
+    },
+    {
       "path": "server.ts",
       "sha256": "39ab873a622cc4d183ffc908ca237a191969404e93412561fc1358cc7a12f4a0",
       "importedBy": [
@@ -312,7 +325,7 @@
     },
     {
       "path": "server/ai/policy.ts",
-      "sha256": "f4bfc4e1d331ac3498b6b5363647fb0f7465ed69f3cec90dfbf8907a2e4d77bc",
+      "sha256": "79944becebaa06e52fcbb9e1ff204bcd632c3f39a3880a53eda7c4196ef541eb",
       "importedBy": [
         "scripts/verify-oauth-routing.mjs",
         "server/ai/calendarRead.ts",
@@ -397,7 +410,7 @@
     },
     {
       "path": "server/api/payments.ts",
-      "sha256": "22334af894ef270f1f74619b443f5a2e678242b2f3dd06f1e315ddb47509e52c",
+      "sha256": "8af6f214248dffcfdbf1f335089393ed1814fd018352d1eda3dab53cb078c8e5",
       "importedBy": [
         "server/api/routes.ts"
       ]
@@ -660,7 +673,7 @@
     },
     {
       "path": "server/database/paymentEntitlementsDao.ts",
-      "sha256": "d2ee0ae7fcb348100708d11e0a13425d2f826312d28635d95dc6a3f226c781e5",
+      "sha256": "fd4867b27b3d10c45907e965267b5ea27252a0c86dae5d92458c480d72c94b0d",
       "importedBy": [
         "server/ai/tools.ts",
         "server/api/payments.ts",
@@ -678,7 +691,7 @@
     },
     {
       "path": "server/database/paymentStore.ts",
-      "sha256": "f7813a4551cb7b99cccd090b370ca1baf2e78f903d9e0226a9de46cdb0475b02",
+      "sha256": "2bb665343ae5694e4e67d7de4c4213aadef39483adcb1e15f17a743d2dc94ace",
       "importedBy": [
         "server/api/payments.ts",
         "server/api/routes.ts",
@@ -918,7 +931,7 @@
     },
     {
       "path": "server/sentry.ts",
-      "sha256": "78e930235a0b597a16dadd032f6ae31a54e66d5dd410b0dce649fdc47eaff37b",
+      "sha256": "8cb3799c62d6bfdc3e3fde949ee340a16127f8fbbb4173233690cbd9d1af7c41",
       "importedBy": [
         "server.ts"
       ]
@@ -1668,6 +1681,11 @@
       "importedBy": []
     },
     {
+      "path": "server/tests/devRuntime.test.ts",
+      "sha256": "84e189cfd30c674cd23cf11a588d9bb575bf693fccb008f738b653971043352f",
+      "importedBy": []
+    },
+    {
       "path": "server/tests/diagnosticsPopulation.test.ts",
       "sha256": "b60724b58d39e403bb65e3340ef2b55b4984bb25f45a7078d144d1d9d3f84e31",
       "importedBy": []
@@ -1989,7 +2007,7 @@
     },
     {
       "path": "server/tests/sentryIsolation.test.ts",
-      "sha256": "46c8448c46fe99c87194682f95aaa96fd4b911e5c061276a771a565c61420233",
+      "sha256": "b42fdf0ab15718fae69388c04052e953cb61c3e1e0a8f41bcea03e51428143df",
       "importedBy": []
     },
     {
@@ -3721,7 +3739,7 @@
     },
     {
       "path": "src/lib/sentry.ts",
-      "sha256": "bf1b3abd0517843b3432f396b17fcbebb90541eb1f8cc6757beb511f36d8e75c",
+      "sha256": "848beec13def51e5a251aa32b78f2e3d31a5043d56c26ea77d8831f12fdbdcbb",
       "importedBy": [
         "src/main.tsx"
       ]
@@ -4192,7 +4210,7 @@
     },
     {
       "path": "src/utils/developerMode.ts",
-      "sha256": "0b6461aa1bcca25e5279e7506c4268047e0b5e4c6b9870b98c8860b13dec544c",
+      "sha256": "e525cc86cda133a541259404b7eba81bbe87b102d2b83a90574c68db226e0b2e",
       "importedBy": [
         "src/components/Announcements.tsx",
         "src/components/NewsPortal.tsx",
@@ -4564,7 +4582,7 @@
     },
     {
       "path": "vite.config.ts",
-      "sha256": "5b99fd2154a4fd61c5f1be79ab2a54cf0040df368f069b7caa0cb3c29106afb0",
+      "sha256": "6239a0e67fae678ad9283c69a2dfd0493aa3381868b65ddbffcc67798ef2669f",
       "importedBy": []
     }
   ],
@@ -6085,13 +6103,7 @@
       "source": "server/database/paymentEntitlementsDao.ts",
       "target": "server/services/paymentEntitlementLogic.ts",
       "kind": "reexport",
-      "line": 32
-    },
-    {
-      "source": "server/database/paymentEntitlementsDao.ts",
-      "target": "server/services/paymentEntitlementLogic.ts",
-      "kind": "reexport",
-      "line": 33
+      "line": 35
     },
     {
       "source": "server/database/paymentOrdersDao.ts",
@@ -6109,7 +6121,7 @@
       "source": "server/database/paymentStore.ts",
       "target": "server/database/supabase.ts",
       "kind": "import",
-      "line": 53
+      "line": 55
     },
     {
       "source": "server/database/radarPriceDao.ts",
@@ -8252,6 +8264,12 @@
       "target": "server/security/auth.ts",
       "kind": "dynamic",
       "line": 11
+    },
+    {
+      "source": "server/tests/devRuntime.test.ts",
+      "target": "scripts/vite-preview-client.mjs",
+      "kind": "import",
+      "line": 8
     },
     {
       "source": "server/tests/diagnosticsPopulation.test.ts",
@@ -13418,6 +13436,12 @@
       "target": "src/utils/announcementFeed.ts",
       "kind": "import",
       "line": 2
+    },
+    {
+      "source": "vite.config.ts",
+      "target": "scripts/vite-preview-client.mjs",
+      "kind": "import",
+      "line": 5
     }
   ],
   "domains": [
@@ -14370,7 +14394,9 @@
         "src/lib/sentrySdk.ts",
         "server/sentry.ts",
         "src/styles/payment.css",
-        "scripts/offline-tests.mjs"
+        "scripts/offline-tests.mjs",
+        "scripts/vite-preview-client.mjs",
+        "scripts/check-dev-runtime.mjs"
       ],
       "tests": [
         "server/tests/responseHeaders.test.ts",
@@ -14381,9 +14407,10 @@
         "server/tests/performanceSummary.test.ts",
         "server/tests/diagnosticsPopulation.test.ts",
         "server/tests/sentryIsolation.test.ts",
-        "server/tests/offlineTests.test.ts"
+        "server/tests/offlineTests.test.ts",
+        "server/tests/devRuntime.test.ts"
       ],
-      "reason": "Canonical document headers preserve OAuth popups, AI Studio preview and public embeds. Deferred optional SDKs preserve authentication assessment, configured monitoring and explicit push requests without blocking public paint. Generic HTML has a neutral brand/loading root, never synthetic filings or an unrelated directory. Real announcements use an explicit route-only insertion marker and public calendar SSR retains its own source-backed document."
+      "reason": "Canonical document headers preserve OAuth popups, AI Studio preview and public embeds. Deferred optional SDKs preserve authentication assessment, configured monitoring and explicit push requests without blocking public paint. Generic HTML has a neutral brand/loading root, never synthetic filings or an unrelated directory. Real announcements use an explicit route-only insertion marker and public calendar SSR retains its own source-backed document. Static development previews prepare an explicit complete browser dependency set before serving React; disabled HMR keeps CSS helpers without opening a socket. Sentry uses the static trace lifecycle so OAuth redaction is executed. A cold Chromium smoke checks real lazy screens separately from the production build."
     },
     {
       "id": "impact-radar",
@@ -15555,7 +15582,7 @@
     },
     {
       "file": "server/api/payments.ts",
-      "line": 520,
+      "line": 521,
       "receiver": "paymentsRouter",
       "method": "GET",
       "path": "/verify",
@@ -15566,7 +15593,7 @@
     },
     {
       "file": "server/api/payments.ts",
-      "line": 590,
+      "line": 592,
       "receiver": "paymentsRouter",
       "method": "GET",
       "path": "/status",
@@ -15577,7 +15604,7 @@
     },
     {
       "file": "server/api/payments.ts",
-      "line": 676,
+      "line": 679,
       "receiver": "paymentsRouter",
       "method": "POST",
       "path": "/recover",
@@ -15589,7 +15616,7 @@
     },
     {
       "file": "server/api/payments.ts",
-      "line": 795,
+      "line": 799,
       "receiver": "paymentsRouter",
       "method": "POST",
       "path": "/claim",
@@ -15601,7 +15628,7 @@
     },
     {
       "file": "server/api/payments.ts",
-      "line": 870,
+      "line": 875,
       "receiver": "paymentsRouter",
       "method": "GET",
       "path": "/history",
@@ -15612,7 +15639,7 @@
     },
     {
       "file": "server/api/payments.ts",
-      "line": 920,
+      "line": 926,
       "receiver": "paymentsRouter",
       "method": "POST",
       "path": "/send-receipt",
@@ -15624,7 +15651,7 @@
     },
     {
       "file": "server/api/payments.ts",
-      "line": 997,
+      "line": 1003,
       "receiver": "paymentsRouter",
       "method": "POST",
       "path": "/webhook",
@@ -19426,7 +19453,7 @@
     },
     {
       "file": "src/lib/sentry.ts",
-      "line": 58,
+      "line": 60,
       "function": "fetch",
       "target": "'/api/config/public'"
     },
@@ -19734,13 +19761,13 @@
     },
     {
       "file": "server/api/payments.ts",
-      "line": 1017,
+      "line": 1023,
       "function": "Buffer.from",
       "key": "signature"
     },
     {
       "file": "server/api/payments.ts",
-      "line": 1019,
+      "line": 1025,
       "function": "Buffer.from",
       "key": "expected"
     },
@@ -20124,19 +20151,49 @@
     },
     {
       "file": "server/database/paymentEntitlementsDao.ts",
-      "line": 59,
+      "line": 62,
       "function": "getSupabase()\n        .from",
       "key": "ENTITLEMENTS_TABLE"
     },
     {
       "file": "server/database/paymentEntitlementsDao.ts",
-      "line": 79,
-      "function": "getSupabase().rpc",
+      "line": 83,
+      "function": "sb.rpc",
       "key": "'reconcile_payment_entitlement'"
     },
     {
       "file": "server/database/paymentEntitlementsDao.ts",
-      "line": 124,
+      "line": 89,
+      "function": "sb\n        .from",
+      "key": "'users'"
+    },
+    {
+      "file": "server/database/paymentEntitlementsDao.ts",
+      "line": 97,
+      "function": "sb\n        .from",
+      "key": "ENTITLEMENTS_TABLE"
+    },
+    {
+      "file": "server/database/paymentEntitlementsDao.ts",
+      "line": 104,
+      "function": "sb\n        .from",
+      "key": "'payment_orders'"
+    },
+    {
+      "file": "server/database/paymentEntitlementsDao.ts",
+      "line": 125,
+      "function": "sb.from",
+      "key": "ENTITLEMENTS_TABLE"
+    },
+    {
+      "file": "server/database/paymentEntitlementsDao.ts",
+      "line": 137,
+      "function": "sb.from",
+      "key": "'users'"
+    },
+    {
+      "file": "server/database/paymentEntitlementsDao.ts",
+      "line": 192,
       "function": "getSupabase().rpc",
       "key": "'grant_payment_atomic'"
     },
@@ -21684,7 +21741,7 @@
     },
     {
       "file": "src/utils/developerMode.ts",
-      "line": 16,
+      "line": 17,
       "function": "localStorage.setItem",
       "key": "STORAGE_KEY"
     },
@@ -21748,6 +21805,36 @@
       "file": "scripts/audit-map.mjs",
       "line": 78,
       "name": "AUDIT_BASE_SHA"
+    },
+    {
+      "file": "scripts/check-dev-runtime.mjs",
+      "line": 10,
+      "name": "DISABLE_HMR"
+    },
+    {
+      "file": "scripts/check-dev-runtime.mjs",
+      "line": 11,
+      "name": "VITE_SENTRY_DSN"
+    },
+    {
+      "file": "scripts/check-dev-runtime.mjs",
+      "line": 34,
+      "name": "PLAYWRIGHT_CHROMIUM_EXECUTABLE"
+    },
+    {
+      "file": "scripts/check-dev-runtime.mjs",
+      "line": 34,
+      "name": "PLAYWRIGHT_CHROMIUM_EXECUTABLE"
+    },
+    {
+      "file": "scripts/check-dev-runtime.mjs",
+      "line": 35,
+      "name": "PLAYWRIGHT_CHROMIUM_ARGS"
+    },
+    {
+      "file": "scripts/check-dev-runtime.mjs",
+      "line": 35,
+      "name": "PLAYWRIGHT_CHROMIUM_ARGS"
     },
     {
       "file": "scripts/provision-ai-reviewer.ts",
@@ -23561,17 +23648,17 @@
     },
     {
       "file": "src/lib/sentry.ts",
-      "line": 52,
+      "line": 54,
       "name": "VITE_SENTRY_DSN"
     },
     {
       "file": "vite.config.ts",
-      "line": 40,
+      "line": 50,
       "name": "DISABLE_HMR"
     },
     {
       "file": "vite.config.ts",
-      "line": 42,
+      "line": 52,
       "name": "DISABLE_HMR"
     }
   ],
@@ -25234,35 +25321,35 @@
     },
     {
       "file": "src/utils/developerMode.ts",
-      "line": 41,
+      "line": 27,
       "target": "window",
       "kind": "listen",
       "name": "storage",
-      "expression": "window.addEventListener('storage', handleStorage)"
+      "expression": "window.addEventListener('storage', callback)"
     },
     {
       "file": "src/utils/developerMode.ts",
-      "line": 42,
+      "line": 28,
       "target": "window",
       "kind": "listen",
       "name": null,
-      "expression": "window.addEventListener(EVENT_NAME, handleCustom)"
+      "expression": "window.addEventListener(EVENT_NAME, callback)"
     },
     {
       "file": "src/utils/developerMode.ts",
-      "line": 45,
+      "line": 30,
       "target": "window",
       "kind": "remove",
       "name": "storage",
-      "expression": "window.removeEventListener('storage', handleStorage)"
+      "expression": "window.removeEventListener('storage', callback)"
     },
     {
       "file": "src/utils/developerMode.ts",
-      "line": 46,
+      "line": 31,
       "target": "window",
       "kind": "remove",
       "name": null,
-      "expression": "window.removeEventListener(EVENT_NAME, handleCustom)"
+      "expression": "window.removeEventListener(EVENT_NAME, callback)"
     },
     {
       "file": "src/utils/retry.ts",

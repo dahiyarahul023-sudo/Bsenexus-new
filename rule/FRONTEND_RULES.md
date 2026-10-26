@@ -45,6 +45,8 @@ The example widths are review starting points, not universal device coverage. Te
 
 ## Workflow to follow every time
 
+Development runtime lesson (26 October 2026): after React/dependency/lazy-import/optimizer/HMR or monitoring-SDK changes, run `npm run test:dev-runtime` as well as the build. Static previews must prepare every browser dependency before serving their first React document; `server/tests/devRuntime.test.ts` checks the explicit import set. Preserve Vite's CSS helpers when HMR is disabled, and verify actual socket behavior. A null React dispatcher alone does not prove a component hook-order violation. Verify monitoring callbacks against the SDK lifecycle; ignored privacy hooks must not be accepted as harmless warnings. Restart/reload an already-open preview after a dependency/config restart. See `changes/development-runtime-repair.md` for evidence and limitations.
+
 1. Read root `AGENTS.md`, these rules, the frontend map and relevant domains. Record the request, evidence, starting commit and acceptance cases.
 2. Run `npm run map:impact -- <paths>`. Inspect the whole journey, named browser-event peers and non-import relationships. Search dynamic names and CSS/context consumers manually.
 3. Explain which screen/state will change and where the effect must also appear. Resolve only material unknown product choices with the user.

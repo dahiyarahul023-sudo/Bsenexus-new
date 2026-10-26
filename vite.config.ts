@@ -2,10 +2,11 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig} from 'vite';
+import {disabledHmrClient} from './scripts/vite-preview-client.mjs';
 
 export default defineConfig(() => {
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [react(), tailwindcss(), disabledHmrClient()],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
@@ -15,6 +16,10 @@ export default defineConfig(() => {
       dedupe: ['react', 'react-dom', 'react-dom/client', 'framer-motion', '@sentry/react'],
     },
     optimizeDeps: {
+      // A static AI Studio preview cannot reload when late dependency discovery
+      // replaces React's shared chunks. Prepare the complete browser set once.
+      // devRuntime.test.ts rejects newly added runtime imports missing below.
+      noDiscovery: true,
       include: [
         'react',
         'react-dom',
