@@ -16,9 +16,9 @@
   .filings-toolbar button { min-height:44px; }
   .filings-search input { height:44px; font-size:16px; }
   .watchlist-tabs { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); }
-  .watchlist-tabs>button { min-width:0; min-height:48px; padding:8px 3px; justify-content:center; white-space:normal; }
-  .watchlist-tabs>button>span:last-child { min-width:0; justify-content:center; flex-wrap:wrap; gap:3px; font-size:11px; line-height:1.35; }
-  .watchlist-tabs svg { flex-shrink:0; }
+  .watchlist-tabs>button { min-width:0; min-height:44px; padding:7px 5px; justify-content:center; white-space:nowrap; }
+  .watchlist-tabs>button>span:last-child { min-width:0; justify-content:center; flex-wrap:nowrap; gap:4px; font-size:12px; line-height:1.35; }
+  .watchlist-tabs svg { display:none; }
   .watchlist-actions { width:100%; }
   .watchlist-actions>div:first-child { min-width:0; flex:1 1 160px; }
   .watchlist-actions input, input[aria-label="Search companies to add"] { font-size:16px; min-height:44px; }
@@ -54,7 +54,7 @@
 
 @media(max-width:767px) {
  .watchlist-tab-wrap { width:100%; }
- .watchlist-actions>div:first-child { flex-wrap:wrap; }
- .watchlist-actions>div:first-child>div:first-child { min-width:0; flex:1 1 150px; }
+ .watchlist-actions>div:first-child { flex-wrap:nowrap; }
+ .watchlist-actions>div:first-child>div:first-child { min-width:0; flex:1 1 0; }
  .mobile-alert-tabs button { flex-shrink:0; min-height:44px; }
 }

@@ -1930,13 +1930,15 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
         <div className="watchlist-toolbar flex flex-col xl:flex-row xl:items-center justify-between gap-3">
           <div className="watchlist-tab-wrap min-w-0 py-0.5">
             {/* View Switcher Tabs: My companies | Updates | Edit watchlist */}
-            <div className="watchlist-tabs flex items-center p-0.5 bg-slate-100 dark:bg-[#15141F] rounded-lg border border-slate-200/80 dark:border-[#2D283E] shrink-0 select-none">
+            <div className="ui-segmented watchlist-tabs flex items-center p-0.5 bg-slate-100 dark:bg-[#15141F] rounded-lg border border-slate-200/80 dark:border-[#2D283E] shrink-0 select-none">
               {/* Tab 1: My companies */}
               <motion.button
                 type="button"
                 whileTap={buttonTap}
                 transition={springSnappy}
                 onClick={() => setWatchlistSubTab('companies')}
+                aria-pressed={watchlistSubTab === 'companies'}
+                aria-label="My companies"
                 className={cn(
                   "relative flex items-center gap-1.5 px-3 min-h-[36px] py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer whitespace-nowrap select-none",
                   watchlistSubTab === 'companies'
@@ -1953,7 +1955,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
                 )}
                 <span className="relative z-10 flex items-center gap-1.5">
                   <Building2 size={13} />
-                  <span>My companies</span>
+                  <span className="watchlist-tab-label"><span className="watchlist-label-wide">My companies</span><span className="watchlist-label-short">Companies</span></span>
                   <span className={cn(
                     "px-1.5 py-0.2 text-[10px] font-mono rounded-full font-black",
                     watchlistSubTab === 'companies' ? "bg-emerald-900/10 text-emerald-900 dark:bg-white/10 dark:text-emerald-100" : "bg-slate-200 dark:bg-[#252233] text-slate-700 dark:text-slate-300"
@@ -1969,6 +1971,8 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
                 whileTap={buttonTap}
                 transition={springSnappy}
                 onClick={() => setWatchlistSubTab('updates')}
+                aria-pressed={watchlistSubTab === 'updates'}
+                aria-label="Updates"
                 className={cn(
                   "relative flex items-center gap-1.5 px-3 min-h-[36px] py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer whitespace-nowrap select-none",
                   watchlistSubTab === 'updates'
@@ -2001,6 +2005,8 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
                 whileTap={buttonTap}
                 transition={springSnappy}
                 onClick={() => setWatchlistSubTab('edit')}
+                aria-pressed={watchlistSubTab === 'edit'}
+                aria-label="Edit watchlist"
                 className={cn(
                   "relative flex items-center gap-1.5 px-3 min-h-[36px] py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer whitespace-nowrap select-none",
                   watchlistSubTab === 'edit'
@@ -2017,7 +2023,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
                 )}
                 <span className="relative z-10 flex items-center gap-1.5">
                   <SlidersHorizontal size={13} />
-                  <span>Edit watchlist</span>
+                  <span className="watchlist-tab-label"><span className="watchlist-label-wide">Edit watchlist</span><span className="watchlist-label-short">Edit list</span></span>
                 </span>
               </motion.button>
             </div>
@@ -2035,7 +2041,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
                     value={companySearch}
                     onChange={e => setCompanySearch(e.target.value)}
                     aria-label="Search my companies"
-                    placeholder="Search my companies..."
+                    placeholder="Search companies"
                     className="pl-7 pr-7 py-1.5 bg-slate-50 dark:bg-[#201E2E] border border-slate-200 dark:border-[#2D283E] text-xs rounded-lg focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-900 dark:text-white w-full min-h-[36px]"
                   />
                   {companySearch && (
@@ -2064,7 +2070,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
                   )}
                 >
                   <Plus size={14} className={isAddCompanyOpen ? "rotate-45 transition-transform" : "transition-transform"} />
-                  <span>Add company</span>
+                  <span className="watchlist-label-wide">Add company</span><span className="watchlist-label-short">Add</span>
                 </motion.button>
               </div>
             )}

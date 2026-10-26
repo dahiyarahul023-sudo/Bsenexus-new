@@ -1,3 +1,4 @@
+import { AnchoredPopover } from './ui/AnchoredPopover';
 import { useCalendarDialog } from '../hooks/useCalendarDialog';
 import { changeRunupPriority, RunupPriorityError } from '../utils/runupPriorityClient';
 import { archiveCompletionMessage } from '../shared/resultFiling';
@@ -319,6 +320,7 @@ function ResultsCalendarView() {
   const [watchlistDeepSyncYears, setWatchlistDeepSyncYears] = useState<number>(3);
   const [watchlistSyncFeedback, setWatchlistSyncFeedback] = useState<string | null>(null);
   const [activeActionMenuId, setActiveActionMenuId] = useState<string | null>(null);
+  const activeMenuAnchor = useRef<HTMLDivElement>(null);
   const [actionFeedback, setActionFeedback] = useState<string | null>(null);
 
   const isProOrAdmin = Boolean(isAdmin || (isPro && !user?.isAnonymous) || profile?.tier === 'admin');
@@ -1207,7 +1209,7 @@ function ResultsCalendarView() {
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               aria-label="Search earnings calendar"
-              placeholder="Search symbol, company, scrip..."
+              placeholder="Search companies or symbols"
               className="w-full h-10 sm:h-9 pl-8 pr-7 bg-slate-50 dark:bg-[#15141E] border border-slate-200 dark:border-[#2D283E] rounded-lg text-xs font-medium focus:outline-none focus:ring-1 focus:ring-slate-400 text-slate-900 dark:text-white"
             />
             {searchQuery && (
@@ -1225,7 +1227,7 @@ function ResultsCalendarView() {
           {/* Right: Filter & View Controls */}
           <div className="flex items-center gap-1.5 shrink-0">
             {/* Stock coverage and the existing date tabs are independent. */}
-            <div className="flex items-center gap-0.5 bg-slate-100 dark:bg-[#201E2E] p-0.5 rounded-lg border border-slate-200 dark:border-[#2D283E]" role="group" aria-label="Calendar scope">
+            <div className="ui-segmented flex items-center gap-0.5 bg-slate-100 dark:bg-[#201E2E] p-0.5 rounded-lg border border-slate-200 dark:border-[#2D283E]" role="group" aria-label="Calendar scope">
               {([
                 ['all', 'All', 'Your watchlist and F&O stocks, without duplicate meetings'],
                 ['fno', 'F&O Stocks', 'All stocks from the F&O calendar list'],
@@ -1244,7 +1246,7 @@ function ResultsCalendarView() {
             </div>
 
             {/* Desktop View Switcher */}
-            <div className="hidden md:flex items-center gap-0.5 bg-slate-100 dark:bg-[#201E2E] p-0.5 rounded-lg border border-slate-200 dark:border-[#2D283E]">
+            <div className="ui-segmented hidden md:flex items-center gap-0.5 bg-slate-100 dark:bg-[#201E2E] p-0.5 rounded-lg border border-slate-200 dark:border-[#2D283E]">
               <button
                 type="button"
                 onClick={() => handleSetViewMode('grid')}
@@ -1994,8 +1996,8 @@ function ResultsCalendarView() {
               const isDeclared = item.isDeclared === true;
               const isFlashing = lightningId === item.id;
               const isSelected = selectedIds.has(item.id);
-              const dateLabel = getResolvedMeetingDate(item) || 'Date to be confirmed';
-              const startsDate = idx === 0 || dateLabel !== (getResolvedMeetingDate(paginatedItems[idx - 1]) || 'Date to be confirmed');
+              const dateLabel = formatDateOnly(getResolvedMeetingDate(item)).replace('N/A', '') || 'Date to be confirmed';
+              const startsDate = idx === 0 || dateLabel !== (formatDateOnly(getResolvedMeetingDate(paginatedItems[idx - 1])).replace('N/A', '') || 'Date to be confirmed');
 
               return (
                 <React.Fragment key={`${item.id || 'cal'}-${idx}`}>
@@ -2010,6 +2012,7 @@ function ResultsCalendarView() {
                   transition={springSnappy}
                   onClick={() => handleSelectItem(item)}
                   className={cn(
+                    "calendar-entry",
                     viewMode === 'grid'
                       ? cn(heliosCard, calCardPad, calCardGap, "transition-all flex flex-col cursor-pointer relative group hover:shadow-[0_16px_40px_rgba(15,23,42,0.10)] dark:hover:shadow-[0_16px_40px_rgba(0,0,0,0.55)]")
                       : cn(heliosCard, calCardPad, "transition-all flex flex-col md:flex-row md:items-center justify-between gap-2.5 cursor-pointer relative group hover:shadow-[0_12px_28px_rgba(15,23,42,0.09)] dark:hover:shadow-[0_12px_28px_rgba(0,0,0,0.5)]"),
@@ -2027,9 +2030,9 @@ function ResultsCalendarView() {
                 )}
 
                 {/* Left Stock info with Select Checkbox & Calendar Tile */}
-                <div className={cn("flex gap-2.5 min-w-0", viewMode === 'grid' ? "flex-col items-stretch" : "items-start flex-1")}>
+                <div className="calendar-stock-info flex flex-col gap-2.5 min-w-0 flex-1">
                   {/* Top row in Grid view OR Header strip in List view */}
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="calendar-card-header flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 min-w-0">
                       {/* Select Checkbox */}
                       <button
@@ -2054,7 +2057,8 @@ function ResultsCalendarView() {
                         );
                       })()}
 
-                      <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                      <div className="calendar-identity flex flex-col items-start gap-0.5 min-w-0">
+                        <div className="flex items-center gap-1.5 min-w-0 w-full">
                         {/* Pulsing Live Dot for today's scheduled or active meetings */}
                         {isToday && (
                           <span className="relative flex h-2 w-2 shrink-0" title="Board meeting scheduled today">
@@ -2065,10 +2069,10 @@ function ResultsCalendarView() {
 
                         <span 
                           onClick={(e) => handleOpenIntel(item.scripCode, item.symbol, getCorrectCompanyName(item), e)}
-                          className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors cursor-pointer break-words"
+                          className="calendar-company-title font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors cursor-pointer break-words"
                           title="Open 360° Stock Intelligence"
                         >
-                          {/^[0-9]+$/.test(item.symbol || '') || !item.symbol ? getCorrectCompanyName(item) : item.symbol}
+                          {getCorrectCompanyName(item)}
                         </span>
 
                         {/* 360° Company Intel Icon with informative tooltip */}
@@ -2082,6 +2086,11 @@ function ResultsCalendarView() {
                           <Building2 size={12} />
                         </button>
 
+                        </div>
+                    <div className="calendar-company-meta">
+                      {item.symbol && !/^[0-9]+$/.test(item.symbol) && item.symbol !== getCorrectCompanyName(item) && <span className="calendar-symbol">{item.symbol}</span>}
+                      <span className="calendar-purpose">{item.purpose || 'Board meeting'}</span>
+                    </div>
                       </div>
                     </div>
 
@@ -2103,68 +2112,18 @@ function ResultsCalendarView() {
                     )}
                   </div>
 
-                  <div className="space-y-0.5 flex-1 min-w-0">
-                    {item.symbol && !/^[0-9]+$/.test(item.symbol) && <div className="text-xs font-semibold text-slate-800 dark:text-slate-200 line-clamp-1">
-                      {getCorrectCompanyName(item)}
-                    </div>}
-
-                    <div className="text-[10px] text-slate-600 dark:text-slate-400 flex items-center gap-1 flex-wrap">
-                      <span className="font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-[#222030] px-1.5 py-0.2 rounded border border-slate-200/60 dark:border-[#2D283E] line-clamp-1 max-w-[300px]">
-                        {item.purpose}
-                      </span>
-                    </div>
-
                     {isDeclared && displaySummary(item) && (
                       <div className="p-1.5 bg-slate-50 dark:bg-[#201E2E] border border-slate-200/80 dark:border-[#2D283E] rounded text-[11px] text-slate-700 dark:text-slate-300 mt-1 flex items-start gap-1">
                         <Sparkles size={11} className="text-amber-500 shrink-0 mt-0.5" />
                         <span className={cn(viewMode === 'grid' ? "line-clamp-2" : "line-clamp-1")}>{displaySummary(item)}</span>
                       </div>
                     )}
-                  </div>
                 </div>
 
-                {/* Right Date & Action Controls */}
-                <div className={cn(
-                  "flex items-center justify-between gap-1.5 shrink-0 border-t border-slate-100 dark:border-[#2D283E] pt-2",
-                  viewMode === 'grid' ? "w-full" : "md:flex-col md:items-end md:justify-center md:border-t-0 md:pt-0"
-                )}>
-                  {(() => {
-                    const meetingDateStr = getResolvedMeetingDate(item);
-                    return (
-                      <div className={cn("space-y-0.2", viewMode === 'grid' ? "text-left" : "text-left md:text-right")}>
-                        <div className={cn("text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1 min-h-[18px]", viewMode !== 'grid' && "md:justify-end")}>
-                          <Clock size={11} className="text-slate-400 shrink-0" />
-                          {meetingDateStr ? (
-                            <span>{meetingDateStr}</span>
-                          ) : (
-                            <span className="inline-block w-20 h-3.5 bg-slate-200 dark:bg-slate-700/60 rounded animate-pulse" aria-label="Loading meeting date" />
-                          )}
-                        </div>
-                        
-                        {viewMode !== 'grid' && (
-                          <>
-                            {isDeclared && item.resultDeclarationTime ? (
-                              <div className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 md:justify-end">
-                                <CheckCircle2 size={10} className="text-emerald-500 shrink-0" />
-                                <span>Declared {formatShortDateTime(item.resultDeclarationTime)}</span>
-                              </div>
-                            ) : isToday ? (
-                              <div className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1 md:justify-end">
-                                <Clock size={10} className="text-amber-500 shrink-0" />
-                                <span>Outcome Pending</span>
-                              </div>
-                            ) : (
-                              <div className="text-[10px] font-mono text-slate-400 flex items-center gap-0.5 md:justify-end">
-                                {isUpcoming ? (item.daysLeft === 1 ? 'Tomorrow' : `In ${item.daysLeft}d`) : 'Past'}
-                              </div>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    );
-                  })()}
-
-                  <div className="relative flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                {/* Full date/year remains in the sticky date heading and Details. */}
+                <div className="calendar-card-footer border-t border-slate-100 dark:border-[#2D283E] pt-2">
+                  {viewMode !== 'grid' && <span className="calendar-list-status text-[11px] text-slate-500 dark:text-slate-400">{isDeclared ? 'Declared' : isToday ? 'Today' : isUpcoming ? (item.daysLeft === 1 ? 'Tomorrow' : `In ${item.daysLeft}d`) : 'Past'}</span>}
+                  <div ref={activeActionMenuId === item.id ? activeMenuAnchor : undefined} className="calendar-card-actions relative" onClick={(e) => e.stopPropagation()}>
                     {isDeclared ? (
                       <button
                         type="button"
@@ -2172,7 +2131,9 @@ function ResultsCalendarView() {
                           e.stopPropagation();
                           setActiveActionMenuId(activeActionMenuId === item.id ? null : item.id);
                         }}
-                        className="px-2.5 py-1.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 text-[11px] font-semibold border border-emerald-200/80 dark:border-emerald-800/80 transition-all flex items-center gap-1 cursor-pointer shadow-2xs select-none min-h-[36px] active:scale-95"
+                        className="calendar-action-button px-2.5 py-1.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 text-[11px] font-semibold border border-emerald-200/80 dark:border-emerald-800/80 transition-all flex items-center gap-1 cursor-pointer shadow-2xs select-none min-h-[36px] active:scale-95"
+                        aria-expanded={activeActionMenuId === item.id}
+                        aria-haspopup="dialog"
                         title="Share declared result update"
                       >
                         <Share2 size={11} className="text-emerald-600 dark:text-emerald-400" />
@@ -2186,7 +2147,9 @@ function ResultsCalendarView() {
                           e.stopPropagation();
                           setActiveActionMenuId(activeActionMenuId === item.id ? null : item.id);
                         }}
-                        className="px-2.5 py-1.5 rounded-md bg-slate-100 dark:bg-[#222030] hover:bg-slate-200 dark:hover:bg-[#2A263D] text-slate-700 dark:text-slate-200 text-[11px] font-semibold border border-slate-200 dark:border-[#2D283E] transition-all flex items-center gap-1 cursor-pointer shadow-2xs select-none min-h-[36px] active:scale-95"
+                        className="calendar-action-button px-2.5 py-1.5 rounded-md bg-slate-100 dark:bg-[#222030] hover:bg-slate-200 dark:hover:bg-[#2A263D] text-slate-700 dark:text-slate-200 text-[11px] font-semibold border border-slate-200 dark:border-[#2D283E] transition-all flex items-center gap-1 cursor-pointer shadow-2xs select-none min-h-[36px] active:scale-95"
+                        aria-expanded={activeActionMenuId === item.id}
+                        aria-haspopup="dialog"
                         title="Set meeting reminder or sync to calendar"
                       >
                         <Bell size={11} className="text-slate-500" />
@@ -2201,7 +2164,7 @@ function ResultsCalendarView() {
                         e.stopPropagation();
                         handleSelectItem(item);
                       }}
-                      className="px-2.5 py-1.5 rounded-md bg-slate-100 dark:bg-[#222030] hover:bg-slate-200 dark:hover:bg-[#2A263D] text-slate-800 dark:text-slate-200 text-[11px] font-semibold border border-slate-200 dark:border-[#2D283E] transition-all flex items-center gap-1 cursor-pointer shadow-2xs select-none min-h-[36px] active:scale-95"
+                      className="calendar-action-button px-2.5 py-1.5 rounded-md bg-slate-100 dark:bg-[#222030] hover:bg-slate-200 dark:hover:bg-[#2A263D] text-slate-800 dark:text-slate-200 text-[11px] font-semibold border border-slate-200 dark:border-[#2D283E] transition-all flex items-center gap-1 cursor-pointer shadow-2xs select-none min-h-[36px] active:scale-95"
                       title="View full filing details & AI analysis"
                     >
                       <span>Details</span>
@@ -2218,20 +2181,9 @@ function ResultsCalendarView() {
                       label={`Save note on ${item.symbol} results`}
                     />
 
-                    {/* Contextual Action Dropdown Popover */}
+                    {/* A portal avoids Soft Glass blur/transform containing blocks. */}
                     {activeActionMenuId === item.id && (
-                      <>
-                        <div
-                          className="fixed inset-0 z-40 bg-transparent"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActiveActionMenuId(null);
-                          }}
-                        />
-                        <div 
-                          className="absolute right-0 top-full mt-1 w-56 bg-white dark:bg-[#1A1926] border border-slate-200 dark:border-[#2D283E] rounded-xl shadow-xl z-50 p-1.5 space-y-1 animate-in fade-in zoom-in-95 duration-100"
-                          onClick={(e) => e.stopPropagation()}
-                        >
+                      <AnchoredPopover anchorRef={activeMenuAnchor} onClose={() => setActiveActionMenuId(null)} label="Calendar actions">
                         {actionFeedback && (
                           <div className="p-1.5 bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold rounded-lg flex items-center gap-1">
                             <CheckCircle2 size={11} />
@@ -2341,9 +2293,8 @@ function ResultsCalendarView() {
                             </button>
                           </>
                         )}
-                      </div>
-                    </>
-                  )}
+                      </AnchoredPopover>
+                    )}
                   </div>
                 </div>
               </motion.div>
@@ -2503,7 +2454,7 @@ function ResultsCalendarView() {
               </div>
 
               {/* Modal Segmented Tabs */}
-              <div className="flex border-b border-slate-200 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-900/60 p-1 gap-1">
+              <div className="ui-segmented flex border-b border-slate-200 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-900/60 p-1 gap-1">
                 <button
                   type="button"
                   onClick={() => setModalTab('results')}
