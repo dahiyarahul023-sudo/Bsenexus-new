@@ -1,3 +1,4 @@
+import { selectCompanyPeers } from '../utils/companyPeers.js';
 import { companyFilingStats } from '../../src/shared/companyFilings.js';
 import { hasExactScripCode, matchesCompanyFiling } from '../../src/shared/scripMatching.js';
 import YahooFinance from 'yahoo-finance2';
@@ -64,6 +65,7 @@ export interface CompanyIntelligenceData {
   scripCode: string;
   companyName: string;
   quote?: CompanyQuoteContext;
+  similarStocks?: ReturnType<typeof selectCompanyPeers>;
   upcomingEvent?: {
     meetingDate: string;
     purpose: string;
@@ -311,6 +313,7 @@ export async function getCompanyIntelligence(scripCode: string, symbol: string):
     scripCode: targetScrip || masterEntry?.scripCode || '',
     companyName: resolvedDisplayName,
     quote: quote || undefined,
+    similarStocks: selectCompanyPeers(allEntries, targetSym, targetScrip),
     upcomingEvent,
     quarterlyResults,
     materialTimeline: uniqueTimeline,

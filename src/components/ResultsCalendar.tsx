@@ -2479,6 +2479,11 @@ function ResultsCalendarView() {
                       symbol={selectedModalItem.symbol}
                       pdfUrl={selectedModalItem.declarationPdfLink}
                       url={resultsPageUrlFor(selectedModalItem) || `https://bsenexus.in/results-calendar?scrip=${selectedModalItem.scripCode || ''}`}
+                      calendarActions={{
+                        onEmail: () => handleShareEmail(selectedModalItem),
+                        onCopyLink: () => handleCopyCalendarLink(selectedModalItem),
+                        copied: copiedCalendarId === selectedModalItem.id,
+                      }}
                       size="xs"
                     />
                   </div>
@@ -2535,18 +2540,18 @@ function ResultsCalendarView() {
               </div>
 
               {/* Modal Tab Content */}
-              <div className="p-6 overflow-y-auto space-y-5 flex-1 overscroll-contain">
+              <div className="p-3 sm:p-4 overflow-y-auto space-y-3 flex-1 min-h-0 overscroll-contain">
               {/* TAB 1: FINANCIAL RESULTS & OUTCOMES */}
               {modalTab === 'results' && (
                 <div className="space-y-4 animate-in fade-in duration-150">
                   {/* Results Status Banner */}
-                  <div className={cn(heliosCard, "p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3")}>
+                  <div className={cn(heliosCard, "px-3 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2")}>
                     <div className="flex items-start gap-3">
                       <div className="space-y-1.5">
                         <HeliosPill tone={selectedModalItem.isDeclared ? "emerald" : "amber"} pulseDot={!selectedModalItem.isDeclared}>
                           {selectedModalItem.isDeclared
-                            ? "Financial Result Declared & Verified on BSE"
-                            : "Result Declaration Awaiting Submission"}
+                            ? "Result declared on BSE"
+                            : "Awaiting result filing"}
                         </HeliosPill>
                         {selectedModalItem.isDeclared && selectedModalItem.resultDeclarationTime ? (
                           <div className="text-xs text-emerald-700 dark:text-emerald-300 font-mono font-bold flex items-center gap-1">
@@ -2555,7 +2560,7 @@ function ResultsCalendarView() {
                           </div>
                         ) : (
                           <div className="text-xs text-slate-500">
-                            Board meeting scheduled on {selectedModalItem.meetingDate}. Company filing will appear live here as soon as published on BSE.
+                            Meeting: {selectedModalItem.meetingDate} · Result filing will appear here once published on BSE.
                           </div>
                         )}
                       </div>
@@ -2574,27 +2579,11 @@ function ResultsCalendarView() {
                     )}
                   </div>
 
-                  {/* Pre-Result Window Priority Booster Card (10 or 20 Days Horizon) */}
-                  <div className="p-4 bg-linear-to-r from-amber-500/10 via-orange-500/10 to-rose-500/10 border border-amber-300/60 dark:border-amber-700/60 rounded-xl space-y-3 shadow-2xs">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div className="flex items-start gap-2.5">
-                        <div className="p-2 rounded-lg bg-amber-500 text-white shadow-2xs shrink-0 mt-0.5">
-                          <Flame size={16} />
-                        </div>
-                        <div>
-                          <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-2 flex-wrap">
-                            <span>Pre-Result Window Priority &amp; Run-Up Disclosures</span>
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
-                              Priority Window
-                            </span>
-                          </div>
-                          <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
-                            Filter and prioritize precursor announcements (board meeting intimation, window closure) in the <strong>{runupWindowDays} days prior</strong> to result date ({selectedModalItem.meetingDate}).
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                  {/* Compact pre-result controls; existing request/priority owners retained. */}
+                  <div className="px-3 py-2.5 bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/70 dark:border-amber-800/50 rounded-xl space-y-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-200 inline-flex items-center gap-1.5"><Flame size={14} className="text-amber-500" />Pre-result filings</span>
+                      <div className="flex items-center gap-2 flex-wrap">
                         {/* 10 vs 20 Days Horizon Toggle */}
                         <div className="inline-flex rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-0.5 shadow-2xs">
                           <button
@@ -2614,7 +2603,7 @@ function ResultsCalendarView() {
                                 : "text-slate-600 dark:text-slate-300 hover:text-slate-900"
                             )}
                           >
-                            10 Days Prior
+                            10 days
                           </button>
                           <button
                             type="button"
@@ -2633,7 +2622,7 @@ function ResultsCalendarView() {
                                 : "text-slate-600 dark:text-slate-300 hover:text-slate-900"
                             )}
                           >
-                            20 Days Prior
+                            20 days
                           </button>
                         </div>
 
@@ -2909,18 +2898,6 @@ function ResultsCalendarView() {
                           </div>
                         </div>
 
-                        {/* Calendar Device Tip */}
-                        <div className="p-3 bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-800/60 rounded-xl text-xs text-blue-800 dark:text-blue-300 flex items-start gap-2">
-                          <Info size={15} className="text-blue-500 shrink-0 mt-0.5" />
-                          <div>
-                            <span className="font-bold">Device Compatibility: </span>
-                            <span>
-                              <strong>Google Calendar link</strong> opens directly on all devices (Android, Windows, iOS). 
-                              <strong> .ICS file</strong> automatically imports the reminder into <strong>Apple Calendar on iPhone/Mac</strong> and <strong>Outlook on Windows</strong>.
-                            </span>
-                          </div>
-                        </div>
-
                         {/* Market Holiday / Weekend Warning Banner */}
                         {holidayCheck.isClosed && (
                           <div className="p-3 bg-amber-500/10 border border-amber-400/40 dark:border-amber-500/30 rounded-xl text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2 animate-in fade-in">
@@ -3065,41 +3042,14 @@ function ResultsCalendarView() {
                   symbol={selectedModalItem.symbol}
                   pdfUrl={selectedModalItem.declarationPdfLink}
                   url={resultsPageUrlFor(selectedModalItem) || `https://bsenexus.in/results-calendar?scrip=${selectedModalItem.scripCode || ''}`}
+                  calendarActions={{
+                    onEmail: () => handleShareEmail(selectedModalItem),
+                    onCopyLink: () => handleCopyCalendarLink(selectedModalItem),
+                    copied: copiedCalendarId === selectedModalItem.id,
+                  }}
+                  buttonLabel="Share"
                   size="sm"
                 />
-
-                {/* 1-Click Share via Email (Mailto) */}
-                <motion.button
-                  whileTap={buttonTap}
-                  transition={springSnappy}
-                  onClick={() => handleShareEmail(selectedModalItem)}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 transition-colors shadow-2xs cursor-pointer touch-manipulation min-h-[38px]"
-                  title="Send 1-Click Calendar Invite via Email"
-                >
-                  <Mail size={14} className="text-amber-500" />
-                  <span>Share via Email</span>
-                </motion.button>
-
-                {/* Copy 1-Click Calendar URL */}
-                <motion.button
-                  whileTap={buttonTap}
-                  transition={springSnappy}
-                  onClick={() => handleCopyCalendarLink(selectedModalItem)}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 transition-colors shadow-2xs cursor-pointer touch-manipulation min-h-[38px]"
-                  title="Copy direct Google Calendar add link"
-                >
-                  {copiedCalendarId === selectedModalItem.id ? (
-                    <>
-                      <Check size={14} className="text-emerald-500" />
-                      <span className="text-emerald-600 dark:text-emerald-400">Link Copied!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy size={14} />
-                      <span>Copy Calendar Link</span>
-                    </>
-                  )}
-                </motion.button>
 
                 {/* Dispatch to Telegram with Calendar Link */}
                 {isAdmin && <ActionButton

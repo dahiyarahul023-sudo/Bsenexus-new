@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
+  Mail, CalendarPlus,
   Share2, 
   Copy, 
   Check, 
@@ -35,6 +36,11 @@ export interface ShareActionMenuProps {
   buttonLabel?: string;
   size?: 'xs' | 'sm' | 'md';
   id?: string;
+  calendarActions?: {
+    onEmail: () => void;
+    onCopyLink: () => Promise<boolean>;
+    copied: boolean;
+  };
 }
 
 export const ShareActionMenu: React.FC<ShareActionMenuProps> = ({
@@ -53,6 +59,7 @@ export const ShareActionMenu: React.FC<ShareActionMenuProps> = ({
   buttonLabel,
   size = 'sm',
   id,
+  calendarActions,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [copiedState, setCopiedState] = useState<'none' | 'web' | 'pdf' | 'summary'>('none');
@@ -145,7 +152,7 @@ export const ShareActionMenu: React.FC<ShareActionMenuProps> = ({
     if (!triggerRef.current || isMobile) return;
     const rect = triggerRef.current.getBoundingClientRect();
     const menuWidth = 270;
-    const menuHeight = 340;
+    const menuHeight = Math.min(window.innerHeight - 24, calendarActions ? 445 : 340);
     const spaceBelow = window.innerHeight - rect.bottom;
     const openDown = spaceBelow >= menuHeight + 12 || spaceBelow > rect.top;
 
@@ -158,11 +165,12 @@ export const ShareActionMenu: React.FC<ShareActionMenuProps> = ({
     left = Math.max(12, Math.min(window.innerWidth - menuWidth - 12, left));
 
     setCoords({ top, left, openDown });
-  }, [isMobile]);
+  }, [isMobile, Boolean(calendarActions)]);
 
   useEffect(() => {
     if (isOpen) {
       updatePosition();
+      const focusFrame = requestAnimationFrame(() => menuRef.current?.querySelector<HTMLButtonElement>('button')?.focus());
       const handleScrollOrResize = () => {
         if (!isMobile) updatePosition();
       };
@@ -170,14 +178,26 @@ export const ShareActionMenu: React.FC<ShareActionMenuProps> = ({
       window.addEventListener('resize', handleScrollOrResize);
 
       const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') setIsOpen(false);
+        // Portals are above the owning calendar/detail dialog.
+        if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); setIsOpen(false); }
+        if (e.key === 'Tab') {
+          e.stopPropagation();
+          const buttons = Array.from(menuRef.current?.querySelectorAll<HTMLButtonElement>('button:not(:disabled)') || []);
+          const first = buttons[0], last = buttons[buttons.length - 1];
+          if (!first) return;
+          if (!buttons.includes(document.activeElement as HTMLButtonElement)) { e.preventDefault(); first.focus(); }
+          else if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+          else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
       };
-      window.addEventListener('keydown', handleKeyDown);
+      window.addEventListener('keydown', handleKeyDown, true);
 
       return () => {
         window.removeEventListener('scroll', handleScrollOrResize, true);
         window.removeEventListener('resize', handleScrollOrResize);
-        window.removeEventListener('keydown', handleKeyDown);
+        window.removeEventListener('keydown', handleKeyDown, true);
+        cancelAnimationFrame(focusFrame);
+        triggerRef.current?.focus({ preventScroll: true });
       };
     }
   }, [isOpen, updatePosition, isMobile]);
@@ -295,6 +315,23 @@ export const ShareActionMenu: React.FC<ShareActionMenuProps> = ({
     setIsOpen(false);
   };
 
+  const calendarOptions = calendarActions && (
+    <div className="py-1.5 border-b border-slate-100 dark:border-[#252233] space-y-1">
+      <button type="button" role={isMobile ? undefined : 'menuitem'}
+        onClick={() => { calendarActions.onEmail(); setIsOpen(false); }}
+        className="w-full flex items-center gap-2.5 min-h-11 px-3 py-2 rounded-xl text-left text-xs font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#252233]">
+        <Mail size={15} className="text-amber-500" /> Share via Email
+      </button>
+      <button type="button" role={isMobile ? undefined : 'menuitem'}
+        aria-label={calendarActions.copied ? 'Calendar Link Copied!' : 'Copy Calendar Link'}
+        onClick={async () => { await calendarActions.onCopyLink(); }}
+        className="w-full flex items-center gap-2.5 min-h-11 px-3 py-2 rounded-xl text-left text-xs font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#252233]">
+        {calendarActions.copied ? <Check size={15} className="text-emerald-500" /> : <CalendarPlus size={15} className="text-emerald-500" />}
+        <span role="status">{calendarActions.copied ? 'Calendar Link Copied!' : 'Copy Calendar Link'}</span>
+      </button>
+    </div>
+  );
+
   const sizeStyles = {
     xs: 'min-h-[32px] min-w-[32px] sm:min-h-[26px] sm:min-w-[26px] px-2 py-0.5 text-[11px] gap-1 rounded-lg touch-manipulation',
     sm: 'min-h-[36px] min-w-[36px] sm:min-h-[30px] sm:min-w-[30px] px-2.5 py-1 text-xs gap-1.5 rounded-xl touch-manipulation',
@@ -366,6 +403,10 @@ export const ShareActionMenu: React.FC<ShareActionMenuProps> = ({
 
                 {/* Bottom Sheet Drawer */}
                 <motion.div
+                  ref={menuRef}
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label="Share options"
                   initial={{ y: '100%' }}
                   animate={{ y: 0 }}
                   exit={{ y: '100%' }}
@@ -387,6 +428,7 @@ export const ShareActionMenu: React.FC<ShareActionMenuProps> = ({
                         whileTap={{ scale: 0.9 }}
                         type="button"
                         onClick={() => setIsOpen(false)}
+                        aria-label="Close share options"
                         className="p-1.5 rounded-xl bg-slate-100 dark:bg-[#252233] text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white cursor-pointer"
                       >
                         <X size={16} />
@@ -417,6 +459,8 @@ export const ShareActionMenu: React.FC<ShareActionMenuProps> = ({
                       </div>
                     </div>
                   </div>
+
+                  {calendarOptions}
 
                   {/* Primary Share Options */}
                   <div className="space-y-2">
@@ -600,8 +644,9 @@ export const ShareActionMenu: React.FC<ShareActionMenuProps> = ({
                     position: 'fixed',
                     top: `${coords.top}px`,
                     left: `${coords.left}px`,
+                    maxHeight: `${Math.max(80, window.innerHeight - coords.top - 12)}px`,
                   }}
-                  className="z-[99999] min-w-[260px] max-w-[280px] p-2.5 rounded-2xl bg-white/95 dark:bg-[#1A1828]/95 backdrop-blur-xl border border-slate-200/90 dark:border-[#2D283E] shadow-2xl text-xs space-y-1.5 select-none"
+                  className="z-[99999] min-w-[260px] max-w-[280px] max-h-[calc(100dvh-24px)] overflow-y-auto p-2.5 rounded-2xl bg-white/95 dark:bg-[#1A1828]/95 backdrop-blur-xl border border-slate-200/90 dark:border-[#2D283E] shadow-2xl text-xs space-y-1.5 select-none"
                 >
                   {/* Header */}
                   <div className="flex items-center justify-between px-2 py-1 text-[11px] font-bold text-slate-400 dark:text-slate-400 border-b border-slate-100 dark:border-[#252233]">
@@ -611,11 +656,14 @@ export const ShareActionMenu: React.FC<ShareActionMenuProps> = ({
                     <button
                       type="button"
                       onClick={() => setIsOpen(false)}
+                      aria-label="Close share options"
                       className="p-0.5 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
                     >
                       <X size={12} />
                     </button>
                   </div>
+
+                  {calendarOptions}
 
                   {/* Primary Actions */}
                   <div className="space-y-0.5">
