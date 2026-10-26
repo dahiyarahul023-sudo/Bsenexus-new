@@ -9,8 +9,10 @@ export default defineConfig(() => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
+        react: path.resolve(__dirname, 'node_modules/react'),
+        'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
       },
-      dedupe: ['react', 'react-dom', 'react-dom/client', 'framer-motion'],
+      dedupe: ['react', 'react-dom', 'react-dom/client', 'framer-motion', '@sentry/react'],
     },
     optimizeDeps: {
       include: [
@@ -20,12 +22,15 @@ export default defineConfig(() => {
         'react/jsx-runtime',
         'react/jsx-dev-runtime',
         'framer-motion',
+        'framer-motion/m',
         'lucide-react',
         'clsx',
         'tailwind-merge',
         'date-fns',
         'firebase/app',
         'firebase/auth',
+        'firebase/app-check',
+        '@sentry/react',
       ],
       esbuildOptions: {
         target: 'es2020',

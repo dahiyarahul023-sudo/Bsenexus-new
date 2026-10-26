@@ -50,7 +50,7 @@ export function publicOrigin(): string {
   return u.origin;
 }
 export const connectionsEnabled = () =>
-  process.env.AI_CONNECTIONS_ENABLED === "true";
+  process.env.AI_CONNECTIONS_ENABLED !== "false";
 export const resourceUrl = () => publicOrigin() + "/mcp";
 export class AiError extends Error {
   constructor(

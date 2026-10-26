@@ -1,0 +1,21 @@
+# Change: results calendar watchlist completeness and announcement intake
+
+- Objective and acceptance cases:
+  - User observed that Vishal Mega Mart (`VMM`, BSE: `544307`), which is actively tracked in their watchlist and announced a Results board meeting for 21 Oct 2026, was displayed as "Next Catalyst (Today)" in Company Hub modal, but was missing from the Results Calendar "Today" tab.
+  - Active watchlist stocks with scheduled board meetings on BSE must reliably appear in Results Calendar under their correct status tab (`TODAY`, `UPCOMING`, `RECENT`).
+  - Announcements with category `BOARD_MEETING` or board meeting intimations ingested from BSE must automatically feed scheduled meeting dates into the Results Calendar cache.
+  - On-demand sync in `getResultsCalendarData`: if any of a user's active watchlist stocks has zero records in the calendar cache, the service dynamically synchronizes that stock from BSE BoardMeeting API so stale cache never drops watchlist companies.
+  - `fetchAndSyncResultsCalendar` merges fetched items by `${scripCode}_${meetingTimestamp}` rather than overwriting the entire in-memory cache, preventing transient per-symbol fetch failures from erasing previously known board meetings.
+  - When the BSE live poller receives a `BOARD_MEETING` announcement, it triggers background calendar synchronization for that scrip.
+- Verified facts (file + symbol):
+  - User watchlist `Red` for UID `WLuLBLPi0FPUd31Wws1yRMybl6u1` contains VMM (`544307`).
+  - BSE BoardMeeting API (`api.bseindia.com/BseIndiaAPI/api/BoardMeeting/w?scripcode=544307`) reports: `meeting_date: "21 Oct 2026"`, `Purpose_name: "Results"`.
+  - BSE announcement `a62fe1c0-f8b2-4a1a-8aa7-38c7f75611a5` (ingested Oct 14) already announced: `Board Meeting Intimation for Approval Of The Unaudited Standalone And Consolidated Financial Results... scheduled on 21/10/2026`.
+  - `server/services/resultsCalendarService.ts`: `fetchAndSyncResultsCalendar` previously overwrote `cachedCalendar` on batch finish (`cachedCalendar = Array.from(uniqueMap.values())`), and `getResultsCalendarSnapshot` only re-fetched if the cache was older than 12 hours.
+- Changed source of truth:
+  - `server/services/resultsCalendarService.ts`: merged cache updates, announcement board-meeting intake, and on-demand watchlist stock synchronization in `getResultsCalendarData`.
+  - `server/services/bse.ts`: poller hook to trigger single stock calendar sync when a `BOARD_MEETING` announcement arrives.
+- Commands run and results:
+  - `npm run map:impact -- server/services/resultsCalendarService.ts`
+  - `npm run test:map`
+  - `node --test --import tsx server/tests/calendarScope.test.ts`
