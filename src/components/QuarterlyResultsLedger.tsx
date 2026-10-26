@@ -123,7 +123,7 @@ export const QuarterlyResultsLedger: React.FC<QuarterlyResultsLedgerProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-slate-900/90 rounded-xl border border-slate-800 backdrop-blur-md">
         <div className="flex items-center gap-2">
           {/* Declared vs All Filter Tabs */}
-          <div className="inline-flex rounded-lg bg-slate-950 p-1 border border-slate-800 relative select-none">
+          <div className="ui-segmented inline-flex rounded-lg bg-slate-950 p-1 border border-slate-800 relative select-none">
             <motion.button
               type="button"
               whileTap={buttonTap}

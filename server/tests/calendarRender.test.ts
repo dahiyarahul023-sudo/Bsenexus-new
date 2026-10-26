@@ -137,3 +137,18 @@ test('shared company calendar link searches the exact BSE code across date tabs 
   const invalid=renderScope('all','rahul','2026-10-21T10:00:00+05:30',false,false,{},false,'?scrip=wrong');
   assert.match(invalid,/Vishal Mega Mart Limited/);
 });
+
+test('new numeric F&O and established symbols share the company/purpose hierarchy with one full date heading', () => {
+  const common={purpose:'Results',meetingDate:'27-Oct-2026',meetingTimestamp:Date.parse('2026-10-27T00:00:00+05:30'),status:'UPCOMING',daysLeft:1,updatedAt:''};
+  const stocks=[{...common,id:'indus',symbol:'534816',scripCode:'534816',companyName:'Indus Towers Limited'},
+    {...common,id:'bajaj',symbol:'BAJAJ-AUTO',scripCode:'532977',companyName:'Bajaj Auto Ltd'},
+    {...common,id:'maruti',symbol:'MARUTI',scripCode:'532500',companyName:'Maruti Suzuki India Ltd'}];
+  for (const viewMode of ['grid','list']) {
+    const html=renderScope('all','rahul','2026-10-26T09:00:00+05:30',true,false,{storedItems:stocks,viewMode,statusFilter:'upcoming'});
+    assert.equal((html.match(/calendar-company-title/g)||[]).length,3);
+    for(const company of ['Indus Towers Limited','Bajaj Auto Ltd','Maruti Suzuki India Ltd']) assert.equal(html.split(company).length-1,1);
+    assert.equal((html.match(/class="calendar-purpose">Results/g)||[]).length,3);
+    assert.equal((html.match(/27 Oct 2026/g)||[]).length,1,'full date including year belongs to the group heading');
+    assert.doesNotMatch(html,/>534816<\/span>/);
+  }
+});
