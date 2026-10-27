@@ -25,3 +25,13 @@ Owner UI: **Settings → Admin Engine → Gift Pro Access**. Verify the current 
 ## Recovery / rollback
 
 Disable GIFT_ACCESS_ENABLED to stop new sends/claims and runtime gift eligibility while diagnosing a release; this also temporarily pauses existing gift-only access. Keep the tables and audit history. Re-enable only after verification. Paid/trial data is never rolled back. Do not drop the gift tables while the connector predicate references them; a schema rollback needs a forward migration restoring that predicate first.
+
+## Preview errors after syncing code
+
+The admin panel calls `/api/gifts/admin`. A JSON `API route not found` (404) means the connected HTTP server has not exposed that path. It does not mean an email API key is missing. Current code deliberately returns 503 `Gift access is not enabled yet.` when its flag is off; an enabled route without a login returns 401. Database/sender setup and admin PIN failures have separate responses.
+
+After pulling a backend change into AI Studio, stop/start its existing preview process once and reload the preview document. The development command now uses Node's module watcher with the existing tsx loader, so later edits to imported backend modules restart the process. It does not enable Vite HMR or change the production `npm start` command. Never launch a second server on the same port. A browser refresh alone cannot replace an already running backend process.
+
+If `VITE_API_BASE_URL` is configured, the preview's API requests go to that server. Update/restart that target rather than changing the browser to a different origin as a workaround. Do not paste service keys into frontend code. The admin panel preserves drafts, identifies a missing Gift server and disables changes until a read succeeds; no send is retried automatically.
+
+The outer Google AI Studio `There was an issue while sharing your applet` banner is a separate platform operation. App API success cannot prove sharing works. Investigate its own failed request/status and editor logs; do not restore an old app or delete files based only on the banner. Google staff's 27 October discussion describes several distinct causes, including sandbox state, invalid virtual file paths and syntax errors: https://discuss.ai.google.dev/t/ai-studio-keeps-saying-the-service-is-temporarily-unavailable-please-try-again-and-there-was-an-issue-while-sharing-your-applet/187622 . The GitHub tree uses relative paths; AI Studio's private virtual workspace and sharing request remain unverified here.
