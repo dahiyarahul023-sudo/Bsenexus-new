@@ -48,6 +48,8 @@ function harness(hanging?: string, failing?: string) {
     '../utils/pollCycle.js': cycle,
     '../database/logDao.js': { addLog: async (_level: string, _module: string, message: string) => { logs.push(message); logLevels.push({ level: _level, message }); } },
     '../database/settingsDao.js': { getSettings: () => invoke('settings', settings) },
+    './giftAccessPolicy.js': { giftsEnabled: () => false },
+    './subscriptionAccess.js': { getAccessProfile: async () => null },
     './bse.js': { fetchBSEAnnouncements: () => invoke('fetch', rows) },
     '../database/announcementDao.js': {
       initAnnouncementCache: () => invoke('init', undefined),

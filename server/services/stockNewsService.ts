@@ -1,3 +1,5 @@
+import { getAccessProfile } from './subscriptionAccess.js';
+import { giftsEnabled } from './giftAccessPolicy.js';
 import { requireVerifiedTelegramTarget } from '../database/telegramLinksDao.js';
 import { createHash } from 'crypto';
 import { getAllWatchlists, extractSymbol } from '../database/watchlistDao.js';
@@ -655,7 +657,8 @@ export async function processAutomatedNewsAlerts(): Promise<{ checked: number; d
     // turns Telegram alerts OFF, no bot-initiated message (filings OR news
     // digests) may go out, even if news alerts were left enabled separately.
     for (const u of allUsers) {
-      const userProActive = Boolean(u.tier === 'admin' || (u.proExpiresAt && u.proExpiresAt > Date.now()));
+      const accessUser = u.telegramChatId && u.notificationPreferences?.telegramNewsAlerts === true && u.notificationPreferences?.telegramAlertsEnabled !== false && giftsEnabled() ? await getAccessProfile(u.uid, { durable: true }) : u;
+      const userProActive = Boolean(accessUser && (accessUser.tier === 'admin' || (accessUser.proExpiresAt && accessUser.proExpiresAt > Date.now())));
       if (!userProActive) continue;
       const uNewsPrefs: any = u.notificationPreferences || {};
       if (u.telegramChatId && uNewsPrefs.telegramNewsAlerts === true) {

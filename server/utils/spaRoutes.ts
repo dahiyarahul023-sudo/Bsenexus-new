@@ -5,7 +5,7 @@ import type { RequestHandler } from 'express';
 export const SPA_PATHS = [
   "/", "/announcements", "/live", "/results-calendar", "/watchlist",
   "/watchlists", "/companies", "/about", "/contact", "/disclaimer",
-  "/privacy-policy", "/terms", "/plugin", "/ai-plugin", "/settings",
+  "/activate-gift", "/privacy-policy", "/terms", "/plugin", "/ai-plugin", "/settings",
 ];
 export function normalizeSpaPath(path: string): string {
   return path.toLowerCase().replace(/\/+$/, "") || "/";

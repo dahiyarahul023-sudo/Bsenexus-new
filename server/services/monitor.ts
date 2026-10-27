@@ -1,3 +1,5 @@
+import { getAccessProfile } from './subscriptionAccess.js';
+import { giftsEnabled } from './giftAccessPolicy.js';
 import { requireVerifiedTelegramTarget } from '../database/telegramLinksDao.js';
 import { PollCycle, PollStageTimeout } from '../utils/pollCycle.js';
 import { getSettings } from '../database/settingsDao.js';
@@ -502,7 +504,8 @@ export async function processAnnouncements(): Promise<AnnouncementPollResult> {
             }
             // Telegram is a PRO-ONLY feature: skip dispatch when the user's
             // trial/pack has expired (in-app notifications above are unaffected).
-            const userProActive = Boolean(u.tier === 'admin' || (u.proExpiresAt && u.proExpiresAt > Date.now()));
+            const accessUser = rawUserChatId && uPrefs.telegramAlertsEnabled !== false && giftsEnabled() ? await getAccessProfile(u.uid, { durable: true }) : u;
+            const userProActive = Boolean(accessUser && (accessUser.tier === 'admin' || (accessUser.proExpiresAt && accessUser.proExpiresAt > Date.now())));
             // Respect user toggle to turn OFF/ON Telegram alerts
             const isUserTelegramActive = userProActive && uPrefs.telegramAlertsEnabled !== false;
 

@@ -1,6 +1,14 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <script>
+      // Fragment secrets never reach HTTP logs. Capture before any optional telemetry.
+      if (location.pathname.replace(/\/+$/, '').toLowerCase() === '/activate-gift') {
+        var gift = new URLSearchParams(location.hash.slice(1)).get('token') || '';
+        if (/^bnx_gift_[A-Za-z0-9_-]{43}$/.test(gift)) window.__BN_GIFT_TOKEN__ = gift;
+        history.replaceState(null, '', location.pathname);
+      }
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script>
@@ -388,6 +396,7 @@
          "Essential Only". Async; cannot block or break existing scripts. -->
     <script type="text/javascript">
     (function () {
+      if (location.pathname.replace(/\/+$/, '').toLowerCase() === '/activate-gift') return;
       var hostname = window.location.hostname;
       if (hostname !== 'bsenexus.in' && hostname !== 'www.bsenexus.in') {
         return;

@@ -79,6 +79,8 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
+  if (url.pathname.toLowerCase().replace(/\/+$/, '') === '/activate-gift' || url.pathname.startsWith('/api/gifts')) return;
+
   // Only handle HTTP/HTTPS requests
   if (!url.protocol.startsWith('http')) return;
 

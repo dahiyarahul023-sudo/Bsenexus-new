@@ -132,6 +132,9 @@ app.get('/api/cron/poll-announcements', createAnnouncementCronHandler({
     return failures > 0 || blockLevel > 0 ? Math.min(60_000, getPollingIntervalMs(failures, blockLevel)) : 0;
   },
 }));
+app.use('/activate-gift', (_req, res, next) => {
+  res.set('Cache-Control', 'private, no-store'); res.set('Referrer-Policy', 'no-referrer'); res.set('X-Robots-Tag', 'noindex, nofollow'); next();
+});
 app.use(authMiddleware);
 mountAiIntegration(app);
 

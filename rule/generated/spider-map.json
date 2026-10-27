@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "f17657d431f8d6f88adf589f6ea2238a98df50463be890ccbef0b74ca36f8209",
+  "sourceDigest": "7a3ec8990593df0aca378e69e6cfc72bea7bdfe1984c28099eee386f15a62b6a",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -10,7 +10,7 @@
   "files": [
     {
       "path": ".env.example",
-      "sha256": "f92fa281155786a4dfdd3c12eda90a4d24a7f9a139d1aa7f7f48719a62cdab30",
+      "sha256": "34dc5a2ad7c8b89de7e871bfd29b528db0b8d74c7f17211665571d9766961c61",
       "importedBy": []
     },
     {
@@ -30,7 +30,7 @@
     },
     {
       "path": "index.html",
-      "sha256": "cb4a3d8bdadeadc8d764ce78342489d59bb878d2e57e715fe8d5ec0aac07f32a",
+      "sha256": "8355790abd5bc131a671fb99d10906bbe576c4493b014ca42ddfd8b8adfec337",
       "importedBy": []
     },
     {
@@ -115,7 +115,7 @@
     },
     {
       "path": "public/sw.js",
-      "sha256": "e331dd7a2aa104cb676d6c9c2637e8dd3e795dd1de04f8e40410ce611b9edff6",
+      "sha256": "42caa159c05c50c1ebbe7eb9eb32918da422f32d4708e7cd7b69349e7e4e5d78",
       "importedBy": []
     },
     {
@@ -212,6 +212,11 @@
       "importedBy": []
     },
     {
+      "path": "scripts/verify-gift-access.mjs",
+      "sha256": "620c71c5fb0d4293145f1d02085ddabeae0a303d699e9979f8ee72309ded9e34",
+      "importedBy": []
+    },
+    {
       "path": "scripts/verify-mcp-directory-staging.sql",
       "sha256": "32307eff8ee70178d58f926a530311de8d2d1e5775182ca38c48074b12456b12",
       "importedBy": []
@@ -241,7 +246,7 @@
     },
     {
       "path": "server.ts",
-      "sha256": "39ab873a622cc4d183ffc908ca237a191969404e93412561fc1358cc7a12f4a0",
+      "sha256": "d74592b04884b78b41e8ed6e1a5d11216d50e3a38f5b801a6e4b72508883f7c0",
       "importedBy": [
         "server/tests/routeResolution.test.ts"
       ]
@@ -350,7 +355,7 @@
     },
     {
       "path": "server/ai/tools.ts",
-      "sha256": "5ddd2e1a93d32fb7c215eb99aa2a43646b6bc05e1f16606010eb12bbb8b1efa1",
+      "sha256": "4171d5eff6fcbda04a6f104f7af00885abdfe8e27b2f8da10de2883dd911eac5",
       "importedBy": [
         "server/ai/http.ts",
         "server/api/aiPlugin.ts",
@@ -394,6 +399,14 @@
       ]
     },
     {
+      "path": "server/api/giftAccess.ts",
+      "sha256": "9fbf39e24040077da32d68c2b5335a9dfd52cfb386569637d2611973a95349f4",
+      "importedBy": [
+        "server/api/routes.ts",
+        "server/tests/giftAccessApi.test.ts"
+      ]
+    },
+    {
       "path": "server/api/impactRadar.ts",
       "sha256": "ff1751dd21cb614de9d1f9dffc1077818e7dacc239db4fe648b9e7b2e6fbf84c",
       "importedBy": [
@@ -410,7 +423,7 @@
     },
     {
       "path": "server/api/payments.ts",
-      "sha256": "8af6f214248dffcfdbf1f335089393ed1814fd018352d1eda3dab53cb078c8e5",
+      "sha256": "4ed5fc1b36ee7f3a73ac4bb98c94edf4686654078e7b4174d8cd9195a4efea5c",
       "importedBy": [
         "server/api/routes.ts"
       ]
@@ -425,7 +438,7 @@
     },
     {
       "path": "server/api/routes.ts",
-      "sha256": "f855d1641d4c0f917fcbf25de7dd4efb7d87f7542a156dba10982ffc127e79f5",
+      "sha256": "3d753a501a65ea5440ed2a037084eba78e184826e3aca0bb5aa192ee25cad39c",
       "importedBy": [
         "server.ts",
         "server/tests/alertRulesApi.test.ts",
@@ -571,6 +584,14 @@
       ]
     },
     {
+      "path": "server/database/giftAccessDao.ts",
+      "sha256": "c596c9bb6aa98fb2030fb9295f2abdbc144f2a572c619c8d77bce0688280f1b5",
+      "importedBy": [
+        "server/api/giftAccess.ts",
+        "server/services/subscriptionAccess.ts"
+      ]
+    },
+    {
       "path": "server/database/impactRadarDao.ts",
       "sha256": "a6d017258766fd4945777d66b65360286ab708d5d46d061df0c4c32377032e31",
       "importedBy": [
@@ -678,7 +699,8 @@
         "server/ai/tools.ts",
         "server/api/payments.ts",
         "server/api/routes.ts",
-        "server/security/auth.ts"
+        "server/security/auth.ts",
+        "server/services/subscriptionAccess.ts"
       ]
     },
     {
@@ -697,6 +719,7 @@
         "server/api/routes.ts",
         "server/api/telegramLinks.ts",
         "server/database/aiQuotaDao.ts",
+        "server/database/giftAccessDao.ts",
         "server/database/notificationDao.ts",
         "server/database/paymentEntitlementsDao.ts",
         "server/database/paymentOrdersDao.ts",
@@ -764,6 +787,7 @@
         "server/database/calendarHistoryDao.ts",
         "server/database/calendarTelegramDao.ts",
         "server/database/feedbackDao.ts",
+        "server/database/giftAccessDao.ts",
         "server/database/impactRadarDao.ts",
         "server/database/indexNowDao.ts",
         "server/database/logDao.ts",
@@ -827,9 +851,9 @@
         "server/database/telegramLinksDao.ts",
         "server/security/auth.ts",
         "server/services/adrRuntime.ts",
-        "server/services/aiQuotaService.ts",
         "server/services/monitor.ts",
         "server/services/stockNewsService.ts",
+        "server/services/subscriptionAccess.ts",
         "server/tests/auditSecurity.test.ts",
         "server/tests/followupAudit.test.ts"
       ]
@@ -869,10 +893,11 @@
     },
     {
       "path": "server/security/auth.ts",
-      "sha256": "fffa632dd721d53d5d904888c3150632844540e8dc73afd0c9aa4047aa5b67be",
+      "sha256": "8330e6988d8a8e85ebba52806a5657033e95fcd239cb326bd49ac96d08917a61",
       "importedBy": [
         "server.ts",
         "server/ai/http.ts",
+        "server/api/giftAccess.ts",
         "server/api/impactRadar.ts",
         "server/api/notes.ts",
         "server/api/payments.ts",
@@ -891,6 +916,7 @@
       "sha256": "b8c9768ab7e590ded081978c3254913ca3da1438896abdcd5e9c2b67f92e1de0",
       "importedBy": [
         "scripts/provision-ai-reviewer.ts",
+        "server/api/giftAccess.ts",
         "server/database/firebase.ts",
         "server/security/auth.ts",
         "server/tests/authIdentity.test.ts",
@@ -901,6 +927,7 @@
       "path": "server/security/firebaseIdentity.ts",
       "sha256": "3cfceb82730075894135b620e07acefa9415c8f99d8a066d1e1c533bafcd26ca",
       "importedBy": [
+        "server/api/giftAccess.ts",
         "server/security/auth.ts",
         "server/tests/authIdentity.test.ts"
       ]
@@ -1020,7 +1047,7 @@
     },
     {
       "path": "server/services/aiQuotaService.ts",
-      "sha256": "f498d6de75c5ea742e227032ee05871e43a825ea0a69d8994938b9330dc0f530",
+      "sha256": "da44056d2b5e0b7ba3092ea6e242aad2eccaf6fd6179524030989d6d200298d2",
       "importedBy": [
         "server/ai/tools.ts",
         "server/api/routes.ts",
@@ -1112,6 +1139,18 @@
       ]
     },
     {
+      "path": "server/services/giftAccessPolicy.ts",
+      "sha256": "c75236c4837fd88adfcebcebb04cba8d1f3e1e3f00b1d3bc28c2b227c1d94b7b",
+      "importedBy": [
+        "server/api/giftAccess.ts",
+        "server/database/giftAccessDao.ts",
+        "server/services/monitor.ts",
+        "server/services/stockNewsService.ts",
+        "server/services/subscriptionAccess.ts",
+        "server/tests/giftAccessApi.test.ts"
+      ]
+    },
+    {
       "path": "server/services/guideIndexNow.ts",
       "sha256": "b2d467f91182feb85871d7b1c2327ad3391bcfd19f4a0f7d6833b13c6bcc9aca",
       "importedBy": [
@@ -1200,7 +1239,7 @@
     },
     {
       "path": "server/services/monitor.ts",
-      "sha256": "37e93131a5003faefa40ca8ae1c0e3c14d0d8baa1fa7ea3e2421b2dae9790d7c",
+      "sha256": "4ae39bb07b102a1a4d00e8001fe968622141fded317c1c88a1ef8da6e1249d78",
       "importedBy": [
         "server.ts",
         "server/ai/tools.ts",
@@ -1296,8 +1335,9 @@
     },
     {
       "path": "server/services/resendMailer.ts",
-      "sha256": "68e0d11ea8a52446bbadb599e6442b51e2f2ff3adcdf9a3e2a54fba6591d403e",
+      "sha256": "17dfea2ccb9d94a8a56d08517ab4b474dad1d2bfcfd2cb0f9bb216f208147f37",
       "importedBy": [
+        "server/api/giftAccess.ts",
         "server/api/payments.ts"
       ]
     },
@@ -1359,7 +1399,7 @@
     },
     {
       "path": "server/services/stockNewsService.ts",
-      "sha256": "55480f085d855808ed230cbb29a39a72dc0a5d069a0e1b013889709c0c6d0b9e",
+      "sha256": "4741161e470e064800c1519ff4d3899620d46e63f8f835710a2d142cbc27724e",
       "importedBy": [
         "server.ts",
         "server/api/routes.ts",
@@ -1383,6 +1423,21 @@
       "sha256": "99eae232fa4af4850bf9ae20bbf4594eca97ae7b023e0ede451ede7646f31f9d",
       "importedBy": [
         "server/api/routes.ts"
+      ]
+    },
+    {
+      "path": "server/services/subscriptionAccess.ts",
+      "sha256": "2a0721cdede4eacf59c9dbe2a07cbdc0b7c9a2cd8327900de221942de623bf00",
+      "importedBy": [
+        "server/ai/tools.ts",
+        "server/api/giftAccess.ts",
+        "server/api/payments.ts",
+        "server/api/routes.ts",
+        "server/security/auth.ts",
+        "server/services/aiQuotaService.ts",
+        "server/services/monitor.ts",
+        "server/services/stockNewsService.ts",
+        "server/tests/giftAccessApi.test.ts"
       ]
     },
     {
@@ -1727,6 +1782,16 @@
       "importedBy": []
     },
     {
+      "path": "server/tests/giftAccessApi.test.ts",
+      "sha256": "21ecb4ad0c3139a0a9602990030863e821c432ec98c2f6a24501941c8004b9f5",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/giftAccessSql.test.ts",
+      "sha256": "f3f41e502c434da98ee951082b9147a85f40f4e23b6f37d2070b5177d540df4b",
+      "importedBy": []
+    },
+    {
       "path": "server/tests/homeNews.test.ts",
       "sha256": "ab91efd702c2ad1baa579605d92f8dac3e6058f58f6c544a5b0a985063c9abdd",
       "importedBy": []
@@ -1843,7 +1908,7 @@
     },
     {
       "path": "server/tests/pollerStall.test.ts",
-      "sha256": "04e920a7eef410730d90e1379078d1376f4bf69a6fb4a8b9a4b0699ee69bbf94",
+      "sha256": "80c601f2300330947e6ee5a411a9c306d96f575079cb9e259fd88e278b2edb01",
       "importedBy": []
     },
     {
@@ -2280,7 +2345,7 @@
     },
     {
       "path": "server/utils/spaRoutes.ts",
-      "sha256": "c17f0ce04bbcd18033bb50af089cd8d19bd3e9f7d8c549a9c81c76e27344bc5f",
+      "sha256": "6ab6695b6fbef99fed8b88004a0ed516c31fd0f72ab7a8466a11dffafc315bcc",
       "importedBy": [
         "scripts/verify-oauth-routing.mjs",
         "server.ts",
@@ -2343,7 +2408,7 @@
     },
     {
       "path": "src/App.tsx",
-      "sha256": "82728c547a95aa51f2483b10a74356bdc3083bd16e945caf8b171dc8ba2bd375",
+      "sha256": "6dd77a29d9b099f9a107822b6909a66167e5fd67fb81740e106ef8ae5c8ab799",
       "importedBy": [
         "src/main.tsx"
       ]
@@ -2355,10 +2420,12 @@
         "src/App.tsx",
         "src/api/notesApi.ts",
         "src/components/AdminDiagnostics.tsx",
+        "src/components/AdminGiftAccess.tsx",
         "src/components/AiPluginPage.tsx",
         "src/components/AlertRulesModal.tsx",
         "src/components/Announcements.tsx",
         "src/components/CompanyIntelligenceModal.tsx",
+        "src/components/GiftActivationPage.tsx",
         "src/components/HelpModal.tsx",
         "src/components/HomeForYou.tsx",
         "src/components/HomeMarketNews.tsx",
@@ -2412,6 +2479,13 @@
       "sha256": "2cf084eb25908af5049378b0d411e74ac6380ecf2f75bfb78b44eb2c25299bab",
       "importedBy": [
         "src/App.tsx"
+      ]
+    },
+    {
+      "path": "src/components/AdminGiftAccess.tsx",
+      "sha256": "cf1c9e1e3a35e520ecfefee849ae164e7406ab6b033eef485d295a17825e39bc",
+      "importedBy": [
+        "src/components/SettingsTab.tsx"
       ]
     },
     {
@@ -2514,6 +2588,13 @@
       ]
     },
     {
+      "path": "src/components/GiftActivationPage.tsx",
+      "sha256": "35549026085ab01ca05e24e6039701cdd8e75c637db769efd97222fc37a28174",
+      "importedBy": [
+        "src/App.tsx"
+      ]
+    },
+    {
       "path": "src/components/GuidesPage.tsx",
       "sha256": "7e21baa6e92834f39f1a5efc2de7c2e0c0b205353257e700c6b21fe00cded40d",
       "importedBy": [
@@ -2558,7 +2639,7 @@
     },
     {
       "path": "src/components/Layout.tsx",
-      "sha256": "73ccf6de1a8c49bef66bf1bbb8dadb26c4423146a822487c10f8c50b1fb6c632",
+      "sha256": "853a43e34b2fcd2af3aa53c72d531fe447af0e0ae470f47e40978948082141c7",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -2701,7 +2782,7 @@
     },
     {
       "path": "src/components/SettingsTab.tsx",
-      "sha256": "05b9bfecbecdad191eee8ee649138393583251ec3e62c51f160ef12c14b3694c",
+      "sha256": "a0e455fc961e19dfd7228599caa92c65fc6b2af981aa3024cca89dc2b80ee1bb",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -2715,7 +2796,7 @@
     },
     {
       "path": "src/components/SubscriptionCard.tsx",
-      "sha256": "62a8c5e9ceea4b98e0b56a143ff0934c2ebcbe060ba2ceaa671658a49161e2bc",
+      "sha256": "37ab95db08fd9c73554d771aedc5372789676bdae89101882867152f79a25217",
       "importedBy": [
         "src/components/SettingsTab.tsx"
       ]
@@ -2759,7 +2840,7 @@
     },
     {
       "path": "src/components/UserProfileModal.tsx",
-      "sha256": "80854df2675a9501ec9916daf7457945ba1665e30debd8bead6cf0963d5ae605",
+      "sha256": "20f3f6d44d1e5b5b69a3fda8f4e71d47c07b79682595894ee0874e283c2486e8",
       "importedBy": [
         "src/components/Layout.tsx"
       ]
@@ -2799,6 +2880,14 @@
       "sha256": "6c2c49eb585644054f282153de1daa35017aa1fd7d2640b9e7185e9a9e242be7",
       "importedBy": [
         "src/App.tsx"
+      ]
+    },
+    {
+      "path": "src/components/gift-access.css",
+      "sha256": "62a89e6e1e2f6e98931c44be64e94e9cf170c670f1d4b2eadb66dd66c7688450",
+      "importedBy": [
+        "src/components/AdminGiftAccess.tsx",
+        "src/components/GiftActivationPage.tsx"
       ]
     },
     {
@@ -3542,10 +3631,11 @@
     },
     {
       "path": "src/context/AuthContext.tsx",
-      "sha256": "381667b9ce0c3b6566395213f778403d510f1ed0fada64646b6456b8223c564f",
+      "sha256": "3df229e621a680abe3ac7ed6836055ca4eb4a9b9289e477ad6068e9e508ac186",
       "importedBy": [
         "src/App.tsx",
         "src/components/AdminDiagnostics.tsx",
+        "src/components/AdminGiftAccess.tsx",
         "src/components/AdminPinModal.tsx",
         "src/components/AiPluginPage.tsx",
         "src/components/AiUsageCard.tsx",
@@ -3554,6 +3644,7 @@
         "src/components/AuthModal.tsx",
         "src/components/AvatarPicker.tsx",
         "src/components/CompanyIntelligenceModal.tsx",
+        "src/components/GiftActivationPage.tsx",
         "src/components/HelpModal.tsx",
         "src/components/HomeForYou.tsx",
         "src/components/ImpactRadar.tsx",
@@ -3778,7 +3869,7 @@
     },
     {
       "path": "src/lib/sentry.ts",
-      "sha256": "848beec13def51e5a251aa32b78f2e3d31a5043d56c26ea77d8831f12fdbdcbb",
+      "sha256": "1d26801025e1ba6200886c2ac46017d25e659a97133e81f6c6d83174dcc81b04",
       "importedBy": [
         "src/main.tsx"
       ]
@@ -3808,7 +3899,7 @@
     },
     {
       "path": "src/main.tsx",
-      "sha256": "5193ade45fae3bb70b3b5f13ffb9d8f67e632f5d4fa119eca7ba11ded6429cdf",
+      "sha256": "df307aff2555941bedd005b138aed6b17c83555cfab5e77e133c55625bd085b2",
       "importedBy": []
     },
     {
@@ -3849,7 +3940,7 @@
     },
     {
       "path": "src/shared/aiTelemetry.ts",
-      "sha256": "706726ab9cbbe7bed792f990362978b1a8cf6ea355bd0de0790c7ce81c102357",
+      "sha256": "d8c60879d1b35b005e6a312c65e9c31f7c26634ae9dbfdcd24936dbbacaf623c",
       "importedBy": [
         "server/sentry.ts",
         "server/tests/aiTelemetry.test.ts",
@@ -3914,6 +4005,16 @@
         "server/tests/pollerStall.test.ts",
         "server/tests/telegramResultDocument.test.ts",
         "src/utils/announcementFeed.ts"
+      ]
+    },
+    {
+      "path": "src/shared/giftAccess.ts",
+      "sha256": "0ec2b179853093434a05afe007042e4c8308e7b8315bcede80e915a4a66b9a85",
+      "importedBy": [
+        "server/database/giftAccessDao.ts",
+        "server/services/subscriptionAccess.ts",
+        "src/components/AdminGiftAccess.tsx",
+        "src/components/GiftActivationPage.tsx"
       ]
     },
     {
@@ -4128,9 +4229,10 @@
     },
     {
       "path": "src/types.ts",
-      "sha256": "34503ceb12070a3ab74fc27b387327c7b5e3ccacfc1e1e046517c184296650d1",
+      "sha256": "d3c6d95730f323e5fe3f1b45f5540acf0e4be18d6bf3253fb44b018185d2f661",
       "importedBy": [
         "server/database/usersDao.ts",
+        "server/services/subscriptionAccess.ts",
         "src/App.tsx",
         "src/api/notesApi.ts",
         "src/components/BlogReaderModal.tsx",
@@ -4636,6 +4738,11 @@
     {
       "path": "supabase/migrations/20261024193046_deep_audit_security.sql",
       "sha256": "511020393603c90a31f4fc00dd72d606ef9abb554f09a6a0c1c3ec6bc5457aef",
+      "importedBy": []
+    },
+    {
+      "path": "supabase/migrations/20261026192403_gift_pro_access.sql",
+      "sha256": "f47b3bfe703ec404be4577191bcb372817ebc361199f2c8ae6916b2a42401560",
       "importedBy": []
     },
     {
@@ -5150,81 +5257,87 @@
     },
     {
       "source": "server/ai/tools.ts",
-      "target": "server/database/aiConnectionsDao.ts",
+      "target": "server/services/subscriptionAccess.ts",
       "kind": "import",
       "line": 1
     },
     {
       "source": "server/ai/tools.ts",
+      "target": "server/database/aiConnectionsDao.ts",
+      "kind": "import",
+      "line": 2
+    },
+    {
+      "source": "server/ai/tools.ts",
       "target": "server/database/usersDao.ts",
       "kind": "import",
-      "line": 6
+      "line": 7
     },
     {
       "source": "server/ai/tools.ts",
       "target": "server/database/paymentEntitlementsDao.ts",
       "kind": "import",
-      "line": 12
+      "line": 13
     },
     {
       "source": "server/ai/tools.ts",
       "target": "server/database/notificationDao.ts",
       "kind": "import",
-      "line": 13
+      "line": 14
     },
     {
       "source": "server/ai/tools.ts",
       "target": "server/database/announcementDao.ts",
       "kind": "import",
-      "line": 14
+      "line": 15
     },
     {
       "source": "server/ai/tools.ts",
       "target": "server/services/aiQuotaService.ts",
       "kind": "import",
-      "line": 15
+      "line": 16
     },
     {
       "source": "server/ai/tools.ts",
       "target": "server/ai/filingSummary.ts",
       "kind": "import",
-      "line": 20
+      "line": 21
     },
     {
       "source": "server/ai/tools.ts",
       "target": "server/database/watchlistDao.ts",
       "kind": "import",
-      "line": 21
+      "line": 22
     },
     {
       "source": "server/ai/tools.ts",
       "target": "server/services/monitor.ts",
       "kind": "import",
-      "line": 22
+      "line": 23
     },
     {
       "source": "server/ai/tools.ts",
       "target": "server/ai/policy.ts",
       "kind": "import",
-      "line": 23
+      "line": 24
     },
     {
       "source": "server/ai/tools.ts",
       "target": "server/ai/market.ts",
       "kind": "import",
-      "line": 30
+      "line": 31
     },
     {
       "source": "server/ai/tools.ts",
       "target": "server/services/resultsCalendarService.ts",
       "kind": "import",
-      "line": 37
+      "line": 38
     },
     {
       "source": "server/ai/tools.ts",
       "target": "server/ai/calendarRead.ts",
       "kind": "import",
-      "line": 38
+      "line": 39
     },
     {
       "source": "server/api/adr.ts",
@@ -5287,6 +5400,48 @@
       "line": 7
     },
     {
+      "source": "server/api/giftAccess.ts",
+      "target": "server/security/auth.ts",
+      "kind": "import",
+      "line": 4
+    },
+    {
+      "source": "server/api/giftAccess.ts",
+      "target": "server/security/firebaseAdmin.ts",
+      "kind": "import",
+      "line": 5
+    },
+    {
+      "source": "server/api/giftAccess.ts",
+      "target": "server/security/firebaseIdentity.ts",
+      "kind": "import",
+      "line": 6
+    },
+    {
+      "source": "server/api/giftAccess.ts",
+      "target": "server/database/giftAccessDao.ts",
+      "kind": "import",
+      "line": 7
+    },
+    {
+      "source": "server/api/giftAccess.ts",
+      "target": "server/services/subscriptionAccess.ts",
+      "kind": "import",
+      "line": 8
+    },
+    {
+      "source": "server/api/giftAccess.ts",
+      "target": "server/services/giftAccessPolicy.ts",
+      "kind": "import",
+      "line": 9
+    },
+    {
+      "source": "server/api/giftAccess.ts",
+      "target": "server/services/resendMailer.ts",
+      "kind": "import",
+      "line": 10
+    },
+    {
       "source": "server/api/impactRadar.ts",
       "target": "server/security/auth.ts",
       "kind": "import",
@@ -5336,63 +5491,69 @@
     },
     {
       "source": "server/api/payments.ts",
-      "target": "server/services/referralPaymentContract.ts",
+      "target": "server/services/subscriptionAccess.ts",
       "kind": "import",
-      "line": 16
+      "line": 1
     },
     {
       "source": "server/api/payments.ts",
-      "target": "server/security/auth.ts",
+      "target": "server/services/referralPaymentContract.ts",
       "kind": "import",
       "line": 17
     },
     {
       "source": "server/api/payments.ts",
-      "target": "server/database/usersDao.ts",
+      "target": "server/security/auth.ts",
       "kind": "import",
       "line": 18
     },
     {
       "source": "server/api/payments.ts",
-      "target": "server/database/watchlistDao.ts",
+      "target": "server/database/usersDao.ts",
       "kind": "import",
       "line": 19
     },
     {
       "source": "server/api/payments.ts",
-      "target": "server/database/paymentOrdersDao.ts",
+      "target": "server/database/watchlistDao.ts",
       "kind": "import",
       "line": 20
     },
     {
       "source": "server/api/payments.ts",
+      "target": "server/database/paymentOrdersDao.ts",
+      "kind": "import",
+      "line": 21
+    },
+    {
+      "source": "server/api/payments.ts",
       "target": "server/database/paymentEntitlementsDao.ts",
       "kind": "import",
-      "line": 27
+      "line": 28
     },
     {
       "source": "server/api/payments.ts",
       "target": "server/database/paymentStore.ts",
       "kind": "import",
-      "line": 31
+      "line": 32
     },
     {
       "source": "server/api/payments.ts",
       "target": "server/services/resendMailer.ts",
       "kind": "import",
-      "line": 35
+      "line": 36
     },
     {
       "source": "server/api/payments.ts",
       "target": "server/database/referralsDao.ts",
       "kind": "import",
-      "line": 40
+      "line": 41
     },
     {
       "source": "server/api/payments.ts",
       "target": "server/config/plans.ts",
       "kind": "import",
-      "line": 75
+      "line": 76
     },
     {
       "source": "server/api/referrals.ts",
@@ -5720,69 +5881,81 @@
     },
     {
       "source": "server/api/routes.ts",
-      "target": "server/api/payments.ts",
+      "target": "server/api/giftAccess.ts",
       "kind": "import",
       "line": 102
     },
     {
       "source": "server/api/routes.ts",
-      "target": "server/api/referrals.ts",
+      "target": "server/services/subscriptionAccess.ts",
       "kind": "import",
       "line": 103
     },
     {
       "source": "server/api/routes.ts",
-      "target": "server/api/faq.ts",
+      "target": "server/api/payments.ts",
       "kind": "import",
       "line": 104
     },
     {
       "source": "server/api/routes.ts",
-      "target": "server/api/notes.ts",
+      "target": "server/api/referrals.ts",
       "kind": "import",
       "line": 105
     },
     {
       "source": "server/api/routes.ts",
-      "target": "server/api/impactRadar.ts",
+      "target": "server/api/faq.ts",
       "kind": "import",
       "line": 106
     },
     {
       "source": "server/api/routes.ts",
-      "target": "server/utils/renderCache.ts",
+      "target": "server/api/notes.ts",
       "kind": "import",
       "line": 107
     },
     {
       "source": "server/api/routes.ts",
-      "target": "server/services/marketGuidesService.ts",
+      "target": "server/api/impactRadar.ts",
       "kind": "import",
       "line": 108
     },
     {
       "source": "server/api/routes.ts",
-      "target": "server/database/watchlistDao.ts",
+      "target": "server/utils/renderCache.ts",
       "kind": "import",
       "line": 109
     },
     {
       "source": "server/api/routes.ts",
-      "target": "server/ai/http.ts",
+      "target": "server/services/marketGuidesService.ts",
       "kind": "import",
       "line": 110
     },
     {
       "source": "server/api/routes.ts",
-      "target": "server/ai/policy.ts",
+      "target": "server/database/watchlistDao.ts",
       "kind": "import",
       "line": 111
     },
     {
       "source": "server/api/routes.ts",
-      "target": "server/api/aiPlugin.ts",
+      "target": "server/ai/http.ts",
       "kind": "import",
       "line": 112
+    },
+    {
+      "source": "server/api/routes.ts",
+      "target": "server/ai/policy.ts",
+      "kind": "import",
+      "line": 113
+    },
+    {
+      "source": "server/api/routes.ts",
+      "target": "server/api/aiPlugin.ts",
+      "kind": "import",
+      "line": 114
     },
     {
       "source": "server/api/search.ts",
@@ -6047,6 +6220,30 @@
       "target": "server/database/localStore.ts",
       "kind": "import",
       "line": 7
+    },
+    {
+      "source": "server/database/giftAccessDao.ts",
+      "target": "server/database/supabase.ts",
+      "kind": "import",
+      "line": 1
+    },
+    {
+      "source": "server/database/giftAccessDao.ts",
+      "target": "server/database/paymentStore.ts",
+      "kind": "import",
+      "line": 2
+    },
+    {
+      "source": "server/database/giftAccessDao.ts",
+      "target": "server/services/giftAccessPolicy.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "server/database/giftAccessDao.ts",
+      "target": "src/shared/giftAccess.ts",
+      "kind": "import",
+      "line": 4
     },
     {
       "source": "server/database/impactRadarDao.ts",
@@ -6380,33 +6577,39 @@
     },
     {
       "source": "server/security/auth.ts",
-      "target": "server/database/paymentEntitlementsDao.ts",
+      "target": "server/services/subscriptionAccess.ts",
       "kind": "import",
       "line": 9
     },
     {
       "source": "server/security/auth.ts",
-      "target": "server/database/paymentStore.ts",
+      "target": "server/database/paymentEntitlementsDao.ts",
       "kind": "import",
       "line": 10
     },
     {
       "source": "server/security/auth.ts",
-      "target": "server/security/recaptchaService.ts",
+      "target": "server/database/paymentStore.ts",
       "kind": "import",
       "line": 11
     },
     {
       "source": "server/security/auth.ts",
-      "target": "server/security/firebaseIdentity.ts",
+      "target": "server/security/recaptchaService.ts",
       "kind": "import",
       "line": 12
     },
     {
       "source": "server/security/auth.ts",
-      "target": "server/security/accountRateLimiter.ts",
+      "target": "server/security/firebaseIdentity.ts",
       "kind": "import",
       "line": 13
+    },
+    {
+      "source": "server/security/auth.ts",
+      "target": "server/security/accountRateLimiter.ts",
+      "kind": "import",
+      "line": 14
     },
     {
       "source": "server/sentry.ts",
@@ -6590,7 +6793,7 @@
     },
     {
       "source": "server/services/aiQuotaService.ts",
-      "target": "server/database/usersDao.ts",
+      "target": "server/services/subscriptionAccess.ts",
       "kind": "import",
       "line": 4
     },
@@ -7076,117 +7279,129 @@
     },
     {
       "source": "server/services/monitor.ts",
-      "target": "server/database/telegramLinksDao.ts",
+      "target": "server/services/subscriptionAccess.ts",
       "kind": "import",
       "line": 1
     },
     {
       "source": "server/services/monitor.ts",
-      "target": "server/utils/pollCycle.ts",
+      "target": "server/services/giftAccessPolicy.ts",
       "kind": "import",
       "line": 2
     },
     {
       "source": "server/services/monitor.ts",
-      "target": "server/database/settingsDao.ts",
+      "target": "server/database/telegramLinksDao.ts",
       "kind": "import",
       "line": 3
     },
     {
       "source": "server/services/monitor.ts",
-      "target": "server/database/logDao.ts",
+      "target": "server/utils/pollCycle.ts",
       "kind": "import",
       "line": 4
     },
     {
       "source": "server/services/monitor.ts",
-      "target": "server/services/bse.ts",
+      "target": "server/database/settingsDao.ts",
       "kind": "import",
       "line": 5
     },
     {
       "source": "server/services/monitor.ts",
-      "target": "src/shared/filingSource.ts",
+      "target": "server/database/logDao.ts",
       "kind": "import",
       "line": 6
     },
     {
       "source": "server/services/monitor.ts",
-      "target": "server/services/telegram.ts",
+      "target": "server/services/bse.ts",
       "kind": "import",
       "line": 7
     },
     {
       "source": "server/services/monitor.ts",
-      "target": "server/services/gemini.ts",
+      "target": "src/shared/filingSource.ts",
       "kind": "import",
       "line": 8
     },
     {
       "source": "server/services/monitor.ts",
-      "target": "server/database/watchlistDao.ts",
+      "target": "server/services/telegram.ts",
       "kind": "import",
       "line": 9
     },
     {
       "source": "server/services/monitor.ts",
-      "target": "server/database/usersDao.ts",
+      "target": "server/services/gemini.ts",
       "kind": "import",
       "line": 10
     },
     {
       "source": "server/services/monitor.ts",
-      "target": "server/database/announcementDao.ts",
+      "target": "server/database/watchlistDao.ts",
       "kind": "import",
       "line": 11
     },
     {
       "source": "server/services/monitor.ts",
-      "target": "server/utils/helpers.ts",
+      "target": "server/database/usersDao.ts",
       "kind": "import",
       "line": 12
     },
     {
       "source": "server/services/monitor.ts",
-      "target": "server/database/notificationDao.ts",
+      "target": "server/database/announcementDao.ts",
       "kind": "import",
       "line": 13
     },
     {
       "source": "server/services/monitor.ts",
-      "target": "server/database/alertRulesDao.ts",
+      "target": "server/utils/helpers.ts",
       "kind": "import",
       "line": 14
     },
     {
       "source": "server/services/monitor.ts",
-      "target": "server/services/timelineClassifier.ts",
+      "target": "server/database/notificationDao.ts",
       "kind": "import",
       "line": 15
     },
     {
       "source": "server/services/monitor.ts",
-      "target": "server/utils/alertDecision.ts",
+      "target": "server/database/alertRulesDao.ts",
       "kind": "import",
       "line": 16
     },
     {
       "source": "server/services/monitor.ts",
-      "target": "server/services/oneSignal.ts",
+      "target": "server/services/timelineClassifier.ts",
       "kind": "import",
       "line": 17
     },
     {
       "source": "server/services/monitor.ts",
-      "target": "server/database/telegramResultDao.ts",
+      "target": "server/utils/alertDecision.ts",
       "kind": "import",
       "line": 18
     },
     {
       "source": "server/services/monitor.ts",
-      "target": "server/services/indexNow.ts",
+      "target": "server/services/oneSignal.ts",
       "kind": "import",
       "line": 19
+    },
+    {
+      "source": "server/services/monitor.ts",
+      "target": "server/database/telegramResultDao.ts",
+      "kind": "import",
+      "line": 20
+    },
+    {
+      "source": "server/services/monitor.ts",
+      "target": "server/services/indexNow.ts",
+      "kind": "import",
+      "line": 21
     },
     {
       "source": "server/services/publicCalendar.ts",
@@ -7448,63 +7663,75 @@
     },
     {
       "source": "server/services/stockNewsService.ts",
-      "target": "server/database/telegramLinksDao.ts",
+      "target": "server/services/subscriptionAccess.ts",
       "kind": "import",
       "line": 1
     },
     {
       "source": "server/services/stockNewsService.ts",
-      "target": "server/database/watchlistDao.ts",
+      "target": "server/services/giftAccessPolicy.ts",
+      "kind": "import",
+      "line": 2
+    },
+    {
+      "source": "server/services/stockNewsService.ts",
+      "target": "server/database/telegramLinksDao.ts",
       "kind": "import",
       "line": 3
     },
     {
       "source": "server/services/stockNewsService.ts",
-      "target": "server/services/telegram.ts",
-      "kind": "import",
-      "line": 4
-    },
-    {
-      "source": "server/services/stockNewsService.ts",
-      "target": "server/database/logDao.ts",
+      "target": "server/database/watchlistDao.ts",
       "kind": "import",
       "line": 5
     },
     {
       "source": "server/services/stockNewsService.ts",
-      "target": "server/database/settingsDao.ts",
+      "target": "server/services/telegram.ts",
       "kind": "import",
       "line": 6
     },
     {
       "source": "server/services/stockNewsService.ts",
-      "target": "server/database/usersDao.ts",
+      "target": "server/database/logDao.ts",
       "kind": "import",
       "line": 7
     },
     {
       "source": "server/services/stockNewsService.ts",
-      "target": "server/database/localStore.ts",
+      "target": "server/database/settingsDao.ts",
       "kind": "import",
       "line": 8
     },
     {
       "source": "server/services/stockNewsService.ts",
-      "target": "server/database/supabase.ts",
+      "target": "server/database/usersDao.ts",
       "kind": "import",
       "line": 9
     },
     {
       "source": "server/services/stockNewsService.ts",
-      "target": "server/utils/circuitBreaker.ts",
+      "target": "server/database/localStore.ts",
       "kind": "import",
       "line": 10
     },
     {
       "source": "server/services/stockNewsService.ts",
-      "target": "server/utils/newsPublicationTime.ts",
+      "target": "server/database/supabase.ts",
       "kind": "import",
       "line": 11
+    },
+    {
+      "source": "server/services/stockNewsService.ts",
+      "target": "server/utils/circuitBreaker.ts",
+      "kind": "import",
+      "line": 12
+    },
+    {
+      "source": "server/services/stockNewsService.ts",
+      "target": "server/utils/newsPublicationTime.ts",
+      "kind": "import",
+      "line": 13
     },
     {
       "source": "server/services/storageMonitor.ts",
@@ -7589,6 +7816,42 @@
       "target": "server/utils/stockResolver.ts",
       "kind": "import",
       "line": 9
+    },
+    {
+      "source": "server/services/subscriptionAccess.ts",
+      "target": "server/services/giftAccessPolicy.ts",
+      "kind": "import",
+      "line": 1
+    },
+    {
+      "source": "server/services/subscriptionAccess.ts",
+      "target": "server/database/usersDao.ts",
+      "kind": "import",
+      "line": 2
+    },
+    {
+      "source": "server/services/subscriptionAccess.ts",
+      "target": "server/database/paymentEntitlementsDao.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "server/services/subscriptionAccess.ts",
+      "target": "server/database/giftAccessDao.ts",
+      "kind": "import",
+      "line": 4
+    },
+    {
+      "source": "server/services/subscriptionAccess.ts",
+      "target": "src/types.ts",
+      "kind": "import",
+      "line": 5
+    },
+    {
+      "source": "server/services/subscriptionAccess.ts",
+      "target": "src/shared/giftAccess.ts",
+      "kind": "import",
+      "line": 6
     },
     {
       "source": "server/services/telegram.ts",
@@ -8537,6 +8800,24 @@
       "target": "src/utils/resultTiming.ts",
       "kind": "import",
       "line": 5
+    },
+    {
+      "source": "server/tests/giftAccessApi.test.ts",
+      "target": "server/api/giftAccess.ts",
+      "kind": "import",
+      "line": 5
+    },
+    {
+      "source": "server/tests/giftAccessApi.test.ts",
+      "target": "server/services/giftAccessPolicy.ts",
+      "kind": "import",
+      "line": 6
+    },
+    {
+      "source": "server/tests/giftAccessApi.test.ts",
+      "target": "server/services/subscriptionAccess.ts",
+      "kind": "import",
+      "line": 7
     },
     {
       "source": "server/tests/homeNews.test.ts",
@@ -9812,9 +10093,15 @@
     },
     {
       "source": "src/App.tsx",
-      "target": "src/components/NotFoundPage.tsx",
+      "target": "src/components/GiftActivationPage.tsx",
       "kind": "dynamic",
       "line": 164
+    },
+    {
+      "source": "src/App.tsx",
+      "target": "src/components/NotFoundPage.tsx",
+      "kind": "dynamic",
+      "line": 165
     },
     {
       "source": "src/api.ts",
@@ -9863,6 +10150,30 @@
       "target": "src/components/ui/ActionButton.tsx",
       "kind": "import",
       "line": 12
+    },
+    {
+      "source": "src/components/AdminGiftAccess.tsx",
+      "target": "src/context/AuthContext.tsx",
+      "kind": "import",
+      "line": 2
+    },
+    {
+      "source": "src/components/AdminGiftAccess.tsx",
+      "target": "src/api.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "src/components/AdminGiftAccess.tsx",
+      "target": "src/shared/giftAccess.ts",
+      "kind": "import",
+      "line": 4
+    },
+    {
+      "source": "src/components/AdminGiftAccess.tsx",
+      "target": "src/components/gift-access.css",
+      "kind": "import",
+      "line": 5
     },
     {
       "source": "src/components/AdminPinModal.tsx",
@@ -10439,6 +10750,30 @@
       "target": "src/components/ui/Switch.tsx",
       "kind": "import",
       "line": 4
+    },
+    {
+      "source": "src/components/GiftActivationPage.tsx",
+      "target": "src/context/AuthContext.tsx",
+      "kind": "import",
+      "line": 2
+    },
+    {
+      "source": "src/components/GiftActivationPage.tsx",
+      "target": "src/api.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "src/components/GiftActivationPage.tsx",
+      "target": "src/shared/giftAccess.ts",
+      "kind": "import",
+      "line": 4
+    },
+    {
+      "source": "src/components/GiftActivationPage.tsx",
+      "target": "src/components/gift-access.css",
+      "kind": "import",
+      "line": 5
     },
     {
       "source": "src/components/GuidesPage.tsx",
@@ -11936,93 +12271,99 @@
     },
     {
       "source": "src/components/SettingsTab.tsx",
-      "target": "src/components/SubscriptionCard.tsx",
-      "kind": "import",
+      "target": "src/components/AdminGiftAccess.tsx",
+      "kind": "dynamic",
       "line": 27
     },
     {
       "source": "src/components/SettingsTab.tsx",
-      "target": "src/components/AiUsageCard.tsx",
+      "target": "src/components/SubscriptionCard.tsx",
       "kind": "import",
       "line": 28
     },
     {
       "source": "src/components/SettingsTab.tsx",
-      "target": "src/context/AuthContext.tsx",
+      "target": "src/components/AiUsageCard.tsx",
       "kind": "import",
       "line": 29
     },
     {
       "source": "src/components/SettingsTab.tsx",
-      "target": "src/api.ts",
+      "target": "src/context/AuthContext.tsx",
       "kind": "import",
       "line": 30
     },
     {
       "source": "src/components/SettingsTab.tsx",
-      "target": "src/utils/developerMode.ts",
+      "target": "src/api.ts",
       "kind": "import",
       "line": 31
     },
     {
       "source": "src/components/SettingsTab.tsx",
-      "target": "src/components/notes/SavedNotesScreen.tsx",
+      "target": "src/utils/developerMode.ts",
       "kind": "import",
       "line": 32
     },
     {
       "source": "src/components/SettingsTab.tsx",
-      "target": "src/version.ts",
+      "target": "src/components/notes/SavedNotesScreen.tsx",
       "kind": "import",
       "line": 33
     },
     {
       "source": "src/components/SettingsTab.tsx",
-      "target": "src/config/companyDirectory.ts",
+      "target": "src/version.ts",
       "kind": "import",
       "line": 34
     },
     {
       "source": "src/components/SettingsTab.tsx",
-      "target": "src/hooks/useBodyScrollLock.ts",
+      "target": "src/config/companyDirectory.ts",
       "kind": "import",
       "line": 35
     },
     {
       "source": "src/components/SettingsTab.tsx",
-      "target": "src/hooks/useFeedDensity.ts",
+      "target": "src/hooks/useBodyScrollLock.ts",
       "kind": "import",
       "line": 36
     },
     {
       "source": "src/components/SettingsTab.tsx",
-      "target": "src/types.ts",
+      "target": "src/hooks/useFeedDensity.ts",
       "kind": "import",
       "line": 37
     },
     {
       "source": "src/components/SettingsTab.tsx",
-      "target": "src/utils/motionTokens.ts",
+      "target": "src/types.ts",
       "kind": "import",
       "line": 38
     },
     {
       "source": "src/components/SettingsTab.tsx",
-      "target": "src/components/ui/SupportFloat.tsx",
+      "target": "src/utils/motionTokens.ts",
       "kind": "import",
       "line": 39
     },
     {
       "source": "src/components/SettingsTab.tsx",
-      "target": "src/components/ui/ActionButton.tsx",
+      "target": "src/components/ui/SupportFloat.tsx",
       "kind": "import",
       "line": 40
     },
     {
       "source": "src/components/SettingsTab.tsx",
+      "target": "src/components/ui/ActionButton.tsx",
+      "kind": "import",
+      "line": 41
+    },
+    {
+      "source": "src/components/SettingsTab.tsx",
       "target": "src/api/notesApi.ts",
       "kind": "dynamic",
-      "line": 148
+      "line": 150
     },
     {
       "source": "src/components/StorageManager.tsx",
@@ -13704,7 +14045,10 @@
         "src/components/TermsModal.tsx",
         "src/components/LandingPage.tsx",
         "supabase/migrations/20261024193046_deep_audit_security.sql",
-        "scripts/verify-deep-audit-staging.sql"
+        "scripts/verify-deep-audit-staging.sql",
+        "server/services/subscriptionAccess.ts",
+        "server/database/giftAccessDao.ts",
+        "supabase/migrations/20261026192403_gift_pro_access.sql"
       ],
       "tests": [
         "server/tests/paymentEntitlement.test.ts",
@@ -14787,7 +15131,10 @@
         "src/shared/aiDataDisclosure.ts",
         "scripts/provision-ai-reviewer.ts",
         "scripts/verify-mcp-directory-staging.sql",
-        "supabase/migrations/20261024193046_deep_audit_security.sql"
+        "supabase/migrations/20261024193046_deep_audit_security.sql",
+        "server/services/subscriptionAccess.ts",
+        "server/database/giftAccessDao.ts",
+        "supabase/migrations/20261026192403_gift_pro_access.sql"
       ],
       "tests": [
         "server/tests/aiConnections.test.ts",
@@ -14849,6 +15196,51 @@
         "server/tests/notificationStartup.test.ts"
       ],
       "reason": "One reviewed company registry and completed-US-session snapshot supplies Home, company intelligence, Market pulse and the opt-in watchlist inbox worker. Public validated snapshots persist under service-only immutable settings session keys and browser localStorage. Partial refresh retains missing symbols; restored, failed or older-source reads cannot renew freshness. Repeated failures back off from one to fifteen minutes. Current US bars, pre/post market, bad identities/currency, stale/partial data and split/thin-volume alerts are guarded. Home uses shared Helios/density/actions and exact company navigation; Stories use one existing chapter. Morning alerts honor fresh owner/list/mute/priority checks and a durable private per-session insert-once key. The existing cron/watchdog supplies the execution lifetime without another timer, migration or public broadcast. Browser/device, live delivery, hosting and source redistribution evidence remain separate."
+    },
+    {
+      "id": "gift-access",
+      "label": "Complimentary Pro invitations and account access",
+      "files": [
+        "server/api/giftAccess.ts",
+        "server/database/giftAccessDao.ts",
+        "server/services/giftAccessPolicy.ts",
+        "server/services/subscriptionAccess.ts",
+        "src/shared/giftAccess.ts",
+        "supabase/migrations/20261026192403_gift_pro_access.sql",
+        "src/components/AdminGiftAccess.tsx",
+        "src/components/GiftActivationPage.tsx",
+        "src/components/gift-access.css",
+        "src/components/SettingsTab.tsx",
+        "src/components/SubscriptionCard.tsx",
+        "src/context/AuthContext.tsx",
+        "src/components/Layout.tsx",
+        "src/components/UserProfileModal.tsx",
+        "src/App.tsx",
+        "src/main.tsx",
+        "src/lib/sentry.ts",
+        "src/shared/aiTelemetry.ts",
+        "index.html",
+        "public/sw.js",
+        "server.ts",
+        "server/security/auth.ts",
+        "server/api/payments.ts",
+        "server/api/routes.ts",
+        "server/ai/tools.ts",
+        "server/services/aiQuotaService.ts",
+        "server/services/monitor.ts",
+        "server/services/stockNewsService.ts",
+        "server/database/usersDao.ts",
+        "server/database/paymentEntitlementsDao.ts",
+        "server/services/resendMailer.ts",
+        "server/utils/spaRoutes.ts"
+      ],
+      "tests": [
+        "server/tests/giftAccessApi.test.ts",
+        "server/tests/giftAccessSql.test.ts",
+        "server/tests/pollerStall.test.ts",
+        "scripts/verify-gift-access.mjs"
+      ],
+      "reason": "Owner PIN elevation creates an email-bound invitation with a server-owned custom duration and separate claim deadline. Hash-only secrets, immutable input/idempotency checks and one DB transaction bind each grant once to a freshly verified Firebase identity. Resend rotates the pending verifier without extending the deadline; revoke never touches paid/trial/referral rows. Read-only unified access projections reach website gates, billing, profile refresh, AI quota and connector writes. Personal Telegram checks consult live gift access at dispatch; ingestion remains independent of gift-store availability. Fragment capture precedes optional monitoring; activation is no-store/noindex and excluded from SW/telemetry. Browser fixture evidence is distinct from real sender/Firebase/database release checks; feature stays off until additive migration verification."
     }
   ],
   "routes": [
@@ -14957,12 +15349,22 @@
       "line": 135,
       "receiver": "app",
       "method": "USE",
+      "path": "/activate-gift",
+      "middleware": [
+        "<handler>"
+      ]
+    },
+    {
+      "file": "server.ts",
+      "line": 138,
+      "receiver": "app",
+      "method": "USE",
       "path": "authMiddleware",
       "middleware": []
     },
     {
       "file": "server.ts",
-      "line": 139,
+      "line": 142,
       "receiver": "app",
       "method": "GET",
       "path": "/sw.js",
@@ -14972,7 +15374,7 @@
     },
     {
       "file": "server.ts",
-      "line": 160,
+      "line": 163,
       "receiver": "app",
       "method": "GET",
       "path": "/OneSignalSDKWorker.js",
@@ -14982,7 +15384,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5366,
+      "line": 5369,
       "receiver": "app",
       "method": "GET",
       "path": "['/health', '/healthz']",
@@ -14992,7 +15394,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5372,
+      "line": 5375,
       "receiver": "app",
       "method": "GET",
       "path": "/robots.txt",
@@ -15002,7 +15404,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5378,
+      "line": 5381,
       "receiver": "app",
       "method": "GET",
       "path": "['/sitemap.xml', '/sitemap', '/sitemap_index.xml', '/sitemap.txt']",
@@ -15012,7 +15414,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5387,
+      "line": 5390,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-core.xml",
@@ -15022,7 +15424,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5425,
+      "line": 5428,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-filings-hot.xml",
@@ -15032,7 +15434,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5462,
+      "line": 5465,
       "receiver": "app",
       "method": "GET",
       "path": "['/rss.xml', '/rss', '/feed.xml', '/feed']",
@@ -15042,7 +15444,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5528,
+      "line": 5531,
       "receiver": "app",
       "method": "GET",
       "path": "[/^\\/https?:\\/?\\/?(?:www\\.)?bsenexus\\.in\\/sitemap(?:\\.xml)?$/i]",
@@ -15052,7 +15454,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5533,
+      "line": 5536,
       "receiver": "app",
       "method": "GET",
       "path": "[`/${INDEXNOW_KEY}.txt`, '/indexnow-key.txt']",
@@ -15062,7 +15464,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5541,
+      "line": 5544,
       "receiver": "app",
       "method": "GET",
       "path": "/opensearch.xml",
@@ -15072,7 +15474,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5548,
+      "line": 5551,
       "receiver": "app",
       "method": "GET",
       "path": "['/.well-known/ai-plugin.json', '/ai-plugin.json']",
@@ -15082,7 +15484,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5568,
+      "line": 5571,
       "receiver": "app",
       "method": "GET",
       "path": "[sourcePath, sourcePath + '/']",
@@ -15092,7 +15494,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5575,
+      "line": 5578,
       "receiver": "app",
       "method": "GET",
       "path": "/filing/:symbol/:newsId",
@@ -15102,7 +15504,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5634,
+      "line": 5637,
       "receiver": "app",
       "method": "GET",
       "path": "/filing/:symbol",
@@ -15112,7 +15514,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5645,
+      "line": 5648,
       "receiver": "app",
       "method": "GET",
       "path": "['/filing', '/filing/']",
@@ -15122,7 +15524,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5651,
+      "line": 5654,
       "receiver": "app",
       "method": "GET",
       "path": "/announcement/:newsId",
@@ -15132,7 +15534,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5980,
+      "line": 5983,
       "receiver": "app",
       "method": "GET",
       "path": "/results/:symbol/:quarterKey",
@@ -15142,7 +15544,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6035,
+      "line": 6038,
       "receiver": "app",
       "method": "GET",
       "path": "/ai-docs",
@@ -15152,7 +15554,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6038,
+      "line": 6041,
       "receiver": "app",
       "method": "GET",
       "path": "['/company/:symbol', '/stock/:symbol']",
@@ -15162,7 +15564,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6113,
+      "line": 6116,
       "receiver": "app",
       "method": "GET",
       "path": "/guides/:slug",
@@ -15172,7 +15574,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6159,
+      "line": 6162,
       "receiver": "app",
       "method": "GET",
       "path": "['/faq', '/faqs']",
@@ -15182,7 +15584,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6166,
+      "line": 6169,
       "receiver": "app",
       "method": "GET",
       "path": "['/pricing', '/pricing/']",
@@ -15192,7 +15594,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6173,
+      "line": 6176,
       "receiver": "app",
       "method": "GET",
       "path": "['/plans', '/plans/']",
@@ -15202,7 +15604,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6178,
+      "line": 6181,
       "receiver": "app",
       "method": "GET",
       "path": "['/guides', '/guides/']",
@@ -15212,7 +15614,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6185,
+      "line": 6188,
       "receiver": "app",
       "method": "GET",
       "path": "['/market-guides', '/market-guides/']",
@@ -15222,7 +15624,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6190,
+      "line": 6193,
       "receiver": "app",
       "method": "GET",
       "path": "['/companies', '/companies/']",
@@ -15232,7 +15634,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6197,
+      "line": 6200,
       "receiver": "app",
       "method": "GET",
       "path": "['/company-directory', '/company-directory/']",
@@ -15242,7 +15644,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6202,
+      "line": 6205,
       "receiver": "app",
       "method": "GET",
       "path": "['/about', '/about/']",
@@ -15252,7 +15654,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6209,
+      "line": 6212,
       "receiver": "app",
       "method": "GET",
       "path": "['/contact', '/contact/']",
@@ -15262,7 +15664,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6216,
+      "line": 6219,
       "receiver": "app",
       "method": "GET",
       "path": "['/disclaimer', '/disclaimer/']",
@@ -15272,7 +15674,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6223,
+      "line": 6226,
       "receiver": "app",
       "method": "GET",
       "path": "['/privacy-policy', '/privacy-policy/']",
@@ -15282,7 +15684,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6230,
+      "line": 6233,
       "receiver": "app",
       "method": "GET",
       "path": "['/privacy', '/privacy/']",
@@ -15292,7 +15694,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6236,
+      "line": 6239,
       "receiver": "app",
       "method": "GET",
       "path": "['/terms', '/terms/']",
@@ -15302,7 +15704,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6243,
+      "line": 6246,
       "receiver": "app",
       "method": "GET",
       "path": "['/terms-of-service', '/terms-of-service/']",
@@ -15312,7 +15714,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6248,
+      "line": 6251,
       "receiver": "app",
       "method": "GET",
       "path": "/embed/widget",
@@ -15322,7 +15724,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6302,
+      "line": 6305,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-companies.xml",
@@ -15332,7 +15734,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6322,
+      "line": 6325,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-guides.xml",
@@ -15342,7 +15744,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6340,
+      "line": 6343,
       "receiver": "app",
       "method": "GET",
       "path": "/llms.txt",
@@ -15352,7 +15754,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6345,
+      "line": 6348,
       "receiver": "app",
       "method": "GET",
       "path": "/llms-full.txt",
@@ -15362,7 +15764,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6355,
+      "line": 6358,
       "receiver": "app",
       "method": "GET",
       "path": "/^\\/google([a-zA-Z0-9_-]+)\\.html$/",
@@ -15372,7 +15774,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6365,
+      "line": 6368,
       "receiver": "app",
       "method": "GET",
       "path": "/",
@@ -15382,7 +15784,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6368,
+      "line": 6371,
       "receiver": "app",
       "method": "USE",
       "path": "express.static(path.join(process.cwd(), 'public'), { maxAge: '1d', immutable: false, setHeaders: (res, filePath) => { if (filePath.includes(`${path.sep}fonts${path.sep}`)) res.setHeader('Cache-Control', 'public, max-age=2592000'); if (fileP",
@@ -15390,7 +15792,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6378,
+      "line": 6381,
       "receiver": "app",
       "method": "USE",
       "path": "['/api', '/auth']",
@@ -15400,7 +15802,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6384,
+      "line": 6387,
       "receiver": "app",
       "method": "USE",
       "path": "/auth",
@@ -15410,7 +15812,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6387,
+      "line": 6390,
       "receiver": "app",
       "method": "POST",
       "path": "/api/security/verify-recaptcha",
@@ -15421,7 +15823,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6428,
+      "line": 6431,
       "receiver": "app",
       "method": "USE",
       "path": "/api",
@@ -15432,7 +15834,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6432,
+      "line": 6435,
       "receiver": "app",
       "method": "USE",
       "path": "['/api/*', '/auth/*']",
@@ -15442,7 +15844,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6437,
+      "line": 6440,
       "receiver": "app",
       "method": "USE",
       "path": "(err: any, req: express.Request, res: express.Response, next: express.NextFunction) => { if (req.path.startsWith('/api') || req.path.startsWith('/auth')) { console.error(\"API Error handler caught:\", err?.message || err); const isProd = proc",
@@ -15450,7 +15852,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6846,
+      "line": 6849,
       "receiver": "app",
       "method": "GET",
       "path": "SPA_PATHS",
@@ -15460,7 +15862,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6880,
+      "line": 6883,
       "receiver": "app",
       "method": "USE",
       "path": "(req, res, next) => { if (req.method !== 'GET' && req.method !== 'HEAD') return next(); const p = normalizeSpaPath(req.path); if ( p === '/' || p === '/announcements' || p === '/results-calendar' || p === '/watchlist' || p === '/watchlists'",
@@ -15468,7 +15870,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6918,
+      "line": 6921,
       "receiver": "app",
       "method": "USE",
       "path": "vite.middlewares",
@@ -15476,7 +15878,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6930,
+      "line": 6933,
       "receiver": "app",
       "method": "USE",
       "path": "express.static(distPath, { maxAge: '1y', immutable: true, index: false, setHeaders: (res, filePath) => { if (filePath.endsWith('.html')) { res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600'); } } }",
@@ -15484,7 +15886,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6950,
+      "line": 6953,
       "receiver": "app",
       "method": "GET",
       "path": "['/announcements', '/announcements/']",
@@ -15494,7 +15896,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6997,
+      "line": 7000,
       "receiver": "app",
       "method": "GET",
       "path": "*",
@@ -15653,6 +16055,75 @@
       ]
     },
     {
+      "file": "server/api/giftAccess.ts",
+      "line": 31,
+      "receiver": "router",
+      "method": "USE",
+      "path": "(_req, res, next) => { res.set('Cache-Control', 'private, no-store'); res.set('Referrer-Policy', 'no-referrer'); if (!dep.enabled()) return res.status(503).json({ success: false, error: 'Gift access is not enabled yet.' }); next(); }",
+      "middleware": []
+    },
+    {
+      "file": "server/api/giftAccess.ts",
+      "line": 36,
+      "receiver": "router",
+      "method": "USE",
+      "path": "requireAuth",
+      "middleware": [
+        "rateLimit({ windowMs: 60000, limit: 30, standardHeaders: true, legacyHeaders: false })"
+      ]
+    },
+    {
+      "file": "server/api/giftAccess.ts",
+      "line": 37,
+      "receiver": "router",
+      "method": "USE",
+      "path": "(req, res, next) => { if (req.method === 'GET') return next(); const origin = req.get('Origin') || ''; const allowed = origin === 'https://bsenexus.in' || (process.env.NODE_ENV !== 'production' && /^http:\\/\\/(localhost|127\\.0\\.0\\.1)(:\\d+)?$",
+      "middleware": []
+    },
+    {
+      "file": "server/api/giftAccess.ts",
+      "line": 56,
+      "receiver": "router",
+      "method": "GET",
+      "path": "/admin",
+      "middleware": [
+        "requireAdmin",
+        "<handler>"
+      ]
+    },
+    {
+      "file": "server/api/giftAccess.ts",
+      "line": 63,
+      "receiver": "router",
+      "method": "POST",
+      "path": "/admin",
+      "middleware": [
+        "requireAdmin",
+        "<handler>"
+      ]
+    },
+    {
+      "file": "server/api/giftAccess.ts",
+      "line": 72,
+      "receiver": "router",
+      "method": "POST",
+      "path": "'/admin/:id/' + action",
+      "middleware": [
+        "requireAdmin",
+        "<handler>"
+      ]
+    },
+    {
+      "file": "server/api/giftAccess.ts",
+      "line": 82,
+      "receiver": "router",
+      "method": "POST",
+      "path": "'/' + action",
+      "middleware": [
+        "<handler>"
+      ]
+    },
+    {
       "file": "server/api/impactRadar.ts",
       "line": 9,
       "receiver": "impactRadarRouter",
@@ -15790,7 +16261,7 @@
     },
     {
       "file": "server/api/payments.ts",
-      "line": 364,
+      "line": 365,
       "receiver": "paymentsRouter",
       "method": "POST",
       "path": "/create-order",
@@ -15801,7 +16272,7 @@
     },
     {
       "file": "server/api/payments.ts",
-      "line": 521,
+      "line": 522,
       "receiver": "paymentsRouter",
       "method": "GET",
       "path": "/verify",
@@ -15812,7 +16283,7 @@
     },
     {
       "file": "server/api/payments.ts",
-      "line": 592,
+      "line": 593,
       "receiver": "paymentsRouter",
       "method": "GET",
       "path": "/status",
@@ -15823,7 +16294,7 @@
     },
     {
       "file": "server/api/payments.ts",
-      "line": 679,
+      "line": 683,
       "receiver": "paymentsRouter",
       "method": "POST",
       "path": "/recover",
@@ -15835,7 +16306,7 @@
     },
     {
       "file": "server/api/payments.ts",
-      "line": 799,
+      "line": 803,
       "receiver": "paymentsRouter",
       "method": "POST",
       "path": "/claim",
@@ -15847,7 +16318,7 @@
     },
     {
       "file": "server/api/payments.ts",
-      "line": 875,
+      "line": 879,
       "receiver": "paymentsRouter",
       "method": "GET",
       "path": "/history",
@@ -15858,7 +16329,7 @@
     },
     {
       "file": "server/api/payments.ts",
-      "line": 926,
+      "line": 930,
       "receiver": "paymentsRouter",
       "method": "POST",
       "path": "/send-receipt",
@@ -15870,7 +16341,7 @@
     },
     {
       "file": "server/api/payments.ts",
-      "line": 1003,
+      "line": 1007,
       "receiver": "paymentsRouter",
       "method": "POST",
       "path": "/webhook",
@@ -16018,7 +16489,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 115,
+      "line": 117,
       "receiver": "apiRouter",
       "method": "USE",
       "path": "telegramLinksRouter",
@@ -16026,7 +16497,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 118,
+      "line": 120,
       "receiver": "apiRouter",
       "method": "USE",
       "path": "/ai/connections",
@@ -16036,7 +16507,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 119,
+      "line": 121,
       "receiver": "apiRouter",
       "method": "USE",
       "path": "/ai",
@@ -16046,7 +16517,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 122,
+      "line": 124,
       "receiver": "apiRouter",
       "method": "USE",
       "path": "/seo",
@@ -16058,7 +16529,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 125,
+      "line": 127,
       "receiver": "apiRouter",
       "method": "USE",
       "path": "/payments",
@@ -16071,6 +16542,16 @@
       "line": 128,
       "receiver": "apiRouter",
       "method": "USE",
+      "path": "/gifts",
+      "middleware": [
+        "giftAccessRouter"
+      ]
+    },
+    {
+      "file": "server/api/routes.ts",
+      "line": 131,
+      "receiver": "apiRouter",
+      "method": "USE",
       "path": "/referrals",
       "middleware": [
         "referralsRouter"
@@ -16078,7 +16559,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 131,
+      "line": 134,
       "receiver": "apiRouter",
       "method": "USE",
       "path": "/faq",
@@ -16088,7 +16569,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 134,
+      "line": 137,
       "receiver": "apiRouter",
       "method": "USE",
       "path": "/notes",
@@ -16098,7 +16579,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 135,
+      "line": 138,
       "receiver": "apiRouter",
       "method": "USE",
       "path": "/impact-radar",
@@ -16108,7 +16589,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 138,
+      "line": 141,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/market-guides",
@@ -16118,7 +16599,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 147,
+      "line": 150,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/market-guides/:slug",
@@ -16128,7 +16609,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 160,
+      "line": 163,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/config/public",
@@ -16138,7 +16619,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 167,
+      "line": 170,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/health",
@@ -16148,7 +16629,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 191,
+      "line": 194,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/cron/poll",
@@ -16158,7 +16639,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 196,
+      "line": 199,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/ping",
@@ -16168,7 +16649,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 201,
+      "line": 204,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/cache/stats",
@@ -16179,7 +16660,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 211,
+      "line": 214,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/cache/clear",
@@ -16190,7 +16671,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 232,
+      "line": 235,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/circuit-breakers",
@@ -16201,7 +16682,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 240,
+      "line": 243,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/circuit-breakers/:name/reset",
@@ -16212,7 +16693,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 255,
+      "line": 258,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/circuit-breakers/reset-all",
@@ -16223,7 +16704,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 290,
+      "line": 293,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/settings",
@@ -16233,7 +16714,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 331,
+      "line": 334,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/settings",
@@ -16244,7 +16725,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 354,
+      "line": 357,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/logs",
@@ -16255,7 +16736,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 365,
+      "line": 368,
       "receiver": "apiRouter",
       "method": "DELETE",
       "path": "/logs",
@@ -16266,7 +16747,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 375,
+      "line": 378,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/admin/ai-usage",
@@ -16277,7 +16758,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 436,
+      "line": 439,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/admin/ai-verify",
@@ -16288,7 +16769,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 447,
+      "line": 450,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/client-log",
@@ -16299,7 +16780,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 464,
+      "line": 467,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/feedback",
@@ -16310,7 +16791,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 495,
+      "line": 498,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/feedback",
@@ -16321,7 +16802,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 504,
+      "line": 507,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/test-gemini",
@@ -16333,7 +16814,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 534,
+      "line": 537,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/announcements",
@@ -16344,7 +16825,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 582,
+      "line": 585,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/announcements/:id",
@@ -16354,7 +16835,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 596,
+      "line": 599,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/announcements/refresh",
@@ -16366,7 +16847,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 606,
+      "line": 609,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/billing/quota",
@@ -16376,7 +16857,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 615,
+      "line": 618,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/billing/reset-quota",
@@ -16387,7 +16868,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 625,
+      "line": 628,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/announcements/:id/generate-summary",
@@ -16399,7 +16880,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 755,
+      "line": 758,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/watchlists",
@@ -16410,7 +16891,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 761,
+      "line": 764,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/watchlists",
@@ -16421,7 +16902,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 767,
+      "line": 770,
       "receiver": "apiRouter",
       "method": "DELETE",
       "path": "/watchlists/:id",
@@ -16432,7 +16913,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 779,
+      "line": 782,
       "receiver": "apiRouter",
       "method": "DELETE",
       "path": "/watchlists/all/symbols",
@@ -16443,7 +16924,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 786,
+      "line": 789,
       "receiver": "apiRouter",
       "method": "DELETE",
       "path": "/watchlists/:id/symbols",
@@ -16454,7 +16935,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 793,
+      "line": 796,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/watchlists/reset-default",
@@ -16465,7 +16946,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 800,
+      "line": 803,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "[\"/watchlists/sync\", \"/watchlists/sync-historical\"]",
@@ -16476,7 +16957,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 811,
+      "line": 814,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/watchlists/sync-stock",
@@ -16487,7 +16968,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 826,
+      "line": 829,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/results-calendar/sync-stock",
@@ -16498,7 +16979,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 841,
+      "line": 844,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/stock-master",
@@ -16509,7 +16990,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 849,
+      "line": 852,
       "receiver": "apiRouter",
       "method": "PATCH",
       "path": "/watchlists/:id/toggle",
@@ -16520,7 +17001,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 857,
+      "line": 860,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/watchlists/:id/symbols",
@@ -16531,7 +17012,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 876,
+      "line": 879,
       "receiver": "apiRouter",
       "method": "PATCH",
       "path": "/watchlists/:id/symbols/:symbol/priority",
@@ -16542,7 +17023,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 884,
+      "line": 887,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/watchlists/:id/symbols/bulk",
@@ -16553,7 +17034,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 922,
+      "line": 925,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/search-company",
@@ -16563,7 +17044,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 936,
+      "line": 939,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/stock/resolve",
@@ -16573,7 +17054,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 983,
+      "line": 986,
       "receiver": "apiRouter",
       "method": "DELETE",
       "path": "/watchlists/:id/symbols/:symbol",
@@ -16584,7 +17065,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 990,
+      "line": 993,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/watchlists/:id/symbols/remove-batch",
@@ -16595,7 +17076,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1004,
+      "line": 1007,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/watchlists/:id/symbols/priority-batch",
@@ -16606,7 +17087,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1034,
+      "line": 1037,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/toggle",
@@ -16617,7 +17098,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1035,
+      "line": 1038,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/toggle-engine",
@@ -16628,7 +17109,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1037,
+      "line": 1040,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/test-telegram",
@@ -16640,7 +17121,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1063,
+      "line": 1066,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/admin/push/broadcast",
@@ -16651,7 +17132,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1090,
+      "line": 1093,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/push/status",
@@ -16661,7 +17142,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1098,
+      "line": 1101,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/users/test-telegram",
@@ -16673,7 +17154,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1150,
+      "line": 1153,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/users/check-username",
@@ -16683,7 +17164,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1176,
+      "line": 1179,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/users/profile",
@@ -16694,7 +17175,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1237,
+      "line": 1240,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/users/profile",
@@ -16705,7 +17186,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1373,
+      "line": 1376,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/users/telegram/settings",
@@ -16716,7 +17197,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1476,
+      "line": 1479,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/test-bse",
@@ -16727,7 +17208,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1496,
+      "line": 1499,
       "receiver": "apiRouter",
       "method": "PATCH",
       "path": "/watchlists/:id/name",
@@ -16738,7 +17219,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1503,
+      "line": 1506,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/send-to-telegram-manual",
@@ -16750,7 +17231,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1559,
+      "line": 1562,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/send-holiday-telegram",
@@ -16762,7 +17243,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1599,
+      "line": 1602,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/results-calendar",
@@ -16772,7 +17253,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1614,
+      "line": 1617,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/results-calendar/refresh",
@@ -16784,7 +17265,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1646,
+      "line": 1649,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/results-calendar/telegram-broadcast",
@@ -16796,7 +17277,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1659,
+      "line": 1662,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/market/adr",
@@ -16806,7 +17287,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1661,
+      "line": 1664,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/story/feed",
@@ -16816,7 +17297,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1674,
+      "line": 1677,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "[\"/news\", \"/news/general\"]",
@@ -16826,7 +17307,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1686,
+      "line": 1689,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/news/watchlist",
@@ -16836,7 +17317,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1697,
+      "line": 1700,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/news/sources",
@@ -16847,7 +17328,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1715,
+      "line": 1718,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/news/stock/:symbol",
@@ -16857,7 +17338,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1726,
+      "line": 1729,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/news/summarize",
@@ -16869,7 +17350,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1826,
+      "line": 1829,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/news/telegram/send",
@@ -16881,7 +17362,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1845,
+      "line": 1848,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/news/telegram/digest",
@@ -16893,7 +17374,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1863,
+      "line": 1866,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/news/telegram/preferences",
@@ -16903,7 +17384,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1891,
+      "line": 1894,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/news/telegram/toggle-auto",
@@ -16914,7 +17395,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1948,
+      "line": 1951,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/news/telegram/trigger-worker",
@@ -16925,7 +17406,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1958,
+      "line": 1961,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/storage/status",
@@ -16936,7 +17417,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1967,
+      "line": 1970,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/storage/cleanup",
@@ -16947,7 +17428,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1977,
+      "line": 1980,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/storage/test-alert",
@@ -16958,7 +17439,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1991,
+      "line": 1994,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/storage/quota-mode",
@@ -16969,7 +17450,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2003,
+      "line": 2006,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/storage/quota-mode",
@@ -16980,7 +17461,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2028,
+      "line": 2031,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/storage/reset-quota",
@@ -16991,7 +17472,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2041,
+      "line": 2044,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/storage/reset-permission",
@@ -17002,7 +17483,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2054,
+      "line": 2057,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/admin/announcements/prune-percentage",
@@ -17013,7 +17494,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2085,
+      "line": 2088,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/stock-results-history",
@@ -17023,7 +17504,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2104,
+      "line": 2107,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/stocks/:scripCode/fetch-deep-history",
@@ -17035,7 +17516,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2117,
+      "line": 2120,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/stocks/:scripCode/fetch-deep-history",
@@ -17046,7 +17527,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2127,
+      "line": 2130,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/watchlist/fetch-deep-history",
@@ -17058,7 +17539,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2138,
+      "line": 2141,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/stocks/:scripCode/boost-runup-priority",
@@ -17069,7 +17550,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2150,
+      "line": 2153,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/stocks/:scripCode/runup-announcements",
@@ -17079,7 +17560,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2164,
+      "line": 2167,
       "receiver": "apiRouter",
       "method": "PATCH",
       "path": "/watchlists/symbols/:symbol/priority-sync",
@@ -17090,7 +17571,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2181,
+      "line": 2184,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/help/ask-ai",
@@ -17102,7 +17583,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2198,
+      "line": 2201,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/pdf-open",
@@ -17112,7 +17593,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2277,
+      "line": 2280,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/company-filing-counts",
@@ -17122,7 +17603,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2289,
+      "line": 2292,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/company-intel/:identifier",
@@ -17132,7 +17613,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2302,
+      "line": 2305,
       "receiver": "apiRouter",
       "method": "ALL",
       "path": "/company-intel/:identifier/ai-overview",
@@ -17144,7 +17625,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2366,
+      "line": 2369,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/stocks/:symbol/quote",
@@ -17154,7 +17635,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2382,
+      "line": 2385,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/material-events",
@@ -17164,7 +17645,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2420,
+      "line": 2423,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/notifications",
@@ -17174,7 +17655,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2450,
+      "line": 2453,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/notifications/unread-count",
@@ -17185,7 +17666,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2469,
+      "line": 2472,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/notifications/:id/read",
@@ -17196,7 +17677,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2479,
+      "line": 2482,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/notifications/read-batch",
@@ -17207,7 +17688,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2490,
+      "line": 2493,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/notifications/read-all",
@@ -17218,7 +17699,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2500,
+      "line": 2503,
       "receiver": "apiRouter",
       "method": "DELETE",
       "path": "/notifications",
@@ -17229,7 +17710,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2510,
+      "line": 2513,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/notifications/toggle-mute",
@@ -17240,7 +17721,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2569,
+      "line": 2572,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/alert-rules",
@@ -17251,7 +17732,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2580,
+      "line": 2583,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/alert-rules",
@@ -17262,7 +17743,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2590,
+      "line": 2593,
       "receiver": "apiRouter",
       "method": "PATCH",
       "path": "/alert-rules/:id/toggle",
@@ -17273,7 +17754,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2601,
+      "line": 2604,
       "receiver": "apiRouter",
       "method": "DELETE",
       "path": "/alert-rules/:id",
@@ -17284,7 +17765,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2611,
+      "line": 2614,
       "receiver": "apiRouter",
       "method": "PUT",
       "path": "/alert-rules/presets",
@@ -17295,7 +17776,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2620,
+      "line": 2623,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/market/indices",
@@ -17306,7 +17787,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2633,
+      "line": 2636,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/market/status",
@@ -17317,7 +17798,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2655,
+      "line": 2658,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/telemetry/event",
@@ -17328,7 +17809,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2690,
+      "line": 2693,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/admin/diagnostics",
@@ -17339,7 +17820,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2716,
+      "line": 2719,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/admin/diagnostics/clear",
@@ -17350,7 +17831,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2726,
+      "line": 2729,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/admin/diagnostics/test-alert",
@@ -17361,7 +17842,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2763,
+      "line": 2766,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/admin/diagnostics/approved-bugs",
@@ -17372,7 +17853,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2773,
+      "line": 2776,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/admin/diagnostics/approved-bugs",
@@ -17383,7 +17864,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2787,
+      "line": 2790,
       "receiver": "apiRouter",
       "method": "DELETE",
       "path": "/admin/diagnostics/approved-bugs/:id",
@@ -17394,7 +17875,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2797,
+      "line": 2800,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/admin/diagnostics/toggle-mute-alerts",
@@ -17405,7 +17886,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2814,
+      "line": 2817,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/security/audit",
@@ -17416,7 +17897,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2825,
+      "line": 2828,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/security/pen-test",
@@ -17427,7 +17908,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2836,
+      "line": 2839,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/admin/bloom-stats",
@@ -17438,7 +17919,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2846,
+      "line": 2849,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/admin/bloom-test",
@@ -17633,7 +18114,7 @@
     },
     {
       "file": "server/security/auth.ts",
-      "line": 303,
+      "line": 304,
       "receiver": "authRouter",
       "method": "POST",
       "path": "/session",
@@ -17645,7 +18126,7 @@
     },
     {
       "file": "server/security/auth.ts",
-      "line": 502,
+      "line": 503,
       "receiver": "authRouter",
       "method": "POST",
       "path": "/login",
@@ -17657,7 +18138,7 @@
     },
     {
       "file": "server/security/auth.ts",
-      "line": 644,
+      "line": 645,
       "receiver": "authRouter",
       "method": "POST",
       "path": "/verify-pin",
@@ -17669,7 +18150,7 @@
     },
     {
       "file": "server/security/auth.ts",
-      "line": 776,
+      "line": 777,
       "receiver": "authRouter",
       "method": "POST",
       "path": "/logout",
@@ -17679,7 +18160,7 @@
     },
     {
       "file": "server/security/auth.ts",
-      "line": 781,
+      "line": 782,
       "receiver": "authRouter",
       "method": "GET",
       "path": "/status",
@@ -17981,6 +18462,32 @@
       ]
     },
     {
+      "file": "server/tests/giftAccessApi.test.ts",
+      "line": 13,
+      "receiver": "app",
+      "method": "USE",
+      "path": "express.json()",
+      "middleware": []
+    },
+    {
+      "file": "server/tests/giftAccessApi.test.ts",
+      "line": 13,
+      "receiver": "app",
+      "method": "USE",
+      "path": "(req,_res,next)=>{(req as any).user= options.noUser ? null : options.user || owner;next();}",
+      "middleware": []
+    },
+    {
+      "file": "server/tests/giftAccessApi.test.ts",
+      "line": 14,
+      "receiver": "app",
+      "method": "USE",
+      "path": "/api/gifts",
+      "middleware": [
+        "createGiftAccessRouter({enabled:()=>true,configured:()=>true, verify:async()=>({uid:'recipient',email:'recipient@example.com',emailVerified:true,displayName:'Recipient',isOwner:false,...options.identity}), profile:async()=>null, command:asy"
+      ]
+    },
+    {
       "file": "server/tests/impactRadarApi.test.ts",
       "line": 21,
       "receiver": "app",
@@ -18088,43 +18595,43 @@
   "network": [
     {
       "file": "public/sw.js",
-      "line": 111,
+      "line": 113,
       "function": "fetch",
       "target": "request"
     },
     {
       "file": "public/sw.js",
-      "line": 142,
+      "line": 144,
       "function": "fetch",
       "target": "request"
     },
     {
       "file": "public/sw.js",
-      "line": 180,
+      "line": 182,
       "function": "fetch",
       "target": "request"
     },
     {
       "file": "public/sw.js",
-      "line": 192,
+      "line": 194,
       "function": "fetch",
       "target": "request"
     },
     {
       "file": "public/sw.js",
-      "line": 220,
+      "line": 222,
       "function": "fetch",
       "target": "request"
     },
     {
       "file": "public/sw.js",
-      "line": 241,
+      "line": 243,
       "function": "fetch",
       "target": "'/api/announcements'"
     },
     {
       "file": "public/sw.js",
-      "line": 257,
+      "line": 259,
       "function": "fetch",
       "target": "'/api/announcements'"
     },
@@ -18142,19 +18649,19 @@
     },
     {
       "file": "server.ts",
-      "line": 6550,
+      "line": 6553,
       "function": "fetch",
       "target": "`http://127.0.0.1:${port}/api/health`"
     },
     {
       "file": "server/api/payments.ts",
-      "line": 207,
+      "line": 208,
       "function": "fetch",
       "target": "`${cfg.base}${path}`"
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2236,
+      "line": 2239,
       "function": "fetchBseDocument",
       "target": "testUrl"
     },
@@ -18256,13 +18763,13 @@
     },
     {
       "file": "server/services/resendMailer.ts",
-      "line": 67,
+      "line": 70,
       "function": "fetch",
       "target": "'https://api.resend.com/emails'"
     },
     {
       "file": "server/services/resendMailer.ts",
-      "line": 102,
+      "line": 107,
       "function": "fetch",
       "target": "'https://api.resend.com/emails'"
     },
@@ -18292,7 +18799,7 @@
     },
     {
       "file": "server/services/stockNewsService.ts",
-      "line": 344,
+      "line": 346,
       "function": "fetch",
       "target": "feed.url"
     },
@@ -18657,6 +19164,18 @@
       "target": "base+'/feed?symbol=A'"
     },
     {
+      "file": "server/tests/giftAccessApi.test.ts",
+      "line": 22,
+      "function": "fetch",
+      "target": "url"
+    },
+    {
+      "file": "server/tests/giftAccessApi.test.ts",
+      "line": 27,
+      "function": "fetch",
+      "target": "base+'/api/gifts/admin'"
+    },
+    {
       "file": "server/tests/indexNowKeyRoute.test.ts",
       "line": 14,
       "function": "fetch",
@@ -18706,37 +19225,37 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 448,
+      "line": 450,
       "function": "fetch",
       "target": "'/api/referrals/track-visit'"
     },
     {
       "file": "src/App.tsx",
-      "line": 844,
+      "line": 846,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/App.tsx",
-      "line": 861,
+      "line": 863,
       "function": "customFetch",
       "target": "'/auth/status'"
     },
     {
       "file": "src/App.tsx",
-      "line": 881,
+      "line": 883,
       "function": "customFetch",
       "target": "'/api/settings'"
     },
     {
       "file": "src/App.tsx",
-      "line": 891,
+      "line": 893,
       "function": "customFetch",
       "target": "'/api/logs?limit=400'"
     },
     {
       "file": "src/App.tsx",
-      "line": 922,
+      "line": 924,
       "function": "customFetch",
       "target": "'/api/toggle'"
     },
@@ -18829,6 +19348,18 @@
       "line": 292,
       "function": "customFetch",
       "target": "'/api/admin/diagnostics/test-alert'"
+    },
+    {
+      "file": "src/components/AdminGiftAccess.tsx",
+      "line": 23,
+      "function": "customFetch",
+      "target": "'/api/gifts/admin?offset=' + page"
+    },
+    {
+      "file": "src/components/AdminGiftAccess.tsx",
+      "line": 32,
+      "function": "customFetch",
+      "target": "path"
     },
     {
       "file": "src/components/AiPluginPage.tsx",
@@ -18937,6 +19468,12 @@
       "line": 239,
       "function": "customFetch",
       "target": "`/api/stocks/${encodeURIComponent(effectiveScrip)}/fetch-deep-history`"
+    },
+    {
+      "file": "src/components/GiftActivationPage.tsx",
+      "line": 41,
+      "function": "customFetch",
+      "target": "'/api/gifts/' + action"
     },
     {
       "file": "src/components/HelpModal.tsx",
@@ -19228,49 +19765,49 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 347,
+      "line": 349,
       "function": "customFetch",
       "target": "'/api/settings'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 392,
+      "line": 394,
       "function": "customFetch",
       "target": "'/api/settings'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 626,
+      "line": 628,
       "function": "customFetch",
       "target": "'/api/users/test-telegram'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 655,
+      "line": 657,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 794,
+      "line": 796,
       "function": "customFetch",
       "target": "'/api/toggle'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 831,
+      "line": 833,
       "function": "customFetch",
       "target": "'/api/settings'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 856,
+      "line": 858,
       "function": "customFetch",
       "target": "'/api/test-telegram'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 875,
+      "line": 877,
       "function": "customFetch",
       "target": "'/api/test-gemini'"
     },
@@ -19324,13 +19861,13 @@
     },
     {
       "file": "src/components/SubscriptionCard.tsx",
-      "line": 66,
+      "line": 67,
       "function": "customFetch",
       "target": "'/api/payments/status'"
     },
     {
       "file": "src/components/SubscriptionCard.tsx",
-      "line": 168,
+      "line": 169,
       "function": "customFetch",
       "target": "'/api/payments/status'"
     },
@@ -19678,7 +20215,7 @@
     },
     {
       "file": "src/lib/sentry.ts",
-      "line": 60,
+      "line": 61,
       "function": "fetch",
       "target": "'/api/config/public'"
     },
@@ -19950,49 +20487,49 @@
     },
     {
       "file": "server/ai/tools.ts",
-      "line": 161,
+      "line": 162,
       "function": "db.from",
       "key": "\"user_watchlists\""
     },
     {
       "file": "server/ai/tools.ts",
-      "line": 186,
+      "line": 187,
       "function": "db\n            .from",
       "key": "\"user_watchlists\""
     },
     {
       "file": "server/ai/tools.ts",
-      "line": 206,
+      "line": 207,
       "function": "db\n            .from",
       "key": "\"user_watchlists\""
     },
     {
       "file": "server/ai/tools.ts",
-      "line": 224,
+      "line": 225,
       "function": "db\n            .from",
       "key": "\"user_notes\""
     },
     {
       "file": "server/ai/tools.ts",
-      "line": 304,
+      "line": 305,
       "function": "db\n              .from",
       "key": "\"ai_connection_operations\""
     },
     {
       "file": "server/ai/tools.ts",
-      "line": 351,
+      "line": 352,
       "function": "db\n            .from",
       "key": "\"ai_connection_operations\""
     },
     {
       "file": "server/api/payments.ts",
-      "line": 1023,
+      "line": 1027,
       "function": "Buffer.from",
       "key": "signature"
     },
     {
       "file": "server/api/payments.ts",
-      "line": 1025,
+      "line": 1029,
       "function": "Buffer.from",
       "key": "expected"
     },
@@ -20193,6 +20730,18 @@
       "line": 105,
       "function": "adminDb.collection",
       "key": "'system_config'"
+    },
+    {
+      "file": "server/database/giftAccessDao.ts",
+      "line": 7,
+      "function": "getSupabase().rpc",
+      "key": "'gift_access_command'"
+    },
+    {
+      "file": "server/database/giftAccessDao.ts",
+      "line": 16,
+      "function": "getSupabase().from",
+      "key": "'gift_access_invites'"
     },
     {
       "file": "server/database/impactRadarDao.ts",
@@ -20760,25 +21309,25 @@
     },
     {
       "file": "server/services/stockNewsService.ts",
-      "line": 99,
+      "line": 101,
       "function": "getSupabase()\n        .from",
       "key": "'sent_news_alerts'"
     },
     {
       "file": "server/services/stockNewsService.ts",
-      "line": 145,
+      "line": 147,
       "function": "getSupabase().from",
       "key": "'sent_news_alerts'"
     },
     {
       "file": "server/services/stockNewsService.ts",
-      "line": 379,
+      "line": 381,
       "function": "Array.from",
       "key": "resultsMap.values()"
     },
     {
       "file": "server/services/stockNewsService.ts",
-      "line": 499,
+      "line": 501,
       "function": "Array.from",
       "key": "symbolSet"
     },
@@ -20946,13 +21495,13 @@
     },
     {
       "file": "server/tests/pollerStall.test.ts",
-      "line": 187,
+      "line": 189,
       "function": "Array.from",
       "key": "{ length: 700 }"
     },
     {
       "file": "server/tests/pollerStall.test.ts",
-      "line": 194,
+      "line": 196,
       "function": "Array.from",
       "key": "await exports.getLogs(2500)"
     },
@@ -21096,73 +21645,73 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 254,
+      "line": 256,
       "function": "sessionStorage.setItem",
-      "key": "'cf_pending_order_id'"
-    },
-    {
-      "file": "src/App.tsx",
-      "line": 295,
-      "function": "sessionStorage.getItem",
       "key": "'cf_pending_order_id'"
     },
     {
       "file": "src/App.tsx",
       "line": 297,
+      "function": "sessionStorage.getItem",
+      "key": "'cf_pending_order_id'"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 299,
       "function": "sessionStorage.removeItem",
       "key": "'cf_pending_order_id'"
     },
     {
       "file": "src/App.tsx",
-      "line": 419,
+      "line": 421,
       "function": "localStorage.getItem",
       "key": "'theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 447,
+      "line": 449,
       "function": "localStorage.setItem",
       "key": "'bse_referral_code'"
     },
     {
       "file": "src/App.tsx",
-      "line": 616,
+      "line": 618,
       "function": "sessionStorage.setItem",
       "key": "'bse_shared_query'"
     },
     {
       "file": "src/App.tsx",
-      "line": 758,
+      "line": 760,
       "function": "localStorage.setItem",
       "key": "'theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 773,
+      "line": 775,
       "function": "localStorage.getItem",
       "key": "'bse_design_theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 790,
+      "line": 792,
       "function": "localStorage.setItem",
       "key": "'bse_design_theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 791,
+      "line": 793,
       "function": "localStorage.setItem",
       "key": "`bse_design_theme_${user.uid}`"
     },
     {
       "file": "src/App.tsx",
-      "line": 823,
+      "line": 825,
       "function": "localStorage.getItem",
       "key": "user?.uid ? `bse_design_theme_${user.uid}` : 'bse_design_theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 832,
+      "line": 834,
       "function": "localStorage.setItem",
       "key": "user?.uid ? `bse_design_theme_${user.uid}` : 'bse_design_theme'"
     },
@@ -21366,25 +21915,25 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 225,
+      "line": 227,
       "function": "localStorage.getItem",
       "key": "'bse_sound_enabled'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 335,
+      "line": 337,
       "function": "localStorage.setItem",
       "key": "'bse_sound_enabled'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 382,
+      "line": 384,
       "function": "localStorage.setItem",
       "key": "'bse_sound_enabled'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 724,
+      "line": 726,
       "function": "localStorage.removeItem",
       "key": "k"
     },
@@ -22095,6 +22644,26 @@
       "name": "AI_REVIEWER_UID"
     },
     {
+      "file": "scripts/verify-gift-access.mjs",
+      "line": 49,
+      "name": "PLAYWRIGHT_CHROMIUM_EXECUTABLE"
+    },
+    {
+      "file": "scripts/verify-gift-access.mjs",
+      "line": 49,
+      "name": "PLAYWRIGHT_CHROMIUM_EXECUTABLE"
+    },
+    {
+      "file": "scripts/verify-gift-access.mjs",
+      "line": 49,
+      "name": "PLAYWRIGHT_CHROMIUM_ARGS"
+    },
+    {
+      "file": "scripts/verify-gift-access.mjs",
+      "line": 49,
+      "name": "PLAYWRIGHT_CHROMIUM_ARGS"
+    },
+    {
       "file": "scripts/verify-oauth-routing.mjs",
       "line": 14,
       "name": "PLAYWRIGHT_MODULE"
@@ -22136,42 +22705,42 @@
     },
     {
       "file": "server.ts",
-      "line": 142,
+      "line": 145,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6353,
+      "line": 6356,
       "name": "GOOGLE_SITE_VERIFICATION_HASH"
     },
     {
       "file": "server.ts",
-      "line": 6353,
+      "line": 6356,
       "name": "GOOGLE_SITE_VERIFICATION_HASH"
     },
     {
       "file": "server.ts",
-      "line": 6440,
+      "line": 6443,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6835,
+      "line": 6838,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6840,
+      "line": 6843,
       "name": "DISABLE_HMR"
     },
     {
       "file": "server.ts",
-      "line": 7112,
+      "line": 7115,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 7112,
+      "line": 7115,
       "name": "TEST_RUNNER"
     },
     {
@@ -22215,208 +22784,213 @@
       "name": "CRON_SECRET"
     },
     {
-      "file": "server/api/payments.ts",
-      "line": 140,
-      "name": "CASHFREE_APP_ID"
+      "file": "server/api/giftAccess.ts",
+      "line": 40,
+      "name": "NODE_ENV"
     },
     {
       "file": "server/api/payments.ts",
       "line": 141,
-      "name": "CASHFREE_CLIENT_ID"
+      "name": "CASHFREE_APP_ID"
     },
     {
       "file": "server/api/payments.ts",
       "line": 142,
-      "name": "CASHFREE_KEY_ID"
+      "name": "CASHFREE_CLIENT_ID"
     },
     {
       "file": "server/api/payments.ts",
       "line": 143,
-      "name": "CASHFREE_API_KEY"
+      "name": "CASHFREE_KEY_ID"
     },
     {
       "file": "server/api/payments.ts",
       "line": 144,
-      "name": "CASHFREE_KEY"
+      "name": "CASHFREE_API_KEY"
     },
     {
       "file": "server/api/payments.ts",
       "line": 145,
-      "name": "CASHFREE_APPID"
+      "name": "CASHFREE_KEY"
     },
     {
       "file": "server/api/payments.ts",
       "line": 146,
-      "name": "CASHFREE_ID"
+      "name": "CASHFREE_APPID"
     },
     {
       "file": "server/api/payments.ts",
       "line": 147,
-      "name": "CASHFREE_SANDBOX_APP_ID"
+      "name": "CASHFREE_ID"
     },
     {
       "file": "server/api/payments.ts",
       "line": 148,
-      "name": "CASHFREE_PROD_APP_ID"
+      "name": "CASHFREE_SANDBOX_APP_ID"
     },
     {
       "file": "server/api/payments.ts",
       "line": 149,
+      "name": "CASHFREE_PROD_APP_ID"
+    },
+    {
+      "file": "server/api/payments.ts",
+      "line": 150,
       "name": "CASHFREE_APP"
     },
     {
       "file": "server/api/payments.ts",
-      "line": 154,
+      "line": 155,
       "name": "CASHFREE_SECRET_KEY"
     },
     {
       "file": "server/api/payments.ts",
-      "line": 155,
+      "line": 156,
       "name": "CASHFREE_CLIENT_SECRET"
     },
     {
       "file": "server/api/payments.ts",
-      "line": 156,
+      "line": 157,
       "name": "CASHFREE_KEY_SECRET"
     },
     {
       "file": "server/api/payments.ts",
-      "line": 157,
+      "line": 158,
       "name": "CASHFREE_API_SECRET"
     },
     {
       "file": "server/api/payments.ts",
-      "line": 158,
+      "line": 159,
       "name": "CASHFREE_SECRET"
     },
     {
       "file": "server/api/payments.ts",
-      "line": 159,
+      "line": 160,
       "name": "CASHFREE_SECRETKEY"
     },
     {
       "file": "server/api/payments.ts",
-      "line": 160,
+      "line": 161,
       "name": "CASHFREE_SANDBOX_SECRET_KEY"
     },
     {
       "file": "server/api/payments.ts",
-      "line": 161,
+      "line": 162,
       "name": "CASHFREE_PROD_SECRET_KEY"
     },
     {
       "file": "server/api/payments.ts",
-      "line": 166,
+      "line": 167,
       "name": "CASHFREE_ENV"
     },
     {
       "file": "server/api/payments.ts",
-      "line": 167,
+      "line": 168,
       "name": "CASHFREE_ENVIRONMENT"
     },
     {
       "file": "server/api/payments.ts",
-      "line": 168,
+      "line": 169,
       "name": "CASHFREE_MODE"
     },
     {
       "file": "server/api/payments.ts",
-      "line": 172,
+      "line": 173,
       "name": "CASHFREE_API_VERSION"
     },
     {
       "file": "server/api/payments.ts",
-      "line": 195,
+      "line": 196,
       "name": "SITE_URL"
     },
     {
       "file": "server/api/routes.ts",
-      "line": 162,
+      "line": 165,
       "name": "SENTRY_DSN"
     },
     {
       "file": "server/api/routes.ts",
-      "line": 162,
+      "line": 165,
       "name": "VITE_SENTRY_DSN"
     },
     {
       "file": "server/api/routes.ts",
-      "line": 308,
-      "name": "TELEGRAM_BOT_TOKEN"
-    },
-    {
-      "file": "server/api/routes.ts",
-      "line": 320,
-      "name": "GEMINI_API_KEY"
-    },
-    {
-      "file": "server/api/routes.ts",
-      "line": 322,
+      "line": 311,
       "name": "TELEGRAM_BOT_TOKEN"
     },
     {
       "file": "server/api/routes.ts",
       "line": 323,
-      "name": "TELEGRAM_CHAT_ID"
-    },
-    {
-      "file": "server/api/routes.ts",
-      "line": 324,
-      "name": "APP_PIN"
+      "name": "GEMINI_API_KEY"
     },
     {
       "file": "server/api/routes.ts",
       "line": 325,
-      "name": "GEMINI_API_KEY"
-    },
-    {
-      "file": "server/api/routes.ts",
-      "line": 506,
-      "name": "GEMINI_API_KEY"
-    },
-    {
-      "file": "server/api/routes.ts",
-      "line": 1110,
       "name": "TELEGRAM_BOT_TOKEN"
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1118,
+      "line": 326,
       "name": "TELEGRAM_CHAT_ID"
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1343,
+      "line": 327,
+      "name": "APP_PIN"
+    },
+    {
+      "file": "server/api/routes.ts",
+      "line": 328,
+      "name": "GEMINI_API_KEY"
+    },
+    {
+      "file": "server/api/routes.ts",
+      "line": 509,
+      "name": "GEMINI_API_KEY"
+    },
+    {
+      "file": "server/api/routes.ts",
+      "line": 1113,
+      "name": "TELEGRAM_BOT_TOKEN"
+    },
+    {
+      "file": "server/api/routes.ts",
+      "line": 1121,
       "name": "TELEGRAM_CHAT_ID"
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1448,
+      "line": 1346,
       "name": "TELEGRAM_CHAT_ID"
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1835,
+      "line": 1451,
       "name": "TELEGRAM_CHAT_ID"
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1835,
+      "line": 1838,
       "name": "TELEGRAM_CHAT_ID"
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1852,
+      "line": 1838,
       "name": "TELEGRAM_CHAT_ID"
     },
     {
       "file": "server/api/routes.ts",
-      "line": 1852,
+      "line": 1855,
       "name": "TELEGRAM_CHAT_ID"
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2827,
+      "line": 1855,
+      "name": "TELEGRAM_CHAT_ID"
+    },
+    {
+      "file": "server/api/routes.ts",
+      "line": 2830,
       "name": "PORT"
     },
     {
@@ -22711,12 +23285,7 @@
     },
     {
       "file": "server/security/auth.ts",
-      "line": 31,
-      "name": "JWT_SECRET"
-    },
-    {
-      "file": "server/security/auth.ts",
-      "line": 31,
+      "line": 32,
       "name": "JWT_SECRET"
     },
     {
@@ -22726,43 +23295,43 @@
     },
     {
       "file": "server/security/auth.ts",
-      "line": 34,
+      "line": 33,
+      "name": "JWT_SECRET"
+    },
+    {
+      "file": "server/security/auth.ts",
+      "line": 35,
       "name": "NODE_ENV"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 198,
+      "line": 199,
       "name": "FIREBASE_APPCHECK_ENFORCE"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 328,
+      "line": 329,
       "name": "NODE_ENV"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 328,
+      "line": 329,
       "name": "RECAPTCHA_ENFORCE"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 464,
+      "line": 465,
       "name": "NODE_ENV"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 544,
+      "line": 545,
       "name": "NODE_ENV"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 544,
+      "line": 545,
       "name": "RECAPTCHA_ENFORCE"
-    },
-    {
-      "file": "server/security/auth.ts",
-      "line": 585,
-      "name": "APP_PIN"
     },
     {
       "file": "server/security/auth.ts",
@@ -22771,23 +23340,23 @@
     },
     {
       "file": "server/security/auth.ts",
-      "line": 617,
-      "name": "NODE_ENV"
-    },
-    {
-      "file": "server/security/auth.ts",
-      "line": 681,
-      "name": "NODE_ENV"
-    },
-    {
-      "file": "server/security/auth.ts",
-      "line": 681,
-      "name": "RECAPTCHA_ENFORCE"
-    },
-    {
-      "file": "server/security/auth.ts",
-      "line": 722,
+      "line": 587,
       "name": "APP_PIN"
+    },
+    {
+      "file": "server/security/auth.ts",
+      "line": 618,
+      "name": "NODE_ENV"
+    },
+    {
+      "file": "server/security/auth.ts",
+      "line": 682,
+      "name": "NODE_ENV"
+    },
+    {
+      "file": "server/security/auth.ts",
+      "line": 682,
+      "name": "RECAPTCHA_ENFORCE"
     },
     {
       "file": "server/security/auth.ts",
@@ -22796,7 +23365,12 @@
     },
     {
       "file": "server/security/auth.ts",
-      "line": 753,
+      "line": 724,
+      "name": "APP_PIN"
+    },
+    {
+      "file": "server/security/auth.ts",
+      "line": 754,
       "name": "NODE_ENV"
     },
     {
@@ -23025,6 +23599,11 @@
       "name": "TELEGRAM_CHAT_ID"
     },
     {
+      "file": "server/services/giftAccessPolicy.ts",
+      "line": 3,
+      "name": "GIFT_ACCESS_ENABLED"
+    },
+    {
       "file": "server/services/historicalFilings.ts",
       "line": 36,
       "name": "NODE_ENV"
@@ -23041,7 +23620,7 @@
     },
     {
       "file": "server/services/monitor.ts",
-      "line": 605,
+      "line": 608,
       "name": "TELEGRAM_CHAT_ID"
     },
     {
@@ -23096,7 +23675,7 @@
     },
     {
       "file": "server/services/stockNewsService.ts",
-      "line": 706,
+      "line": 709,
       "name": "TELEGRAM_CHAT_ID"
     },
     {
@@ -23931,12 +24510,12 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 765,
+      "line": 767,
       "name": "DEV"
     },
     {
       "file": "src/App.tsx",
-      "line": 772,
+      "line": 774,
       "name": "DEV"
     },
     {
@@ -23946,7 +24525,7 @@
     },
     {
       "file": "src/lib/sentry.ts",
-      "line": 54,
+      "line": 55,
       "name": "VITE_SENTRY_DSN"
     },
     {
@@ -23963,7 +24542,7 @@
   "browserEvents": [
     {
       "file": "src/App.tsx",
-      "line": 617,
+      "line": 619,
       "target": "window",
       "kind": "dispatch",
       "name": "bse-share-target",
@@ -23971,7 +24550,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 626,
+      "line": 628,
       "target": "window",
       "kind": "listen",
       "name": "popstate",
@@ -23979,31 +24558,31 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 627,
+      "line": 629,
       "target": "window",
       "kind": "remove",
       "name": "popstate",
       "expression": "window.removeEventListener('popstate', handlePopState)"
-    },
-    {
-      "file": "src/App.tsx",
-      "line": 740,
-      "target": "window",
-      "kind": "listen",
-      "name": "popstate",
-      "expression": "window.addEventListener('popstate', handlePopState)"
     },
     {
       "file": "src/App.tsx",
       "line": 742,
       "target": "window",
+      "kind": "listen",
+      "name": "popstate",
+      "expression": "window.addEventListener('popstate', handlePopState)"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 744,
+      "target": "window",
       "kind": "remove",
       "name": "popstate",
       "expression": "window.removeEventListener('popstate', handlePopState)"
     },
     {
       "file": "src/App.tsx",
-      "line": 855,
+      "line": 857,
       "target": "window",
       "kind": "listen",
       "name": "watchlists-changed",
@@ -24011,7 +24590,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 856,
+      "line": 858,
       "target": "window",
       "kind": "remove",
       "name": "watchlists-changed",
@@ -24019,7 +24598,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 875,
+      "line": 877,
       "target": "window",
       "kind": "listen",
       "name": "auth-expired",
@@ -24027,7 +24606,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 876,
+      "line": 878,
       "target": "window",
       "kind": "remove",
       "name": "auth-expired",
@@ -24224,6 +24803,22 @@
       "kind": "remove",
       "name": "visibilitychange",
       "expression": "document.removeEventListener('visibilitychange', visible)"
+    },
+    {
+      "file": "src/components/GiftActivationPage.tsx",
+      "line": 22,
+      "target": "window",
+      "kind": "listen",
+      "name": "hashchange",
+      "expression": "window.addEventListener('hashchange', capture)"
+    },
+    {
+      "file": "src/components/GiftActivationPage.tsx",
+      "line": 23,
+      "target": "window",
+      "kind": "remove",
+      "name": "hashchange",
+      "expression": "window.removeEventListener('hashchange', capture)"
     },
     {
       "file": "src/components/HomeForYou.tsx",
@@ -24547,7 +25142,7 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 155,
+      "line": 157,
       "target": "window",
       "kind": "listen",
       "name": "notes-changed",
@@ -24555,7 +25150,7 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 156,
+      "line": 158,
       "target": "window",
       "kind": "remove",
       "name": "notes-changed",
@@ -24563,7 +25158,7 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 318,
+      "line": 320,
       "target": "window",
       "kind": "listen",
       "name": "keydown",
@@ -24571,7 +25166,7 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 319,
+      "line": 321,
       "target": "window",
       "kind": "remove",
       "name": "keydown",
@@ -24579,7 +25174,7 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 1857,
+      "line": 1859,
       "target": "window",
       "kind": "dispatch",
       "name": "open-referral-modal",

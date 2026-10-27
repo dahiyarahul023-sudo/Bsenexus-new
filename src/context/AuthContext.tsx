@@ -1367,7 +1367,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // excluded by design. Auto on at grant, auto off at expiry.
   const isPaidProActive = Boolean(
     isAdmin ||
-    (isPro && isPaidPro && profile?.proExpiresAt && profile.proExpiresAt > now)
+    (isPro && isPaidPro && (profile?.subscriptionAccess ? profile.subscriptionAccess.paidExpiresAt > now : profile?.proExpiresAt && profile.proExpiresAt > now))
   );
 
   return (

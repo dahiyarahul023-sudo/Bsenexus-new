@@ -6,6 +6,7 @@ import { getSettings, saveSettings } from '../database/settingsDao.js';
 import { addLog } from '../database/logDao.js';
 import { getFirebaseAuth, getFirebaseAppCheck } from './firebaseAdmin.js';
 import { getUserProfile, claimTrialAtomically } from '../database/usersDao.js';
+import { getAccessProfile } from '../services/subscriptionAccess.js';
 import { reconcilePaymentEntitlement } from '../database/paymentEntitlementsDao.js';
 import { isPaymentStoreUnavailable } from '../database/paymentStore.js';
 import { verifyRecaptchaToken } from './recaptchaService.js';
@@ -267,7 +268,7 @@ export const requireProOrAdmin = async (req: express.Request, res: express.Respo
     }
     wasPaidUser = Boolean(entitlement?.lastPaymentAt || entitlement?.lastOrderId);
 
-    const profile = await getUserProfile(user.uid, { durable: true });
+    const profile = await getAccessProfile(user.uid, { durable: true });
     const now = Date.now();
     // HARD RULE: a user with a successful payment on record is NEVER told
     // about a "trial" — even after their Pro expires.
@@ -293,7 +294,7 @@ export const requireProOrAdmin = async (req: express.Request, res: express.Respo
     proRequired: true, 
     error: wasPaidUser
       ? "Your Pro subscription has expired. Renew Pro — one-time plans from ₹59 (Weekly), ₹199 (Monthly), ₹999 (6-Month), ₹1,799 (Yearly) — to continue using this feature."
-      : "1-Week Free Pro trial has ended. Please upgrade to Pro — one-time plans from ₹59 (Weekly), ₹199 (Monthly), ₹999 (6-Month), ₹1,799 (Yearly) — to continue using this feature." 
+      : "Your Pro access has ended. Please upgrade to Pro — one-time plans from ₹59 (Weekly), ₹199 (Monthly), ₹999 (6-Month), ₹1,799 (Yearly) — to continue using this feature."
   });
 };
 
@@ -447,7 +448,7 @@ authRouter.post('/session', authRateLimiter, requireAppCheck, async (req, res) =
     const now = Date.now();
     // Server-only RPC atomically records first use; expiry loss is not eligibility.
     await claimTrialAtomically(cleanUid, email, displayName || email.split('@')[0]);
-    profile = await getUserProfile(cleanUid, { durable: true });
+    profile = await getAccessProfile(cleanUid, { durable: true });
 
     const isPro = Boolean(isOwner || profile?.tier === 'admin' || (profile?.proExpiresAt && profile.proExpiresAt > now));
     const proDaysLeft = profile?.proExpiresAt ? Math.max(0, Math.ceil((profile.proExpiresAt - now) / (24 * 60 * 60 * 1000))) : 0;
@@ -467,7 +468,7 @@ authRouter.post('/session', authRateLimiter, requireAppCheck, async (req, res) =
       path: '/'
     });
 
-    await addLog('INFO', 'AUTH', `User session verified & started: ${email || cleanUid} (${isOwner ? 'OWNER' : isPro ? `PRO_TRIAL_${proDaysLeft}D` : 'FREE_USER'})`);
+    await addLog('INFO', 'AUTH', `User session verified & started: ${email || cleanUid} (${isOwner ? 'OWNER' : isPro ? `PRO_ACCESS_${proDaysLeft}D` : 'FREE_USER'})`);
     res.json({ 
       success: true, 
       token, 

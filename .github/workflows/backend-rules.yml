@@ -21,6 +21,7 @@ jobs:
       - run: node scripts/patch-firebase-auth.cjs
       - run: npx playwright install --with-deps chromium
       - run: npm run test:dev-runtime
+      - run: node scripts/verify-gift-access.mjs
   bun-application:
     runs-on: ubuntu-latest
     timeout-minutes: 15

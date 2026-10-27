@@ -1,3 +1,4 @@
+import { getAccessProfile } from '../services/subscriptionAccess.js';
 import {
   aiDb,
   aiRpc,
@@ -42,7 +43,7 @@ export function publicToolResult(name: string, result: any) {
 }
 export async function accountState(uid: string) {
   const [profile, entitlement] = await Promise.all([
-    getUserProfile(uid, { durable: true }),
+    getAccessProfile(uid, { durable: true }),
     getPaymentEntitlement(uid),
   ]);
   if (!profile) throw new AiError("account_missing", 401);

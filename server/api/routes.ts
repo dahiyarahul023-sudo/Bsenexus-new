@@ -99,6 +99,8 @@ import {
 import { seoRouter } from "./seoRoutes.js";
 import { reconcilePaymentEntitlement } from "../database/paymentEntitlementsDao.js";
 import { isPaymentStoreUnavailable } from "../database/paymentStore.js";
+import { giftAccessRouter } from './giftAccess.js';
+import { getAccessProfile } from '../services/subscriptionAccess.js';
 import { paymentsRouter } from "./payments.js";
 import { referralsRouter } from "./referrals.js";
 import { faqRouter } from "./faq.js";
@@ -123,6 +125,7 @@ apiRouter.use("/seo", requireAdmin, aiRateLimiter, seoRouter);
 
 // Cashfree one-time Pro payments (create-order / verify / webhook / status)
 apiRouter.use("/payments", paymentsRouter);
+apiRouter.use("/gifts", giftAccessRouter);
 
 // Referral partner & creator affiliate program
 apiRouter.use("/referrals", referralsRouter);
@@ -647,7 +650,7 @@ apiRouter.post("/announcements/:id/generate-summary", requireAuth, aiRateLimiter
     let isProLike = isAdminUser;
     let profile: any = null;
     try {
-      profile = await getUserProfile(uid);
+      profile = await getAccessProfile(uid, { durable: true });
       const now = Date.now();
       isProLike = isProLike || profile?.tier === 'admin' || Boolean(profile?.proExpiresAt && profile.proExpiresAt > now);
     } catch (profileErr: any) {
@@ -885,7 +888,7 @@ apiRouter.post("/watchlists/:id/symbols/bulk", requireProOrAdmin, async (req, re
   const uid = getReqUserId(req);
   if (Array.isArray(req.body.symbols)) {
     const isAdminUser = (req as any).user?.isAdmin === true || uid === 'admin';
-    const profile = uid !== 'guest' ? await getUserProfile(uid) : null;
+    const profile = uid !== 'guest' ? await getAccessProfile(uid, { durable: true }) : null;
     const isPro = isAdminUser || (profile?.tier === 'pro' && (!profile.proExpiresAt || profile.proExpiresAt > Date.now()));
 
     const cleanInputSymbols = req.body.symbols
@@ -1199,7 +1202,7 @@ apiRouter.get("/users/profile", requireAuth, async (req, res) => {
       });
     }
 
-    res.json({ success: true, profile });
+    res.json({ success: true, profile: profile ? await getAccessProfile(uid, { durable: true }) : profile });
   } catch (err: any) {
     if (isPaymentStoreUnavailable(err)) {
       return res.status(503).json({
@@ -1226,7 +1229,7 @@ async function isProLikeUser(uid: string, isAdminUser: boolean): Promise<boolean
     return true;
   }
 
-  const p = await getUserProfile(uid, { durable: true });
+  const p = await getAccessProfile(uid, { durable: true });
   if (!p) return false;
   const now = Date.now();
   return p.tier === 'admin' || Boolean(p.proExpiresAt && p.proExpiresAt > now);
@@ -1346,7 +1349,7 @@ apiRouter.post("/users/profile", requireAuth, async (req, res) => {
     }
     const updatedProfile = await saveUserProfile(uid, { ...sanitizedPatch, uid }, false, { durable: true });
     invalidateMonitorConfigCache(uid);
-    res.json({ success: true, profile: updatedProfile });
+    res.json({ success: true, profile: await getAccessProfile(uid, { durable: true }) });
   } catch (err: any) {
     if (isPaymentStoreUnavailable(err)) {
       return res.status(503).json({
@@ -1454,7 +1457,7 @@ apiRouter.post("/users/telegram/settings", requireAuth, async (req, res) => {
 
     res.json({
       success: true,
-      profile: updatedProfile,
+      profile: await getAccessProfile(uid, { durable: true }),
       telegramChatId: updatedProfile.telegramChatId,
       telegramAlertsEnabled: updatedProfile.notificationPreferences?.telegramAlertsEnabled !== false,
       telegramAiSummaryEnabled: updatedProfile.notificationPreferences?.telegramAiSummaryEnabled !== false,
@@ -1894,7 +1897,7 @@ apiRouter.post("/news/telegram/toggle-auto", requireAuth, async (req, res) => {
     const { enabled, sources, categories } = req.body;
 
     if (uid && uid !== 'anonymous') {
-      const user = await getUserProfile(uid);
+      const user = await getAccessProfile(uid, { durable: true });
       if (user) {
         // Telegram is PRO-ONLY for enabling/configuring, but DISABLING must
         // always be allowed — even for expired/free users (kill-switch rule).
