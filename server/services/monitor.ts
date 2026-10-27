@@ -1,7 +1,11 @@
+import { getAccessProfile } from './subscriptionAccess.js';
+import { giftsEnabled } from './giftAccessPolicy.js';
+import { requireVerifiedTelegramTarget } from '../database/telegramLinksDao.js';
 import { PollCycle, PollStageTimeout } from '../utils/pollCycle.js';
 import { getSettings } from '../database/settingsDao.js';
 import { addLog } from '../database/logDao.js';
 import { fetchBSEAnnouncements, getLastBseError } from './bse.js';
+import { isBseFiling } from '../../src/shared/filingSource.js';
 import { sendToTelegram } from './telegram.js';
 import { generateAndSendSummary } from './gemini.js';
 import { getActiveWatchlistSymbols, getActiveWatchlistSymbolMap } from '../database/watchlistDao.js';
@@ -14,6 +18,7 @@ import { classifyMaterialEvent } from './timelineClassifier.js';
 import { doesAnnouncementMatchUserPrefs, personalAlertChannels } from '../utils/alertDecision.js';
 import { sendOneSignalPush, isOneSignalConfigured } from './oneSignal.js';
 import { recordFilingDeliveryTiming } from '../database/telegramResultDao.js';
+import { indexNowQueue } from './indexNow';
 
 export { pruneAndCheckStorageCapacity };
 
@@ -153,6 +158,7 @@ export async function processAnnouncements(): Promise<AnnouncementPollResult> {
     return result('busy');
   }
   isPolling = true;
+  const releaseIndexNowBatch = indexNowQueue.beginBatch();
   const cycleId = Date.now().toString(36);
   let outcome = 'success';
   let cycle: PollCycle | undefined;
@@ -215,6 +221,7 @@ export async function processAnnouncements(): Promise<AnnouncementPollResult> {
     const pendingAnnouncements = [];
     
     for (const item of announcements) {
+      if (!isBseFiling(item)) continue;
       const newsId = item.NEWSID;
       if (!newsId) continue;
       if (!(await cycle.step('dedupe-read', () => isAnnouncementProcessed(newsId)))) {
@@ -354,6 +361,7 @@ export async function processAnnouncements(): Promise<AnnouncementPollResult> {
         try {
           await cycle.step('filing-save', () => saveAnnouncement({
             newsId, companyName, subject, details, pdfLink, scrip_cd,
+            symbol: item.symbol, source: sourceName,
             bseTime: item.News_submission_dt || item.DT_TM || item.NEWS_DT,
             priority: priority.level,
             category: priority.category,
@@ -496,7 +504,8 @@ export async function processAnnouncements(): Promise<AnnouncementPollResult> {
             }
             // Telegram is a PRO-ONLY feature: skip dispatch when the user's
             // trial/pack has expired (in-app notifications above are unaffected).
-            const userProActive = Boolean(u.tier === 'admin' || (u.proExpiresAt && u.proExpiresAt > Date.now()));
+            const accessUser = rawUserChatId && uPrefs.telegramAlertsEnabled !== false && giftsEnabled() ? await getAccessProfile(u.uid, { durable: true }) : u;
+            const userProActive = Boolean(accessUser && (accessUser.tier === 'admin' || (accessUser.proExpiresAt && accessUser.proExpiresAt > Date.now())));
             // Respect user toggle to turn OFF/ON Telegram alerts
             const isUserTelegramActive = userProActive && uPrefs.telegramAlertsEnabled !== false;
 
@@ -596,14 +605,15 @@ export async function processAnnouncements(): Promise<AnnouncementPollResult> {
                 sentTelegramChatIds.add(rawUserChatId);
                 dispatchPromises.push((async () => {
                   try {
-                    const userRes = await sendToTelegram(message, rawUserChatId);
+                    const verifiedChat = await requireVerifiedTelegramTarget(u.uid, rawUserChatId, settings.chatId || process.env.TELEGRAM_CHAT_ID);
+                    const userRes = await sendToTelegram(message, verifiedChat);
                     if (userRes.success && userRes.messageId) {
                       const viaRule = !prefsMatch && userRuleEval.shouldSendTelegram;
                       await addLog('SUCCESS', 'TELEGRAM', `Personal alert -> user ${u.uid}: ${companyName} [${priority.category}] via ${viaRule ? 'alert-rule(telegram-on)' : 'watchlist-prefs'}`);
                       const userWantsAiSummary = uPrefs?.telegramAiSummaryEnabled !== false;
                       if (priority.category === 'RESULTS' && userWantsAiSummary) {
                         const userSummaryLang = (uPrefs as any)?.aiSummaryLang === 'hinglish' ? 'hinglish' : 'english';
-                        generateAndSendSummary(userRes.messageId, companyName, subject, details, priority.category, pdfLink, newsId, rawUserChatId, userSummaryLang, scrip_cd)
+                        generateAndSendSummary(userRes.messageId, companyName, subject, details, priority.category, pdfLink, newsId, rawUserChatId, userSummaryLang, scrip_cd, u.uid)
                           .catch(() => {});
                       }
                     }
@@ -651,6 +661,7 @@ export async function processAnnouncements(): Promise<AnnouncementPollResult> {
       cycle?.finish(outcome);
     } finally {
       isPolling = false;
+      releaseIndexNowBatch();
       logSummary(outcome);
     }
   }

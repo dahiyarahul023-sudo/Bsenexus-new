@@ -4,13 +4,15 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "tsx server.ts",
+    "dev": "node --import tsx server.ts --port 3000",
     "prebuild": "node scripts/bump-version.mjs",
-    "build": "tsc --noEmit && vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs && rm -rf build && cp -r dist build",
+    "build": "tsc --noEmit && vite build && node scripts/check-performance-budget.mjs && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs && rm -rf build && cp -r dist build",
+    "perf:budget": "node scripts/check-performance-budget.mjs",
     "start": "node dist/server.cjs",
     "clean": "rm -rf dist build server.cjs",
     "lint": "tsc --noEmit",
-    "test": "node --test --import tsx server/tests/*.test.ts",
+    "test": "node --test --import ./scripts/offline-tests.mjs --import tsx server/tests/*.test.ts",
+    "test:dev-runtime": "node scripts/check-dev-runtime.mjs",
     "postinstall": "node scripts/patch-firebase-auth.cjs",
     "verify:ai": "tsx scripts/verify-ai-models.ts",
     "map:generate": "node scripts/spider-map.mjs",
@@ -22,6 +24,7 @@
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
+    "@modelcontextprotocol/sdk": "1.32.1",
     "@sentry/node": "^11.4.0",
     "@sentry/react": "^11.4.0",
     "@supabase/supabase-js": "^2.117.2",
@@ -48,7 +51,8 @@
     "sharp": "^0.35.3",
     "tailwind-merge": "^3.6.0",
     "undici": "7.30.1",
-    "yahoo-finance2": "^4.0.2"
+    "yahoo-finance2": "^4.0.2",
+    "zod": "3.25.76"
   },
   "overrides": {
     "@grpc/grpc-js": "^1.14.6",
@@ -68,6 +72,7 @@
     "@types/react-dom": "^19.3.0",
     "autoprefixer": "^10.4.21",
     "esbuild": "^0.25.0",
+    "playwright": "1.62.1",
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",

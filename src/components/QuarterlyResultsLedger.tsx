@@ -1,3 +1,4 @@
+import { ResultTimingPanel } from './ResultTimingPanel';
 import React, { useState } from 'react';
 import { 
   FileText, 
@@ -77,6 +78,7 @@ interface QuarterlyResultsLedgerProps {
   scripCode?: string;
   companyName?: string;
   isLoading?: boolean;
+  errorMessage?: string | null;
   onRefresh?: () => void;
   onFetchDeepHistory?: (years: number) => void;
   isFetchingDeep?: boolean;
@@ -91,6 +93,7 @@ export const QuarterlyResultsLedger: React.FC<QuarterlyResultsLedgerProps> = ({
   scripCode = '',
   companyName = '',
   isLoading = false,
+  errorMessage = null,
   onRefresh,
   onFetchDeepHistory,
   isFetchingDeep = false,
@@ -100,7 +103,7 @@ export const QuarterlyResultsLedger: React.FC<QuarterlyResultsLedgerProps> = ({
 }) => {
   const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({});
   const [filterMode, setFilterMode] = useState<'declared' | 'all'>('declared');
-  const [selectedYears, setSelectedYears] = useState<number>(3);
+  const [selectedYears, setSelectedYears] = useState<number>(1);
 
   const toggleAccordion = (id: string) => {
     setExpandedCards(prev => ({
@@ -110,18 +113,19 @@ export const QuarterlyResultsLedger: React.FC<QuarterlyResultsLedgerProps> = ({
   };
 
   const declaredResults = results.filter(r => r.isOutcome || r.status === 'Declared' || r.status === 'Outcome Declared');
-  const displayItems = filterMode === 'declared' ? (declaredResults.length > 0 ? declaredResults : results) : results;
+  const displayItems = filterMode === 'declared' ? declaredResults : results;
 
   const displaySymbol = symbol || (results[0]?.symbol) || '';
   const displayShortName = companyName || results[0]?.companyShortName || results[0]?.companyName || displaySymbol;
 
   return (
     <div className="w-full space-y-4 font-sans text-slate-200">
+      <ResultTimingPanel results={results} />
       {/* Top Controls & Sync Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-slate-900/90 rounded-xl border border-slate-800 backdrop-blur-md">
         <div className="flex items-center gap-2">
           {/* Declared vs All Filter Tabs */}
-          <div className="inline-flex rounded-lg bg-slate-950 p-1 border border-slate-800 relative select-none">
+          <div className="ui-segmented inline-flex rounded-lg bg-slate-950 p-1 border border-slate-800 relative select-none">
             <motion.button
               type="button"
               whileTap={buttonTap}
@@ -160,16 +164,16 @@ export const QuarterlyResultsLedger: React.FC<QuarterlyResultsLedgerProps> = ({
           <div className="flex items-center gap-2">
             <CustomDropdown
               options={[
-                { value: 1, label: '1 Year (4 Qtrs)' },
-                { value: 2, label: '2 Years (8 Qtrs)' },
-                { value: 3, label: '3 Years (12 Qtrs)' },
-                { value: 5, label: '5 Years (20 Qtrs)' }
+                { value: 1, label: 'Last 1 Year' },
+                { value: 2, label: 'Last 2 Years' },
+                { value: 3, label: 'Last 3 Years' },
+                { value: 5, label: 'Last 5 Years' }
               ]}
               value={selectedYears}
               onChange={(val) => {
                 const y = Number(val);
                 setSelectedYears(y);
-                if (onFetchDeepHistory) onFetchDeepHistory(y);
+
               }}
               disabled={isFetchingDeep}
               size="xs"
@@ -191,6 +195,8 @@ export const QuarterlyResultsLedger: React.FC<QuarterlyResultsLedgerProps> = ({
         )}
       </div>
 
+      {onFetchDeepHistory && scripCode && <p className="text-xs text-slate-500 dark:text-slate-400">Sync imports all BSE filings for the selected period. Result cards require financial disclosure evidence; meeting notices stay in the meetings tab.</p>}
+
       {isFetchingDeep && (
         <div className="animate-in fade-in duration-200">
           <HonestProgressBar
@@ -198,21 +204,26 @@ export const QuarterlyResultsLedger: React.FC<QuarterlyResultsLedgerProps> = ({
             isRunning={true}
             simulatedSteps={[
               { label: `Accessing BSE financial registry for ${selectedYears}Y records...`, durationMs: 1500 },
-              { label: 'Parsing standalone & consolidated financial statements...', durationMs: 2500 },
-              { label: 'Calculating YoY & QoQ variance and PAT margins...', durationMs: 2200 },
-              { label: 'Indexing board meeting timestamps & release latency...', durationMs: 1200 }
+              { label: 'Reading official filing dates and document links...', durationMs: 2500 },
+              { label: 'Saving verified BSE filing records...', durationMs: 2200 },
+              { label: 'Checking result filing evidence...', durationMs: 1200 }
             ]}
           />
         </div>
       )}
 
-      {deepHistoryMsg && (
-        <div className="p-3 bg-amber-950/40 border border-amber-800/80 rounded-xl text-xs text-amber-300 flex items-center gap-2 animate-in fade-in">
-          <AlertCircle size={14} className="shrink-0 text-amber-400" />
-          <span>{deepHistoryMsg}</span>
+      {(errorMessage || deepHistoryMsg) && <div
+        role={errorMessage ? 'alert' : 'status'}
+        className={cn('rounded-xl border p-3 text-sm flex items-start gap-2', errorMessage
+          ? 'border-amber-500/40 bg-amber-500/10 text-amber-800 dark:text-amber-200'
+          : 'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-200')}
+      >
+        <AlertCircle size={14} className="shrink-0 mt-0.5" />
+        <div>
+          <p>{errorMessage || deepHistoryMsg}</p>
+          {errorMessage && onRefresh && <button type="button" onClick={onRefresh} className="mt-2 underline font-semibold">Retry history</button>}
         </div>
-      )}
-
+      </div>}
       {/* Loading state - Show shape not spin */}
       {isLoading ? (
         <div className="space-y-3 animate-pulse">
@@ -248,9 +259,9 @@ export const QuarterlyResultsLedger: React.FC<QuarterlyResultsLedgerProps> = ({
         </div>
       ) : displayItems.length === 0 ? (
         <div className="p-6 sm:p-7 text-left bg-slate-900/40 rounded-2xl border border-slate-800 space-y-2 max-w-lg">
-          <div className="text-sm font-bold text-slate-200">No quarterly results indexed yet for {displaySymbol || 'this stock'}.</div>
+          <div className="text-sm font-bold text-slate-200">{errorMessage ? 'Result history could not be fully loaded.' : `No verified result filings loaded for ${displaySymbol || 'this stock'} yet.`}</div>
           <p className="text-xs text-slate-400 leading-relaxed">
-            Click <strong className="text-slate-200">Sync BSE History</strong> above to automatically pull and parse the last 1 to 5 years of verified financial result filings and release timestamps.
+            This is the stored BSE filing history. Use <strong className="text-slate-200">Sync BSE History</strong> to check older quarters. Meeting dates alone do not confirm a result release.
           </p>
         </div>
       ) : (
@@ -292,9 +303,8 @@ export const QuarterlyResultsLedger: React.FC<QuarterlyResultsLedgerProps> = ({
             }
 
             const boardMeetingDate = item.boardMeetingDate || item.meetingDate || item.declarationDate || 'N/A';
-            const rawTime = item.declarationTime || '';
+            const rawTime = (item.declarationTime || '').match(/(?:^|[T\s,])(\d{1,2}:\d{2}(?::\d{2})?)(?:\s*IST)?(?:$|\s|[.+Z-])/i)?.[1] || '';
             const timeOnly = rawTime ? (rawTime.includes('IST') ? rawTime : `${rawTime} IST`) : '';
-            const declaredAt = item.declaredAtFormatted || (timeOnly ? `${boardMeetingDate}, ${timeOnly}` : (isDeclared ? boardMeetingDate : null));
 
             const safePdf = item.pdfLink ? getSafePdfUrl(item.pdfLink, undefined, item.id, item.scripCode || scripCode) : null;
 
@@ -373,10 +383,10 @@ export const QuarterlyResultsLedger: React.FC<QuarterlyResultsLedgerProps> = ({
                       <span className="text-[11px] text-slate-400 font-sans">1st Filing Time:</span>
                       <span className="font-mono font-bold whitespace-nowrap">{timeOnly}</span>
                     </div>
-                  ) : declaredAt ? (
+                  ) : isDeclared ? (
                     <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
-                      <span>Declared at:</span>
-                      <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">{declaredAt}</span>
+                      <span>Filing time:</span>
+                      <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">Time unavailable</span>
                     </div>
                   ) : null}
                 </div>
@@ -425,7 +435,7 @@ export const QuarterlyResultsLedger: React.FC<QuarterlyResultsLedgerProps> = ({
                     </motion.button>
                   ) : (
                     <div className="text-[11px] text-slate-500 dark:text-slate-500 font-mono">
-                      Single direct outcome filing
+                      {isDeclared ? 'No additional same-day filings loaded' : 'Result filing not yet verified'}
                     </div>
                   )}
 

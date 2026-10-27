@@ -1,5 +1,7 @@
 # Frontend engineering rules
 
+API transport lesson (28 October 2026): HTML startup/error pages with HTTP 200 are failed API transport. Classify before success events, keep typed errors without page content, preserve denial statuses and never replay uncertain mutations. Deliberately disabled features use a configuration response. Align Studio source and canonical repo before claiming a merged repair reaches preview.
+
 Read this before changing the Bsenexus frontend. The user's assignment is to apply the same disciplined thinking used for backend work to FRONTEND work. These are requirements and evidence standards, not a claim the current UI passes every rule. Primary research and official guidance are in `FRONTEND_RESEARCH.md`; actual wiring is in `FRONTEND_MAP.md`.
 
 ## Rules with observable acceptance criteria
@@ -45,6 +47,8 @@ The example widths are review starting points, not universal device coverage. Te
 
 ## Workflow to follow every time
 
+Development runtime lesson (26 October 2026): after React/dependency/lazy-import/optimizer/HMR or monitoring-SDK changes, run `npm run test:dev-runtime` as well as the build. Static previews must prepare every browser dependency before serving their first React document; `server/tests/devRuntime.test.ts` checks the explicit import set. Preserve Vite's CSS helpers when HMR is disabled, and verify actual socket behavior. A null React dispatcher alone does not prove a component hook-order violation. Verify monitoring callbacks against the SDK lifecycle; ignored privacy hooks must not be accepted as harmless warnings. Restart/reload an already-open preview after a dependency/config restart. See `changes/development-runtime-repair.md` for evidence and limitations.
+
 1. Read root `AGENTS.md`, these rules, the frontend map and relevant domains. Record the request, evidence, starting commit and acceptance cases.
 2. Run `npm run map:impact -- <paths>`. Inspect the whole journey, named browser-event peers and non-import relationships. Search dynamic names and CSS/context consumers manually.
 3. Explain which screen/state will change and where the effect must also appear. Resolve only material unknown product choices with the user.
@@ -54,3 +58,14 @@ The example widths are review starting points, not universal device coverage. Te
 7. Report the observable result and exact delivery status. List remaining evidence gaps without presenting them as completed work.
 
 Referral input rule (2026-10-09): editable referral drafts must not force capitalization or apply the 20-character code limit to a full share URL. Parse the entire same-site link before normalization; validate rather than strip/truncate. Keep full unique aliases in share/copy output and normalize case only at the code/API boundary. Both checkout steps share `ui/ReferralCodeField`; see `changes/referral-link-input.md`.
+
+Performance evidence rule (2026-10-24): budget the complete statically imported JS closure using the built manifest and actual output bytes. Named entry size or a raised chunk-warning limit is not a speed fix. Keep closed terminal/dialog modules dynamic, with a visible cancellable loading state and recoverable failure. Measure missing timings as missing; retain slow visits, label the sample count, and never call navigation load-time percentiles INP/LCP. CDN headers, real-device profiles and deployed revision need their own evidence. See changes/performance-startup.md.
+
+Calendar feedback rule (2026-10-25): a completed saved-history read with pending document checks is a successful read with a diagnostic notice. Do not emit a second identical error/retry panel. Distinguish structured auth denial from a proxy HTML response, preserve server guards, and never automatically retry a shared mutation after an uncertain response.
+
+
+Calendar audit lesson (2026-10-25): changing a pre-result horizon reloads the open drawer rather than invoking its close toggle. Couple pending reads to company/date/window and cancel collapse/unmount. A failure envelope with items:[] is not an empty success. Language variants must reach server projections, counts, filters and cards together. Shared-channel Telegram permissions mirror the actual admin route, and accepted-delivery feedback requires a message ID; do not show send success before awaiting it. Keyboard ownership stays on the owning calendar dialog so independent global overlays remain usable.
+
+Responsive consistency lesson (26 October 2026): numeric exchange symbols and known ticker symbols must share the same company/purpose hierarchy; a numeric identity must not suppress a company label. Test active segmented backgrounds and their hit targets together in every design theme. Theme radii based only on Tailwind class substrings miss inner highlights; shared semantic hooks own control shape. Blurred/transformed cards create containing blocks for fixed descendants, so action popovers requiring viewport dismissal/placement must portal outside the card. Keep a full year in date-group headings without squeezing repeated date text into card actions. Mobile inputs remain at least 16px to avoid iOS focus zoom; make room with concise labels and responsive layout.
+
+Preview lifecycle lesson (27 October 2026): keep the HMR-disabled preview's backend process stable while editing. An automatic backend watcher can close Vite during a lazy import even when API reload tests and cold browser checks pass. After backend sync, explicitly stop the existing process, start the current command, wait for readiness, then reload the preview document. Test an already open actual App across an interrupted import, closed server and replacement server; a process-only fixture is insufficient. In development, error boundaries must not navigate automatically to a stopped server. Cached failed lazy imports require an explicit fresh document, not a boundary-state reset. Keep production recovery policy separate. See changes/preview-restart-stability.md.

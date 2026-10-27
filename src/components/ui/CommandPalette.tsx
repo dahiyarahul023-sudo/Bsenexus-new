@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Search, X, Flame, List, CalendarDays, Newspaper, Settings, 
   Moon, Sun, Zap, Sparkles, Building2, TrendingUp, ExternalLink, 
-  ChevronRight, Command, CornerDownLeft, Loader2, Plus, Star, Bot
+  ChevronRight, Command, CornerDownLeft, Loader2, Plus, Star
 } from 'lucide-react';
 import { springSnappy } from '../../utils/motionTokens';
 import { useIntelModal } from '../../context/IntelModalContext';
@@ -58,7 +58,7 @@ const TOP_BSE_STOCKS = [
   { name: 'Titan Company Ltd', symbol: 'TITAN', scrip: '500114', sector: 'Consumer Goods' },
   { name: 'Trent Ltd', symbol: 'TRENT', scrip: '500251', sector: 'Retail' },
   { name: 'State Bank of India', symbol: 'SBIN', scrip: '500112', sector: 'Banking' },
-  { name: 'Zomato Ltd', symbol: 'ZOMATO', scrip: '543320', sector: 'Tech' },
+  { name: 'Eternal Limited (formerly Zomato)', symbol: 'ETERNAL', scrip: '543320', sector: 'Tech' },
   { name: 'IRFC', symbol: 'IRFC', scrip: '543257', sector: 'Railways & PSU' },
   { name: 'RVNL', symbol: 'RVNL', scrip: '542649', sector: 'Railways & PSU' },
   { name: 'Suzlon Energy Ltd', symbol: 'SUZLON', scrip: '532667', sector: 'Renewable Energy' }
@@ -190,16 +190,6 @@ export function CommandPalette({
         icon: CalendarDays,
         action: () => { onTabChange('results-calendar'); onClose(); },
         keywords: ['earnings', 'results', 'calendar', 'q1', 'q2', 'q3', 'q4', 'board meeting']
-      },
-      {
-        id: 'nav_ai_plugin',
-        title: 'Universal AI Plugin & Action Schema',
-        subtitle: 'Connect ChatGPT, Google Gemini & custom bots directly to live BSE filings',
-        category: 'Navigation',
-        icon: Bot,
-        action: () => { window.location.href = '/plugin'; onClose(); },
-        badge: 'New',
-        keywords: ['ai', 'plugin', 'chatgpt', 'gemini', 'gpt', 'bot', 'api', 'openapi', 'actions', 'telegram', 'schema', 'llm']
       },
       {
         id: 'nav_news',

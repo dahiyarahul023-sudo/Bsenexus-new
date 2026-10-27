@@ -11,6 +11,7 @@
  */
 
 import { parseFilingTimestamp } from './timeFormat';
+import { isBseFiling } from '../shared/filingSource';
 
 const FEED_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -53,6 +54,7 @@ export function mergeAnnouncementFeed(prev: any[], incoming: any[], now: number 
     map.set(key, map.has(key) ? { ...map.get(key), ...item } : item);
   }
   const merged = Array.from(map.values()).filter(a => {
+    if (!isBseFiling(a)) return false;
     const ts = announcementTs(a, now);
     return ts === 0 || ts >= cutoff;
   }).map(a => {

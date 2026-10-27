@@ -1,3 +1,5 @@
+import { ComponentSkeleton } from './ui/ComponentSkeleton';
+import { emptyNotificationSnapshots, notificationSnapshot, storeNotificationSnapshot, updateNotificationSnapshots, type NotificationFilter } from '../utils/notificationSnapshots';
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Bell, BellOff, CheckCircle2, Trash2, Check, ExternalLink, 
@@ -60,10 +62,9 @@ export function NotificationInbox({
 }: NotificationInboxProps) {
   useBodyScrollLock(isOpen);
   const { user, profile } = useAuth();
-  const [notifications, setNotifications] = useState<InAppNotificationItem[]>([]);
+
   const [loading, setLoading] = useState<boolean>(false);
-  const [activeFilter, setActiveFilter] = useState<'WATCHLIST' | 'RESULTS' | 'ACTIONS' | 'UNREAD' | 'ALL'>('UNREAD');
-  const filterRef = useRef(activeFilter); filterRef.current = activeFilter;
+  const [activeFilter, setActiveFilter] = useState<NotificationFilter>('ALL');
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [isTogglingMute, setIsTogglingMute] = useState<boolean>(false);
   // Race guard: panel open/filter change fires loadNotifications + fetchMuteStatus.
@@ -72,6 +73,12 @@ export function NotificationInbox({
   // shows after close/reopen" bug.
   const owner = user?.uid || profile?.uid || 'guest';
   const ownerRef = useRef(owner); ownerRef.current = owner;
+  const [snapshots, setSnapshots] = useState(() => emptyNotificationSnapshots<InAppNotificationItem>(owner));
+  const snapshot = notificationSnapshot(snapshots, owner, activeFilter);
+  const notifications = snapshot || [];
+  const setNotifications = (update: InAppNotificationItem[] | ((items: InAppNotificationItem[]) => InAppNotificationItem[])) => {
+    setSnapshots(previous => updateNotificationSnapshots(previous, owner, items => (typeof update === 'function' ? update(items) : update).sort((a,b) => Number(a.isRead) - Number(b.isRead) || b.timestamp - a.timestamp)));
+  };
   const readBusy = useRef(new Set<string>());
   const muteSeqRef = useRef(0);
   const loadSeqRef = useRef(0);
@@ -97,26 +104,37 @@ export function NotificationInbox({
   useEffect(() => {
     setConfirmClear(false);
     setActionFeedback(null);
-    setNotifications([]);
-    if (isOpen) setActiveFilter('UNREAD');
-    return () => {loadSeqRef.current++;};
-  },[isOpen,user?.uid,profile?.uid]);
+    setSnapshots(emptyNotificationSnapshots(owner));
+    setIsMuted(false);
+    setIsTogglingMute(false);
+    setActiveFilter('ALL');
+    readBusy.current.clear();
+    muteSeqRef.current++;
+    return () => { loadSeqRef.current++; muteSeqRef.current++; };
+  },[owner]);
+
+  useEffect(() => {
+    if (!isOpen) { setConfirmClear(false); setActionFeedback(null); }
+    return () => { loadSeqRef.current++; };
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
       loadNotifications();
-      fetchMuteStatus();
     }
   }, [isOpen, activeFilter, user?.uid, profile?.uid]);
 
+  useEffect(() => { if (isOpen) void fetchMuteStatus(); }, [isOpen, owner]);
+
   const fetchMuteStatus = async () => {
     if (!user && !profile) return;
-    const seq = muteSeqRef.current;
+    const seq = muteSeqRef.current, account = owner;
     try {
       const res = await customFetch('/api/settings');
-      if (muteSeqRef.current !== seq) return; // stale — a manual toggle happened since
+      if (muteSeqRef.current !== seq || ownerRef.current !== account) return; // stale — a manual toggle happened since
       if (res.ok) {
         const data = await res.json();
+        if (muteSeqRef.current !== seq || ownerRef.current !== account) return;
         setIsMuted(Boolean(data.muteInAppNotifications ?? data.settings?.muteInAppNotifications));
       }
     } catch (err) {
@@ -125,6 +143,7 @@ export function NotificationInbox({
   };
 
   const handleToggleMute = async () => {
+    const account = owner;
     const prevState = isMuted;
     const nextState = !prevState;
     // Invalidate any in-flight mute-status/notification fetches before the
@@ -138,8 +157,10 @@ export function NotificationInbox({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mute: nextState })
       });
+      if (ownerRef.current !== account) return;
       if (res.ok) {
         const data = await res.json().catch(() => null);
+        if (ownerRef.current !== account) return;
         if (typeof data?.muteInAppNotifications === 'boolean') {
           setIsMuted(data.muteInAppNotifications);
         }
@@ -147,32 +168,32 @@ export function NotificationInbox({
         setIsMuted(prevState); // Rollback on error
       }
     } catch (err) {
+      if (ownerRef.current !== account) return;
       setIsMuted(prevState); // Rollback on error
       alert("Failed to toggle notification mute state");
     } finally {
-      setIsTogglingMute(false);
+      if (ownerRef.current === account) setIsTogglingMute(false);
     }
   };
 
   const loadNotifications = async (background = false) => {
+    if (readBusy.current.size || isClearing) return;
     if (!user && !profile) {
       setNotifications([]);
       setLoading(false);
       return;
     }
-    const loadSeq = muteSeqRef.current;
+    const loadSeq = muteSeqRef.current, account = owner, filter = activeFilter;
     const requestSeq = ++loadSeqRef.current;
     if (!background) setLoading(true);
+    setActionFeedback(null);
     try {
       let url = '/api/notifications?limit=100';
       if (activeFilter === 'WATCHLIST') {
         url += '&watchlistOnly=true';
       } else if (activeFilter === 'RESULTS') {
         url += '&type=RESULTS&watchlistOnly=false';
-      } else if (activeFilter === 'ACTIONS') {
-        url += '&type=ACTIONS&watchlistOnly=false';
-      } else if (activeFilter === 'UNREAD') {
-        url += '&unreadOnly=true&watchlistOnly=false';
+
       } else if (activeFilter === 'ALL') {
         url += '&watchlistOnly=false';
       }
@@ -180,19 +201,20 @@ export function NotificationInbox({
       const res = await customFetch(url);
       if (res.ok) {
         const data = await res.json();
-        if (requestSeq !== loadSeqRef.current) return;
-        setNotifications(Array.isArray(data.notifications) ? [...data.notifications].sort((a,b) => Number(a.isRead) - Number(b.isRead) || b.timestamp - a.timestamp) : []);
+        if (requestSeq !== loadSeqRef.current || ownerRef.current !== account) return;
+        if (!Array.isArray(data.notifications)) throw new Error('Invalid notifications response');
+        setSnapshots(previous => storeNotificationSnapshot(previous, account, filter, [...data.notifications].sort((a,b) => Number(a.isRead) - Number(b.isRead) || b.timestamp - a.timestamp)));
         if (typeof data.muteInAppNotifications === 'boolean' && muteSeqRef.current === loadSeq) {
           setIsMuted(data.muteInAppNotifications);
         }
         onRefreshCount();
-      } else if (requestSeq === loadSeqRef.current) {
+      } else if (requestSeq === loadSeqRef.current && ownerRef.current === account) {
         setActionFeedback({error:true,message:'Notifications could not be loaded. Please reopen the inbox to retry.'});
       }
     } catch (e) {
-      if (requestSeq === loadSeqRef.current) setActionFeedback({error:true,message:'Notifications could not be loaded. Please reopen the inbox to retry.'});
+      if (requestSeq === loadSeqRef.current && ownerRef.current === account) setActionFeedback({error:true,message:'Notifications could not be loaded. Please reopen the inbox to retry.'});
     } finally {
-      if (requestSeq === loadSeqRef.current) setLoading(false);
+      if (requestSeq === loadSeqRef.current && ownerRef.current === account) setLoading(false);
     }
   };
 
@@ -206,26 +228,26 @@ export function NotificationInbox({
       const res = await customFetch(`/api/notifications/${encodeURIComponent(id)}/read`, { method: 'POST' });
       if (!res.ok) throw new Error('Read status could not be saved. Please retry.');
       if (ownerRef.current !== account) return;
-      setNotifications(prev => filterRef.current === 'UNREAD' ? prev.filter(n => n.id !== id) : prev.map(n => n.id === id ? {...n,isRead:true} : n));
+      setNotifications(prev => prev.map(n => n.id === id ? {...n,isRead:true} : n));
       onRefreshCount();
     } catch {
       if (ownerRef.current === account) setActionFeedback({error:true,message:'Read status could not be saved. Please retry.'});
-    } finally { readBusy.current.delete(id); }
+    } finally { if (ownerRef.current === account) readBusy.current.delete(id); }
   };
 
   const handleMarkAllRead = async () => {
     if (readBusy.current.has('all')) return;
-    const account = owner, ids = new Set(notifications.map(n => n.id));
+    const account = owner;
     readBusy.current.add('all'); ++loadSeqRef.current; setLoading(false);
     try {
       const res = await customFetch('/api/notifications/read-all', { method: 'POST' });
       if (!res.ok) throw new Error('Read status could not be saved.');
       if (ownerRef.current !== account) return;
-      setNotifications(prev => filterRef.current === 'UNREAD' ? prev.filter(n => !ids.has(n.id)) : prev.map(n => ids.has(n.id) ? {...n,isRead:true} : n));
+      setNotifications(prev => prev.map(n => ({...n,isRead:true})));
       onRefreshCount();
     } catch {
       if (ownerRef.current === account) setActionFeedback({error:true,message:'Read status could not be saved. Please retry.'});
-    } finally { readBusy.current.delete('all'); }
+    } finally { if (ownerRef.current === account) readBusy.current.delete('all'); }
   };
 
   const handleClearAll = async () => {
@@ -367,11 +389,9 @@ export function NotificationInbox({
         <div className="mobile-alert-tabs px-3 sm:px-4 py-2 border-b border-slate-200 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-900/30 flex flex-col items-stretch gap-2">
           <div className="notification-filter-grid" role="group" aria-label="Filter notifications">
             {[
+              { id: 'ALL' as const, label: 'All' },
               { id: 'WATCHLIST' as const, label: 'Watchlist' },
               { id: 'RESULTS' as const, label: 'Results' },
-              { id: 'ACTIONS' as const, label: 'Actions' },
-              { id: 'UNREAD' as const, label: unreadCount === null ? 'Unread' : `Unread (${unreadCount})` },
-              { id: 'ALL' as const, label: 'All' },
             ].map(f => (
               <motion.button
                 key={f.id}
@@ -399,12 +419,12 @@ export function NotificationInbox({
             ))}
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center justify-end gap-2 shrink-0">
             {unreadCount !== null && unreadCount > 0 && (
               <button
                 onClick={handleMarkAllRead}
                 disabled={isClearing}
-                className="text-[11px] font-bold text-emerald-600 hover:underline flex items-center gap-1 cursor-pointer"
+                className="min-h-[44px] px-2 text-[11px] font-bold text-emerald-600 hover:underline flex items-center gap-1 cursor-pointer"
               >
                 <Check size={12} />
                 <span>Mark all read</span>
@@ -434,13 +454,12 @@ export function NotificationInbox({
             </div>
           </div>
         )}
+        {loading && snapshot !== undefined && <p role="status" className="px-4 py-1 text-xs text-slate-500">Checking for updates…</p>}
         {/* Notification Stream List */}
         <div className="p-2.5 sm:p-3 overflow-y-auto flex-1 space-y-2 pb-16 sm:pb-3">
-          {loading ? (
-            <div className="py-16 text-center text-xs text-slate-400">
-              Loading notifications...
-            </div>
-          ) : notifications.length === 0 ? (
+          {snapshot === undefined && (loading || !actionFeedback) ? (
+            <div role="status" aria-label="Loading notifications"><ComponentSkeleton type="section" /></div>
+          ) : snapshot === undefined ? <p role="status" className="py-8 text-center text-xs text-slate-500">No saved notifications available. Reopen the inbox to retry.</p> : notifications.length === 0 ? (
             <div className="py-16 text-center space-y-2">
               <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto text-slate-400">
                 <Bell size={18} />
@@ -458,7 +477,7 @@ export function NotificationInbox({
             <motion.div
               key="notif-stream-container"
               variants={containerStaggerVariants}
-              initial="hidden"
+              initial={false}
               animate="visible"
               className="space-y-2"
             >
@@ -473,7 +492,7 @@ export function NotificationInbox({
                     <motion.div
                       key={n.id || `notif-${idx}`}
                       variants={notificationItemVariants}
-                      initial="hidden"
+                      initial={false}
                       animate="visible"
                       exit="exit"
                       layout

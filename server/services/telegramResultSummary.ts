@@ -20,7 +20,7 @@ export async function deliverTelegramResultSummary(input: Input, deps: Dependenc
   const deliveryToken = randomUUID();
   const delivery = await deps.store.claim(deliveryKey, 'delivery', input.source, deliveryToken);
   if (!delivery.acquired) return 'duplicate';
-  const summaryKey = identity + ':summary:' + input.lang;
+  const summaryKey = identity + ':summary:v2:' + input.lang;
   const generate = async () => {
     const token = randomUUID();
     const claim = await deps.store.claim(summaryKey, 'summary', input.source, token);

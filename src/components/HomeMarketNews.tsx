@@ -38,20 +38,20 @@ export function NewsTextCard({ item, lead = false }: { item: HomeNewsItem; lead?
   );
 }
 
-export function HomeMarketNews({ active, identity, watched, onNavigate, density }: {
-  active: boolean; identity: string; watched: string[]; onNavigate: (tab: string) => void; density: string;
+export function HomeMarketNews({ active, identity, watched, onNavigate, density, watchlistOnly = false, watchlistStatus = 'ready' }: {
+  active: boolean; identity: string; watched: string[]; onNavigate: (tab: string) => void; density: string; watchlistOnly?: boolean; watchlistStatus?: string;
 }) {
-  const feed = useMemo(() => new HomeNewsFeed(), [identity]);
+  const feed = useMemo(() => new HomeNewsFeed(), [identity, watchlistOnly ? watched.join('|') : '']);
   const state = useSyncExternalStore(feed.subscribe, feed.getSnapshot, feed.getSnapshot);
   const watchedRef = useRef(watched); watchedRef.current = watched;
   const refresh = useCallback(() => feed.refresh(async signal => {
     const response = await customFetch('/api/news', { signal });
     if (!response.ok) throw new Error('News unavailable');
     return response.json();
-  }, items => selectHomeNews(items, watchedRef.current)), [feed]);
+  }, items => selectHomeNews(items, watchedRef.current, Date.now(), watchlistOnly)), [feed, watchlistOnly]);
 
   useEffect(() => {
-    if (!active) return;
+    if (!active || (watchlistOnly && (watchlistStatus !== 'ready' || !watched.length))) return;
     if (!document.hidden) void refresh();
     const onVisibility = () => { if (document.hidden) feed.cancel(); };
     const onNavRefresh = (event: Event) => { if (!document.hidden && (event as CustomEvent).detail?.tab === 'home') void refresh(); };
@@ -62,16 +62,17 @@ export function HomeMarketNews({ active, identity, watched, onNavigate, density 
       document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('bse_nav_tab_refresh', onNavRefresh);
     };
-  }, [active, feed, refresh]);
-  useVisibilityInterval(refresh, 60_000, active);
+  }, [active, feed, refresh, watchlistStatus, watched.length, watchlistOnly]);
+  useVisibilityInterval(refresh, 60_000, active && (!watchlistOnly || (watchlistStatus==='ready' && !!watched.length)));
 
+  if (watchlistOnly && (watchlistStatus !== 'ready' || !watched.length)) return <section className="home-news"><h2>Your stock news</h2><p className="home-news-status">{watchlistStatus==='loading'?'Checking your watchlist…':watchlistStatus==='error'?'Your watchlist could not be checked.':'Add stocks to see matching company news.'}</p></section>;
   const initial = state.checkedAt === null && !state.error;
   return (
     <section className={`home-news home-news--${density}`} aria-labelledby="home-news-title" aria-busy={state.loading}>
       <div className="home-news-heading">
         <div className="home-news-heading-copy">
           <span className="home-news-icon"><Newspaper size={20} aria-hidden="true" /></span>
-          <div><h2 id="home-news-title">Market News</h2><p>Headlines that matter, from trusted sources.</p></div>
+          <div><h2 id="home-news-title">{watchlistOnly ? 'Your stock news' : 'Market News'}</h2><p>{watchlistOnly ? 'Headlines matching your watchlist companies.' : 'Headlines that matter, from trusted sources.'}</p></div>
         </div>
         <div className="home-news-heading-actions">
           <ActionButton type="button" variant="ghost" size="sm" className="home-news-control" onClick={() => onNavigate('news')}>All news <ArrowRight size={14} aria-hidden="true" className="inline" /></ActionButton>
@@ -87,7 +88,7 @@ export function HomeMarketNews({ active, identity, watched, onNavigate, density 
       </div>}
       {initial && !state.displayed.length ? <div role="status" className="home-news-skeleton"><span className="sr-only">Checking market headlines…</span><div aria-hidden="true" className="home-news-grid">{[0, 1, 2].map(index => <div key={index} className={`home-news-card${index === 0 ? ' home-news-card--lead' : ''}`}><span /><span /><span /></div>)}</div></div>
         : state.displayed.length ? <div className="home-news-grid">{state.displayed.map((item, index) => <NewsTextCard key={item.id} item={item} lead={index === 0} />)}</div>
-        : !state.error && <div className="home-news-status">No headlines available yet. Check again soon or explore Market News.</div>}
+        : !state.error && <div className="home-news-status">{watchlistOnly ? 'No matching company headlines yet. We will keep this section focused on your stocks.' : 'No headlines available yet. Check again soon or explore Market News.'}</div>}
     </section>
   );
 }

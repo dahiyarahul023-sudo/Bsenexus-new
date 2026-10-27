@@ -260,3 +260,28 @@ export async function clearAllNotifications(userId: string = 'guest'): Promise<v
   localClearedBefore[userId] = Math.max(localClearedBefore[userId] || 0,Date.now());
   writeLocalJson(INBOX_STATE_FILE,localClearedBefore);
 }
+
+/** Insert a private, stable-ID event once. A duplicate never rewrites read/clear state. */
+export async function addNotificationOnce(notif: AppNotification): Promise<boolean> {
+  if (!notif.id || !notif.userId || ['guest', 'system', 'all'].includes(notif.userId)) throw new Error('A private notification owner is required');
+  let inserted: boolean;
+  if (needsCloud()) {
+    inserted = await cloud('insert notification once', async () => {
+      const { data, error } = await getSupabase().from(NOTIFICATIONS_TABLE)
+        .upsert(toRow(notif), { onConflict: 'id', ignoreDuplicates: true }).select('id');
+      if (error) throw error;
+      if (!Array.isArray(data)) throw new Error('Notification insertion was not confirmed');
+      return data.some(row => row.id === notif.id);
+    });
+  } else {
+    inserted = !notificationsCache.some(item => item.id === notif.id);
+  }
+  if (!inserted) return false;
+  if (!notificationsCache.some(item => item.id === notif.id)) {
+    notificationsCache.unshift({ ...notif });
+    notificationsCache = notificationsCache.slice(0, MAX_CACHED);
+    // Immediate development persistence also retains stable IDs on a local restart.
+    writeLocalJson(NOTIFICATIONS_FILE, notificationsCache);
+  }
+  return true;
+}

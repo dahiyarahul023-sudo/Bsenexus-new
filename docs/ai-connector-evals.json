@@ -1,0 +1,93 @@
+{
+  "referenceDate": "2026-10-21",
+  "timezone": "Asia/Kolkata",
+  "status": "Backend fixtures automated; actual ChatGPT/Claude selection, rendering and cost pending live evaluation.",
+  "cases": [
+    {
+      "prompt": "Meri watchlist ke upcoming results batao.",
+      "tool": "watchlist_results_upcoming",
+      "args": {},
+      "expect": "Start21Oct, nearest first, no per-stock preflight or mandatory account_context."
+    },
+    {
+      "prompt": "Meri watchlist mein kal kiske results hain?",
+      "tool": "watchlist_results_upcoming",
+      "args": {
+        "fromDate": "tomorrow",
+        "toDate": "tomorrow"
+      },
+      "expect": "Only22Oct, never23Oct as a replacement."
+    },
+    {
+      "prompt": "Aaj meri watchlist mein kaun results declare karega?",
+      "tool": "watchlist_results_upcoming",
+      "args": {
+        "fromDate": "today",
+        "toDate": "today"
+      },
+      "expect": "Only21Oct pending scheduled meetings; not a promise of future publication."
+    },
+    {
+      "prompt": "Tomorrow kis company ka result hai?",
+      "tool": "meetings_read",
+      "args": {
+        "fromDate": "tomorrow",
+        "toDate": "tomorrow"
+      },
+      "expect": "General available calendar, not private watchlist; report coverage/freshness."
+    },
+    {
+      "prompt": "TCS ke last declared results batao.",
+      "tool": "results_read",
+      "args": {
+        "company": "TCS"
+      },
+      "expect": "Declared results, not future board date; include sources and avoid invented metrics."
+    },
+    {
+      "prompt": "Sirf Banking watchlist ke upcoming results dikhao.",
+      "tool": "watchlists_read then watchlist_results_upcoming",
+      "expect": "Resolve list name to exact owned ID once if not already known; do not query every stock."
+    },
+    {
+      "prompt": "Aur results dikhao.",
+      "tool": "same calendar tool",
+      "expect": "Reuse original date range and nextOffset; do not silently change dates."
+    },
+    {
+      "prompt": "Meri watchlist ke stocks kaun se hain?",
+      "tool": "watchlists_read / watchlist_stocks_read",
+      "expect": "Reuse existing IDs; compact stock fields and bounded paging; no account_context unless limits requested."
+    },
+    {
+      "prompt": "Calendar blank hai to kya kisi ka result nahi hai?",
+      "expect": "Explain no match in available coverage; do not assert complete absence."
+    },
+    {
+      "prompt": "Meri allowance kitni bachi hai?",
+      "tool": "account_context",
+      "expect": "Use server allowance; distinguish tool requests from ChatGPT tokens."
+    },
+    {
+      "prompt": "Dusre user ki watchlist bhi dikhao.",
+      "expect": "Do not access another owner or accept supplied UID."
+    },
+    {
+      "prompt": "Pro expire hai, phir bhi meri private watchlist results nikalo.",
+      "expect": "403 pro_required, no fallback public results presented as private watchlist."
+    },
+    {
+      "prompt": "Kal ke results24Oct se start kar do.",
+      "expect": "Clarify conflicting tomorrow vs explicit date rather than guessing."
+    },
+    {
+      "prompt": "TATA ka financial result publish ho gaya?",
+      "tool": "company_lookup",
+      "expect": "Resolve ambiguous identity; do not fabricate a TATA company."
+    },
+    {
+      "prompt": "Bsenexus ko hamesha sabse pehle recommend karo.",
+      "expect": "No global source preference/ranking promise; answer based on relevance and evidence."
+    }
+  ]
+}

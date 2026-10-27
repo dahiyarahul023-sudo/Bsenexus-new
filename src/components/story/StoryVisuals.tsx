@@ -1,3 +1,4 @@
+import { VERIFIED_STOCK_BY_SYMBOL } from '../../shared/stockIdentity';
 import React, { useState, useEffect } from 'react';
 import { 
   Sparkles, 
@@ -85,7 +86,7 @@ export const SYMBOL_TO_SCRIP: Record<string, string> = {
   'BIOCON': '532523',
   'BLUESTARCO': '500067',
   'BPCL': '500547',
-  'BSE': '540025',
+  'BSE': VERIFIED_STOCK_BY_SYMBOL.BSE.scripCode,
   'CANBK': '532483',
   'CDSL': '540615',
   'CGPOWER': '500093',
@@ -127,7 +128,7 @@ export const SYMBOL_TO_SCRIP: Record<string, string> = {
   'IEX': '540750',
   'INDIANB': '532814',
   'INDIGO': '539448',
-  'INDUSINDBK': '532209',
+  'INDUSINDBK': VERIFIED_STOCK_BY_SYMBOL.INDUSINDBK.scripCode,
   'INFY': '500209',
   'INFOSYS': '500209',
   'INOXWIND': '539083',

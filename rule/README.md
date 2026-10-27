@@ -43,3 +43,19 @@ Nine `frontend-*` domains cover navigation, sessions, shared design, feed/detail
 ## Detailed frontend completion specification
 
 Read [FRONTEND_COMPLETION_GUIDE.md](FRONTEND_COMPLETION_GUIDE.md) for the user's complete requirement and its remaining implementation gates. It explains action ownership and every connected effect, shared design/motion adoption, the planned action-level map, automatic refresh, coverage and truthful AI handoff. Use it with the existing rules and journey map; it does not certify runtime completion.
+
+## Directory counts and IndexNow operations
+
+`src/config/companyDirectory.ts` owns curated membership/order and displayed counts; keep the BSE_26_COMPANIES compatibility export until its consumers migrate. Adding a profile must update this single list, never a separate hardcoded count. IndexNow uses the existing server primary, INDEXNOW_KEY server env (public verification-file bootstrap if unset) and INDEXNOW_SUBMITTER=server/cloudflare/off. Check actual Cloudflare Crawler Hints before selecting another primary. The additive service-only URL ledger migration must precede runtime release. Its claims reserve 24 hours before HTTP; no indexing work is awaited from filing ingestion. See changes/directory-loading-indexnow.md for current schema/source evidence and publication gates.
+
+## MCP directory release boundaries
+
+Use docs/MCP_DIRECTORY_REVIEW.md for the 21 October connector checklist, reviewer fixtures and remaining submission gates. Human titles and complete write annotations must agree with actual wire registration, not only a source list. PDF analysis must not promote a legacy heuristic to document evidence or consume quota after a failed generation. Shared stockIdentity pins verified code/name repairs across resolver, Watchlist/Story/F&O fallback consumers. /ai-docs and the shared privacy disclosure describe actual limited coverage and processing; a working connector and local SDK tests do not prove exchange redistribution permission or a clean Claude directory-review flow. Reviewer overrides require a dedicated, expiring server UID and never grant Pro.
+
+## Retained panels and operator identity
+
+Closing a dialog must not discard its confirmed same-owner snapshots: check the mounting parent as well as the child reset effect. NotificationInbox stays owner-keyed under Layout while closed and keeps ephemeral filter snapshots; account switches remount and clear them. Unknown watchlists render the shared content skeleton until an actual response, including confirmed empty. Pull indicators must sit below controls that stay stable. BSE equity has no BSE security code; 540025 is Advanced Enzyme. Keep public company render, intelligence, legacy evidence projection, ingestion symbol/source and IndexNow identity aligned through shared exact matchers and verified master pins. See changes/brand-refresh-inbox.md.
+
+## Deep security audit repair — release prerequisite
+
+See changes/deep-audit-repair.md before deploying its branch. The forward migration requires the verified modern payment contract; payment/trial/reconcile and shared auth counters are service-only transactions. Do not auto-promote profile plan fields to paid provenance. Owner administration needs a same-UID PIN elevation valid for 15 minutes. Personal Telegram linking is bot-proven with expiring one-use challenges; an old typed chat ID cannot authorize a send. The runtime is not deployed. Following explicit approval, the staging migration and rolled-back service-role checks passed on 25 October 2026 IST; production rollout is pending.

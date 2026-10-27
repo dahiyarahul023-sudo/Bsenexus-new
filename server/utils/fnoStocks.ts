@@ -1,3 +1,4 @@
+import { VERIFIED_STOCK_BY_SYMBOL } from '../../src/shared/stockIdentity';
 /**
  * F&O securities list — the NSE stocks on which futures & options trade.
  * Source: NSE fo_mktlots.csv (fetched 2026-09-27).
@@ -261,7 +262,7 @@ const FNO_BSE_SCRIP: Record<string, string> = {
   'BIOCON': '532523',
   'BLUESTARCO': '500067',
   'BPCL': '500547',
-  'BSE': '540025',
+  'BSE': VERIFIED_STOCK_BY_SYMBOL.BSE.scripCode,
   'CANBK': '532483',
   'CDSL': '540615',
   'CGPOWER': '500093',
@@ -304,7 +305,7 @@ const FNO_BSE_SCRIP: Record<string, string> = {
   'IEX': '540750',
   'INDIANB': '532814',
   'INDIGO': '539448',
-  'INDUSINDBK': '532209',
+  'INDUSINDBK': VERIFIED_STOCK_BY_SYMBOL.INDUSINDBK.scripCode,
   'INFY': '500209',
   'INOXWIND': '539083',
   'IOC': '530965',

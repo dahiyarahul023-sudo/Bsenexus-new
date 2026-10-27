@@ -1,3 +1,5 @@
+import { getAdrSnapshot } from './adrService.js';
+import type { AdrSnapshot } from '../../src/shared/adr.js';
 import { fetchLiveMarketIndices } from './marketIndicesService.js';
 import { fetchAllMultiSourceNewsFeeds, StockNewsItem } from './stockNewsService.js';
 import { getRecentAnnouncements } from '../database/announcementDao.js';
@@ -162,6 +164,7 @@ export async function getLiveBluechipMovers(forceRefresh = false): Promise<LiveM
 export const MAX_MAJOR_STORY_AGE_MS = 18 * 60 * 60 * 1000;
 
 export interface LiveStoryFeedResponse {
+  adr?: AdrSnapshot;
   timestamp: number;
   session: {
     isMarketOpen: boolean;
@@ -252,14 +255,15 @@ export async function getLiveStoryFeed(): Promise<LiveStoryFeedResponse> {
   }
 
   // 2. Fetch live parallel feeds
-  const [indicesData, movers, rawNews, rawAnnouncements, calendarData, nseEvents, fiiDii] = await Promise.all([
+  const [indicesData, movers, rawNews, rawAnnouncements, calendarData, nseEvents, fiiDii, adr] = await Promise.all([
     fetchLiveMarketIndices().catch(() => null),
     getLiveBluechipMovers(false).catch(() => []),
     fetchAllMultiSourceNewsFeeds(false).catch(() => [] as StockNewsItem[]),
     getRecentAnnouncements(60).catch(() => []),
     getResultsCalendarData('all').catch(() => null),
     fetchGeneralNSEEventCalendar().catch(() => []),
-    getLiveFiiDiiData().catch(() => null)
+    getLiveFiiDiiData().catch(() => null),
+    getAdrSnapshot().catch(() => undefined)
   ]);
 
   // Extract sensex and nifty
@@ -474,6 +478,7 @@ export async function getLiveStoryFeed(): Promise<LiveStoryFeedResponse> {
     },
     fiiDii,
     fresh18hAnnouncements,
-    fresh18hNewsStories
+    fresh18hNewsStories,
+    adr
   };
 }

@@ -9,6 +9,8 @@ test('PORT supports platform configuration and rejects invalid values', () => {
   assert.equal(resolveServerPort('8080'), 8080);
   assert.equal(resolveServerPort('8080', ['node', 'server.ts', '--port', '3000']), 3000);
   assert.equal(resolveServerPort('8080', ['node', 'server.ts', '--port=3000']), 3000);
+  // npm run dev -- --port 4000 can override the preview script's default.
+  assert.equal(resolveServerPort('8080', ['node', 'server.ts', '--port', '3000', '--port=4000']), 4000);
   for (const value of ['0', '-1', '65536', '3.5', 'abc']) {
     assert.throws(() => resolveServerPort(value), /PORT must/);
   }

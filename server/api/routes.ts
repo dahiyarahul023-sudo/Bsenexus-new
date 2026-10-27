@@ -1,9 +1,16 @@
+import { readResultHistory } from '../services/resultHistoryRead.js';
+import { telegramLinksRouter } from './telegramLinks.js';
+import { requireVerifiedTelegramTarget, telegramLinkCommand } from '../database/telegramLinksDao.js';
+import { startHistorySync, historySyncStatus } from '../services/historicalFilings.js';
+import { createAdrHandler } from './adr.js';
 import express from "express";
+import { parseCalendarScope } from '../../src/shared/calendarScope.js';
 import bcrypt from "bcryptjs";
 import { getSettings, saveSettings } from "../database/settingsDao.js";
 import { getLogs, addLog, clearLogs } from "../database/logDao.js";
 import { saveFeedback, getAllFeedback, markFeedbackRead } from "../database/feedbackDao.js";
 import { getRecentAnnouncements, markAnnouncementSent, getAnnouncementById, processedBloomFilter, sentBloomFilter, isAnnouncementProcessed, isAnnouncementSent, getBloomFilterDiagnostics } from "../database/announcementDao.js";
+import { isBseFiling } from '../../src/shared/filingSource.js';
 import { generateDirectSummary, generateAndSendSummary, askAppHelpAI } from "../services/gemini.js";
 import { escapeHTML, isMarketHoursIST } from "../utils/helpers.js";
 import { resolvePersonalTelegramTarget } from '../utils/telegramTarget.js';
@@ -48,7 +55,7 @@ import {
 } from "../services/resultsCalendarService.js";
 import { getStorageStatusReport, runAutoStorageCleanup, triggerManualTestStorageAlert, pruneAnnouncementsByPercentage } from "../services/storageMonitor.js";
 import { getManualStorageMode, setManualStorageMode, resetQuotaExceededFlag, isFirestoreQuotaExceeded, resetAdminPermissionDenied, isAdminPermissionDenied } from "../database/localStore.js";
-import { getCompanyIntelligence, generateCompanyAiOverview, fetchStockQuote } from "../services/companyIntelService.js";
+import { getCompanyIntelligence, getCompanyFilingCount, generateCompanyAiOverview, fetchStockQuote } from "../services/companyIntelService.js";
 import { filterNotifications, getAllNotifications, getUnreadNotificationCount, markNotificationRead, markNotificationsReadBatch, markAllNotificationsRead, clearAllNotifications } from "../database/notificationDao.js";
 import { circuitRegistry } from "../utils/circuitBreaker.js";
 import { 
@@ -77,6 +84,7 @@ import { readLocalJson } from "../database/localStore.js";
 import { classifyMaterialEvent } from "../services/timelineClassifier.js";
 import { searchCompany } from "./search.js";
 import { fetchLiveMarketIndices, getMarketSessionStatus } from "../services/marketIndicesService.js";
+import { getAdrSnapshot } from '../services/adrService.js';
 import { getLiveStoryFeed } from "../services/storyFeedService.js";
 import { sendOneSignalPush, isOneSignalConfigured, ONESIGNAL_APP_ID } from "../services/oneSignal.js";
 import { 
@@ -91,6 +99,8 @@ import {
 import { seoRouter } from "./seoRoutes.js";
 import { reconcilePaymentEntitlement } from "../database/paymentEntitlementsDao.js";
 import { isPaymentStoreUnavailable } from "../database/paymentStore.js";
+import { giftAccessRouter } from './giftAccess.js';
+import { getAccessProfile } from '../services/subscriptionAccess.js';
 import { paymentsRouter } from "./payments.js";
 import { referralsRouter } from "./referrals.js";
 import { faqRouter } from "./faq.js";
@@ -98,11 +108,16 @@ import { notesRouter } from "./notes.js";
 import { impactRadarRouter } from "./impactRadar.js";
 import { pageRenderCache, staticGuideCache, apiResponseCache } from "../utils/renderCache.js";
 import { getMarketGuides, getMarketGuideBySlug } from "../services/marketGuidesService.js";
+import { invalidateUserWatchlistCache } from '../database/watchlistDao.js';
+import { aiConnectionsRouter } from '../ai/http.js';
+import { connectionsEnabled } from '../ai/policy.js';
 import { aiPluginRouter } from "./aiPlugin.js";
 
 export const apiRouter = express.Router();
+apiRouter.use(telegramLinksRouter);
 
 // Universal AI Plugin & OpenAPI Action Gateway (ChatGPT, Gemini, Agents)
+apiRouter.use("/ai/connections", aiConnectionsRouter);
 apiRouter.use("/ai", aiPluginRouter);
 
 // Mount Super SEO Suite (11 Verified Skills Engine)
@@ -110,6 +125,7 @@ apiRouter.use("/seo", requireAdmin, aiRateLimiter, seoRouter);
 
 // Cashfree one-time Pro payments (create-order / verify / webhook / status)
 apiRouter.use("/payments", paymentsRouter);
+apiRouter.use("/gifts", giftAccessRouter);
 
 // Referral partner & creator affiliate program
 apiRouter.use("/referrals", referralsRouter);
@@ -151,9 +167,15 @@ apiRouter.get("/config/public", (_req, res) => {
 });
 
 // Health Check Endpoint with Circuit Breakers & Cache Telemetry
-apiRouter.get("/health", (_req, res) => {
+apiRouter.get("/health", (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
-  res.json({ 
+  // SECURITY (24 Oct 2026 audit INFO-1): anonymous callers only learn that the
+  // process is alive. Upstream health, cache and circuit-breaker internals help
+  // an attacker time attacks, so they are admin-only.
+  if ((req as any).user?.isAdmin !== true) {
+    return res.json({ status: "ok", timestamp: Date.now() });
+  }
+  res.json({
     status: "ok", 
     uptime: process.uptime(),
     bseSource: { ...getBseHealth(), ...getBseFeedStaleness() },
@@ -179,7 +201,7 @@ apiRouter.get("/ping", (_req, res) => {
 });
 
 // Cache Telemetry & Diagnostics API
-apiRouter.get("/cache/stats", (_req, res) => {
+apiRouter.get("/cache/stats", requireAdmin, (_req, res) => {
   res.json({
     success: true,
     pages: pageRenderCache.getStats(),
@@ -210,7 +232,7 @@ apiRouter.post("/cache/clear", requireAdmin, (req, res) => {
 });
 
 // Circuit Breaker Telemetry & Status API
-apiRouter.get("/circuit-breakers", (_req, res) => {
+apiRouter.get("/circuit-breakers", requireAdmin, (_req, res) => {
   res.json({
     success: true,
     circuitBreakers: circuitRegistry.getAllStatuses()
@@ -547,7 +569,7 @@ apiRouter.get("/announcements",
         processAnnouncements().catch(() => {});
       }
     } catch { /* non-fatal: staleness headers are best-effort */ }
-    // Cap derived from per-stock policy: 25 filings per tracked stock × up to 100 stocks.
+    // Recent-feed response budget; full company history is separately paged.
     // DAO serves from in-memory cache (up to 10k items), so this costs no extra Firestore reads.
     const limitParam = Math.min(2500, Math.max(1, parseInt(req.query.limit as string) || 50));
     let symbols: string[] | undefined;
@@ -628,7 +650,7 @@ apiRouter.post("/announcements/:id/generate-summary", requireAuth, aiRateLimiter
     let isProLike = isAdminUser;
     let profile: any = null;
     try {
-      profile = await getUserProfile(uid);
+      profile = await getAccessProfile(uid, { durable: true });
       const now = Date.now();
       isProLike = isProLike || profile?.tier === 'admin' || Boolean(profile?.proExpiresAt && profile.proExpiresAt > now);
     } catch (profileErr: any) {
@@ -735,6 +757,7 @@ apiRouter.post("/announcements/:id/generate-summary", requireAuth, aiRateLimiter
 
 apiRouter.get("/watchlists", requireProOrAdmin, async (req, res) => {
   const uid = getReqUserId(req);
+  if (connectionsEnabled()) invalidateUserWatchlistCache(uid);
   res.json(await getAllWatchlists(uid));
 });
 
@@ -865,7 +888,7 @@ apiRouter.post("/watchlists/:id/symbols/bulk", requireProOrAdmin, async (req, re
   const uid = getReqUserId(req);
   if (Array.isArray(req.body.symbols)) {
     const isAdminUser = (req as any).user?.isAdmin === true || uid === 'admin';
-    const profile = uid !== 'guest' ? await getUserProfile(uid) : null;
+    const profile = uid !== 'guest' ? await getAccessProfile(uid, { durable: true }) : null;
     const isPro = isAdminUser || (profile?.tier === 'pro' && (!profile.proExpiresAt || profile.proExpiresAt > Date.now()));
 
     const cleanInputSymbols = req.body.symbols
@@ -1095,7 +1118,7 @@ apiRouter.post("/users/test-telegram", requireProOrAdmin, telegramRateLimiter, a
       });
     }
 
-    const cleanChatId = rawTargetChatId;
+    const cleanChatId = await requireVerifiedTelegramTarget(uid, rawTargetChatId, settings.chatId || process.env.TELEGRAM_CHAT_ID);
     const userName = (req as any).user?.displayName || (req as any).user?.email?.split('@')[0] || userProf?.displayName || 'Trader';
     const isAiSummaryOn = userProf?.notificationPreferences?.telegramAiSummaryEnabled !== false;
     const isAlertsOn = userProf?.notificationPreferences?.telegramAlertsEnabled !== false;
@@ -1122,7 +1145,7 @@ apiRouter.post("/users/test-telegram", requireProOrAdmin, telegramRateLimiter, a
       });
     }
   } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(err.status === 403 ? 403 : 500).json({ success: false, error: err.message });
   }
 });
 
@@ -1179,7 +1202,7 @@ apiRouter.get("/users/profile", requireAuth, async (req, res) => {
       });
     }
 
-    res.json({ success: true, profile });
+    res.json({ success: true, profile: profile ? await getAccessProfile(uid, { durable: true }) : profile });
   } catch (err: any) {
     if (isPaymentStoreUnavailable(err)) {
       return res.status(503).json({
@@ -1206,7 +1229,7 @@ async function isProLikeUser(uid: string, isAdminUser: boolean): Promise<boolean
     return true;
   }
 
-  const p = await getUserProfile(uid, { durable: true });
+  const p = await getAccessProfile(uid, { durable: true });
   if (!p) return false;
   const now = Date.now();
   return p.tier === 'admin' || Boolean(p.proExpiresAt && p.proExpiresAt > now);
@@ -1253,7 +1276,7 @@ apiRouter.post("/users/profile", requireAuth, async (req, res) => {
         'muteInAppNotifications', 'stocksHighPriority', 'stocksMediumPriority',
         'stocksLowPriority', 'concallsAndInvestorMeets', 'boardMeetingsAndOutcomes',
         'insiderTradingAndSAST', 'creditRatingChanges', 'annualReportsAndAudits',
-        'telegramNewsAlerts', 'telegramAlertsEnabled', 'telegramAiSummaryEnabled',
+        'telegramNewsAlerts', 'telegramAlertsEnabled', 'telegramAiSummaryEnabled', 'adrAlertsEnabled', 'storyNavigationButtons',
       ];
       for (const k of booleanKeys) {
         if (k in rawNp && typeof rawNp[k] === 'boolean') cleanedNp[k] = rawNp[k];
@@ -1318,9 +1341,15 @@ apiRouter.post("/users/profile", requireAuth, async (req, res) => {
       }
     }
 
-    const updatedProfile = await saveUserProfile(uid, { ...sanitizedPatch, uid });
+    if (sanitizedPatch.telegramChatId) {
+      const settings = await getSettings();
+      sanitizedPatch.telegramChatId = await requireVerifiedTelegramTarget(uid, sanitizedPatch.telegramChatId, settings.chatId || process.env.TELEGRAM_CHAT_ID);
+    } else if (sanitizedPatch.telegramChatId === null || sanitizedPatch.telegramChatId === '') {
+      await telegramLinkCommand('unlink', uid);
+    }
+    const updatedProfile = await saveUserProfile(uid, { ...sanitizedPatch, uid }, false, { durable: true });
     invalidateMonitorConfigCache(uid);
-    res.json({ success: true, profile: updatedProfile });
+    res.json({ success: true, profile: await getAccessProfile(uid, { durable: true }) });
   } catch (err: any) {
     if (isPaymentStoreUnavailable(err)) {
       return res.status(503).json({
@@ -1337,7 +1366,7 @@ apiRouter.post("/users/profile", requireAuth, async (req, res) => {
         suggestion: err.suggestion 
       });
     }
-    return res.status(500).json({ success: false, error: err.message });
+    return res.status(err.status === 403 ? 403 : 500).json({ success: false, error: err.message });
   }
 });
 
@@ -1417,12 +1446,18 @@ apiRouter.post("/users/telegram/settings", requireAuth, async (req, res) => {
       }
     }
 
-    const updatedProfile = await saveUserProfile(uid, patch);
+    if (patch.telegramChatId) {
+      const settings = await getSettings();
+      patch.telegramChatId = await requireVerifiedTelegramTarget(uid, patch.telegramChatId, settings.chatId || process.env.TELEGRAM_CHAT_ID);
+    } else if (unlink || patch.telegramChatId === null || patch.telegramChatId === '') {
+      await telegramLinkCommand('unlink', uid);
+    }
+    const updatedProfile = await saveUserProfile(uid, patch, false, { durable: true });
     invalidateMonitorConfigCache(uid);
 
     res.json({
       success: true,
-      profile: updatedProfile,
+      profile: await getAccessProfile(uid, { durable: true }),
       telegramChatId: updatedProfile.telegramChatId,
       telegramAlertsEnabled: updatedProfile.notificationPreferences?.telegramAlertsEnabled !== false,
       telegramAiSummaryEnabled: updatedProfile.notificationPreferences?.telegramAiSummaryEnabled !== false,
@@ -1437,7 +1472,7 @@ apiRouter.post("/users/telegram/settings", requireAuth, async (req, res) => {
         error: 'Profile is temporarily unavailable. Please retry in a moment.',
       });
     }
-    return res.status(500).json({ success: false, error: err.message });
+    return res.status(err.status === 403 ? 403 : 500).json({ success: false, error: err.message });
   }
 });
 
@@ -1471,6 +1506,7 @@ apiRouter.patch("/watchlists/:id/name", requireProOrAdmin, async (req, res) => {
 apiRouter.post("/send-to-telegram-manual", requireAdmin, telegramRateLimiter, async (req, res) => {
   try {
     const { newsId, companyName, subject, details, category, pdfLink, attachmentUrl, scripCode, calendarUrl } = req.body;
+    if (!isBseFiling({ newsId, pdfLink: pdfLink || attachmentUrl })) return res.status(400).json({ success: false, error: 'Telegram filing alerts use BSE filings only.' });
 
     if (!companyName || !subject) {
       return res.status(400).json({ success: false, error: "Missing required announcement fields" });
@@ -1565,10 +1601,11 @@ apiRouter.post("/send-holiday-telegram", requireAdmin, telegramRateLimiter, asyn
 
 apiRouter.get("/results-calendar", async (req, res) => {
   try {
-    res.setHeader('Cache-Control', 'private, max-age=10, stale-while-revalidate=30');
+    res.setHeader('Cache-Control', 'private, no-store');
     const filter = (req.query.filter as string || "all") as 'all' | 'today' | 'upcoming' | 'recent';
     const watchlistId = req.query.watchlistId as string;
-    const scope = (req.query.scope as string) === 'market' ? 'market' : 'watchlist';
+    const scope = req.query.scope === undefined ? 'watchlist' : parseCalendarScope(req.query.scope);
+    if (!scope) return res.status(400).json({ error: 'Invalid calendar scope' });
     const uid = getReqUserId(req);
     const data = await getResultsCalendarData(filter, watchlistId, uid, scope);
     res.json(data);
@@ -1579,10 +1616,12 @@ apiRouter.get("/results-calendar", async (req, res) => {
 
 apiRouter.post("/results-calendar/refresh", requireAuth, aiRateLimiter, async (req, res) => {
   try {
+    res.setHeader('Cache-Control', 'private, no-store');
     const mode = (req.query.mode as string) || req.body?.mode;
     const filter = (req.query.filter as string || "all") as 'all' | 'today' | 'upcoming' | 'recent';
     const watchlistId = req.query.watchlistId as string;
-    const scope = (req.query.scope as string) === 'market' ? 'market' : 'watchlist';
+    const scope = req.query.scope === undefined ? 'watchlist' : parseCalendarScope(req.query.scope);
+    if (!scope) return res.status(400).json({ error: 'Invalid calendar scope' });
     const uid = getReqUserId(req);
 
     if (mode === 'full') {
@@ -1620,6 +1659,8 @@ apiRouter.post("/results-calendar/telegram-broadcast", requireAdmin, telegramRat
 // ==========================================
 // Dynamic Live Market Story Feed Route
 // ==========================================
+apiRouter.get('/market/adr', createAdrHandler(getAdrSnapshot));
+
 apiRouter.get("/story/feed", async (_req, res) => {
   try {
     res.setHeader('Cache-Control', 'private, max-age=30, stale-while-revalidate=60');
@@ -1794,7 +1835,7 @@ apiRouter.post("/news/telegram/send", requireProOrAdmin, telegramRateLimiter, as
     let destination = chatId;
     if ((req as any).user?.isAdmin !== true) {
       const [profile, settings] = await Promise.all([getUserProfile(getReqUserId(req)), getSettings()]);
-      try { destination = resolvePersonalTelegramTarget(profile?.telegramChatId, chatId, settings.chatId || process.env.TELEGRAM_CHAT_ID); }
+      try { destination = await requireVerifiedTelegramTarget(getReqUserId(req), resolvePersonalTelegramTarget(profile?.telegramChatId, chatId, settings.chatId || process.env.TELEGRAM_CHAT_ID), settings.chatId || process.env.TELEGRAM_CHAT_ID); }
       catch (error: any) { return res.status(403).json({ success: false, error: error.message }); }
     }
     const result = await sendNewsToTelegram(newsItem, destination);
@@ -1811,7 +1852,7 @@ apiRouter.post("/news/telegram/digest", requireProOrAdmin, telegramRateLimiter, 
     let destination = chatId;
     if ((req as any).user?.isAdmin !== true) {
       const [profile, settings] = await Promise.all([getUserProfile(uid), getSettings()]);
-      try { destination = resolvePersonalTelegramTarget(profile?.telegramChatId, chatId, settings.chatId || process.env.TELEGRAM_CHAT_ID); }
+      try { destination = await requireVerifiedTelegramTarget(getReqUserId(req), resolvePersonalTelegramTarget(profile?.telegramChatId, chatId, settings.chatId || process.env.TELEGRAM_CHAT_ID), settings.chatId || process.env.TELEGRAM_CHAT_ID); }
       catch (error: any) { return res.status(403).json({ success: false, error: error.message }); }
     }
     const result = await sendWatchlistNewsDigestToTelegram(uid, destination);
@@ -1856,7 +1897,7 @@ apiRouter.post("/news/telegram/toggle-auto", requireAuth, async (req, res) => {
     const { enabled, sources, categories } = req.body;
 
     if (uid && uid !== 'anonymous') {
-      const user = await getUserProfile(uid);
+      const user = await getAccessProfile(uid, { durable: true });
       if (user) {
         // Telegram is PRO-ONLY for enabling/configuring, but DISABLING must
         // always be allowed — even for expired/free users (kill-switch rule).
@@ -2053,51 +2094,36 @@ apiRouter.get("/stock-results-history", async (req, res) => {
     if (!symbol && !scripCode && !companyName) {
       return res.status(400).json({ error: "Missing symbol or scripCode" });
     }
-    let history = await getStockResultsHistory(symbol, scripCode, companyName);
-    // Empty history for a real stock almost always means its filings sit
-    // outside the recent cache window — pull one year from BSE once, then
-    // re-read, so the tab never opens blank for a listed company. The pull
-    // is bounded (autoFetchDeepHistoricalResults): a fast fetch still
-    // lands in this same response; a slow/blocked BSE finishes in the
-    // background instead of freezing the page.
-    if (history.length === 0 && scripCode) {
-      try {
-        const fetchedInTime = await autoFetchDeepHistoricalResults(scripCode, symbol, 1);
-        if (fetchedInTime) {
-          history = await getStockResultsHistory(symbol, scripCode, companyName);
-        }
-      } catch (e) {}
-    }
-    res.json({ success: true, symbol, scripCode, history });
+    res.setHeader('Cache-Control', 'no-store');
+    const result = await readResultHistory(symbol, scripCode, companyName, req.query.autoSync !== '0');
+    res.json(result);
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// Deep Historical Sync for a single stock (1 to 5 years)
-// PERF (1 Oct 2026 audit PERF-001): Previously awaited the FULL deep fetch
-// synchronously, which could block the event loop for 60-80s on slow BSE
-// (same pattern as the 1 Oct outage). Now uses autoFetchDeepHistoricalResults
-// which is bounded at 8s wait + 10-min cooldown + in-flight dedupe. The fetch
-// continues in the background if it doesn't land within 8s; the client gets
-// an immediate response and can re-query for the filled history.
+// Explicit archive start returns a worker receipt; polling never starts new exchange work.
+// The worker is bounded, duplicate-safe by filing ID and reports storage failures explicitly.
 apiRouter.post("/stocks/:scripCode/fetch-deep-history", requireProOrAdmin, aiRateLimiter, async (req, res) => {
   try {
     const scripCode = req.params.scripCode;
-    const { symbol, years } = req.body;
-    const yearsNum = Math.max(1, Math.min(5, parseInt(years, 10) || 1));
-    const landed = await autoFetchDeepHistoricalResults(scripCode, symbol, yearsNum);
-    res.json({
-      success: true,
-      landed,
-      message: landed
-        ? `Deep fetch complete (${yearsNum} year${yearsNum > 1 ? 's' : ''}).`
-        : 'Deep fetch initiated in background. Refresh in a few seconds to see updated history.',
-      years: yearsNum
-    });
+    const yearsNum = Number(req.body?.years ?? 1);
+    if (!/^\d{6}$/.test(scripCode) || !Number.isInteger(yearsNum) || yearsNum < 1 || yearsNum > 5) return res.status(400).json({ success: false, error: 'Valid BSE code and 1–5 whole years required' });
+    const job = startHistorySync(scripCode, yearsNum);
+    res.setHeader('Cache-Control', 'no-store');
+    res.status(job.state === 'running' ? 202 : 200).json({ success: true, job });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }
+});
+
+apiRouter.get("/stocks/:scripCode/fetch-deep-history", requireProOrAdmin, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  const years = Number(req.query.years ?? 1);
+  if (!/^\d{6}$/.test(req.params.scripCode) || !Number.isInteger(years) || years < 1 || years > 5 || typeof req.query.id !== 'string') return res.status(400).json({ success: false, error: 'Invalid archive status request' });
+  const job = historySyncStatus(req.params.scripCode, years, req.query.id);
+  if (!job) return res.status(404).json({ success: false, error: 'Archive worker status unavailable after restart or on this instance. Saved records remain available; retry sync.' });
+  res.json({ success: true, job });
 });
 
 // Deep Historical Sync for all active Watchlist stocks (1 to 5 years)
@@ -2250,6 +2276,18 @@ apiRouter.get("/pdf-open", async (req, res) => {
 // ==========================================
 // FEATURE 1: COMPANY INTELLIGENCE & QUOTE
 // ==========================================
+
+apiRouter.get("/company-filing-counts", async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  const stocks = typeof req.query.stocks === 'string' ? [...new Set(req.query.stocks.split(','))] : [];
+  if (!stocks.length || stocks.length > 20 || stocks.some(code => !/^\d{6}$/.test(code) && code !== 'BSE')) return res.status(400).json({ success: false, error: 'Provide 1–20 exact BSE codes or BSE operator identity' });
+  const items: Record<string, any> = {};
+  for (let i = 0; i < stocks.length; i += 4) await Promise.all(stocks.slice(i, i + 4).map(async code => {
+    try { items[code] = { ...await getCompanyFilingCount(code === 'BSE' ? '' : code, code === 'BSE' ? 'BSE' : ''), available: true }; }
+    catch { items[code] = { available: false }; }
+  }));
+  res.json({ success: true, items });
+});
 
 apiRouter.get("/company-intel/:identifier", async (req, res) => {
   try {

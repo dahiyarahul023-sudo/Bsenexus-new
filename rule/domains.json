@@ -17,14 +17,21 @@
         "src/utils/avatarSave.ts",
         "src/components/AvatarPicker.tsx",
         "src/components/ui/UserAvatar.tsx",
-        "supabase/migrations/20261011031315_restrict_user_skeleton_rpc.sql"
+        "supabase/migrations/20261011031315_restrict_user_skeleton_rpc.sql",
+        "supabase/migrations/20261024193046_deep_audit_security.sql",
+        "server/api/telegramLinks.ts",
+        "server/database/telegramLinksDao.ts",
+        "scripts/verify-deep-audit-staging.sql"
       ],
       "tests": [
         "server/tests/authIdentity.test.ts",
         "server/tests/accountProtection.test.ts",
         "server/tests/recaptchaSecurity.test.ts",
         "server/tests/avatar.test.ts",
-        "server/tests/userSkeletonPrivileges.test.ts"
+        "server/tests/userSkeletonPrivileges.test.ts",
+        "server/tests/deepAuditSql.test.ts",
+        "server/tests/deepAuditAuth.test.ts",
+        "server/tests/clientIpSpoofing.test.ts"
       ],
       "reason": "Verified token \u2192 server session \u2192 current durable profile \u2192 route authorization. Browser roles are display state; never authority. The server-only ensure_user_skeleton RPC denies browser EXECUTE, uses SECURITY INVOKER and a fixed empty search path with a qualified users relation. Its narrow production permission repair preserves existing paid rows on retry."
     },
@@ -51,13 +58,20 @@
         "public/llms-full.txt",
         "src/components/HelpModal.tsx",
         "src/components/TermsModal.tsx",
-        "src/components/LandingPage.tsx"
+        "src/components/LandingPage.tsx",
+        "supabase/migrations/20261024193046_deep_audit_security.sql",
+        "scripts/verify-deep-audit-staging.sql",
+        "server/services/subscriptionAccess.ts",
+        "server/database/giftAccessDao.ts",
+        "supabase/migrations/20261026192403_gift_pro_access.sql"
       ],
       "tests": [
         "server/tests/paymentEntitlement.test.ts",
-        "server/tests/pricingSync.test.ts"
+        "server/tests/pricingSync.test.ts",
+        "server/tests/deepAuditSql.test.ts",
+        "server/tests/deepAuditAuth.test.ts"
       ],
-      "reason": "Create, webhook, verify, recover and claim must agree on owner, plan, amount/currency and exactly-once durable grant. Profile edits must preserve paid rights."
+      "reason": "Create, webhook, verify, recover and claim must agree on owner, plan, amount/currency and exactly-once durable grant. Profile edits must preserve paid rights. Deep-audit repair moves reconciliation into the same account lock as granting; profile fields cannot become paid provenance. Modern-schema forward migration is required before runtime deployment."
     },
     {
       "id": "trial-quota",
@@ -77,11 +91,15 @@
         "src/components/HelpModal.tsx",
         "src/components/TermsModal.tsx",
         "src/components/LandingPage.tsx",
-        "supabase/migrations/003_durable_ai_quota.sql"
+        "supabase/migrations/003_durable_ai_quota.sql",
+        "supabase/migrations/20261024193046_deep_audit_security.sql",
+        "scripts/verify-deep-audit-staging.sql"
       ],
       "tests": [
         "server/tests/aiQuotaFrontend.test.ts",
-        "server/tests/followupAudit.test.ts"
+        "server/tests/followupAudit.test.ts",
+        "server/tests/deepAuditSql.test.ts",
+        "server/tests/deepAuditAuth.test.ts"
       ],
       "reason": "Trial duration and paid-vs-trial labels cross backend, client and copy. Quota consumption and rollback must survive races and restart; reset boundaries use IST."
     },
@@ -101,16 +119,23 @@
         "server/database/telegramResultDao.ts",
         "server/services/telegramResultSummary.ts",
         "server/utils/telegramResultPolicy.ts",
-        "supabase/migrations/20261019065115_telegram_result_delivery.sql"
+        "server/utils/resultAnalysis.ts",
+        "src/shared/filingSource.ts",
+        "supabase/migrations/20261019065115_telegram_result_delivery.sql",
+        "server/ai/filingSummary.ts",
+        "server/ai/tools.ts",
+        "server/ai/filingText.ts"
       ],
       "tests": [
         "server/tests/aiGateway.test.ts",
+        "server/tests/resultAnalysis.test.ts",
         "server/tests/auditSecurity.test.ts",
         "server/tests/telegramResults.test.ts",
         "server/tests/telegramResultSql.test.ts",
-        "server/tests/telegramResultDocument.test.ts"
+        "server/tests/telegramResultDocument.test.ts",
+        "server/tests/mcpPdfSummary.test.ts"
       ],
-      "reason": "Authenticated request \u2192 quota \u2192 allowlisted document fetch \u2192 provider budget/fallback \u2192 response/cache. Retrieved documents are untrusted content, not instructions. Telegram results require an official BSE/NSE PDF, supported v2 extraction for large files and numeric output validation before caching/sending; placeholders or missing-document responses are suppressed. Site-requested AI remains independent. The public BSE proxy retains its original BSE-only allowlist."
+      "reason": "Authenticated request \u2192 quota \u2192 allowlisted document fetch \u2192 provider budget/fallback \u2192 response/cache. Retrieved documents are untrusted content, not instructions. Telegram filing delivery is BSE-only. Strict result summaries extract literal PDF rows, headings and units, validate numeric order and period/basis evidence, then compute YoY/QoQ and bounded prose in code. Unreadable or invalid evidence suppresses the AI reply, not the original filing alert. Website prose cache is separate; versioned summary keys retain unchanged per-chat delivery receipts. Site-requested AI remains independent. The public BSE proxy retains its original BSE-only allowlist. Explicit connector PDF analysis uses the existing gateway and bounded official-document fetcher without changing website/Telegram fallback policy. Evidence stores language, coverage, input truncation and document hash; provider/extraction/output failure refunds the generation reservation."
     },
     {
       "id": "feed-alerts",
@@ -140,7 +165,33 @@
         "supabase/migrations/20261019065115_telegram_result_delivery.sql",
         "src/components/SettingsTab.tsx",
         "src/components/WatchlistEditor.tsx",
-        "src/shared/watchlistIdentity.ts"
+        "src/shared/watchlistIdentity.ts",
+        "server/services/filingIndexNow.ts",
+        "src/shared/filingSource.ts",
+        "server/services/indexNow.ts",
+        "server/services/indexNowQueue.ts",
+        "src/shared/adr.ts",
+        "server/services/adrService.ts",
+        "server/services/adrAlerts.ts",
+        "src/shared/companyFilings.ts",
+        "src/hooks/useCompanyFilingCounts.ts",
+        "src/components/ui/ListPagination.tsx",
+        "server/services/historicalFilings.ts",
+        "server/services/companyIntelService.ts",
+        "server/services/resultsCalendarService.ts",
+        "server/database/calendarHistoryDao.ts",
+        "src/shared/calendarTiming.ts",
+        "src/components/CompanyIntelligenceModal.tsx",
+        "supabase/migrations/20261024193046_deep_audit_security.sql",
+        "server/api/telegramLinks.ts",
+        "server/database/telegramLinksDao.ts",
+        "server/database/calendarTelegramDao.ts",
+        "server/services/calendarTelegramDelivery.ts",
+        "supabase/migrations/20261024171520_calendar_telegram_delivery_ledger.sql",
+        "server/services/resultHistoryRead.ts",
+        "src/utils/resultHistoryClient.ts",
+        "src/shared/resultFiling.ts",
+        "server/services/resultDocumentEvidence.ts"
       ],
       "tests": [
         "server/tests/bseBackfill.test.ts",
@@ -150,15 +201,31 @@
         "server/tests/alertRulesReliability.test.ts",
         "server/tests/alertRulesApi.test.ts",
         "server/tests/pollerStall.test.ts",
+        "server/tests/filingSource.test.ts",
         "server/tests/announcementCron.test.ts",
         "server/tests/announcementCadence.test.ts",
         "server/tests/telegramResults.test.ts",
         "server/tests/telegramResultSql.test.ts",
         "server/tests/telegramResultDocument.test.ts",
         "server/tests/watchlistIdentity.test.ts",
-        "server/tests/watchlistMetadata.test.ts"
+        "server/tests/watchlistMetadata.test.ts",
+        "server/tests/indexNowIngestion.test.ts",
+        "server/tests/indexNowQueue.test.ts",
+        "server/tests/adr.test.ts",
+        "server/tests/adrInbox.test.ts",
+        "server/tests/calendarRecovery.test.ts",
+        "server/tests/calendarNavigation.test.ts",
+        "server/tests/companyFilingHistory.test.ts",
+        "server/tests/deepAuditSql.test.ts",
+        "server/tests/deepAuditAuth.test.ts",
+        "server/tests/calendarAlertTiming.test.ts",
+        "server/tests/calendarBroadcast.test.ts",
+        "server/tests/calendarTelegramDelivery.test.ts",
+        "server/tests/calendarTelegramSql.test.ts",
+        "server/tests/resultHistory.test.ts",
+        "server/tests/resultDocumentEvidence.test.ts"
       ],
-      "reason": "Poll \u2192 normalize/dedupe \u2192 persistence \u2192 feed and alert decisions \u2192 recipient-specific delivery/inbox. Global and personal recipients must remain distinct. Preset saves replace stable per-owner IDs atomically; confirmed cloud settings feed every poll. Personal channels supersede inherited defaults once presets are saved. Live polling has a CRON_SECRET bearer-protected HTTP trigger, a 60-second in-container watchdog timer, a continuous 15-second active poller, and a 15-second-stale traffic trigger. The shared process-local monitor lock skips running cycles without queueing. Request lifetime covers bounded ingestion, raw delivery/write drain and then result AI after releasing the ingestion lock; cron source failure eligibility is capped at 60 seconds. External Scheduler remains necessary for idle request-based Cloud Run; legacy cron returns 410. Numbered IST worker summaries and cron request summaries have distinct event fields. Automatic Telegram AI applies only to actual financial results with a stable security-code/period identity. Private durable claims share one valid analysis per period/language and reserve one reply per chat across exchange copies, languages and restart. Failed evidence uses a bounded newer-source retry; uncertain send acceptance never replays. Private admin delivery timings retain exchange, observed, processed and Telegram acceptance dates without recipient identity. Migration must precede runtime release."
+      "reason": "Poll \u2192 normalize/dedupe \u2192 persistence \u2192 feed and alert decisions \u2192 recipient-specific delivery/inbox. Global and personal recipients must remain distinct. Preset saves replace stable per-owner IDs atomically; confirmed cloud settings feed every poll. Personal channels supersede inherited defaults once presets are saved. Live polling has a CRON_SECRET bearer-protected HTTP trigger, a 60-second in-container watchdog timer, a continuous 15-second active poller, and a 15-second-stale traffic trigger. The shared process-local monitor lock skips running cycles without queueing. Request lifetime covers bounded ingestion, raw delivery/write drain and then result AI after releasing the ingestion lock; cron source failure eligibility is capped at 60 seconds. External Scheduler remains necessary for idle request-based Cloud Run; legacy cron returns 410. Numbered IST worker summaries and cron request summaries have distinct event fields. Automatic Telegram AI applies only to actual financial results with a stable security-code/period identity. Private durable claims share one valid analysis per period/language and reserve one reply per chat across exchange copies, languages and restart. Failed evidence uses a bounded newer-source retry; uncertain send acceptance never replays. Private admin delivery timings retain exchange, observed, processed and Telegram acceptance dates without recipient identity. Migration must precede runtime release. Confirmed public filing changes queue company/announcements IndexNow URLs after successful upsert; the poll collection hold is idempotently released in finally. Indexing I/O runs outside ingestion and does not change alert recipients or intake. Overnight ADR adds one existing Market pulse screen and an opt-in private morning inbox digest; source dates and fetch times remain distinct, and durable insertion prevents per-session repeats. Stored 30-day filing counts share one exact-company projection with company detail, independently of the seven-day updates feed. Durable per-company history uses keyset pages; company Filings and Material Actions expose numbered pages. Explicit paid archive imports all categories over selected years with bounded workers, source failure and storage confirmation, and does not persist PDFs. Process restart or another instance may make worker status unavailable; saved evidence remains and no success is invented. Financial result titles include Results For Quarter/Q1 and board Outcome - Results. Generic outcomes need identity-bound proof from bounded official BSE PDF text; no PDF is persisted. Archive receipts distinguish saved filings from documents awaiting verification. Calendar retains one lower history control; Stock 360 and automatic readers share completion copy."
     },
     {
       "id": "user-data",
@@ -177,16 +244,24 @@
         "src/components/NotificationInbox.tsx",
         "src/components/UserProfileModal.tsx",
         "src/hooks/useUnreadNotificationCount.ts",
-        "src/utils/unreadNotificationCount.ts"
+        "src/utils/unreadNotificationCount.ts",
+        "scripts/provision-ai-reviewer.ts",
+        "scripts/verify-mcp-directory-staging.sql",
+        "supabase/migrations/20261024193046_deep_audit_security.sql",
+        "server/api/telegramLinks.ts",
+        "server/database/telegramLinksDao.ts"
       ],
       "tests": [
         "server/tests/notes.test.ts",
         "server/tests/preferenceSaveQueue.test.ts",
         "server/tests/followupAudit.test.ts",
         "server/tests/notificationStartup.test.ts",
-        "server/tests/notificationCountApi.test.ts"
+        "server/tests/notificationCountApi.test.ts",
+        "server/tests/mcpToolMatrix.test.ts",
+        "server/tests/deepAuditSql.test.ts",
+        "server/tests/deepAuditAuth.test.ts"
       ],
-      "reason": "Verified UID must constrain every read/write/delete. Delayed saves must not resurrect deleted data or overwrite newer preferences; inbox clear/read must be durable. Unread counts require verified server authentication; Layout owns one account-scoped snapshot shared by header, inbox and profile. Cached login paint and guest reads never supply a private badge."
+      "reason": "Verified UID must constrain every read/write/delete. Delayed saves must not resurrect deleted data or overwrite newer preferences; inbox clear/read must be durable. Unread counts require verified server authentication; Layout owns one account-scoped snapshot shared by header, inbox and profile. Cached login paint and guest reads never supply a private badge. Reviewer preparation is dry-run by default and refuses ordinary account IDs. Create/seed/reset require server credentials and explicit apply; only the dedicated synthetic namespace is eligible. Existing subscription and shared AI allowances are not granted or extended."
     },
     {
       "id": "storage",
@@ -207,14 +282,17 @@
         "supabase/migrations/003_durable_ai_quota.sql",
         "supabase/migrations/004_notification_inbox_receipts.sql",
         "supabase/migrations/005_user_notification_inbox_clear.sql",
-        "supabase/migrations/006_durable_referrals.sql"
+        "supabase/migrations/006_durable_referrals.sql",
+        "server/database/indexNowDao.ts",
+        "supabase/migrations/20261021133613_indexnow_url_cooldown.sql"
       ],
       "tests": [
         "server/tests/storageQuotaSwitch.test.ts",
         "server/tests/startupRecovery.test.ts",
-        "server/tests/productionAudit.test.ts"
+        "server/tests/productionAudit.test.ts",
+        "server/tests/indexNowSql.test.ts"
       ],
-      "reason": "Supabase and privileged RPCs are server-only. Cache/fallback behavior varies per DAO: local success never proves durable payment success. Review migrations with caller changes."
+      "reason": "Supabase and privileged RPCs are server-only. Cache/fallback behavior varies per DAO: local success never proves durable payment success. Review migrations with caller changes. IndexNow public-URL claims use service-role-only RLS/invoker RPCs and reserve a durable 24-hour cooldown before HTTP; browser grants and local fallback authority are absent."
     },
     {
       "id": "public-contract",
@@ -230,7 +308,10 @@
         "public/sw.js",
         "server/services/marketGuidesService.ts",
         "server/services/seoPrerender.ts",
-        "src/shared/scripMatching.ts"
+        "src/shared/scripMatching.ts",
+        "server/utils/spaRoutes.ts",
+        "server/services/publicCalendar.ts",
+        "server/utils/routeHeading.ts"
       ],
       "tests": [
         "server/tests/routeResolution.test.ts",
@@ -238,7 +319,15 @@
         "server/tests/searchEngineDiscovery.test.ts",
         "server/tests/pwaOfflineSync.test.ts",
         "server/tests/sevenFixes.test.ts",
-        "server/tests/seoPrehydration.test.ts"
+        "server/tests/seoPrehydration.test.ts",
+        "server/tests/spaRouteParity.test.ts",
+        "scripts/verify-oauth-routing.mjs",
+        "server/tests/aiEvidence.test.ts",
+        "scripts/verify-public-calendar.mjs",
+        "server/tests/publicCalendarCoverage.test.ts",
+        "server/tests/calendarDiscovery.test.ts",
+        "server/tests/calendarEntry.test.ts",
+        "server/tests/routeHeading.test.ts"
       ],
       "reason": "API responses, SSR routes, browser deep links, SEO and service-worker caching must remain compatible. User-specific responses must never enter shared public caches."
     },
@@ -284,6 +373,11 @@
         "server/services/fiiDiiService.ts",
         "server/services/marketIndicesService.ts",
         "server/services/resultsCalendarService.ts",
+        "server/services/calendarUniverse.ts",
+        "server/database/calendarHistoryDao.ts",
+        "src/shared/calendarTiming.ts",
+        "server/config/fnoCalendarStocks.json",
+        "src/shared/calendarScope.ts",
         "server/services/stockNewsService.ts",
         "server/services/storyFeedService.ts",
         "server/services/timelineClassifier.ts",
@@ -294,16 +388,53 @@
         "src/utils/timeFormat.ts",
         "src/components/HomeMarketNews.tsx",
         "src/utils/homeNews.ts",
-        "src/shared/scripMatching.ts"
+        "src/shared/scripMatching.ts",
+        "server/ai/calendarRead.ts",
+        "server/services/publicCalendar.ts",
+        "server/utils/stockIdentity.ts",
+        "src/shared/stockIdentity.ts",
+        "server/utils/fnoStocks.ts",
+        "server/ai/market.ts",
+        "src/components/WatchlistManager.tsx",
+        "src/components/story/StoryVisuals.tsx",
+        "server/database/calendarTelegramDao.ts",
+        "server/services/calendarTelegramDelivery.ts",
+        "supabase/migrations/20261024171520_calendar_telegram_delivery_ledger.sql",
+        "server/services/resultHistoryRead.ts",
+        "src/utils/resultHistoryClient.ts",
+        "src/shared/resultFiling.ts",
+        "server/services/resultDocumentEvidence.ts",
+        "server/utils/companyPeers.ts",
+        "src/utils/forYou.ts",
+        "src/utils/resultTiming.ts",
+        "src/components/ResultTimingPanel.tsx"
       ],
       "tests": [
         "server/tests/core.test.ts",
         "server/tests/auditData.test.ts",
         "server/tests/followupAudit.test.ts",
         "server/tests/homeNews.test.ts",
-        "server/tests/sevenFixes.test.ts"
+        "server/tests/calendarFno.test.ts",
+        "server/tests/calendarSync.test.ts",
+        "server/tests/calendarRecovery.test.ts",
+        "server/tests/sevenFixes.test.ts",
+        "server/tests/aiConnectorQuality.test.ts",
+        "server/tests/aiEvidence.test.ts",
+        "scripts/verify-public-calendar.mjs",
+        "server/tests/mcpDirectoryQuality.test.ts",
+        "server/tests/publicCalendarCoverage.test.ts",
+        "server/tests/calendarDiscovery.test.ts",
+        "server/tests/calendarAlertTiming.test.ts",
+        "server/tests/calendarBroadcast.test.ts",
+        "server/tests/calendarTelegramDelivery.test.ts",
+        "server/tests/calendarTelegramSql.test.ts",
+        "server/tests/resultHistory.test.ts",
+        "server/tests/resultDocumentEvidence.test.ts",
+        "server/tests/calendarAudit.test.ts",
+        "server/tests/companyPeers.test.ts",
+        "server/tests/forYouPersonal.test.ts"
       ],
-      "reason": "Upstream timestamps, stock identity and market sessions affect cached API results, screen freshness and alert timing. Public market data availability does not establish trading-data accuracy."
+      "reason": "Upstream timestamps, stock identity and market sessions affect cached API results, screen freshness and alert timing. Public market data availability does not establish trading-data accuracy. Verified security identities repair IndusInd/J&K and current Eternal naming; conflicting legacy cache entries cannot overwrite them. Watchlist, Story and F&O fallback maps use the shared verified codes. Connector read projections follow security code and mark legacy conflicts rather than silently rewriting personal lists. Financial result titles include Results For Quarter/Q1 and board Outcome - Results. Generic outcomes need identity-bound proof from bounded official BSE PDF text; no PDF is persisted. Archive receipts distinguish saved filings from documents awaiting verification. Calendar retains one lower history control; Stock 360 and automatic readers share completion copy. Global watchlist archive counts completed and failed/unresolved imports separately; partial source failure cannot become an all-success receipt. English summary variants survive calendar/history reads. Company Hub peers reuse catalogue identities and explicit industry membership, with exact-sector fallback and a four-stock limit. Calendar email/reminder-copy actions live inside both shared Share menus; other share consumers keep their existing options. For You uses exact active-watchlist projections for results, news, Radar, ADR and company Stories, with explicit target/new-list stock additions through existing guarded routes. Canonical result history supplies first-declaration IST timing dots, a supported one/two-hour concentration and labelled exceptions; no scheduled or ingestion clocks imply release times. Today preserves declared results with distinct wording and accent."
     },
     {
       "id": "faq-search-seo",
@@ -325,7 +456,26 @@
         "public/llms.txt",
         "public/llms-full.txt",
         "src/content/keywordGuides.ts",
-        "src/shared/scripMatching.ts"
+        "src/shared/scripMatching.ts",
+        "server/services/publicCalendar.ts",
+        "src/config/exchangeCompanies.ts",
+        "server/services/exchangeProfiles.ts",
+        "src/config/companyDirectory.ts",
+        "server/services/indexNowConfig.ts",
+        "server/services/indexNowQueue.ts",
+        "server/services/filingIndexNow.ts",
+        "server/database/indexNowDao.ts",
+        "supabase/migrations/20261021133613_indexnow_url_cooldown.sql",
+        "public/indexnow-key.txt",
+        "public/bbf74ca16c536bfcbe219216d579fdb009cdc40013aad38a3fd6bc649e18fa93.txt",
+        "server/ai/docs.ts",
+        "src/shared/aiDataDisclosure.ts",
+        "src/shared/stockIdentity.ts",
+        "server/services/companyIntelService.ts",
+        "server/database/announcementDao.ts",
+        "server/services/monitor.ts",
+        "server/utils/stockResolver.ts",
+        "server/utils/routeHeading.ts"
       ],
       "tests": [
         "server/tests/faqBank.test.ts",
@@ -333,9 +483,23 @@
         "server/tests/routeResolution.test.ts",
         "server/tests/keywordGuides.test.ts",
         "server/tests/sevenFixes.test.ts",
-        "server/tests/seoPrehydration.test.ts"
+        "server/tests/seoPrehydration.test.ts",
+        "server/tests/aiEvidence.test.ts",
+        "scripts/verify-public-calendar.mjs",
+        "server/tests/exchangeProfiles.test.ts",
+        "server/tests/companyDirectory.test.ts",
+        "server/tests/indexNowQueue.test.ts",
+        "server/tests/indexNowSql.test.ts",
+        "server/tests/indexNowIngestion.test.ts",
+        "server/tests/indexNowKeyRoute.test.ts",
+        "server/tests/mcpDirectoryQuality.test.ts",
+        "server/tests/brandRefreshInbox.test.ts",
+        "server/tests/publicCalendarCoverage.test.ts",
+        "server/tests/calendarDiscovery.test.ts",
+        "server/tests/calendarEntry.test.ts",
+        "server/tests/routeHeading.test.ts"
       ],
-      "reason": "Public copy and crawler metadata must agree with actual API/product contracts. Admin SEO mutations inherit mount guards; generated summaries are not evidence of source accuracy."
+      "reason": "Public copy and crawler metadata must agree with actual API/product contracts. Admin SEO mutations inherit mount guards; generated summaries are not evidence of source accuracy. BSE/NSE operator profiles, shared listing identity, directory/landing links and static/dynamic sitemaps agree; these records never expand intake or assign BSE Limited an invented BSE code. The shared directory count includes Nexus Select Trust (NXST/543913) and drives client/server metadata, badge, filters and schema. One configured primary IndexNow submitter batches canonical changed public URLs, dedupes 24 hours across instances and allows at most one later retry. Directory content-version changes enqueue once, not on every startup; Cloudflare configuration is external and not assumed. AI docs have canonical SSR content, static/dynamic sitemap discovery and content-version IndexNow notification. Legacy ZOMATO company links redirect to the current ETERNAL identity. Public metadata does not imply legal data-use permission or directory verification. Public BSE/NSE operators now use the regular cached company renderer/intelligence service. NSE uses 544937; BSE equity uses exact named/symbol NSE archive evidence with no BSE scrip. Verified pins reserve 540025 for Advanced Enzyme; read projections correct proven old BSE records without rewriting canonical evidence. New filing persistence retains source/symbol, invalidates company render cache and notifies the existing IndexNow path for NSE-only BSE too. The legacy standalone exchange renderer is compatibility code, no longer mounted on public company routes."
     },
     {
       "id": "operations",
@@ -347,6 +511,10 @@
         "server/security/hardening.ts",
         "server/security/recaptchaService.ts",
         "server/database/diagnosticsDao.ts",
+        "src/shared/performanceSummary.ts",
+        "src/utils/navigationMetrics.ts",
+        "src/utils/telemetry.ts",
+        "src/components/AdminDiagnostics.tsx",
         "server/database/logDao.ts",
         "server/database/feedbackDao.ts",
         "server/database/settingsDao.ts",
@@ -355,17 +523,40 @@
         "server/utils/retry.ts",
         "server/utils/circuitBreaker.ts",
         "server/utils/pollCycle.ts",
-        "package.json"
+        "package.json",
+        "server/services/indexNow.ts",
+        "server/services/indexNowConfig.ts",
+        "server/services/indexNowQueue.ts",
+        "server/ai/http.ts",
+        "server/database/aiConnectionsDao.ts",
+        "scripts/offline-tests.mjs",
+        "server/database/calendarTelegramDao.ts",
+        "server/services/calendarTelegramDelivery.ts",
+        "supabase/migrations/20261024171520_calendar_telegram_delivery_ledger.sql"
       ],
       "tests": [
         "server/tests/startupRecovery.test.ts",
+        "server/tests/navigationMetrics.test.ts",
+        "server/tests/performanceSummary.test.ts",
+        "server/tests/diagnosticsPopulation.test.ts",
         "server/tests/accountProtection.test.ts",
         "server/tests/circuitBreaker.test.ts",
         "server/tests/recaptchaSecurity.test.ts",
         "server/tests/pollerStall.test.ts",
-        "server/tests/announcementCadence.test.ts"
+        "server/tests/announcementCadence.test.ts",
+        "server/tests/indexNowQueue.test.ts",
+        "server/tests/indexNowSql.test.ts",
+        "server/tests/mcpToolMatrix.test.ts",
+        "server/tests/sentryIsolation.test.ts",
+        "server/tests/offlineTests.test.ts",
+        "server/tests/calendarAlertTiming.test.ts",
+        "server/tests/calendarBroadcast.test.ts",
+        "server/tests/calendarTelegramDelivery.test.ts",
+        "server/tests/calendarTelegramSql.test.ts",
+        "server/tests/previewBackendReload.test.ts",
+        "scripts/check-preview-restart.mjs"
       ],
-      "reason": "Startup and settings influence background jobs, provider calls, abuse limits and logs. A live HTTP listener does not establish that durable stores or external providers are ready. Poller stage deadlines release the monitor lock without resuming abandoned workers; dedicated local poller history is not cloud deployment durability."
+      "reason": "Startup and settings influence background jobs, provider calls, abuse limits and logs. A live HTTP listener does not establish that durable stores or external providers are ready. Poller stage deadlines release the monitor lock without resuming abandoned workers; dedicated local poller history is not cloud deployment durability. IndexNow starts only after listen, uses the existing provider circuit and reports configured primary mode/HTTP status in diagnostics. Its background failures never fail filing storage; production Crawler Hints state requires independent inspection. MCP request logs expose only generated trace IDs, bounded operation/error labels and irreversible connection tags; no tool arguments, tokens or private text. Quota/idempotency errors provide actionable recovery. A failed docs fingerprint cannot interrupt other indexing/startup. Development retains one Node process with the existing tsx import hook during source edits. Backend adoption requires a coordinated explicit restart and document reload; production start and Vite HMR policy remain independent. Actual App/browser tests cover an interrupted Settings import, closed Vite, stable recovery and a fresh document against a replacement server."
     },
     {
       "id": "frontend-navigation",
@@ -387,13 +578,32 @@
         "src/utils/homeNews.ts",
         "src/styles/home-news.css",
         "src/components/ui/motion/ShareActionMenu.tsx",
-        "src/components/notes/SaveNoteButton.tsx"
+        "src/components/notes/SaveNoteButton.tsx",
+        "src/components/AiPluginPage.tsx",
+        "src/components/SettingsTab.tsx",
+        "src/components/ui/CommandPalette.tsx",
+        "server/utils/spaRoutes.ts",
+        "src/components/CompaniesPage.tsx",
+        "src/config/companyDirectory.ts",
+        "src/components/LandingPage.tsx",
+        "src/components/NotificationInbox.tsx",
+        "src/utils/haptics.ts",
+        "src/components/ui/PageHeading.tsx"
       ],
       "tests": [
         "server/tests/routeResolution.test.ts",
-        "server/tests/homeNews.test.ts"
+        "server/tests/calendarNavigation.test.ts",
+        "server/tests/homeNews.test.ts",
+        "server/tests/spaRouteParity.test.ts",
+        "scripts/verify-oauth-routing.mjs",
+        "server/tests/companyDirectory.test.ts",
+        "server/tests/sevenFixes.test.ts",
+        "server/tests/brandRefreshInbox.test.ts",
+        "server/tests/calendarEntry.test.ts",
+        "server/tests/routeHeading.test.ts",
+        "scripts/check-preview-restart.mjs"
       ],
-      "reason": "URL and active tab must agree across direct links, refresh, browser Back/Forward and share pages. Loading, focus and scroll restoration are part of navigation; route tests do not prove browser behavior."
+      "reason": "URL and active tab must agree across direct links, refresh, browser Back/Forward and share pages. Loading, focus and scroll restoration are part of navigation; route tests do not prove browser behavior. Saved scroll positions restore silently; App does not mount the restored-position notification. Settings Companies/AI entries use the App route owner and existing PageSkeleton during cold lazy imports; native history/popstate preserves Back/Forward without a full document reload. Ordinary login and generic app launch retain For You; explicit feed/calendar/watchlist/share intents remain. Original Nexus branding replaces text tiles. The shell keeps the same-owner inbox mounted while closed, and Settings supplies quiet vibration plus visual pressed/focus feedback."
     },
     {
       "id": "frontend-session",
@@ -408,26 +618,36 @@
         "src/components/ui/SyncStatusBadge.tsx",
         "src/utils/preferenceSaveQueue.ts",
         "src/api.ts",
+        "src/components/story/StoryNavigationPreference.tsx",
         "src/firebase.ts",
         "src/config/avatars.ts",
         "src/utils/avatarSave.ts",
         "src/components/AvatarPicker.tsx",
-        "src/components/ui/UserAvatar.tsx"
+        "src/components/ui/UserAvatar.tsx",
+        "supabase/migrations/20261024193046_deep_audit_security.sql",
+        "src/components/TelegramLinkControl.tsx",
+        "src/utils/runupPriorityClient.ts"
       ],
       "tests": [
         "server/tests/preferenceSaveQueue.test.ts",
         "server/tests/recaptchaUiState.test.ts",
         "server/tests/apiCancellation.test.ts",
         "server/tests/avatar.test.ts",
-        "server/tests/appCheckStartup.test.ts"
+        "server/tests/appCheckStartup.test.ts",
+        "server/tests/storyButtons.test.ts",
+        "server/tests/deepAuditSql.test.ts",
+        "server/tests/deepAuditAuth.test.ts",
+        "server/tests/calendarFeedback.test.ts"
       ],
-      "reason": "Guest, restoring, signed-in and expired states must stay distinct. Late requests and saved preferences must not overwrite newer edits or leak between accounts. A success message requires the appropriate confirmed result."
+      "reason": "Guest, restoring, signed-in and expired states must stay distinct. Late requests and saved preferences must not overwrite newer edits or leak between accounts. A success message requires the appropriate confirmed result. Completed archive receipts with pending documents remain successful reads and have one ledger status owner. Shared pre-result priority updates require existing admin authorization; explicit server PIN denial opens the existing PIN dialog. HTML/preview denial remains an unconfirmed blocker. No automatic mutation retry or client role expansion is permitted."
     },
     {
       "id": "frontend-design",
       "label": "Frontend: shared styling, motion and overlays",
       "files": [
         "src/index.css",
+        "src/styles/mobile-repairs.css",
+        "scripts/verify-ui-followup.mjs",
         "src/types.ts",
         "src/App.tsx",
         "src/components/Layout.tsx",
@@ -460,14 +680,23 @@
         "src/styles/avatars.css",
         "src/components/ui/Switch.tsx",
         "src/styles/notification-controls.css",
-        "src/styles/watchlist-editor.css"
+        "src/styles/watchlist-editor.css",
+        "src/utils/haptics.ts",
+        "src/components/ui/BseNexusLogo.tsx",
+        "src/utils/notificationSnapshots.ts",
+        "src/components/ui/AnchoredPopover.tsx",
+        "src/utils/forYou.ts",
+        "src/utils/resultTiming.ts",
+        "src/components/ResultTimingPanel.tsx"
       ],
       "tests": [
         "server/tests/homeNews.test.ts",
         "server/tests/avatar.test.ts",
-        "server/tests/watchlistEditorRender.test.ts"
+        "server/tests/watchlistEditorRender.test.ts",
+        "server/tests/brandRefreshInbox.test.ts",
+        "server/tests/forYouPersonal.test.ts"
       ],
-      "reason": "Global CSS, inherited theme tokens, shared controls, focus, z-index and scroll locks connect screens without direct imports. Review all changed selector/token consumers; this seed list is not every affected screen. No browser accessibility or screenshot test suite is established by this domain."
+      "reason": "Global CSS, inherited theme tokens, shared controls, focus, z-index and scroll locks connect screens without direct imports. Review all changed selector/token consumers; this seed list is not every affected screen. No browser accessibility or screenshot test suite is established by this domain. Original Nexus identity uses the shared logo or public icon.svg. Settings quiet haptics are optional hardware feedback; visible pressed/focus states and reduced-motion support remain. Inbox read actions sit below/right of three wrapping-safe filter targets and confirmed content avoids entrance hiding on reopen. Calendar uses the same company/purpose hierarchy for numeric F&O and symbolic rows, one normalized full-date heading, and wrapping action-only footers. Semantic segmented/control radius tokens cover Classic and Soft Glass; Watchlist compact labels retain inline counts and readable mobile search. Calendar reminder popovers portal outside blurred/transformed cards and own viewport placement, keyboard dismissal and focus return. For You uses exact active-watchlist projections for results, news, Radar, ADR and company Stories, with explicit target/new-list stock additions through existing guarded routes. Canonical result history supplies first-declaration IST timing dots, a supported one/two-hour concentration and labelled exceptions; no scheduled or ingestion clocks imply release times. Today preserves declared results with distinct wording and accent."
     },
     {
       "id": "frontend-feed",
@@ -477,6 +706,8 @@
         "src/components/Announcements.tsx",
         "src/components/WatchlistManager.tsx",
         "src/components/ResultsCalendar.tsx",
+        "src/styles/mobile-repairs.css",
+        "src/shared/calendarScope.ts",
         "src/components/QuarterlyResultsLedger.tsx",
         "src/components/NewsPortal.tsx",
         "src/components/NotificationInbox.tsx",
@@ -502,7 +733,34 @@
         "src/components/WatchlistEditor.tsx",
         "src/shared/watchlistIdentity.ts",
         "src/styles/watchlist-editor.css",
-        "src/styles/notification-controls.css"
+        "src/styles/notification-controls.css",
+        "src/utils/watchlistPreview.ts",
+        "src/shared/stockIdentity.ts",
+        "src/utils/notificationSnapshots.ts",
+        "src/hooks/usePullToRefresh.ts",
+        "src/components/ui/PullToRefreshIndicator.tsx",
+        "src/components/ui/ComponentSkeleton.tsx",
+        "src/components/story/StoryVisuals.tsx",
+        "src/shared/companyFilings.ts",
+        "src/hooks/useCompanyFilingCounts.ts",
+        "src/components/ui/ListPagination.tsx",
+        "server/services/historicalFilings.ts",
+        "server/services/companyIntelService.ts",
+        "server/services/resultsCalendarService.ts",
+        "server/database/calendarHistoryDao.ts",
+        "src/shared/calendarTiming.ts",
+        "server/services/resultHistoryRead.ts",
+        "src/utils/resultHistoryClient.ts",
+        "src/shared/resultFiling.ts",
+        "server/services/resultDocumentEvidence.ts",
+        "src/utils/runupPriorityClient.ts",
+        "src/hooks/useCalendarDialog.ts",
+        "src/components/ui/PageHeading.tsx",
+        "server/utils/companyPeers.ts",
+        "src/components/ui/AnchoredPopover.tsx",
+        "src/utils/forYou.ts",
+        "src/utils/resultTiming.ts",
+        "src/components/ResultTimingPanel.tsx"
       ],
       "tests": [
         "server/tests/core.test.ts",
@@ -516,9 +774,24 @@
         "server/tests/notificationCountApi.test.ts",
         "server/tests/watchlistIdentity.test.ts",
         "server/tests/watchlistEditorRender.test.ts",
-        "server/tests/watchlistMetadata.test.ts"
+        "server/tests/watchlistMetadata.test.ts",
+        "server/tests/calendarFno.test.ts",
+        "server/tests/calendarRender.test.ts",
+        "server/tests/calendarRecovery.test.ts",
+        "server/tests/calendarNavigation.test.ts",
+        "server/tests/watchlistPreview.test.ts",
+        "server/tests/mcpDirectoryQuality.test.ts",
+        "server/tests/brandRefreshInbox.test.ts",
+        "server/tests/companyFilingHistory.test.ts",
+        "server/tests/resultHistory.test.ts",
+        "server/tests/resultDocumentEvidence.test.ts",
+        "server/tests/calendarFeedback.test.ts",
+        "server/tests/calendarAudit.test.ts",
+        "server/tests/routeHeading.test.ts",
+        "server/tests/companyPeers.test.ts",
+        "server/tests/forYouPersonal.test.ts"
       ],
-      "reason": "List/detail identity, filters, watchlist membership, badge counts and timestamps must agree. Background refresh preserves content, density, selection and scroll. Rapid filter changes must not render older responses. Home membership uses active-list exact identities. The responsive watchlist editor preserves company metadata, page scrolling and four visible priority filters. Inbox opens on confirmed unread items, while device push delivery has an independent persistent control."
+      "reason": "List/detail identity, filters, watchlist membership, badge counts and timestamps must agree. Background refresh preserves content, density, selection and scroll. Rapid filter changes must not render older responses. Home membership uses active-list exact identities. The responsive watchlist editor preserves company metadata, page scrolling and four visible priority filters. Inbox presents unread items first, while device push delivery has an independent persistent control. Calendar labels use company names when symbols are numeric; sticky date headings share measured toolbar offsets. Home previews select the newest filing per exact watchlist security before limiting, without changing the full filing feed. Static Watchlist identity fallback uses the shared verified IndusInd code; existing list state, revisions and editor behavior are preserved. Inbox now has All/Watchlist/Results only, with unread-first ordering, read action below/right of filters and ephemeral per-owner/filter snapshots retained across close. Confirmed read/clear reconciles all cached filters; loading/error never erases saved content. Watchlist first-read readiness separates unknown from confirmed empty. Calendar/News/Watchlist pull indicators occupy flow below stable controls. Watchlist and Story symbol-to-code fallback maps also use the shared blank BSE code, preventing the old Advanced Enzyme mapping from returning through a client fallback. Stored 30-day filing counts share one exact-company projection with company detail, independently of the seven-day updates feed. Durable per-company history uses keyset pages; company Filings and Material Actions expose numbered pages. Explicit paid archive imports all categories over selected years with bounded workers, source failure and storage confirmation, and does not persist PDFs. Process restart or another instance may make worker status unavailable; saved evidence remains and no success is invented. Financial result titles include Results For Quarter/Q1 and board Outcome - Results. Generic outcomes need identity-bound proof from bounded official BSE PDF text; no PDF is persisted. Archive receipts distinguish saved filings from documents awaiting verification. Calendar retains one lower history control; Stock 360 and automatic readers share completion copy. Completed archive receipts with pending documents remain successful reads and have one ledger status owner. Shared pre-result priority updates require existing admin authorization; explicit server PIN denial opens the existing PIN dialog. HTML/preview denial remains an unconfirmed blocker. No automatic mutation retry or client role expansion is permitted. Calendar window reads cancel superseded company/window requests and expose retry on failure. English summary fields survive server projections and share AI counts/filter/render. Pagination clamps after refresh. Details/filter keyboard ownership is element-local; shared Telegram controls mirror server admin-only policy and wait for confirmed message IDs. Company Hub peer cards replace redundant result teasers and navigate through IntelModalContext with exact identities; shared calendar Share actions retain the existing email/clipboard handlers. Calendar uses the same company/purpose hierarchy for numeric F&O and symbolic rows, one normalized full-date heading, and wrapping action-only footers. Semantic segmented/control radius tokens cover Classic and Soft Glass; Watchlist compact labels retain inline counts and readable mobile search. Calendar reminder popovers portal outside blurred/transformed cards and own viewport placement, keyboard dismissal and focus return. For You uses exact active-watchlist projections for results, news, Radar, ADR and company Stories, with explicit target/new-list stock additions through existing guarded routes. Canonical result history supplies first-declaration IST timing dots, a supported one/two-hour concentration and labelled exceptions; no scheduled or ingestion clocks imply release times. Today preserves declared results with distinct wording and accent."
     },
     {
       "id": "frontend-notes",
@@ -586,13 +859,20 @@
         "src/components/ui/ThinkingPill.tsx",
         "src/components/ui/TimeoutRetryState.tsx",
         "src/components/notes/SaveNoteButton.tsx",
-        "src/api.ts"
+        "src/api.ts",
+        "src/components/AiPluginPage.tsx",
+        "src/styles/ai-connections.css",
+        "server/api/aiPlugin.ts",
+        "src/shared/aiDataDisclosure.ts",
+        "server/ai/docs.ts"
       ],
       "tests": [
         "server/tests/aiQuotaFrontend.test.ts",
-        "server/tests/apiCancellation.test.ts"
+        "server/tests/apiCancellation.test.ts",
+        "server/tests/mcpToolMatrix.test.ts",
+        "server/tests/mcpPdfSummary.test.ts"
       ],
-      "reason": "AI request lifecycle connects quota meters, upgrade entry points, cancellation and saving generated content. Failed/aborted requests, late responses, quota events and account changes must keep all consumers consistent."
+      "reason": "AI request lifecycle connects quota meters, upgrade entry points, cancellation and saving generated content. Failed/aborted requests, late responses, quota events and account changes must keep all consumers consistent. Advanced help links to the public AI guide. Connector generation shares existing website AI allowance and validated cache reads do not reserve another generation; denial/failure is explicit."
     },
     {
       "id": "frontend-offline-privacy",
@@ -643,15 +923,31 @@
         "server/services/marketGuidesService.ts",
         "server/services/guideIndexNow.ts",
         "src/shared/scripMatching.ts",
-        "src/config/topCompanies.ts"
+        "src/config/topCompanies.ts",
+        "server/services/publicCalendar.ts",
+        "src/config/exchangeCompanies.ts",
+        "server/services/exchangeProfiles.ts",
+        "src/config/companyDirectory.ts",
+        "src/shared/aiDataDisclosure.ts",
+        "server/ai/docs.ts",
+        "server/utils/routeHeading.ts"
       ],
       "tests": [
         "server/tests/searchEngineDiscovery.test.ts",
         "server/tests/routeResolution.test.ts",
         "server/tests/keywordGuides.test.ts",
-        "server/tests/sevenFixes.test.ts"
+        "server/tests/sevenFixes.test.ts",
+        "server/tests/aiEvidence.test.ts",
+        "scripts/verify-public-calendar.mjs",
+        "server/tests/exchangeProfiles.test.ts",
+        "server/tests/companyDirectory.test.ts",
+        "server/tests/mcpDirectoryQuality.test.ts",
+        "server/tests/publicCalendarCoverage.test.ts",
+        "server/tests/calendarDiscovery.test.ts",
+        "server/tests/calendarEntry.test.ts",
+        "server/tests/routeHeading.test.ts"
       ],
-      "reason": "Public links, pricing claims, server-rendered content and client views must agree. Lazy navigation, responsive composition, keyboard operation and motion require browser evidence beyond server discovery tests."
+      "reason": "Public links, pricing claims, server-rendered content and client views must agree. Lazy navigation, responsive composition, keyboard operation and motion require browser evidence beyond server discovery tests. BSE/NSE operator profiles, shared listing identity, directory/landing links and static/dynamic sitemaps agree; these records never expand intake or assign BSE Limited an invented BSE code. The ordered shared company/REIT/exchange directory drives live counts, landing links and SSR discovery; Nexus Select Trust is appended with verified code 543913 and does not expand filing intake. Public AI setup/tool/coverage documentation is linked from AI Connections. React and SSR privacy copy share actual provider/consent/retention disclosure, and current Eternal preset labels preserve the old name as a search alias."
     },
     {
       "id": "document-startup-security",
@@ -663,15 +959,40 @@
         "src/lib/sentry.ts",
         "src/firebase.ts",
         "src/utils/oneSignal.ts",
+        "src/App.tsx",
+        "src/components/landing/CreativeHero.tsx",
+        "src/components/AdminDiagnostics.tsx",
+        "src/hooks/usePaymentDialog.ts",
+        "src/utils/telemetry.ts",
+        "src/components/ui/TabErrorBoundary.tsx",
+        "src/utils/navigationMetrics.ts",
+        "src/shared/performanceSummary.ts",
+        "server/database/diagnosticsDao.ts",
+        "vite.config.ts",
+        "package.json",
+        "scripts/check-performance-budget.mjs",
         "index.html",
-        "src/lib/sentrySdk.ts"
+        "src/lib/sentrySdk.ts",
+        "server/sentry.ts",
+        "src/styles/payment.css",
+        "scripts/offline-tests.mjs",
+        "scripts/vite-preview-client.mjs",
+        "scripts/check-dev-runtime.mjs"
       ],
       "tests": [
         "server/tests/responseHeaders.test.ts",
         "server/tests/recaptchaSecurity.test.ts",
-        "server/tests/appCheckStartup.test.ts"
+        "server/tests/appCheckStartup.test.ts",
+        "server/tests/performanceBudget.test.ts",
+        "server/tests/navigationMetrics.test.ts",
+        "server/tests/performanceSummary.test.ts",
+        "server/tests/diagnosticsPopulation.test.ts",
+        "server/tests/sentryIsolation.test.ts",
+        "server/tests/offlineTests.test.ts",
+        "server/tests/devRuntime.test.ts",
+        "scripts/check-preview-restart.mjs"
       ],
-      "reason": "Canonical document headers preserve OAuth popups, AI Studio preview and public embeds. Deferred optional SDKs preserve authentication assessment, configured monitoring and explicit push requests without blocking public paint."
+      "reason": "Canonical document headers preserve OAuth popups, AI Studio preview and public embeds. Deferred optional SDKs preserve authentication assessment, configured monitoring and explicit push requests without blocking public paint. Generic HTML has a neutral brand/loading root, never synthetic filings or an unrelated directory. Real announcements use an explicit route-only insertion marker and public calendar SSR retains its own source-backed document. Static development previews prepare an explicit complete browser dependency set before serving React; disabled HMR keeps CSS helpers without opening a socket. Sentry uses the static trace lifecycle so OAuth redaction is executed. A cold Chromium smoke checks real lazy screens separately from the production build."
     },
     {
       "id": "impact-radar",
@@ -738,15 +1059,18 @@
         "server/tests/announcementCadence.test.ts",
         "server/tests/announcementCron.test.ts",
         "server/tests/radarCompanyGroups.test.ts",
-        "server/tests/radarSourceChecks.test.ts"
+        "server/tests/radarSourceChecks.test.ts",
+        "server/tests/brandRefreshInbox.test.ts"
       ],
-      "reason": "Two Home previews open a native modal Radar dashboard and immediate detail. Watchlist scope stays separate from durable event follows. Both exchange disclosures and shared RSS intake carry source/date provenance; explicit jurisdiction/case references alone may join evidence. Future events have no predictions. Observed NSE final daily closes are a separate bounded, cached read with per-session source, missing-data states and no causal attribution. Account cancellation, modal focus/scroll, themes and reduced motion remain explicit contracts. The list is read-only; existing watchdog drives bounded intake. Server-only DB categories, strict real company identity, typed proceedings, source-domain rules and offset timestamps gate publishing. Reviewed PNC source backfill retains explicit news timestamps and separately sourced NSE daily ranges. Following outages preserve closed records. Additional material event terms come from private DB rules and match bounded literal phrases independently of source type or authority. Explicit RSS timestamps normalize to UTC. Publisher/report attribution and related-topic links preserve uncertainty. Selected company final NSE session values persist as small, private, duplicate-safe snapshots and can survive upstream outages. Routine corporate transactions and statutory takeover boilerplate are excluded independently of configured discovery terms. Insolvency/disputes retain the stable deals category ID with a focused label. Read projections hide legacy routine/vague cards while retaining immutable evidence and follows; all headings use source wording and original timeline titles remain intact. Official filing names and exact-code title prefixes repair numeric identities without assigning a guessed NSE symbol. Exchange daily rows may match one exact full company name; NSE SME and BSE scrip-keyed reports retain explicit source identity. Future hearing dates do not suppress prior publication-day history. Sparse details render known facts and collapsed source/method sections. Report requests use a private proxy-aware dispatcher and a bounded concurrency queue with an overall response budget. Security-code/ticker aliases share immutable prices across reports. Previous-session, event-window and latest-company context remain separately labelled. A bounded rotating worker captures the last eight dates on boot/watchdog and authenticated cron, with explicit read/write/source diagnostics and retry; request-based hosting still requires its external Scheduler. Related reports query the company directly, independently of feed caps or selected report age. Compact selectable daily bars retain exact source/price details and reduced-motion support. Latest persisted company context remains visible even beyond the eight-day event lookback, with its original date and source. Presentation groups exact company sets without merging durable proceedings. A private seven-day scan ledger supplies latest check health across hosting instances; missing history is pending, and optional RSS outage is distinct from filing-scan success."
+      "reason": "Two Home previews open a native modal Radar dashboard and immediate detail. Watchlist scope stays separate from durable event follows. Both exchange disclosures and shared RSS intake carry source/date provenance; explicit jurisdiction/case references alone may join evidence. Future events have no predictions. Observed NSE final daily closes are a separate bounded, cached read with per-session source, missing-data states and no causal attribution. Account cancellation, modal focus/scroll, themes and reduced motion remain explicit contracts. The list is read-only; existing watchdog drives bounded intake. Server-only DB categories, strict real company identity, typed proceedings, source-domain rules and offset timestamps gate publishing. Reviewed PNC source backfill retains explicit news timestamps and separately sourced NSE daily ranges. Following outages preserve closed records. Additional material event terms come from private DB rules and match bounded literal phrases independently of source type or authority. Explicit RSS timestamps normalize to UTC. Publisher/report attribution and related-topic links preserve uncertainty. Selected company final NSE session values persist as small, private, duplicate-safe snapshots and can survive upstream outages. Routine corporate transactions and statutory takeover boilerplate are excluded independently of configured discovery terms. Insolvency/disputes retain the stable deals category ID with a focused label. Read projections hide legacy routine/vague cards while retaining immutable evidence and follows; all headings use source wording and original timeline titles remain intact. Official filing names and exact-code title prefixes repair numeric identities without assigning a guessed NSE symbol. Exchange daily rows may match one exact full company name; NSE SME and BSE scrip-keyed reports retain explicit source identity. Future hearing dates do not suppress prior publication-day history. Sparse details render known facts and collapsed source/method sections. Report requests use a private proxy-aware dispatcher and a bounded concurrency queue with an overall response budget. Security-code/ticker aliases share immutable prices across reports. Previous-session, event-window and latest-company context remain separately labelled. A bounded rotating worker captures the last eight dates on boot/watchdog and authenticated cron, with explicit read/write/source diagnostics and retry; request-based hosting still requires its external Scheduler. Related reports query the company directly, independently of feed caps or selected report age. Compact selectable daily bars retain exact source/price details and reduced-motion support. Latest persisted company context remains visible even beyond the eight-day event lookback, with its original date and source. Presentation groups exact company sets without merging durable proceedings. A private seven-day scan ledger supplies latest check health across hosting instances; missing history is pending, and optional RSS outage is distinct from filing-scan success. October 22 inspection found recent durable checks healthy. Client refresh resumes explicitly on visible/online/pageshow; timed-out abort-resolving reads expose retry and release the read lock. Source policy and scheduling are unchanged. Source scan freshness ages from the actual persisted scan timestamp, separately from the browser read time. Heading actions retain a single-line label and wrap as a group on narrow screens."
     },
     {
       "id": "frontend-stories",
       "label": "Frontend: market stories and institutional identity",
       "files": [
         "src/components/TodayMarketStoryModal.tsx",
+        "src/components/story/StoryNavigationPreference.tsx",
+        "src/context/AuthContext.tsx",
         "src/components/story/storyTypes.ts",
         "src/components/story/storyBuilder.ts",
         "src/components/story/storyFeedClient.ts",
@@ -763,14 +1087,182 @@
         "src/components/ui/BseNexusLogo.tsx",
         "src/hooks/useBodyScrollLock.ts",
         "src/api.ts",
-        "server/services/storyFeedService.ts"
+        "server/services/storyFeedService.ts",
+        "src/shared/stockIdentity.ts",
+        "src/shared/adr.ts",
+        "server/services/adrService.ts",
+        "server/services/adrAlerts.ts"
       ],
       "tests": [
         "server/tests/marketStories.test.ts",
+        "server/tests/calendarNavigation.test.ts",
+        "server/tests/storyButtons.test.ts",
         "server/tests/companyStoryBudget.test.ts",
-        "server/tests/followupAudit.test.ts"
+        "server/tests/followupAudit.test.ts",
+        "server/tests/mcpDirectoryQuality.test.ts",
+        "server/tests/adr.test.ts",
+        "server/tests/adrInbox.test.ts"
       ],
-      "reason": "Public feed \u2192 validated content-led chapter adapter \u2192 Home carousel and both shared viewer entry points. Chapter selection uses stable IDs. Aggregate topics, especially FII/DII, have neutral symbols and no company CTA; only exact per-company records use the existing official-logo resolver and Company Intelligence callbacks. No sample facts on loading/error. News is bounded by sourced publication time and the existing 18-hour/session policy. Newer refreshes win cache races; stale/empty/error states remain distinct. The scoped reading canvas, proportional signed charts, native illustrations, pause clock, portal focus/inertness, scroll and reduced motion are one interaction contract. Browser/device verification and live deployment are separate from source/render/build evidence. Company news is one finite chapter: at most seven screens, two per company, complete explanations and adjacent company groups. Chapter-wide progress/count never reset per news sequence. Optional restrained sector art, clean text and unambiguous source-backed order metrics avoid a compulsory repeated illustration."
+      "reason": "Public feed \u2192 validated content-led chapter adapter \u2192 Home carousel and both shared viewer entry points. Chapter selection uses stable IDs. Aggregate topics, especially FII/DII, have neutral symbols and no company CTA; only exact per-company records use the existing official-logo resolver and Company Intelligence callbacks. No sample facts on loading/error. News is bounded by sourced publication time and the existing 18-hour/session policy. Newer refreshes win cache races; stale/empty/error states remain distinct. The scoped reading canvas, proportional signed charts, native illustrations, pause clock, portal focus/inertness, scroll and reduced motion are one interaction contract. Browser/device verification and live deployment are separate from source/render/build evidence. Company news is one finite chapter: at most seven screens, two per company, complete explanations and adjacent company groups. Chapter-wide progress/count never reset per news sequence. Optional restrained sector art, clean text and unambiguous source-backed order metrics avoid a compulsory repeated illustration. Default-on 46px Previous/Pause/Next controls are optional via the account-saved Story navigation preference; side taps, swipes, header controls and keyboard navigation remain; a contrast-visible 4px progress track remains present at zero elapsed time and under reduced motion. Story identity lookup reuses the same verified IndusInd code as watchlists and server resolution; story timing/navigation/style is unchanged. Overnight ADR adds one existing Market pulse screen and an opt-in private morning inbox digest; source dates and fetch times remain distinct, and durable insertion prevents per-session repeats."
+    },
+    {
+      "id": "ai-connections",
+      "label": "Scoped OAuth AI connections and account tools",
+      "files": [
+        "server/ai/policy.ts",
+        "server/ai/oauth.ts",
+        "server/ai/http.ts",
+        "server/ai/tools.ts",
+        "server/ai/market.ts",
+        "server/database/aiConnectionsDao.ts",
+        "server/api/aiPlugin.ts",
+        "server/database/watchlistDao.ts",
+        "server/database/usersDao.ts",
+        "server/database/paymentEntitlementsDao.ts",
+        "server/database/notificationDao.ts",
+        "server/services/aiQuotaService.ts",
+        "server/services/monitor.ts",
+        "server.ts",
+        "server/api/routes.ts",
+        "src/components/AiPluginPage.tsx",
+        "src/styles/ai-connections.css",
+        "src/App.tsx",
+        "src/components/SettingsTab.tsx",
+        "src/components/Layout.tsx",
+        "src/components/LandingPage.tsx",
+        "src/components/ui/CommandPalette.tsx",
+        "src/components/WatchlistManager.tsx",
+        "src/context/AuthContext.tsx",
+        "public/sw.js",
+        "supabase/migrations/20261020072807_ai_connections.sql",
+        "server/sentry.ts",
+        "src/lib/sentry.ts",
+        "src/shared/aiTelemetry.ts",
+        "scripts/verify-ai-connections-staging.sql",
+        "server/utils/spaRoutes.ts",
+        "server/ai/calendarRead.ts",
+        "server/services/publicCalendar.ts",
+        "server/ai/docs.ts",
+        "server/ai/filingSummary.ts",
+        "server/ai/filingText.ts",
+        "server/utils/stockIdentity.ts",
+        "src/shared/stockIdentity.ts",
+        "src/shared/aiDataDisclosure.ts",
+        "scripts/provision-ai-reviewer.ts",
+        "scripts/verify-mcp-directory-staging.sql",
+        "supabase/migrations/20261024193046_deep_audit_security.sql",
+        "server/services/subscriptionAccess.ts",
+        "server/database/giftAccessDao.ts",
+        "supabase/migrations/20261026192403_gift_pro_access.sql"
+      ],
+      "tests": [
+        "server/tests/aiConnections.test.ts",
+        "server/tests/aiConnectionsSql.test.ts",
+        "server/tests/aiOAuth.test.ts",
+        "server/tests/aiAuthorize.test.ts",
+        "server/tests/aiPlugin.test.ts",
+        "server/tests/aiWatchlistConcurrency.test.ts",
+        "server/tests/aiTelemetry.test.ts",
+        "server/tests/aiIngress.test.ts",
+        "server/tests/spaRouteParity.test.ts",
+        "scripts/verify-oauth-routing.mjs",
+        "server/tests/aiConnectorQuality.test.ts",
+        "server/tests/aiEvidence.test.ts",
+        "scripts/verify-public-calendar.mjs",
+        "server/tests/mcpDirectoryQuality.test.ts",
+        "server/tests/mcpPdfSummary.test.ts",
+        "server/tests/mcpToolMatrix.test.ts",
+        "server/tests/publicCalendarCoverage.test.ts",
+        "server/tests/calendarDiscovery.test.ts",
+        "server/tests/deepAuditSql.test.ts",
+        "server/tests/deepAuditAuth.test.ts"
+      ],
+      "reason": "Website sign-in approves a public PKCE client with explicit permissions. External opaque credentials never accept website cookies or client-supplied owners/roles. Live durable entitlement and shared per-account quotas precede bounded tools; writes recheck grant and plan in a transaction with an idempotent receipt. Website watchlists use request-local revision CAS while enabled, and reads do not restore stale backups. Connection/consent responses bypass browser, CDN and SW caches. Profile/watchlist/notes refresh on return; account changes suppress late responses. Root OAuth endpoints, MCP and the four compatibility GET routes share the same authorization owner. The disabled-by-default flag is required until an approved service-only schema rollout and live client/browser checks; source tests do not certify deployment or marketplace publication. Connection discovery uses the configured Express trusted-proxy hostname while all issuer/resource URLs remain canonical. Exact browser-Origin checks cover MCP requests and preflights. Settings owns the sole visible entry; client-specific web setup distinguishes public URL copying, approved grants and completed client setup. Same-account refresh retains content and account/request changes hide obsolete responses. Approved-access cards use a minmax content column and non-wrapping action column, with permission rows and a single-column phone layout; confirmed revoke and account guards are unchanged. Every wire tool has a title and complete read/write hints; descriptions are factual. PDF analysis has an independent provenance cache, language/coverage validation and shared-quota refunds, with no heuristic success. Service-only owner predicates and request receipts survive guessed IDs; local wire/SQL tests and rolled-back staging checks are distinct from a clean deployed Claude/Inspector flow. DCR supports exact loopback hosts with port relaxation and rejects client_credentials. Public docs/privacy describe partial coverage, upstream processing and retention; reviewer fixtures/expiring UID-specific limits never grant a paid entitlement."
+    },
+    {
+      "id": "overnight-adr",
+      "label": "Overnight ADR: shared sessions and private morning alerts",
+      "files": [
+        "src/shared/adr.ts",
+        "src/services/adrClient.ts",
+        "src/components/adr/OvernightAdr.tsx",
+        "src/components/adr/AdrAlertPreference.tsx",
+        "src/styles/overnight-adr.css",
+        "server/services/adrService.ts",
+        "server/services/adrAlerts.ts",
+        "server/services/adrRuntime.ts",
+        "server/database/adrSnapshotDao.ts",
+        "server/api/adr.ts",
+        "server/api/routes.ts",
+        "server/database/notificationDao.ts",
+        "server/database/watchlistDao.ts",
+        "server/database/usersDao.ts",
+        "server/services/storyFeedService.ts",
+        "src/components/story/storyBuilder.ts",
+        "src/components/HomeForYou.tsx",
+        "src/components/CompanyIntelligenceModal.tsx",
+        "src/components/AlertRulesModal.tsx",
+        "src/types.ts",
+        "server.ts"
+      ],
+      "tests": [
+        "server/tests/adr.test.ts",
+        "server/tests/adrInbox.test.ts",
+        "server/tests/announcementCadence.test.ts",
+        "server/tests/adrSnapshotStore.test.ts",
+        "server/tests/marketStories.test.ts",
+        "server/tests/companyStoryBudget.test.ts",
+        "server/tests/notificationStartup.test.ts"
+      ],
+      "reason": "One reviewed company registry and completed-US-session snapshot supplies Home, company intelligence, Market pulse and the opt-in watchlist inbox worker. Public validated snapshots persist under service-only immutable settings session keys and browser localStorage. Partial refresh retains missing symbols; restored, failed or older-source reads cannot renew freshness. Repeated failures back off from one to fifteen minutes. Current US bars, pre/post market, bad identities/currency, stale/partial data and split/thin-volume alerts are guarded. Home uses shared Helios/density/actions and exact company navigation; Stories use one existing chapter. Morning alerts honor fresh owner/list/mute/priority checks and a durable private per-session insert-once key. The existing cron/watchdog supplies the execution lifetime without another timer, migration or public broadcast. Browser/device, live delivery, hosting and source redistribution evidence remain separate."
+    },
+    {
+      "id": "gift-access",
+      "label": "Complimentary Pro invitations and account access",
+      "files": [
+        "server/api/giftAccess.ts",
+        "server/database/giftAccessDao.ts",
+        "server/services/giftAccessPolicy.ts",
+        "server/services/subscriptionAccess.ts",
+        "src/shared/giftAccess.ts",
+        "supabase/migrations/20261026192403_gift_pro_access.sql",
+        "src/components/AdminGiftAccess.tsx",
+        "src/components/GiftActivationPage.tsx",
+        "src/components/gift-access.css",
+        "src/components/SettingsTab.tsx",
+        "src/components/SubscriptionCard.tsx",
+        "src/context/AuthContext.tsx",
+        "src/components/Layout.tsx",
+        "src/components/UserProfileModal.tsx",
+        "src/App.tsx",
+        "src/main.tsx",
+        "src/lib/sentry.ts",
+        "src/shared/aiTelemetry.ts",
+        "index.html",
+        "public/sw.js",
+        "server.ts",
+        "server/security/auth.ts",
+        "server/api/payments.ts",
+        "server/api/routes.ts",
+        "server/ai/tools.ts",
+        "server/services/aiQuotaService.ts",
+        "server/services/monitor.ts",
+        "server/services/stockNewsService.ts",
+        "server/database/usersDao.ts",
+        "server/database/paymentEntitlementsDao.ts",
+        "server/services/resendMailer.ts",
+        "server/utils/spaRoutes.ts",
+        "src/api.ts"
+      ],
+      "tests": [
+        "server/tests/giftAccessApi.test.ts",
+        "server/tests/giftAccessSql.test.ts",
+        "server/tests/pollerStall.test.ts",
+        "scripts/verify-gift-access.mjs",
+        "server/tests/giftAccessMount.test.ts",
+        "server/tests/previewBackendReload.test.ts"
+      ],
+      "reason": "Owner PIN elevation creates an email-bound invitation with a server-owned custom duration and separate claim deadline. Hash-only secrets, immutable input/idempotency checks and one DB transaction bind each grant once to a freshly verified Firebase identity. Resend rotates the pending verifier without extending the deadline; revoke never touches paid/trial/referral rows. Read-only unified access projections reach website gates, billing, profile refresh, AI quota and connector writes. Personal Telegram checks consult live gift access at dispatch; ingestion remains independent of gift-store availability. Fragment capture precedes optional monitoring; activation is no-store/noindex and excluded from SW/telemetry. Browser fixture evidence is distinct from real sender/Firebase/database release checks; feature stays off until additive migration verification. The actual root API mount distinguishes disabled 409 from auth denial and genuine 404. Admin missing-server recovery preserves drafts and blocks writes until a successful history reload. HTML API pages with HTTP 200 become typed transport failures without automatic write replay; deliberate feature-off state is GIFT_ACCESS_DISABLED, not a transient outage."
     }
   ]
 }

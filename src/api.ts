@@ -1,4 +1,4 @@
-import { auth } from './firebase';
+import { auth, initAppCheck } from './firebase';
 
 export async function customFetch(url: string, options: RequestInit = {}) {
   try {
@@ -31,6 +31,13 @@ export async function customFetch(url: string, options: RequestInit = {}) {
       }
     } catch {}
 
+    if (url.startsWith('/auth/') && (import.meta as any).env?.VITE_APPCHECK_ENFORCE === 'true') {
+      const appCheck = initAppCheck();
+      if (!appCheck) throw new Error('Security verification is unavailable. Please retry.');
+      const { getToken } = await import('firebase/app-check');
+      const token = await getToken(appCheck);
+      headers.set('X-Firebase-AppCheck', token.token);
+    }
     let res = await fetch(resolvedUrl, {
       credentials: 'include',
       ...options,
@@ -62,17 +69,19 @@ export async function customFetch(url: string, options: RequestInit = {}) {
       }
     }
 
-    if (res.ok) {
-      window.dispatchEvent(new CustomEvent('network-status', { detail: { isOnline: true } }));
-    }
-
     const contentType = res.headers.get("content-type") || "";
     if (contentType.includes("text/html") && !contentType.includes("application/json")) {
-      // If server returned pure HTML for an API request, wrap it as a JSON error response
-      return new Response(JSON.stringify({ success: false, error: `Server returned non-JSON response (${res.status})`, items: [] }), {
-        status: res.status || 500,
+      // Preview proxies can return an HTML startup page with HTTP 200.
+      // It is never successful API data, and must never trigger a write retry.
+      return new Response(JSON.stringify({ success: false, code: 'API_NON_JSON_RESPONSE', upstreamStatus: res.status,
+        error: 'The connected server returned a page instead of API data. Wait for the server to be ready, then refresh.', items: [] }), {
+        status: res.ok ? 502 : res.status,
         headers: { "Content-Type": "application/json" }
       });
+    }
+
+    if (res.ok) {
+      window.dispatchEvent(new CustomEvent('network-status', { detail: { isOnline: true } }));
     }
 
     return res;

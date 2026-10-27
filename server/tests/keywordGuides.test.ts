@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
 import { KEYWORD_GUIDES, getKeywordGuide, KEYWORD_GUIDE_CSS } from '../../src/content/keywordGuides.js';
-import { getMarketGuideBySlug, getIndexableMarketGuides, FALLBACK_MARKET_GUIDES } from '../services/marketGuidesService.js';
+import { getMarketGuideBySlug, getIndexableMarketGuides, FALLBACK_MARKET_GUIDES, getGuidePrimaryAction } from '../services/marketGuidesService.js';
 
 // Run the real server renderer without starting providers, background jobs or notifications.
 const source = readFileSync(new URL('../../server.ts', import.meta.url), 'utf8');
@@ -13,7 +13,7 @@ const node = tree.statements.find(item => ts.isFunctionDeclaration(item) && item
 assert.ok(node, 'server guide renderer exists');
 const rendererCode = ts.transpileModule(node.getText(tree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
 const escape = (value: unknown) => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]!));
-const context = vm.createContext({ getKeywordGuide, KEYWORD_GUIDE_CSS, escapeHtmlText: escape, escapeHtmlAttr: escape, getRelatedCompaniesForGuide: () => [], AI_STUDIO_REDIRECT_SCRIPT: '' });
+const context = vm.createContext({ getKeywordGuide, KEYWORD_GUIDE_CSS, getGuidePrimaryAction, escapeHtmlText: escape, escapeHtmlAttr: escape, getRelatedCompaniesForGuide: () => [], AI_STUDIO_REDIRECT_SCRIPT: '' });
 vm.runInContext(rendererCode, context);
 
 for (const guide of KEYWORD_GUIDES) {
@@ -61,4 +61,19 @@ test('review drafts remain resolvable but never enter search discovery', () => {
   assert.ok(legacy.includes('content="index, follow"'));
   assert.ok(legacy.includes(`${escape(FALLBACK_MARKET_GUIDES[0].title)} | Bsenexus`));
   assert.ok(!legacy.includes('Editorial draft'));
+});
+
+test('real guide renderer provides three native calendar actions and retains article identity', () => {
+  for (const slug of ['bse-quarterly-results-calendar-guide', 'board-meeting-results-guide']) {
+    const guide = getMarketGuideBySlug(slug)!;
+    assert.ok(guide);
+    const html: string = context.renderGuidePage(guide);
+    assert.equal((html.match(/href="\/results-calendar"/g) || []).length, 3);
+    assert.ok(html.includes(`href="https://bsenexus.in/guides/${slug}"`));
+    assert.ok(html.includes('content="index, follow"'));
+    assert.ok(html.indexOf('aria-label="Upcoming company dates"') < html.indexOf('class="intro-box"'));
+  }
+  const other = context.renderGuidePage(getMarketGuideBySlug('sebi-lodr-regulation-30'));
+  assert.ok(other.includes('href="/?tab=guides"'));
+  assert.ok(!other.includes('aria-label="Upcoming company dates"'));
 });

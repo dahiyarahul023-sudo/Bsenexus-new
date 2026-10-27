@@ -1,18 +1,23 @@
+import { selectCompanyPeers } from '../utils/companyPeers.js';
+import { injectRouteHeading } from '../utils/routeHeading.js';
+import { companyFilingStats } from '../../src/shared/companyFilings.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import vm from 'node:vm';
 import ts from 'typescript';
-import { hasExactScripCode } from '../../src/shared/scripMatching.js';
+import { hasExactScripCode, matchesCompanyFiling } from '../../src/shared/scripMatching.js';
 import { TOP_COMPANIES } from '../../src/config/topCompanies.js';
+import { EXCHANGE_COMPANIES, exchangeCompany } from '../../src/config/exchangeCompanies.js';
+import { DIRECTORY_COMPANIES, directoryDescription, directoryBadge } from '../../src/config/companyDirectory';
 import { getScripCode } from '../utils/stockResolver.js';
 import { isSymbolMatch } from '../utils/helpers.js';
 
 const targets = [['RELIANCE', '500325'], ['CLEAN', '543318'], ['CONCOR', '531344'], ['HAL', '541154'], ['IDEA', '532822'], ['OIL', '533106']];
 function load(source: string, globals: any = {}) {
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-  const context = vm.createContext({ exports: {}, console, ...globals });
+  const context = vm.createContext({ exports: {}, console, injectRouteHeading, DIRECTORY_COMPANIES, directoryDescription, directoryBadge, exchangeCompany, matchesCompanyFiling, ...globals });
   vm.runInContext(code, context);
   return context;
 }
@@ -25,6 +30,27 @@ function declarations(names: string[]) {
     return false;
   }).map(node => node.getText(serverAst)).join('\n');
 }
+
+test('public company financial rows keep long filing evidence collapsed, with the period, date and PDF accessible', () => {
+  const ctx = load(declarations(['renderCompanyPage', 'escapeHtmlText', 'escapeHtmlAttr']), {
+    hasExactScripCode, AI_STUDIO_REDIRECT_SCRIPT: '', getAllStockEntries: () => [],
+  });
+  const sourceText = 'Original quarterly filing details & board approval. '.repeat(25);
+  const output = ctx.renderCompanyPage({ companyName: 'Wipro Limited', quarterlyResults: [{
+    scripCode: '507685', periodOrMeeting: 'Quarter Ended 30-Sep-2026 (Q2 FY27)', declarationDate: '15 Oct 2026',
+    status: 'Declared', subject: sourceText, pdfLink: 'https://www.bseindia.com/filing.pdf',
+  }] }, 'WIPRO', '507685');
+  const table = output.match(/<table class="results-table"[^>]*>[\s\S]*?<\/table>/)[0];
+  const disclosure = table.match(/<details\b([^>]*)>([\s\S]*?)<\/details>/);
+  assert.ok(disclosure, 'long filing evidence has an expandable disclosure');
+  assert.doesNotMatch(disclosure[1], /\bopen\b/, 'long evidence starts collapsed');
+  const summary = disclosure[2].match(/<summary>([\s\S]*?)<\/summary>/)[1].replace(/<[^>]+>/g, '');
+  assert.ok(summary.length < 220, 'visible filing summary is bounded');
+  assert.ok(disclosure[2].includes(sourceText.replace(/&/g, '&amp;')), 'full original evidence remains accessible');
+  assert.ok(table.includes('Quarter Ended 30-Sep-2026 (Q2 FY27)'));
+  assert.ok(table.includes('15 Oct 2026'));
+  assert.match(table, /href="https:\/\/www\.bseindia\.com\/filing\.pdf"/);
+});
 
 for (const [symbol, scrip] of targets) {
   test(`${symbol}: only its exact BSE scrip identifies a filing`, () => {
@@ -51,7 +77,9 @@ for (const [symbol, scrip] of targets) {
     const ctx = load(readFileSync('server/services/companyIntelService.ts', 'utf8'), {
       setTimeout: () => 0,
       require(path: string) {
-        if (path.endsWith('/scripMatching.js')) return { hasExactScripCode };
+        if (path.endsWith('/companyPeers.js')) return { selectCompanyPeers };
+        if (path.endsWith('/companyFilings.js')) return { companyFilingStats };
+        if (path.endsWith('/scripMatching.js')) return { hasExactScripCode, matchesCompanyFiling };
         if (path === 'yahoo-finance2') return { default: class { async quote() { return { regularMarketPrice: 100, shortName: symbol }; } } };
         if (path.endsWith('/resultsCalendarService.js')) return {
           getStockResultsHistory: async () => history,
@@ -66,7 +94,7 @@ for (const [symbol, scrip] of targets) {
       },
     });
     const result = await ctx.exports.getCompanyIntelligence(scrip, symbol);
-    assert.deepEqual(Array.from(result.recentFilings, (f: any) => f.id).sort(), ['good', 'history']);
+    assert.deepEqual(Array.from(result.recentFilings, (f: any) => f.id).sort(), ['good']);
     assert.deepEqual(Array.from(result.quarterlyResults, (f: any) => f.id), ['history']);
     assert.equal(result.upcomingEvent, undefined);
   });
@@ -96,18 +124,31 @@ test('sitemap parses with a strict XML parser; alias URLs are excluded', () => {
   assert.ok(!urls.includes('https://bsenexus.in/privacy'));
 });
 
-test('homepage initial HTML links every curated company with name and BSE code', () => {
-  assert.equal(TOP_COMPANIES.length, 26);
-  assert.equal(new Set(TOP_COMPANIES.map(c => c.scripCode)).size, 26);
+test('homepage no-script HTML links every curated company with its correct listing identity', () => {
+  assert.equal(TOP_COMPANIES.length, 29);
+  assert.equal(new Set(TOP_COMPANIES.map(c => c.symbol)).size, 29);
   const index = readFileSync('index.html', 'utf8');
-  const section = index.match(/<section aria-labelledby="top-companies-heading">([\s\S]*?)<\/section>/)?.[1] || '';
-  const directory = readFileSync('src/components/CompaniesPage.tsx', 'utf8');
+  const section = index.match(/<section aria-labelledby="noscript-top-companies-heading">([\s\S]*?)<\/section>/)?.[1] || '';
+  assert.equal(TOP_COMPANIES, DIRECTORY_COMPANIES);
   for (const c of TOP_COMPANIES) {
     assert.ok(section.includes(`href="/company/${c.symbol}"`), c.symbol);
-    assert.ok(section.includes(`BSE: ${c.scripCode}`), c.symbol);
+    assert.ok(section.includes(c.listingLabel || `BSE: ${c.scripCode}`), c.symbol);
     assert.ok(section.includes(c.name.replaceAll('&', '&amp;')), c.symbol);
-    assert.ok(directory.includes(`scripCode: "${c.scripCode}"`));
   }
+});
+
+test('server directory renders exchange names, correct listings and all current discovery links', () => {
+  const ctx = load(declarations(['renderCompaniesDirectoryPage', 'escapeHtmlText', 'escapeHtmlAttr']), { EXCHANGE_COMPANIES, AI_STUDIO_REDIRECT_SCRIPT: '' });
+  const html = ctx.renderCompaniesDirectoryPage();
+  for (const company of EXCHANGE_COMPANIES) {
+    assert.ok(html.includes(`href="https://bsenexus.in/company/${company.symbol}"`));
+    assert.ok(html.includes(company.name));
+    assert.ok(html.includes(company.listingLabel));
+  }
+  assert.doesNotMatch(html, /BSE: 540025|26 PREMIER/);
+  assert.match(html, /"numberOfItems":\s*29/);
+  assert.ok(html.includes('29 COMPANIES, REITs &amp; EXCHANGES'));
+  assert.ok(html.includes('Explore 29 company, REIT and exchange operator profiles'));
 });
 
 test('live alias metadata uses the announcements canonical', () => {
@@ -126,4 +167,56 @@ test('privacy alias handler returns a permanent redirect, not duplicate content'
   assert.deepEqual(response, { status: 301, location: '/privacy-policy' });
   const redirects = readFileSync('public/_redirects', 'utf8');
   assert.ok(redirects.indexOf('/privacy /privacy-policy 301') < redirects.indexOf('/* /index.html 200'));
+});
+
+test('BSE and NSE render stored official disclosures through the regular company page without mixed identities', async () => {
+  const bseFiling = {id:'bse-official',symbol:'BSE',companyName:'BSE Limited',scrip_cd:'',subject:'EXCHANGE OPERATOR DISCLOSURE',pdfLink:'https://nsearchives.nseindia.com/corporate/BSE1_21102026130745_NSEintimation.pdf',bseTime:'2026-10-21T13:07:45Z'};
+  const wrong = {id:'enzyme',scrip_cd:'540025',companyName:'Advanced Enzyme Technologies Ltd',subject:'UNRELATED ENZYME DISCLOSURE',pdfLink:'https://www.bseindia.com/xml-data/corpfiling/AttachLive/enzyme.pdf'};
+  const ctx = load(readFileSync('server/services/companyIntelService.ts','utf8'), {
+    setTimeout:()=>0,
+    require(path:string) {
+      if(path.endsWith('/companyPeers.js')) return {selectCompanyPeers};
+      if(path.endsWith('/companyFilings.js')) return {companyFilingStats};
+      if(path.endsWith('/helpers.js')) return {parseBseDate:(value:string)=>Date.parse(value)||0};
+      if(path.endsWith('/scripMatching.js'))return {hasExactScripCode,matchesCompanyFiling};
+      if(path==='yahoo-finance2')return {default:class {async quote(){return null;}}};
+      if(path.endsWith('/resultsCalendarService.js'))return {getStockResultsHistory:async()=>{throw new Error('BSE-only history must not run for NSE-only equity');},getResultsCalendarData:async()=>{throw new Error('BSE calendar must not be read for NSE-only equity');}};
+      if(path.endsWith('/announcementDao.js'))return {getBseOperatorAnnouncements:async()=>[bseFiling,wrong],getRecentAnnouncements:async()=>{throw new Error('Use exact durable operator read');}};
+      if(path.endsWith('/timelineClassifier.js'))return {classifyMaterialEvent:()=>null};
+      if(path.endsWith('/stockResolver.js'))return {getAllStockEntries:()=>[]};
+      return {};
+    },
+  });
+  const intel=await ctx.exports.getCompanyIntelligence('540025','BSE'); // ignore poisoned old caller code
+  assert.equal(intel.scripCode,'');
+  assert.deepEqual(Array.from(intel.recentFilings,(f:any)=>f.id),['bse-official']);
+  assert.equal(intel.upcomingEvent,undefined);
+  const renderer=load(declarations(['renderCompanyPage','escapeHtmlText','escapeHtmlAttr']),{AI_STUDIO_REDIRECT_SCRIPT:'',getAllStockEntries:()=>[]});
+  const bseHtml=renderer.renderCompanyPage({...intel,companyName:'BSE Limited'},'BSE','');
+  assert.match(bseHtml,/EXCHANGE OPERATOR DISCLOSURE/);
+  assert.doesNotMatch(bseHtml,/UNRELATED ENZYME DISCLOSURE|BSE:540025/);
+  assert.match(bseHtml,/NSE Announcements &amp; Filings Live|NSE Announcements & Filings Live/);
+  assert.match(bseHtml,/NSE:BSE/);
+  assert.match(bseHtml,/Meeting dates for BSE Limited are available from NSE/);
+  const nseHtml=renderer.renderCompanyPage({companyName:'National Stock Exchange of India Limited',recentFilings:[{id:'nse',scripCode:'544937',subject:'NSE STORED FILING'},wrong]},'NSE','544937');
+  assert.match(nseHtml,/NSE STORED FILING/);assert.doesNotMatch(nseHtml,/UNRELATED ENZYME DISCLOSURE/);
+  assert.match(nseHtml,/BSE:544937/);
+});
+
+test('actual public operator route uses ordinary intelligence/cache and accepts NSE-only BSE without a scrip', async () => {
+  const route = serverAst.statements.find(node => node.getText(serverAst).startsWith("app.get(['/company/:symbol', '/stock/:symbol']"))!.getText(serverAst);
+  let handler:any;
+  const calls:any[]=[];
+  load(route, {
+    app:{get:(_paths:any,fn:any)=>{handler=fn;}}, getScripCode, getAllStockEntries:()=>[],
+    renderCompany404Page:()=> 'NOT FOUND', pageRenderCache:{get:()=>null,set:(_key:string,body:string)=>({body,etag:'fixture'})},
+    getCompanyIntelligence:async(code:string,symbol:string)=>{calls.push([code,symbol]);return {companyName:symbol};},
+    renderCompanyPage:(_data:any,symbol:string,code:string)=>`regular profile ${symbol}:${code}`,
+  });
+  for(const [symbol,code] of [['BSE',''],['NSE','544937']]){
+    const output:any={statusCode:200};const res:any={status:(status:number)=>{output.statusCode=status;return res;},setHeader:()=>res,send:(body:string)=>{output.body=body;return res;}};
+    await handler({params:{symbol},path:'/company/'+symbol,headers:{}},res);
+    assert.equal(output.statusCode,200);assert.equal(output.body,`regular profile ${symbol}:${code}`);
+  }
+  assert.deepEqual(calls,[['','BSE'],['544937','NSE']]);
 });

@@ -1,3 +1,8 @@
+import { PageHeading } from './ui/PageHeading';
+import { useCompanyFilingCounts } from '../hooks/useCompanyFilingCounts';
+import { matchesCompanyFiling } from '../shared/scripMatching';
+import { ComponentSkeleton } from './ui/ComponentSkeleton';
+import { VERIFIED_STOCK_BY_SYMBOL } from '../shared/stockIdentity';
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { customFetch } from '../api';
 import { WatchlistEditor } from './WatchlistEditor';
@@ -37,6 +42,20 @@ import { ShareActionMenu } from './ui/motion/ShareActionMenu';
 import { HeliosPill, heliosCard, heliosDivider, heliosTitle, heliosMeta } from './ui/helios';
 import { SaveNoteButton } from './notes/SaveNoteButton';
 import { AiSummaryViewer } from './AiSummaryViewer';
+
+function readCachedWatchlists(accountId: string): any[] | null {
+  // Show last cached watchlists instantly on login; fresh data replaces in background.
+  try {
+    const cached = localStorage.getItem(`bsenexus_watchlists_cache:${accountId}`);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed.items) && Date.now() - (parsed.ts || 0) < 12 * 60 * 60 * 1000) {
+        return parsed.items;
+      }
+    }
+  } catch { /* ignore corrupt cache */ }
+  return null;
+}
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -156,7 +175,7 @@ const stockMasterClient: Record<string, { scripCode: string; nameKeywords: strin
   "MPHASIS": { scripCode: "526299", nameKeywords: ["MPHASIS"] },
   "MCX": { scripCode: "534091", nameKeywords: ["MULTI COMMODITY EXCHANGE", "MCX"] },
   "CDSL": { scripCode: "540615", nameKeywords: ["CENTRAL DEPOSITARY SERVICES", "CDSL"] },
-  "BSE": { scripCode: "540025", nameKeywords: ["BSE LIMITED"] },
+  "BSE": { scripCode: VERIFIED_STOCK_BY_SYMBOL.BSE.scripCode, nameKeywords: ["BSE LIMITED"] },
   "IEX": { scripCode: "540750", nameKeywords: ["INDIAN ENERGY EXCHANGE", "IEX"] },
   "POLYCAB": { scripCode: "542652", nameKeywords: ["POLYCAB INDIA", "POLYCAB"] },
   "HAVELLS": { scripCode: "517354", nameKeywords: ["HAVELLS INDIA", "HAVELLS"] },
@@ -230,7 +249,7 @@ const stockMasterClient: Record<string, { scripCode: string; nameKeywords: strin
   "HINDZINC": { scripCode: "500188", nameKeywords: ["HINDUSTAN ZINC"] },
   "AMBUJACEM": { scripCode: "500425", nameKeywords: ["AMBUJA CEMENTS"] },
   "ACC": { scripCode: "500410", nameKeywords: ["ACC LIMITED", "ACC"] },
-  "INDUSINDBK": { scripCode: "532209", nameKeywords: ["INDUSIND BANK"] },
+  "INDUSINDBK": { scripCode: VERIFIED_STOCK_BY_SYMBOL.INDUSINDBK.scripCode, nameKeywords: ["INDUSIND BANK"] },
   "TECHM": { scripCode: "532755", nameKeywords: ["TECH MAHINDRA"] },
   "ABB": { scripCode: "500002", nameKeywords: ["ABB INDIA"] },
   "BPCL": { scripCode: "500547", nameKeywords: ["BHARAT PETROLEUM", "BPCL"] },
@@ -496,7 +515,7 @@ const SwipeableFilingCard: React.FC<{
   );
 };
 
-export function WatchlistManager() {
+export function WatchlistManager({ isActive = true }: { isActive?: boolean } = {}) {
   // Shared feed density (Settings screen) — visibly resizes stock cards.
   const [density] = useFeedDensity();
   const wlCardPad = density === 'comfortable' ? 'p-6' : density === 'dense' ? 'p-4' : 'p-5';
@@ -510,19 +529,8 @@ export function WatchlistManager() {
   const accountId = user?.uid || profile?.uid || 'guest';
   const accountRef = useRef(accountId); accountRef.current = accountId;
   const [watchlistOwner, setWatchlistOwner] = useState(accountId);
-  const [watchlists, setWatchlists] = useState<any[]>(() => {
-    // Show last cached watchlists instantly on login; fresh data replaces in background.
-    try {
-      const cached = localStorage.getItem(`bsenexus_watchlists_cache:${accountId}`);
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed.items) && Date.now() - (parsed.ts || 0) < 12 * 60 * 60 * 1000) {
-          return parsed.items;
-        }
-      }
-    } catch { /* ignore corrupt cache */ }
-    return [];
-  });
+  const [watchlists, setWatchlists] = useState<any[]>(() => readCachedWatchlists(accountId) || []);
+  const [watchlistsReady, setWatchlistsReady] = useState(() => readCachedWatchlists(accountId) !== null);
   const watchlistsRead = useRef<AbortController | null>(null);
   const [watchlistsError, setWatchlistsError] = useState<string | null>(null);
   const [isAddingSymbol, setIsAddingSymbol] = useState(false);
@@ -871,9 +879,9 @@ export function WatchlistManager() {
       const data = await res.json();
       if (!Array.isArray(data)) throw new Error('Invalid watchlist response.');
       if (controller.signal.aborted || accountRef.current !== owner) return;
-      setWatchlists(data); setWatchlistOwner(owner);
+      setWatchlists(data); setWatchlistOwner(owner); setWatchlistsReady(true);
       try { localStorage.setItem(`bsenexus_watchlists_cache:${owner}`, JSON.stringify({ ts: Date.now(), items: data })); } catch {}
-      window.dispatchEvent(new Event('watchlists-changed'));
+      window.dispatchEvent(new CustomEvent('watchlists-changed', { detail: { source: 'watchlist-manager' } }));
     } catch (error) {
       if (!controller.signal.aborted && accountRef.current === owner) setWatchlistsError('Your watchlists could not be loaded. Please retry.');
     } finally { if (watchlistsRead.current === controller) watchlistsRead.current = null; }
@@ -896,17 +904,10 @@ export function WatchlistManager() {
         ? activeSymbols
         : Array.from(new Set(watchlists.flatMap(l => (l.items || []).map((it: any) => parseSymbolItem(it).symbol).filter(Boolean))));
 
-      // Feed size scales with the watchlist — mirrors the server's dynamic per-stock
-      // depth (2500 budget split across symbols, 25–100 each). Small watchlists get
-      // deeper per-stock history; the limit here just needs to cover the server's output.
-      const perStockDepth = Math.min(100, Math.max(25, Math.floor(2500 / Math.max(1, symbolsToFetch.length))));
-      let url = '/api/announcements';
-      if (symbolsToFetch.length > 0) {
-        const limit = Math.min(2500, symbolsToFetch.length * perStockDepth);
-        url += `?limit=${limit}&symbols=${encodeURIComponent(symbolsToFetch.join(','))}`;
-      } else {
-        url += '?limit=50';
-      }
+      // Recent updates have a global response budget; company history is independently paged.
+      const url = symbolsToFetch.length > 0
+        ? `/api/announcements?limit=2500&symbols=${encodeURIComponent(symbolsToFetch.join(','))}`
+        : '/api/announcements?limit=50';
 
       const res = await customFetch(url);
       if (res.ok) {
@@ -935,7 +936,18 @@ export function WatchlistManager() {
   useVisibilityInterval(fetchAnnouncements, 90000);
 
   useEffect(() => {
-    if (watchlistOwner !== accountId) { setWatchlists([]); setWatchlistOwner(accountId); setActiveListId('ALL'); setLastAddedInfo(null); setUndoToast(null); }
+    const refresh = () => { if (document.visibilityState === 'visible') void fetchWatchlists(); };
+    const membershipChanged = (event: Event) => {
+      if ((event as CustomEvent).detail?.source !== 'watchlist-manager') void fetchWatchlists();
+    };
+    window.addEventListener('focus', refresh);
+    window.addEventListener('watchlists-changed', membershipChanged);
+    document.addEventListener('visibilitychange', refresh);
+    return () => { window.removeEventListener('focus', refresh); window.removeEventListener('watchlists-changed', membershipChanged); document.removeEventListener('visibilitychange', refresh); };
+  }, [user?.uid, isPro, isAdmin]);
+
+  useEffect(() => {
+    if (watchlistOwner !== accountId) { const cached = readCachedWatchlists(accountId); setWatchlists(cached || []); setWatchlistsReady(cached !== null); setWatchlistOwner(accountId); setActiveListId('ALL'); setLastAddedInfo(null); setUndoToast(null); }
     void fetchWatchlists();
 
     const handleAuthChanged = () => {
@@ -1546,6 +1558,9 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
 
   const currentWatchlist = watchlists.find(l => l.id === activeListId);
 
+  const filingCountKeys = allCombinedTrackedItems.map(item => item.symbol === 'BSE' ? 'BSE' : item.scripCode || stockMasterClient[item.symbol]?.scripCode || getScripCodeClient(item.symbol) || '');
+  const { counts: storedFilingCounts, retry: retryFilingCounts } = useCompanyFilingCounts(filingCountKeys, accountId);
+
   // Dedicated memo for "My companies" view with live update counts & formatted names
   const myCompaniesList = useMemo(() => {
     const seen = new Set<string>();
@@ -1558,6 +1573,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
       listName?: string;
       listId?: string;
       updateCount: number;
+      filingCountStatus: 'loading' | 'ready' | 'error';
       concreteStatus?: string;
       hasResultsDeclaredToday?: boolean;
       hasHighImpactUpdate?: boolean;
@@ -1599,7 +1615,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
 
       for (let i = 0; i < announcements.length; i++) {
         const a = announcements[i];
-        if (checkSymbolMatchFast(a.companyName, a.subject, item.symbol, a.scrip_cd)) {
+        if (matchesCompanyFiling(a, scripCode, item.symbol)) {
           uCount++;
           if (cleanName === item.symbol && a.companyName) {
             cleanName = a.companyName;
@@ -1627,8 +1643,11 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
         }
       }
 
+      const storedCount = storedFilingCounts[item.symbol === 'BSE' ? 'BSE' : scripCode || ''];
+      const filingCountStatus = !storedCount ? 'loading' : storedCount.available ? 'ready' : 'error';
+      uCount = storedCount?.available ? storedCount.last30Days! : 0;
       // Format concrete human-readable status
-      let concreteStatus = "No recent filings";
+      let concreteStatus = filingCountStatus === 'ready' ? (uCount ? `${uCount} stored filings in 30 days` : "No stored filings in 30 days") : "Filing count pending";
       if (hasResultsDeclaredToday) {
         concreteStatus = "Results declared today";
       } else if (filingsToday > 0) {
@@ -1667,6 +1686,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
         listName: item.listName,
         listId: item.listId,
         updateCount: uCount,
+        filingCountStatus,
         concreteStatus,
         hasResultsDeclaredToday,
         hasHighImpactUpdate: hasHighImpactUpdate || hasResultsDeclaredToday || item.priority === 'HIGH',
@@ -1682,7 +1702,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
       if (pDiff !== 0) return pDiff;
       return a.name.localeCompare(b.name);
     });
-  }, [activeListId, currentListParsedItems, currentWatchlist, allCombinedTrackedItems, announcements]);
+  }, [activeListId, currentListParsedItems, currentWatchlist, allCombinedTrackedItems, announcements, storedFilingCounts]);
 
   const filteredMyCompanies = useMemo(() => {
     if (!companySearch.trim()) return myCompaniesList;
@@ -1887,7 +1907,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
     return (
       <div className="rich-pro-gate flex flex-col items-center justify-center text-center px-6 py-16 space-y-4">
         <RichIllustration kind="pro" />
-        <h2 className="text-lg font-black text-slate-900 dark:text-white">Watchlists are a Pro feature</h2>
+        <PageHeading active={isActive} className="text-lg font-black text-slate-900 dark:text-white">Watchlists are a Pro feature</PageHeading>
         <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xs leading-relaxed">
           Track unlimited stocks with priority tiers and instant Telegram alerts. Upgrade to Pro — one-time plans from ₹{getLowestPlanPrice()}.
         </p>
@@ -1905,27 +1925,25 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
   return (
     <div ref={watchlistContainerRef} className="space-y-2 overscroll-y-contain relative">
       {/* Pull to Refresh Animated Indicator for Watchlists */}
-      <PullToRefreshIndicator 
-        pullDistance={watchlistPullDist}
-        isPulling={isWatchlistPulling}
-        isRefreshing={isWatchlistRefreshing}
-        progress={watchlistPullProg}
-        label="Watchlist & Filings"
-      />
+
+
+      <PageHeading active={isActive} className="text-base sm:text-lg font-bold text-slate-900 dark:text-white font-display">Your Stock Watchlist</PageHeading>
 
       {/* Consolidated High-Density Navigation & Filter Bar - Sticky below navbar */}
       <div className="sticky top-14 md:top-[89px] z-30 bg-white/95 dark:bg-[#1A1926]/95 backdrop-blur-md border border-slate-200/90 dark:border-[#2D283E] rounded-xl p-2 sm:p-2.5 shadow-xs space-y-2">
         {/* Row 1: Primary Controls */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5">
+        <div className="watchlist-toolbar flex flex-col xl:flex-row xl:items-center justify-between gap-3">
           <div className="watchlist-tab-wrap min-w-0 py-0.5">
             {/* View Switcher Tabs: My companies | Updates | Edit watchlist */}
-            <div className="watchlist-tabs flex items-center p-0.5 bg-slate-100 dark:bg-[#15141F] rounded-lg border border-slate-200/80 dark:border-[#2D283E] shrink-0 select-none">
+            <div className="ui-segmented watchlist-tabs flex items-center p-0.5 bg-slate-100 dark:bg-[#15141F] rounded-lg border border-slate-200/80 dark:border-[#2D283E] shrink-0 select-none">
               {/* Tab 1: My companies */}
               <motion.button
                 type="button"
                 whileTap={buttonTap}
                 transition={springSnappy}
                 onClick={() => setWatchlistSubTab('companies')}
+                aria-pressed={watchlistSubTab === 'companies'}
+                aria-label="My companies"
                 className={cn(
                   "relative flex items-center gap-1.5 px-3 min-h-[36px] py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer whitespace-nowrap select-none",
                   watchlistSubTab === 'companies'
@@ -1942,7 +1960,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
                 )}
                 <span className="relative z-10 flex items-center gap-1.5">
                   <Building2 size={13} />
-                  <span>My companies</span>
+                  <span className="watchlist-tab-label"><span className="watchlist-label-wide">My companies</span><span className="watchlist-label-short">Companies</span></span>
                   <span className={cn(
                     "px-1.5 py-0.2 text-[10px] font-mono rounded-full font-black",
                     watchlistSubTab === 'companies' ? "bg-emerald-900/10 text-emerald-900 dark:bg-white/10 dark:text-emerald-100" : "bg-slate-200 dark:bg-[#252233] text-slate-700 dark:text-slate-300"
@@ -1958,6 +1976,8 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
                 whileTap={buttonTap}
                 transition={springSnappy}
                 onClick={() => setWatchlistSubTab('updates')}
+                aria-pressed={watchlistSubTab === 'updates'}
+                aria-label="Updates"
                 className={cn(
                   "relative flex items-center gap-1.5 px-3 min-h-[36px] py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer whitespace-nowrap select-none",
                   watchlistSubTab === 'updates'
@@ -1990,6 +2010,8 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
                 whileTap={buttonTap}
                 transition={springSnappy}
                 onClick={() => setWatchlistSubTab('edit')}
+                aria-pressed={watchlistSubTab === 'edit'}
+                aria-label="Edit watchlist"
                 className={cn(
                   "relative flex items-center gap-1.5 px-3 min-h-[36px] py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer whitespace-nowrap select-none",
                   watchlistSubTab === 'edit'
@@ -2006,7 +2028,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
                 )}
                 <span className="relative z-10 flex items-center gap-1.5">
                   <SlidersHorizontal size={13} />
-                  <span>Edit watchlist</span>
+                  <span className="watchlist-tab-label"><span className="watchlist-label-wide">Edit watchlist</span><span className="watchlist-label-short">Edit list</span></span>
                 </span>
               </motion.button>
             </div>
@@ -2017,19 +2039,21 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
             {watchlistSubTab === 'companies' && (
               <div className="flex items-center gap-2 w-full md:w-auto">
                 {/* Search My Companies */}
-                <div className="relative flex-1 md:w-56 min-w-[150px]">
+                <div className="relative flex-1 xl:w-64 min-w-0">
                   <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input 
                     type="text" 
                     value={companySearch}
                     onChange={e => setCompanySearch(e.target.value)}
-                    placeholder="Search my companies..."
+                    aria-label="Search my companies"
+                    placeholder="Search companies"
                     className="pl-7 pr-7 py-1.5 bg-slate-50 dark:bg-[#201E2E] border border-slate-200 dark:border-[#2D283E] text-xs rounded-lg focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-900 dark:text-white w-full min-h-[36px]"
                   />
                   {companySearch && (
                     <button
                       type="button"
                       onClick={() => setCompanySearch('')}
+                      aria-label="Clear company search"
                       className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5"
                     >
                       <X size={12} />
@@ -2051,7 +2075,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
                   )}
                 >
                   <Plus size={14} className={isAddCompanyOpen ? "rotate-45 transition-transform" : "transition-transform"} />
-                  <span>Add company</span>
+                  <span className="watchlist-label-wide">Add company</span><span className="watchlist-label-short">Add</span>
                 </motion.button>
               </div>
             )}
@@ -2176,6 +2200,16 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
           </div>
         )}
       </div>
+
+      <PullToRefreshIndicator
+        pullDistance={watchlistPullDist}
+        isPulling={isWatchlistPulling}
+        isRefreshing={isWatchlistRefreshing}
+        progress={watchlistPullProg}
+        label="Watchlist & Filings"
+      />
+
+      {watchlistsError && <p role="alert" className="text-sm text-rose-600">{watchlistsError} <button type="button" onClick={() => void fetchWatchlists()} className="underline">Retry</button></p>}
 
       {/* FILTER BOTTOM SHEET / DRAWER */}
       {isFilterDrawerOpen && (
@@ -2601,7 +2635,10 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
 
           {companyAddError && <p role="alert" className="p-3 rounded-xl text-sm text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/30">{companyAddError}</p>}
           {/* Companies List / Grid */}
-          {filteredMyCompanies.length === 0 ? (
+          {(watchlistOwner !== accountId || !watchlistsReady) ? (
+            watchlistsError ? <p role="status" className="p-4 text-sm text-slate-500">No saved watchlist is available yet.</p>
+              : <div role="status" aria-label="Loading your watchlist"><ComponentSkeleton type="section" /></div>
+          ) : filteredMyCompanies.length === 0 ? (
             <div className="rich-panel rich-empty my-4 p-6 sm:p-8 text-slate-400 space-y-4 border rounded-2xl max-w-lg">
               {myCompaniesList.length === 0 ? <RichIllustration kind="companies" /> : <Search size={28} className="mx-auto" aria-hidden="true" />}
               <div className="space-y-1">
@@ -2687,27 +2724,13 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
 
                     {/* Footer: filings · actions */}
                     <div className="flex items-center justify-between gap-2">
-                        {c.updateCount > 0 ? (
-                          <motion.button
-                            type="button"
-                            whileTap={buttonTap}
-                            transition={springSnappy}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedStockFilter(c.symbol);
-                              setWatchlistSubTab('updates');
-                            }}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold bg-slate-100 dark:bg-[#252233] text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#2F2B40] transition-colors cursor-pointer select-none min-h-[32px] active:scale-[0.96]"
-                            title={`View all ${c.updateCount} filings for ${c.symbol}`}
-                          >
-                            <span>{c.updateCount} {c.updateCount === 1 ? 'filing' : 'filings'}</span>
-                            <ChevronRight size={12} />
-                          </motion.button>
-                        ) : (
-                          <span className={cn(heliosMeta, "select-none")}>
-                            0 filings
-                          </span>
-                        )}
+                        <button type="button"
+                          onClick={e => { e.stopPropagation(); if (c.filingCountStatus === 'error') retryFilingCounts(); else handleOpenIntel(c.scripCode, c.symbol, c.name); }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold bg-slate-100 dark:bg-[#252233] min-h-[32px] cursor-pointer"
+                          title="Stored exchange filings in the last 30 days; open company history for all pages">
+                          <span>{c.filingCountStatus === 'ready' ? `${c.updateCount} filings · 30d` : c.filingCountStatus === 'error' ? 'Count unavailable · Retry' : 'Checking filings…'}</span>
+                          <ChevronRight size={12} />
+                        </button>
 
                       <div className="flex items-center gap-1">
                         <motion.button
@@ -2775,8 +2798,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
 
       {/* One responsive editor owns list selection, stock identity and priority controls. */}
       {watchlistSubTab === 'edit' && <>
-        {watchlistsError && <p role="alert" className="text-sm text-rose-600">{watchlistsError} <button type="button" onClick={() => void fetchWatchlists()} className="underline">Retry</button></p>}
-        <WatchlistEditor lists={watchlistOwner === accountId ? watchlists : []} activeId={activeListId} onSelect={setActiveListId}
+        {!watchlistsReady || watchlistOwner !== accountId ? (watchlistsError ? <p role="status">No saved watchlist is available yet.</p> : <div role="status" aria-label="Loading your watchlist"><ComponentSkeleton type="section" /></div>) : <WatchlistEditor lists={watchlistOwner === accountId ? watchlists : []} activeId={activeListId} onSelect={setActiveListId}
           creating={isCreatingList} onCreating={setIsCreatingList} listName={newListName} onListName={setNewListName} onCreate={handleAddList}
           editingId={editingListId} editName={editListName} onEditName={setEditListName} onEdit={(id, name) => {setEditingListId(id);setEditListName(name);}} onCancelEdit={() => setEditingListId(null)} onRename={handleRenameList}
           onToggle={handleToggleList} onDelete={handleDeleteList} symbol={newSymbol} onSymbol={setNewSymbol} category={newCategory} onCategory={setNewCategory} priority={newPriority} onPriority={setNewPriority}
@@ -2784,7 +2806,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
           onAdd={handleAddSymbol} onDirectAdd={handleDirectAddSymbol} filter={symbolPriorityFilter} onFilter={setSymbolPriorityFilter} query={symbolSearchQuery} onQuery={setSymbolSearchQuery}
           onCycle={handleCyclePriority} onRemove={handleRemoveSymbol} onOpen={handleOpenIntel}
           onClear={id => setConfirmModalState({isOpen:true,title:id ? 'Clear this watchlist?' : 'Clear all watchlists?',description:'Remove the stocks in this view? Your other saved research stays available.',actionType:id ? 'clear_list' : 'clear_all',listId:id})}
-          onReset={() => setConfirmModalState({isOpen:true,title:'Restore default watchlists?',description:'This replaces your lists with the default company selection.',actionType:'reset_defaults'})} />
+          onReset={() => setConfirmModalState({isOpen:true,title:'Restore default watchlists?',description:'This replaces your lists with the default company selection.',actionType:'reset_defaults'})} />}
       </>}
 
       {/* VIEW 2: DEDICATED WATCHLIST ANNOUNCEMENTS & SUMMARIES FEED */}

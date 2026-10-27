@@ -92,7 +92,11 @@ describe('Firestore Security Rules Least-Privilege Verification', () => {
       if (operation === 'create') {
         return requestData?.userId === uid;
       }
-      if (operation === 'update' || operation === 'delete') {
+      if (operation === 'update') {
+        // userId is immutable for the owner (firestore.rules RULES-1).
+        return resourceData?.userId === uid && requestData?.userId === resourceData?.userId;
+      }
+      if (operation === 'delete') {
         return resourceData?.userId === uid;
       }
       return false;
@@ -259,6 +263,8 @@ describe('Firestore Security Rules Least-Privilege Verification', () => {
     assert.strictEqual(evaluateRule({ auth: otherAuth, collection: 'user_notes', docId: 'n1', operation: 'read', resourceData: ownNote }), false, 'Attacker must NOT read victim note');
     assert.strictEqual(evaluateRule({ auth: otherAuth, collection: 'user_notes', docId: 'n1', operation: 'update', resourceData: ownNote, requestData: { userId: 'user_owner_1', text: 'tampered' } }), false, 'Attacker must NOT update victim note');
     assert.strictEqual(evaluateRule({ auth: otherAuth, collection: 'user_notes', docId: 'n1', operation: 'delete', resourceData: ownNote }), false, 'Attacker must NOT delete victim note');
+    // RULES-1: a note owner must NOT re-point their note at another user's uid.
+    assert.strictEqual(evaluateRule({ auth: ownerAuth, collection: 'user_notes', docId: 'n1', operation: 'update', resourceData: ownNote, requestData: { ...ownNote, userId: 'victim_uid_42' } }), false, 'Owner must NOT reassign a note to another uid');
     assert.strictEqual(evaluateRule({ auth: otherAuth, collection: 'user_notes', docId: 'n9', operation: 'create', requestData: { userId: 'user_owner_1', text: 'forged' } }), false, 'Attacker must NOT create a note under the victim uid');
 
     // Anonymous (guest) users are fully denied

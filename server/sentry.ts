@@ -1,4 +1,5 @@
 import * as Sentry from '@sentry/node';
+import { redactAiTelemetry } from '../src/shared/aiTelemetry.js';
 
 /**
  * BSE Nexus Server-Side Sentry Monitoring
@@ -18,6 +19,8 @@ export function getServerSentryDsn(): string {
 let isServerInitialized = false;
 
 export function initServerSentry(): void {
+  // Importing SSR renderers in tests must never start the production transport.
+  if (process.env.NODE_ENV === 'test' || process.env.TEST_RUNNER || process.env.NODE_TEST_CONTEXT) return;
   if (isServerInitialized) return;
 
   const dsn = getServerSentryDsn();
@@ -28,6 +31,10 @@ export function initServerSentry(): void {
       dsn,
       environment: process.env.NODE_ENV || 'production',
       tracesSampleRate: 0.1,
+      // Keep beforeSendTransaction active under Sentry 11's streaming default.
+      traceLifecycle: 'static',
+      beforeSend: event => redactAiTelemetry(event),
+      beforeSendTransaction: event => redactAiTelemetry(event),
     });
     isServerInitialized = true;
     console.log('[Sentry] Server monitoring initialized.');

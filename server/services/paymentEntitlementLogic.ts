@@ -99,10 +99,10 @@ export function deriveEntitlementFromOrders(
 }
 
 /**
- * Legacy paid profiles created before the dedicated entitlement collection
- * remain valid evidence for status/repair. They are only a bridge: the DAO
- * copies the result into payment_entitlements, after which the profile is
- * no longer the source of truth.
+ * Diagnostic helper for offline historical review only. Ordinary profile
+ * fields are not payment evidence: runtime reconciliation never invokes
+ * this function or copies its result into payment_entitlements. Historical
+ * recovery requires an audited ledger/provider verification.
  */
 export function deriveEntitlementFromProfile(
   uid: string,

@@ -1,6 +1,14 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <script>
+      // Fragment secrets never reach HTTP logs. Capture before any optional telemetry.
+      if (location.pathname.replace(/\/+$/, '').toLowerCase() === '/activate-gift') {
+        var gift = new URLSearchParams(location.hash.slice(1)).get('token') || '';
+        if (/^bnx_gift_[A-Za-z0-9_-]{43}$/.test(gift)) window.__BN_GIFT_TOKEN__ = gift;
+        history.replaceState(null, '', location.pathname);
+      }
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script>
@@ -317,6 +325,13 @@
         font-family: 'JetBrains Mono';
         font-display: swap;
       }
+      .app-boot { min-height: 100dvh; display: flex; align-items: center; justify-content: center; gap: 12px; background: #f8fafc; color: #172033; font: 600 18px system-ui, sans-serif; }
+      .app-boot-heading { margin: 0; font: inherit; line-height: 1.4; overflow-wrap: anywhere; }
+      .app-boot-copy { max-width: 36rem; }
+      .app-boot { padding: 24px; box-sizing: border-box; }
+      .app-boot-mark { flex-shrink: 0; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; }
+      .app-boot-label { display: block; margin-top: 5px; color: #64748b; font-size: 12px; font-weight: 400; }
+      @media (prefers-color-scheme: dark) { .app-boot { background: #100e19; color: #f0f3f8; } .app-boot-label { color: #b2b9c9; } }
       .critical-preloader {
         min-height: 100vh;
         background: #0D0C15;
@@ -381,6 +396,7 @@
          "Essential Only". Async; cannot block or break existing scripts. -->
     <script type="text/javascript">
     (function () {
+      if (location.pathname.replace(/\/+$/, '').toLowerCase() === '/activate-gift') return;
       var hostname = window.location.hostname;
       if (hostname !== 'bsenexus.in' && hostname !== 'www.bsenexus.in') {
         return;
@@ -413,156 +429,11 @@
   </head>
   <body>
     <div id="root">
-      <div class="critical-preloader">
-        <header class="critical-header">
-          <div class="critical-logo">
-            <div class="critical-logo-icon"></div>
-            <span>BSE<span style="color:#10B981;">NEXUS</span></span>
-            <span class="critical-badge">15s Live Feed</span>
-          </div>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <a href="/announcements" style="color: #94A3B8; font-size: 12px; font-weight: 600; text-decoration: none; padding: 4px 8px;">Announcements</a>
-            <a href="/results-calendar" style="color: #94A3B8; font-size: 12px; font-weight: 600; text-decoration: none; padding: 4px 8px;">Results Calendar</a>
-            <a href="/guides" style="color: #94A3B8; font-size: 12px; font-weight: 600; text-decoration: none; padding: 4px 8px;">Guides</a>
-          </div>
-        </header>
-
-        <main class="critical-body">
-          <div style="margin-bottom: 20px;">
-            <h1 style="font-size: 20px; font-weight: 800; color: #F8FAFC; margin: 0 0 6px 0; letter-spacing: -0.02em;">
-              Live BSE Corporate Announcements &amp; Disclosures Feed
-            </h1>
-            <p style="font-size: 13px; color: #94A3B8; margin: 0; line-height: 1.5;">
-              Real-time Bombay Stock Exchange (BSE India) corporate disclosures, quarterly financial results (SEBI LODR 33), material events (Reg 30), and Gemini AI summaries.
-            </p>
-          </div>
-
-          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px;">
-            <article style="background: #181624; border: 1px solid #2D283E; border-radius: 12px; padding: 14px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <span style="font-weight: 700; font-size: 13px; color: #FFFFFF;">RELIANCE INDUSTRIES LTD.</span>
-                <span style="font-family: monospace; font-size: 11px; background: #221F30; color: #10B981; padding: 2px 6px; border-radius: 4px; border: 1px solid #342E46;">BSE: 500325</span>
-              </div>
-              <p style="font-size: 12px; color: #94A3B8; margin: 0 0 8px 0; line-height: 1.4;">
-                Unaudited Financial Results For The Quarter Ended September 30, 2026 - SEBI LODR Regulation 33
-              </p>
-              <span style="font-size: 10px; font-weight: 700; background: rgba(16, 185, 129, 0.15); color: #10B981; padding: 2px 6px; border-radius: 4px;">RESULTS</span>
-            </article>
-
-            <article style="background: #181624; border: 1px solid #2D283E; border-radius: 12px; padding: 14px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <span style="font-weight: 700; font-size: 13px; color: #FFFFFF;">TATA CONSULTANCY SERVICES LTD.</span>
-                <span style="font-family: monospace; font-size: 11px; background: #221F30; color: #10B981; padding: 2px 6px; border-radius: 4px; border: 1px solid #342E46;">BSE: 532540</span>
-              </div>
-              <p style="font-size: 12px; color: #94A3B8; margin: 0 0 8px 0; line-height: 1.4;">
-                Outcome Of Board Meeting - Unaudited Financial Results For Q2 FY27
-              </p>
-              <span style="font-size: 10px; font-weight: 700; background: rgba(16, 185, 129, 0.15); color: #10B981; padding: 2px 6px; border-radius: 4px;">RESULTS</span>
-            </article>
-
-            <article style="background: #181624; border: 1px solid #2D283E; border-radius: 12px; padding: 14px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <span style="font-weight: 700; font-size: 13px; color: #FFFFFF;">LARSEN &amp; TOUBRO LTD.</span>
-                <span style="font-family: monospace; font-size: 11px; background: #221F30; color: #60A5FA; padding: 2px 6px; border-radius: 4px; border: 1px solid #342E46;">BSE: 500510</span>
-              </div>
-              <p style="font-size: 12px; color: #94A3B8; margin: 0 0 8px 0; line-height: 1.4;">
-                Heavy Civil Infrastructure Secures Mega Order (₹5,000 - ₹10,000 Cr) under Regulation 30
-              </p>
-              <span style="font-size: 10px; font-weight: 700; background: rgba(96, 165, 250, 0.15); color: #60A5FA; padding: 2px 6px; border-radius: 4px;">ORDER WIN</span>
-            </article>
-
-            <article style="background: #181624; border: 1px solid #2D283E; border-radius: 12px; padding: 14px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <span style="font-weight: 700; font-size: 13px; color: #FFFFFF;">INFOSYS LTD.</span>
-                <span style="font-family: monospace; font-size: 11px; background: #221F30; color: #A78BFA; padding: 2px 6px; border-radius: 4px; border: 1px solid #342E46;">BSE: 500209</span>
-              </div>
-              <p style="font-size: 12px; color: #94A3B8; margin: 0 0 8px 0; line-height: 1.4;">
-                Schedule of Earnings Conference Call for Q2 FY27 Results
-              </p>
-              <span style="font-size: 10px; font-weight: 700; background: rgba(167, 139, 250, 0.15); color: #A78BFA; padding: 2px 6px; border-radius: 4px;">CONCALL</span>
-            </article>
-          </div>
-        </main>
+      <div class="app-boot" role="status" aria-label="Loading BSE Nexus">
+        <img class="app-boot-mark" src="/icon.svg" alt="" width="40" height="40">
+        <section class="app-boot-copy"><!--route-heading--><h1 class="app-boot-heading">Every BSE filing, decoded in seconds.</h1><!--/route-heading--><span class="app-boot-label">Loading BSE Nexus…</span></section>
       </div>
-
-      <!-- Semantic Initial HTML for Answer Engine Optimization (AEO) & Search Engine Indexing -->
-      <main style="display: none;">
-        <h2>Real-time BSE India Corporate Filings, Earnings Calendar &amp; AI Intelligence</h2>
-        <p>Never miss a market-moving announcement. Get instant Gemini AI financial summaries, YoY &amp; QoQ metric breakdowns, custom watchlist filtering, and high-speed Telegram alerts the moment companies file on BSE.</p>
-
-        <section id="about">
-          <h2>About Bsenexus: Real-Time Corporate Filings &amp; Market Intelligence</h2>
-          <p>
-            <strong>Bsenexus</strong> is an independent financial technology analytics terminal and research platform engineered specifically for tracking Bombay Stock Exchange (BSE) corporate announcements, regulatory disclosures, and earnings releases in real time. Designed for active retail investors, equity research analysts, and institutional desks, Bsenexus ingests corporate disclosures directly from the official portal of the <a href="https://www.bseindia.com" target="_blank" rel="noopener noreferrer">Bombay Stock Exchange (BSE India)</a> within 15 seconds of filing.
-          </p>
-          <p>
-            The platform continuously monitors regulatory compliance under the SEBI (Listing Obligations and Disclosure Requirements) Regulations, 2015, specifically capturing material events under Regulation 30 and financial outcome declarations under Regulation 33. All regulatory filings mandated by the <a href="https://www.sebi.gov.in" target="_blank" rel="noopener noreferrer">Securities and Exchange Board of India (SEBI)</a>—such as dividend declarations, board meeting intimations, mergers and acquisitions, capital expenditure projects, order wins, management transitions, and forensic auditor resignations—are parsed through an automated neural pipeline powered by Gemini AI. This delivers instantaneous extraction of year-over-year (YoY) and quarter-over-quarter (QoQ) revenue, operating EBITDA, and net profit metrics directly from unformatted corporate PDF documents.
-          </p>
-          <p>
-            Beyond real-time disclosure feeds, Bsenexus maintains an updated <a href="/results-calendar">Quarterly Results Calendar</a> tracking scheduled board meetings, audited and unaudited earnings declarations, and historical corporate actions across 4,000+ listed Indian enterprises. Investors can navigate directly to dedicated company pages—such as <a href="/company/RELIANCE">Reliance Industries</a>, <a href="/company/TCS">Tata Consultancy Services (TCS)</a>, and HDFC Bank—to review comprehensive regulatory histories, price metrics, and peer group benchmarks.
-          </p>
-          <p>
-            To empower investors with actionable domain expertise, our <a href="/guides">Market Research Guides</a> offer step-by-step forensic playbooks on decoding corporate actions, analyzing balance sheets, auditing shareholding patterns under Regulation 31, and interpreting SEBI PIT insider trading disclosures. Users can also configure personalized watchlists and receive instant Telegram push notifications the moment target companies submit new filings.
-          </p>
-        </section>
-
-        <section id="faq">
-          <h2>Frequently Asked Questions about Bsenexus &amp; Indian Stock Disclosures</h2>
-          <article>
-            <h3>What is Bsenexus and what services does it provide?</h3>
-            <p>Bsenexus is an independent real-time equity research terminal and corporate disclosure tracking platform for Indian capital markets. It ingests Bombay Stock Exchange (BSE) regulatory filings within 15 seconds, provides Gemini AI YoY/QoQ financial metric summaries, hosts an updated quarterly results calendar, tracks dedicated company pages, and delivers instant Telegram alerts.</p>
-          </article>
-          <article>
-            <h3>How do I check upcoming BSE quarterly results and board meetings?</h3>
-            <p>Visit the Bsenexus Results Calendar (/results-calendar) or the Live BSE Docket on the homepage. Meeting dates, audited/unaudited quarterly periods, dividend agendas, and LODR Regulation 29 notices are synchronized directly from live BSE exchange disclosures.</p>
-          </article>
-          <article>
-            <h3>How does Bsenexus process SEBI LODR Regulation 30 corporate announcements?</h3>
-            <p>Under SEBI LODR Regulations 30 and 33, listed Indian companies must disclose material events such as dividend declarations, acquisitions, Capex projects, order wins, and financial results. Bsenexus automatically parses official PDF filings from bseindia.com in real-time, extracting revenue, PAT, and EBITDA numbers with AI.</p>
-          </article>
-          <article>
-            <h3>Where can I find research guides on Indian stock market filings?</h3>
-            <p>Explore the Bsenexus Market Research Guides (/guides) to read in-depth educational tutorials on analyzing balance sheets, tracking promoter shareholding patterns under Regulation 31, decoding auditor resignations, and interpreting SEBI PIT insider trading rules.</p>
-          </article>
-          <article>
-            <h3>Can I track announcements for specific stocks like Reliance Industries or TCS?</h3>
-            <p>Yes. Search any listed BSE scrip or navigate directly to dedicated company pages (such as /company/RELIANCE or /company/TCS) to review comprehensive historical filings, upcoming board meetings, live price data, and peer comparisons.</p>
-          </article>
-          <article>
-            <h3>Is Bsenexus affiliated with the Bombay Stock Exchange or Nexus Select Trust?</h3>
-            <p>No. Bsenexus is an independent market intelligence terminal. It is not affiliated with BSE India Ltd (bseindia.com), SEBI (sebi.gov.in), or Nexus Select Trust (REIT Scrip: 543913). All regulatory disclosures originate from public stock exchange feeds.</p>
-          </article>
-        </section>
-        <section aria-labelledby="top-companies-heading"><h2 id="top-companies-heading">Track Companies</h2><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px;">
-<a href="/company/RELIANCE" style="display: block; border: 1px solid #2D283E; border-radius: 12px; padding: 14px; text-decoration: none;"><strong>Reliance Industries Ltd</strong><br><span>BSE: 500325</span></a>
-<a href="/company/TCS" style="display: block; border: 1px solid #2D283E; border-radius: 12px; padding: 14px; text-decoration: none;"><strong>Tata Consultancy Services Ltd</strong><br><span>BSE: 532540</span></a>
-<a href="/company/HDFCBANK" style="display: block; border: 1px solid #2D283E; border-radius: 12px; padding: 14px; text-decoration: none;"><strong>HDFC Bank Ltd</strong><br><span>BSE: 500180</span></a>
-<a href="/company/INFY" style="display: block; border: 1px solid #2D283E; border-radius: 12px; padding: 14px; text-decoration: none;"><strong>Infosys Ltd</strong><br><span>BSE: 500209</span></a>
-<a href="/company/ICICIBANK" style="display: block; border: 1px solid #2D283E; border-radius: 12px; padding: 14px; text-decoration: none;"><strong>ICICI Bank Ltd</strong><br><span>BSE: 532174</span></a>
-<a href="/company/SBIN" style="display: block; border: 1px solid #2D283E; border-radius: 12px; padding: 14px; text-decoration: none;"><strong>State Bank of India</strong><br><span>BSE: 500112</span></a>
-<a href="/company/BHARTIARTL" style="display: block; border: 1px solid #2D283E; border-radius: 12px; padding: 14px; text-decoration: none;"><strong>Bharti Airtel Ltd</strong><br><span>BSE: 532454</span></a>
-<a href="/company/ITC" style="display: block; border: 1px solid #2D283E; border-radius: 12px; padding: 14px; text-decoration: none;"><strong>ITC Ltd</strong><br><span>BSE: 500875</span></a>
-<a href="/company/KOTAKBANK" style="display: block; border: 1px solid #2D283E; border-radius: 12px; padding: 14px; text-decoration: none;"><strong>Kotak Mahindra Bank Ltd</strong><br><span>BSE: 500247</span></a>
-<a href="/company/LT" style="display: block; border: 1px solid #2D283E; border-radius: 12px; padding: 14px; text-decoration: none;"><strong>Larsen &amp; Toubro Ltd</strong><br><span>BSE: 500510</span></a>
-<a href="/company/AXISBANK" style="display: block; border: 1px solid #2D283E; border-radius: 12px; padding: 14px; text-decoration: none;"><strong>Axis Bank Ltd</strong><br><span>BSE: 532215</span></a>
-<a href="/company/MARUTI" style="display: block; border: 1px solid #2D283E; border-radius: 12px; padding: 14px; text-decoration: none;"><strong>Maruti Suzuki India Ltd</strong><br><span>BSE: 532500</span></a>
-<a href="/company/TITAN" style="display: block; border: 1px solid #2D283E; border-radius: 12px; padding: 14px; text-decoration: none;"><strong>Titan Company Ltd</strong><br><span>BSE: 500114</span></a>
-<a href="/company/ASIANPAINT" style="display: block; border: 1px solid #2D283E; border-radius: 12px; padding: 14px; text-decoration: none;"><strong>Asian Paints Ltd</strong><br><span>BSE: 500820</span></a>
-<a href="/company/HCLTECH" style="display: block; border: 1px solid #2D283E; border-radius: 12px; padding: 14px; text-decoration: none;"><strong>HCL Technologies Ltd</strong><br><span>BSE: 532281</span></a>
-<a href="/company/SUNPHARMA" style="display: block; border: 1px solid #2D283E; border-radius: 12px; padding: 14px; text-decoration: none;"><strong>Sun Pharmaceutical Industries Ltd</strong><br><span>BSE: 524715</span></a>
-<a href="/company/TATAMOTORS" style="display: block; border: 1px solid #2D283E; border-radius: 12px; padding: 14px; text-decoration: none;"><strong>Tata Motors Ltd</strong><br><span>BSE: 500570</span></a>
-<a href="/company/TATASTEEL" style="display: block; border: 1px solid #2D283E; border-radius: 12px; padding: 14px; text-decoration: none;"><strong>Tata Steel Ltd</strong><br><span>BSE: 500470</span></a>
-<a href="/company/WIPRO" style="display: block; border: 1px solid #2D283E; border-radius: 12px; padding: 14px; text-decoration: none;"><strong>Wipro Ltd</strong><br><span>BSE: 507685</span></a>
-<a href="/company/ULTRACEMCO" style="display: block; border: 1px solid #2D283E; border-radius: 12px; padding: 14px; text-decoration: none;"><strong>UltraTech Cement Ltd</strong><br><span>BSE: 532538</span></a>
-<a href="/company/NTPC" style="display: block; border: 1px solid #2D283E; border-radius: 12px; padding: 14px; text-decoration: none;"><strong>NTPC Ltd</strong><br><span>BSE: 532555</span></a>
-<a href="/company/POWERGRID" style="display: block; border: 1px solid #2D283E; border-radius: 12px; padding: 14px; text-decoration: none;"><strong>Power Grid Corporation of India Ltd</strong><br><span>BSE: 532898</span></a>
-<a href="/company/ONGC" style="display: block; border: 1px solid #2D283E; border-radius: 12px; padding: 14px; text-decoration: none;"><strong>Oil &amp; Natural Gas Corporation Ltd</strong><br><span>BSE: 500312</span></a>
-<a href="/company/COALINDIA" style="display: block; border: 1px solid #2D283E; border-radius: 12px; padding: 14px; text-decoration: none;"><strong>Coal India Ltd</strong><br><span>BSE: 533278</span></a>
-<a href="/company/BAJFINANCE" style="display: block; border: 1px solid #2D283E; border-radius: 12px; padding: 14px; text-decoration: none;"><strong>Bajaj Finance Ltd</strong><br><span>BSE: 500034</span></a>
-<a href="/company/TRENT" style="display: block; border: 1px solid #2D283E; border-radius: 12px; padding: 14px; text-decoration: none;"><strong>Trent Ltd</strong><br><span>BSE: 500251</span></a>
-</div></section>
-
-      </main>
+      <!--announcements-feed-->
     </div>
 
     <noscript>
@@ -587,6 +458,9 @@
         </section>
 
         <section aria-labelledby="noscript-top-companies-heading"><h2 id="noscript-top-companies-heading">Track Companies</h2><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px;">
+<a href="/company/BSE"><strong>BSE Limited</strong><br><span>NSE: BSE</span></a>
+<a href="/company/NSE"><strong>National Stock Exchange of India Limited</strong><br><span>BSE: 544937</span></a>
+<a href="/company/NXST"><strong>Nexus Select Trust</strong><br><span>BSE: 543913</span></a>
 <a href="/company/RELIANCE" style="display: block; border: 1px solid #2D283E; border-radius: 12px; padding: 14px; text-decoration: none;"><strong>Reliance Industries Ltd</strong><br><span>BSE: 500325</span></a>
 <a href="/company/TCS" style="display: block; border: 1px solid #2D283E; border-radius: 12px; padding: 14px; text-decoration: none;"><strong>Tata Consultancy Services Ltd</strong><br><span>BSE: 532540</span></a>
 <a href="/company/HDFCBANK" style="display: block; border: 1px solid #2D283E; border-radius: 12px; padding: 14px; text-decoration: none;"><strong>HDFC Bank Ltd</strong><br><span>BSE: 500180</span></a>

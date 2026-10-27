@@ -1,640 +1,859 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Bot, 
-  Terminal, 
-  Copy, 
-  Check, 
-  Play, 
-  ExternalLink, 
-  Sparkles, 
-  Zap, 
-  ShieldCheck, 
-  Code2, 
-  FileJson, 
+import React, { useEffect, useRef, useState } from "react";
+import {
+  ArrowLeft,
   ArrowRight,
-  Database,
-  Calendar,
-  Layers,
-  ChevronRight
-} from 'lucide-react';
-import { BseNexusLogo } from './ui/BseNexusLogo';
+  Check,
+  ChevronDown,
+  Copy,
+  ExternalLink,
+  Link2,
+  Loader2,
+  RefreshCw,
+  ShieldCheck,
+  Unplug,
+} from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import { customFetch } from "../api";
+import { BseNexusLogo } from "./ui/BseNexusLogo";
+import "../styles/ai-connections.css";
 
 interface AiPluginPageProps {
   onEnterTerminal?: (tab?: string) => void;
 }
+interface Connection {
+  id: string;
+  name: string;
+  scopes: string[];
+  expiresAt: string;
+}
+interface Status {
+  plan: string;
+  limits: { daily: number; perMinute: number; writes: number };
+  used: number;
+  connections: Connection[];
+  mcpUrl: string;
+  scopeLabels: Record<string, string>;
+  activity?: { action: string; at: string; status: string }[];
+}
+interface Consent {
+  name: string;
+  callbackOrigin: string;
+  scopes: string[];
+  scopeLabels: Record<string, string>;
+}
+interface Loaded {
+  owner: string;
+  status?: Status;
+  consent?: Consent;
+  loading: boolean;
+  error: string;
+  code: string;
+}
+const PLATFORMS = [
+  {
+    id: "chatgpt",
+    name: "ChatGPT",
+    url: "https://chatgpt.com/",
+    field: "MCP endpoint URL",
+    help: "https://help.openai.com/en/articles/12584461-connecting-custom-mcp-servers-in-chatgpt",
+    open: "On ChatGPT web, open Plugins, choose +, then Add custom MCP server. Name it BSE Nexus. In the older interface, look under Settings → Apps → Create.",
+    finish:
+      "Choose OAuth, complete the BSE Nexus sign-in and review the tools. Finish creating the plugin, then select BSE Nexus with @ in a new chat.",
+    note: "Custom MCP setup is web-only. The options you see depend on your ChatGPT plan and workspace permissions.",
+  },
+  {
+    id: "gemini",
+    name: "Gemini",
+    url: "https://gemini.google.com/",
+    field: "MCP server URL",
+    help: "https://support.google.com/gemini/answer/17209137?hl=en",
+    open: "On Gemini web, open Settings → Connected Apps → Custom apps → Add a custom app. Connected Apps may be inside Personal Intelligence.",
+    finish:
+      "Choose Next and follow the BSE Nexus sign-in. Leave advanced credentials empty: BSE Nexus supports automatic client registration. After approval, select the app with @ in Gemini.",
+    note: "Google currently documents custom apps for eligible personal accounts in the US, in English, with Keep Activity on. Setup happens on the web; connected apps can then be used on mobile. Check Google's availability if this option is missing.",
+  },
+  {
+    id: "claude",
+    name: "Claude",
+    url: "https://claude.ai/",
+    field: "Remote MCP server URL",
+    help: "https://support.claude.com/en/articles/11175166-get-started-with-custom-connectors-using-remote-mcp",
+    open: "Open Customize → Connectors → Add → Add custom connector. Name it BSE Nexus. Team or Enterprise users may need their workspace owner to add it first.",
+    finish:
+      "Continue with sign-in. If Claude asks how to identify its OAuth client, choose Register automatically. Complete BSE Nexus approval, then enable the connector in your chat.",
+    note: "Choose automatic registration for this connection. Provider account and workspace rules still apply.",
+  },
+  {
+    id: "other",
+    name: "Another AI",
+    url: "",
+    field: "Remote MCP server URL",
+    help: "",
+    open: "In your AI's connection settings, add a remote MCP server. Your AI must support HTTPS Streamable HTTP, OAuth and automatic client registration.",
+    finish:
+      "Use automatic OAuth sign-in and approve access on BSE Nexus. Return to your AI and finish adding its tools.",
+    note: "A client that only accepts a static API key or a local server is not supported by this setup. Use a compatible remote OAuth client.",
+  },
+];
+const platformId = () => {
+  const id = new URLSearchParams(window.location.search).get("ai") || "";
+  return PLATFORMS.some((p) => p.id === id) ? id : "";
+};
+function validStatus(data: any): data is Status {
+  return (
+    data &&
+    typeof data.plan === "string" &&
+    typeof data.mcpUrl === "string" &&
+    Number.isFinite(data.used) &&
+    data.used >= 0 &&
+    data.limits &&
+    ["daily", "perMinute", "writes"].every(
+      (k) => Number.isFinite(data.limits[k]) && data.limits[k] >= 0,
+    ) &&
+    Array.isArray(data.connections) &&
+    data.connections.every(
+      (c: any) =>
+        typeof c.id === "string" &&
+        typeof c.name === "string" &&
+        Array.isArray(c.scopes) &&
+        c.scopes.every((s: any) => typeof s === "string") &&
+        Number.isFinite(Date.parse(c.expiresAt)),
+    ) &&
+    data.scopeLabels &&
+    Object.values(data.scopeLabels).every((v) => typeof v === "string") &&
+    (!data.activity ||
+      (Array.isArray(data.activity) &&
+        data.activity.every(
+          (a: any) =>
+            typeof a.action === "string" &&
+            typeof a.status === "string" &&
+            Number.isFinite(Date.parse(a.at)),
+        )))
+  );
+}
 
-export const AiPluginPage: React.FC<AiPluginPageProps> = ({ onEnterTerminal }) => {
-  const [copiedKey, setCopiedKey] = useState<string | null>(null);
-
-  // Playground state
-  const [selectedEndpoint, setSelectedEndpoint] = useState<'filings' | 'results' | 'board-meetings' | 'company'>('filings');
-  const [paramSymbol, setParamSymbol] = useState('RELIANCE');
-  const [paramCategory, setParamCategory] = useState('');
-  const [paramLimit, setParamLimit] = useState(5);
-  const [paramDays, setParamDays] = useState(30);
-  const [paramQuery, setParamQuery] = useState('Tata Motors');
-
-  const [isLoading, setIsLoading] = useState(false);
-  const [apiResponse, setApiResponse] = useState<any>(null);
-  const [responseStatus, setResponseStatus] = useState<number | null>(null);
-  const [responseLatency, setResponseLatency] = useState<number | null>(null);
+export const AiPluginPage: React.FC<AiPluginPageProps> = ({
+  onEnterTerminal,
+}) => {
+  const { user, authLoading, setIsAuthModalOpen } = useAuth();
+  const [search, setSearch] = useState(window.location.search);
+  const request = new URLSearchParams(search).get("request") || "";
+  const signedIn = Boolean(user && !user.isAnonymous);
+  const owner = JSON.stringify([signedIn ? user!.uid : null, request]);
+  const ownerRef = useRef(owner);
+  ownerRef.current = owner;
+  const [loaded, setLoaded] = useState<Loaded | null>(null);
+  const active = loaded?.owner === owner ? loaded : null;
+  const status = active?.status,
+    consent = active?.consent;
+  const [selected, setSelected] = useState(platformId);
+  const selectedRef = useRef(selected);
+  selectedRef.current = selected;
+  const platform = PLATFORMS.find((p) => p.id === selected);
+  const [scopes, setScopes] = useState<string[]>([]);
+  const [busy, setBusy] = useState("");
+  const action = useRef<symbol | null>(null);
+  const [feedback, setFeedback] = useState<{
+    owner: string;
+    text: string;
+    error?: boolean;
+  } | null>(null);
+  const feedbackHere = feedback?.owner === owner ? feedback : null;
+  const [copied, setCopied] = useState(false),
+    [retry, setRetry] = useState(0);
+  const addressInput = useRef<HTMLInputElement>(null);
+  const epoch = useRef(0);
 
   useEffect(() => {
-    window.scrollTo(0, 0);
-    document.title = 'Universal AI Plugin & Action Gateway | BSE Nexus';
-    let canonicalLink = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
-    if (!canonicalLink) {
-      canonicalLink = document.createElement('link');
-      canonicalLink.rel = 'canonical';
-      document.head.appendChild(canonicalLink);
-    }
-    canonicalLink.href = 'https://bsenexus.in/plugin';
+    const old = document.title;
+    document.title = "AI Connections | Bsenexus";
+    return () => {
+      document.title = old;
+    };
   }, []);
-
-  const handleCopy = (key: string, text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedKey(key);
-    setTimeout(() => setCopiedKey(null), 2000);
-  };
-
-  const executePlaygroundCall = async () => {
-    setIsLoading(true);
-    setApiResponse(null);
-    setResponseStatus(null);
-    setResponseLatency(null);
-
-    const startTime = performance.now();
-    let url = '';
-
-    if (selectedEndpoint === 'filings') {
-      const params = new URLSearchParams();
-      if (paramSymbol) params.set('symbol', paramSymbol.trim());
-      if (paramCategory) params.set('category', paramCategory.trim());
-      params.set('limit', String(paramLimit));
-      url = `/api/ai/v1/filings?${params.toString()}`;
-    } else if (selectedEndpoint === 'results') {
-      url = `/api/ai/v1/results?symbol=${encodeURIComponent(paramSymbol.trim() || 'RELIANCE')}`;
-    } else if (selectedEndpoint === 'board-meetings') {
-      const params = new URLSearchParams();
-      if (paramSymbol) params.set('symbol', paramSymbol.trim());
-      params.set('daysAhead', String(paramDays));
-      url = `/api/ai/v1/board-meetings?${params.toString()}`;
-    } else if (selectedEndpoint === 'company') {
-      url = `/api/ai/v1/company?query=${encodeURIComponent(paramQuery.trim() || 'Reliance')}`;
-    }
-
-    try {
-      const res = await fetch(url);
-      const data = await res.json();
-      const endTime = performance.now();
-      setResponseStatus(res.status);
-      setResponseLatency(Math.round(endTime - startTime));
-      setApiResponse(data);
-    } catch (err: any) {
-      const endTime = performance.now();
-      setResponseStatus(500);
-      setResponseLatency(Math.round(endTime - startTime));
-      setApiResponse({ error: err?.message || 'Network request failed' });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Run initial test call on mount
   useEffect(() => {
-    executePlaygroundCall();
-  }, [selectedEndpoint]);
+    const sync = () => {
+      setSearch(window.location.search);
+      setSelected(platformId());
+      setCopied(false);
+      setFeedback(null);
+    };
+    window.addEventListener("popstate", sync);
+    return () => window.removeEventListener("popstate", sync);
+  }, []);
+  useEffect(() => {
+    setBusy("");
+    action.current = null;
+    setCopied(false);
+  }, [owner]);
+  useEffect(() => {
+    const controller = new AbortController();
+    const current = ++epoch.current;
+    if (!signedIn || authLoading)
+      return () => {
+        controller.abort();
+        epoch.current++;
+      };
+    setLoaded((old) => ({
+      ...(old?.owner === owner ? old : {}),
+      owner,
+      loading: true,
+      error: "",
+      code: "",
+    }));
+    void (async () => {
+      try {
+        const response = await customFetch(
+          "/api/ai/connections" +
+            (request ? "/request?request=" + encodeURIComponent(request) : ""),
+          { signal: controller.signal, cache: "no-store" },
+        );
+        const data = await response.json();
+        if (!response.ok)
+          throw Object.assign(
+            new Error(data.error || "Could not load your connections."),
+            { code: data.code || "" },
+          );
+        if (
+          current !== epoch.current ||
+          ownerRef.current !== owner ||
+          controller.signal.aborted
+        )
+          return;
+        if (request) {
+          if (
+            !Array.isArray(data.scopes) ||
+            !data.scopes.every((s: unknown) => typeof s === "string") ||
+            typeof data.callbackOrigin !== "string" ||
+            !data.scopeLabels ||
+            !Object.values(data.scopeLabels).every((v) => typeof v === "string")
+          )
+            throw new Error(
+              "Could not read this permission request. Start again from your AI.",
+            );
+          setScopes(data.scopes.filter((s: string) => s.endsWith(":read")));
+          setLoaded({
+            owner,
+            consent: data,
+            loading: false,
+            error: "",
+            code: "",
+          });
+        } else {
+          if (!validStatus(data))
+            throw new Error(
+              "Could not read your connection settings. Please retry.",
+            );
+          setLoaded({
+            owner,
+            status: data,
+            loading: false,
+            error: "",
+            code: "",
+          });
+        }
+      } catch (e: any) {
+        if (
+          !controller.signal.aborted &&
+          current === epoch.current &&
+          ownerRef.current === owner
+        )
+          setLoaded((old) => ({
+            owner,
+            status: old?.owner === owner ? old.status : undefined,
+            loading: false,
+            error: e.message || "Connection settings are unavailable.",
+            code: e.code || "",
+          }));
+      }
+    })();
+    return () => {
+      controller.abort();
+      epoch.current++;
+    };
+  }, [owner, signedIn, authLoading, request, retry]);
+  useEffect(() => {
+    const refresh = () => {
+      if (!request && document.visibilityState === "visible" && !action.current)
+        setRetry((n) => n + 1);
+    };
+    window.addEventListener("focus", refresh);
+    return () => window.removeEventListener("focus", refresh);
+  }, [request]);
 
-  const openApiUrl = 'https://bsenexus.in/api/ai/openapi.json';
-  const geminiToolsUrl = 'https://bsenexus.in/api/ai/gemini-tools.json';
-  const manifestUrl = 'https://bsenexus.in/.well-known/ai-plugin.json';
-
-  const gptInstructions = `You are a financial intelligence assistant powered by live BSE Nexus data (https://bsenexus.in).
-When answering questions regarding Indian stock announcements, corporate actions, quarterly financial results, dividends, or board meetings:
-1. Use the getBseFilings action to query real-time disclosures by stock symbol (e.g. RELIANCE, TCS, INFY) or category.
-2. Use getQuarterlyResults to fetch revenue, net profit, EBITDA, and margins.
-3. Use getBoardMeetings to check upcoming board meeting dates and agendas.
-4. Always include the official BSE Nexus permalink and BSE PDF link in your citation so the user can verify the original regulatory filing.`;
-
-  const geminiSampleCode = `import { GoogleGenAI } from "@google/genai";
-
-const ai = new GoogleGenAI({});
-
-// Fetch live BSE Nexus tool declarations
-const toolsData = await fetch("${geminiToolsUrl}").then(r => r.json());
-
-const response = await ai.models.generateContent({
-  model: "gemini-2.5-flash",
-  contents: "What are the latest corporate announcements filed by Reliance Industries today?",
-  config: {
-    tools: [{ functionDeclarations: toolsData.functionDeclarations }]
-  }
-});
-
-console.log(response.text);`;
+  const choose = (id: string) => {
+    if (!PLATFORMS.some((p) => p.id === id)) return;
+    const url = new URL(window.location.href);
+    url.searchParams.set("ai", id);
+    window.history.pushState(null, "", url.pathname + url.search);
+    setSearch(url.search);
+    setSelected(id);
+    setCopied(false);
+    setFeedback(null);
+  };
+  const copy = async () => {
+    if (!status || !platform || active?.error) return;
+    const target = platform;
+    try {
+      await navigator.clipboard.writeText(status.mcpUrl);
+      if (ownerRef.current !== owner || selectedRef.current !== target.id)
+        return;
+      setCopied(true);
+      setFeedback({
+        owner,
+        text: `Copied. Paste it into ${target.name}'s ${target.field} field in step 2. Copying alone does not connect your account.`,
+      });
+    } catch {
+      if (ownerRef.current !== owner || selectedRef.current !== target.id)
+        return;
+      addressInput.current?.focus();
+      addressInput.current?.select();
+      setFeedback({
+        owner,
+        text: "The address is selected. Touch and hold, or use your browser's Copy command, then paste it in your AI's server URL field.",
+      });
+    }
+  };
+  const perform = async (id: string, path: string, body: unknown) => {
+    if (action.current) return;
+    const job = Symbol();
+    action.current = job;
+    const current = epoch.current;
+    setBusy(id);
+    setFeedback(null);
+    try {
+      const response = await customFetch(path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await response.json();
+      if (!response.ok)
+        throw new Error(
+          data.error || "Could not complete this request. Please retry.",
+        );
+      if (
+        ownerRef.current !== owner ||
+        current !== epoch.current ||
+        action.current !== job
+      )
+        return;
+      if (id === "consent") {
+        if (data.redirect) window.location.assign(data.redirect);
+        else {
+          window.history.replaceState(null, "", "/plugin");
+          setSearch("");
+          setFeedback({
+            owner: JSON.stringify([user!.uid, ""]),
+            text: "Connection cancelled. No access was granted.",
+          });
+        }
+      } else {
+        setLoaded((old) =>
+          old?.owner === owner && old.status
+            ? {
+                ...old,
+                status: {
+                  ...old.status,
+                  connections: old.status.connections.filter(
+                    (c) => c.id !== id,
+                  ),
+                },
+              }
+            : old,
+        );
+        setFeedback({
+          owner,
+          text: "Disconnected. This AI can no longer access your BSE Nexus account.",
+        });
+      }
+    } catch (e: any) {
+      if (
+        ownerRef.current === owner &&
+        current === epoch.current &&
+        action.current === job
+      )
+        setFeedback({ owner, text: e.message, error: true });
+    } finally {
+      if (action.current === job) {
+        action.current = null;
+        setBusy("");
+      }
+    }
+  };
+  const back = () => {
+    if (request) {
+      window.location.assign("/plugin");
+      return;
+    }
+    if (onEnterTerminal) onEnterTerminal("settings");
+    else window.location.assign("/announcements?tab=settings");
+  };
+  const error = active?.error;
+  const initialLoading =
+    authLoading ||
+    (signedIn && (!active || (active.loading && !status && !consent)));
+  const unavailable = active?.code === "connections_not_enabled";
 
   return (
-    <div className="min-h-screen bg-[#0B0F19] text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-black">
-      {/* Top Header */}
-      <header className="border-b border-slate-800/80 bg-[#0E1322]/80 backdrop-blur-md sticky top-0 z-40">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <a href="/" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity">
-              <BseNexusLogo className="w-8 h-8 rounded-lg shadow-sm" />
-              <div className="flex flex-col">
-                <span className="font-bold tracking-tight text-white text-base">BSE Nexus</span>
-                <span className="text-[10px] text-emerald-400 font-mono tracking-wider uppercase">AI Plugin Gateway</span>
-              </div>
-            </a>
-          </div>
-
-          <div className="flex items-center gap-4 text-xs font-medium">
-            <a href="/announcements" className="hidden sm:inline-block text-slate-400 hover:text-white transition-colors">
-              Live Terminal
-            </a>
-            <a href="/companies" className="hidden sm:inline-block text-slate-400 hover:text-white transition-colors">
-              Directory
-            </a>
-            <a href="/pricing" className="text-slate-400 hover:text-white transition-colors">
-              Pro Plans
-            </a>
-            {onEnterTerminal ? (
-              <button
-                onClick={() => onEnterTerminal('announcements')}
-                className="px-3.5 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-semibold hover:bg-emerald-500/20 transition-all flex items-center gap-1.5"
-              >
-                <span>Terminal</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            ) : (
-              <a
-                href="/"
-                className="px-3.5 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-semibold hover:bg-emerald-500/20 transition-all flex items-center gap-1.5"
-              >
-                <span>Terminal</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </a>
-            )}
-          </div>
-        </div>
+    <div className="ai-connect-page">
+      <header className="ai-connect-header">
+        <a href="/" className="ai-connect-brand">
+          <BseNexusLogo className="w-9 h-9" />
+          <span>Bsenexus</span>
+        </a>
+        <button
+          onClick={back}
+          className="ai-connect-button ai-connect-secondary"
+        >
+          <ArrowLeft size={17} />
+          <span>{request ? "Cancel setup" : "Settings"}</span>
+        </button>
       </header>
-
-      {/* Main Content */}
-      <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-10 sm:py-16 space-y-16">
-        
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
-          <a href="/" className="hover:text-emerald-400 transition-colors">Home</a>
-          <ChevronRight className="w-3.5 h-3.5 text-slate-600" />
-          <span className="text-slate-200">AI Plugin & OpenAPI Action Gateway</span>
-        </div>
-
-        {/* Hero Section */}
-        <div className="space-y-6 text-center max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
-            <Bot className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Universal AI Integration Layer</span>
-          </div>
-
-          <h1 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
-            Connect Any AI to Real-Time BSE Corporate Filings
+      <main className="ai-connect-main">
+        <div className="ai-connect-intro">
+          <span className="ai-connect-eyebrow">
+            <Link2 size={16} />
+            AI Connections
+          </span>
+          <h1>
+            {request
+              ? "Choose what your AI can do"
+              : "Use BSE Nexus in your AI"}
           </h1>
-
-          <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
-            One standardized OpenAPI 3.1 action schema and Google Gemini function declarations. 
-            Empower ChatGPT Custom GPTs, Gemini agents, Claude, and Telegram bots to query live regulatory announcements, quarterly results, and board meetings with zero friction.
+          <p>
+            {request
+              ? "Review the app and select its permissions. Editing access is optional."
+              : "Find company filings, read your notes and manage permitted watchlists through conversation. Sign in with BSE Nexus—no API key to generate."}
           </p>
-
-          {/* Quick Copy Schema URL Bar */}
-          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3 max-w-xl mx-auto">
-            <div className="w-full flex items-center bg-[#121624] border border-slate-800 rounded-xl px-3 py-2.5 text-xs font-mono text-slate-300">
-              <span className="text-slate-500 mr-2 select-none">Schema URL:</span>
-              <span className="truncate flex-1 text-emerald-400 font-semibold">{openApiUrl}</span>
-            </div>
-            <button
-              onClick={() => handleCopy('openapi', openApiUrl)}
-              className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-500/10 shrink-0"
-            >
-              {copiedKey === 'openapi' ? <Check className="w-4 h-4 text-black" /> : <Copy className="w-4 h-4 text-black" />}
-              <span>{copiedKey === 'openapi' ? 'Copied URL!' : 'Copy OpenAPI URL'}</span>
-            </button>
-          </div>
         </div>
-
-        {/* Three Step Quick Integration Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Card 1: ChatGPT */}
-          <div className="p-6 rounded-2xl bg-[#121624] border border-slate-800/90 flex flex-col justify-between space-y-5">
-            <div className="space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-                <Bot className="w-5 h-5" />
-              </div>
-              <h2 className="text-lg font-bold text-white">ChatGPT Custom GPT</h2>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Connect your custom GPT in 30 seconds. Paste the OpenAPI URL in GPT Builder Actions with zero authentication.
+        {feedbackHere && (
+          <div
+            role={feedbackHere.error ? "alert" : "status"}
+            aria-live="polite"
+            className={
+              feedbackHere.error ? "ai-connect-error" : "ai-connect-notice"
+            }
+          >
+            {feedbackHere.text}
+          </div>
+        )}
+        {error && (
+          <div role="alert" className="ai-connect-error">
+            <h2>
+              {unavailable
+                ? "Connections are not enabled on the server yet"
+                : "We couldn't refresh your connection settings"}
+            </h2>
+            <p>
+              {unavailable
+                ? "The site administrator needs to finish server setup. A new API key or repeated connection attempts will not resolve this. Try again after setup is complete."
+                : error}
+            </p>
+            {status && (
+              <p className="ai-connect-small">
+                Previously loaded access is shown below. These settings may have
+                changed; retry to check the latest state.
               </p>
-              <div className="text-xs text-slate-300 space-y-1.5 pt-2">
-                <p>1. Open <strong>GPT Builder</strong> &gt; <strong>Configure</strong></p>
-                <p>2. Scroll down to <strong>Actions</strong> &gt; <strong>Import from URL</strong></p>
-                <p>3. Paste <code className="text-emerald-400 bg-[#0B0F19] px-1 py-0.5 rounded font-mono">/api/ai/openapi.json</code></p>
-              </div>
-            </div>
-
+            )}
             <button
-              onClick={() => handleCopy('gptPrompt', gptInstructions)}
-              className="w-full py-2.5 px-3 rounded-lg bg-[#181D2F] border border-slate-700/80 text-xs font-semibold text-slate-200 hover:text-white hover:border-slate-600 flex items-center justify-center gap-2 transition-all"
+              disabled={active?.loading || !!busy}
+              className="ai-connect-button ai-connect-secondary"
+              onClick={() => setRetry((n) => n + 1)}
             >
-              {copiedKey === 'gptPrompt' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-              <span>{copiedKey === 'gptPrompt' ? 'Copied Instructions!' : 'Copy GPT Instructions'}</span>
+              <RefreshCw size={16} />
+              {active?.loading ? "Checking…" : "Check again"}
             </button>
           </div>
-
-          {/* Card 2: Google Gemini */}
-          <div className="p-6 rounded-2xl bg-[#121624] border border-slate-800/90 flex flex-col justify-between space-y-5">
-            <div className="space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
-                <Sparkles className="w-5 h-5" />
-              </div>
-              <h2 className="text-lg font-bold text-white">Google Gemini Tools</h2>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Plug direct function declarations into the <code className="text-blue-400 font-mono">@google/genai</code> SDK for Gemini 2.5/3 Pro &amp; Flash.
-              </p>
-              <div className="text-xs text-slate-300 space-y-1.5 pt-2">
-                <p>1. Import declarations from <code className="text-blue-400 bg-[#0B0F19] px-1 py-0.5 rounded font-mono">/api/ai/gemini-tools.json</code></p>
-                <p>2. Pass to <code className="text-blue-400 font-mono">ai.models.generateContent()</code></p>
-                <p>3. Gemini calls BSE Nexus functions automatically.</p>
-              </div>
-            </div>
-
+        )}
+        {initialLoading ? (
+          <div className="ai-connect-card ai-connect-loading">
+            <Loader2 className="animate-spin" />
+            <span>Checking your account…</span>
+          </div>
+        ) : !signedIn ? (
+          <section className="ai-connect-card ai-connect-signin">
+            <ShieldCheck size={32} />
+            <h2>Start with your BSE Nexus account</h2>
+            <p>
+              Sign in to connect your AI and choose what it can access. Your
+              password stays with BSE Nexus.
+            </p>
             <button
-              onClick={() => handleCopy('geminiCode', geminiSampleCode)}
-              className="w-full py-2.5 px-3 rounded-lg bg-[#181D2F] border border-slate-700/80 text-xs font-semibold text-slate-200 hover:text-white hover:border-slate-600 flex items-center justify-center gap-2 transition-all"
+              className="ai-connect-button ai-connect-primary"
+              onClick={() => setIsAuthModalOpen(true)}
             >
-              {copiedKey === 'geminiCode' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Code2 className="w-3.5 h-3.5" />}
-              <span>{copiedKey === 'geminiCode' ? 'Copied Node.js Snippet!' : 'Copy Gemini SDK Code'}</span>
+              Sign in to continue
+              <ArrowRight size={18} />
             </button>
-          </div>
-
-          {/* Card 3: Bots & Automation */}
-          <div className="p-6 rounded-2xl bg-[#121624] border border-slate-800/90 flex flex-col justify-between space-y-5">
-            <div className="space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
-                <Terminal className="w-5 h-5" />
-              </div>
-              <h2 className="text-lg font-bold text-white">Telegram &amp; REST Bots</h2>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Clean, token-efficient JSON endpoints with CORS enabled for browser apps, Node, Python, and webhook automations.
-              </p>
-              <div className="text-xs text-slate-300 space-y-1.5 pt-2">
-                <p>• CORS enabled: Call directly from any client</p>
-                <p>• Strip HTML: Concise AI token footprint</p>
-                <p>• Direct BSE PDF and Nexus URLs in every item</p>
-              </div>
-            </div>
-
-            <button
-              onClick={() => handleCopy('curlCmd', `curl -s "https://bsenexus.in/api/ai/v1/filings?symbol=RELIANCE&limit=5"`)}
-              className="w-full py-2.5 px-3 rounded-lg bg-[#181D2F] border border-slate-700/80 text-xs font-semibold text-slate-200 hover:text-white hover:border-slate-600 flex items-center justify-center gap-2 transition-all font-mono"
-            >
-              {copiedKey === 'curlCmd' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-              <span>{copiedKey === 'curlCmd' ? 'Copied cURL!' : 'Copy cURL Example'}</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Interactive Live Playground Console */}
-        <div className="rounded-2xl bg-[#121624] border border-slate-800 overflow-hidden shadow-2xl">
-          <div className="p-6 border-b border-slate-800 bg-[#0E1322] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <Terminal className="w-4 h-4 text-emerald-400" />
-                <h2 className="text-base font-bold text-white">Interactive AI API Playground</h2>
-              </div>
-              <p className="text-xs text-slate-400">
-                Test live queries against the BSE Nexus AI Gateway in real-time.
-              </p>
-            </div>
-
-            {/* Segmented endpoint selector */}
-            <div className="flex flex-wrap items-center gap-1.5 p-1 bg-[#0B0F19] border border-slate-800 rounded-xl">
-              <button
-                onClick={() => setSelectedEndpoint('filings')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${selectedEndpoint === 'filings' ? 'bg-emerald-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'}`}
-              >
-                /v1/filings
-              </button>
-              <button
-                onClick={() => setSelectedEndpoint('results')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${selectedEndpoint === 'results' ? 'bg-emerald-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'}`}
-              >
-                /v1/results
-              </button>
-              <button
-                onClick={() => setSelectedEndpoint('board-meetings')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${selectedEndpoint === 'board-meetings' ? 'bg-emerald-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'}`}
-              >
-                /v1/board-meetings
-              </button>
-              <button
-                onClick={() => setSelectedEndpoint('company')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${selectedEndpoint === 'company' ? 'bg-emerald-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'}`}
-              >
-                /v1/company
-              </button>
-            </div>
-          </div>
-
-          {/* Playground Parameters Bar */}
-          <div className="p-6 border-b border-slate-800/80 bg-[#121624] space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {selectedEndpoint !== 'company' && (
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                    Stock Symbol / Scrip Code
-                  </label>
+            <p className="ai-connect-small">
+              Your AI must support remote MCP and OAuth. Its plan, region and
+              workspace rules also apply.
+            </p>
+          </section>
+        ) : consent ? (
+          <section className="ai-connect-card">
+            <span className="ai-connect-eyebrow">
+              Account permission request
+            </span>
+            <h2>{consent.name || "AI application"}</h2>
+            <p>Continue only if this is the app you just added in your AI.</p>
+            <p className="ai-connect-origin">
+              Return address: <strong>{consent.callbackOrigin}</strong>
+            </p>
+            <p className="ai-connect-small">
+              The app developer supplies its name. Check the return address as
+              well.
+            </p>
+            <fieldset className="ai-connect-permissions">
+              <legend>Allow this application to:</legend>
+              {consent.scopes.map((scope) => (
+                <label key={scope}>
                   <input
-                    type="text"
-                    value={paramSymbol}
-                    onChange={(e) => setParamSymbol(e.target.value.toUpperCase())}
-                    placeholder="e.g. RELIANCE, TCS, 500325"
-                    className="w-full bg-[#0B0F19] border border-slate-700/80 rounded-lg px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-emerald-500"
+                    type="checkbox"
+                    checked={scopes.includes(scope)}
+                    disabled={scope === "account:read" || !!busy}
+                    onChange={(e) =>
+                      setScopes((old) =>
+                        e.target.checked
+                          ? [...old, scope]
+                          : old.filter((s) => s !== scope),
+                      )
+                    }
                   />
+                  <span>
+                    {consent.scopeLabels[scope] || scope}
+                    {scope === "account:read" && (
+                      <small>Required to identify the connected account</small>
+                    )}
+                  </span>
+                </label>
+              ))}
+            </fieldset>
+            <p className="ai-connect-small">
+              Your plan and usage limits still apply. Access expires after 30
+              days; disconnect at any time.
+            </p>
+            <div className="ai-connect-actions">
+              <button
+                disabled={!!busy || !!error}
+                className="ai-connect-button ai-connect-primary"
+                onClick={() =>
+                  perform("consent", "/api/ai/connections/authorize", {
+                    request,
+                    scopes,
+                    allow: true,
+                  })
+                }
+              >
+                {busy ? (
+                  <Loader2 className="animate-spin" size={18} />
+                ) : (
+                  <ShieldCheck size={18} />
+                )}
+                Allow selected access
+              </button>
+              <button
+                disabled={!!busy}
+                className="ai-connect-button ai-connect-secondary"
+                onClick={() =>
+                  perform("consent", "/api/ai/connections/authorize", {
+                    request,
+                    scopes,
+                    allow: false,
+                  })
+                }
+              >
+                Cancel
+              </button>
+            </div>
+            <p className="ai-connect-small">
+              After approval, return to your AI and finish its setup.
+            </p>
+          </section>
+        ) : !request ? (
+          <>
+            {status && (
+              <section className="ai-connect-account ai-connect-card">
+                <div>
+                  <span className="ai-connect-eyebrow">BSE Nexus account</span>
+                  <h2>{user!.displayName || user!.email || "Your account"}</h2>
+                  <p>
+                    {status.plan === "pro"
+                      ? "Active Pro access"
+                      : "Free account"}
+                  </p>
                 </div>
-              )}
-
-              {selectedEndpoint === 'filings' && (
+                <div className="ai-connect-meter">
+                  <strong>
+                    {Math.max(0, status.limits.daily - status.used)}{" "}
+                    <small>/ {status.limits.daily}</small>
+                  </strong>
+                  <span>AI tool requests left today</span>
+                  <small>
+                    Up to {status.limits.perMinute}/minute ·{" "}
+                    {status.limits.writes} writes/day
+                    <br />
+                    Shared across your AI apps · Resets at midnight IST
+                  </small>
+                </div>
+              </section>
+            )}
+            <section
+              className="ai-connect-card ai-connect-setup"
+              aria-labelledby="ai-setup-title"
+            >
+              <h2 id="ai-setup-title">Connect an AI</h2>
+              <label className="ai-connect-select-label" htmlFor="ai-platform">
+                Which AI do you use?
+              </label>
+              <select
+                id="ai-platform"
+                className="ai-connect-select"
+                value={selected}
+                onChange={(e) => choose(e.target.value)}
+              >
+                <option value="" disabled>
+                  Choose your AI
+                </option>
+                {PLATFORMS.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+              {platform ? (
                 <>
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                      Filing Category Filter
-                    </label>
-                    <input
-                      type="text"
-                      value={paramCategory}
-                      onChange={(e) => setParamCategory(e.target.value)}
-                      placeholder="e.g. Board Meeting, Results"
-                      className="w-full bg-[#0B0F19] border border-slate-700/80 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                      Max Results (1 - 25)
-                    </label>
-                    <input
-                      type="number"
-                      min={1}
-                      max={25}
-                      value={paramLimit}
-                      onChange={(e) => setParamLimit(Number(e.target.value))}
-                      className="w-full bg-[#0B0F19] border border-slate-700/80 rounded-lg px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-emerald-500"
-                    />
-                  </div>
+                  <ol className="ai-connect-steps">
+                    <li>
+                      <strong>
+                        Open {platform.name}'s connection settings
+                      </strong>
+                      <p>{platform.open}</p>
+                      {platform.url && (
+                        <a
+                          className="ai-connect-text-link"
+                          href={platform.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Open {platform.name}
+                          <ExternalLink size={14} />
+                        </a>
+                      )}
+                    </li>
+                    <li>
+                      <strong>
+                        Paste this address into “{platform.field}”
+                      </strong>
+                      <div className="ai-connect-address">
+                        <input
+                          ref={addressInput}
+                          aria-label="BSE Nexus MCP server URL"
+                          readOnly
+                          value={status?.mcpUrl || "https://bsenexus.in/mcp"}
+                        />
+                        <button
+                          disabled={!status || !!error}
+                          className="ai-connect-button ai-connect-secondary"
+                          onClick={copy}
+                        >
+                          {copied ? <Check size={16} /> : <Copy size={16} />}
+                          {copied ? "Copied" : "Copy server URL"}
+                        </button>
+                      </div>
+                      <p className="ai-connect-small">
+                        This public address is not an API key. Copying it does
+                        not approve access.
+                      </p>
+                    </li>
+                    <li>
+                      <strong>Sign in and approve access</strong>
+                      <p>{platform.finish}</p>
+                      <p className="ai-connect-small">
+                        Start with read access. Allow optional edits only when
+                        you want your AI to make changes.
+                      </p>
+                    </li>
+                    <li>
+                      <strong>Try it in your AI</strong>
+                      <p>
+                        Ask: “Find the latest TCS filings on BSE Nexus and
+                        include the source links.”
+                      </p>
+                    </li>
+                  </ol>
+                  <p className="ai-connect-small">
+                    {platform.note}
+                    {platform.help && (
+                      <>
+                        {" "}
+                        <a
+                          className="ai-connect-text-link"
+                          href={platform.help}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Official setup help
+                          <ExternalLink size={13} />
+                        </a>
+                      </>
+                    )}
+                  </p>
                 </>
-              )}
-
-              {selectedEndpoint === 'board-meetings' && (
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                    Lookahead Window (Days)
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={60}
-                    value={paramDays}
-                    onChange={(e) => setParamDays(Number(e.target.value))}
-                    className="w-full bg-[#0B0F19] border border-slate-700/80 rounded-lg px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
-              )}
-
-              {selectedEndpoint === 'company' && (
-                <div className="sm:col-span-2">
-                  <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                    Company Name / BSE Scrip Code
-                  </label>
-                  <input
-                    type="text"
-                    value={paramQuery}
-                    onChange={(e) => setParamQuery(e.target.value)}
-                    placeholder="e.g. Tata Motors, 500570, Infosys"
-                    className="w-full bg-[#0B0F19] border border-slate-700/80 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center justify-between pt-2">
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] text-slate-400">Presets:</span>
-                <button
-                  type="button"
-                  onClick={() => { setParamSymbol('RELIANCE'); setSelectedEndpoint('filings'); }}
-                  className="px-2 py-0.5 rounded bg-[#0B0F19] border border-slate-800 text-[11px] text-slate-300 hover:text-emerald-400"
-                >
-                  Reliance Filings
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setParamSymbol('TATAMOTORS'); setSelectedEndpoint('results'); }}
-                  className="px-2 py-0.5 rounded bg-[#0B0F19] border border-slate-800 text-[11px] text-slate-300 hover:text-emerald-400"
-                >
-                  Tata Motors Results
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setSelectedEndpoint('board-meetings'); setParamSymbol(''); }}
-                  className="px-2 py-0.5 rounded bg-[#0B0F19] border border-slate-800 text-[11px] text-slate-300 hover:text-emerald-400"
-                >
-                  Upcoming Meetings
-                </button>
-              </div>
-
-              <button
-                onClick={executePlaygroundCall}
-                disabled={isLoading}
-                className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition-all shadow"
-              >
-                <Play className="w-3.5 h-3.5 fill-current" />
-                <span>{isLoading ? 'Executing...' : 'Run Query'}</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Response Window */}
-          <div className="p-6 bg-[#080B12]">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <span className="text-xs font-mono font-bold text-slate-400">RESPONSE PAYLOAD:</span>
-                {responseStatus && (
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${responseStatus === 200 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/10 text-red-400 border border-red-500/30'}`}>
-                    HTTP {responseStatus}
-                  </span>
-                )}
-                {responseLatency !== null && (
-                  <span className="text-[11px] font-mono text-slate-400">
-                    ⚡ {responseLatency}ms
-                  </span>
-                )}
-              </div>
-
-              {apiResponse && (
-                <button
-                  onClick={() => handleCopy('jsonPayload', JSON.stringify(apiResponse, null, 2))}
-                  className="text-xs text-slate-400 hover:text-white flex items-center gap-1 font-mono transition-colors"
-                >
-                  {copiedKey === 'jsonPayload' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{copiedKey === 'jsonPayload' ? 'Copied JSON!' : 'Copy JSON'}</span>
-                </button>
-              )}
-            </div>
-
-            <pre className="p-4 rounded-xl bg-[#0B0F19] border border-slate-800/90 text-xs font-mono text-emerald-400 overflow-x-auto max-h-[380px] leading-relaxed select-text">
-              {isLoading ? (
-                <div className="flex items-center gap-2 text-slate-400 py-6">
-                  <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-                  <span>Fetching live data from BSE Nexus gateway...</span>
-                </div>
-              ) : apiResponse ? (
-                JSON.stringify(apiResponse, null, 2)
               ) : (
-                <span className="text-slate-600">// Click Run Query to inspect live JSON response</span>
+                <p>
+                  Select your AI for the exact setup steps. You will approve
+                  access on BSE Nexus after adding its server URL.
+                </p>
               )}
-            </pre>
-          </div>
-        </div>
-
-        {/* Complete API Endpoint Reference */}
-        <div className="space-y-6">
-          <div className="space-y-1">
-            <h2 className="text-2xl font-bold text-white tracking-tight">AI Gateway Endpoint Reference</h2>
-            <p className="text-xs sm:text-sm text-slate-400">
-              Deterministic, cache-controlled endpoints designed for seamless language model tool use.
+              {error && (
+                <p className="ai-connect-small">
+                  The guide is available, but server setup must be working
+                  before you can connect.
+                </p>
+              )}
+            </section>
+            {status && (
+              <section aria-labelledby="ai-approved-title">
+                <div className="ai-connect-section-title">
+                  <h2 id="ai-approved-title">Approved AI access</h2>
+                  <button
+                    disabled={!!busy || active?.loading}
+                    className="ai-connect-button ai-connect-secondary"
+                    onClick={() => setRetry((n) => n + 1)}
+                    aria-label="Refresh approved access"
+                  >
+                    <RefreshCw
+                      className={active?.loading ? "animate-spin" : ""}
+                      size={16}
+                    />
+                  </button>
+                </div>
+                <p className="ai-connect-small">
+                  These apps have your permission. Finish setup in the AI itself
+                  to use its tools.
+                </p>
+                {status.connections.length ? (
+                  status.connections.map((c) => (
+                    <article
+                      key={c.id}
+                      className="ai-connect-card ai-connect-connection"
+                    >
+                      <div>
+                        <h3>
+                          <span className="ai-connect-dot" />
+                          {c.name}
+                        </h3>
+                        <ul className="ai-connect-scope-list" aria-label="Approved permissions">
+                          {c.scopes.map((s) => <li key={s}>{status.scopeLabels[s] || s}</li>)}
+                        </ul>
+                        <small>
+                          Access approved · Expires{" "}
+                          {new Date(c.expiresAt).toLocaleDateString()}
+                        </small>
+                      </div>
+                      <button
+                        disabled={!!busy}
+                        className="ai-connect-button ai-connect-secondary"
+                        onClick={() =>
+                          perform(
+                            c.id,
+                            "/api/ai/connections/" +
+                              encodeURIComponent(c.id) +
+                              "/revoke",
+                            {},
+                          )
+                        }
+                      >
+                        {busy === c.id ? (
+                          <Loader2 className="animate-spin" size={16} />
+                        ) : (
+                          <Unplug size={16} />
+                        )}
+                        Disconnect
+                      </button>
+                    </article>
+                  ))
+                ) : (
+                  <div className="ai-connect-card ai-connect-empty">
+                    <Link2 size={25} />
+                    <h3>No AI access approved yet</h3>
+                    <p>
+                      Complete the steps above. An app appears here after you
+                      approve its permissions.
+                    </p>
+                  </div>
+                )}
+              </section>
+            )}
+            {!!status?.activity?.length && (
+              <details className="ai-connect-card ai-connect-developer">
+                <summary>
+                  Recent AI activity
+                  <ChevronDown size={17} />
+                </summary>
+                <ul>
+                  {status.activity.map((a, i) => (
+                    <li key={i}>
+                      <strong>{a.action.replaceAll("_", " ")}</strong>
+                      <p>
+                        {a.status} · {new Date(a.at).toLocaleString()}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
+          </>
+        ) : null}
+        <section className="ai-connect-assurance">
+          <ShieldCheck size={22} />
+          <div>
+            <strong>You stay in control</strong>
+            <p>
+              Only your account, selected permissions and current plan are
+              available. AI connections cannot change payments, grant Pro or
+              perform admin operations. New summaries use your existing website
+              AI allowance.
             </p>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Endpoint 1 */}
-            <div className="p-5 rounded-2xl bg-[#121624] border border-slate-800 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-mono text-[10px] font-bold">GET</span>
-                  <code className="text-xs font-mono font-bold text-white">/api/ai/v1/filings</code>
-                </div>
-                <span className="text-[11px] text-slate-400 font-mono">Rate Limit: 60/min</span>
-              </div>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Fetches real-time regulatory filings and corporate disclosures. Supports filtering by NSE/BSE symbol, scrip code, or keyword category.
-              </p>
-              <div className="text-[11px] font-mono text-slate-400 pt-1 space-y-1 border-t border-slate-800/80">
-                <p>• <strong>symbol</strong>: (optional) e.g. <code className="text-slate-300">RELIANCE</code>, <code className="text-slate-300">500325</code></p>
-                <p>• <strong>category</strong>: (optional) e.g. <code className="text-slate-300">Financial Results</code>, <code className="text-slate-300">Board Meeting</code></p>
-                <p>• <strong>limit</strong>: (optional) 1 to 25 (default: 10)</p>
-              </div>
-            </div>
-
-            {/* Endpoint 2 */}
-            <div className="p-5 rounded-2xl bg-[#121624] border border-slate-800 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 font-mono text-[10px] font-bold">GET</span>
-                  <code className="text-xs font-mono font-bold text-white">/api/ai/v1/results</code>
-                </div>
-                <span className="text-[11px] text-slate-400 font-mono">Rate Limit: 60/min</span>
-              </div>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Returns historical quarterly financial reports, revenue, EBITDA, net profit figures, and margin percentages for any listed scrip.
-              </p>
-              <div className="text-[11px] font-mono text-slate-400 pt-1 space-y-1 border-t border-slate-800/80">
-                <p>• <strong>symbol</strong>: (required) e.g. <code className="text-slate-300">TATAMOTORS</code>, <code className="text-slate-300">500570</code></p>
-                <p>• Returns up to 8 recent quarters of verified financials.</p>
-              </div>
-            </div>
-
-            {/* Endpoint 3 */}
-            <div className="p-5 rounded-2xl bg-[#121624] border border-slate-800 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 font-mono text-[10px] font-bold">GET</span>
-                  <code className="text-xs font-mono font-bold text-white">/api/ai/v1/board-meetings</code>
-                </div>
-                <span className="text-[11px] text-slate-400 font-mono">Rate Limit: 60/min</span>
-              </div>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Queries upcoming scheduled meetings of company boards to approve quarterly earnings, consider dividends, bonus shares, or buybacks.
-              </p>
-              <div className="text-[11px] font-mono text-slate-400 pt-1 space-y-1 border-t border-slate-800/80">
-                <p>• <strong>symbol</strong>: (optional) Filter for a specific stock</p>
-                <p>• <strong>daysAhead</strong>: (optional) Window in days (1 to 60, default: 14)</p>
-              </div>
-            </div>
-
-            {/* Endpoint 4 */}
-            <div className="p-5 rounded-2xl bg-[#121624] border border-slate-800 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 font-mono text-[10px] font-bold">GET</span>
-                  <code className="text-xs font-mono font-bold text-white">/api/ai/v1/company</code>
-                </div>
-                <span className="text-[11px] text-slate-400 font-mono">Rate Limit: 60/min</span>
-              </div>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Resolves stock tickers, company legal names, and official 6-digit BSE Scrip Codes for unambiguous disambiguation.
-              </p>
-              <div className="text-[11px] font-mono text-slate-400 pt-1 space-y-1 border-t border-slate-800/80">
-                <p>• <strong>query</strong>: (required) e.g. <code className="text-slate-300">Zomato</code>, <code className="text-slate-300">543320</code>, <code className="text-slate-300">Infosys</code></p>
-                <p>• Returns scrip code, sector, and BSE Nexus company URL.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Developer Trust & Policy */}
-        <div className="p-8 rounded-2xl bg-gradient-to-r from-[#121624] to-[#161C2E] border border-slate-800/80 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="space-y-2 max-w-2xl">
-            <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold uppercase tracking-wider">
-              <ShieldCheck className="w-4 h-4" />
-              <span>Open Developer Policy</span>
-            </div>
-            <h3 className="text-xl font-bold text-white">Committed to Free &amp; Open Financial Intelligence</h3>
-            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-              BSE Nexus provides public AI endpoints to democratize access to SEBI corporate disclosures. 
-              Responses are cached at the edge to ensure high throughput without overburdening exchange systems.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3 shrink-0">
+        </section>
+        <details className="ai-connect-card ai-connect-developer">
+          <summary>
+            Advanced help
+            <ChevronDown size={17} />
+          </summary>
+          <p>
+            Use the MCP server URL for the setup above. OpenAPI JSON is a
+            separate developer reference; pasting it into an ordinary AI chat
+            does not create a connection. BSE Nexus is not listed in an AI app
+            directory by this setup.
+          </p>
+          <div className="ai-connect-actions">
             <a
-              href={openApiUrl}
+              href="/api/ai/openapi.json"
               target="_blank"
               rel="noopener noreferrer"
-              className="px-4 py-2.5 rounded-xl bg-[#0B0F19] border border-slate-700 text-xs font-semibold text-white hover:border-slate-600 flex items-center gap-1.5 transition-colors"
             >
-              <span>View OpenAPI JSON</span>
-              <ExternalLink className="w-3.5 h-3.5" />
+              OpenAPI reference
+              <ExternalLink size={14} />
+            </a>
+            <a href="/ai-docs">
+              Setup, tools and data guide
+              <ExternalLink size={14} />
+            </a>
+            <a href="/contact">
+              Connection support
+              <ExternalLink size={14} />
             </a>
           </div>
-        </div>
-
+        </details>
       </main>
-
-      {/* Footer */}
-      <footer className="border-t border-slate-800/80 bg-[#0A0D17] py-8 text-xs text-slate-400">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <BseNexusLogo className="w-5 h-5 rounded" />
-            <span>&copy; {new Date().getFullYear()} BSE Nexus • Independent BSE Disclosures Aggregator</span>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-4 text-xs">
-            <a href="/announcements" className="hover:text-emerald-400 transition-colors">Live Filings</a>
-            <a href="/companies" className="hover:text-emerald-400 transition-colors">Directory</a>
-            <a href="/guides" className="hover:text-emerald-400 transition-colors">Guides</a>
-            <a href="/privacy-policy" className="hover:text-emerald-400 transition-colors">Privacy Policy</a>
-            <a href="/terms" className="hover:text-emerald-400 transition-colors">Terms</a>
-            <a href="/contact" className="hover:text-emerald-400 transition-colors">Contact</a>
-          </div>
-        </div>
+      <footer className="ai-connect-footer">
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+        <a href="/contact">Help with connecting</a>
       </footer>
     </div>
   );

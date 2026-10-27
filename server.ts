@@ -1,6 +1,8 @@
-import { hasExactScripCode } from './src/shared/scripMatching.js';
+import { injectRouteHeading } from './server/utils/routeHeading.js';
+import { matchesCompanyFiling } from './src/shared/scripMatching.js';
 import { getKeywordGuide, KEYWORD_GUIDE_CSS } from './src/content/keywordGuides.js';
 import 'dotenv/config';
+import { processAdrAlerts } from './server/services/adrRuntime.js';
 import { initServerSentry, Sentry } from "./server/sentry.js";
 initServerSentry();
 
@@ -32,17 +34,25 @@ import { getPollingIntervalMs, parseBseDate } from "./server/utils/helpers.js";
 import { getAnnouncementById, getRecentAnnouncements } from "./server/database/announcementDao.js";
 import { getScripCode, getAllStockEntries } from "./server/utils/stockResolver.js";
 import { getCompanyIntelligence } from "./server/services/companyIntelService.js";
-import { MARKET_GUIDES, getMarketGuides, getMarketGuideBySlug, getIndexableMarketGuides } from "./server/services/marketGuidesService.js";
+import { MARKET_GUIDES, getMarketGuides, getMarketGuideBySlug, getIndexableMarketGuides, getGuidePrimaryAction } from "./server/services/marketGuidesService.js";
 import type { ServerMarketGuide as MarketGuide } from "./server/services/marketGuidesService.js";
 import { resumeFirestoreNetwork, startStorageRecoveryProbe } from "./server/database/firebase.js";
 import { isFirestoreQuotaExceeded, getManualStorageMode, resetAdminPermissionDenied } from "./server/database/localStore.js";
 import { pageRenderCache, staticGuideCache, apiResponseCache } from "./server/utils/renderCache.js";
-import { INDEXNOW_KEY, indexNowQueue } from "./server/services/indexNow.js";
+import { INDEXNOW_KEY, indexNowQueue, startIndexNow } from "./server/services/indexNow.js";
 import { autoIndexNewGuides } from "./server/services/guideIndexNow.js";
 import { verifyRecaptchaToken } from "./server/security/recaptchaService.js";
 import { getBseBlockBackoffLevel } from "./server/services/bse.js";
 import { getAllFeedback } from "./server/database/feedbackDao.js";
-import { prerenderFilingHtml, prerenderCompanyHtml, buildSitemapIndexXml, cleanCanonicalUrl, buildAnnouncementsFeedCards, buildAnnouncementsCollectionJsonLd, PRELOADER_CARD_RE } from "./server/services/seoPrerender.js";
+import { prerenderFilingHtml, prerenderCompanyHtml, buildSitemapIndexXml, cleanCanonicalUrl, buildAnnouncementsFeedCards, buildAnnouncementsCollectionJsonLd } from "./server/services/seoPrerender.js";
+import { renderAiConnectionDocs } from './server/ai/docs';
+import { AI_DATA_DISCLOSURE } from './src/shared/aiDataDisclosure';
+import { DIRECTORY_COMPANIES, directoryDescription, directoryBadge } from './src/config/companyDirectory';
+import { EXCHANGE_COMPANIES, exchangeCompany } from './src/config/exchangeCompanies';
+import { mountAiIntegration } from './server/ai/http.js';
+import { readCachedResultsCalendar } from './server/services/resultsCalendarService.js';
+import { renderPublicCalendarShell, publicCalendarCacheControl } from './server/services/publicCalendar.js';
+import { SPA_PATHS, normalizeSpaPath, redirectLegacyCalendar } from './server/utils/spaRoutes.js';
 import { getAiPluginManifest } from "./server/api/aiPlugin.js";
 
 // Global error handlers to prevent background quota/network exceptions from crashing the process
@@ -58,7 +68,12 @@ process.on('uncaughtException', (err: any) => {
 const app = express();
 
 // Trust reverse proxy (Cloud Run / Nginx) so client IP and rate-limiting work properly
-app.set('trust proxy', 1);
+// Preserve the existing one-hop policy by default. Override only after verifying
+// the actual ingress/header chain and restricting any shorter origin path;
+// another CDN alone does not establish a safe hop count.
+// Never trust X-Forwarded-For entries beyond the verified proxy boundary.
+const trustProxyHops = Number.parseInt(process.env.TRUST_PROXY_HOPS || '1', 10);
+app.set('trust proxy', Number.isInteger(trustProxyHops) && trustProxyHops >= 0 && trustProxyHops <= 5 ? trustProxyHops : 1);
 
 // Enable Gzip compression in transit for JSON, text, HTML, and API responses (> 1KB threshold)
 app.use(compression({
@@ -94,6 +109,8 @@ app.use(compression({
 
 app.use(responseHeaders());
 app.use('/api/payments/webhook', express.raw({ type: 'application/json', limit: '1mb' }));
+app.use(['/mcp','/register'], express.json({ limit: '32kb' }));
+app.use(['/token','/revoke'], express.urlencoded({ extended: false, limit: '8kb' }));
 app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser());
 // The scheduler uses its own server-only secret, never a user session token.
@@ -105,6 +122,7 @@ app.get('/api/cron/poll-announcements', createAnnouncementCronHandler({
     await Promise.allSettled([
       (async () => { await refreshRadarIntake(); await refreshRadarPriceSnapshots(); })(),
       drainTelegramSummaries(),
+      processAdrAlerts().catch(() => console.warn("[ADR] Morning alert pass unavailable")),
     ]);
   },
   backoffMs: () => {
@@ -114,7 +132,11 @@ app.get('/api/cron/poll-announcements', createAnnouncementCronHandler({
     return failures > 0 || blockLevel > 0 ? Math.min(60_000, getPollingIntervalMs(failures, blockLevel)) : 0;
   },
 }));
+app.use('/activate-gift', (_req, res, next) => {
+  res.set('Cache-Control', 'private, no-store'); res.set('Referrer-Policy', 'no-referrer'); res.set('X-Robots-Tag', 'noindex, nofollow'); next();
+});
 app.use(authMiddleware);
+mountAiIntegration(app);
 
 // Explicit Service Worker handler with no-cache headers
 app.get('/sw.js', (_req, res) => {
@@ -174,6 +196,7 @@ async function generateDynamicSitemap(): Promise<string> {
     { loc: "https://bsenexus.in/announcements", lastmod: todayStr, changefreq: "always", priority: "0.9" },
     { loc: "https://bsenexus.in/results-calendar", lastmod: todayStr, changefreq: "daily", priority: "0.9" },
     { loc: "https://bsenexus.in/watchlist", lastmod: todayStr, changefreq: "daily", priority: "0.8" },
+    { loc: "https://bsenexus.in/ai-docs", changefreq: "monthly", priority: "0.6" },
     { loc: "https://bsenexus.in/companies", lastmod: todayStr, changefreq: "weekly", priority: "0.8" },
     { loc: "https://bsenexus.in/guides", lastmod: todayStr, changefreq: "weekly", priority: "0.8" },
     { loc: "https://bsenexus.in/faq", lastmod: todayStr, changefreq: "weekly", priority: "0.8" },
@@ -244,7 +267,7 @@ async function generateDynamicSitemap(): Promise<string> {
     try {
       const stockEntries = getAllStockEntries();
       const seenSymbols = new Set<string>();
-      for (const entry of stockEntries) {
+      for (const entry of [...DIRECTORY_COMPANIES, ...stockEntries]) {
         const sym = entry.symbol?.trim().toUpperCase();
         if (!sym || seenSymbols.has(sym) || !/^[A-Z0-9-]{2,15}$/.test(sym)) continue;
         seenSymbols.add(sym);
@@ -809,6 +832,8 @@ ${JSON.stringify(jsonLd, null, 2)}
 }
 
 function renderCompanyPage(data: any, symbol: string, scripCode?: string): string {
+  const operator = exchangeCompany(symbol);
+  const venue = operator?.symbol === 'BSE' ? 'NSE' : 'BSE';
   const allStockEntries = getAllStockEntries();
   const masterEntry = allStockEntries.find(
     e => e.symbol.toUpperCase() === symbol.toUpperCase() || (scripCode && e.scripCode === scripCode)
@@ -820,25 +845,25 @@ function renderCompanyPage(data: any, symbol: string, scripCode?: string): strin
   const companyName = cleanCompanyName;
   const quote = data.quote;
   const upcomingEvent = data.upcomingEvent;
-  const quarterlyResults: any[] = Array.isArray(data.quarterlyResults) ? data.quarterlyResults.filter((filing: any) => hasExactScripCode(filing, scripCode)) : [];
-  const recentFilings: any[] = Array.isArray(data.recentFilings) ? data.recentFilings.filter((filing: any) => hasExactScripCode(filing, scripCode)) : [];
+  const quarterlyResults: any[] = Array.isArray(data.quarterlyResults) ? data.quarterlyResults.filter((filing: any) => matchesCompanyFiling(filing, scripCode, symbol)) : [];
+  const recentFilings: any[] = Array.isArray(data.recentFilings) ? data.recentFilings.filter((filing: any) => matchesCompanyFiling(filing, scripCode, symbol)) : [];
   const aiSnapshot = (data.aiSnapshot || '').trim();
 
   // High-CTR Stock Page Title formula:
-  // <Clean Company Name> (<SYMBOL>) BSE Announcements & Filings Live | Bsenexus
-  const pageTitle = `${cleanCompanyName} (${symbol}) BSE Announcements & Filings Live | Bsenexus`;
+  // <Clean Company Name> (<SYMBOL>) ${venue} Announcements & Filings Live | Bsenexus
+  const pageTitle = `${cleanCompanyName} (${symbol}) ${venue} Announcements & Filings Live | Bsenexus`;
   const canonicalUrl = `https://bsenexus.in/company/${encodeURIComponent(symbol)}`;
 
   const latestFiling = recentFilings[0];
   const latestAnnouncementText = latestFiling ? (latestFiling.headline || latestFiling.subject || latestFiling.NEWSSUB || latestFiling.MORE || '').trim() : '';
 
   const safeHeadline = latestAnnouncementText.replace(/`/g, "'").replace(/\$\{/g, '$ {').replace(/\s+/g, ' ').trim();
-  const scripTag = scripCode ? ` | BSE: ${scripCode}` : '';
+  const scripTag = scripCode ? ` | ${venue}: ${scripCode}` : '';
   const currentYear = new Date().getFullYear();
 
   let description = safeHeadline
-    ? `Get live BSE announcements & PDF filings for ${cleanCompanyName} (${symbol}${scripTag}). Latest disclosure: "${safeHeadline.slice(0, 48)}...". Track in real-time.`.slice(0, 155)
-    : `Get live BSE announcements, ${currentYear} results & official PDF filings for ${cleanCompanyName} (${symbol}${scripTag}). Track board meetings & corporate actions.`.slice(0, 155);
+    ? `Get live ${venue} announcements & PDF filings for ${cleanCompanyName} (${symbol}${scripTag}). Latest disclosure: "${safeHeadline.slice(0, 48)}...". Track in real-time.`.slice(0, 155)
+    : `Get live ${venue} announcements, ${currentYear} results & official PDF filings for ${cleanCompanyName} (${symbol}${scripTag}). Track board meetings & corporate actions.`.slice(0, 155);
 
   // FAQ — query-matched, data-driven Q&A (AI-search playbook: answer the exact
   // questions ChatGPT/Google AI Overviews search for, using the company's live
@@ -852,10 +877,10 @@ function renderCompanyPage(data: any, symbol: string, scripCode?: string): strin
     : (typeof upcomingEvent?.countdownDays === 'number' ? `in ${upcomingEvent.countdownDays} days` : '');
   const faqItems: Array<{ q: string; a: string }> = [
     {
-      q: `What is the latest BSE announcement by ${companyName}?`,
+      q: `What is the latest ${venue} announcement by ${companyName}?`,
       a: safeHeadline
-        ? `The latest BSE disclosure by ${companyName} (${symbol})${latestFilingDate ? `, filed on ${latestFilingDate},` : ''} is: "${safeHeadline}". Bsenexus tracks every official filing for ${companyName} with AI-powered summaries on its announcements feed.`
-        : `${companyName} (${symbol}) disclosures are tracked on Bsenexus, which structures every official BSE filing with AI-powered summaries.`
+        ? `The latest ${venue} disclosure by ${companyName} (${symbol})${latestFilingDate ? `, filed on ${latestFilingDate},` : ''} is: "${safeHeadline}". Bsenexus tracks every official filing for ${companyName} with AI-powered summaries on its announcements feed.`
+        : `${companyName} (${symbol}) disclosures are tracked on Bsenexus, which structures every official ${venue} filing with AI-powered summaries.`
     },
     {
       q: `When is ${companyName}'s next board meeting?`,
@@ -877,7 +902,7 @@ function renderCompanyPage(data: any, symbol: string, scripCode?: string): strin
         "@type": "Corporation",
         "@id": `${canonicalUrl}#corporation`,
         "name": companyName,
-        "tickerSymbol": `BSE:${scripCode || symbol}`,
+        "tickerSymbol": `${venue}:${scripCode || symbol}`,
         "url": canonicalUrl,
         "description": description,
         ...(quote?.sector || quote?.industry ? { "industry": quote.sector || quote.industry } : {}),
@@ -1240,6 +1265,7 @@ ${jsonLd}
     }
     .results-table {
       width: 100%;
+      table-layout: fixed;
       border-collapse: collapse;
       font-size: 0.875rem;
       text-align: left;
@@ -1256,18 +1282,28 @@ ${jsonLd}
       padding: 12px 16px;
       border-bottom: 1px solid var(--border);
       vertical-align: top;
+      overflow-wrap: anywhere;
     }
+    .results-table th:nth-child(1) { width: 26%; }
+    .results-table th:nth-child(2) { width: 22%; }
+    .results-table th:nth-child(3) { width: 15%; }
+    .results-table th:nth-child(4) { width: 37%; }
+    .results-table th { white-space: normal; }
+    .result-filing-details summary { cursor: pointer; line-height: 1.5; }
+    .result-filing-details summary span { display: block; color: #059669; font-size: .75rem; margin-top: 4px; }
+    .result-filing-details p { margin-top: 10px; line-height: 1.6; }
+    .result-filing-details summary:focus-visible { outline: 2px solid #059669; outline-offset: 3px; }
     .results-table tr:last-child td {
       border-bottom: none;
     }
     .cell-period {
       font-weight: 600;
       color: var(--brand);
-      white-space: nowrap;
+      white-space: normal;
     }
     .cell-date {
       color: var(--muted);
-      white-space: nowrap;
+      white-space: normal;
     }
     .status-pill {
       display: inline-block;
@@ -1294,6 +1330,16 @@ ${jsonLd}
       text-decoration: none;
     }
     .pdf-link:hover { text-decoration: underline; }
+    @media(max-width: 767px) {
+      .results-table, .results-table tbody { display: block; }
+      .results-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+      .results-table tr { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px 12px; padding: 16px; border-bottom: 1px solid var(--border); }
+      .results-table tr:last-child { border-bottom: 0; }
+      .results-table td { padding: 0; border: 0; min-width: 0; }
+      .results-table .cell-period { grid-column: 1 / -1; }
+      .results-table td:last-child { grid-column: 1 / -1; line-height: 1.5; }
+      .results-table td:nth-child(3) { justify-self: end; }
+    }
     .peer-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -1384,13 +1430,20 @@ ${jsonLd}
       .price-val { font-size: 1.875rem; }
       .filing-item { flex-direction: column; align-items: flex-start; gap: 6px; }
     }
+    .operator-profile-note { font-size: .875rem; line-height: 1.65; }
+    .operator-profile-note summary { cursor: pointer; font-weight: 700; }
+    .operator-profile-note a { color: #047857; text-decoration: underline; text-underline-offset: 3px; }
+    .operator-profile-note a:focus-visible, .operator-profile-note summary:focus-visible { outline: 2px solid #10b981; outline-offset: 4px; }
+    .operator-profile-note li { margin-block: 8px; }
+    .operator-coverage { font-size: .8125rem; line-height: 1.65; color: var(--muted); }
+    @media (prefers-color-scheme: dark) { .operator-profile-note a { color: #6ee7b7; } }
   </style>
 </head>
 <body>
   <div id="root">
   <header class="top-banner">
     <a href="https://bsenexus.in/" class="top-brand">
-      Bsenexus <span>Terminal</span>
+      <img src="/icon.svg" alt="" width="28" height="28"> Bsenexus <span>Terminal</span>
     </a>
     <a href="https://bsenexus.in/?tab=watchlists" class="app-btn">
       Open in Bsenexus App &rarr;
@@ -1400,13 +1453,16 @@ ${jsonLd}
   <main class="container">
     <article class="card">
       <div class="meta-bar">
-        ${scripCode ? `<span class="badge scrip">BSE: ${escapeHtmlText(String(scripCode))}</span>` : ''}
+        ${operator ? `<span class="badge scrip">${escapeHtmlText(operator.listingLabel)}</span>` : scripCode ? `<span class="badge scrip">BSE: ${escapeHtmlText(String(scripCode))}</span>` : ''}
         <span class="badge scrip">${escapeHtmlText(symbol)}</span>
         ${quote?.exchange ? `<span class="badge scrip">${escapeHtmlText(quote.exchange)}</span>` : ''}
         ${quote?.sector ? `<span class="badge">${escapeHtmlText(quote.sector)}</span>` : ''}
       </div>
 
       <h1>${escapeHtmlText(companyName)} (${escapeHtmlText(scripCode || symbol)}) — Latest Corporate Announcements</h1>
+      ${operator ? `<details class="section operator-profile-note"><summary>Company identity &amp; official sources</summary><p>${escapeHtmlText(operator.description)}</p><p>Share listing: ${escapeHtmlText(operator.listingLabel)} · ISIN: ${escapeHtmlText(operator.isin)}. This equity is separate from the exchange’s market indices.</p><ul>${operator.sources.map(source => `<li><a href="${escapeHtmlAttr(source.url)}" target="_blank" rel="noopener noreferrer">${escapeHtmlText(source.label)} ↗</a></li>`).join('')}</ul></details><p class="operator-coverage">${operator.symbol === 'BSE' ? 'NSE disclosures appear below. Meeting dates for BSE Limited are available from NSE.' : 'Available BSE filings and financial results appear below.'}</p>` : ''}
+      ${operator && !recentFilings.length ? '<p role="status">No verified filings are available in this view yet. Check the official sources above.</p>' : ''}
+
 
       ${quote ? `
       <div class="quote-summary">
@@ -1468,7 +1524,7 @@ ${jsonLd}
         <div class="filings-list">
           ${recentFilings.slice(0, 20).map((f: any) => {
             const fId = f.id || f.newsId || '';
-            const fSub = f.subject || 'BSE Corporate Announcement';
+            const fSub = f.subject || `${venue} Corporate Announcement`;
             const fDate = f.bseTime || (f.timestamp ? new Date(f.timestamp).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' }) : 'Recent');
             return `<a href="/announcement/${escapeHtmlAttr(encodeURIComponent(fId))}" class="filing-item">
               <span class="filing-sub">${escapeHtmlText(fSub)}</span>
@@ -1483,29 +1539,29 @@ ${jsonLd}
       <section class="section">
         <h2 class="section-label">Financial Results (Quarterly &amp; Annual)</h2>
         <div class="table-wrap">
-          <table class="results-table">
-            <thead>
-              <tr>
-                <th>Quarter / Period</th>
-                <th>Meeting / Outcome Date</th>
-                <th>Status</th>
-                <th>Filing Details</th>
+          <table class="results-table" role="table" aria-label="Quarterly and annual financial result filings">
+            <thead role="rowgroup">
+              <tr role="row">
+                <th scope="col" role="columnheader">Quarter / Period</th>
+                <th scope="col" role="columnheader">Meeting / Outcome Date</th>
+                <th scope="col" role="columnheader">Status</th>
+                <th scope="col" role="columnheader">Filing Details</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody role="rowgroup">
               ${quarterlyResults.slice(0, 12).map((q: any) => {
                 const period = q.periodOrMeeting || q.quarterKey || 'Quarter Result';
                 const date = q.declarationDate || q.meetingDate || '—';
                 const status = q.status || (q.isOutcome ? 'Declared' : 'Scheduled');
                 const sub = q.subject || q.details || 'Financial Results';
                 const pdf = q.pdfLink;
-                return `<tr>
-                  <td class="cell-period">${escapeHtmlText(period)}</td>
-                  <td class="cell-date">${escapeHtmlText(date)}</td>
-                  <td><span class="status-pill ${String(status).toLowerCase().includes('declared') ? 'status-declared' : 'status-upcoming'}">${escapeHtmlText(status)}</span></td>
-                  <td>
-                    ${escapeHtmlText(sub)}
-                    ${pdf ? `<br><a href="${escapeHtmlAttr(pdf)}" target="_blank" rel="noopener noreferrer" class="pdf-link">📄 View ${escapeHtmlText(period)} Results PDF &nearr;</a>` : ''}
+                return `<tr role="row">
+                  <td role="cell" class="cell-period">${escapeHtmlText(period)}</td>
+                  <td role="cell" class="cell-date">${escapeHtmlText(date)}</td>
+                  <td role="cell"><span class="status-pill ${String(status).toLowerCase().includes('declared') ? 'status-declared' : 'status-upcoming'}">${escapeHtmlText(status)}</span></td>
+                  <td role="cell">
+                    ${String(sub).length > 180 ? `<details class="result-filing-details"><summary>${escapeHtmlText(String(sub).slice(0, 160).trim())}…<span>Read full filing details</span></summary><p>${escapeHtmlText(sub)}</p></details>` : escapeHtmlText(sub)}
+                    ${pdf ? `<br><a href="${escapeHtmlAttr(pdf)}" target="_blank" rel="noopener noreferrer" class="pdf-link">📄 Results PDF &nearr;</a>` : ''}
                   </td>
                 </tr>`;
               }).join('\n')}
@@ -1552,7 +1608,7 @@ ${jsonLd}
       </section>
 
       <section class="section faq-sec">
-        <h2 class="section-label">Frequently Asked Questions about ${escapeHtmlText(companyName)} BSE Disclosures</h2>
+        <h2 class="section-label">Frequently Asked Questions about ${escapeHtmlText(companyName)} ${venue} Disclosures</h2>
         ${faqItems.map(item => `
         <div class="faq-item">
           <h3 class="faq-q">${escapeHtmlText(item.q)}</h3>
@@ -1568,7 +1624,7 @@ ${jsonLd}
     </article>
 
     <footer>
-      Bsenexus Financial Intelligence &middot; Real-time regulatory filings, board meetings &amp; quarterly results direct from BSE India public feeds.
+      Bsenexus Financial Intelligence &middot; Real-time regulatory filings, board meetings &amp; quarterly results from official ${venue} disclosures.
     </footer>
   </main>
   </div>
@@ -1989,7 +2045,7 @@ ${jsonLd}
       <p>Launch the free Bsenexus live terminal, set up custom watchlists, and get instant Telegram alerts for every corporate disclosure.</p>
       <div class="cta-btns">
         <a href="https://bsenexus.in/?tab=announcements" class="btn-white">Open Live Terminal &rarr;</a>
-        <a href="https://bsenexus.in/?tab=results-calendar" class="btn-outline">Earnings Calendar</a>
+        <a href="https://bsenexus.in/results-calendar" class="btn-outline">Earnings Calendar</a>
         <a href="https://bsenexus.in/?tab=guides" class="btn-outline">Market Guides</a>
       </div>
     </div>
@@ -3019,38 +3075,11 @@ ${jsonLd}
 }
 
 export function renderCompaniesDirectoryPage(): string {
-  const pageTitle = "BSE Listed Companies — Company Profiles, Results & Filings | Bsenexus";
+  const pageTitle = "Companies & Exchanges — Profiles, Results & Filings | Bsenexus";
   const canonicalUrl = "https://bsenexus.in/companies";
-  const description = "Comprehensive directory of India's top 26 BSE listed companies. Access real-time corporate filings, quarterly financial results, SEBI LODR disclosures, and AI analysis.";
+  const description = directoryDescription();
 
-  const companiesList = [
-    { symbol: "RELIANCE", scripCode: "500325", name: "Reliance Industries Ltd", sector: "Energy & Petrochemicals / Conglomerate", category: "Mega Cap Leader", desc: "India's largest conglomerate spanning energy, retail, telecommunications (Jio), and petrochemicals." },
-    { symbol: "TCS", scripCode: "532540", name: "Tata Consultancy Services Ltd", sector: "IT Services & Software", category: "Tech Heavyweight", desc: "Global leader in IT services, digital transformation consulting, and enterprise cloud infrastructure." },
-    { symbol: "HDFCBANK", scripCode: "500180", name: "HDFC Bank Ltd", sector: "Private Sector Banking & Finance", category: "Banking Giant", desc: "India's largest private sector bank providing retail, commercial, and digital transaction banking." },
-    { symbol: "INFY", scripCode: "500209", name: "Infosys Ltd", sector: "IT Services & Consulting", category: "Tech Heavyweight", desc: "Pioneer in global information technology services, next-gen cloud migration, and enterprise AI." },
-    { symbol: "ICICIBANK", scripCode: "532174", name: "ICICI Bank Ltd", sector: "Private Sector Banking & Finance", category: "Banking Giant", desc: "Premier Indian banking institution delivering retail loans, wealth management, and corporate credit." },
-    { symbol: "SBIN", scripCode: "500112", name: "State Bank of India", sector: "Public Sector Banking", category: "PSU Banking Leader", desc: "India's flagship public sector commercial bank commanding over 22% domestic deposit market share." },
-    { symbol: "BHARTIARTL", scripCode: "532454", name: "Bharti Airtel Ltd", sector: "Telecommunications & Digital", category: "Telecom Leader", desc: "Leading global telecommunications provider with 5G mobile, broadband, and enterprise cloud networks." },
-    { symbol: "ITC", scripCode: "500875", name: "ITC Ltd", sector: "Diversified FMCG & Cigarettes", category: "FMCG Heavyweight", desc: "Diversified conglomerate with leadership across branded packaged foods, hotels, paperboards, and agri-business." },
-    { symbol: "KOTAKBANK", scripCode: "500247", name: "Kotak Mahindra Bank Ltd", sector: "Private Sector Banking & Finance", category: "Banking & Wealth", desc: "Prominent Indian banking and financial conglomerate spanning commercial lending and asset management." },
-    { symbol: "LT", scripCode: "500510", name: "Larsen & Toubro Ltd", sector: "Infrastructure & Heavy Engineering", category: "Capex & Infra Titan", desc: "India's premier multinational engaged in EPC projects, hi-tech manufacturing, defense, and power grids." },
-    { symbol: "AXISBANK", scripCode: "532215", name: "Axis Bank Ltd", sector: "Private Sector Banking & Finance", category: "Banking Giant", desc: "Major private sector bank in India delivering corporate lending, retail credit, and digital payment solutions." },
-    { symbol: "MARUTI", scripCode: "532500", name: "Maruti Suzuki India Ltd", sector: "Automobile Manufacturing", category: "Auto Champion", desc: "India's undisputed passenger vehicle manufacturer controlling over 40% domestic market share." },
-    { symbol: "TITAN", scripCode: "500114", name: "Titan Company Ltd", sector: "Consumer Goods & Jewellery", category: "Consumer Discretionary", desc: "Tata Group luxury retail powerhouse dominating organized jewellery (Tanishq), watches, and precision eyewear." },
-    { symbol: "ASIANPAINT", scripCode: "500820", name: "Asian Paints Ltd", sector: "Paints & Home Improvement", category: "Consumer & Home Decor", desc: "India's largest decorative and industrial paint manufacturer with extensive international presence." },
-    { symbol: "HCLTECH", scripCode: "532281", name: "HCL Technologies Ltd", sector: "IT Services & Software Products", category: "Tech Heavyweight", desc: "Global technology enterprise delivering digital engineering, hybrid cloud platforms, and software products." },
-    { symbol: "SUNPHARMA", scripCode: "524715", name: "Sun Pharmaceutical Industries Ltd", sector: "Pharmaceuticals & Healthcare", category: "Pharma Champion", desc: "India's largest pharmaceutical corporation and top global specialty generic drug manufacturer." },
-    { symbol: "TATAMOTORS", scripCode: "500570", name: "Tata Motors Ltd", sector: "Automotive & Commercial Vehicles", category: "Mobility & EV Pioneer", desc: "Multinational automotive corporation leading Indian electric mobility (EVs), commercial freight, and Jaguar Land Rover." },
-    { symbol: "TATASTEEL", scripCode: "500470", name: "Tata Steel Ltd", sector: "Metals & Mining", category: "Metals Leader", desc: "Top global integrated steel manufacturing corporation with crude steel capacity exceeding 35 MTPA." },
-    { symbol: "WIPRO", scripCode: "507685", name: "Wipro Ltd", sector: "IT Services & Consulting", category: "IT Major", desc: "Global information technology and enterprise cloud consulting company driving digital workflows." },
-    { symbol: "ULTRACEMCO", scripCode: "532538", name: "UltraTech Cement Ltd", sector: "Cement & Building Materials", category: "Materials Champion", desc: "Flagship cement company of Aditya Birla Group and India's largest manufacturer of grey cement." },
-    { symbol: "NTPC", scripCode: "532555", name: "NTPC Ltd", sector: "Power Generation & Utilities", category: "Energy & Utilities", desc: "India's largest integrated energy utility generating over 24% of national electricity with rapid green expansion." },
-    { symbol: "POWERGRID", scripCode: "532898", name: "Power Grid Corporation of India Ltd", sector: "Power Transmission", category: "Infrastructure Monopoly", desc: "Central Transmission Utility of India wheeling 85% of domestic inter-regional electricity." },
-    { symbol: "ONGC", scripCode: "500312", name: "Oil & Natural Gas Corporation Ltd", sector: "Oil & Gas Exploration", category: "Energy & Resources", desc: "India's premier public sector enterprise contributing 71% to domestic crude oil and 84% of natural gas output." },
-    { symbol: "COALINDIA", scripCode: "533278", name: "Coal India Ltd", sector: "Mining & Energy Resources", category: "Energy Security Titan", desc: "The world's largest coal-producing corporation supplying key fuel feedstock to Indian thermal power generation." },
-    { symbol: "BAJFINANCE", scripCode: "500034", name: "Bajaj Finance Ltd", sector: "Non-Banking Financials (NBFC)", category: "Consumer Finance Star", desc: "India's largest diversified NBFC specializing in consumer financing, MSME loans, and digital credit cards." },
-    { symbol: "TRENT", scripCode: "500251", name: "Trent Ltd", sector: "Retail & Fashion Apparel", category: "Fast Fashion Powerhouse", desc: "Fast-growing Tata Group retail powerhouse operating leading lifestyle and value chains Westside and Zudio." }
-  ];
+  const companiesList = DIRECTORY_COMPANIES.map(company => ({ ...company, desc: company.description }));
 
   const jsonLd = JSON.stringify({
     "@context": "https://schema.org",
@@ -3063,7 +3092,7 @@ export function renderCompaniesDirectoryPage(): string {
         "description": description,
         "mainEntity": {
           "@type": "ItemList",
-          "name": "BSE 26 Listed Heavyweights & Bluechips",
+          "name": "Companies and Exchange Operators",
           "numberOfItems": companiesList.length,
           "itemListElement": companiesList.map((c, idx) => ({
             "@type": "ListItem",
@@ -3399,7 +3428,7 @@ ${jsonLd}
 <body>
   <header class="top-banner">
     <a href="https://bsenexus.in/" class="top-brand">
-      <div class="brand-icon">N</div>
+      <img class="brand-icon" src="/icon.svg" alt="BSE Nexus" width="28" height="28">
       Bsenexus <span>Companies</span>
     </a>
     <nav class="nav-links">
@@ -3423,9 +3452,9 @@ ${jsonLd}
     </div>
 
     <div class="hero">
-      <span class="badge">🏛️ 26 PREMIER BSE BLUECHIPS &amp; HEAVYWEIGHTS</span>
-      <h1>BSE Listed Companies — Profiles, Earnings &amp; Filings</h1>
-      <p class="subtitle">Complete company intelligence dossiers for India's 26 leading listed equities. Track real-time Bombay Stock Exchange regulatory disclosures, quarterly financial results, and SEBI LODR corporate actions.</p>
+      <span class="badge">${escapeHtmlText(directoryBadge())}</span>
+      <h1>Companies &amp; Exchanges — Profiles, Earnings &amp; Filings</h1>
+      <p class="subtitle">${escapeHtmlText(directoryDescription())}</p>
     </div>
 
     <div class="companies-list">
@@ -3437,7 +3466,7 @@ ${jsonLd}
               <div class="comp-title">${escapeHtmlText(c.name)}</div>
               <div class="comp-sub">
                 <span class="comp-ticker">${escapeHtmlText(c.symbol)}</span>
-                <span>BSE: ${escapeHtmlText(c.scripCode)}</span>
+                <span>${escapeHtmlText("listingLabel" in c ? c.listingLabel : `BSE: ${c.scripCode}`)}</span>
               </div>
             </div>
           </div>
@@ -3454,7 +3483,7 @@ ${jsonLd}
     </div>
 
     <div class="cta-box">
-      <h2>Continuous Sub-Minute BSE Ingestion for All 26 Heavyweights</h2>
+      <h2>Explore Live Corporate Disclosures</h2>
       <p>Bsenexus monitors BSE announcements every 15 seconds to deliver instant AI metric extraction and instant Telegram alerts directly to your trading desk.</p>
       <div class="cta-actions">
         <a href="https://bsenexus.in/?tab=announcements" class="btn-emerald">Open Live Terminal &rarr;</a>
@@ -4343,6 +4372,7 @@ function renderPrivacyPolicyPage(): string {
         You may request complete deletion of your account, watchlists, and associated data at any time by emailing <a href="mailto:admin@bsenexus.in" style="color: var(--accent);">admin@bsenexus.in</a> with the subject line "Data Deletion Request".
       </p>
     </div>
+    ${AI_DATA_DISCLOSURE.map(section => `<div class="content-sec"><h2>${escapeHtmlText(section.title)}</h2><p>${escapeHtmlText(section.text)}</p></div>`).join('')}
   `;
 
   return renderTrustPageLayout({
@@ -4351,7 +4381,7 @@ function renderPrivacyPolicyPage(): string {
     canonicalUrl: "https://bsenexus.in/privacy-policy",
     badge: "Privacy & Data Protection",
     heading: "Privacy Policy",
-    subheading: "Last updated: September 2026 • Clear, transparent data protection standards.",
+    subheading: "Last updated: 21 October 2026 • Clear, transparent data protection standards.",
     breadcrumbs: "Privacy Policy",
     contentHtml,
     schemaJson: schema
@@ -4640,6 +4670,7 @@ function getRelatedCompaniesForGuide(slug: string): Array<{ symbol: string; name
 
 function renderGuidePage(guide: MarketGuide): string {
   const slug = guide.slug || guide.id;
+  const primaryAction = getGuidePrimaryAction(slug);
   const keywordGuide = getKeywordGuide(slug);
   const pendingReview = guide.editorialStatus === "verification-pending";
   const pageTitle = keywordGuide ? guide.title : `${guide.title} | Bsenexus`;
@@ -5204,8 +5235,8 @@ ${faqJsonLd ? `  <script type="application/ld+json">\n${faqJsonLd}\n  </script>`
     <a href="https://bsenexus.in" class="top-brand">
       BSE <span>Nexus</span>
     </a>
-    <a href="https://bsenexus.in/?tab=guides" class="app-btn">
-      Open in Bsenexus App &rarr;
+    <a href="${escapeHtmlAttr(primaryAction.href)}" class="app-btn">
+      ${escapeHtmlText(primaryAction.label)} &rarr;
     </a>
   </nav>
 
@@ -5218,6 +5249,8 @@ ${faqJsonLd ? `  <script type="application/ld+json">\n${faqJsonLd}\n  </script>`
       </div>
 
       <h1 class="guide-title">${escapeHtmlText(guide.title)}</h1>
+
+      ${primaryAction.description ? `<aside class="callout callout-info" aria-label="Upcoming company dates"><p class="callout-text">${escapeHtmlText(primaryAction.description)}</p><a class="terminal-link" href="${escapeHtmlAttr(primaryAction.href)}">${escapeHtmlText(primaryAction.label)} &rarr;</a></aside>` : ''}
 
       ${guide.author ? `
       <div class="author-bar">
@@ -5248,8 +5281,8 @@ ${faqJsonLd ? `  <script type="application/ld+json">\n${faqJsonLd}\n  </script>`
       ${keywordGuide ? "" : relatedCompaniesHtml}
 
       <div class="cta-row">
-        <a href="https://bsenexus.in/?tab=guides" class="app-btn-large">
-          Open in Bsenexus App &rarr;
+        <a href="${escapeHtmlAttr(primaryAction.href)}" class="app-btn-large">
+          ${escapeHtmlText(primaryAction.label)} &rarr;
         </a>
         <a href="https://bsenexus.in/?tab=announcements" class="terminal-link">
           Explore Live BSE Corporate Disclosures on Bsenexus &rarr;
@@ -5507,6 +5540,7 @@ app.get([/^\/https?:\/?\/?(?:www\.)?bsenexus\.in\/sitemap(?:\.xml)?$/i], (_req, 
 
 // IndexNow Key verification endpoint for search engines (Bing, Yandex, Seznam, Naver)
 app.get([`/${INDEXNOW_KEY}.txt`, '/indexnow-key.txt'], (_req, res) => {
+  if (!INDEXNOW_KEY) return res.status(503).type('text/plain').send('IndexNow ownership key is not configured');
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
   res.setHeader('Cache-Control', 'public, max-age=86400');
   res.send(INDEXNOW_KEY);
@@ -5523,7 +5557,7 @@ app.get('/opensearch.xml', (_req, res) => {
 app.get(['/.well-known/ai-plugin.json', '/ai-plugin.json'], (_req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.setHeader('Cache-Control', 'public, max-age=86400');
+  res.setHeader('Cache-Control', 'no-store');
   res.json(getAiPluginManifest());
 });
 
@@ -6009,6 +6043,8 @@ app.get('/results/:symbol/:quarterKey', async (req, res) => {
   }
 });
 
+app.get('/ai-docs', (_req,res) => res.type('html').set('Cache-Control','public, max-age=300').send(renderAiConnectionDocs()));
+
 // Crawlable, server-rendered individual company/stock pages for search engines & direct visitors
 app.get(['/company/:symbol', '/stock/:symbol'], async (req, res) => {
   const rawInput = req.params.symbol;
@@ -6017,8 +6053,14 @@ app.get(['/company/:symbol', '/stock/:symbol'], async (req, res) => {
   }
 
   const cleanInput = rawInput.trim().toUpperCase();
-  let symbol = cleanInput;
-  let scripCode = getScripCode(cleanInput);
+  if (cleanInput === 'ZOMATO') return res.redirect(301, '/company/ETERNAL');
+  const exchange = exchangeCompany(cleanInput);
+  if (exchange) {
+    if (req.path !== `/company/${exchange.symbol}`) return res.redirect(301, `/company/${exchange.symbol}`);
+  }
+  const curated = DIRECTORY_COMPANIES.find(company => company.symbol === cleanInput || (company.scripCode && company.scripCode === cleanInput));
+  let symbol = curated?.symbol || cleanInput;
+  let scripCode = exchange?.symbol === 'BSE' ? '' : curated?.scripCode || getScripCode(cleanInput);
 
   // If user navigated via numeric BSE Scrip Code (e.g., 500325)
   if (/^\d{5,7}$/.test(cleanInput)) {
@@ -6028,7 +6070,7 @@ app.get(['/company/:symbol', '/stock/:symbol'], async (req, res) => {
     if (match && match.symbol) {
       symbol = match.symbol;
     }
-  } else if (!scripCode) {
+  } else if (!scripCode && !exchange) {
     const allEntries = getAllStockEntries();
     const match = allEntries.find(e => e.symbol.toUpperCase() === cleanInput);
     if (match && match.scripCode) {
@@ -6036,7 +6078,7 @@ app.get(['/company/:symbol', '/stock/:symbol'], async (req, res) => {
     }
   }
 
-  if (!scripCode) {
+  if (!scripCode && exchange?.symbol !== 'BSE') {
     return res.status(404).setHeader('Content-Type', 'text/html; charset=utf-8').send(renderCompany404Page(symbol));
   }
 
@@ -6062,7 +6104,7 @@ app.get(['/company/:symbol', '/stock/:symbol'], async (req, res) => {
       return res.status(404).setHeader('Content-Type', 'text/html; charset=utf-8').send(renderCompany404Page(symbol));
     }
 
-    const html = renderCompanyPage(intel, symbol, scripCode);
+    const html = renderCompanyPage({ ...intel, companyName: curated?.name || intel.companyName }, symbol, scripCode);
     const entry = pageRenderCache.set(cacheKey, html, 'text/html; charset=utf-8', { ttlMs: 15 * 60 * 1000 });
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('ETag', entry.etag);
@@ -6155,7 +6197,7 @@ app.get(['/market-guides', '/market-guides/'], (_req, res) => {
   res.redirect(301, '/guides');
 });
 
-// Crawlable, server-rendered 26 BSE Listed Companies directory page
+// Crawlable directory; all membership and counts come from the shared list.
 app.get(['/companies', '/companies/'], (_req, res) => {
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400');
@@ -6274,7 +6316,7 @@ app.get('/sitemap-companies.xml', (_req, res) => {
   const seenSymbols = new Set<string>();
 
   let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
-  for (const entry of stockEntries) {
+  for (const entry of [...DIRECTORY_COMPANIES, ...stockEntries]) {
     const sym = entry.symbol?.trim().toUpperCase();
     if (!sym || seenSymbols.has(sym) || !/^[A-Z0-9-]{2,15}$/.test(sym)) continue;
     seenSymbols.add(sym);
@@ -6329,6 +6371,9 @@ app.get(/^\/google([a-zA-Z0-9_-]+)\.html$/, (req, res) => {
   }
   res.status(404).send('Not Found');
 });
+
+// Legacy calendar links must reach the source-backed document in either mode.
+app.get('/', redirectLegacyCalendar);
 
 // Serve static assets from public directory (favicons, apple-touch-icons, manifest, etc.)
 app.use(express.static(path.join(process.cwd(), 'public'), {
@@ -6428,6 +6473,7 @@ trackInterval(setInterval(async () => {
   // Reuse the watchdog; intake has its own 60s single-flight guard and never dispatches alerts.
   void refreshRadarIntake();
   void refreshRadarPriceSnapshots();
+  void processAdrAlerts().catch(() => console.warn("[ADR] Morning alert pass unavailable"));
   try {
     await processAnnouncements();
   } catch (err: any) {
@@ -6561,8 +6607,8 @@ const TAB_SEO_CONFIG: Record<string, TabSeoMeta> = {
     canonical: "https://bsenexus.in/pricing",
   },
   companies: {
-    title: "BSE Listed Companies — Company Profiles, Results & Filings | Bsenexus",
-    description: "Explore all 26 premier BSE listed companies on Bsenexus. Access live corporate announcements, quarterly earnings results, SEBI LODR disclosures, and AI intelligence.",
+    title: "Companies & Exchanges — Profiles, Results & Filings | Bsenexus",
+    description: directoryDescription(),
     canonical: "https://bsenexus.in/companies",
   },
   about: {
@@ -6766,19 +6812,20 @@ function injectTabSeoMetadata(html: string, tabQuery?: string): string {
     }
   }
 
-  return transformed;
+  return injectRouteHeading(transformed, normalizedKey || 'default');
 }
 
 // Helper to compute Cloudflare edge and browser Cache-Control headers for SPA routes
 function getSpaRouteCacheControl(reqPath: string): string {
   const p = reqPath.toLowerCase().replace(/\/+$/, '') || '/';
+  if (p === '/plugin' || p === '/ai-plugin' || p === '/settings') return 'no-store';
   if (p === '/') {
     // 1. / (homepage)
     return 'public, max-age=60, s-maxage=300, stale-while-revalidate=600';
   }
   if (p === '/results-calendar') {
     // 4. /results-calendar
-    return 'public, max-age=300, s-maxage=1800, stale-while-revalidate=1800';
+    return publicCalendarCacheControl();
   }
   if (p.startsWith('/company/') || p.startsWith('/stock/')) {
     // 2. /company/:symbol
@@ -6807,26 +6854,28 @@ async function startServer() {
     });
 
     // In development mode, allow verifying tab-specific SEO metadata in responses with proper headers
-    app.get(["/", "/announcements", "/live", "/results-calendar", "/watchlist", "/watchlists", "/companies", "/about", "/contact", "/disclaimer", "/privacy-policy", "/terms", "/plugin", "/ai-plugin"], async (req, res, next) => {
-      let tab = req.path === "/live" ? "live" : req.query.tab as string | undefined;
+    app.get(SPA_PATHS, async (req, res, next) => {
+      const routePath = normalizeSpaPath(req.path);
+      let tab = routePath === "/settings" ? "settings" : routePath === "/live" ? "live" : req.query.tab as string | undefined;
       if (!tab) {
-        if (req.path === '/announcements') tab = 'announcements';
-        else if (req.path === '/live') tab = 'live';
-        else if (req.path === '/results-calendar') tab = 'results-calendar';
-        else if (req.path === '/watchlist' || req.path === '/watchlists') tab = 'watchlists';
-        else if (req.path === '/companies') tab = 'companies';
-        else if (req.path === '/about') tab = 'about';
-        else if (req.path === '/contact') tab = 'contact';
-        else if (req.path === '/disclaimer') tab = 'disclaimer';
-        else if (req.path === '/privacy-policy') tab = 'privacy-policy';
-        else if (req.path === '/privacy') tab = 'privacy';
-        else if (req.path === '/terms') tab = 'terms';
-        else if (req.path === '/plugin' || req.path === '/ai-plugin') tab = 'plugin';
+        if (routePath === '/announcements') tab = 'announcements';
+        else if (routePath === '/live') tab = 'live';
+        else if (routePath === '/results-calendar') tab = 'results-calendar';
+        else if (routePath === '/watchlist' || routePath === '/watchlists') tab = 'watchlists';
+        else if (routePath === '/companies') tab = 'companies';
+        else if (routePath === '/about') tab = 'about';
+        else if (routePath === '/contact') tab = 'contact';
+        else if (routePath === '/disclaimer') tab = 'disclaimer';
+        else if (routePath === '/privacy-policy') tab = 'privacy-policy';
+        else if (routePath === '/privacy') tab = 'privacy';
+        else if (routePath === '/terms') tab = 'terms';
+        else if (routePath === '/plugin' || routePath === '/ai-plugin') tab = 'plugin';
       }
       try {
         const rawIndexHtml = fs.readFileSync(path.join(process.cwd(), "index.html"), "utf-8");
         const transformedHtml = await vite.transformIndexHtml(req.originalUrl, rawIndexHtml);
-        const finalHtml = injectTabSeoMetadata(transformedHtml, tab);
+        let finalHtml = injectTabSeoMetadata(transformedHtml, routePath === "/results-calendar" ? "results-calendar" : tab);
+        if (routePath === "/results-calendar") finalHtml = renderPublicCalendarShell(finalHtml, readCachedResultsCalendar());
         res.setHeader("Content-Type", "text/html; charset=utf-8");
         res.setHeader("Cache-Control", getSpaRouteCacheControl(req.path));
         if (tab === 'settings' || tab === 'admin' || tab === 'account') {
@@ -6841,7 +6890,7 @@ async function startServer() {
     // Intercept invalid HTML navigation requests so they return real 404 instead of silent homepage fallback
     app.use((req, res, next) => {
       if (req.method !== 'GET' && req.method !== 'HEAD') return next();
-      const p = req.path;
+      const p = normalizeSpaPath(req.path);
       if (
         p === '/' ||
         p === '/announcements' ||
@@ -6856,6 +6905,8 @@ async function startServer() {
         p === '/terms' ||
         p === '/plugin' ||
         p === '/ai-plugin' ||
+        p === '/settings' ||
+        p === '/live' ||
         p.startsWith('/@') ||
         p.startsWith('/src') ||
         p.startsWith('/node_modules') ||
@@ -6899,22 +6950,7 @@ async function startServer() {
     }));
 
     // Server-side HTML renderer with tab-specific SEO metadata & ETag cache
-    const VALID_SPA_ROUTES = new Set([
-      '/',
-      '/announcements',
-      '/live',
-      '/results-calendar',
-      '/watchlist',
-      '/watchlists',
-      '/companies',
-      '/about',
-      '/contact',
-      '/disclaimer',
-      '/privacy-policy',
-      '/terms',
-      '/plugin',
-      '/ai-plugin'
-    ]);
+    const VALID_SPA_ROUTES = new Set(SPA_PATHS);
     const tabHtmlCache = new Map<string, { html: string; etag: string }>();
 
     // /announcements Soft-404 fix (production): serve the SPA shell with REAL
@@ -6924,7 +6960,7 @@ async function startServer() {
     // Any failure falls through to the standard shell via next().
     app.get(['/announcements', '/announcements/'], async (req, res, next) => {
       try {
-        const cacheKey = 'announcements-feed-v1';
+        const cacheKey = 'announcements-feed-v2';
         const clientEtag = req.headers['if-none-match'];
         const cached = pageRenderCache.get(cacheKey);
         if (cached) {
@@ -6942,11 +6978,7 @@ async function startServer() {
         let html = injectTabSeoMetadata(rawHtml, 'announcements');
         const cards = await buildAnnouncementsFeedCards();
         if (cards) {
-          let replaced = false;
-          html = html.replace(PRELOADER_CARD_RE, () => {
-            if (!replaced) { replaced = true; return cards; }
-            return '';
-          });
+          html = html.replace('<!--announcements-feed-->', () => cards);
         }
         // Swap the neutral CollectionPage marker for the dynamic ItemList built
         // from the same real filings as the cards. No-op if the feed is empty
@@ -6974,25 +7006,34 @@ async function startServer() {
     });
 
     app.get("*", (req, res) => {
+      const routePath = normalizeSpaPath(req.path);
       // If the path is not a valid SPA route, return a true 404 instead of silent homepage fallback!
-      if (!VALID_SPA_ROUTES.has(req.path)) {
+      if (!VALID_SPA_ROUTES.has(routePath)) {
         return res.status(404).setHeader('Content-Type', 'text/html; charset=utf-8').send(renderGeneral404Page(req.path));
       }
 
-      let tabParam = req.path === "/live" ? "live" : (typeof req.query.tab === "string" ? req.query.tab.trim().toLowerCase() : "");
+      // This dynamic public document never enters the static tabHtmlCache.
+      // The snapshot is synchronous/cache-only: no fetch, account read or wait.
+      if (routePath === "/results-calendar") {
+        const html = renderPublicCalendarShell(injectTabSeoMetadata(getIndexHtml(), "results-calendar"), readCachedResultsCalendar());
+        res.setHeader("Cache-Control", publicCalendarCacheControl());
+        return res.type("html").send(html);
+      }
+
+      let tabParam = routePath === "/settings" ? "settings" : routePath === "/live" ? "live" : (typeof req.query.tab === "string" ? req.query.tab.trim().toLowerCase() : "");
       if (!tabParam) {
-        if (req.path === '/announcements') tabParam = 'announcements';
-        else if (req.path === '/live') tabParam = 'live';
-        else if (req.path === '/results-calendar') tabParam = 'results-calendar';
-        else if (req.path === '/watchlist' || req.path === '/watchlists') tabParam = 'watchlists';
-        else if (req.path === '/companies') tabParam = 'companies';
-        else if (req.path === '/about') tabParam = 'about';
-        else if (req.path === '/contact') tabParam = 'contact';
-        else if (req.path === '/disclaimer') tabParam = 'disclaimer';
-        else if (req.path === '/privacy-policy') tabParam = 'privacy-policy';
-        else if (req.path === '/privacy') tabParam = 'privacy';
-        else if (req.path === '/terms') tabParam = 'terms';
-        else if (req.path === '/plugin' || req.path === '/ai-plugin') tabParam = 'plugin';
+        if (routePath === '/announcements') tabParam = 'announcements';
+        else if (routePath === '/live') tabParam = 'live';
+        else if (routePath === '/results-calendar') tabParam = 'results-calendar';
+        else if (routePath === '/watchlist' || routePath === '/watchlists') tabParam = 'watchlists';
+        else if (routePath === '/companies') tabParam = 'companies';
+        else if (routePath === '/about') tabParam = 'about';
+        else if (routePath === '/contact') tabParam = 'contact';
+        else if (routePath === '/disclaimer') tabParam = 'disclaimer';
+        else if (routePath === '/privacy-policy') tabParam = 'privacy-policy';
+        else if (routePath === '/privacy') tabParam = 'privacy';
+        else if (routePath === '/terms') tabParam = 'terms';
+        else if (routePath === '/plugin' || routePath === '/ai-plugin') tabParam = 'plugin';
         else tabParam = 'default';
       }
       const clientEtag = req.headers['if-none-match'];
@@ -7036,6 +7077,7 @@ async function startServer() {
   startStorageRecoveryProbe();
   void addLog('INFO', 'SYSTEM', 'Bsenexus Server Started').catch(error => console.error('DB connect err:', error));
   // "Apne aap index": auto-submit any newly published guide URLs to IndexNow (deduped, create-only).
+  startIndexNow();
   try { autoIndexNewGuides(); } catch (e: any) { console.error('Guide auto-index err:', e?.message || e); }
   // PERF-006 (1 Oct 2026 audit): Graceful shutdown handler.
   // Cloud Run sends SIGTERM ~10s before killing the instance. Without this:

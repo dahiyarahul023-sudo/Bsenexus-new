@@ -1,250 +1,104 @@
-import { test, describe } from 'node:test';
-import assert from 'node:assert';
-import { 
-  getAiPluginManifest, 
-  getOpenApiSpec, 
-  getGeminiToolsSpec, 
-  aiPluginRouter 
-} from '../api/aiPlugin.js';
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import express from "express";
+import { once } from "node:events";
+import {
+  aiPluginRouter,
+  getOpenApiSpec,
+  getGeminiToolsSpec,
+} from "../api/aiPlugin.js";
+import { mountAiIntegration } from "../ai/http.js";
 
-describe('BSE Nexus Universal AI Plugin & Action Gateway', () => {
-
-  test('Manifest: validates ChatGPT plugin schema standards', () => {
-    const manifest = getAiPluginManifest();
-    assert.strictEqual(manifest.schema_version, 'v1');
-    assert.strictEqual(manifest.auth.type, 'none');
-    assert.strictEqual(manifest.api.type, 'openapi');
-    assert.ok(manifest.api.url.endsWith('/api/ai/openapi.json'));
-    assert.ok(manifest.description_for_model.includes('SEBI LODR Regulation 30'));
-    assert.ok(manifest.description_for_human.length > 20);
-    assert.ok(manifest.contact_email.includes('@'));
-  });
-
-  test('OpenAPI: validates OpenAPI 3.1 structure and operations', () => {
-    const spec = getOpenApiSpec() as any;
-    assert.strictEqual(spec.openapi, '3.1.0');
-    assert.ok(spec.info.title.includes('BSE Nexus'));
-    assert.strictEqual(spec.info.version, '1.0.0');
-
-    const paths = spec.paths;
-    assert.ok(paths['/api/ai/v1/filings']);
-    assert.ok(paths['/api/ai/v1/results']);
-    assert.ok(paths['/api/ai/v1/board-meetings']);
-    assert.ok(paths['/api/ai/v1/company']);
-
-    // Check operation IDs
-    assert.strictEqual(paths['/api/ai/v1/filings'].get.operationId, 'getBseFilings');
-    assert.strictEqual(paths['/api/ai/v1/results'].get.operationId, 'getQuarterlyResults');
-    assert.strictEqual(paths['/api/ai/v1/board-meetings'].get.operationId, 'getBoardMeetings');
-    assert.strictEqual(paths['/api/ai/v1/company'].get.operationId, 'getCompanyIntel');
-
-    // Filings parameters
-    const filingParams = paths['/api/ai/v1/filings'].get.parameters;
-    const paramNames = filingParams.map((p: any) => p.name);
-    assert.ok(paramNames.includes('symbol'));
-    assert.ok(paramNames.includes('category'));
-    assert.ok(paramNames.includes('limit'));
-  });
-
-  test('Gemini Tools: produces valid Google GenAI functionDeclarations', () => {
-    const gemini = getGeminiToolsSpec() as any;
-    assert.ok(Array.isArray(gemini.functionDeclarations));
-    assert.strictEqual(gemini.functionDeclarations.length, 4);
-
-    const names = gemini.functionDeclarations.map((fn: any) => fn.name);
-    assert.ok(names.includes('getBseFilings'));
-    assert.ok(names.includes('getQuarterlyResults'));
-    assert.ok(names.includes('getBoardMeetings'));
-    assert.ok(names.includes('getCompanyIntel'));
-
-    for (const fn of gemini.functionDeclarations) {
-      assert.strictEqual(fn.parameters.type, 'OBJECT');
-      assert.ok(typeof fn.description === 'string' && fn.description.length > 10);
-      assert.ok(fn.parameters.properties);
-    }
-  });
-
-  test('Endpoints: /v1/results rejects missing symbol parameter with HTTP 400', async () => {
-    let statusCode = 200;
-    let jsonBody: any = null;
-
-    const mockReq = { query: {} } as any;
-    const mockRes = {
-      setHeader() {},
-      status(code: number) {
-        statusCode = code;
-        return this;
-      },
-      json(data: any) {
-        jsonBody = data;
-        return this;
-      }
-    } as any;
-
-    // Simulate route handler
-    const routes = (aiPluginRouter as any).stack;
-    const routeLayer = routes.find((r: any) => r.route?.path === '/v1/results');
-    assert.ok(routeLayer, 'Route /v1/results should be registered');
-
-    await routeLayer.route.stack[0].handle(mockReq, mockRes, () => {});
-
-    assert.strictEqual(statusCode, 400);
-    assert.strictEqual(jsonBody.success, false);
-    assert.ok(jsonBody.error.includes('symbol'));
-  });
-
-  test('Endpoints: /v1/company rejects missing query parameter with HTTP 400', async () => {
-    let statusCode = 200;
-    let jsonBody: any = null;
-
-    const mockReq = { query: {} } as any;
-    const mockRes = {
-      setHeader() {},
-      status(code: number) {
-        statusCode = code;
-        return this;
-      },
-      json(data: any) {
-        jsonBody = data;
-        return this;
-      }
-    } as any;
-
-    const routes = (aiPluginRouter as any).stack;
-    const routeLayer = routes.find((r: any) => r.route?.path === '/v1/company');
-    assert.ok(routeLayer, 'Route /v1/company should be registered');
-
-    await routeLayer.route.stack[0].handle(mockReq, mockRes, () => {});
-
-    assert.strictEqual(statusCode, 400);
-    assert.strictEqual(jsonBody.success, false);
-    assert.ok(jsonBody.error.includes('query'));
-  });
-
-  test('Endpoints: /v1/company resolves well-known company (e.g. Reliance)', async () => {
-    let jsonBody: any = null;
-
-    const mockReq = { query: { query: 'RELIANCE' } } as any;
-    const mockRes = {
-      setHeader() {},
-      status() { return this; },
-      json(data: any) {
-        jsonBody = data;
-        return this;
-      }
-    } as any;
-
-    const routes = (aiPluginRouter as any).stack;
-    const routeLayer = routes.find((r: any) => r.route?.path === '/v1/company');
-    await routeLayer.route.stack[0].handle(mockReq, mockRes, () => {});
-
-    assert.strictEqual(jsonBody.success, true);
-    assert.strictEqual(jsonBody.found, true);
-    assert.strictEqual(jsonBody.company.scripCode, '500325');
-    assert.ok(jsonBody.company.name.includes('Reliance'));
-  });
-
-  test('Endpoints: /v1/filings returns valid JSON array format', async () => {
-    let jsonBody: any = null;
-
-    const mockReq = { query: { limit: '5' } } as any;
-    const mockRes = {
-      setHeader() {},
-      status() { return this; },
-      json(data: any) {
-        jsonBody = data;
-        return this;
-      }
-    } as any;
-
-    const routes = (aiPluginRouter as any).stack;
-    const routeLayer = routes.find((r: any) => r.route?.path === '/v1/filings');
-    await routeLayer.route.stack[0].handle(mockReq, mockRes, () => {});
-
-    assert.strictEqual(jsonBody.success, true);
-    assert.ok(Array.isArray(jsonBody.filings));
-  });
-
-  test('Endpoints: /v1/board-meetings returns valid JSON array format', async () => {
-    let jsonBody: any = null;
-
-    const mockReq = { query: { daysAhead: '30' } } as any;
-    const mockRes = {
-      setHeader() {},
-      status() { return this; },
-      json(data: any) {
-        jsonBody = data;
-        return this;
-      }
-    } as any;
-
-    const routes = (aiPluginRouter as any).stack;
-    const routeLayer = routes.find((r: any) => r.route?.path === '/v1/board-meetings');
-    await routeLayer.route.stack[0].handle(mockReq, mockRes, () => {});
-
-    assert.strictEqual(jsonBody.success, true);
-    assert.ok(Array.isArray(jsonBody.meetings));
-  });
-
-  test('Security: Anti-exploit method lockdown rejects POST requests with 405', async () => {
-    let statusCode = 200;
-    let jsonBody: any = null;
-
-    const mockReq = { method: 'POST', originalUrl: '/api/ai/v1/filings' } as any;
-    const mockRes = {
-      status(code: number) {
-        statusCode = code;
-        return this;
-      },
-      json(data: any) {
-        jsonBody = data;
-        return this;
-      }
-    } as any;
-
-    const routes = (aiPluginRouter as any).stack;
-    const methodGuardLayer = routes.find((r: any) => !r.route && r.handle.length === 3);
-    assert.ok(methodGuardLayer, 'Method guard middleware should exist');
-
-    let nextCalled = false;
-    await methodGuardLayer.handle(mockReq, mockRes, () => { nextCalled = true; });
-
-    assert.strictEqual(statusCode, 405);
-    assert.strictEqual(jsonBody.success, false);
-    assert.strictEqual(nextCalled, false);
-    assert.ok(jsonBody.error.includes('Method Not Allowed'));
-  });
-
-  test('Security: In-memory cache returns X-Cache HIT on duplicate filings request', async () => {
-    let headers: Record<string, string> = {};
-    let jsonBody: any = null;
-
-    const mockReq = { query: { symbol: 'INFY', limit: '2' } } as any;
-    const mockRes = {
-      setHeader(name: string, val: string) {
-        headers[name] = val;
-      },
-      status() { return this; },
-      json(data: any) {
-        jsonBody = data;
-        return this;
-      }
-    } as any;
-
-    const routes = (aiPluginRouter as any).stack;
-    const routeLayer = routes.find((r: any) => r.route?.path === '/v1/filings');
-
-    // First request: MISS
-    headers = {};
-    await routeLayer.route.stack[0].handle(mockReq, mockRes, () => {});
-    assert.strictEqual(jsonBody.success, true);
-    assert.strictEqual(headers['X-Cache'], 'MISS');
-
-    // Second request: HIT
-    headers = {};
-    await routeLayer.route.stack[0].handle(mockReq, mockRes, () => {});
-    assert.strictEqual(jsonBody.success, true);
-    assert.strictEqual(headers['X-Cache'], 'HIT');
-  });
+test("published operations match registered GET routes and explicitly declare OAuth", () => {
+  const spec = getOpenApiSpec();
+  const routes = (aiPluginRouter as any).stack
+    .filter((l: any) => l.route)
+    .map((l: any) => l.route);
+  for (const [path, operation] of Object.entries(spec.paths)) {
+    assert.ok(
+      routes.some(
+        (r: any) => r.path === path.replace("/api/ai", "") && r.methods.get,
+      ),
+    );
+    assert.ok(
+      (operation as any).get.security[0].BsenexusOAuth.includes("market:read"),
+    );
+  }
+  assert.equal(getGeminiToolsSpec().functionDeclarations.length, 4);
+  assert.match(getGeminiToolsSpec().execution, /must execute/);
 });
-
+test("HTTP discovery is accessible, personal calls require OAuth and all denial paths keep CORS/no-store", async () => {
+  process.env.AI_CONNECTIONS_ENABLED = "true";
+  const app = express();
+  app.set("trust proxy", 1);
+  app.use(express.json());
+  app.use("/api/ai", aiPluginRouter);
+  mountAiIntegration(app);
+  const server = app.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  const base = "http://127.0.0.1:" + (server.address() as any).port;
+  try {
+    for (const method of ["GET", "HEAD", "OPTIONS"]) {
+      const res = await fetch(base + "/api/ai/openapi.json", {
+        method,
+        headers: { Origin: "https://client.example.org" },
+      });
+      assert.ok([200, 204].includes(res.status));
+      assert.equal(res.headers.get("access-control-allow-origin"), "*");
+      assert.equal(res.headers.get("cache-control"), "no-store");
+    }
+    for (const path of [
+      "/filings?symbol=500325",
+      "/results?symbol=TCS",
+      "/board-meetings",
+      "/company?query=TCS",
+    ]) {
+      const res = await fetch(base + "/api/ai/v1" + path);
+      assert.equal(res.status, 401);
+      assert.ok(res.headers.get("www-authenticate"));
+      assert.equal(res.headers.get("access-control-allow-origin"), "*");
+      assert.equal(res.headers.get("cache-control"), "no-store");
+    }
+    const write = await fetch(base + "/api/ai/v1/filings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}",
+    });
+    assert.equal(write.status, 405);
+    const meta = await fetch(
+      base + "/.well-known/oauth-authorization-server",
+    ).then((r) => r.json());
+    assert.deepEqual(meta.code_challenge_methods_supported, ["S256"]);
+    assert.ok(meta.registration_endpoint.endsWith("/register"));
+    const mcp = await fetch(base + "/mcp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list" }),
+    });
+    assert.equal(mcp.status, 401);
+    process.env.AI_CONNECTIONS_ENABLED = "false";
+    for (const path of [
+      "/mcp",
+      "/register",
+      "/token",
+      "/api/ai/v1/company?query=TCS",
+    ]) {
+      const disabled = await fetch(base + path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      });
+      // The REST compatibility API only permits GET regardless of enablement.
+      assert.equal(disabled.status, path.startsWith("/api/ai") ? 405 : 503);
+      assert.equal(disabled.headers.get("cache-control"), "no-store");
+    }
+    assert.equal(
+      (await fetch(base + "/api/ai/v1/company?query=TCS")).status,
+      503,
+    );
+  } finally {
+    delete process.env.AI_CONNECTIONS_ENABLED;
+    server.closeAllConnections();
+    await new Promise<void>((r) => server.close(() => r()));
+  }
+});

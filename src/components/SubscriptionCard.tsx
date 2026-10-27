@@ -20,6 +20,7 @@ interface SubStatus {
   plan: { id: string; label: string; amountPaise: number; currency: string; validityDays: number };
   lastPaymentAt: number | null;
   lastOrderId: string | null;
+  subscriptionAccess?: import('../shared/giftAccess').SubscriptionAccess | null;
   autoRenew: 'coming_soon';
 }
 
@@ -214,7 +215,7 @@ export function SubscriptionCard() {
       )}
 
       {!loading && !showUnavailable && status?.isPro && (
-        <SubscriptionProgress expiry={status.proExpiresAt} days={status.lastPaymentAt ? status.plan.validityDays : 7} paidAt={status.lastPaymentAt} />
+        <SubscriptionProgress expiry={status.proExpiresAt} days={status.subscriptionAccess?.source === 'gift' ? status.subscriptionAccess.gift!.validityDays : status.lastPaymentAt ? status.plan.validityDays : 7} paidAt={status.subscriptionAccess?.source === 'gift' ? status.subscriptionAccess.gift!.activatedAt : status.lastPaymentAt} />
       )}
 
       {!loading && !showUnavailable && status && (
@@ -222,7 +223,7 @@ export function SubscriptionCard() {
           <div className="payment-billing-row">
             <span className="text-slate-500 dark:text-slate-400">Plan</span>
             <span className="font-semibold text-slate-900 dark:text-white">
-              {status.lastPaymentAt
+              {status.subscriptionAccess?.source === 'gift' ? `Gift Pro — ${status.subscriptionAccess.gift!.validityDays} days · Complimentary` : status.lastPaymentAt
                 ? `${status.plan.label} — ${fmtINR(status.plan.amountPaise)} · ${status.plan.validityDays} days (one-time)`
                 : status.isPro ? 'Pro Trial — 7-day free trial' : 'Free plan'}
             </span>
@@ -261,6 +262,7 @@ export function SubscriptionCard() {
         </div>
       )}
 
+      {status?.subscriptionAccess?.gift && status.subscriptionAccess.source !== 'gift' && <p className="text-xs mb-4">Gift access: {status.subscriptionAccess.gift.validityDays} days, valid until {fmtDate(status.subscriptionAccess.gift.expiresAt)}. Runs alongside your existing access.</p>}
       {error && (
         <div className="mb-3 py-2.5 px-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-[11px] font-semibold rounded-xl">
           {error}

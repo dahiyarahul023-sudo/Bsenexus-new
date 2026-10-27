@@ -152,7 +152,7 @@ export const CustomDropdown: React.FC<CustomDropdownProps> = ({
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         className={cn(
-          "group flex items-center justify-between border font-bold transition-all cursor-pointer shadow-2xs focus:outline-none focus:ring-1 focus:ring-blue-500/40 disabled:opacity-50 disabled:cursor-not-allowed",
+          "ui-control group flex items-center justify-between border font-bold transition-all cursor-pointer shadow-2xs focus:outline-none focus:ring-1 focus:ring-blue-500/40 disabled:opacity-50 disabled:cursor-not-allowed",
           sizeClasses[size],
           variantClasses[variant],
           isOpen && "ring-1 ring-blue-500/40 border-blue-400 dark:border-blue-600",

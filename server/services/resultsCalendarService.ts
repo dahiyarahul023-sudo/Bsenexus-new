@@ -1,23 +1,32 @@
+import { isPureResultOutcomeFiling, isIntimationOrNoticeFiling, isVerifiedResultFiling, resultFilingText } from '../../src/shared/resultFiling.js';
+export { isPureResultOutcomeFiling, isIntimationOrNoticeFiling } from '../../src/shared/resultFiling.js';
+import { startHistorySync, waitHistorySync, historySyncStatus } from './historicalFilings.js';
 import { hasExactScripCode } from '../../src/shared/scripMatching.js';
 import fs from 'fs';
 import path from 'path';
-import { getActiveWatchlistSymbols, getAllWatchlists, extractSymbol } from '../database/watchlistDao.js';
+import { getActiveWatchlistSymbols, getAllWatchlists, extractSymbol, getCalendarWatchlistStocks } from '../database/watchlistDao.js';
+import { automaticCalendarMeetings, buildCalendarTargets, calendarIdentity, calendarWatchlistCodes, currentUpcomingMeetings, FNO_CALENDAR_VERSION, isFnoCalendarCode, mergeCalendarMeetings, selectCalendarScope } from './calendarUniverse.js';
+import type { CalendarScope } from '../../src/shared/calendarScope.js';
 import { getScripCodeForSymbolOrName, parseBseDate, resolveStockDetails } from '../utils/helpers.js';
 import { addLog } from '../database/logDao.js';
-import { 
-  getRecentAnnouncements, 
-  saveAnnouncement, 
+import {
+  getRecentAnnouncements,
+  getAnnouncementsForScrip,
+  saveAnnouncement,
   saveAnnouncementsBatch,
-  flushLocalDiskSave, 
+  flushLocalDiskSave,
   boostAnnouncementsPriorityForWindow,
   getAnnouncementsForStockInWindow
 } from '../database/announcementDao.js';
-import { sendToTelegram } from './telegram.js';
+import { deliverCalendarTelegram } from './calendarTelegramDelivery.js';
+import { readCalendarTelegramClaims } from '../database/calendarTelegramDao.js';
 import { getSettings } from '../database/settingsDao.js';
 import { determinePriority } from '../utils/helpers.js';
 import { getSupabase, isSupabaseConfigured } from '../database/supabase.js';
 import { getBseISTDate } from './bse.js';
 import { externalFeedsCircuitBreaker } from '../utils/circuitBreaker.js';
+import { readStoredCalendarMeetings } from '../database/calendarHistoryDao.js';
+import { calendarDayKey, calendarDayStart, projectCalendarTiming } from '../../src/shared/calendarTiming.js';
 
 export interface ResultCalendarItem {
   id: string;
@@ -37,6 +46,7 @@ export interface ResultCalendarItem {
   declarationPdfLink?: string;
   declarationSubject?: string;
   aiSummary?: string;
+  aiSummaryEn?: string;
   bseTimestamp?: number;
   /** True when this item's scrip was synced via the market-wide calendar universe
    *  (not only via watchlists). Used by the market scope filter. */
@@ -44,11 +54,8 @@ export interface ResultCalendarItem {
 }
 
 /**
- * Market-wide calendar universe: major result-season companies whose board
- * meetings are synced even when they are on nobody's watchlist. This powers
- * the "Market" scope of the results calendar. Symbols only — all dates come
- * from the live BSE BoardMeeting API at sync time; nothing is hardcoded.
- * Every symbol must resolve via getScripCodeForSymbolOrName (verified Oct 7, 2026).
+ * Legacy export retained for existing consumers. Calendar sync now uses the
+ * supplied BSE-code-keyed FNO_CALENDAR_STOCKS in calendarUniverse.ts.
  */
 export const MARKET_CALENDAR_UNIVERSE: string[] = [
   'TCS','INFY','WIPRO','TECHM','HCLTECH',
@@ -84,6 +91,10 @@ export function applyCalendarScope(
 let cachedCalendar: ResultCalendarItem[] = [];
 let lastCalendarFetchTime = 0;
 let isSyncing = false;
+let lastCalendarSyncIncomplete = false;
+let lastCalendarAttemptTime = 0;
+let calendarUniverseVersion = '';
+let calendarSyncPromise: Promise<ResultCalendarItem[]> | null = null;
 
 const CACHE_FILE_PATH = path.join(process.cwd(), 'data', 'results_calendar.json');
 const NOTIFIED_MEETINGS_FILE = path.join(process.cwd(), 'data', 'notified_calendar_meetings.json');
@@ -114,23 +125,8 @@ async function loadNotifiedMeetings() {
     console.error('Error loading notified meetings cache:', e.message);
   }
 
-  // Hydrate from Supabase so notified status survives container rebuilds/republishes
-  if (isSupabaseConfigured()) {
-    try {
-      const { data, error } = await getSupabase()
-        .from('results_calendar')
-        .select('id, data');
-      if (!error && Array.isArray(data)) {
-        for (const row of data) {
-          if (row.data?.isNotified) {
-            notifiedMeetingIds.add(row.id);
-          }
-        }
-      }
-    } catch (sbErr: any) {
-      console.warn('[ResultsCalendar] Supabase notified hydration notice:', sbErr?.message || sbErr);
-    }
-  }
+  // Legacy local hints only. The separate durable delivery ledger owns replay protection.
+
 }
 
 function saveNotifiedMeetings() {
@@ -168,6 +164,9 @@ function loadLocalCache() {
           return item;
         });
         lastCalendarFetchTime = parsed.lastUpdated || 0;
+        lastCalendarAttemptTime = parsed.lastAttempt || lastCalendarFetchTime;
+        calendarUniverseVersion = parsed.universeVersion || '';
+        lastCalendarSyncIncomplete = Boolean(parsed.incomplete);
       }
     }
   } catch (e: any) {
@@ -176,6 +175,40 @@ function loadLocalCache() {
 }
 
 loadLocalCache();
+
+let storedCalendarHydration: Promise<void> | null = null;
+let storedCalendarAttempt = 0;
+let storedCalendarLoaded = false;
+let calendarHistoryUnavailable = false;
+
+/** Recover durable meeting evidence after restart and from other instances, without reviving replaced future schedules. */
+async function hydrateStoredCalendar(): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+  if (storedCalendarHydration) return storedCalendarHydration;
+  if (storedCalendarAttempt && Date.now() - storedCalendarAttempt < 60_000) return;
+  storedCalendarAttempt = Date.now();
+  storedCalendarHydration = (async () => {
+    try {
+      const stored = await readStoredCalendarMeetings();
+      const today = calendarDayStart();
+      const cold = !storedCalendarLoaded && cachedCalendar.length === 0;
+      const existing = new Set(cachedCalendar.map(item => `${item.scripCode}:${item.meetingTimestamp}`));
+      const eligible = stored.filter(item => (cold || item.meetingTimestamp < today) && !existing.has(`${item.scripCode}:${item.meetingTimestamp}`));
+      const merged = mergeCalendarMeetings(eligible, cachedCalendar, new Set());
+      if (JSON.stringify(merged) !== JSON.stringify(cachedCalendar)) {
+        cachedCalendar = merged;
+        invalidateEnrichedCalendarCache();
+      }
+      for (const item of stored) if (item.isNotified) notifiedMeetingIds.add(item.id);
+      storedCalendarLoaded = true;
+      calendarHistoryUnavailable = false;
+    } catch {
+      calendarHistoryUnavailable = true;
+      console.warn('[ResultsCalendar] Stored history recovery unavailable; existing entries retained');
+    } finally { storedCalendarHydration = null; }
+  })();
+  return storedCalendarHydration;
+}
 
 const COMMON_HEADERS = {
   "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
@@ -255,7 +288,7 @@ function parseMeetingDateToIstMidnight(dateStr: string): number {
   if (!dateStr) return 0;
   const clean = dateStr.trim();
   const pad = (n: number | string) => String(n).padStart(2, '0');
-  
+
   // Format: DD-MM-YYYY or DD/MM/YYYY
   const dmyMatch = clean.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
   if (dmyMatch) {
@@ -301,8 +334,10 @@ export async function syncSingleStockResultsCalendar(
   scripCodeOverride?: string
 ): Promise<{ success: boolean; count: number; newlyFound: number; items: ResultCalendarItem[] }> {
   try {
-    let resolvedSym = symbolOrScrip.toUpperCase().trim();
-    let scripCode = scripCodeOverride || getScripCodeForSymbolOrName(resolvedSym);
+    await hydrateStoredCalendar();
+    const identity = calendarIdentity({ symbol: symbolOrScrip, scripCode: scripCodeOverride });
+    let resolvedSym = identity?.symbol || symbolOrScrip.toUpperCase().trim();
+    let scripCode = identity?.scripCode;
 
     if (!scripCode) {
       const resolved = await resolveStockDetails(symbolOrScrip);
@@ -326,6 +361,11 @@ export async function syncSingleStockResultsCalendar(
       return { success: true, count: cachedCalendar.length, newlyFound: 0, items: [] };
     }
     const json = JSON.parse(text);
+    if (!Array.isArray(json?.Table) || json.Table.some((row: any) => {
+      if (!row || typeof row !== 'object') return true;
+      const code = row.SCRIP_CD ?? row.scrip_cd ?? row.scripCode ?? row.scrip_code;
+      return code != null && String(code).trim() !== scripCode;
+    })) throw new Error('Unexpected BSE calendar security response');
     const todayStartTs = getIstMidnightTs(new Date());
     const stockItems: ResultCalendarItem[] = [];
 
@@ -345,7 +385,7 @@ export async function syncSingleStockResultsCalendar(
           else if (daysLeft >= -30) status = 'RECENT';
           else status = 'PAST';
 
-          let companyName = (row.LONG_NAME || row.Short_name || resolvedSym).trim();
+          let companyName = (row.LONG_NAME || row.Short_name || identity?.companyName || resolvedSym).trim();
           if (scripCode === '500034' || resolvedSym === 'BAJFINANCE' || companyName.toUpperCase() === 'BAJAJ AUTO F') {
             companyName = 'Bajaj Finance Ltd';
           }
@@ -361,7 +401,8 @@ export async function syncSingleStockResultsCalendar(
             meetingTimestamp: meetingTs,
             daysLeft,
             status,
-            updatedAt: new Date().toISOString()
+            updatedAt: new Date().toISOString(),
+            marketUniverse: isFnoCalendarCode(scripCode)
           });
         }
       }
@@ -381,10 +422,8 @@ export async function syncSingleStockResultsCalendar(
     }
     const finalStockItems = Array.from(uniqueStockItems.values());
 
-    // Merge into in-memory cachedCalendar (remove older items for this scripCode first)
-    loadLocalCache();
-    const otherItems = cachedCalendar.filter(i => i.scripCode !== scripCode && i.symbol !== resolvedSym);
-    cachedCalendar = [...otherItems, ...finalStockItems];
+    // A refreshed rolling source can replace future dates, but never delete the recorded archive.
+    cachedCalendar = mergeCalendarMeetings(cachedCalendar, finalStockItems, new Set([scripCode]), todayStartTs);
     lastCalendarFetchTime = Date.now();
 
     // Save to disk
@@ -392,6 +431,9 @@ export async function syncSingleStockResultsCalendar(
       ensureDataDir();
       fs.writeFileSync(CACHE_FILE_PATH, JSON.stringify({
         lastUpdated: lastCalendarFetchTime,
+        lastAttempt: lastCalendarAttemptTime,
+        universeVersion: calendarUniverseVersion,
+        incomplete: lastCalendarSyncIncomplete,
         items: cachedCalendar
       }, null, 2));
     } catch {}
@@ -413,77 +455,59 @@ export async function syncSingleStockResultsCalendar(
   }
 }
 
-export async function fetchAndSyncResultsCalendar(
+export function fetchAndSyncResultsCalendar(
+  force: boolean = false,
+  options?: { quick?: boolean; symbols?: string[] }
+): Promise<ResultCalendarItem[]> {
+  if (calendarSyncPromise) return calendarSyncPromise;
+  calendarSyncPromise = performCalendarSync(force, options).finally(() => { calendarSyncPromise = null; });
+  return calendarSyncPromise;
+}
+
+async function performCalendarSync(
   force: boolean = false,
   options?: { quick?: boolean; symbols?: string[] }
 ): Promise<ResultCalendarItem[]> {
   const now = Date.now();
-  if (!force && isSyncing) return cachedCalendar;
-  if (!force && lastCalendarFetchTime > 0 && (now - lastCalendarFetchTime < 60 * 60 * 1000) && cachedCalendar.length > 0) {
+  if (!force && calendarUniverseVersion === FNO_CALENDAR_VERSION && lastCalendarAttemptTime > 0 &&
+      now - lastCalendarAttemptTime < (lastCalendarSyncIncomplete ? 60000 : 60 * 60 * 1000)) {
     return cachedCalendar;
   }
 
   isSyncing = true;
+  lastCalendarAttemptTime = now;
   try {
-    let targetSymbols: string[] = [];
-    if (options?.symbols && options.symbols.length > 0) {
-      targetSymbols = options.symbols;
-    } else {
-      targetSymbols = await getActiveWatchlistSymbols();
-      // Market-wide universe: also sync major result-season companies so the
-      // market calendar scope can show companies beyond any watchlist.
-      const seen = new Set(targetSymbols.map(s => s.trim().toUpperCase()));
-      for (const sym of MARKET_CALENDAR_UNIVERSE) {
-        const clean = sym.trim().toUpperCase();
-        if (clean && !seen.has(clean)) {
-          seen.add(clean);
-          targetSymbols.push(clean);
-        }
-      }
-    }
-
-    // Scrip codes belonging to the market universe (for scope tagging below)
-    const marketScripSet = new Set<string>();
-    if (!options?.symbols || options.symbols.length === 0) {
-      for (const sym of MARKET_CALENDAR_UNIVERSE) {
-        const sc = getScripCodeForSymbolOrName(sym.trim().toUpperCase());
-        if (sc) marketScripSet.add(sc);
-      }
-    }
-
-    if (!targetSymbols || targetSymbols.length === 0) {
-      cachedCalendar = [];
-      lastCalendarFetchTime = now;
-      return [];
-    }
-
-    const scripMap = new Map<string, string[]>(); // scripCode -> list of symbols
-    for (const sym of targetSymbols) {
-      const cleanSym = sym.trim().toUpperCase();
-      if (!cleanSym) continue;
-      const sc = getScripCodeForSymbolOrName(cleanSym);
-      if (sc) {
-        if (!scripMap.has(sc)) scripMap.set(sc, []);
-        scripMap.get(sc)!.push(cleanSym);
-      }
-    }
+    await hydrateStoredCalendar();
+    const subset = Boolean(options?.symbols?.length);
+    const targets = buildCalendarTargets(subset ? options!.symbols! : await getCalendarWatchlistStocks(), !subset);
+    const watchlistScrips = new Set([...targets.values()].filter(stock => stock.isWatchlist).map(stock => stock.scripCode));
+    const successfulCodes = new Set<string>();
 
     const todayStartTs = getIstMidnightTs(new Date());
     const fetchedItems: ResultCalendarItem[] = [];
-    const scripEntries = Array.from(scripMap.entries());
+    const scripEntries = Array.from(targets.entries());
 
     // Fetch batch by batch (BATCH_SIZE = 8 to prevent rate limiting)
     const BATCH_SIZE = 8;
     for (let i = 0; i < scripEntries.length; i += BATCH_SIZE) {
       const batch = scripEntries.slice(i, i + BATCH_SIZE);
-      const promises = batch.map(async ([scripCode, symbols]) => {
+      const promises = batch.map(async ([scripCode, stock]) => {
         const url = `https://api.bseindia.com/BseIndiaAPI/api/BoardMeeting/w?scripcode=${scripCode}&strPurpose=&fromdate=&todate=`;
         try {
           const res = await fetch(url, { headers: COMMON_HEADERS, signal: AbortSignal.timeout(8000) });
           if (!res.ok) return [];
           const text = await res.text();
-          if (!text || text.includes("No Record") || text.trim() === "{}" || text.trim() === "[]") return [];
+          if (text.includes("No Record") || text.trim() === "{}" || text.trim() === "[]") {
+            successfulCodes.add(scripCode);
+            return [];
+          }
           const json = JSON.parse(text);
+          if (!Array.isArray(json?.Table)) throw new Error('Unexpected BSE calendar response');
+          if (json.Table.some((row: any) => {
+            if (!row || typeof row !== 'object') return true;
+            const code = row.SCRIP_CD ?? row.scrip_cd ?? row.scripCode ?? row.scrip_code;
+            return code != null && String(code).trim() !== scripCode;
+          })) throw new Error('BSE calendar security mismatch');
 
           const items: ResultCalendarItem[] = [];
           if (json && json.Table && Array.isArray(json.Table)) {
@@ -504,8 +528,8 @@ export async function fetchAndSyncResultsCalendar(
                 else if (daysLeft >= -30) status = 'RECENT';
                 else status = 'PAST';
 
-                const primarySymbol = symbols[0];
-                let companyName = (row.LONG_NAME || row.Short_name || primarySymbol).trim();
+                const primarySymbol = stock.symbol;
+                let companyName = (row.LONG_NAME || row.Short_name || stock.companyName).trim();
                 if (scripCode === '500034' || primarySymbol === 'BAJFINANCE' || companyName.toUpperCase() === 'BAJAJ AUTO F') {
                   companyName = 'Bajaj Finance Ltd';
                 }
@@ -522,11 +546,12 @@ export async function fetchAndSyncResultsCalendar(
                   daysLeft,
                   status,
                   updatedAt: new Date().toISOString(),
-                  marketUniverse: marketScripSet.has(scripCode)
+                  marketUniverse: isFnoCalendarCode(scripCode)
                 });
               }
             }
           }
+          successfulCodes.add(scripCode);
           return items;
         } catch (e: any) {
           return [];
@@ -555,14 +580,21 @@ export async function fetchAndSyncResultsCalendar(
       }
     }
 
-    cachedCalendar = Array.from(uniqueMap.values());
-    lastCalendarFetchTime = now;
+    cachedCalendar = mergeCalendarMeetings(cachedCalendar, Array.from(uniqueMap.values()), successfulCodes, todayStartTs);
+    lastCalendarSyncIncomplete = successfulCodes.size < targets.size;
+    if (!subset) calendarUniverseVersion = FNO_CALENDAR_VERSION;
+    if (successfulCodes.size > 0) lastCalendarFetchTime = now;
+    invalidateEnrichedCalendarCache();
+    if (lastCalendarSyncIncomplete) await addLog('WARN', 'RESULTS_CALENDAR', `BSE calendar unavailable for ${targets.size - successfulCodes.size} securities; previous entries retained.`);
 
     // Save to disk cache
     try {
       ensureDataDir();
       fs.writeFileSync(CACHE_FILE_PATH, JSON.stringify({
         lastUpdated: lastCalendarFetchTime,
+        lastAttempt: lastCalendarAttemptTime,
+        universeVersion: calendarUniverseVersion,
+        incomplete: lastCalendarSyncIncomplete,
         items: cachedCalendar
       }, null, 2));
     } catch (fsErr: any) {
@@ -597,53 +629,39 @@ export async function fetchAndSyncResultsCalendar(
       console.warn('Supabase results calendar sync notice:', syncErr?.message || syncErr);
     }
 
-    // Auto-notify Telegram for newly discovered upcoming board meetings
+    // Automatic sends use current Indian dates and a durable per-meeting claim.
     try {
       const settings = await getSettings();
       if (settings.autoTelegramCalendar !== false) {
-        // Cold boot protection: if notified cache is completely empty, seed existing items
-        // to prevent blasting 15+ meetings to Telegram whenever container restarts or republishes
-        if (notifiedMeetingIds.size === 0 && cachedCalendar.length > 0) {
-          for (const item of cachedCalendar) {
-            if (item.id) {
-              notifiedMeetingIds.add(item.id);
-              item.isNotified = true;
-            }
-          }
-          saveNotifiedMeetings();
-          console.info(`[ResultsCalendar] Initialized notified cache with ${notifiedMeetingIds.size} existing items (cold boot blast suppressed).`);
-        } else {
-          const newlyFoundUpcoming = cachedCalendar.filter(item => 
-            (item.daysLeft >= 0) && !notifiedMeetingIds.has(item.id)
-          ).slice(0, 3); // Capped at 3 to prevent burst spam
-
-          if (newlyFoundUpcoming.length > 0) {
-            for (const item of newlyFoundUpcoming) {
-              const daysText = item.daysLeft === 0 ? '🔥 <b>TODAY (आज)</b>' : `⏳ <b>${item.daysLeft} days remaining</b>`;
-              const telegramMsg = 
-                `📅 <b>UPCOMING BOARD MEETING SCHEDULED</b>\n\n` +
-                `🏢 <b>${item.companyName} (${item.symbol})</b>\n` +
-                `📌 BSE Scrip Code: <code>${item.scripCode}</code>\n` +
-                `🗓️ Meeting Date: <b>${item.meetingDate}</b>\n` +
-                `🎯 Purpose: <i>${item.purpose}</i>\n` +
-                `⏰ Schedule: ${daysText}\n\n` +
-                `🔗 <a href="https://www.bseindia.com/corporates/Comp_Resultsnew.aspx?scrip_cd=${item.scripCode}">View BSE Filings & Outcomes</a>\n` +
-                `⚡ <i>Auto-synced from Watchlist Results Calendar</i>`;
-
-              await sendToTelegram(telegramMsg).catch(e => console.error('Telegram calendar send err:', e));
-              notifiedMeetingIds.add(item.id);
-              item.isNotified = true;
-
-              // Gentle 1s spacing between messages so Telegram doesn't hit rate limits or trip circuit breaker
-              await new Promise(r => setTimeout(r, 1000));
-            }
-            saveNotifiedMeetings();
-            await addLog('INFO', 'TELEGRAM', `Auto-dispatched ${newlyFoundUpcoming.length} upcoming board meeting alert(s) to Telegram channel`);
+        const claimed = await readCalendarTelegramClaims();
+        const candidates = automaticCalendarMeetings(cachedCalendar, watchlistScrips, notifiedMeetingIds, claimed);
+        const announcements = candidates.length ? await getRecentAnnouncements(10000) : [];
+        let sent = 0;
+        for (const item of candidates) {
+          // The same exact-code/date outcome test drives the calendar UI below.
+          if (announcements.some(a => isCalendarOutcome(item, a))) continue;
+          const delivered = await deliverCalendarTelegram(item, current => {
+            const daysText = current.daysLeft === 0 ? '🔥 <b>TODAY (आज)</b>' : `⏳ <b>${current.daysLeft} days remaining</b>`;
+            return `📅 <b>UPCOMING BOARD MEETING SCHEDULED</b>\n\n` +
+              `🏢 <b>${current.companyName} (${current.symbol})</b>\n` +
+              `📌 BSE Scrip Code: <code>${current.scripCode}</code>\n` +
+              `🗓️ Meeting Date: <b>${current.meetingDate}</b>\n` +
+              `🎯 Purpose: <i>${current.purpose}</i>\n⏰ Schedule: ${daysText}\n\n` +
+              `🔗 <a href="https://www.bseindia.com/corporates/Comp_Resultsnew.aspx?scrip_cd=${current.scripCode}">View BSE Filings & Outcomes</a>\n` +
+              `⚡ <i>Auto-synced from Watchlist Results Calendar</i>`;
+          });
+          if (delivered) {
+            notifiedMeetingIds.add(item.id);
+            item.isNotified = true;
+            sent++;
+            await new Promise(r => setTimeout(r, 1000));
           }
         }
+        saveNotifiedMeetings();
+        if (sent) await addLog('INFO', 'TELEGRAM', `Auto-dispatched ${sent} upcoming board meeting alert(s) to Telegram channel`);
       }
-    } catch (tgErr: any) {
-      console.error('Failed to auto-dispatch calendar meetings to Telegram:', tgErr.message);
+    } catch {
+      console.warn('[ResultsCalendar] Automatic calendar delivery unavailable; no unclaimed messages sent');
     }
 
     await addLog('INFO', 'RESULTS_CALENDAR', `Updated results calendar for ${cachedCalendar.length} items across active watchlists`);
@@ -656,9 +674,33 @@ export async function fetchAndSyncResultsCalendar(
   }
 }
 
+/** Shared declaration evidence for calendar projection and automatic alerts. */
+function isCalendarOutcome(item: ResultCalendarItem, a: any, meetingStartTs = item.meetingTimestamp): boolean {
+  const windowStartTs = meetingStartTs - 6 * 60 * 60 * 1000;
+  const windowEndTs = meetingStartTs + (3 * 24 + 12) * 60 * 60 * 1000;
+  if (!hasExactScripCode(a, item.scripCode)) return false;
+  const fullText = resultFilingText(a).toLowerCase();
+  const isPreNotice = isIntimationOrNoticeFiling(a.subject || '', a.details || '');
+  if (isPreNotice) return false;
+
+  const isResultOrOutcome = isVerifiedResultFiling(a);
+  if (!isResultOrOutcome) return false;
+
+  const annTs = parseBseDate(a.bseTime) || Number(a.bseTimestamp || 0);
+  if (!Number.isFinite(annTs) || annTs <= 0 || annTs > Date.now()) return false;
+
+  // Check if filing explicitly mentions this exact meeting date text in subject/details
+  const parsedMeetingDateStr = item.meetingDate ? item.meetingDate.toLowerCase().trim() : '';
+  const hasExplicitMeetingDateMention = parsedMeetingDateStr && fullText.includes(parsedMeetingDateStr);
+
+  // Strict Window match OR Explicit meeting date mention
+  return Boolean((annTs >= windowStartTs && annTs <= windowEndTs) || hasExplicitMeetingDateMention);
+}
+
 // Memory cache for processed & enriched results calendar (invalidated on new fetch or after TTL)
 let enrichedCache: {
   ts: number;
+  day: number;
   items: ResultCalendarItem[];
   byWatchlist: Map<string, ResultCalendarItem[]>;
 } | null = null;
@@ -667,20 +709,27 @@ export function invalidateEnrichedCalendarCache() {
   enrichedCache = null;
 }
 
-export async function getResultsCalendarData(
-  filterStatus: 'all' | 'today' | 'upcoming' | 'recent' = 'all', 
-  watchlistId?: string,
-  userId?: string,
-  scope: 'watchlist' | 'market' = 'watchlist'
-) {
+// Fast public-document path: never sync, fetch, query accounts or await a
+// dependency. Use the existing cache and report its actual age/coverage.
+export function readCachedResultsCalendar() {
+  const items = enrichedCache && Date.now() - enrichedCache.ts < 45000
+    ? enrichedCache.items : cachedCalendar;
+  return { items: items.map(item => projectCalendarTiming(item)), lastUpdated: lastCalendarFetchTime };
+}
+
+// Public calendar facts only. Account visibility remains in the caller;
+// website callers keep their original scope/filter semantics below.
+export async function getResultsCalendarSnapshot() {
+  await hydrateStoredCalendar();
   const now = Date.now();
-  if (cachedCalendar.length === 0 || now - lastCalendarFetchTime > 12 * 60 * 60 * 1000) {
+  if (calendarUniverseVersion !== FNO_CALENDAR_VERSION || cachedCalendar.length === 0 ||
+      (lastCalendarSyncIncomplete && now - lastCalendarAttemptTime >= 60000) || now - lastCalendarFetchTime > 12 * 60 * 60 * 1000) {
     await fetchAndSyncResultsCalendar(false);
   }
 
   // Use cached enriched items if fresh (< 45s old)
   let allEnrichedItems: ResultCalendarItem[] = [];
-  if (enrichedCache && (now - enrichedCache.ts < 45000)) {
+  if (enrichedCache && enrichedCache.day === calendarDayKey(now) && (now - enrichedCache.ts < 45000)) {
     allEnrichedItems = enrichedCache.items;
   } else {
     const todayStartTs = getIstMidnightTs(new Date());
@@ -731,45 +780,12 @@ export async function getResultsCalendarData(
         }
       }
 
-      // STRICT WINDOW: Meeting Day start (-6 hours for evening filings / timezone buffer) to Meeting Day + 3 days (72 hours buffer)
-      // This strictly prevents an old meeting (e.g. Feb 2026 or Nov 2025) from ever grabbing an unrelated future quarter's filing (e.g. May 2026)!
-      const windowStartTs = meetingStartTs - (6 * 60 * 60 * 1000);
-      const windowEndTs = meetingStartTs + (3 * 24 * 60 * 60 * 1000) + (12 * 60 * 60 * 1000);
+      const validMatches = candidates.filter(a => isCalendarOutcome(item, a, meetingStartTs));
 
-      // Filter candidate matches for actual Board Outcome / Result
-      const validMatches = candidates.filter(a => {
-        if (!hasExactScripCode(a, item.scripCode)) return false;
-        const fullText = `${a.subject || ''} ${a.details || ''}`.toLowerCase();
-        const isPreNotice = isIntimationOrNoticeFiling(a.subject || '', a.details || '');
-        if (isPreNotice) return false;
-
-        const isResultOrOutcome = a.category === 'RESULTS' ||
-          /financial result|quarterly result|audited result|unaudited result|q1 result|q2 result|q3 result|q4 result|statement of financial|outcome of board|board meeting outcome|outcome of the board/i.test(fullText);
-        if (!isResultOrOutcome) return false;
-
-        const annTs = parseBseDate(a.bseTime) || (a.fetched_at ? new Date(a.fetched_at).getTime() : 0);
-        if (annTs <= 0) return false;
-
-        // Check if filing explicitly mentions this exact meeting date text in subject/details
-        const parsedMeetingDateStr = item.meetingDate ? item.meetingDate.toLowerCase().trim() : '';
-        const hasExplicitMeetingDateMention = parsedMeetingDateStr && fullText.includes(parsedMeetingDateStr);
-
-        // Strict Window match OR Explicit meeting date mention
-        return (annTs >= windowStartTs && annTs <= windowEndTs) || hasExplicitMeetingDateMention;
-      });
-
-      // Earliest result announcement on/around meeting date, prioritizing exact board outcome & closest timestamp
-      validMatches.sort((a, b) => {
-        const tsA = parseBseDate(a.bseTime) || (a.fetched_at ? new Date(a.fetched_at).getTime() : 0);
-        const tsB = parseBseDate(b.bseTime) || (b.fetched_at ? new Date(b.fetched_at).getTime() : 0);
-
-        const isOutcomeA = /outcome of board|board meeting outcome|outcome of the board|financial results/i.test((a.subject || ''));
-        const isOutcomeB = /outcome of board|board meeting outcome|outcome of the board|financial results/i.test((b.subject || ''));
-        if (isOutcomeA && !isOutcomeB) return -1;
-        if (!isOutcomeA && isOutcomeB) return 1;
-
-        return Math.abs(tsA - meetingStartTs) - Math.abs(tsB - meetingStartTs);
-      });
+      // Every remaining candidate is a genuine result; use its first publication.
+      validMatches.sort((a, b) =>
+        (parseBseDate(a.bseTime) || Number(a.bseTimestamp || 0)) -
+        (parseBseDate(b.bseTime) || Number(b.bseTimestamp || 0)));
 
       const matched = validMatches[0];
       let isDeclared = false;
@@ -778,20 +794,18 @@ export async function getResultsCalendarData(
       let declarationPdfLink: string | undefined = undefined;
       let declarationSubject: string | undefined = undefined;
       let aiSummary: string | undefined = undefined;
+      let aiSummaryEn: string | undefined = undefined;
       let bseTimestamp: number | undefined = undefined;
 
       if (matched) {
         isDeclared = true;
-        resultDeclarationTime = matched.bseTime || (matched.fetched_at ? new Date(matched.fetched_at).toISOString() : undefined);
+        resultDeclarationTime = matched.bseTime || (matched.bseTimestamp ? new Date(matched.bseTimestamp).toISOString() : undefined);
         declarationAnnouncementId = matched.id;
         declarationPdfLink = matched.pdfLink;
         declarationSubject = matched.subject;
         aiSummary = matched.aiSummary;
-        bseTimestamp = matched.bseTimestamp || (matched.bseTime ? parseBseDate(matched.bseTime) : undefined) || (matched.fetched_at ? new Date(matched.fetched_at).getTime() : undefined);
-      } else if (daysLeft < 0) {
-        // Past meeting with no specific filing in store - mark declared with clean meeting date
-        isDeclared = true;
-        resultDeclarationTime = item.meetingDate;
+        aiSummaryEn = matched.aiSummaryEn;
+        bseTimestamp = matched.bseTimestamp || (matched.bseTime ? parseBseDate(matched.bseTime) : undefined);
       }
 
       let companyName = item.companyName;
@@ -802,30 +816,42 @@ export async function getResultsCalendarData(
       const derivedBseTs = bseTimestamp || item.bseTimestamp || item.meetingTimestamp || meetingStartTs;
       const derivedMeetingDate = item.meetingDate || (meetingStartTs ? new Date(meetingStartTs).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' }) : '');
 
-      return { 
-        ...item, 
+      return {
+        ...item,
         companyName,
         meetingDate: derivedMeetingDate,
         meetingTimestamp: meetingStartTs,
         bseTimestamp: derivedBseTs,
-        daysLeft, 
-        status, 
-        isDeclared, 
+        daysLeft,
+        status,
+        isDeclared,
         resultDeclarationTime,
         declarationAnnouncementId,
         declarationPdfLink,
         declarationSubject,
-        aiSummary
+        aiSummary, aiSummaryEn
       };
     });
 
     enrichedCache = {
       ts: now,
+      day: calendarDayKey(now),
       items: allEnrichedItems,
       byWatchlist: new Map()
     };
   }
 
+  return { items: allEnrichedItems, lastUpdated: lastCalendarFetchTime };
+}
+
+export async function getResultsCalendarData(
+  filterStatus: 'all' | 'today' | 'upcoming' | 'recent' = 'all',
+  watchlistId?: string,
+  userId?: string,
+  scope: CalendarScope | 'market' = 'watchlist'
+) {
+  const snapshot = await getResultsCalendarSnapshot();
+  const allEnrichedItems = snapshot.items;
   let items = [...allEnrichedItems];
 
   // Retrieve user's watchlists to enforce strict visibility filtering
@@ -848,29 +874,10 @@ export async function getResultsCalendarData(
   // user's watchlists. Watchlist scope (default): existing behavior unchanged.
   if (scope === 'market') {
     items = applyCalendarScope(items, 'market', userSymbols, userScripCodes);
-  } else if (watchlistId) {
-    const selectedList = userWatchlists.find(w => String(w.id) === String(watchlistId));
-    if (selectedList && selectedList.items) {
-      const listSymbols = new Set(selectedList.items.map(s => extractSymbol(s).toUpperCase().trim()));
-      const listScrips = new Set(selectedList.items.map(s => (typeof s === 'object' && s.scripCode) ? String(s.scripCode).trim() : getScripCodeForSymbolOrName(extractSymbol(s))).filter(Boolean));
-      items = items.filter(item => 
-        listSymbols.has(item.symbol.toUpperCase().trim()) ||
-        (item.scripCode && listScrips.has(String(item.scripCode).trim()))
-      );
-    } else {
-      items = [];
-    }
   } else {
-    // If user has watchlists configured and userSymbols is empty (all stocks deleted), return empty list
-    if (userWatchlists.length > 0 && userSymbols.size === 0) {
-      items = [];
-    } else if (userSymbols.size > 0) {
-      items = items.filter(item => 
-        userSymbols.has(item.symbol.toUpperCase().trim()) ||
-        (item.scripCode && userScripCodes.has(String(item.scripCode).trim()))
-      );
-    }
+    items = selectCalendarScope(items, scope, calendarWatchlistCodes(userWatchlists, scope === 'watchlist' ? watchlistId : undefined));
   }
+  const scopedCount = items.length;
 
   // Calculate clean, non-confusing summary metrics across active scope
   const todayItems = items.filter(i => i.status === 'TODAY' || i.daysLeft === 0);
@@ -882,12 +889,12 @@ export async function getResultsCalendarData(
   const upcomingFutureItems = items.filter(i => i.status === 'UPCOMING' || i.daysLeft > 0);
   const upcomingFutureCount = upcomingFutureItems.length;
 
-  // Recent declared in past 30 days
+  // Recorded past meetings in the last 30 days, not necessarily declared results.
   const recentItems = items.filter(i => i.status === 'RECENT' || (i.daysLeft < 0 && i.daysLeft >= -30));
   const recentCount = recentItems.length;
 
   // Total filings with AI summary
-  const aiSummaryCount = items.filter(i => Boolean(i.aiSummary)).length;
+  const aiSummaryCount = items.filter(i => Boolean(i.aiSummary || i.aiSummaryEn)).length;
 
   // Apply requested tab filter cleanly
   if (filterStatus === 'today') {
@@ -912,8 +919,10 @@ export async function getResultsCalendarData(
 
   return {
     lastUpdated: lastCalendarFetchTime,
+    calendarIncomplete: lastCalendarSyncIncomplete,
+    calendarHistoryUnavailable,
     totalCount: items.length,
-    allCount: allEnrichedItems.length,
+    allCount: scopedCount,
     todayCount,
     todayDeclaredCount,
     todayPendingCount,
@@ -954,6 +963,7 @@ export interface StockHistoricalResultItem {
   details?: string;
   pdfLink?: string;
   aiSummary?: string;
+  aiSummaryEn?: string;
   isOutcome: boolean;
   status: string;
   priority?: string;
@@ -962,91 +972,6 @@ export interface StockHistoricalResultItem {
   preResultAnnouncementsCount?: number;
   followUpFilings?: StockHistoricalFollowUpFiling[];
   followUpCount?: number;
-}
-
-export function isPureResultOutcomeFiling(subject: string = '', details: string = ''): boolean {
-  const combined = `${subject || ''} ${details || ''}`.trim();
-  if (!combined) return false;
-  const lower = combined.toLowerCase();
-
-  // 1. Strictly reject non-financial result filings (Regulation 30 intimations, investor meets, analyst calls, press releases, etc.)
-  const isCorporateNoticeOrIntimation = 
-    /analyst\s*\/\s*investor\s*meet|investor\s*meet|analyst\s*meet|institutional\s*investor|conference\s*call|earnings\s*call/i.test(lower) ||
-    /investor\s*presentation|analyst\s*presentation|corporate\s*presentation|audio\s*recording|transcript\s*of|press\s*release/i.test(lower) ||
-    /newspaper\s*publication|loss\s*of\s*share|duplicate\s*share|credit\s*rating|change\s*in\s*(?:director|kmp|management|auditor)|resignation|appointment/i.test(lower) ||
-    /closure\s*of\s*trading\s*window|trading\s*window\s*closure|prior\s*intimation|intimation\s*of\s*board\s*meeting|notice\s*of\s*board\s*meeting|meeting\s*scheduled\s*to\s*be\s*held|to\s*consider\s*and\s*approve/i.test(lower) ||
-    /postal\s*ballot|scrutinizer|voting\s*results|record\s*date\s*intimation|allotment\s*of\s*shares|reconstitution/i.test(lower);
-
-  if (isCorporateNoticeOrIntimation) {
-    const hasStrictReg33 = /\b(?:regulation 33|reg\s*33|reg\.\s*33|lodr\s*33)\b/i.test(lower);
-    const hasApprovedResults = /\b(?:considered and approved the (?:un-?audited|audited|financial)|approved the (?:un-?audited|audited|financial) results)\b/i.test(lower);
-    if (!hasStrictReg33 && !hasApprovedResults) {
-      return false;
-    }
-  }
-
-  // 2. Definitive Regulation 33 Financial Results Outcome Matches
-  if (/\b(?:regulation 33|reg\s*33|reg\.\s*33|lodr\s*33)\b/i.test(lower)) {
-    return true;
-  }
-
-  // 3. Exact and simple Financial Results / Results phrases (e.g. Shriram Finance "Financial Results", "Results", "Results/Dividend")
-  if (
-    /^(?:financial results?|results?|results\s*\/\s*dividend|financial results\s*\/\s*dividend)[\.\s\-:]*$/i.test(combined.trim()) ||
-    /\b(?:financial results?|financial result|un-?audited financial results?|audited financial results?|statement of (?:standalone|consolidated|financial) results)\b/i.test(lower) ||
-    /\b(?:financial results \(standalone|financial results - standalone|financial results \(consolidated|financial results - consolidated)\b/i.test(lower) ||
-    /\b(?:standalone and consolidated financial results|financial results for the (?:quarter|half year|nine months|year ended))\b/i.test(lower) ||
-    /\b(?:considered and approved (?:the )?(?:un-?audited|audited|financial)|approved (?:the )?(?:un-?audited|audited|financial) results|approval of (?:un-?audited|audited|financial) results)\b/i.test(lower)
-  ) {
-    return true;
-  }
-
-  // 4. Board meeting outcome specifically mentioning financial results
-  if (/\b(?:outcome of board|board meeting outcome|outcome of the board)\b/i.test(lower)) {
-    if (/\b(?:financial results?|un-?audited|audited|quarter ended|half year ended|year ended|profit and loss|balance sheet)\b/i.test(lower)) {
-      return true;
-    }
-    // Generic outcome of board meeting without financial results is NOT a financial result
-    return false;
-  }
-
-  return false;
-}
-
-export function isIntimationOrNoticeFiling(subject: string = '', details: string = ''): boolean {
-  const fullText = `${subject || ''} ${details || ''}`.toLowerCase();
-  if (!fullText.trim()) return false;
-
-  // 1. Explicit OUTCOME / RESULTS indicators override any notice keywords
-  // (Regulation 33 is specifically Financial Results submission under SEBI LODR)
-  const isDefinitiveOutcome = 
-    /^(?:financial results?|results?|results\s*\/\s*dividend|financial results\s*\/\s*dividend)[\.\s\-:]*$/i.test(fullText.trim()) ||
-    /\b(?:regulation 33|reg\s*33|reg\.\s*33|lodr\s*33)\b/i.test(fullText) ||
-    /\b(?:financial results?|financial result|un-?audited financial results?|audited financial results?|statement of (?:standalone|consolidated|financial) results)\b/i.test(fullText) ||
-    /\b(?:considered and approved the (?:un-?audited|audited|financial)|approved the (?:un-?audited|audited|financial) results|approval of (?:un-?audited|audited|financial) results)\b/i.test(fullText) ||
-    /\b(?:financial results \(standalone|financial results - standalone|financial results \(consolidated|financial results - consolidated)\b/i.test(fullText);
-
-  if (isDefinitiveOutcome) {
-    return false; // It is a genuine OUTCOME, NOT a prior intimation/notice
-  }
-
-  // 2. True Prior Notice / Intimations
-  const hasIntimationKeywords = 
-    /\b(?:prior intimation|notice of board|board meeting intimation|intimation of board|to consider and approve|meeting scheduled|meeting will be held|update on board meeting|rescheduled|trading window|closure of window|closure of trading|regulation 29|reg\s*29|reg\.\s*29)\b/i.test(fullText);
-
-  if (hasIntimationKeywords) {
-    return true;
-  }
-
-  if (/intimation.*(?:to consider|meeting to be held|scheduled on)/i.test(fullText)) {
-    return true;
-  }
-
-  if (/newspaper publication|press release|investor presentation|audio recording|transcript|analyst.*meet.*intimation|loss of share|duplicate share|scrutinizer/i.test(fullText)) {
-    return true;
-  }
-
-  return false;
 }
 
 export function parseQuarterPeriod(text: string, timestamp: number): {
@@ -1058,9 +983,9 @@ export function parseQuarterPeriod(text: string, timestamp: number): {
 } {
   const clean = (text || '').toLowerCase();
   const isPriorNotice = isIntimationOrNoticeFiling(text);
-  const filingDate = new Date(timestamp || Date.now());
-  const filingYear = filingDate.getFullYear();
-  const filingMonth = filingDate.getMonth(); // 0 = Jan, 11 = Dec
+  const filingDate = new Date((timestamp || Date.now()) + 5.5 * 3_600_000);
+  const filingYear = filingDate.getUTCFullYear();
+  const filingMonth = filingDate.getUTCMonth(); // 0 = Jan, 11 = Dec
 
   // Standalone vs Consolidated tags
   const hasConsol = /\b(?:consolidated|consol)\b/i.test(clean);
@@ -1105,7 +1030,8 @@ export function parseQuarterPeriod(text: string, timestamp: number): {
   }
 
   // Extract year near period ended if present
-  const yearNearPeriod = text.match(/(?:period|quarter|half\s*year|nine\s*months?|year)\s*ended[^\d\n\r]{0,30}(\d{4})/i) ||
+  const explicitPeriodYear = text.match(/(?:quarter|period|half\s*year|nine\s*months?|year)\s*ended[^;\n]{0,60}?\b((?:19|20)\d{2})\b/i);
+  const yearNearPeriod = explicitPeriodYear || text.match(/(?:period|quarter|half\s*year|nine\s*months?|year)\s*ended[^\d\n\r]{0,30}(\d{4})/i) ||
     text.match(/(?:30[\s\.\-\/]*(?:jun|sep)|31[\s\.\-\/]*(?:dec|mar))[\s\.\-\/,]*(\d{4})/i);
   if (yearNearPeriod && yearNearPeriod[1]) {
     detectedPeriodYear = parseInt(yearNearPeriod[1], 10);
@@ -1207,7 +1133,7 @@ export async function getStockResultsHistory(
   let resolvedEntry: any = null;
   if (targetScrip) {
     resolvedEntry = await resolveStockDetails(targetScrip);
-    if (!sym && resolvedEntry?.symbol) sym = resolvedEntry.symbol.toUpperCase();
+    if ((!sym || /^\d+$/.test(sym)) && resolvedEntry?.symbol) sym = resolvedEntry.symbol.toUpperCase();
   } else if (sym) {
     resolvedEntry = await resolveStockDetails(sym);
     if (resolvedEntry?.scripCode) targetScrip = resolvedEntry.scripCode;
@@ -1221,21 +1147,22 @@ export async function getStockResultsHistory(
   const todayStartTs = getIstMidnightTs(new Date());
 
   // 1. Fetch announcements for this stock from Dao
-  const recentAnnouncements = await getRecentAnnouncements(10000);
+  const recentAnnouncements = await getAnnouncementsForScrip(targetScrip, Number.MAX_SAFE_INTEGER, true);
   const stockAnns = recentAnnouncements.filter((ann: any) => hasExactScripCode(ann, targetScrip));
 
   // Group announcements strictly by calendar date in IST
   const dateMap = new Map<string, any[]>();
   for (const ann of stockAnns) {
     const rawTime = ann.bseTime || ann.News_submission_dt || ann.DT_TM || ann.NEWS_DT || '';
-    let ts = ann.bseTimestamp || ann.timestamp || (rawTime ? parseBseDate(rawTime) : 0);
-    if (!ts && ann.fetched_at) ts = ann.fetched_at;
-    if (!ts) continue;
+    const ts = rawTime ? parseBseDate(rawTime) : Number(ann.bseTimestamp || 0);
+    // Fetch/ingestion time is never the company's publication time.
+    if (!Number.isFinite(ts) || ts <= 0 || ts > Date.now()) continue;
 
     const d = new Date(ts);
     const dateStr = d.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' });
-    const timeStr = d.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-    const formattedExact = `${dateStr}, ${timeStr} IST`;
+    const hasClock = rawTime ? /[T\s]\d{1,2}:\d{2}/.test(rawTime) : Boolean(ann.bseTimestamp);
+    const timeStr = hasClock ? d.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }) : '';
+    const formattedExact = timeStr ? `${dateStr}, ${timeStr} IST` : dateStr;
 
     if (!dateMap.has(dateStr)) dateMap.set(dateStr, []);
     dateMap.get(dateStr)!.push({
@@ -1254,9 +1181,9 @@ export async function getStockResultsHistory(
   for (const [dateStr, filings] of dateMap.entries()) {
     filings.sort((a, b) => a.ts - b.ts);
 
-    const outcomeFiling = filings.find(f => isPureResultOutcomeFiling(f.subject, f.details));
+    const outcomeFiling = filings.find(f => isVerifiedResultFiling(f));
     if (outcomeFiling) {
-      const { quarterKey, periodLabel } = parseQuarterPeriod(`${outcomeFiling.subject} ${outcomeFiling.details}`, outcomeFiling.ts);
+      const { quarterKey, periodLabel } = parseQuarterPeriod(resultFilingText(outcomeFiling), outcomeFiling.ts);
 
       const followUps: StockHistoricalFollowUpFiling[] = filings
         .filter(f => f !== outcomeFiling)
@@ -1270,6 +1197,9 @@ export async function getStockResultsHistory(
           category: f.category || 'Results'
         }));
 
+      // Later corrections cannot replace the first verified result release.
+      const earlier = quarterOutcomesMap.get(quarterKey);
+      if (earlier && (earlier.submissionTimestamp || 0) <= outcomeFiling.ts) continue;
       quarterOutcomesMap.set(quarterKey, {
         id: outcomeFiling.id || outcomeFiling.NEWSID || `decl_${quarterKey}`,
         symbol: sym,
@@ -1289,6 +1219,7 @@ export async function getStockResultsHistory(
         details: outcomeFiling.details,
         pdfLink: outcomeFiling.pdfLink,
         aiSummary: outcomeFiling.aiSummary,
+        aiSummaryEn: outcomeFiling.aiSummaryEn,
         isOutcome: true,
         status: 'Declared',
         priority: outcomeFiling.priority || 'HIGH',
@@ -1329,7 +1260,7 @@ export async function getStockResultsHistory(
     const isPast = daysLeft < 0;
     let statusText = 'Scheduled Upcoming';
     if (daysLeft === 0) statusText = 'Meeting Today';
-    else if (isPast) statusText = 'Declared';
+    else if (isPast) statusText = 'Past Meeting';
 
     quarterOutcomesMap.set(quarterKey, {
       id: `nse_${sym}_${meetingTs}_${quarterKey}`,
@@ -1341,13 +1272,10 @@ export async function getStockResultsHistory(
       periodOrMeeting: periodLabel,
       meetingDate: dateStr,
       boardMeetingDate: dateStr,
-      declarationDate: dateStr,
-      declaredAtFormatted: isPast ? `${dateStr} IST` : undefined,
-      exactDateTimeStr: isPast ? `${dateStr} IST` : undefined,
       submissionTimestamp: meetingTs,
       subject: nseItem.bm_desc || nseItem.purpose || 'Financial Results',
       details: nseItem.purpose,
-      isOutcome: isPast ? true : false,
+      isOutcome: false,
       status: statusText,
       priority: 'HIGH',
       category: 'Results',
@@ -1357,7 +1285,7 @@ export async function getStockResultsHistory(
   }
 
   // 4. Also check active Results Calendar items for upcoming / today meetings
-  const calendarData = await getResultsCalendarData('all');
+  const calendarData = await getResultsCalendarSnapshot();
   for (const calItem of calendarData.items || []) {
     const isCalMatch = hasExactScripCode(calItem, targetScrip);
 
@@ -1365,9 +1293,15 @@ export async function getStockResultsHistory(
       const meetingTs = calItem.meetingTimestamp || parseMeetingDateToIstMidnight(calItem.meetingDate || '');
       const { quarterKey, periodLabel } = parseQuarterPeriod(`${calItem.purpose} ${calItem.declarationSubject || ''}`, meetingTs);
 
-      if (calItem.isDeclared) {
-        if (!quarterOutcomesMap.has(quarterKey) || !quarterOutcomesMap.get(quarterKey)?.pdfLink) {
-          const declTimeStr = calItem.resultDeclarationTime || '';
+      if (calItem.isDeclared && calItem.declarationAnnouncementId &&
+          isPureResultOutcomeFiling(calItem.declarationSubject || '', '') && calItem.resultDeclarationTime) {
+        if (!quarterOutcomesMap.get(quarterKey)?.isOutcome) {
+          const declarationTs = parseBseDate(calItem.resultDeclarationTime || '');
+          if (!declarationTs || declarationTs > Date.now()) continue;
+          const declarationDate = new Date(declarationTs).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' });
+          const declTimeStr = /[T\s]\d{1,2}:\d{2}/.test(calItem.resultDeclarationTime || '')
+            ? new Date(declarationTs).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }) : '';
+          const declaredAt = declTimeStr ? `${declarationDate}, ${declTimeStr} IST` : declarationDate;
           quarterOutcomesMap.set(quarterKey, {
             id: calItem.declarationAnnouncementId || calItem.id,
             symbol: sym,
@@ -1378,15 +1312,16 @@ export async function getStockResultsHistory(
             periodOrMeeting: periodLabel,
             meetingDate: calItem.meetingDate,
             boardMeetingDate: calItem.meetingDate,
-            declarationDate: calItem.meetingDate,
+            declarationDate,
             declarationTime: declTimeStr,
-            declaredAtFormatted: declTimeStr.includes('IST') ? declTimeStr : `${declTimeStr} IST`,
-            exactDateTimeStr: declTimeStr,
-            submissionTimestamp: calItem.meetingTimestamp || meetingTs,
+            declaredAtFormatted: declaredAt,
+            exactDateTimeStr: declaredAt,
+            submissionTimestamp: declarationTs,
             subject: calItem.declarationSubject || calItem.purpose,
             details: calItem.purpose,
             pdfLink: calItem.declarationPdfLink,
             aiSummary: calItem.aiSummary,
+            aiSummaryEn: calItem.aiSummaryEn,
             isOutcome: true,
             status: 'Declared',
             priority: 'HIGH',
@@ -1395,7 +1330,7 @@ export async function getStockResultsHistory(
             followUpCount: quarterOutcomesMap.get(quarterKey)?.followUpCount || 0
           });
         }
-      } else if (!quarterOutcomesMap.has(quarterKey)) {
+      } else if (!quarterOutcomesMap.has(quarterKey) && /result|financial|audited|quarter/i.test(calItem.purpose)) {
         const diffTime = meetingTs - todayStartTs;
         const daysLeft = Math.round(diffTime / (1000 * 60 * 60 * 24));
         let statusText = 'Scheduled Upcoming';
@@ -1433,191 +1368,36 @@ export async function getStockResultsHistory(
   return canonicalResults;
 }
 
-export async function fetchDeepHistoricalResultsForStock(
-  scripCode: string,
-  symbol?: string,
-  years: number = 1
-): Promise<{ success: boolean; newlySaved: number; totalHistoryCount: number; years: number }> {
-  const targetScrip = String(scripCode || '').trim();
-  const targetSym = String(symbol || '').trim().toUpperCase();
-
-  if (!targetScrip) {
-    throw new Error('Valid BSE Scrip Code is required for deep historical fetch');
-  }
-
-  const validYears = Math.max(1, Math.min(5, years || 1));
-  const maxPages = Math.min(35, validYears * 6);
-  const cutoffTimestamp = Date.now() - (validYears * 365.25 * 86400000);
-
-  let totalSaved = 0;
-  let reachedCutoff = false;
-
-  // Also fetch official BSE Board Meetings archive table
-  try {
-    const cleanTargetScrip = targetScrip.replace(/[^0-9]/g, '');
-    const bmUrl = `https://api.bseindia.com/BseIndiaAPI/api/BoardMeeting/w?scripcode=${cleanTargetScrip}&strPurpose=&fromdate=&todate=`;
-    const bmRes = await fetch(bmUrl, {
-      headers: COMMON_HEADERS,
-      signal: AbortSignal.timeout(9000)
-    });
-    if (bmRes.ok) {
-      const bmJson = await bmRes.json();
-      if (bmJson && Array.isArray(bmJson.Table)) {
-        const bmAnnouncements: any[] = [];
-        for (const bm of bmJson.Table) {
-          const mDate = bm.meeting_date || '';
-          const purpose = bm.Purpose_name || 'Board Meeting';
-          if (mDate) {
-            const safeDateKey = mDate.replace(/[^a-zA-Z0-9]/g, '_');
-            const newsId = `bm_${cleanTargetScrip}_${safeDateKey}`;
-            const mTs = parseBseDate(mDate);
-            const isFuture = mTs > Date.now();
-            bmAnnouncements.push({
-              newsId,
-              companyName: bm.Long_Name || targetSym || "BSE Stock",
-              subject: `Board Meeting Intimation - ${purpose}`,
-              details: `Board Meeting scheduled on ${mDate} to consider ${purpose}`,
-              pdfLink: "",
-              scrip_cd: cleanTargetScrip,
-              // If meeting date is in the future, publication time is now (not the future meeting date)
-              bseTime: isFuture ? new Date().toISOString() : mDate,
-              meetingDate: mDate,
-              priority: 'MEDIUM',
-              category: 'BOARD_MEETING',
-              isWatchlist: true
-            });
-          }
-        }
-        if (bmAnnouncements.length > 0) {
-          const res = await saveAnnouncementsBatch(bmAnnouncements);
-          totalSaved += (res.inserted + res.updated);
-        }
-      }
-    }
-  } catch (e: any) {
-    console.warn(`BSE BoardMeeting sync for ${targetScrip} notice:`, e.message);
-  }
-
-  // Process in batches of 4 pages concurrently for rapid sync
-  const batchSize = 4;
-  for (let startPage = 1; startPage <= maxPages && !reachedCutoff; startPage += batchSize) {
-    const pageNumbers = Array.from({ length: Math.min(batchSize, maxPages - startPage + 1) }, (_, i) => startPage + i);
-
-    const batchResults = await Promise.all(
-      pageNumbers.map(async (page) => {
-        const prevDate = getBseISTDate(180);
-        const toDate = getBseISTDate(0);
-        try {
-          const url = `https://api.bseindia.com/BseIndiaAPI/api/AnnSubCategoryGetData/w?pageno=${page}&strCat=Result&strPrevDate=${prevDate}&strScrip=${targetScrip}&strSearch=P&strToDate=${toDate}&strType=C`;
-          const res = await fetch(url, {
-            headers: COMMON_HEADERS,
-            signal: AbortSignal.timeout(9000)
-          });
-          if (!res.ok) return [];
-          const txt = await res.text();
-          if (!txt || txt.includes("No Record") || txt.trim() === "{}" || txt.trim() === "[]") return [];
-
-          const data = JSON.parse(txt);
-          if (data && data.Table && Array.isArray(data.Table)) return data.Table;
-          if (Array.isArray(data)) return data;
-          return [];
-        } catch {
-          // Fallback to general AnnSubCategoryGetData for this page
-          try {
-            const fbUrl = `https://api.bseindia.com/BseIndiaAPI/api/AnnSubCategoryGetData/w?pageno=${page}&strCat=-1&strPrevDate=${prevDate}&strScrip=${targetScrip}&strSearch=P&strToDate=${toDate}&strType=C`;
-            const fbRes = await fetch(fbUrl, {
-              headers: COMMON_HEADERS,
-              signal: AbortSignal.timeout(9000)
-            });
-            if (!fbRes.ok) return [];
-            const fbTxt = await fbRes.text();
-            if (!fbTxt || fbTxt.includes("No Record")) return [];
-            const fbData = JSON.parse(fbTxt);
-            if (fbData && fbData.Table && Array.isArray(fbData.Table)) return fbData.Table;
-            if (Array.isArray(fbData)) return fbData;
-          } catch {}
-          return [];
-        }
-      })
-    );
-
-    for (const items of batchResults) {
-      if (!items || items.length === 0) {
-        reachedCutoff = true;
-        continue;
-      }
-
-      const historicalAnnouncements: any[] = [];
-      for (const item of items) {
-        const newsId = item.NEWSID;
-        if (!newsId || !hasExactScripCode(item, targetScrip)) continue;
-
-        const companyName = item.SLONGNAME || item.scrip_cd || targetSym || "BSE Stock";
-        const subject = item.NEWSSUB || "No Subject";
-        const details = item.HEADLINE || "";
-        const scrip_cd = String(item.scrip_cd || item.SCRIP_CD).trim();
-        const pdfLink = item.ATTACHMENTNAME ? `https://www.bseindia.com/xml-data/corpfiling/AttachLive/${item.ATTACHMENTNAME}` : "";
-        const priority = determinePriority(subject, details);
-        const rawTime = item.News_submission_dt || item.DT_TM || item.NEWS_DT;
-        const parsedTs = parseBseDate(rawTime);
-
-        if (parsedTs > 0 && parsedTs < cutoffTimestamp) {
-          reachedCutoff = true;
-        }
-
-        historicalAnnouncements.push({
-          newsId,
-          companyName,
-          subject,
-          details,
-          pdfLink,
-          scrip_cd,
-          bseTime: rawTime,
-          priority: priority.level,
-          category: priority.category,
-          isWatchlist: true
-        });
-      }
-
-      if (historicalAnnouncements.length > 0) {
-        const res = await saveAnnouncementsBatch(historicalAnnouncements);
-        totalSaved += (res.inserted + res.updated);
-      }
-    }
-  }
-
-  flushLocalDiskSave();
-
-  // Re-fetch historical results list to return updated count
-  const updatedHistory = await getStockResultsHistory(targetSym, targetScrip);
-
-  await addLog(
-    'INFO', 
-    'BSE', 
-    `Deep historical sync (${validYears} Year(s)) for ${targetSym || targetScrip} complete: +${totalSaved} filings processed, ${updatedHistory.length} total results/meetings recorded.`
-  );
-
-  return {
-    success: true,
-    newlySaved: totalSaved,
-    totalHistoryCount: updatedHistory.length,
-    years: validYears
-  };
+export async function fetchDeepHistoricalResultsForStock(scripCode: string, symbol?: string, years = 1) {
+  const status = await waitHistorySync(scripCode, years);
+  if (status.state === 'failed') throw new Error(status.error || 'Archive import failed');
+  const history = await getStockResultsHistory(symbol || '', scripCode);
+  return { success: true, newlySaved: status.processed, totalHistoryCount: history.length, years };
 }
-
-export const autoFetchDeepHistoricalResults = fetchDeepHistoricalResultsForStock;
+/** Bounded legacy auto-start: never aliases the full exchange walk. */
+export async function autoFetchDeepHistoricalResults(scripCode: string, symbol?: string, years = 1): Promise<boolean> {
+  try {
+    startHistorySync(scripCode, years);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      await Promise.race([waitHistorySync(scripCode, years), new Promise(resolve => { timer = setTimeout(resolve, 6000); })]);
+      return historySyncStatus(scripCode, years)?.state === 'complete';
+    } finally { clearTimeout(timer); }
+  } catch { return false; }
+}
 
 export async function fetchDeepHistoricalResultsForWatchlist(
   years: number = 1
-): Promise<{ success: boolean; newlySaved: number; symbolsCount: number; years: number }> {
+): Promise<{ success: boolean; newlySaved: number; symbolsCount: number; years: number; completedCount: number; failedCount: number; error?: string }> {
   const activeSymbols = await getActiveWatchlistSymbols();
   if (!activeSymbols || activeSymbols.length === 0) {
-    return { success: true, newlySaved: 0, symbolsCount: 0, years };
+    return { success: true, newlySaved: 0, symbolsCount: 0, years, completedCount: 0, failedCount: 0 };
   }
 
   const validYears = Math.max(1, Math.min(5, years || 1));
   let totalSaved = 0;
   const processedScrips = new Set<string>();
+  let completedCount = 0, failedCount = 0;
 
   // Process in batches of 4 to respect BSE API rate limits while maintaining fast sync
   const batchSize = 4;
@@ -1625,29 +1405,35 @@ export async function fetchDeepHistoricalResultsForWatchlist(
     const batch = activeSymbols.slice(i, i + batchSize);
     await Promise.all(batch.map(async (sym) => {
       const scripCode = getScripCodeForSymbolOrName(sym);
-      if (!scripCode || processedScrips.has(scripCode)) return;
+      if (!scripCode) { failedCount++; return; }
+      if (processedScrips.has(scripCode)) return;
       processedScrips.add(scripCode);
 
       try {
         const res = await fetchDeepHistoricalResultsForStock(scripCode, sym, validYears);
-        if (res && res.newlySaved) {
+        if (!res?.success) throw new Error('Archive did not confirm completion');
+        completedCount++;
+        if (res.newlySaved) {
           totalSaved += res.newlySaved;
         }
       } catch (err: any) {
+        failedCount++;
         console.warn(`Error during deep sync for ${sym} (${scripCode}):`, err.message);
       }
     }));
   }
 
   await addLog(
-    'INFO', 
-    'BSE', 
-    `Watchlist ${validYears}-Year deep sync complete across ${activeSymbols.length} stocks (+${totalSaved} total historical filings)`
+    failedCount ? 'WARN' : 'INFO',
+    'BSE',
+    `Watchlist ${validYears}-Year archive: ${completedCount} completed, ${failedCount} failed or unresolved, ${totalSaved} filings processed`
   );
 
   return {
-    success: true,
+    success: failedCount === 0,
     newlySaved: totalSaved,
+    completedCount, failedCount,
+    ...(failedCount ? { error: `${failedCount} stock imports failed or could not resolve. ${completedCount} completed; saved filings remain available.` } : {}),
     symbolsCount: activeSymbols.length,
     years: validYears
   };
@@ -1755,9 +1541,9 @@ function generateServerGoogleCalUrl(item: { symbol: string; companyName: string;
 export async function broadcastUpcomingMeetingsToTelegram(options: { forceAll?: boolean } = {}) {
   const data = await getResultsCalendarData('all');
   const items = data.items || [];
-  
+
   // Filter for upcoming / today meetings
-  const upcoming = items.filter(i => i.daysLeft >= 0 || i.status === 'TODAY' || i.status === 'UPCOMING');
+  const upcoming = currentUpcomingMeetings(items);
   if (upcoming.length === 0) {
     return { success: true, count: 0, message: 'No upcoming board meetings found in watchlist schedule.' };
   }
@@ -1771,24 +1557,23 @@ export async function broadcastUpcomingMeetingsToTelegram(options: { forceAll?: 
       continue;
     }
 
-    notifiedMeetingIds.add(item.id);
-    const daysText = item.daysLeft === 0 ? '🔥 <b>TODAY (आज)</b>' : `⏳ <b>${item.daysLeft} days remaining</b>`;
-    const isDeclared = item.isDeclared ? ' (Outcome Declared)' : '';
-    const calUrl = generateServerGoogleCalUrl(item);
-    
-    const telegramMsg = 
-      `📅 <b>UPCOMING BOARD MEETING ALERT</b>\n\n` +
-      `🏢 <b>${item.companyName} (${item.symbol})</b>\n` +
-      `📌 BSE Scrip Code: <code>${item.scripCode}</code>\n` +
-      `🗓️ Meeting Date: <b>${item.meetingDate}</b>${isDeclared}\n` +
-      `🎯 Purpose: <i>${item.purpose}</i>\n` +
-      `⏰ Timeline: ${daysText}\n\n` +
-      `📅 <a href="${calUrl}">Add to Google Calendar (1-Click)</a>\n` +
-      `🔗 <a href="https://www.bseindia.com/corporates/Comp_Resultsnew.aspx?scrip_cd=${item.scripCode}">View BSE Corporate Filings</a>\n` +
-      `⚡ <i>Dispatched via BSE Results Calendar</i>`;
+    const delivered = await deliverCalendarTelegram(item, current => {
+      const daysText = current.daysLeft === 0 ? '🔥 <b>TODAY (आज)</b>' : `⏳ <b>${current.daysLeft} days remaining</b>`;
+      const isDeclared = current.isDeclared ? ' (Outcome Declared)' : '';
+      const calUrl = generateServerGoogleCalUrl(current);
 
-    const res = await sendToTelegram(telegramMsg).catch(e => ({ success: false, error: e.message }));
-    if (res && res.success) {
+      return `📅 <b>UPCOMING BOARD MEETING ALERT</b>\n\n` +
+        `🏢 <b>${current.companyName} (${current.symbol})</b>\n` +
+        `📌 BSE Scrip Code: <code>${current.scripCode}</code>\n` +
+        `🗓️ Meeting Date: <b>${current.meetingDate}</b>${isDeclared}\n` +
+        `🎯 Purpose: <i>${current.purpose}</i>\n` +
+        `⏰ Timeline: ${daysText}\n\n` +
+        `📅 <a href="${calUrl}">Add to Google Calendar (1-Click)</a>\n` +
+        `🔗 <a href="https://www.bseindia.com/corporates/Comp_Resultsnew.aspx?scrip_cd=${current.scripCode}">View BSE Corporate Filings</a>\n` +
+        `⚡ <i>Dispatched via BSE Results Calendar</i>`;
+
+    }, { force: options.forceAll, allowDeclared: true });
+    if (delivered) {
       notifiedMeetingIds.add(item.id);
       sentCount++;
     }
@@ -1796,11 +1581,11 @@ export async function broadcastUpcomingMeetingsToTelegram(options: { forceAll?: 
 
   saveNotifiedMeetings();
   await addLog('INFO', 'TELEGRAM', `Broadcast ${sentCount} upcoming board meeting(s) to Telegram`);
-  return { 
-    success: true, 
-    count: sentCount, 
+  return {
+    success: true,
+    count: sentCount,
     totalUpcoming: upcoming.length,
-    message: `Successfully broadcast ${sentCount} upcoming board meeting(s) to Telegram channel.` 
+    message: `Successfully broadcast ${sentCount} upcoming board meeting(s) to Telegram channel.`
   };
 }
 

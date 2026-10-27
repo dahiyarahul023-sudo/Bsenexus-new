@@ -776,13 +776,7 @@ export const NewsPortal: React.FC<NewsPortalProps> = ({
   return (
     <div ref={feedScrollRef} className="space-y-2.5 overscroll-y-contain relative">
       {/* Pull to Refresh Animated Indicator (Like Watchlist & Filings) */}
-      <PullToRefreshIndicator 
-        pullDistance={pullDistance}
-        isPulling={isPulling}
-        isRefreshing={isPullRefreshing || (isLoading && filteredNews.length > 0)}
-        progress={pullProgress}
-        label="Market News"
-      />
+
 
       {/* 1. STREAMLINED UNIFIED TOOLBAR: Sticky below navbar - Page Title, Search & Filter Trigger */}
       <div className="sm:sticky sm:top-14 md:top-[89px] z-30 bg-white/95 dark:bg-[#1A1926]/95 backdrop-blur-md border border-slate-200/90 dark:border-[#2D283E] rounded-xl p-2.5 sm:p-3 shadow-xs flex flex-col gap-2">
@@ -952,6 +946,14 @@ export const NewsPortal: React.FC<NewsPortalProps> = ({
           )}
         </div>
       </div>
+
+      <PullToRefreshIndicator
+        pullDistance={pullDistance}
+        isPulling={isPulling}
+        isRefreshing={isPullRefreshing || (isLoading && filteredNews.length > 0)}
+        progress={pullProgress}
+        label="Market News"
+      />
 
       {/* 2. FILTER & PREFERENCES BOTTOM SHEET / MODAL */}
       <AnimatePresence>

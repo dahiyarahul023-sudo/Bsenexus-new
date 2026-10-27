@@ -15,9 +15,10 @@
 }
 .story-header { flex: none; padding: 14px 18px 0; padding-top: max(14px, env(safe-area-inset-top)); z-index: 3; }
 .story-progress-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; min-height: 14px; }
-.story-progress { display: flex; flex: 1; gap: 4px; height: 2px; min-width: 0; }
+.story-progress { display: flex; flex: 1; gap: 4px; height: 4px; min-width: 0; }
 .story-progress-count { flex: none; color: var(--story-muted); font-size: 10px; font-variant-numeric: tabular-nums; }
-.story-progress > span { flex: 1; min-width: 0; overflow: hidden; background: #ffffff24; }
+.story-progress > span { flex: 1; min-width: 0; height: 100%; border-radius: 4px; overflow: hidden; background: #ffffff55; }
+.story-progress > span[data-active] { background: #62e2c299; }
 .story-progress i { display: block; width: 100%; height: 100%; background: #edf0f5; transform-origin: left; transition: transform 100ms linear; }
 .story-topline { display: flex; align-items: center; gap: 12px; min-height: 42px; }
 .story-wordmark { display: inline-flex; padding-right: 3px; flex: none; }
@@ -79,6 +80,9 @@ button.story-list-row { cursor: pointer; }
 .story-list-copy > small { font-size: 11px; color: var(--story-muted); line-height: 1.5; overflow-wrap: anywhere; }
 .story-list-value { font-size: 13px; font-weight: 600; max-width: 35%; text-align: right; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .story-footer { flex: none; padding: 8px 26px 20px; padding-bottom: max(20px, env(safe-area-inset-bottom)); display: flex; flex-direction: column; align-items: center; gap: 13px; }
+.story-navigation { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; }
+.story-navigation button { min-height: 46px; min-width: 46px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; border: 1px solid #ffffff25; border-radius: 12px; padding: 8px 10px; background: #ffffff0a; color: var(--story-ink); cursor: pointer; font-size: 12px; touch-action: manipulation; }
+.story-navigation button:disabled { opacity: .4; cursor: default; }
 .story-company-link { display: flex; align-items: center; justify-content: center; gap: 9px; background: transparent; border: 0; color: var(--story-ink); max-width: 100%; min-height: 44px; cursor: pointer; font-size: 14px !important; }
 .story-company-link > span { overflow-wrap: anywhere; }
 .story-source { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 9px; color: var(--story-muted); font-size: 10px; line-height: 1.6; text-align: center; }

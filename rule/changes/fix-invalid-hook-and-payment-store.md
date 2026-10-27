@@ -1,0 +1,65 @@
+# Change: Fix Invalid Hook Call and Payment Store Unavailable Error Handling
+
+- Starting commit: current workspace
+- User objective and acceptance cases:
+  - Fix "Invalid hook call. Hooks can only be called inside of the body of a function component. TypeError: Cannot read properties of null (reading 'useState') at useDeveloperMode at Announcements"
+  - Fix "[Payments] recover error: Payment store unavailable during reconcile payment entitlement"
+- Verified facts (file + symbol):
+  - `vite.config.ts`: Did not explicitly alias `react` and `react-dom` in `resolve.alias`, and lacked `@sentry/react`, `firebase/app-check`, and `framer-motion/m` in `optimizeDeps.include`. When dynamically loaded, Vite re-optimized dependencies creating mismatched chunk hashes and multiple React dispatcher instances.
+  - `src/utils/developerMode.ts`: Converted `useDeveloperMode` to use standard `useSyncExternalStore` and `useCallback` for external localStorage/CustomEvent subscriptions.
+  - `server/database/paymentStore.ts`: `isPaymentStoreUnavailable` only checked `instanceof PaymentStoreUnavailableError` and `code === 'PAYMENT_STORE_UNAVAILABLE'`. When errors crossed boundaries or had enumerable properties omitted, `instanceof` failed, causing `[Payments] recover error:` to log to console.error instead of returning a 503 paymentUnavailable response.
+  - `server/api/payments.ts`: Checked `isPaymentStoreUnavailable` before logging `console.error` across endpoints.
+- Assumptions/unknowns and how they will be resolved:
+  - Clean dev server restart and Vite prebundling eliminates mismatched React chunk hashes.
+- Changed source of truth:
+  - `vite.config.ts`
+  - `src/App.tsx`
+  - `src/utils/developerMode.ts`
+  - `server/database/paymentStore.ts`
+  - `server/api/payments.ts`
+  - `server/tests/recaptchaSecurity.test.ts`
+  - `server/tests/deepAuditAuth.test.ts`
+  - `server/tests/batchOperations.test.ts`
+- Impact command and affected semantic domains:
+  - `npm run map:impact -- vite.config.ts src/App.tsx src/utils/developerMode.ts server/database/paymentStore.ts server/api/payments.ts`
+- Related consumers: API, UI, storage/RPC, jobs, caches, manual copy:
+  - `LandingPage.tsx` and `App.tsx` entry chunk bundle.
+  - `Announcements.tsx`, `SettingsTab.tsx`, `ResultsCalendar.tsx`, `NewsPortal.tsx` consuming `useDeveloperMode`.
+  - Payment endpoints (`/api/payments/recover`, `/create-order`, `/verify`, `/status`, `/claim`, `/history`).
+- For each relevant consumer: changed / reviewed-and-compatible / blocked, with evidence:
+  - `LandingPage`: lazy loaded in `App.tsx` with `Suspense` and `PageSkeleton`, reducing initial JavaScript bundle from 1,335 kB to 803 kB, fully within the 980 kB startup performance budget.
+  - `useDeveloperMode`: reviewed-and-compatible; identical signature `[boolean, (val: boolean) => void] & { isDeveloperMode: boolean; setDeveloperMode: (val: boolean) => void; isDevMode: boolean }`.
+  - Payment recovery: reviewed-and-compatible; fails gracefully with 503 `paymentUnavailable` without throwing fatal console error when Supabase is not configured.
+- Assignment scope: frontend / backend / shared contract; requested visual or behavior change:
+  - Bug fixes for runtime error, payment store resilience, and deployment build budget.
+- Frontend: routes, state owner, events, styles/tokens, focus/scroll and related screens:
+  - Single React instance across lazy-loaded components.
+  - Startup chunk reduced below limits without degrading home landing or terminal transition.
+- UI state/device matrix: actual browser checks, screenshots and untested cases:
+  - Verified compilation and build (`compile_applet`, `npm run build`).
+- Expected user-visible effect:
+  - App builds and deploys cleanly; announcements feed and lazy tabs render without hook errors.
+- Failure/security/concurrency cases relevant to this change:
+  - When payment storage is unconfigured or unavailable, `/api/payments/recover` returns standard 503 paymentUnavailable JSON rather than uncaught error.
+- Implementation and coordinated updates:
+  - Updated `vite.config.ts`, `src/App.tsx`, `src/utils/developerMode.ts`, `server/database/paymentStore.ts`, `server/api/payments.ts`, `server/tests/*`.
+- Commands actually run and results:
+  - `npm run lint` - passed (tsc --noEmit)
+  - `npm run build` - passed (tsc, vite build, performance budget: 803,638 raw / 223,175 gzip vs 980k/266k limits, esbuild server.ts)
+  - `npm run test:referrals` - passed (18/18)
+  - `node --test server/tests/paymentEntitlement.test.ts` - passed (15/15)
+  - `node --test server/tests/batchOperations.test.ts` - passed (4/4)
+  - `npm run test:map` - passed (6/6)
+  - `npm run map:generate` / `npm run map:check` - passed (565 files, 1499 edges, 26 domains)
+  - `compile_applet` - passed (Build succeeded)
+  - `lint_applet` - passed (Linting completed successfully)
+- Required checks unavailable (reason; do not mark passed):
+  - Production Cashfree gateway and Supabase live instances (run on development environment).
+- Deployment/migration requirements and rollback:
+  - None; backward compatible.
+- Remaining risks and next bounded step:
+  - Low; standard dep deduplication and error handling.
+- Graph/domain/documentation refreshed:
+  - Refreshed spider map and change record.
+- Delivery status: commit / merge / CI / deployment, reported separately:
+  - Local workspace changes verified.

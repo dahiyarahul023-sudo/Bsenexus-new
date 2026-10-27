@@ -271,22 +271,28 @@ describe('Google reCAPTCHA Enterprise Strict Verification Tests', () => {
   });
 
   test('Server failure: Missing API credentials fails closed in all environments', async () => {
-    delete process.env.RECAPTCHA_API_KEY;
-    delete process.env.GEMINI_API_KEY;
-    delete process.env.GOOGLE_API_KEY;
+    const origNodeEnv = process.env.NODE_ENV;
+    try {
+      delete process.env.RECAPTCHA_API_KEY;
+      delete process.env.GEMINI_API_KEY;
+      delete process.env.GOOGLE_API_KEY;
 
-    // In development
-    process.env.NODE_ENV = 'development';
-    const resultDev = await verifyRecaptchaToken('ANY_TOKEN_DEV_NOCREDS', 'LOGIN');
-    assert.strictEqual(resultDev.valid, false);
-    assert.strictEqual(resultDev.errorCode, 'SERVICE_UNAVAILABLE');
-    assert.strictEqual(resultDev.score, 0);
+      // In development
+      process.env.NODE_ENV = 'development';
+      const resultDev = await verifyRecaptchaToken('ANY_TOKEN_DEV_NOCREDS', 'LOGIN');
+      assert.strictEqual(resultDev.valid, false);
+      assert.strictEqual(resultDev.errorCode, 'SERVICE_UNAVAILABLE');
+      assert.strictEqual(resultDev.score, 0);
 
-    // In production
-    process.env.NODE_ENV = 'production';
-    const resultProd = await verifyRecaptchaToken('ANY_TOKEN_PROD_NOCREDS', 'LOGIN');
-    assert.strictEqual(resultProd.valid, false);
-    assert.strictEqual(resultProd.errorCode, 'SERVICE_UNAVAILABLE');
-    assert.strictEqual(resultProd.score, 0);
+      // In production
+      process.env.NODE_ENV = 'production';
+      const resultProd = await verifyRecaptchaToken('ANY_TOKEN_PROD_NOCREDS', 'LOGIN');
+      assert.strictEqual(resultProd.valid, false);
+      assert.strictEqual(resultProd.errorCode, 'SERVICE_UNAVAILABLE');
+      assert.strictEqual(resultProd.score, 0);
+    } finally {
+      if (origNodeEnv === undefined) delete process.env.NODE_ENV;
+      else process.env.NODE_ENV = origNodeEnv;
+    }
   });
 });

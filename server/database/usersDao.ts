@@ -446,7 +446,7 @@ export async function saveUserProfile(
   skipUniquenessCheck: boolean = false,
   options: { durable?: boolean } = {},
 ): Promise<UserProfile> {
-  const durable = options.durable === true;
+  const durable = options.durable === true || process.env.NODE_ENV === 'production';
 
   let existingProfile: UserProfile | undefined;
   if (durable) {
@@ -471,16 +471,17 @@ export async function saveUserProfile(
   }
 
   const existing = existingProfile || { uid, createdAt: Date.now() };
-  const updated: UserProfile = { ...existing, ...profile, uid } as UserProfile;
+  let updated: UserProfile = { ...existing, ...profile, uid } as UserProfile;
 
   if (durable) {
     await runPaymentStore(
       'save user profile',
       (async () => {
-        const { error } = await getSupabase()
+        const { data, error } = await getSupabase()
           .from(USERS_TABLE)
-          .upsert(toRow(updated), { onConflict: 'uid' });
+          .upsert(toRow(updated), { onConflict: 'uid' }).select('*').single();
         if (error) throw error;
+        updated = fromRow(data);
       })(),
       12_000,
     );
@@ -545,6 +546,7 @@ const freeDemoLocks = new Map<string, Promise<void>>();
  * - Serialized local read-modify-write fallback when Supabase is down.
  */
 export async function claimFreeSummaryDemo(uid: string): Promise<boolean> {
+  if (process.env.NODE_ENV === 'production' && !isSupabaseConfigured()) throw new PaymentStoreUnavailableError('claim free summary demo');
   const prev = freeDemoLocks.get(uid) || Promise.resolve();
   let release!: () => void;
   const mine = new Promise<void>((res) => { release = () => res(); });
@@ -605,3 +607,12 @@ setTimeout(() => {
   cleanAndDeduplicateAllUsernames().catch(e => console.warn('[UsersDao] Initial username deduplication notice:', e));
 }, 2000);
 
+
+/** A missing/cleared expiry is never evidence for a second trial. */
+export async function claimTrialAtomically(uid: string, email: string, displayName: string): Promise<void> {
+  await runPaymentStore('claim first trial', (async () => {
+    const { error } = await getSupabase().rpc('claim_trial_atomic', { p_uid: uid, p_email: email, p_display_name: displayName });
+    if (error) throw error;
+  })());
+  invalidateUserProfileCache(uid);
+}

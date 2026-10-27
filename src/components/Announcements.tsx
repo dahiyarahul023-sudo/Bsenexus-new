@@ -1,3 +1,4 @@
+import { PageHeading } from './ui/PageHeading';
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { customFetch } from '../api';
@@ -74,6 +75,7 @@ const AI_THINKING_STEPS = [
 ];
 
 export interface AnnouncementsProps {
+  isActive?: boolean;
   bseHealth?: { status?: string; latency?: number };
   telegramHealth?: { status?: string; latency?: number };
   isRunning?: boolean;
@@ -81,6 +83,7 @@ export interface AnnouncementsProps {
 }
 
 export function Announcements({
+  isActive = true,
   bseHealth: propBseHealth,
   telegramHealth: propTelegramHealth,
   isRunning: propIsRunning,
@@ -1294,9 +1297,9 @@ export function Announcements({
           
           {/* Left: Brand Title & Clean Live Indicator */}
           <div className="flex items-center gap-2 shrink-0">
-            <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white font-display whitespace-nowrap tracking-tight">
+            <PageHeading active={isActive} className="text-base sm:text-lg font-bold text-slate-900 dark:text-white font-display whitespace-nowrap tracking-tight">
               Filings
-            </h1>
+            </PageHeading>
             {effectiveIsRunning && (
               <span
                 className="relative flex h-2.5 w-2.5 items-center justify-center shrink-0"

@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useSyncExternalStore, useCallback } from 'react';
 
 const STORAGE_KEY = 'nexus_dev_terminal_mode';
 const EVENT_NAME = 'nexus_dev_mode_changed';
 
 export function isDeveloperTerminalModeEnabled(): boolean {
   try {
-    return localStorage.getItem(STORAGE_KEY) === 'true';
+    return typeof window !== 'undefined' && localStorage.getItem(STORAGE_KEY) === 'true';
   } catch {
     return false;
   }
@@ -13,8 +13,8 @@ export function isDeveloperTerminalModeEnabled(): boolean {
 
 export function setDeveloperTerminalMode(enabled: boolean): void {
   try {
-    localStorage.setItem(STORAGE_KEY, enabled ? 'true' : 'false');
     if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY, enabled ? 'true' : 'false');
       window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: { enabled } }));
     }
   } catch (e) {
@@ -22,35 +22,30 @@ export function setDeveloperTerminalMode(enabled: boolean): void {
   }
 }
 
-export function useDeveloperMode(): [boolean, (val: boolean) => void] & { isDeveloperMode: boolean; setDeveloperMode: (val: boolean) => void; isDevMode: boolean } {
-  const [isDevMode, setIsDevMode] = useState<boolean>(() => isDeveloperTerminalModeEnabled());
-
-  useEffect(() => {
-    const handleStorage = () => {
-      setIsDevMode(isDeveloperTerminalModeEnabled());
-    };
-
-    const handleCustom = (e: any) => {
-      if (e?.detail?.enabled !== undefined) {
-        setIsDevMode(Boolean(e.detail.enabled));
-      } else {
-        setIsDevMode(isDeveloperTerminalModeEnabled());
-      }
-    };
-
-    window.addEventListener('storage', handleStorage);
-    window.addEventListener(EVENT_NAME, handleCustom);
-
-    return () => {
-      window.removeEventListener('storage', handleStorage);
-      window.removeEventListener(EVENT_NAME, handleCustom);
-    };
-  }, []);
-
-  const toggle = (val: boolean) => {
-    setDeveloperTerminalMode(val);
-    setIsDevMode(val);
+function subscribe(callback: () => void): () => void {
+  if (typeof window === 'undefined') return () => {};
+  window.addEventListener('storage', callback);
+  window.addEventListener(EVENT_NAME, callback);
+  return () => {
+    window.removeEventListener('storage', callback);
+    window.removeEventListener(EVENT_NAME, callback);
   };
+}
+
+function getSnapshot(): boolean {
+  return isDeveloperTerminalModeEnabled();
+}
+
+function getServerSnapshot(): boolean {
+  return false;
+}
+
+export function useDeveloperMode(): [boolean, (val: boolean) => void] & { isDeveloperMode: boolean; setDeveloperMode: (val: boolean) => void; isDevMode: boolean } {
+  const isDevMode = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+
+  const toggle = useCallback((val: boolean) => {
+    setDeveloperTerminalMode(val);
+  }, []);
 
   const result: any = [isDevMode, toggle];
   result.isDeveloperMode = isDevMode;

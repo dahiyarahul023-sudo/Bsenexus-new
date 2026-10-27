@@ -1,5 +1,16 @@
 import { KEYWORD_GUIDES } from '../../src/content/keywordGuides.js';
 
+/** Fixed internal actions: guide text and incoming slugs cannot supply a redirect URL. */
+export function getGuidePrimaryAction(slug: string): { href: string; label: string; description?: string } {
+  if (slug === 'bse-quarterly-results-calendar-guide' || slug === 'board-meeting-results-guide') {
+    return {
+      href: '/results-calendar', label: 'Open BSE results calendar',
+      description: 'Looking for company dates? View the available scheduled results-related board meetings, nearest first, with exchange sources and the last calendar sync. Coverage is incomplete; a scheduled meeting is not a confirmed result declaration.',
+    };
+  }
+  return { href: '/?tab=guides', label: 'Open in Bsenexus App' };
+}
+
 /**
  * Static Market Guides provider. Existing plain-text guides remain local;
  * keyword articles share checked-in content with the frontend catalogue.
@@ -420,8 +431,8 @@ export const FALLBACK_MARKET_GUIDES: ServerMarketGuide[] = [
     title: 'BSE Results Calendar Guide: How to Track Dalal Street Earnings & Board Meeting Dates',
     category: 'Earnings',
     readTime: '10 min read',
-    summary: 'A complete institutional and retail guide to tracking BSE quarterly earnings dates, decoding Regulation 29 board meeting notices, trading window closures, and Limited Review Reports on Dalal Street.',
-    excerpt: 'Master the quarterly results season on the Bombay Stock Exchange (BSE). Learn how to track upcoming board meeting dates, audit financial releases under SEBI LODR Regulation 33, and capture earnings moves before the broader market.',
+    summary: 'Learn how to read BSE results dates and board-meeting notices, distinguish scheduled meetings from declared results, and check the original exchange filings.',
+    excerpt: 'A practical explanation of results-related board meetings and financial filings. Use the separate BSE results calendar for available upcoming company dates.',
     date: '2026-09-21',
     publishedAt: '2026-09-21T09:00:00Z',
     author: {
@@ -430,7 +441,7 @@ export const FALLBACK_MARKET_GUIDES: ServerMarketGuide[] = [
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
     },
     content: {
-      introduction: 'Every quarter on Dalal Street, over 4,000 listed enterprises on the Bombay Stock Exchange (BSE) undergo the most consequential corporate transparency audit in global emerging markets: the quarterly financial results cycle. For active equity investors, fundamental researchers, and quantitative trading desks, tracking upcoming earnings dates is not merely an administrative exercise—it represents the primary catalyst for severe price repricing, earnings surprises, volatility expansion, and institutional capital rotation. Understanding how Indian corporations schedule board meetings, disseminate unaudited financial statements, and comply with mandatory exchange disclosures gives market participants an unassailable edge over those who rely on lagging social media reports or delayed secondary aggregators.',
+      introduction: 'A results calendar lists scheduled board meetings; it does not confirm that financial results have been declared. This guide explains how to read those notices and the resulting filings. For company dates, use the separate BSE results calendar and check its last sync and original exchange source before relying on a schedule.',
       sections: [
         {
           heading: '1. The Statutory Framework: SEBI LODR Regulation 33 & The 45-Day Timeline',
@@ -483,12 +494,12 @@ export const FALLBACK_MARKET_GUIDES: ServerMarketGuide[] = [
         {
           heading: '5. How to Track BSE Upcoming Results Live on Bsenexus',
           title: '5. How to Track BSE Upcoming Results Live on Bsenexus',
-          content: 'Navigating through hundreds of exchange PDFs during peak earnings season requires systematic filtering. The Bsenexus Results Calendar terminal delivers instant clarity with zero latency:',
+          content: 'Use the BSE Nexus results calendar to inspect available scheduled dates, then verify the meeting notice and any later outcome with the exchange:',
           body: [
-            'Live 15-Second Polling: Bsenexus polls exchange servers every 15 seconds to capture board meeting announcements, date changes, and declared result PDFs within seconds of filing.',
+            'Check freshness: The public calendar displays the last successful calendar sync. Cached coverage can be incomplete or stale; it is not a guaranteed delivery schedule.',
             'Comprehensive Scope Filters: Switch effortlessly between "Upcoming Board Meetings", "Today Results", and "Historical Ledger" to isolate scheduled events across your portfolio.',
             'Instant Calendar Sync: Download .ics calendar files or add upcoming board meeting dates directly to Google Calendar with a single click to ensure you never miss an earnings call.',
-            'Telegram Push Notifications: Configure your private watchlist to receive instant push alerts on mobile the millisecond a board meeting outcome or quarterly PDF is posted.'
+            'Confirm outcomes separately: A board-meeting date remains a schedule until a result filing is available. Use the original exchange document to check what was actually declared.'
           ]
         },
         {

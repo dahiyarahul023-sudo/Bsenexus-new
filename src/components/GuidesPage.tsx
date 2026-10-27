@@ -1,3 +1,4 @@
+import { BseNexusLogo } from './ui/BseNexusLogo';
 import React, { useState, useEffect } from 'react';
 import { MarketGuidesSection } from './MarketGuidesSection';
 import { BlogReaderModal } from './BlogReaderModal';
@@ -42,9 +43,7 @@ export const GuidesPage: React.FC<GuidesPageProps> = ({ onEnterTerminal }) => {
               }}
               className="flex items-center gap-2 group text-decoration-none"
             >
-              <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white font-black text-sm shadow-md shadow-emerald-600/20 group-hover:scale-105 transition-transform">
-                N
-              </div>
+              <BseNexusLogo className="w-8 h-8 transition-transform group-hover:scale-105" />
               <span className="font-black text-lg tracking-tight text-slate-900 dark:text-white">
                 BSE<span className="text-emerald-500">NEXUS</span>
               </span>

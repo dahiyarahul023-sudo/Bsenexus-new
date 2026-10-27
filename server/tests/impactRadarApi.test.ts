@@ -19,7 +19,7 @@ globalThis.fetch = (async (input: any, init: any) => {
 const { impactRadarRouter } = await import('../api/impactRadar.js');
 const { radarRecordFromSource, classifyRadarEvent } = await import('../services/impactRadarService.js');
 const app = express(); app.use(express.json());
-app.use((req, _res, next) => { if (req.headers.authorization === 'Bearer alice') (req as any).user = { uid: 'alice', isAnonymous: false }; if (req.headers.authorization === 'Bearer admin') (req as any).user = { uid: 'admin', isAnonymous: false, isAdmin: true }; next(); });
+app.use((req, _res, next) => { if (req.headers.authorization === 'Bearer alice') (req as any).user = { uid: 'alice', isAnonymous: false }; if (req.headers.authorization === 'Bearer admin') (req as any).user = { uid: 'admin', email: 'dahiyarahul023@gmail.com', emailVerified: true, isAnonymous: false, isAdmin: true, adminElevatedUntil: Date.now()+60000 }; next(); });
 app.use('/api/impact-radar', impactRadarRouter);
 const server = app.listen(0, '127.0.0.1'); await once(server, 'listening');
 const url = `http://127.0.0.1:${(server.address() as any).port}/api/impact-radar`;
@@ -57,14 +57,16 @@ test('discovery excludes generic compliance, forecasts, unknown times and uniden
   assert.equal(radarRecordFromSource({ ...input, company: { ...input.company, scripCode: '' } }), null);
 });
 test('explicit case references link source updates without merging unrelated cases or companies', () => {
+  // Grouping is independent of wall-clock freshness; keep this source fixture in its own session.
+  const fromSource = (input: Parameters<typeof radarRecordFromSource>[0]) => radarRecordFromSource(input, Date.parse('2026-10-16T10:00:00Z'));
   const input = { sourceId: 'source-a', title: 'Supreme Court appeal no 123/2026 hearing listed', company: event.companies[0], source: event.source as any, publishedAt: event.publishedAt };
-  const a = radarRecordFromSource(input)!;
-  const b = radarRecordFromSource({ ...input, sourceId: 'source-b', title: 'Supreme Court appeal no 123/2026 hearing deferred', source: { ...input.source, url: 'https://www.bseindia.com/next-report.pdf' } })!;
+  const a = fromSource(input)!;
+  const b = fromSource({ ...input, sourceId: 'source-b', title: 'Supreme Court appeal no 123/2026 hearing deferred', source: { ...input.source, url: 'https://www.bseindia.com/next-report.pdf' } })!;
   assert.equal(a.event.id, b.event.id); assert.notEqual(a.update.id, b.update.id);
-  assert.notEqual(a.event.id, radarRecordFromSource({ ...input, title: 'Supreme Court appeal no 124/2026 hearing listed' })!.event.id);
-  assert.notEqual(a.event.id, radarRecordFromSource({ ...input, company: { ...input.company, symbol: 'INFY', scripCode: '500209' } })!.event.id);
+  assert.notEqual(a.event.id, fromSource({ ...input, title: 'Supreme Court appeal no 124/2026 hearing listed' })!.event.id);
+  assert.notEqual(a.event.id, fromSource({ ...input, company: { ...input.company, symbol: 'INFY', scripCode: '500209' } })!.event.id);
   const highCourt = { ...input, title: 'High Court appeal no 123/2026 hearing listed' };
-  assert.notEqual(radarRecordFromSource(highCourt)!.event.id, radarRecordFromSource({ ...highCourt, source: { ...input.source, url: 'https://www.bseindia.com/different-court.pdf' } })!.event.id, 'A generic High Court reference does not identify its jurisdiction');
+  assert.notEqual(fromSource(highCourt)!.event.id, fromSource({ ...highCourt, source: { ...input.source, url: 'https://www.bseindia.com/different-court.pdf' } })!.event.id, 'A generic High Court reference does not identify its jurisdiction');
 });
 
  test('public event detail separates source history and future hearings preserve the historical report anchor', async () => {

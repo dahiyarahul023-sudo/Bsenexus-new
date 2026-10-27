@@ -1,7 +1,7 @@
 // Bsenexus - Progressive Web App Service Worker
-// Version: 4.2.0
+// Version: 4.3.0
 
-const CACHE_NAME = 'bse-nexus-v4.2';
+const CACHE_NAME = 'bse-nexus-v4.3';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -79,6 +79,8 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
+  if (url.pathname.toLowerCase().replace(/\/+$/, '') === '/activate-gift' || url.pathname.startsWith('/api/gifts')) return;
+
   // Only handle HTTP/HTTPS requests
   if (!url.protocol.startsWith('http')) return;
 
@@ -101,6 +103,9 @@ self.addEventListener('fetch', (event) => {
   ) {
     return; // Pass through to browser native network
   }
+
+  // OAuth consent, codes and connection responses never enter offline caches.
+  if (url.pathname === '/plugin' || url.pathname === '/ai-plugin' || url.pathname === '/mcp' || ['/authorize','/token','/register','/revoke'].includes(url.pathname) || url.pathname.startsWith('/api/ai/')) return;
 
   // 1. Navigation requests (HTML pages) -> Network first, fallback to cached index.html
   if (request.mode === 'navigate') {

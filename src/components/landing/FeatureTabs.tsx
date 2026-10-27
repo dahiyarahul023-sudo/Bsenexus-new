@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence, useReducedMotion, useInView } from 'framer-motion';
+import { AnimatePresence, useReducedMotion, useInView } from 'framer-motion';
+import * as motion from 'framer-motion/m';
 import {
   ArrowUpRight, Check, Clock,
 } from 'lucide-react';

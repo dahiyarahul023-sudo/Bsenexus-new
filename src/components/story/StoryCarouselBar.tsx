@@ -1,3 +1,4 @@
+import { personalStoryChapters } from '../../utils/forYou';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { fetchLiveStoryChapters, getInitialStoryChapters, getStorySessionStorageKey } from './storyData';
@@ -16,8 +17,9 @@ function topicHint(chapters: StoryChapter[], id: StoryTopic, fallback: string) {
   return fallback;
 }
 
-export function StoryCarouselBar({ onOpenStory, className = '' }: { onOpenStory: (chapterId?: string) => void; className?: string }) {
-  const [chapters, setChapters] = useState(getInitialStoryChapters);
+export function StoryCarouselBar({ onOpenStory, className = '', watched }: { onOpenStory: (chapterId?: string) => void; className?: string; watched?: string[] }) {
+  const [rawChapters, setChapters] = useState(getInitialStoryChapters);
+  const chapters=personalStoryChapters(rawChapters,watched);
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
   const [retry, setRetry] = useState(0);
@@ -34,9 +36,9 @@ export function StoryCarouselBar({ onOpenStory, className = '' }: { onOpenStory:
     load(retry > 0); document.addEventListener('visibilitychange', visibility);
     return () => { cancelled = true; document.removeEventListener('visibilitychange', visibility); };
   }, [retry, updateSeen]);
-  const topics = loaded && !failed ? STORY_TOPICS.filter(topic => chapters.some(chapter => chapter.id === topic.id)) : STORY_TOPICS;
+  const topics = loaded && !failed ? STORY_TOPICS.filter(topic => chapters.some(chapter => chapter.id === topic.id)) : watched ? STORY_TOPICS.filter(topic=>chapters.some(chapter=>chapter.id===topic.id)) : STORY_TOPICS;
   return <section className={`story-carousel ${className}`} aria-label="Market stories" onFocusCapture={updateSeen}>
-    <div className="story-carousel-heading"><strong>Market stories</strong><button type="button" onClick={() => onOpenStory()} disabled={loaded && !failed && !chapters.length}>Watch all<ChevronRight size={14} /></button></div>
+    <div className="story-carousel-heading"><strong>{watched ? 'Your stock stories' : 'Market stories'}</strong><button type="button" onClick={() => onOpenStory()} disabled={watched ? !chapters.length : loaded && !failed && !chapters.length}>Watch all<ChevronRight size={14} /></button></div>
     {topics.length > 0 && <div className="story-capsules">{topics.map(topic => <button type="button" key={topic.id} className="story-capsule" onClick={() => onOpenStory(topic.id)}>
       <span className="story-capsule-ring" data-seen={seen}><StoryTopicMark topic={topic.id} /></span>
       <span className="story-capsule-label">{topic.label}</span><span className="story-capsule-hint">{topicHint(chapters, topic.id, topic.hint)}</span>
