@@ -11,9 +11,11 @@ import './styles/payment.css';
 import { initClientTelemetry } from './utils/telemetry.ts';
 import { initOneSignal } from './utils/oneSignal.ts';
 
-initSentry();
-initClientTelemetry();
-initOneSignal();
+if (window.location.pathname.replace(/\/+$/, '').toLowerCase() !== '/activate-gift') {
+  initSentry();
+  initClientTelemetry();
+  initOneSignal();
+}
 
 class ClientErrorBoundary extends Component<{ children: ReactNode; fallback: ReactNode }, { failed: boolean }> {
   state = { failed: false };

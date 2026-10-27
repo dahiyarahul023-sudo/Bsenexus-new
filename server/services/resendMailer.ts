@@ -34,6 +34,9 @@ export function isResendConfigured(): boolean {
 
 export interface ReceiptEmailInput {
   to: string;
+  idempotencyKey?: string;
+  signal?: AbortSignal;
+  verifiedSenderOnly?: boolean;
   subject: string;
   html: string;
   text: string;
@@ -66,9 +69,11 @@ export async function sendReceiptEmail(input: ReceiptEmailInput): Promise<Resend
   try {
     res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
+      signal: input.signal,
       headers: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
+        ...(input.idempotencyKey ? { 'Idempotency-Key': input.idempotencyKey } : {}),
       },
       body: JSON.stringify({
         from: primaryFrom,
@@ -96,14 +101,16 @@ export async function sendReceiptEmail(input: ReceiptEmailInput): Promise<Resend
 
   // If custom domain is not yet verified in Resend, retry once with onboarding@resend.dev
   const rawMsg = String((data && (data.message || data.error)) || '');
-  if (!res.ok && rawMsg.toLowerCase().includes('not verified') && !primaryFrom.includes('onboarding@resend.dev')) {
+  if (!input.verifiedSenderOnly && !res.ok && rawMsg.toLowerCase().includes('not verified') && !primaryFrom.includes('onboarding@resend.dev')) {
     console.warn('[Resend] Domain unverified; retrying with onboarding@resend.dev fallback...');
     try {
       const retryRes = await fetch('https://api.resend.com/emails', {
         method: 'POST',
+      signal: input.signal,
         headers: {
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
+        ...(input.idempotencyKey ? { 'Idempotency-Key': input.idempotencyKey } : {}),
         },
         body: JSON.stringify({
           from: 'BSE Nexus <onboarding@resend.dev>',

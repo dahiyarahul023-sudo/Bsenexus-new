@@ -402,7 +402,7 @@ export function Layout({
                 </span>
                 {/* PRO badge — paid subscription active (or admin). Simple monochrome pill;
                     a one-time gold sheen sweeps across on mount, then it stays simple. */}
-                {isPaidProActive && (
+                {(isPaidProActive || profile?.subscriptionAccess?.gift && profile.subscriptionAccess.gift.expiresAt > Date.now()) && (
                   <span
                     className="relative overflow-hidden inline-flex items-center shrink-0 text-[9px] font-black tracking-[1.2px] px-1.5 py-[3px] rounded-md bg-slate-900/[0.07] text-slate-900 dark:bg-white/10 dark:text-white border border-slate-900/10 dark:border-white/15"
                     aria-label="Pro subscriber"

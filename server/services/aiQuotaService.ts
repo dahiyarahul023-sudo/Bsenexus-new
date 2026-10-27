@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { operateDurableAiQuota, requiresDurableAiQuota } from '../database/aiQuotaDao.js';
 import { readLocalJson, writeLocalJson } from '../database/localStore.js';
-import { getUserProfile } from '../database/usersDao.js';
+import { getAccessProfile as getUserProfile } from './subscriptionAccess.js';
 import { createKeyedSerial } from '../utils/keyedSerial.js';
 
 const serializeQuota = createKeyedSerial();
@@ -50,7 +50,7 @@ export async function checkServerAiQuota(
       allowed: false,
       remaining: 0,
       dailyLimit: 0,
-      error: "Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹59) to continue generating AI summaries.",
+      error: "Your Pro access has ended. Upgrade to Pro (one-time plans from ₹59) to continue generating AI summaries.",
       isPro: false
     };
   }

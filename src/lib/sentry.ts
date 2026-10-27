@@ -48,6 +48,7 @@ async function startSentry(dsn: string) {
 
 /** Initialize Sentry. Safe to call multiple times; resolves once. */
 export function initSentry(): Promise<void> {
+  if (typeof window !== 'undefined' && window.location.pathname.replace(/\/+$/, '').toLowerCase() === '/activate-gift') return Promise.resolve();
   if (initPromise) return initPromise;
   initPromise = (async () => {
     if (typeof window === 'undefined') return;

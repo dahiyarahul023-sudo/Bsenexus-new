@@ -1,7 +1,7 @@
 // OAuth secrets must never become error-report or trace payloads.
-const secret = /bnx_(?:at|rt|code|req)_[A-Za-z0-9_-]{43}/g;
+const secret = /bnx_(?:at|rt|code|req|gift)_[A-Za-z0-9_-]{43}/g;
 const privateRoute =
-  /\/(?:plugin|ai-plugin|mcp|authorize|token|register|revoke)(?:[/?#]|$)|\/api\/ai(?:[/?#]|$)/;
+  /\/(?:activate-gift|plugin|ai-plugin|mcp|authorize|token|register|revoke)(?:[/?#]|$)|\/api\/(?:ai|gifts)(?:[/?#]|$)/;
 const sensitiveKey =
   /^(?:authorization|cookie|set-cookie|access_token|refresh_token|id_token|client_secret|code_verifier)$/i;
 export function redactAiTelemetry<T>(event: T): T {

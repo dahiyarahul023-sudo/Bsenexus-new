@@ -1,3 +1,4 @@
+import { getAccessProfile } from '../services/subscriptionAccess.js';
 /**
  * Cashfree Payment Gateway integration — one-time Pro payments.
  *
@@ -621,8 +622,10 @@ paymentsRouter.get('/status', requireAuth, async (req, res) => {
 
     // Paid expiry always wins over a trial/profile expiry. A missing paid
     // entitlement is the only case where the profile can describe a trial.
-    const proExpiresAt = isPaidPro ? paidExpiresAt : Number(profile?.proExpiresAt || 0);
-    const isPro = isAdmin || paidActive || (!isPaidPro && proExpiresAt > now && (profile?.tier === 'pro' || profile?.tier === 'admin'));
+    const accessProfile = await getAccessProfile(uid, { durable: true });
+    const access = accessProfile?.subscriptionAccess;
+    const proExpiresAt = access?.expiresAt ?? (isPaidPro ? paidExpiresAt : Number(profile?.proExpiresAt || 0));
+    const isPro = isAdmin || paidActive || Boolean(access ? proExpiresAt > now : !isPaidPro && proExpiresAt > now && (profile?.tier === 'pro' || profile?.tier === 'admin'));
 
     return res.json({
       success: true,
@@ -630,6 +633,7 @@ paymentsRouter.get('/status', requireAuth, async (req, res) => {
       isPro,
       isPaidPro,
       paidActive,
+      subscriptionAccess: access || null,
       entitlementSource: entitlement?.source || null,
       repairedEntitlement: repaired,
       store: 'firestore' as const,

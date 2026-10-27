@@ -24,6 +24,7 @@ import { TermsModal, LegalTabType } from './TermsModal';
 import { SecurityAuditModal } from './SecurityAuditModal';
 import { AlertRulesModal } from './AlertRulesModal';
 import { HelpModal } from './HelpModal';
+const AdminGiftAccess = React.lazy(() => import('./AdminGiftAccess').then(m => ({ default: m.AdminGiftAccess })));
 import { SubscriptionCard } from './SubscriptionCard';
 import { AiUsageCard } from './AiUsageCard';
 import { useAuth } from '../context/AuthContext';
@@ -75,6 +76,7 @@ const SETTINGS_REGISTRY = [
   { id: 'diagnostics', title: 'System Diagnostics & Telemetry', description: 'Bloom filter telemetry, crash-free rates, device health and memory stats', category: 'Advanced Engine', keywords: ['diagnostics', 'telemetry', 'bloom', 'health', 'memory', 'cpu'] },
   { id: 'logs', title: 'Engine Activity Logs', description: 'Live stream of BSE ingestion, Gemini AI summaries and workers', category: 'Advanced Engine', keywords: ['logs', 'activity', 'engine', 'terminal', 'stream', 'gemini'] },
   { id: 'storage', title: 'Storage Manager & Quotas', description: 'Firestore quotas, backup downloads, and cache health', category: 'Advanced Engine', keywords: ['storage', 'quotas', 'firestore', 'database', 'cache'] },
+  { id: 'gift-access', title: 'Gift Pro Access', description: 'Email invitations, custom days, resend and revoke', category: 'Advanced Engine', keywords: ['gift', 'subscription', 'invite', 'complimentary'] },
   { id: 'server-keys', title: 'Server Keys & Ingestion Config', description: 'Bot token, Master PIN, AI summarizer test, and live toggle', category: 'Advanced Engine', keywords: ['server', 'admin', 'pin', 'keys', 'token', 'ingestion'] },
   { id: 'help', title: 'Help Center & Feedback', description: 'FAQs, Telegram community group and reporting an issue', category: 'Help & Support', keywords: ['help', 'support', 'faq', 'feedback', 'issue', 'ticket'] },
   { id: 'legal', title: 'Terms, Privacy & Policies', description: 'Terms of Service, Privacy (DPDP), Cookies, Refund and SEBI disclaimers', category: 'About & Legal', keywords: ['terms', 'privacy', 'legal', 'dpdp', 'sebi', 'policy', 'disclaimer'] },
@@ -911,7 +913,7 @@ export function SettingsTab({
   const queryLower = searchQuery.toLowerCase().trim();
   const isMatch = (id: string) => {
     // Advanced & Developer options are strictly admin-only
-    const advancedIds = ['security-audit', 'diagnostics', 'logs', 'storage', 'server-keys', 'seo-suite'];
+    const advancedIds = [ 'gift-access','security-audit', 'diagnostics', 'logs', 'storage', 'server-keys', 'seo-suite'];
     if (advancedIds.includes(id) && !isSuperAdmin) {
       return false;
     }
@@ -993,17 +995,17 @@ export function SettingsTab({
     },
     {
       id: 'subscription', title: 'Subscription & Billing',
-      subtitle: isPaidProActive
+      subtitle: isPro && profile?.subscriptionAccess?.source === 'gift' ? `Gift Pro · ${proDaysLeft}d left` : isPaidProActive
         ? (proDaysLeft > 0 ? `Pro active · ${proDaysLeft}d left` : 'Pro active · plans & payments')
         : isPro
           ? (proDaysLeft > 0 ? `Pro Trial · ${proDaysLeft}d left` : 'Pro Trial')
           : `Free plan · Pro from ₹${getLowestPlanPrice()}`,
       icon: Crown, iconClass: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
       registryIds: ['subscription'],
-      // Layer appears ONLY for paid-active subscriptions (server-driven) — never for trial.
+      // Layer appears for paid or complimentary access, never for a trial.
       // Auto-appears on payment grant, auto-removes at proExpiresAt.
-      activeLayer: isPaidProActive,
-      badge: isPaidProActive ? (
+      activeLayer: isPaidProActive || Boolean(isPro && profile?.subscriptionAccess?.gift),
+      badge: (isPaidProActive || isPro && profile?.subscriptionAccess?.gift) ? (
         <span className="inline-flex items-center gap-1 text-[10px] font-extrabold tracking-wide px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/40 shadow-[0_0_12px_rgba(16,185,129,0.25)]">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
           PRO ACTIVE
@@ -1071,7 +1073,7 @@ export function SettingsTab({
       id: 'admin', title: 'Admin Engine',
       subtitle: 'Diagnostics, logs, storage & SEO',
       icon: ShieldCheck, iconClass: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
-      registryIds: ['security-audit', 'diagnostics', 'logs', 'storage', 'server-keys', 'seo-suite'],
+      registryIds: ['gift-access', 'security-audit', 'diagnostics', 'logs', 'storage', 'server-keys', 'seo-suite'],
       adminOnly: true,
       badge: (
         <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 font-mono lowercase">
@@ -1924,7 +1926,7 @@ export function SettingsTab({
       )}
 
       {/* SECTION 4: ADVANCED & DEVELOPER ENGINE (Strictly Admin & Operator Only) */}
-      {visibleSection === 'admin' && isSuperAdmin && (isMatch('security-audit') || isMatch('diagnostics') || isMatch('logs') || isMatch('storage') || isMatch('server-keys') || isMatch('seo-suite')) && (
+      {visibleSection === 'admin' && isSuperAdmin && (isMatch('gift-access') || isMatch('security-audit') || isMatch('diagnostics') || isMatch('logs') || isMatch('storage') || isMatch('server-keys') || isMatch('seo-suite')) && (
         <div className="space-y-2">
           <div className="flex items-center justify-between px-1">
             <div className="flex items-center gap-2">
@@ -1946,6 +1948,8 @@ export function SettingsTab({
               Lock Session
             </button>
           </div>
+
+          {isMatch('gift-access') && <React.Suspense fallback={<p role="status">Loading gift access…</p>}><AdminGiftAccess /></React.Suspense>}
 
           <div className="bg-white dark:bg-[#181626] border border-purple-200/90 dark:border-purple-900/50 rounded-2xl divide-y divide-slate-100 dark:divide-[#252236] overflow-hidden shadow-2xs">
                   

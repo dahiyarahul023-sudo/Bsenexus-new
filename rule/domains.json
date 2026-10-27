@@ -60,7 +60,10 @@
         "src/components/TermsModal.tsx",
         "src/components/LandingPage.tsx",
         "supabase/migrations/20261024193046_deep_audit_security.sql",
-        "scripts/verify-deep-audit-staging.sql"
+        "scripts/verify-deep-audit-staging.sql",
+        "server/services/subscriptionAccess.ts",
+        "server/database/giftAccessDao.ts",
+        "supabase/migrations/20261026192403_gift_pro_access.sql"
       ],
       "tests": [
         "server/tests/paymentEntitlement.test.ts",
@@ -1143,7 +1146,10 @@
         "src/shared/aiDataDisclosure.ts",
         "scripts/provision-ai-reviewer.ts",
         "scripts/verify-mcp-directory-staging.sql",
-        "supabase/migrations/20261024193046_deep_audit_security.sql"
+        "supabase/migrations/20261024193046_deep_audit_security.sql",
+        "server/services/subscriptionAccess.ts",
+        "server/database/giftAccessDao.ts",
+        "supabase/migrations/20261026192403_gift_pro_access.sql"
       ],
       "tests": [
         "server/tests/aiConnections.test.ts",
@@ -1205,6 +1211,51 @@
         "server/tests/notificationStartup.test.ts"
       ],
       "reason": "One reviewed company registry and completed-US-session snapshot supplies Home, company intelligence, Market pulse and the opt-in watchlist inbox worker. Public validated snapshots persist under service-only immutable settings session keys and browser localStorage. Partial refresh retains missing symbols; restored, failed or older-source reads cannot renew freshness. Repeated failures back off from one to fifteen minutes. Current US bars, pre/post market, bad identities/currency, stale/partial data and split/thin-volume alerts are guarded. Home uses shared Helios/density/actions and exact company navigation; Stories use one existing chapter. Morning alerts honor fresh owner/list/mute/priority checks and a durable private per-session insert-once key. The existing cron/watchdog supplies the execution lifetime without another timer, migration or public broadcast. Browser/device, live delivery, hosting and source redistribution evidence remain separate."
+    },
+    {
+      "id": "gift-access",
+      "label": "Complimentary Pro invitations and account access",
+      "files": [
+        "server/api/giftAccess.ts",
+        "server/database/giftAccessDao.ts",
+        "server/services/giftAccessPolicy.ts",
+        "server/services/subscriptionAccess.ts",
+        "src/shared/giftAccess.ts",
+        "supabase/migrations/20261026192403_gift_pro_access.sql",
+        "src/components/AdminGiftAccess.tsx",
+        "src/components/GiftActivationPage.tsx",
+        "src/components/gift-access.css",
+        "src/components/SettingsTab.tsx",
+        "src/components/SubscriptionCard.tsx",
+        "src/context/AuthContext.tsx",
+        "src/components/Layout.tsx",
+        "src/components/UserProfileModal.tsx",
+        "src/App.tsx",
+        "src/main.tsx",
+        "src/lib/sentry.ts",
+        "src/shared/aiTelemetry.ts",
+        "index.html",
+        "public/sw.js",
+        "server.ts",
+        "server/security/auth.ts",
+        "server/api/payments.ts",
+        "server/api/routes.ts",
+        "server/ai/tools.ts",
+        "server/services/aiQuotaService.ts",
+        "server/services/monitor.ts",
+        "server/services/stockNewsService.ts",
+        "server/database/usersDao.ts",
+        "server/database/paymentEntitlementsDao.ts",
+        "server/services/resendMailer.ts",
+        "server/utils/spaRoutes.ts"
+      ],
+      "tests": [
+        "server/tests/giftAccessApi.test.ts",
+        "server/tests/giftAccessSql.test.ts",
+        "server/tests/pollerStall.test.ts",
+        "scripts/verify-gift-access.mjs"
+      ],
+      "reason": "Owner PIN elevation creates an email-bound invitation with a server-owned custom duration and separate claim deadline. Hash-only secrets, immutable input/idempotency checks and one DB transaction bind each grant once to a freshly verified Firebase identity. Resend rotates the pending verifier without extending the deadline; revoke never touches paid/trial/referral rows. Read-only unified access projections reach website gates, billing, profile refresh, AI quota and connector writes. Personal Telegram checks consult live gift access at dispatch; ingestion remains independent of gift-store availability. Fragment capture precedes optional monitoring; activation is no-store/noindex and excluded from SW/telemetry. Browser fixture evidence is distinct from real sender/Firebase/database release checks; feature stays off until additive migration verification."
     }
   ]
 }

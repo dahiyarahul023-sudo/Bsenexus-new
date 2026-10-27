@@ -60,6 +60,7 @@ export interface UserNotificationPreferences {  resultsAndEarnings: boolean;
 }
 
 export interface UserProfile {
+  subscriptionAccess?: import('./shared/giftAccess').SubscriptionAccess;
   uid: string;
   email: string | null;
   displayName: string | null;
