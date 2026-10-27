@@ -24,3 +24,5 @@
 - npm run lint passed. Production build passed; entry budget 621603 raw / 174002 gzip bytes. Existing server-bundle size warning retained.
 - Six map tests passed. Map generation and freshness check passed: 580 source files, 1545 import edges, 27 domains. git diff --check passed.
 - Host preview and live release checks remain with the user; no deployment claim. Remote CI and merge reported separately in delivery.
+
+- Make npm test use the same four-worker concurrency as the completed 849-test local run. The unconstrained run ended without a TAP completion summary; bounded workers avoid launching the entire heavy backend suite at once on constrained runners. This changes scheduling only, with all tests and assertions retained.

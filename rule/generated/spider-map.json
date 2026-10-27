@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "983cf54101cd1fc184196f0516312076a32fdd1f12b9eaf7d58b0e8f515e1021",
+  "sourceDigest": "bd39ea8cf21896e30ba94938a1a8ec22015f3dd1c4a9503a70e2eab81b44d856",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -45,7 +45,7 @@
     },
     {
       "path": "package.json",
-      "sha256": "3a784ff4ad182eaf9dcc1fc4a26865033e200fe9adc89d0ee1f1a1473af9c484",
+      "sha256": "c26f83ec4634c541fed6d7f72a5adbde9c6e824e30cd3005dd7d61923a9dc6dc",
       "importedBy": []
     },
     {

@@ -11,7 +11,7 @@
     "start": "node dist/server.cjs",
     "clean": "rm -rf dist build server.cjs",
     "lint": "tsc --noEmit",
-    "test": "node --test --import ./scripts/offline-tests.mjs --import tsx server/tests/*.test.ts",
+    "test": "node --test --test-concurrency=4 --import ./scripts/offline-tests.mjs --import tsx server/tests/*.test.ts",
     "test:dev-runtime": "node scripts/check-dev-runtime.mjs",
     "postinstall": "node scripts/patch-firebase-auth.cjs",
     "verify:ai": "tsx scripts/verify-ai-models.ts",
