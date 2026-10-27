@@ -1,3 +1,5 @@
+import { connectionsEnabled } from '../ai/policy.js';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { getSupabase, isSupabaseConfigured } from './supabase.js';
 import { runPaymentStore, PaymentStoreUnavailableError } from './paymentStore.js';
 import { readLocalJson, writeLocalJson, isOfflineOrNetworkError } from './localStore.js';
@@ -6,6 +8,9 @@ import { withRetry } from '../utils/retry.js';
 import { addLog } from './logDao.js';
 
 const WATCHLISTS_TABLE = 'user_watchlists';
+const mutationContext = new AsyncLocalStorage<{uid:string; revision?:number|null}>();
+const durableMutation = (uid:string) => mutationContext.getStore()?.uid === uid;
+class WatchlistConflict extends Error {}
 
 /** Best-effort cloud write; never throws (background syncs only). */
 async function upsertWatchlistsQuiet(uid: string, lists: any[]): Promise<void> {
@@ -22,12 +27,15 @@ async function upsertWatchlistsQuiet(uid: string, lists: any[]): Promise<void> {
 async function readWatchlistsRow(uid: string): Promise<any[] | null> {
   const { data, error } = await getSupabase()
     .from(WATCHLISTS_TABLE)
-    .select('lists')
+    .select(connectionsEnabled() ? 'lists,revision' : 'lists')
     .eq('uid', uid)
     .maybeSingle();
   if (error) throw error;
-  if (!data) return null;
-  return Array.isArray(data.lists) ? data.lists : null;
+  const row=data as unknown as {lists:any[];revision?:number}|null;
+  const context=mutationContext.getStore();
+  if(context?.uid===uid) context.revision=row ? Number(row.revision || 0) : null;
+  if (!row) return null;
+  return Array.isArray(row.lists) ? row.lists : null;
 }
 
 export interface WatchlistStockItemDao {
@@ -227,6 +235,12 @@ export async function withUidLock<T>(uid: string, fn: () => Promise<T>): Promise
   uidLocks[uid] = prev.then(() => next);
   await prev;
   try {
+    if (uid !== 'guest' && isSupabaseConfigured() && connectionsEnabled()) {
+      for (let attempt=0; attempt<3; attempt++) {
+        try { invalidateUserWatchlistCache(uid); return await mutationContext.run({uid},fn); }
+        catch(error) { if (!(error instanceof WatchlistConflict) || attempt===2) throw error; }
+      }
+    }
     return await fn();
   } finally {
     release();
@@ -243,7 +257,7 @@ export function invalidateUserWatchlistCache(userId?: string) {
 }
 
 export async function migrateLegacyAdminWatchlists(targetRealUid: string): Promise<void> {
-  if (!targetRealUid || targetRealUid === 'admin' || targetRealUid === 'guest') return;
+  if (!process.env.LEGACY_ADMIN_UID || targetRealUid !== process.env.LEGACY_ADMIN_UID) return;
   
   try {
     const legacyFile = getWatchlistFilename('admin');
@@ -312,6 +326,25 @@ export async function migrateLegacyAdminWatchlists(targetRealUid: string): Promi
 }
 
 async function persistUserWatchlists(uid: string, lists: any[]): Promise<void> {
+  if (durableMutation(uid)) {
+    const context=mutationContext.getStore()!;
+    const revision=context.revision;
+    if (revision===undefined) throw new Error('Watchlist must be read before saving');
+    const row={uid,lists:sanitizeWatchlistArray(lists),updated_at:new Date().toISOString()};
+    let data:any;
+    try {
+      const query=revision===null
+        ? getSupabase().from(WATCHLISTS_TABLE).insert(row).select('revision')
+        : getSupabase().from(WATCHLISTS_TABLE).update(row).eq('uid',uid).eq('revision',revision).select('revision');
+      const response=await query;data=response.data;
+      if(response.error?.code==='23505'||(!response.error&&!data?.length))throw new WatchlistConflict('Watchlist changed. Retry with fresh data.');
+      if(response.error)throw response.error;
+    } catch(error) {if(error instanceof WatchlistConflict)throw error;throw new PaymentStoreUnavailableError('save watchlist',error);}
+    context.revision=Number(data![0].revision);
+    userWatchlistsCache[uid]={lists:row.lists,fetchedAt:Date.now()};userWatchlistsDirty[uid]=false;
+    try{writeLocalJson(getWatchlistFilename(uid),row.lists);}catch{}
+    return;
+  }
   // Defensive: the retired 52-stock "Default" list must never be re-persisted
   // through any path (e.g. legacy admin merge). Idempotent for current data.
   const sanitized = sanitizeWatchlistArray(migrateToSingleFoDefault(lists).lists);
@@ -358,6 +391,10 @@ export async function getAllWatchlists(userId?: string, opts?: GetWatchlistsOpti
   const uid = sanitizeUserId(userId);
   const now = Date.now();
   const noCreate = opts?.noCreate === true;
+  if(durableMutation(uid)) {
+    const lists=await runPaymentStore('read watchlists for update',readWatchlistsRow(uid));
+    return JSON.parse(JSON.stringify(lists===null?createDefaultWatchlists():sanitizeWatchlistArray(lists)));
+  }
 
   // 1. In-memory cache with short TTL (if not marked dirty)
   if (userWatchlistsCache[uid] !== undefined && !userWatchlistsDirty[uid] && (now - userWatchlistsCache[uid].fetchedAt < WATCHLISTS_CACHE_TTL_MS)) {
@@ -370,6 +407,23 @@ export async function getAllWatchlists(userId?: string, opts?: GetWatchlistsOpti
   if (uid !== 'guest' && isSupabaseConfigured()) {
     try {
       const cloudLists = await readWatchlistsRow(uid);
+      // Connected AI and website writers share CAS. Reads never upload old local
+      // backups or run legacy whole-document migrations over a concurrent edit.
+      if(connectionsEnabled()) {
+        if (cloudLists === null) {
+          if (noCreate) return []; // Do not cache an unsaved empty/default row.
+          return withUidLock(uid, async () => {
+            const current = await getAllWatchlists(uid);
+            // Insert only if still absent. A concurrent creator wins; the CAS
+            // conflict retry rereads and returns their lists without replacing.
+            if (mutationContext.getStore()!.revision === null) await persistUserWatchlists(uid, current);
+            return current;
+          });
+        }
+        const lists=sanitizeWatchlistArray(cloudLists);
+        userWatchlistsCache[uid]={lists,fetchedAt:Date.now()};userWatchlistsDirty[uid]=false;
+        return JSON.parse(JSON.stringify(lists));
+      }
       if (cloudLists !== null) {
         const sanitized = await migrateExistingUserWatchlists(uid, sanitizeWatchlistArray(cloudLists), noCreate);
         userWatchlistsCache[uid] = { lists: sanitized, fetchedAt: Date.now() };
@@ -381,7 +435,7 @@ export async function getAllWatchlists(userId?: string, opts?: GetWatchlistsOpti
         // First check if there is legacy admin data that needs migration to this user
         const legacyFile = getWatchlistFilename('admin');
         const legacyDisk = readLocalJson<any[] | null>(legacyFile, null);
-        if (legacyDisk && Array.isArray(legacyDisk) && legacyDisk.some(l => Array.isArray(l.items) && l.items.length > 0)) {
+        if (process.env.LEGACY_ADMIN_UID === uid && legacyDisk && Array.isArray(legacyDisk) && legacyDisk.some(l => Array.isArray(l.items) && l.items.length > 0)) {
           await migrateLegacyAdminWatchlists(uid);
           if (userWatchlistsCache[uid]?.lists) {
             return JSON.parse(JSON.stringify(userWatchlistsCache[uid].lists));
@@ -473,17 +527,11 @@ export async function deleteWatchlist(id: string, userId?: string): Promise<bool
       : await getAllWatchlists(uid);
     if (!current.some(l => String(l.id) === String(id))) return false;
     const next = current.filter(l => String(l.id) !== String(id));
-    if (durable) {
-      await runPaymentStore('persist watchlist deletion',Promise.resolve().then(async () => {
-        const {error}=await getSupabase().from(WATCHLISTS_TABLE).upsert({uid,lists:next,updated_at:new Date().toISOString()},{onConflict:'uid'});
-        if(error)throw error;
-      }));
-      userWatchlistsCache[uid]={lists:next,fetchedAt:Date.now()};
-      userWatchlistsDirty[uid]=false;
+    if(durable && !connectionsEnabled()) {
+      await runPaymentStore('persist watchlist deletion',Promise.resolve().then(async()=>{const {error}=await getSupabase().from(WATCHLISTS_TABLE).upsert({uid,lists:next,updated_at:new Date().toISOString()},{onConflict:'uid'});if(error)throw error;}));
+      userWatchlistsCache[uid]={lists:next,fetchedAt:Date.now()};userWatchlistsDirty[uid]=false;
       writeLocalJson(getWatchlistFilename(uid),next);
-    } else {
-      await persistUserWatchlists(uid,next);
-    }
+    } else await persistUserWatchlists(uid,next);
     return true;
   });
 }
@@ -639,6 +687,7 @@ export async function clearAllWatchlistsSymbols(userId?: string): Promise<void> 
 export async function resetUserWatchlistsToDefault(userId?: string): Promise<any[]> {
   const uid = sanitizeUserId(userId);
   return withUidLock(uid, async () => {
+    if (durableMutation(uid)) await runPaymentStore('read watchlists for reset', readWatchlistsRow(uid));
     const initial = createDefaultWatchlists();
     await persistUserWatchlists(uid, initial);
     return JSON.parse(JSON.stringify(initial));
@@ -791,6 +840,22 @@ export async function getAllActiveWatchlistsAcrossUsers(): Promise<any[]> {
     } catch {}
   }
   return allLists;
+}
+
+/** Internal calendar intake: retain supplied security codes for symbols outside the local master. */
+export async function getCalendarWatchlistStocks(): Promise<any[]> {
+  const activeItems = (lists: any[]) => lists.filter(list => list?.is_active === true || list?.is_active === 1)
+    .flatMap(list => Array.isArray(list.items) ? list.items : []);
+  if (isSupabaseConfigured()) {
+    try {
+      const { data, error } = await getSupabase().from(WATCHLISTS_TABLE).select('lists');
+      if (error) throw error;
+      if (Array.isArray(data)) return data.flatMap(row => activeItems(Array.isArray(row.lists) ? row.lists : []));
+    } catch {
+      console.warn('[ResultsCalendar] Watchlist intake unavailable; retaining cached meetings and using known local lists.');
+    }
+  }
+  return activeItems(await getAllActiveWatchlistsAcrossUsers());
 }
 
 export async function getActiveWatchlistSymbols(userId?: string, opts?: GetWatchlistsOptions): Promise<string[]> {

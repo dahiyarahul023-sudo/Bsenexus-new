@@ -2,12 +2,14 @@
 .impact-radar--dense { --radar-pad:13px; }
 .impact-radar--comfortable { --radar-pad:21px; }
 .impact-radar-heading,.impact-radar-brand,.impact-radar-heading-actions,.impact-radar-card-top,.impact-radar-card-meta,.impact-radar-card-foot,.impact-radar-detail-top,.impact-radar-check,.impact-radar-new { display:flex; align-items:center; gap:9px; }
-.impact-radar-heading { justify-content:space-between; gap:12px; margin-bottom:16px; }
+.impact-radar-heading { justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:16px; }
 .impact-radar-brand { gap:11px; min-width:0; }
 .impact-radar-mark { display:grid; place-items:center; width:42px; height:42px; flex:none; border-radius:14px; color:var(--rich-selected-ink,#065f46); background:var(--rich-selected,#d4f6ee); border:1px solid var(--rich-selected-border,#67cdb0); box-shadow:inset 0 1px 0 #fff3; }
 .impact-radar h2 { font-size:19px; font-weight:800; line-height:1.3; letter-spacing:-.5px; }
 .impact-radar-heading p { margin-top:3px; color:var(--rich-muted,#586578); font-size:11px; }
-.impact-radar-heading-actions { gap:5px; flex:none; }
+.impact-radar-heading-actions { gap:5px; flex:none; margin-left:auto; }
+.impact-radar-heading-actions button { white-space:nowrap; flex-shrink:0; }
+.impact-radar-heading-actions button>span { display:inline-flex; align-items:center; gap:6px; }
 .impact-radar-heading-actions button,.impact-radar-track { min-height:44px; }
 .impact-radar-refresh { min-width:44px; padding:0!important; }
 .impact-radar-controls { display:flex; align-items:center; flex-wrap:wrap; gap:10px; }

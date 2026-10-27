@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
+import { isBseFiling } from '../../src/shared/filingSource.js';
 
 function harness(hanging?: string, failing?: string) {
   let now = 1_000_000;
@@ -11,6 +12,7 @@ function harness(hanging?: string, failing?: string) {
   const consoleEntries: { level: string; message: string }[] = [];
   const logLevels: { level: string; message: string }[] = [];
   const calls: string[] = [];
+  let indexBatchBalance = 0;
   let release!: (value: any) => void;
   const pending = new Promise(resolve => { release = resolve; });
   let held = false;
@@ -41,9 +43,13 @@ function harness(hanging?: string, failing?: string) {
   const cycle = load('../utils/pollCycle.ts');
   const settings = { isRunning: true, telegramAlertsEnabled: false };
   const monitor = load('../services/monitor.ts', {
+    '../../src/shared/filingSource.js': { isBseFiling },
+    './indexNow': { indexNowQueue: { beginBatch() { indexBatchBalance++; return () => { indexBatchBalance--; }; } } },
     '../utils/pollCycle.js': cycle,
     '../database/logDao.js': { addLog: async (_level: string, _module: string, message: string) => { logs.push(message); logLevels.push({ level: _level, message }); } },
     '../database/settingsDao.js': { getSettings: () => invoke('settings', settings) },
+    './giftAccessPolicy.js': { giftsEnabled: () => false },
+    './subscriptionAccess.js': { getAccessProfile: async () => null },
     './bse.js': { fetchBSEAnnouncements: () => invoke('fetch', rows) },
     '../database/announcementDao.js': {
       initAnnouncementCache: () => invoke('init', undefined),
@@ -64,7 +70,7 @@ function harness(hanging?: string, failing?: string) {
   });
   const settle = async () => { for (let i = 0; i < 100; i++) await Promise.resolve(); };
   return {
-    poll: () => monitor.processAnnouncements(), failures: () => monitor.getConsecutiveFailures(), calls, logs, consoleEntries, logLevels, release, rows, settings, settle,
+    poll: () => monitor.processAnnouncements(), failures: () => monitor.getConsecutiveFailures(), indexBatches: () => indexBatchBalance, calls, logs, consoleEntries, logLevels, release, rows, settings, settle,
     async advance(ms: number) {
       now += ms;
       for (const [id, timer] of [...timers]) if (timer.at <= now) { timers.delete(id); timer.callback(); }
@@ -81,10 +87,12 @@ for (const stage of ['init', 'fetch', 'settings', 'sent', 'save', 'inbox', 'drai
     await h.settle();
     assert.ok(h.calls.includes(stage));
     await h.poll(); // Admin/manual refresh cannot overlap the active cycle.
+    assert.equal(h.indexBatches(), 1, 'overlapping poll cannot start a second IndexNow batch');
     assert.equal(h.calls.filter(x => x === stage).length, 1);
     assert.equal(done, false);
     await h.advance(stage === 'fetch' ? 60_000 : 30_000);
     await first;
+    assert.equal(h.indexBatches(), 0, 'timeouts release the IndexNow batch');
     assert.equal(done, true);
     assert.equal(h.failures(), stage === 'fetch' ? 1 : 0, 'only exchange timeouts increase source backoff');
     assert.ok(h.logs.some(x => x.includes('outcome=timeout')));
@@ -101,6 +109,7 @@ for (const stage of ['init', 'fetch', 'settings', 'sent', 'save', 'inbox', 'drai
 test('healthy monitor saves the filing and recipient inbox in order', async () => {
   const h = harness();
   await h.poll();
+  assert.equal(h.indexBatches(), 0);
   assert.ok(h.calls.indexOf('fetch') < h.calls.indexOf('save'));
   assert.ok(h.calls.indexOf('save') < h.calls.indexOf('inbox'));
   assert.ok(h.logs.some(x => x.includes('outcome=success')));
@@ -108,6 +117,13 @@ test('healthy monitor saves the filing and recipient inbox in order', async () =
   assert.equal(summary.level, 'log');
   assert.doesNotMatch(summary.message, /error/i);
   assert.equal(h.logLevels.find(x => x.message.startsWith('{'))!.level, 'INFO');
+});
+
+test('monitor never saves or delivers NSE filings even if an upstream adapter accidentally supplies one', async () => {
+  const h = harness();
+  h.rows[0].NEWSID = 'corp_nse_duplicate';
+  await h.poll();
+  assert.ok(!h.calls.includes('save')); assert.ok(!h.calls.includes('inbox'));
 });
 
 test('all monitor attempts emit one numbered IST summary; overlapping attempts skip without a queue', async () => {

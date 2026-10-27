@@ -1,4 +1,4 @@
-import { hasExactScripCode } from '../../src/shared/scripMatching.js';
+import { hasExactScripCode, isBseOperatorFiling, projectFilingIdentity } from '../../src/shared/scripMatching.js';
 import { getSupabase, isSupabaseConfigured } from './supabase.js';
 import { determinePriority, parseBseDate, isSymbolMatch } from '../utils/helpers.js';
 import { addLog } from './logDao.js';
@@ -6,7 +6,8 @@ import { readLocalJson, writeLocalJson, isOfflineOrNetworkError } from './localS
 import { BloomFilter } from '../utils/bloomFilter.js';
 import { pageRenderCache, apiResponseCache } from '../utils/renderCache.js';
 import { notifySearchEnginesOfNewPages } from '../services/indexNow.js';
-import { resolveStockDetailsSync } from '../utils/stockResolver.js';
+import { publicFilingVersion, storedFilingIndexPages } from '../services/filingIndexNow';
+import { isBseFiling } from '../../src/shared/filingSource.js';
 
 const ANNOUNCEMENTS_TABLE = 'announcements';
 
@@ -23,7 +24,7 @@ function toRow(id: string, item: any): Record<string, any> {
 
 function fromRow(row: any): any {
   const data = row?.data ?? {};
-  return { id: row?.id, ...data };
+  return projectFilingIdentity({ id: row?.id, ...data });
 }
 
 const ANNOUNCEMENTS_FILE = 'announcements.json';
@@ -43,7 +44,7 @@ const LEGACY_DEMO_IDS = new Set([
 ]);
 
 let loadedLocal = readLocalJson<any[]>(ANNOUNCEMENTS_FILE, []);
-let announcementsMemoryCache: any[] = (Array.isArray(loadedLocal) ? loadedLocal : []).filter(item => !LEGACY_DEMO_IDS.has(item?.id));
+let announcementsMemoryCache: any[] = (Array.isArray(loadedLocal) ? loadedLocal : []).filter(item => !LEGACY_DEMO_IDS.has(item?.id)).map(projectFilingIdentity);
 
 let saveDiskTimer: NodeJS.Timeout | null = null;
 function scheduleLocalDiskSave() {
@@ -114,7 +115,7 @@ export async function initAnnouncementCache() {
       let bseTs = parseBseDate(dataItem.bseTime);
       if (!bseTs) bseTs = dataItem.fetched_at || 0;
 
-      const fsItem = { id: row.id, ...dataItem, bseTimestamp: bseTs };
+      const fsItem = projectFilingIdentity({ id: row.id, ...dataItem, bseTimestamp: bseTs });
       const existing = mergedMap.get(row.id);
       mergedMap.set(row.id, existing ? { ...existing, ...fsItem } : fsItem);
     }
@@ -281,6 +282,7 @@ let nextBatchRetryTime = 0;
 async function processSupabaseQueue() {
   if (isQueueWorkerRunning) return;
   isQueueWorkerRunning = true;
+  const changedPublicFilings = new Map<string, any>();
 
   try {
     while (supabaseWriteQueue.size > 0) {
@@ -340,6 +342,10 @@ async function processSupabaseQueue() {
           .upsert(rowsToUpsert, { onConflict: 'id' });
         if (upsertError) throw upsertError;
 
+        for (const row of rowsToUpsert) {
+          if (!existingById.has(row.id) || publicFilingVersion(existingById.get(row.id)) !== publicFilingVersion(row.data)) changedPublicFilings.set(String(row.id), row.data);
+        }
+
         // Remove from queue ONLY after the upsert confirms success
         for (const t of tasksToProcess) {
           supabaseWriteQueue.delete(t.docId);
@@ -380,6 +386,15 @@ async function processSupabaseQueue() {
     console.warn("[Supabase] Write queue worker notice:", globalQueueErr);
   } finally {
     isQueueWorkerRunning = false;
+    // Coalesce the whole confirmed storage drain; no HTTP/database indexing work
+    // is awaited by the filing pipeline, and unchanged/delivery-only rows stay out.
+    try {
+      for (const page of storedFilingIndexPages([...changedPublicFilings.values()])) {
+        const match = new URL(page.url).pathname.match(/^\/company\/(.+)$/);
+        if (match) pageRenderCache.invalidate(`comp:${decodeURIComponent(match[1])}`);
+        notifySearchEnginesOfNewPages(page.url, page.version);
+      }
+    } catch { console.warn('[IndexNow] Could not queue stored public changes; filing storage is unaffected'); }
   }
 }
 
@@ -509,8 +524,17 @@ export async function updateAnnouncementSummary(newsId: string, aiSummary: strin
   pageRenderCache.invalidate(`ann:${newsId}`);
 }
 
+/** Separate provenance cache; legacy website summaries are never promoted to PDF evidence. */
+export function cacheAiConnectionSummary(newsId: string, field: 'aiConnectionSummaryEn' | 'aiConnectionSummary', value: unknown) {
+  const inMem = announcementsMemoryCache.find(a => a.id === newsId);
+  if (inMem) { (inMem as any)[field] = value; scheduleLocalDiskSave(); }
+  queueAnnouncementWrite(newsId, { [field]: value }, true);
+}
+
 export interface AnnouncementInput {
   newsId: string;
+  symbol?: string;
+  source?: string;
   companyName: string;
   subject: string;
   details: string;
@@ -524,6 +548,7 @@ export interface AnnouncementInput {
   aiSummaryEn?: string;
   scrip_cd?: string;
   isWatchlist?: boolean;
+  resultDocumentCheck?: import('../../src/shared/resultFiling.js').ResultDocumentCheck;
 }
 
 export async function saveAnnouncementsBatch(items: AnnouncementInput[]): Promise<{ total: number; inserted: number; updated: number; skipped: number }> {
@@ -594,6 +619,7 @@ export async function saveAnnouncementsBatch(items: AnnouncementInput[]): Promis
     if (existingIdx !== undefined && existingIdx >= 0) {
       const existing = announcementsMemoryCache[existingIdx];
       const isIdentical = 
+        JSON.stringify(existing.resultDocumentCheck || null) === JSON.stringify(safeData.resultDocumentCheck || existing.resultDocumentCheck || null) &&
         existing.subject === safeData.subject &&
         existing.details === safeData.details &&
         existing.companyName === safeData.companyName &&
@@ -630,26 +656,7 @@ export async function saveAnnouncementsBatch(items: AnnouncementInput[]): Promis
     scheduleLocalDiskSave();
     queueAnnouncementsBatchWrite(tasksToQueue);
 
-    // Notify search engines (Bing, Yandex, etc.) of newly published announcement pages.
-    // Canonical shareable scheme: /filing/:symbol/:newsId (legacy /announcement/
-    // URLs 301-redirect there, but notify the canonical URL directly).
-    if (inserted > 0) {
-      const newUrls = items
-        .filter(it => it && it.newsId)
-        .slice(0, 50)
-        .map(it => {
-          // Resolve the trading symbol from the BSE scrip code for the
-          // canonical /filing/:symbol/:newsId URL; fall back to the legacy URL
-          // (server 301-redirects it) when the symbol can't be resolved.
-          const sym = String(resolveStockDetailsSync(String(it.scrip_cd || ''))?.symbol || '').trim().toUpperCase();
-          return /^[A-Z0-9-]{2,20}$/.test(sym)
-            ? `https://bsenexus.in/filing/${encodeURIComponent(sym)}/${encodeURIComponent(it.newsId)}`
-            : `https://bsenexus.in/announcement/${encodeURIComponent(it.newsId)}`;
-        });
-      if (newUrls.length > 0) {
-        notifySearchEnginesOfNewPages(newUrls);
-      }
-    }
+
   }
 
   return { total: items.length, inserted, updated, skipped };
@@ -673,22 +680,16 @@ export async function getRecentAnnouncements(limitNum: number = 1000, symbols?: 
   if (symbols && symbols.length > 0) {
     const cleanSymbols = symbols.map(s => String(s).trim().toUpperCase()).filter(Boolean);
     if (cleanSymbols.length > 0) {
-      // Hybrid feed policy — "what's new", not an archive:
-      //   1. Time window: only filings from the last 7 days. Older items are not "news".
-      //   2. Per-stock cap: DYNAMIC — the 2500-item budget is split across the requested
-      //      symbols (max 100 per stock, min 25). A user tracking 10 stocks gets 100 filings
-      //      each (deep history); a user tracking 100+ stocks gets 25 each. Small watchlists
-      //      no longer waste most of the budget; hyperactive stocks still can't flood the feed.
-      // The cache is sorted newest-first, so we stop at the first item older than the
-      // window — no full-cache scan. (Archive needs are served by the per-company modal
-      // and the global All-Filings tab, not this feed.)
-      const PER_STOCK = Math.min(100, Math.max(25, Math.floor(2500 / cleanSymbols.length)));
+      // Recent updates keep their seven-day window and a global response budget.
+      // There is no per-company total cap; the company history read pages durable rows.
+      const PER_STOCK = limitNum;
       const WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
       const cutoff = Date.now() - WINDOW_MS;
       const buckets: any[][] = cleanSymbols.map(() => []);
       const counts = new Array<number>(cleanSymbols.length).fill(0);
       let allFull = false;
       for (const ann of announcementsMemoryCache) {
+        if (!isBseFiling(ann)) continue;
         const ts = (typeof ann.bseTimestamp === 'number' && !isNaN(ann.bseTimestamp) && ann.bseTimestamp > 0)
           ? ann.bseTimestamp : (ann.fetched_at || 0);
         if (ts > 0 && ts < cutoff) break; // older than the window; rest is older too
@@ -716,7 +717,7 @@ export async function getRecentAnnouncements(limitNum: number = 1000, symbols?: 
     }
   }
   // announcementsMemoryCache is already maintained sorted on insert
-  return announcementsMemoryCache.slice(0, limitNum);
+  return announcementsMemoryCache.filter(isBseFiling).slice(0, limitNum);
 }
 
 export function getTotalAnnouncementsCount(): number {
@@ -730,10 +731,11 @@ export function getTotalAnnouncementsCount(): number {
 // still exists in Supabase. Query Supabase directly by scrip (indexed column)
 // and union with whatever memory already holds.
 // During local fallback this degrades to the memory-only view.
-export async function getAnnouncementsForScrip(scripCode: string, limitNum: number = 400): Promise<any[]> {
+export async function getAnnouncementsForScrip(scripCode: string, limitNum: number = Number.MAX_SAFE_INTEGER, strict = false): Promise<any[]> {
   const target = String(scripCode || '').trim();
   if (!target) return [];
 
+  if (strict && process.env.NODE_ENV === 'production' && !isSupabaseConfigured()) throw new Error('Stored filing history unavailable');
   const byId = new Map<string, any>();
   for (const ann of announcementsMemoryCache) {
     if (hasExactScripCode(ann, target)) {
@@ -743,26 +745,61 @@ export async function getAnnouncementsForScrip(scripCode: string, limitNum: numb
 
   if (isSupabaseConfigured()) {
     try {
-      const { data, error } = await getSupabase()
-        .from(ANNOUNCEMENTS_TABLE)
-        .select('*')
-        .eq('scrip_cd', target)
-        .limit(limitNum);
-      if (error) throw error;
-      for (const row of data || []) {
-        const dataItem: any = row.data || {};
-        let bseTs = parseBseDate(dataItem.bseTime);
-        if (!bseTs) bseTs = dataItem.bseTimestamp || dataItem.fetched_at || 0;
-        const item = { id: row.id, scrip_cd: row.scrip_cd, ...dataItem, bseTimestamp: bseTs };
-        if (!hasExactScripCode(item, target)) continue;
-        byId.set(row.id, { ...(byId.get(row.id) || {}), ...item });
+      // Keyset pages avoid both PostgREST's row ceiling and a silent total-history cap.
+      const deadline = AbortSignal.timeout(12_000);
+      let after = '';
+      while (true) {
+        let query = getSupabase().from(ANNOUNCEMENTS_TABLE).select('*')
+          .eq('scrip_cd', target).order('id', { ascending: true }).limit(Math.min(500, limitNum));
+        if (after) query = query.gt('id', after);
+        const { data, error } = await query.abortSignal(deadline);
+        if (error) throw error;
+        for (const row of data || []) {
+          const dataItem: any = row.data || {};
+          const item = { ...dataItem, id: row.id, scrip_cd: row.scrip_cd,
+            bseTimestamp: parseBseDate(dataItem.bseTime) || dataItem.bseTimestamp || 0 };
+          if (hasExactScripCode(item, target)) byId.set(row.id, { ...(byId.get(row.id) || {}), ...item });
+        }
+        if (!data?.length || data.length < Math.min(500, limitNum) || byId.size >= limitNum) break;
+        const next = String(data[data.length - 1].id);
+        if (next <= after) throw new Error('Filing history pagination did not advance');
+        after = next;
       }
     } catch (e) {
-      // Network trouble — memory-only view is the honest fallback.
+      if (strict) throw new Error('Stored filing history unavailable');
+      // Existing callers may explicitly use the memory fallback.
     }
   }
 
-  return Array.from(byId.values());
+  return Array.from(byId.values()).filter(isBseFiling);
+}
+
+/** BSE equity has no BSE scrip. Read exact NSE identity, including verified legacy PDFs. */
+export async function getBseOperatorAnnouncements(strict = false): Promise<any[]> {
+  if (strict && process.env.NODE_ENV === 'production' && !isSupabaseConfigured()) throw new Error('BSE operator filings unavailable');
+  const byId = new Map<string, any>();
+  for (const item of announcementsMemoryCache) if (isBseOperatorFiling(item)) byId.set(item.id, item);
+  if (isSupabaseConfigured()) {
+    const deadline = AbortSignal.timeout(12_000);
+    let after = '';
+    try {
+      while (true) {
+        let query = getSupabase().from(ANNOUNCEMENTS_TABLE).select('*')
+          .or('data->>symbol.eq.BSE,data->>companyName.eq.BSE Limited,data->>companyName.eq.BSE Ltd')
+          .order('id', { ascending: true }).limit(500);
+        if (after) query = query.gt('id', after);
+        const { data, error } = await query.abortSignal(deadline);
+        if (error) throw error;
+        for (const row of data || []) { const item = fromRow(row); if (isBseOperatorFiling(item)) byId.set(row.id, item); }
+        if (!data?.length || data.length < 500) break;
+        const next = String(data[data.length - 1].id);
+        if (next <= after) throw new Error('Operator history pagination stalled');
+        after = next;
+      }
+    } catch { if (strict || !byId.size) throw new Error('BSE operator filings unavailable'); }
+  }
+  // Projection only; immutable stored evidence and its old code are not rewritten.
+  return [...byId.values()].map(projectFilingIdentity);
 }
 
 export async function boostAnnouncementsPriorityForWindow(

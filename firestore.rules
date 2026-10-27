@@ -110,7 +110,14 @@ service cloud.firestore {
         isAdmin()
       );
       allow create: if isAuthenticated() && !isAnonymous() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isAuthenticated() && !isAnonymous() && (resource.data.userId == request.auth.uid || isAdmin());
+      // SECURITY (24 Oct 2026 audit RULES-1): the owner may edit the rule but must
+      // not re-point `userId`. Without this an owner could hand a rule to another
+      // user's uid (or to 'system', which every signed-in user can read).
+      allow update: if isAuthenticated() && !isAnonymous() && (
+        (resource.data.userId == request.auth.uid && request.resource.data.userId == resource.data.userId) ||
+        isAdmin()
+      );
+      allow delete: if isAuthenticated() && !isAnonymous() && (resource.data.userId == request.auth.uid || isAdmin());
     }
 
     // Sent News Alerts: Internal server dispatch tracking
@@ -125,7 +132,13 @@ service cloud.firestore {
         isAdmin()
       );
       allow create: if isAuthenticated() && !isAnonymous() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isAuthenticated() && !isAnonymous() && (resource.data.userId == request.auth.uid || isAdmin());
+      // SECURITY (24 Oct 2026 audit RULES-1): `userId` is immutable for the owner,
+      // so a note can never be planted into another user's account.
+      allow update: if isAuthenticated() && !isAnonymous() && (
+        (resource.data.userId == request.auth.uid && request.resource.data.userId == resource.data.userId) ||
+        isAdmin()
+      );
+      allow delete: if isAuthenticated() && !isAnonymous() && (resource.data.userId == request.auth.uid || isAdmin());
     }
 
     // Payment ledger & entitlements: SERVER ONLY (Admin SDK bypasses rules).

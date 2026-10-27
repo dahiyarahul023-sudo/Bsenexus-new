@@ -5,11 +5,11 @@ export function resolveServerPort(rawPort = process.env.PORT, argv = process.arg
     for (let i = 0; i < argv.length; i++) {
       if (argv[i] === '--port' && argv[i + 1]) {
         rawPort = argv[i + 1];
-        break;
+        i++;
+        continue;
       }
       if (argv[i].startsWith('--port=')) {
         rawPort = argv[i].slice('--port='.length);
-        break;
       }
     }
   }

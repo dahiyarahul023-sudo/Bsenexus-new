@@ -32,6 +32,8 @@ export interface UserNotificationPreferences {  resultsAndEarnings: boolean;
   creditRatings: boolean;
   muteRoutineFilings: boolean;
   muteInAppNotifications?: boolean;
+  adrAlertsEnabled?: boolean;
+  storyNavigationButtons?: boolean;
   // Granular notification toggles:
   stocksHighPriority: boolean;
   stocksMediumPriority: boolean;
@@ -58,6 +60,7 @@ export interface UserNotificationPreferences {  resultsAndEarnings: boolean;
 }
 
 export interface UserProfile {
+  subscriptionAccess?: import('./shared/giftAccess').SubscriptionAccess;
   uid: string;
   email: string | null;
   displayName: string | null;

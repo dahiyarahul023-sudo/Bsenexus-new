@@ -183,11 +183,13 @@ export default function ParticleRibbons() {
       const heads: Array<[number, number, number]> = [];
       for (const r of ribbons) {
         const passes = dark ? [{ m: 4.2, a: 0.13 }, { m: 1, a: 1 }] : [{ m: 2.4, a: 0.15 }];
+        // Adjacent segments and glow passes share the same curve at this time.
+        const points = Array.from({ length: SEG + 1 }, (_, s) => ribbonPoint(r, t, s / SEG, bx, by));
         for (const p of passes) {
           for (let s = 1; s <= SEG; s++) {
-            const k0 = (s - 1) / SEG, k1 = s / SEG;
-            const [x0, y0] = ribbonPoint(r, t, k0, bx, by);
-            const [x1, y1] = ribbonPoint(r, t, k1, bx, by);
+            const k1 = s / SEG;
+            const [x0, y0] = points[s - 1];
+            const [x1, y1] = points[s];
             const fade = Math.pow(1 - k1, 1.6);
             const a = r.alpha * fade * p.a * (dark ? 1 : 0.5);
             if (a < 0.004) continue;

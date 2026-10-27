@@ -45,3 +45,9 @@
 - **Data Pipeline**: Automated BSE India web service scrapers with checksum deduplication and PDF text extraction.
 - **AI Processing**: Google Gemini 2.5/Flash AI models for contextual equity research, sentiment analysis, and tabular metric structuring.
 - **Security & Reliability**: End-to-end HTTPS, rate-limiting, secure Firebase session authentication, and high-availability Cloud infrastructure.
+
+## Connected AI access
+- Remote OAuth MCP server: https://bsenexus.in/mcp ; user setup and permissions: https://bsenexus.in/plugin
+- Declared results filings and upcoming result dates are different datasets. Upcoming dates are scheduled results-related board meetings from available stored coverage, not guaranteed declarations.
+- Calendar tools report Asia/Kolkata date ranges, source freshness and coverage. Private watchlist queries require the connected account and permitted scopes; they are not public crawl content.
+- Use original exchange notices for verification. Missing coverage must not be described as proof that no result is scheduled. MCP data endpoints do not guarantee independently validated financial metrics.

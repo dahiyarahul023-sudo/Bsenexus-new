@@ -295,6 +295,15 @@ html, body {
   max-width: 100vw;
 }
 
+/* Keep horizontal clipping without a non-scrolling ancestor trapping the
+   calendar toolbar/date headings. Retained hidden tabs must not enable this. */
+@supports (overflow-x: clip) {
+  html:has([data-screen-page="results-calendar"]:not([hidden])),
+  body:has([data-screen-page="results-calendar"]:not([hidden])) {
+    overflow-x: clip;
+  }
+}
+
 /* 
  * Video Principle: "Jump links need scroll-margin-top, or every heading tucks up under the bar."
  * Targets anchors, headings, and sections with IDs so they clear the sticky header + ticker
@@ -711,3 +720,54 @@ body {
   outline: 2px solid rgba(47, 158, 119, 0.6);
   outline-offset: 2px;
 }
+
+/* Semantic control shapes: the active surface and its hit target share one radius.
+   Explicit hooks avoid restyling switches, icon circles or destructive variants. */
+:root { --rich-control-radius:12px; --rich-segment-radius:9px; --rich-group-radius:13px; }
+[data-design-theme="softglass"] { --rich-control-radius:999px; --rich-segment-radius:999px; --rich-group-radius:24px; }
+.ui-segmented,[data-design-theme] .ui-segmented { border-radius:var(--rich-group-radius); }
+.ui-segmented>button,[data-design-theme] .ui-segmented>button { border-radius:var(--rich-segment-radius); min-width:0; }
+.ui-segmented .rich-tab-pill,[data-design-theme] .ui-segmented .rich-tab-pill { border-radius:inherit; }
+.ui-control,[data-design-theme] .ui-control,
+.rich-action,[data-design-theme] .rich-action,
+.calendar-action-button,[data-design-theme] .calendar-action-button { border-radius:var(--rich-control-radius); }
+.ui-segmented>button:focus-visible { outline:2px solid var(--rich-focus,#047857); outline-offset:2px; }
+.watchlist-label-short { display:none; }
+.watchlist-tabs>button>span:last-child { flex-wrap:nowrap; }
+.filings-search input,.results-search input,.watchlist-actions input { font-size:13px; line-height:1.4; font-weight:500; }
+[data-design-theme] :is(.filings-search,.results-search,.watchlist-actions) input { border-radius:var(--rich-control-radius); }
+.calendar-entry .calendar-identity { flex:1; }
+.calendar-company-title { min-width:0; font-size:13px; line-height:1.45; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.calendar-company-meta { display:flex; flex-wrap:wrap; align-items:center; gap:5px 8px; margin-top:4px; font-size:11px; line-height:1.5; color:var(--rich-muted,#586578); }
+.calendar-symbol { font-size:10px; font-weight:650; }
+.calendar-purpose { color:var(--rich-muted,#586578); }
+.calendar-date-heading { font-size:11px; line-height:1.5; min-height:34px; white-space:nowrap; }
+.calendar-card-footer { display:flex; align-items:center; justify-content:flex-end; flex-wrap:wrap; gap:8px; }
+.calendar-card-actions { display:flex; align-items:center; justify-content:flex-end; flex-wrap:wrap; gap:6px; min-width:0; }
+.calendar-action-button { min-height:36px; font-size:11px; }
+.calendar-list-status { margin-right:auto; white-space:nowrap; }
+@media(max-width:767px) {
+  .watchlist-label-wide { display:none; }
+  .watchlist-label-short { display:inline; }
+  .watchlist-tabs>button>span:last-child { flex-wrap:nowrap; font-size:12px; }
+  .watchlist-toolbar .watchlist-actions>div:first-child { flex-wrap:nowrap; }
+  .watchlist-toolbar .watchlist-actions>div:first-child>div:first-child { flex:1 1 0; min-width:0; }
+  .watchlist-toolbar .watchlist-actions input,.results-search input,.filings-search input { font-size:16px; min-height:44px; }
+  .watchlist-toolbar .watchlist-actions>div:first-child>button { flex:none; padding-inline:12px; min-height:44px; }
+  .calendar-action-button { min-height:44px; }
+  .calendar-company-title { font-size:14px; }
+}
+@media(max-width:480px) {
+  .calendar-card-header { flex-wrap:wrap; align-items:flex-start; }
+  .calendar-card-header>:first-child { flex:1 1 100%; }
+  .calendar-card-header>:last-child:not(:first-child) { margin-left:auto; }
+}
+.calendar-stock-info { width:100%; }
+.calendar-identity .calendar-company-meta { margin-top:0; }
+.calendar-action-popover { background:var(--rich-surface,#fff); color:var(--rich-ink,#162333); border-color:var(--rich-border,#dce4e9); }
+.calendar-action-popover :is(button,a) { min-height:40px; }
+@media(max-width:767px) { .calendar-action-popover :is(button,a) { min-height:44px; } }
+.calendar-declared-today,[data-result-status="declared-today"] { border-left:3px solid #059669; background-image:linear-gradient(100deg,#10b9810b,transparent 70%); }
+.calendar-declared-today .calendar-list-status { color:var(--rich-selected-ink,#065f46); font-weight:750; }
+.result-timing { color:var(--rich-ink,#162333); }
+.result-timing svg { width:100%; max-width:640px; height:auto; display:block; min-height:110px; }

@@ -5,20 +5,15 @@ import { PageSkeleton } from './components/ui/PageSkeleton';
 import { useScreenTransition } from './hooks/useScreenTransition';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { IntelModalProvider } from './context/IntelModalContext';
-import { NoteEditorProvider } from './context/NoteEditorContext';
+import { NoteEditorProvider, useNoteEditor } from './context/NoteEditorContext';
 import { ToastProvider, useToast } from './context/ToastContext';
 import { customFetch } from './api';
 import { verifyProPayment, clearPendingOrderId, getPlanDisplayFromOrderId, isValidPlanId } from './utils/cashfree';
 import { useVisibilityInterval } from './hooks/useVisibilityInterval';
+import { usePaymentDialog } from './hooks/usePaymentDialog';
 import type { DesignTheme } from './types';
 
-import { LandingPage } from './components/LandingPage';
-import { Layout } from './components/Layout';
-import { AuthModal } from './components/AuthModal';
-import { ProUpgradeModal } from './components/ProUpgradeModal';
-import { ProCheckoutView } from './components/ProCheckoutView';
-import { ProReceiptView } from './components/ProReceiptView';
-import { AdminPinModal } from './components/AdminPinModal';
+const LandingPage = lazyWithRetry(() => import('./components/LandingPage').then(m => ({ default: m.LandingPage })));
 
 /**
  * Wraps dynamic React.lazy imports with automated retry logic to seamlessly recover
@@ -78,28 +73,106 @@ function TabFallback() {
     </div>
   );
 }
+
+// A lazy import only saves startup work when no eager import reaches the same
+// module. Keep the entire terminal shell and closed dialogs outside the public
+// landing dependency graph. Each boundary preserves the existing page and gives
+// a failed chunk the same reload/recovery path as a failed tab.
+function deferredComponent<Props extends object>(
+  label: string,
+  load: () => Promise<{ default: React.ComponentType<Props> }>,
+  overlay = false,
+) {
+  const Content = lazyWithRetry(load);
+  return function DeferredComponent(props: Props) {
+    const cancel = useDeferredCancel(label);
+    return (
+      <TabErrorBoundary label={label} overlay={overlay} onBack={overlay ? cancel : undefined} backLabel="Close">
+        <Suspense fallback={overlay ? <PendingOverlay label={label} /> : <PageSkeleton page="home" />}>
+          <Content {...props} />
+        </Suspense>
+      </TabErrorBoundary>
+    );
+  };
+}
+
+function useDeferredCancel(label: string) {
+  const { setIsAuthModalOpen, setIsProModalOpen, setIsAdminPinModalOpen, setIsCheckoutOpen, setReceipt } = useAuth();
+  const { closeNoteEditor } = useNoteEditor();
+  return () => {
+    if (label === 'sign in') setIsAuthModalOpen(false);
+    else if (label === 'plans') setIsProModalOpen(false);
+    else if (label === 'admin access') setIsAdminPinModalOpen(false);
+    else if (label === 'checkout') setIsCheckoutOpen(false);
+    else if (label === 'receipt') setReceipt(null);
+    else closeNoteEditor();
+  };
+}
+
+function PendingOverlay({ label }: { label: string }) {
+  const cancel = useDeferredCancel(label);
+  const dialog = usePaymentDialog(true, cancel);
+  return (
+    <div ref={dialog} className="fixed inset-0 z-[150] grid place-items-center bg-slate-950/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={`Opening ${label}`}>
+      <div className="rounded-2xl bg-white dark:bg-slate-900 px-8 py-5 text-sm text-slate-700 dark:text-slate-200">
+        <p role="status">Opening {label}…</p>
+        <button type="button" onClick={cancel} className="mt-4 min-h-11 rounded-full px-4 border border-slate-300 dark:border-slate-600">Cancel</button>
+      </div>
+    </div>
+  );
+}
+
+const Layout = deferredComponent('terminal', () => import('./components/Layout').then(m => ({ default: m.Layout })));
+const AuthModal = deferredComponent('sign in', () => import('./components/AuthModal').then(m => ({ default: m.AuthModal })), true);
+const ProUpgradeModal = deferredComponent('plans', () => import('./components/ProUpgradeModal').then(m => ({ default: m.ProUpgradeModal })), true);
+const AdminPinModal = deferredComponent('admin access', () => import('./components/AdminPinModal').then(m => ({ default: m.AdminPinModal })), true);
+const ProCheckoutView = deferredComponent('checkout', () => import('./components/ProCheckoutView').then(m => ({ default: m.ProCheckoutView })), true);
+const ProReceiptView = deferredComponent('receipt', () => import('./components/ProReceiptView').then(m => ({ default: m.ProReceiptView })), true);
+const FilingPage = deferredComponent('filing', () => import('./components/filing/FilingPage').then(m => ({ default: m.FilingPage })));
+const ResultsPage = deferredComponent('results', () => import('./components/results/ResultsPage').then(m => ({ default: m.ResultsPage })));
+const NoteEditorChunk = deferredComponent('note editor', () => import('./components/notes/NoteEditor').then(m => ({
+  default: function LoadedNoteEditor({ onReady }: { onReady: () => void }) {
+    useEffect(onReady, [onReady]);
+    return <m.NoteEditorHost />;
+  },
+})), true);
+
+function NoteEditorHost() {
+  const { isOpen } = useNoteEditor();
+  // Retain only a host that actually mounted. Cancelling its first cold load
+  // must remove the fallback, including any later load failure.
+  const [hasMounted, setHasMounted] = useState(false);
+  const onReady = useCallback(() => { setHasMounted(true); }, []);
+  return isOpen || hasMounted ? <NoteEditorChunk onReady={onReady} /> : null;
+}
+
+function PaymentOverlays() {
+  const { isCheckoutOpen, receipt } = useAuth();
+  return <>
+    {isCheckoutOpen && <ProCheckoutView />}
+    {receipt && <ProReceiptView />}
+  </>;
+}
 import { useScrollRestoration } from './hooks/useScrollRestoration';
 import { TabErrorBoundary } from './components/ui/TabErrorBoundary';
-import { ScrollRestoredPill } from './components/ui/ScrollRestoredPill';
 import { saveScrollPosition } from './utils/scrollState';
 import { parseShareablePath } from './utils/shareUrls';
-import { FilingPage } from './components/filing/FilingPage';
-import { ResultsPage } from './components/results/ResultsPage';
-import { NoteEditorHost } from './components/notes/NoteEditor';
 const PricingPage = lazy(() => import('./components/PricingPage').then(m => ({ default: m.PricingPage })));
 const GuidesPage = lazy(() => import('./components/GuidesPage').then(m => ({ default: m.GuidesPage })));
 const CompaniesPage = lazy(() => import('./components/CompaniesPage').then(m => ({ default: m.CompaniesPage })));
 const TrustPage = lazy(() => import('./components/TrustPages').then(m => ({ default: m.TrustPage })));
 const AiPluginPage = lazy(() => import('./components/AiPluginPage').then(m => ({ default: m.AiPluginPage })));
+const GiftActivationPage = lazy(() => import('./components/GiftActivationPage').then(m => ({ default: m.GiftActivationPage })));
 const NotFoundPage = lazy(() => import('./components/NotFoundPage').then(m => ({ default: m.NotFoundPage })));
 
-function getAppPathRoute(): 'home' | 'pricing' | 'guides' | 'companies' | 'about' | 'contact' | 'privacy' | 'terms' | 'disclaimer' | 'plugin' | '404' {
+function getAppPathRoute(): 'home' | 'pricing' | 'guides' | 'companies' | 'about' | 'contact' | 'privacy' | 'terms' | 'disclaimer' | 'plugin' | 'gift' | '404' {
   if (typeof window === 'undefined') return 'home';
   const path = window.location.pathname.toLowerCase().replace(/\/+$/, '') || '/';
   if (path === '/' || path === '') return 'home';
   if (path === '/pricing' || path === '/plans') return 'pricing';
   if (path === '/guides' || path === '/market-guides') return 'guides';
   if (path === '/companies' || path === '/company-directory') return 'companies';
+  if (path === '/activate-gift') return 'gift';
   if (path === '/about') return 'about';
   if (path === '/contact') return 'contact';
   if (path === '/plugin' || path === '/ai-plugin') return 'plugin';
@@ -131,11 +204,12 @@ function getAppPathRoute(): 'home' | 'pricing' | 'guides' | 'companies' | 'about
   return '404';
 }
 
-function Dashboard({ bseHealth, telegramHealth, isRunning, handleToggle }: any) {
+function Dashboard({ bseHealth, telegramHealth, isRunning, handleToggle, isActive = true }: any) {
   return (
     <div className="space-y-2">
       {/* Main Announcements Feed */}
       <Suspense fallback={<PageSkeleton page="announcements" />}><Announcements
+        isActive={isActive}
         isRunning={isRunning}
         onToggleEngine={handleToggle}
         bseHealth={bseHealth}
@@ -152,7 +226,7 @@ function Dashboard({ bseHealth, telegramHealth, isRunning, handleToggle }: any) 
  * Runs on every route so a payment return always lands in the React app.
  */
 function CashfreeReturnHandler() {
-  const { user, refreshProfile, setReceipt, setIsAuthModalOpen } = useAuth();
+  const { user, refreshProfile, setReceipt, setIsAuthModalOpen, isAuthModalOpen } = useAuth();
   const { success, warning } = useToast();
   const handledRef = useRef<string | null>(null);
   // While our server confirms the payment with Cashfree, show a processing
@@ -234,6 +308,9 @@ function CashfreeReturnHandler() {
   }, [user, needsLogin]);
 
   if (needsLogin) {
+    // Preserve recovery intent while the sign-in dialog owns focus/visibility.
+    // Cancelling sign-in exposes this prompt again; no payment is confirmed here.
+    if (isAuthModalOpen) return null;
     return (
       <div
         className="payment-ui payment-overlay" style={{ zIndex: 96 }}
@@ -276,7 +353,7 @@ function CashfreeReturnHandler() {
 }
 
 function AppContent() {
-  const [currentRoute, setCurrentRoute] = useState<'home' | 'pricing' | 'guides' | 'companies' | 'about' | 'contact' | 'privacy' | 'terms' | 'disclaimer' | 'plugin' | '404'>(() => getAppPathRoute());
+  const [currentRoute, setCurrentRoute] = useState<'home' | 'pricing' | 'guides' | 'companies' | 'about' | 'contact' | 'privacy' | 'terms' | 'disclaimer' | 'plugin' | 'gift' | '404'>(() => getAppPathRoute());
   // Shareable deep-link route (/filing/:symbol/:newsId, /results/:symbol/:quarterKey).
   // Rendered as standalone public pages; must survive the tab-sync pushState logic.
   // Legacy /announcement/:newsId URLs 301-redirect server-side, so only the two
@@ -350,6 +427,7 @@ function AppContent() {
   const [settings, setSettings] = useState<any>({});
   const [logs, setLogs] = useState([]);
   const [watchlists, setWatchlists] = useState<any[]>([]);
+  const [watchlistDataOwner, setWatchlistDataOwner] = useState('');
   const [health, setHealth] = useState({ bse: { status: 'unknown', latency: 0 }, telegram: { status: 'unknown', latency: 0 } });
   
   const { user, profile, authLoading, isAdmin, isPro, adminUnlocked, logout, 
@@ -358,6 +436,9 @@ function AppContent() {
     isPaidProActive, updateNotificationPreferences, openCheckout
   } = useAuth();
   const { showToast } = useToast();
+  const watchlistsRequest = useRef<AbortController | null>(null);
+  const watchlistAccount = user?.uid || profile?.uid || 'guest';
+  const watchlistOwner = useRef(watchlistAccount); watchlistOwner.current = watchlistAccount;
   const [serverAuth, setServerAuth] = useState<{ isAuthenticated: boolean; hasPin: boolean } | null>(null);
 
   // Capture ?ref=CODE referral links across all entry points
@@ -416,12 +497,13 @@ function AppContent() {
   const tabMotion = useScreenTransition(activeTab);
 
   // Apple-Grade Scroll State & Restoration System ("Scroll is state")
-  const { restoredInfo, scrollToTop } = useScrollRestoration({
+  const { scrollToTop } = useScrollRestoration({
     activeKey: tabMotion.displayedKey,
     enabled: true
   });
 
-  const handleTabChange = (newTab: string) => {
+  const handleTabChange = (requestedTab: string) => {
+    const newTab = requestedTab === 'announcements' ? 'dashboard' : requestedTab;
     // Watchlist is Pro-only: free users get the upgrade sheet instead (covers
     // deep links, profile-modal shortcut and in-app buttons).
     const canUseWatchlist = Boolean(isPro || isAdmin || adminUnlocked || profile?.tier === 'admin');
@@ -429,14 +511,16 @@ function AppContent() {
       setIsProModalOpen(true);
       return;
     }
-    if (newTab === activeTab) {
+    if (newTab === activeTab && getAppPathRoute() === 'home') {
       // Tap active tab to scroll to top (like iOS / Twitter)
       scrollToTop();
       return;
     }
-    if (newTab === 'companies') {
-      // Legacy: companies now lives under Settings → BSE Listed Companies.
-      window.location.href = '/companies';
+    if (newTab === 'companies' || newTab === 'plugin') {
+      saveScrollPosition(tabMotion.displayedKey);
+      window.history.pushState(null, '', newTab === 'companies' ? '/companies' : '/plugin');
+      setCurrentRoute(newTab);
+      window.scrollTo({ top: 0, behavior: 'instant' });
       return;
     }
     // Save previous tab scroll position immediately before switching
@@ -546,6 +630,10 @@ function AppContent() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
+  useEffect(() => {
+    if (currentRoute === 'home') document.title = activeTab === 'dashboard' ? 'Live BSE Filings | Bsenexus' : 'Bsenexus — Stock Market Intelligence';
+  }, [currentRoute, activeTab]);
+
   // Synchronize browser address bar with activeTab navigation without reloading
   const isFirstTabSyncRender = useRef(true);
   useEffect(() => {
@@ -579,7 +667,7 @@ function AppContent() {
         targetPath = '/?tab=seo-suite';
         break;
       case 'settings':
-        targetPath = '/?tab=settings';
+        targetPath = '/settings';
         break;
       case 'home':
       default:
@@ -606,6 +694,10 @@ function AppContent() {
         if (shared) return;
         if (pathname === '/announcements') {
           setActiveTab('dashboard');
+          return;
+        }
+        if (pathname === '/settings') {
+          setActiveTab('settings');
           return;
         }
         if (pathname === '/live') {
@@ -661,14 +753,7 @@ function AppContent() {
     document.documentElement.style.overflow = '';
   }, [activeTab]);
 
-  // When user successfully signs in, immediately navigate inside to the live terminal dashboard
-  const prevUserRef = useRef<any>(null);
-  useEffect(() => {
-    if (user && !prevUserRef.current && !parseShareablePath(window.location.pathname) && getAppPathRoute() === 'home') {
-      setActiveTab(prev => (prev === 'home' ? 'dashboard' : prev));
-    }
-    prevUserRef.current = user;
-  }, [user]);
+  // The home tab is For You. Authentication preserves it and any explicit URL/tab intent.
 
   useEffect(() => {
     if (theme === 'dark') document.documentElement.classList.add('dark');
@@ -753,14 +838,26 @@ function AppContent() {
   }, [authLoading, user?.uid, profile?.notificationPreferences?.designTheme, isPaidProActive]);
 
   const fetchWatchlists = async () => {
+    watchlistsRequest.current?.abort();
+    if (!user && !profile) { setWatchlists([]); return; }
+    const controller = new AbortController(); watchlistsRequest.current = controller;
+    const requestedOwner = watchlistAccount;
+    const current = () => !controller.signal.aborted && watchlistOwner.current === requestedOwner;
     try {
-      const res = await customFetch('/api/watchlists');
-      if (res.ok) {
-        const data = await res.json();
-        setWatchlists(Array.isArray(data) ? data : []);
-      }
-    } catch (e) {}
+      const res = await customFetch('/api/watchlists', { signal: controller.signal });
+      if (!res.ok) throw new Error('Watchlists unavailable');
+      const data = await res.json();
+      if (current()) { setWatchlists(Array.isArray(data) ? data : []); setWatchlistDataOwner(requestedOwner); }
+    } catch { if (current()) setWatchlists([]); }
   };
+
+  useEffect(() => {
+    setWatchlists([]);
+    void fetchWatchlists();
+    const changed = () => { void fetchWatchlists(); };
+    window.addEventListener('watchlists-changed', changed);
+    return () => { watchlistsRequest.current?.abort(); window.removeEventListener('watchlists-changed', changed); };
+  }, [watchlistAccount]);
 
   const checkAuth = async () => {
     try {
@@ -775,9 +872,6 @@ function AppContent() {
 
   useEffect(() => {
     checkAuth();
-    if (user) {
-      fetchWatchlists();
-    }
     const handleAuthExpired = () => {
       checkAuth();
     };
@@ -810,7 +904,6 @@ function AppContent() {
 
   useEffect(() => {
     fetchSettings();
-    fetchWatchlists();
   }, []);
 
   useEffect(() => {
@@ -872,6 +965,10 @@ function AppContent() {
     );
   }
 
+  if (currentRoute === 'gift') {
+    return <><TabErrorBoundary label="gift invitation"><Suspense fallback={<TabFallback />}><GiftActivationPage /></Suspense></TabErrorBoundary>{isAuthModalOpen && <AuthModal />}</>;
+  }
+
   if (currentRoute === 'pricing') {
     return <>
       <TabErrorBoundary label="pricing"><Suspense fallback={<TabFallback />}>
@@ -906,7 +1003,7 @@ function AppContent() {
     return (
       <>
         <TabErrorBoundary label="companies">
-        <Suspense fallback={<TabFallback />}>
+        <Suspense fallback={<PageSkeleton page="companies" />}>
           <CompaniesPage
             onEnterTerminal={(tab) => {
               setCurrentRoute('home');
@@ -953,7 +1050,7 @@ function AppContent() {
     return (
       <>
         <TabErrorBoundary label="ai-plugin-page">
-          <Suspense fallback={<TabFallback />}>
+          <Suspense fallback={<PageSkeleton page="ai-connections" />}>
             <AiPluginPage
               onEnterTerminal={(tab) => {
                 setCurrentRoute('home');
@@ -993,29 +1090,31 @@ function AppContent() {
   if (!user && activeTab === 'home' && !authLoading) {
     return (
       <>
-        <LandingPage
-          onEnterTerminal={(tab) => {
-            // No silent entry for logged-out visitors: open the auth modal so they
-            // explicitly choose Sign in / Create account / Continue as Guest.
-            if (!user) {
-              pendingTerminalTabRef.current = tab || 'dashboard';
-              setIsAuthModalOpen(true);
-              return;
-            }
-            if (tab) {
-              const safeTab = (tab === 'diagnostics' || tab === 'logs' || tab === 'storage' || tab === 'seo-suite') && !isAdmin
-                ? 'dashboard'
-                : tab;
-              handleTabChange(safeTab);
-            } else {
-              setIsAuthModalOpen(true);
-            }
-          }}
-          theme={theme}
-          setTheme={setTheme}
-          bseHealth={health.bse}
-          telegramHealth={health.telegram}
-        />
+        <Suspense fallback={<PageSkeleton page="home" />}>
+          <LandingPage
+            onEnterTerminal={(tab) => {
+              // No silent entry for logged-out visitors: open the auth modal so they
+              // explicitly choose Sign in / Create account / Continue as Guest.
+              if (!user) {
+                pendingTerminalTabRef.current = tab || 'home';
+                setIsAuthModalOpen(true);
+                return;
+              }
+              if (tab) {
+                const safeTab = (tab === 'diagnostics' || tab === 'logs' || tab === 'storage' || tab === 'seo-suite') && !isAdmin
+                  ? 'dashboard'
+                  : tab;
+                handleTabChange(safeTab);
+              } else {
+                setIsAuthModalOpen(true);
+              }
+            }}
+            theme={theme}
+            setTheme={setTheme}
+            bseHealth={health.bse}
+            telegramHealth={health.telegram}
+          />
+        </Suspense>
         {isAuthModalOpen && (
           <AuthModal
             onSuccess={() => {
@@ -1036,29 +1135,31 @@ function AppContent() {
   if (!user && activeTab === 'home') {
     return (
       <>
-        <LandingPage
-          onEnterTerminal={(tab) => {
-            // No silent entry for logged-out visitors: open the auth modal so they
-            // explicitly choose Sign in / Create account / Continue as Guest.
-            if (!user) {
-              pendingTerminalTabRef.current = tab || 'dashboard';
-              setIsAuthModalOpen(true);
-              return;
-            }
-            if (tab) {
-              const safeTab = (tab === 'diagnostics' || tab === 'logs' || tab === 'storage' || tab === 'seo-suite') && !isAdmin
-                ? 'dashboard'
-                : tab;
-              handleTabChange(safeTab);
-            } else {
-              setIsAuthModalOpen(true);
-            }
-          }}
-          theme={theme}
-          setTheme={setTheme}
-          bseHealth={health.bse}
-          telegramHealth={health.telegram}
-        />
+        <Suspense fallback={<PageSkeleton page="home" />}>
+          <LandingPage
+            onEnterTerminal={(tab) => {
+              // No silent entry for logged-out visitors: open the auth modal so they
+              // explicitly choose Sign in / Create account / Continue as Guest.
+              if (!user) {
+                pendingTerminalTabRef.current = tab || 'home';
+                setIsAuthModalOpen(true);
+                return;
+              }
+              if (tab) {
+                const safeTab = (tab === 'diagnostics' || tab === 'logs' || tab === 'storage' || tab === 'seo-suite') && !isAdmin
+                  ? 'dashboard'
+                  : tab;
+                handleTabChange(safeTab);
+              } else {
+                setIsAuthModalOpen(true);
+              }
+            }}
+            theme={theme}
+            setTheme={setTheme}
+            bseHealth={health.bse}
+            telegramHealth={health.telegram}
+          />
+        </Suspense>
         {isAuthModalOpen && (
           <AuthModal
             onSuccess={() => {
@@ -1097,6 +1198,7 @@ function AppContent() {
         {(visitedTabs.has('dashboard') || activeTab === 'dashboard') && (
           <div data-screen-page="dashboard" hidden={tabMotion.displayedKey !== 'dashboard'}>
             <TabErrorBoundary label="announcements"><Dashboard
+              isActive={tabMotion.displayedKey === 'dashboard'}
               bseHealth={health.bse} 
               telegramHealth={health.telegram} 
               isRunning={settings.isRunning} 
@@ -1108,7 +1210,7 @@ function AppContent() {
           <div data-screen-page="watchlists" hidden={tabMotion.displayedKey !== 'watchlists'}>
             <TabErrorBoundary label="watchlists">
             <Suspense fallback={<PageSkeleton page="watchlists" />}>
-              <WatchlistManager key={user?.uid || profile?.uid || 'guest'} />
+              <WatchlistManager key={user?.uid || profile?.uid || 'guest'} isActive={tabMotion.displayedKey === 'watchlists'} />
             </Suspense>
             </TabErrorBoundary>
           </div>
@@ -1127,7 +1229,7 @@ function AppContent() {
             <TabErrorBoundary label="news">
             <Suspense fallback={<PageSkeleton page="news" />}>
               <NewsPortal
-                watchlists={watchlists}
+                watchlists={watchlistDataOwner === watchlistAccount ? watchlists : []}
                 user={user}
                 onOpenWatchlists={() => handleTabChange('watchlists')}
                 onOpenSettings={() => handleTabChange('settings')}
@@ -1194,11 +1296,6 @@ function AppContent() {
         </div>
       </Layout>
 
-      {/* Floating Reassurance Indicator when restoring scroll position */}
-      <ScrollRestoredPill 
-        restoredY={restoredInfo?.y ?? null} 
-        onScrollToTop={scrollToTop} 
-      />
     </>
   );
 }
@@ -1211,8 +1308,7 @@ export default function App() {
         <ToastProvider>
           <AppContent />
           <CashfreeReturnHandler />
-          <ProCheckoutView />
-          <ProReceiptView />
+          <PaymentOverlays />
         </ToastProvider>
         </NoteEditorProvider>
       </IntelModalProvider>

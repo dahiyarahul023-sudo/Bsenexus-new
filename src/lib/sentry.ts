@@ -5,6 +5,7 @@
 //   2. GET /api/config/public -> { sentryDsn } (runtime, server reads SENTRY_DSN env)
 // If neither is set, Sentry stays disabled and the app works normally.
 import type * as SentryTypes from '@sentry/react';
+import { redactAiTelemetry } from '../shared/aiTelemetry';
 import { APP_VERSION } from '../version';
 
 let initialized = false;
@@ -26,6 +27,8 @@ async function startSentry(dsn: string) {
       release: `bsenexus@${APP_VERSION}`,
       // Free-tier friendly: a small sample of transactions, all errors captured.
       tracesSampleRate: 0.1,
+      // The transaction redactor below requires the static lifecycle in SDK 11.
+      traceLifecycle: 'static',
       beforeSend(event) {
         try {
           const msg =
@@ -33,8 +36,9 @@ async function startSentry(dsn: string) {
             (typeof event.message === 'string' ? event.message : '');
           if (msg && BENIGN_PATTERNS.test(msg)) return null;
         } catch {}
-        return event;
+        return redactAiTelemetry(event);
       },
+      beforeSendTransaction: event => redactAiTelemetry(event),
     });
     initialized = true;
   } catch {
@@ -44,6 +48,7 @@ async function startSentry(dsn: string) {
 
 /** Initialize Sentry. Safe to call multiple times; resolves once. */
 export function initSentry(): Promise<void> {
+  if (typeof window !== 'undefined' && window.location.pathname.replace(/\/+$/, '').toLowerCase() === '/activate-gift') return Promise.resolve();
   if (initPromise) return initPromise;
   initPromise = (async () => {
     if (typeof window === 'undefined') return;

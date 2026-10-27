@@ -1,4 +1,6 @@
+import { TelegramLinkControl } from './TelegramLinkControl';
 import { AvatarPicker } from './AvatarPicker';
+import { StoryNavigationPreference } from './story/StoryNavigationPreference';
 import { UserAvatar } from './ui/UserAvatar';
 import { DeviceNotificationControl } from './DeviceNotificationControl';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
@@ -22,6 +24,7 @@ import { TermsModal, LegalTabType } from './TermsModal';
 import { SecurityAuditModal } from './SecurityAuditModal';
 import { AlertRulesModal } from './AlertRulesModal';
 import { HelpModal } from './HelpModal';
+const AdminGiftAccess = React.lazy(() => import('./AdminGiftAccess').then(m => ({ default: m.AdminGiftAccess })));
 import { SubscriptionCard } from './SubscriptionCard';
 import { AiUsageCard } from './AiUsageCard';
 import { useAuth } from '../context/AuthContext';
@@ -29,6 +32,7 @@ import { customFetch } from '../api';
 import { useDeveloperMode } from '../utils/developerMode';
 import { SavedNotesScreen } from './notes/SavedNotesScreen';
 import { APP_VERSION } from '../version';
+import { DIRECTORY_COMPANIES } from '../config/companyDirectory';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { useFeedDensity, DEFAULT_DENSITY, type FeedDensity } from '../hooks/useFeedDensity';
 import type { DesignTheme } from '../types';
@@ -59,6 +63,7 @@ const SETTINGS_REGISTRY = [
   { id: 'appearance', title: 'Appearance & Theme', description: 'Dark/Light mode and the Pro-only Soft Glass design theme', category: 'Preferences', keywords: ['dark', 'light', 'theme', 'mode', 'appearance', 'color', 'soft glass', 'design theme', 'pro theme', 'glass'] },
   { id: 'density', title: 'Feed Display Density', description: 'Adjust spacing for disclosure feeds (Comfortable, Compact, Dense)', category: 'Preferences', keywords: ['density', 'compact', 'comfortable', 'dense', 'spacing', 'feed', 'layout'] },
   { id: 'sound', title: 'Audio alerts', description: 'Play chime on high-impact filing updates', category: 'Preferences', keywords: ['sound', 'audio', 'chime', 'bell', 'alert', 'volume', 'audio cue'] },
+  { id: 'story-buttons', title: 'Story navigation buttons', description: 'Show or hide Previous, Pause and Next below stories', category: 'Preferences', keywords: ['story', 'stories', 'buttons', 'navigation', 'pause', 'next', 'swipe'] },
   { id: 'filter', title: 'High impact filter', description: 'Highlight material price-sensitive disclosures (SEBI LODR 30)', category: 'Preferences', keywords: ['filter', 'materiality', 'high impact', 'sebi', 'lodr', 'price-sensitive'] },
   { id: 'profile', title: 'Profile & Display name', description: 'Profile avatar, investor name, and public @username handle', category: 'Account & Identity', keywords: ['profile', 'avatar', 'character', 'photo', 'display name', 'username', 'handle', 'account', 'identity'] },
   { id: 'telegram', title: 'Telegram Alert Delivery', description: 'Instant push notifications for watchlist disclosures', category: 'Account & Identity', keywords: ['telegram', 'chat id', 'push', 'notifications', 'phone', 'bot', 'mobile'] },
@@ -71,6 +76,7 @@ const SETTINGS_REGISTRY = [
   { id: 'diagnostics', title: 'System Diagnostics & Telemetry', description: 'Bloom filter telemetry, crash-free rates, device health and memory stats', category: 'Advanced Engine', keywords: ['diagnostics', 'telemetry', 'bloom', 'health', 'memory', 'cpu'] },
   { id: 'logs', title: 'Engine Activity Logs', description: 'Live stream of BSE ingestion, Gemini AI summaries and workers', category: 'Advanced Engine', keywords: ['logs', 'activity', 'engine', 'terminal', 'stream', 'gemini'] },
   { id: 'storage', title: 'Storage Manager & Quotas', description: 'Firestore quotas, backup downloads, and cache health', category: 'Advanced Engine', keywords: ['storage', 'quotas', 'firestore', 'database', 'cache'] },
+  { id: 'gift-access', title: 'Gift Pro Access', description: 'Email invitations, custom days, resend and revoke', category: 'Advanced Engine', keywords: ['gift', 'subscription', 'invite', 'complimentary'] },
   { id: 'server-keys', title: 'Server Keys & Ingestion Config', description: 'Bot token, Master PIN, AI summarizer test, and live toggle', category: 'Advanced Engine', keywords: ['server', 'admin', 'pin', 'keys', 'token', 'ingestion'] },
   { id: 'help', title: 'Help Center & Feedback', description: 'FAQs, Telegram community group and reporting an issue', category: 'Help & Support', keywords: ['help', 'support', 'faq', 'feedback', 'issue', 'ticket'] },
   { id: 'legal', title: 'Terms, Privacy & Policies', description: 'Terms of Service, Privacy (DPDP), Cookies, Refund and SEBI disclaimers', category: 'About & Legal', keywords: ['terms', 'privacy', 'legal', 'dpdp', 'sebi', 'policy', 'disclaimer'] },
@@ -78,8 +84,8 @@ const SETTINGS_REGISTRY = [
   { id: 'delete-account', title: 'Delete Account & All Personal Data', description: 'Permanently wipe your account, stored watchlists, and all cloud preferences', category: 'Danger Zone', keywords: ['delete account', 'delete my data', 'erase', 'wipe account', 'remove profile', 'gdpr', 'dpdp', 'danger'] },
   { id: 'sign-out', title: 'Sign out of account', description: 'Log out of current investor session on this device', category: 'Danger Zone', keywords: ['sign out', 'logout', 'log out', 'exit', 'session'] },
   { id: 'alerts-triggers', title: 'Alerts & Triggers', description: 'Keyword and filing-based alert rules', category: 'Tools', keywords: ['alerts', 'triggers', 'keyword', 'filters', 'rules', 'notifications'] },
-  { id: 'ai-plugin', title: 'Universal AI Plugin & Action Schema', description: 'ChatGPT Custom Actions, Google Gemini Tools & OpenAPI Gateway', category: 'Tools', keywords: ['ai', 'plugin', 'chatgpt', 'gemini', 'bot', 'api', 'openapi', 'telegram', 'actions'] },
-  { id: 'companies-dir', title: 'BSE Listed Companies', description: 'Company profiles, filings and disclosures', category: 'Tools', keywords: ['companies', 'directory', 'listed', 'profiles', 'bse'] },
+  { id: 'ai-plugin', title: 'AI Connections', description: 'Connect an AI, review permissions and manage access', category: 'Tools', keywords: ['ai', 'connections', 'mcp', 'chatgpt', 'gemini', 'claude', 'oauth', 'permissions'] },
+  { id: 'companies-dir', title: 'Companies & Exchanges', description: 'Company profiles, filings and disclosures', category: 'Tools', keywords: ['companies', 'directory', 'listed', 'profiles', 'bse', 'nse', 'nexus', 'nxst', 'reit'] },
   { id: 'guides', title: 'User Guides & Tutorials', description: 'SEBI LODR and disclosure guides', category: 'Help & Support', keywords: ['guides', 'tutorials', 'help', 'how to', 'learn', 'user guide'] },
   { id: 'sebi', title: 'SEBI & Legal Disclaimer', description: 'Investment risks and regulatory disclosures', category: 'About & Legal', keywords: ['sebi', 'disclaimer', 'legal', 'risk', 'regulatory'] },
   { id: 'seo-suite', title: 'Super SEO Suite', description: 'Page audits, EEAT, snippets and anti-slop engine', category: 'Advanced Engine', keywords: ['seo', 'suite', 'audit', 'eeat', 'snippets', 'super'] }
@@ -120,10 +126,12 @@ export function SettingsTab({
     verifyAdminPin,
     lockAdminSession,
     setIsAuthModalOpen,
-    setIsProModalOpen
+    setIsProModalOpen,
+    refreshProfile,
   } = useAuth();
 
   const isSuperAdmin = Boolean(isAdmin || isOwner || adminUnlocked || profile?.tier === 'admin' || user?.isAdmin);
+  const storyButtonsEnabled = profile?.notificationPreferences?.storyNavigationButtons !== false;
   // Telegram is Pro-only; the AI Summary Language picker stays visible for everyone.
   const isTelegramPro = Boolean(isPro || isAdmin || isOwner || profile?.tier === 'admin');
 
@@ -428,6 +436,7 @@ export function SettingsTab({
     handleResetSound(e);
     handleResetFilter(e);
     handleResetDensity(e);
+    if (profile) void updateNotificationPreferences({ storyNavigationButtons: true });
   };
 
   // Revert unsaved identity form values
@@ -610,7 +619,7 @@ export function SettingsTab({
     }
     const targetChatId = tgChatIdInput.trim() || profile?.telegramChatId;
     if (!targetChatId) {
-      setTestTgResult('Please enter your Telegram Chat ID first.');
+      setTestTgResult('Verify your Telegram connection first.');
       return;
     }
     setIsTestingTelegram(true);
@@ -904,7 +913,7 @@ export function SettingsTab({
   const queryLower = searchQuery.toLowerCase().trim();
   const isMatch = (id: string) => {
     // Advanced & Developer options are strictly admin-only
-    const advancedIds = ['security-audit', 'diagnostics', 'logs', 'storage', 'server-keys', 'seo-suite'];
+    const advancedIds = [ 'gift-access','security-audit', 'diagnostics', 'logs', 'storage', 'server-keys', 'seo-suite'];
     if (advancedIds.includes(id) && !isSuperAdmin) {
       return false;
     }
@@ -938,7 +947,7 @@ export function SettingsTab({
     (isDesignThemeModified ? 1 : 0) +
     (isSoundModified ? 1 : 0) + 
     (isFilterModified ? 1 : 0) + 
-    (isDensityModified ? 1 : 0);
+    (isDensityModified ? 1 : 0) + (storyButtonsEnabled ? 0 : 1);
 
   // Render Section Breadcrumb when filtering via search
   const renderSearchBreadcrumb = (category: string) => {
@@ -971,7 +980,7 @@ export function SettingsTab({
       id: 'preferences', title: 'Preferences',
       subtitle: modifiedPreferencesCount > 0 ? `${modifiedPreferencesCount} customized · Theme, audio, density, filters` : 'Appearance, audio, feed density & filters',
       icon: SlidersHorizontal, iconClass: 'bg-slate-500/10 text-slate-600 dark:text-slate-300',
-      registryIds: ['appearance', 'density', 'sound', 'filter'],
+      registryIds: ['appearance', 'density', 'sound', 'filter', 'story-buttons'],
       badge: modifiedPreferencesCount > 0 ? (
         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-950/70 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
           {modifiedPreferencesCount}
@@ -986,17 +995,17 @@ export function SettingsTab({
     },
     {
       id: 'subscription', title: 'Subscription & Billing',
-      subtitle: isPaidProActive
+      subtitle: isPro && profile?.subscriptionAccess?.source === 'gift' ? `Gift Pro · ${proDaysLeft}d left` : isPaidProActive
         ? (proDaysLeft > 0 ? `Pro active · ${proDaysLeft}d left` : 'Pro active · plans & payments')
         : isPro
           ? (proDaysLeft > 0 ? `Pro Trial · ${proDaysLeft}d left` : 'Pro Trial')
           : `Free plan · Pro from ₹${getLowestPlanPrice()}`,
       icon: Crown, iconClass: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
       registryIds: ['subscription'],
-      // Layer appears ONLY for paid-active subscriptions (server-driven) — never for trial.
+      // Layer appears for paid or complimentary access, never for a trial.
       // Auto-appears on payment grant, auto-removes at proExpiresAt.
-      activeLayer: isPaidProActive,
-      badge: isPaidProActive ? (
+      activeLayer: isPaidProActive || Boolean(isPro && profile?.subscriptionAccess?.gift),
+      badge: (isPaidProActive || isPro && profile?.subscriptionAccess?.gift) ? (
         <span className="inline-flex items-center gap-1 text-[10px] font-extrabold tracking-wide px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/40 shadow-[0_0_12px_rgba(16,185,129,0.25)]">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
           PRO ACTIVE
@@ -1028,18 +1037,18 @@ export function SettingsTab({
       action: () => setAlertRulesOpen(true),
     },
     {
-      id: 'ai-plugin', title: 'Universal AI Plugin & Bot API',
-      subtitle: 'ChatGPT, Gemini & bot integrations',
+      id: 'ai-plugin', title: 'AI Connections',
+      subtitle: 'Connect ChatGPT, Gemini or Claude · No API key',
       icon: Bot, iconClass: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
       registryIds: ['ai-plugin'],
-      action: () => { if (typeof window !== 'undefined') window.location.href = '/plugin'; },
+      action: () => { if (onNavigate) onNavigate('plugin'); else if (typeof window !== 'undefined') window.location.href = '/plugin'; },
     },
     {
-      id: 'companies', title: 'BSE Listed Companies',
-      subtitle: 'Profiles, filings & disclosures',
+      id: 'companies', title: 'Companies & Exchanges',
+      subtitle: `${DIRECTORY_COMPANIES.length} profiles, filings & disclosures`,
       icon: Building2, iconClass: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
       registryIds: ['companies-dir'],
-      action: () => { if (typeof window !== 'undefined') window.location.href = '/companies'; },
+      action: () => { if (onNavigate) onNavigate('companies'); else if (typeof window !== 'undefined') window.location.href = '/companies'; },
     },
     {
       id: 'help', title: 'Help & Support',
@@ -1064,7 +1073,7 @@ export function SettingsTab({
       id: 'admin', title: 'Admin Engine',
       subtitle: 'Diagnostics, logs, storage & SEO',
       icon: ShieldCheck, iconClass: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
-      registryIds: ['security-audit', 'diagnostics', 'logs', 'storage', 'server-keys', 'seo-suite'],
+      registryIds: ['gift-access', 'security-audit', 'diagnostics', 'logs', 'storage', 'server-keys', 'seo-suite'],
       adminOnly: true,
       badge: (
         <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 font-mono lowercase">
@@ -1127,7 +1136,7 @@ export function SettingsTab({
 
   const indexGroups: { label?: string; ids: string[]; danger?: boolean }[] = [
     { ids: ['preferences', 'account', 'subscription', 'notes', 'watchlist'] },
-    { label: 'Tools & Discovery', ids: ['alerts', 'companies'] },
+    { label: 'Tools & Discovery', ids: ['alerts', 'ai-plugin', 'companies'] },
     { label: 'Support', ids: ['help', 'about'] },
   ];
 
@@ -1290,7 +1299,7 @@ export function SettingsTab({
         </div>
       )}
 
-      {visibleSection === 'preferences' && (isMatch('appearance') || isMatch('density') || isMatch('sound') || isMatch('filter')) && (
+      {visibleSection === 'preferences' && (isMatch('appearance') || isMatch('density') || isMatch('sound') || isMatch('filter') || isMatch('story-buttons')) && (
         <div className="space-y-2 select-none">
           <div className="flex items-center justify-between px-1">
             <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
@@ -1317,6 +1326,7 @@ export function SettingsTab({
           <div className="bg-white dark:bg-[#181626] border border-slate-200/90 dark:border-[#2D283E] rounded-2xl divide-y divide-slate-100 dark:divide-[#252236] overflow-hidden shadow-2xs">
             
             {/* 1.1 Theme Toggle Row */}
+            {isMatch('story-buttons') && <StoryNavigationPreference key={user?.uid || 'guest'} />}
             {isMatch('appearance') && (
               <div className="p-3.5 flex items-center justify-between gap-3 text-xs">
                 <div>
@@ -1916,7 +1926,7 @@ export function SettingsTab({
       )}
 
       {/* SECTION 4: ADVANCED & DEVELOPER ENGINE (Strictly Admin & Operator Only) */}
-      {visibleSection === 'admin' && isSuperAdmin && (isMatch('security-audit') || isMatch('diagnostics') || isMatch('logs') || isMatch('storage') || isMatch('server-keys') || isMatch('seo-suite')) && (
+      {visibleSection === 'admin' && isSuperAdmin && (isMatch('gift-access') || isMatch('security-audit') || isMatch('diagnostics') || isMatch('logs') || isMatch('storage') || isMatch('server-keys') || isMatch('seo-suite')) && (
         <div className="space-y-2">
           <div className="flex items-center justify-between px-1">
             <div className="flex items-center gap-2">
@@ -1938,6 +1948,8 @@ export function SettingsTab({
               Lock Session
             </button>
           </div>
+
+          {isMatch('gift-access') && <React.Suspense fallback={<p role="status">Loading gift access…</p>}><AdminGiftAccess /></React.Suspense>}
 
           <div className="bg-white dark:bg-[#181626] border border-purple-200/90 dark:border-purple-900/50 rounded-2xl divide-y divide-slate-100 dark:divide-[#252236] overflow-hidden shadow-2xs">
                   
@@ -2731,51 +2743,11 @@ export function SettingsTab({
                   </div>
                 </div>
 
-                {/* 4. HOW TO CONNECT TELEGRAM INSTRUCTIONS */}
-                <div className="p-3 bg-blue-50/50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/60 rounded-xl space-y-1.5 text-[11px] text-slate-700 dark:text-slate-300">
-                  <div className="font-bold text-blue-900 dark:text-blue-200">How to connect your personal Telegram:</div>
-                  <div className="flex items-start gap-1.5">
-                    <span className="font-bold text-blue-600 dark:text-blue-400">1.</span>
-                    <span>Open <a href="https://t.me/userinfobot" target="_blank" rel="noopener noreferrer" className="font-mono font-bold text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-0.5">@userinfobot <ArrowUpRight size={11} /></a> and press <strong>Start</strong> to see your numeric <strong>Id</strong>.</span>
-                  </div>
-                  <div className="flex items-start gap-1.5">
-                    <span className="font-bold text-blue-600 dark:text-blue-400">2.</span>
-                    <span>Open alert bot <a href={`https://t.me/${settings?.botUsername || 'Dahiyastockbot'}`} target="_blank" rel="noopener noreferrer" className="font-mono font-bold text-emerald-600 dark:text-emerald-400 hover:underline inline-flex items-center gap-0.5">@{settings?.botUsername || 'Dahiyastockbot'} <ArrowUpRight size={11} /></a> and tap <strong className="text-emerald-700 dark:text-emerald-300">Start (/start)</strong>.</span>
-                  </div>
-                  <div className="flex items-start gap-1.5">
-                    <span className="font-bold text-blue-600 dark:text-blue-400">3.</span>
-                    <span>Paste your numeric Chat ID below, tap <strong>Send test alert</strong>, then tap <strong>Save Settings</strong>.</span>
-                  </div>
-                </div>
-
-                {/* 5. CHAT ID INPUT & USERNAME */}
-                <div className="space-y-2">
-                  <div>
-                    <label className="block text-slate-600 dark:text-slate-400 font-semibold mb-1">
-                      Your Telegram Chat ID <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={tgChatIdInput}
-                      onChange={e => setTgChatIdInput(e.target.value)}
-                      placeholder="e.g. 987654321"
-                      className="w-full px-3 py-2 bg-slate-50 dark:bg-[#201E2E] border border-slate-200 dark:border-[#2D283E] rounded-lg text-slate-900 dark:text-white text-xs font-mono outline-none focus:ring-1 focus:ring-purple-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-slate-600 dark:text-slate-400 font-semibold mb-1">
-                      Telegram Username (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      value={tgUsernameInput}
-                      onChange={e => setTgUsernameInput(e.target.value)}
-                      placeholder="e.g. your_telegram_handle"
-                      className="w-full px-3 py-2 bg-slate-50 dark:bg-[#201E2E] border border-slate-200 dark:border-[#2D283E] rounded-lg text-slate-900 dark:text-white text-xs font-mono outline-none focus:ring-1 focus:ring-purple-500"
-                    />
-                  </div>
-                </div>
+                {user && !user.isAnonymous && <TelegramLinkControl key={user.uid} uid={user.uid} onVerified={async chatId => {
+                  setTgChatIdInput(chatId);
+                  await refreshProfile();
+                }} />}
+                <p className="text-xs text-slate-500">Connected destination: {profile?.telegramChatId || 'Not connected'}. Personal linking supports private chats.</p>
 
                 {/* TEST ALERT STATUS FEEDBACK */}
                 {testTgResult && (

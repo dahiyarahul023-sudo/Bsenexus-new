@@ -233,11 +233,33 @@ async function deleteAccountRecord(accountKey: string): Promise<void> {
 /**
  * Checks whether an account is currently permitted to attempt login, or locked out / subject to delay.
  */
+export class AccountProtectionUnavailableError extends Error {
+  constructor() { super('Shared account protection unavailable'); this.name = 'AccountProtectionUnavailableError'; }
+}
+export const isAccountProtectionUnavailable = (error: unknown): boolean => error instanceof AccountProtectionUnavailableError;
+async function sharedCommand(action: 'check' | 'fail' | 'reset', key: string, max?: number, lockout?: number): Promise<any> {
+  const config = getAccountProtectionConfig();
+  try {
+    const { data, error } = await withTimeout(getSupabase().rpc('auth_account_command', {
+      p_action: action, p_key: key, p_max_attempts: max ?? config.maxAttempts,
+      p_window_ms: config.windowMs, p_lockout_ms: lockout ?? config.lockoutDurationMs,
+    }) as any, 5000) as any;
+    if (error || !data) throw error || new Error('Empty protection result');
+    return data;
+  } catch { throw new AccountProtectionUnavailableError(); }
+}
+
 export async function checkAccountProtection(
   accountKey: string,
   customNow: number = Date.now()
 ): Promise<AccountProtectionStatus> {
   const config = getAccountProtectionConfig();
+  if (process.env.NODE_ENV === 'production') {
+    const r = await sharedCommand('check', accountKey);
+    return { allowed: !r.remainingLockoutSec, isLocked: Boolean(r.remainingLockoutSec),
+      lockedUntil: r.lockedUntil, remainingLockoutSec: r.remainingLockoutSec,
+      failedAttempts: r.failedAttempts, delayMs: calculateProgressiveDelayMs(r.failedAttempts, config) };
+  }
   const record = await fetchAccountRecord(accountKey);
 
   if (!record) {
@@ -334,6 +356,10 @@ export async function recordFailedAttempt(
     ? options.customLockoutSec * 1000
     : config.lockoutDurationMs;
 
+  if (process.env.NODE_ENV === 'production') {
+    const r = await sharedCommand('fail', accountKey, maxAttempts, lockoutDurationMs);
+    return { ...r, locked: Boolean(r.remainingLockoutSec), delayMs: calculateProgressiveDelayMs(r.failedAttempts, config) };
+  }
   const existing = await fetchAccountRecord(accountKey);
 
   let failedAttempts = 1;
@@ -393,6 +419,7 @@ export async function recordFailedAttempt(
  * Resets account protection counter on successful authentication.
  */
 export async function resetAccountProtection(accountKey: string): Promise<void> {
+  if (process.env.NODE_ENV === 'production') { await sharedCommand('reset', accountKey); return; }
   await deleteAccountRecord(accountKey);
   await addLog('INFO', 'AUTH', `Account protection counter safely reset for key ${accountKey.substring(0, 10)}...`);
 }
@@ -413,15 +440,6 @@ export async function simulateCredentialVerificationDelay(): Promise<void> {
  */
 export function getSanitizedClientIp(req: express.Request | any): string {
   if (!req) return 'unknown';
-
-  // For upstream reverse proxy chains (Cloud Run / Nginx reverse proxy), extract client IP safely
-  const forwarded = req.headers?.['x-forwarded-for'];
-  if (typeof forwarded === 'string' && forwarded.trim()) {
-    const parts = forwarded.split(',').map((p: string) => p.trim()).filter(Boolean);
-    if (parts.length > 0) {
-      return parts[0].replace(/^::ffff:/, '');
-    }
-  }
 
   // Express req.ip is computed safely according to app.set('trust proxy', 1)
   const rawIp = (req.ip || req.socket?.remoteAddress || 'unknown').trim();

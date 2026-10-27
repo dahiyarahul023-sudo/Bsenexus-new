@@ -10,7 +10,7 @@ export function StoryChapterProgress({ chapter, activeId, progress }: {
   const fraction = Number.isFinite(progress) ? Math.max(0, Math.min(1, progress / 100)) : 0;
   return <div className="story-progress-row">
     <div className="story-progress" aria-hidden="true">{(slides.length ? slides : [null]).map((slide, index) =>
-      <span key={slide?.id || 'loading'}><i style={{ transform: `scaleX(${index < activeIndex ? 1 : index === activeIndex ? fraction : 0})` }} /></span>
+      <span key={slide?.id || 'loading'} data-active={index === activeIndex || undefined}><i style={{ transform: `scaleX(${index < activeIndex ? 1 : index === activeIndex ? fraction : 0})` }} /></span>
     )}</div>
     {activeIndex >= 0 && <span className="story-progress-count" aria-label={`${chapter!.title}, story ${activeIndex + 1} of ${slides.length}`}>{activeIndex + 1} / {slides.length}</span>}
   </div>;

@@ -148,7 +148,7 @@
 [data-design-theme="softglass"] .rich-push-banner { --rich-surface:#fafcf8; --rich-soft:#edf3eb; --rich-border:#d8e3d6; }
 [data-design-theme="softglass"] .helios-pill { padding:4px 10px; box-shadow:inset 0 1px 0 #fff8; }
 [data-design-theme="softglass"] .rich-action-primary,
-[data-design-theme="softglass"] .rich-action-emerald { background:var(--rich-emerald); color:#073c35; border-radius:14px; }
+[data-design-theme="softglass"] .rich-action-emerald { background:var(--rich-emerald); color:#073c35; border-radius:var(--rich-control-radius,999px); }
 
 @media(max-width:540px) {
   .rich-push-banner { grid-template-columns:minmax(0,1fr); gap:8px; padding:12px; }

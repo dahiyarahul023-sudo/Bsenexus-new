@@ -38,7 +38,8 @@ export class ImpactRadarFeed {
         this.identity === 'guest' ? Promise.resolve({ ids: [], events: [] }) :
           this.request('/api/impact-radar/following', { signal: controller.signal }).then(async r => { if (!r.ok) throw new Error('Tracking unavailable'); return r.json(); }),
       ]);
-      if (controller.signal.aborted || revision !== this.revision) return;
+      if (revision !== this.revision) return;
+      if (controller.signal.aborted) throw new Error('Radar check timed out. Please retry.');
       if (followed.status === 'fulfilled' && followed.value.success !== false && Array.isArray(followed.value.ids) && Array.isArray(followed.value.events)) {
         if (followRevision === this.followingRevision && !this.writes.size) this.set({ following: followed.value.ids.filter((x: unknown) => typeof x === 'string'), followingReady: true, followingError: false, actionError: null });
       } else this.set({ followingError: true });

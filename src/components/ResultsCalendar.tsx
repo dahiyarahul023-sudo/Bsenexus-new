@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { AnchoredPopover } from './ui/AnchoredPopover';
+import { useCalendarDialog } from '../hooks/useCalendarDialog';
+import { changeRunupPriority, RunupPriorityError } from '../utils/runupPriorityClient';
+import { archiveCompletionMessage } from '../shared/resultFiling';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { calendarCacheKey, readCalendarScope, saveCalendarScope, type CalendarScope } from '../shared/calendarScope';
+import { calendarDayKey, projectCalendarTiming } from '../shared/calendarTiming';
 import { 
   CalendarDays, RefreshCw, Search, Clock, Building2, Filter, 
   AlertCircle, CheckCircle2, Upload, FileText, Sparkles, 
@@ -10,6 +16,7 @@ import {
   History, BellRing, LayoutGrid, List, Bell
 } from 'lucide-react';
 import { customFetch } from '../api';
+import { watchResultHistory, waitForResultArchive } from '../utils/resultHistoryClient';
 import { getLowestPlanPrice } from '../utils/cashfree';
 import { useAuth } from '../context/AuthContext';
 import { useIntelModal } from '../context/IntelModalContext';
@@ -29,6 +36,7 @@ import { ShareActionMenu } from './ui/motion/ShareActionMenu';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { useFeedDensity } from '../hooks/useFeedDensity';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
+import { useVisibilityInterval } from '../hooks/useVisibilityInterval';
 import { useSwipeGesture } from '../hooks/useSwipeGesture';
 import { PullToRefreshIndicator } from './ui/PullToRefreshIndicator';
 import { HeliosPill, heliosCard } from './ui/helios';
@@ -79,6 +87,7 @@ export interface ResultCalendarItem {
   declarationPdfLink?: string;
   declarationSubject?: string;
   aiSummary?: string;
+  aiSummaryEn?: string;
   quarterKey?: string;
   bseTimestamp?: number;
   filing?: any;
@@ -138,8 +147,45 @@ export function getResolvedMeetingDate(item?: any): string {
   return '';
 }
 
+function calendarStorage() {
+  try { return typeof window === 'undefined' ? undefined : window.localStorage; } catch { return undefined; }
+}
+
+export function calendarLinkedScrip(): string {
+  try { const code = new URLSearchParams(window.location.search).get('scrip') || ''; return /^\d{6}$/.test(code) ? code : ''; }
+  catch { return ''; }
+}
+
 export function ResultsCalendar() {
-  const { user, profile, isAdmin, isPro, isPaidPro, adminUnlocked, setIsAuthModalOpen, setIsProModalOpen } = useAuth();
+  const { user } = useAuth();
+  return <ResultsCalendarView key={user && !user.isAnonymous ? user.uid : 'guest'} />;
+}
+
+function ResultsCalendarView() {
+  const toolbarRef = useRef<HTMLDivElement>(null);
+  const [toolbarHeight, setToolbarHeight] = useState(0);
+  useEffect(() => {
+    const toolbar = toolbarRef.current;
+    if (!toolbar) return;
+    const measure = () => setToolbarHeight(toolbar.getBoundingClientRect().height);
+    const observer = new ResizeObserver(measure);
+    observer.observe(toolbar); measure();
+    return () => observer.disconnect();
+  }, []);
+  const { user, profile, isAdmin, isPro, isPaidPro, adminUnlocked, setIsAuthModalOpen, setIsProModalOpen, setIsAdminPinModalOpen } = useAuth();
+  const owner = user && !user.isAnonymous ? user.uid : 'guest';
+  const [calendarScope, setCalendarScope] = useState<CalendarScope>(() => readCalendarScope(calendarStorage(), owner));
+  const [selectedWatchlistId, setSelectedWatchlistId] = useState<string>('');
+  const calendarKey = calendarCacheKey(owner, calendarScope, selectedWatchlistId);
+  const requestKey = useRef(calendarKey);
+  requestKey.current = calendarKey;
+  const requestSequence = useRef(0);
+  const calendarRequest = useRef<AbortController | null>(null);
+  const [calendarError, setCalendarError] = useState<string | null>(null);
+  const handleCalendarScopeChange = (scope: CalendarScope) => {
+    saveCalendarScope(calendarStorage(), owner, scope);
+    setCalendarScope(scope);
+  };
   // Shared feed density (Settings screen) — visibly resizes calendar cards.
   const [density] = useFeedDensity();
   const calCardPad = density === 'comfortable' ? 'p-5' : density === 'dense' ? 'p-3' : 'p-4';
@@ -147,33 +193,34 @@ export function ResultsCalendar() {
   // AI summary language (Settings → Telegram Alerts & AI Summaries); English variant lives in aiSummaryEn
   const summaryLang: 'hinglish' | 'english' = profile?.notificationPreferences?.aiSummaryLang === 'hinglish' ? 'hinglish' : 'english';
   const displaySummary = (item: any): string | undefined =>
-    summaryLang === 'english' ? (item?.aiSummaryEn || item?.aiSummary) : item?.aiSummary;
-  const isSuperAdmin = Boolean(isAdmin || adminUnlocked || profile?.tier === 'admin' || user?.isAdmin);
+    summaryLang === 'english' ? (item?.aiSummaryEn || item?.aiSummary) : (item?.aiSummary || item?.aiSummaryEn);
+  const isSuperAdmin = isAdmin;
   const { isDeveloperMode } = useDeveloperMode();
   // SWR: Initialize calendar items immediately from client cache for 0ms transition
   // (12h TTL — survives app restarts via localStorage; fresh data loads in background)
-  const [items, setItems] = useState<ResultCalendarItem[]>(() => {
-    const cached = getCacheItem<ResultCalendarItem[]>('results_calendar_items', 12 * 60 * 60 * 1000) || [];
+  const [storedItems, setItems] = useState<ResultCalendarItem[]>(() => {
+    const cached = getCacheItem<ResultCalendarItem[]>(calendarKey, 12 * 60 * 60 * 1000) || [];
     return cached.map((it: any) => ({
       ...it,
       companyName: getCorrectCompanyName(it),
       meetingDate: getResolvedMeetingDate(it) || it.meetingDate
     }));
   });
+  const [calendarDay, setCalendarDay] = useState(() => calendarDayKey());
+  const dayClock = useRef(calendarDay);
+  const items = useMemo(() => storedItems.map(item => projectCalendarTiming(item, Date.now())), [storedItems, calendarDay]);
   const [loading, setLoading] = useState(() => {
-    const cached = getCacheItem<ResultCalendarItem[]>('results_calendar_items', 12 * 60 * 60 * 1000);
+    const cached = getCacheItem<ResultCalendarItem[]>(calendarKey, 12 * 60 * 60 * 1000);
     return !cached || cached.length === 0;
   });
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<number>(0);
-  const [statusFilter, setStatusFilter] = useState<'today' | 'upcoming' | 'declared' | 'ai' | 'all'>('upcoming');
+  const [statusFilter, setStatusFilter] = useState<'today' | 'upcoming' | 'declared' | 'ai' | 'all'>(() => calendarLinkedScrip() ? 'all' : 'upcoming');
   const [declarationFilter, setDeclarationFilter] = useState<'all' | 'declared' | 'pending' | 'urgent_3d' | 'week_7d' | 'month_30d' | 'has_ai'>('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(calendarLinkedScrip);
   const [watchlists, setWatchlists] = useState<any[]>([]);
-  const [selectedWatchlistId, setSelectedWatchlistId] = useState<string>('');
-  // Calendar scope: 'watchlist' (default, existing behavior) vs 'market'
-  // (market-wide view: companies beyond any watchlist, incl. Wipro/TechM).
-  const [calendarScope, setCalendarScope] = useState<'watchlist' | 'market'>('watchlist');
+  const watchlistsRequest = useRef<AbortController | null>(null);
+  const watchlistOwner = useRef(owner); watchlistOwner.current = owner;
   const [sortBy, setSortBy] = useState<'date_asc' | 'date_desc' | 'status' | 'alpha'>('date_asc');
   
   // View Mode: 'grid' (default on PC/tablet) vs 'list' (default on mobile)
@@ -204,15 +251,19 @@ export function ResultsCalendar() {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(25);
 
-  const [summaryStats, setSummaryStats] = useState({ 
-    upcomingCount: 0, 
-    upcomingFutureCount: 0,
-    todayCount: 0, 
-    todayDeclaredCount: 0, 
-    todayPendingCount: 0, 
-    recentCount: 0,
-    aiSummaryCount: 0
-  });
+  const summaryStats = useMemo(() => {
+    const today = items.filter(item => item.daysLeft === 0);
+    const future = items.filter(item => item.daysLeft > 0);
+    return {
+      upcomingCount: today.length + future.length,
+      upcomingFutureCount: future.length,
+      todayCount: today.length,
+      todayDeclaredCount: today.filter(item => item.isDeclared).length,
+      todayPendingCount: today.filter(item => !item.isDeclared).length,
+      recentCount: items.filter(item => item.daysLeft < 0 && item.daysLeft >= -30).length,
+      aiSummaryCount: items.filter(item => Boolean(displaySummary(item))).length,
+    };
+  }, [items, summaryLang]);
 
   // Modal inspection state & animations
   const [selectedModalItem, setSelectedModalItem] = useState<ResultCalendarItem | null>(null);
@@ -227,9 +278,19 @@ export function ResultsCalendar() {
   const [modalTab, setModalTab] = useState<'results' | 'meetings'>('results');
   const [stockHistory, setStockHistory] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState<boolean>(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const [historyRetry, setHistoryRetry] = useState(0);
+  const historyRevision = useRef(0);
+  const historySelectionRef = useRef('');
+  const historyController = useRef<AbortController | null>(null);
+  const manualHistoryController = useRef<AbortController | null>(null);
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
+  const aiRequest = useRef<AbortController | null>(null);
   const [aiStepIndex, setAiStepIndex] = useState(0);
   const [isSendingTelegram, setIsSendingTelegram] = useState(false);
+  const telegramRequest = useRef<AbortController | null>(null);
+  const bulkTelegramRequest = useRef<AbortController | null>(null);
+  useEffect(() => () => { bulkTelegramRequest.current?.abort(); bulkTelegramRequest.current = null; }, []);
   const [isPlaneFlying, setIsPlaneFlying] = useState(false);
   const [telegramStatus, setTelegramStatus] = useState<string | null>(null);
   const [lightningId, setLightningId] = useState<string | null>(null);
@@ -237,129 +298,152 @@ export function ResultsCalendar() {
   const [copiedCalendarId, setCopiedCalendarId] = useState<string | null>(null);
   const [showMarketHolidaysModal, setShowMarketHolidaysModal] = useState<boolean>(false);
 
+  const detailsDialog = useCalendarDialog(Boolean(selectedModalItem), () => setSelectedModalItem(null));
+  const filtersDialog = useCalendarDialog(isFilterSheetOpen, () => setIsFilterSheetOpen(false));
+
   // Lock body scroll whenever modal or filter sheet is opened to prevent background movement / scroll chaining
   useBodyScrollLock(Boolean(selectedModalItem || showMarketHolidaysModal || isFilterSheetOpen));
 
   // Deep History (1-5 Years) & Pre-Result Window (10-20 Days) Priority Boost State
-  const [selectedYears, setSelectedYears] = useState<number>(3);
   const [isFetchingDeepHistory, setIsFetchingDeepHistory] = useState<boolean>(false);
   const [deepHistoryMsg, setDeepHistoryMsg] = useState<string | null>(null);
 
   const [runupWindowDays, setRunupWindowDays] = useState<number>(10);
   const [isBoostingRunup, setIsBoostingRunup] = useState<boolean>(false);
-  const [boostRunupMsg, setBoostRunupMsg] = useState<string | null>(null);
+  const [boostRunupMsg, setBoostRunupMsg] = useState<{ type: 'success' | 'warning' | 'error'; message: string; requiresPin?: boolean } | null>(null);
   const [expandedRunupDate, setExpandedRunupDate] = useState<string | null>(null);
   const [runupAnnouncements, setRunupAnnouncements] = useState<any[]>([]);
   const [loadingRunupAnnouncements, setLoadingRunupAnnouncements] = useState<boolean>(false);
+  const [runupError, setRunupError] = useState<string | null>(null);
+  const runupReadController = useRef<AbortController | null>(null);
 
   // Watchlist Deep Sync (1-5 Years) State
   const [isSyncingWatchlistHistory, setIsSyncingWatchlistHistory] = useState<boolean>(false);
   const [watchlistDeepSyncYears, setWatchlistDeepSyncYears] = useState<number>(3);
   const [watchlistSyncFeedback, setWatchlistSyncFeedback] = useState<string | null>(null);
   const [activeActionMenuId, setActiveActionMenuId] = useState<string | null>(null);
+  const activeMenuAnchor = useRef<HTMLDivElement>(null);
   const [actionFeedback, setActionFeedback] = useState<string | null>(null);
 
   const isProOrAdmin = Boolean(isAdmin || (isPro && !user?.isAnonymous) || profile?.tier === 'admin');
   const aiQuota = useAiQuota(user, profile, isPro, isAdmin);
   const isTelegramConnected = Boolean(profile?.telegramChatId || user?.telegramChatId);
 
+  const runupSelectionKey = `${owner}:${selectedModalItem?.scripCode || ''}:${selectedModalItem?.meetingDate || ''}:${runupWindowDays}`;
+  const runupSelectionRef = useRef(runupSelectionKey);
+  runupSelectionRef.current = runupSelectionKey;
+  const boostRunupController = useRef<AbortController | null>(null);
+  useEffect(() => {
+    boostRunupController.current?.abort(); boostRunupController.current = null;
+    setBoostRunupMsg(null); setIsBoostingRunup(false);
+    return () => { boostRunupController.current?.abort(); boostRunupController.current = null; };
+  }, [runupSelectionKey]);
+
+  useEffect(() => {
+    runupReadController.current?.abort(); runupReadController.current = null;
+    setExpandedRunupDate(null); setRunupAnnouncements([]); setRunupError(null); setLoadingRunupAnnouncements(false);
+    aiRequest.current?.abort(); aiRequest.current = null;
+    telegramRequest.current?.abort(); telegramRequest.current = null;
+    setIsSendingTelegram(false); setIsPlaneFlying(false);
+    setIsGeneratingAi(false); setTelegramStatus(null); setCopiedSummary(false);
+    return () => { runupReadController.current?.abort(); runupReadController.current = null; aiRequest.current?.abort(); aiRequest.current = null; telegramRequest.current?.abort(); telegramRequest.current = null; };
+  }, [owner, selectedModalItem?.scripCode, selectedModalItem?.meetingDate]);
+
   // Deep History Fetcher for Single Stock (1-5 Years)
   const handleFetchDeepHistory = async (scripCode: string, symbol: string, years: number) => {
     if (!scripCode) return;
-    setIsFetchingDeepHistory(true);
-    setDeepHistoryMsg(null);
-
+    if (isFetchingDeepHistory) return;
+    historyController.current?.abort();
+    const revision = ++historyRevision.current;
+    const controller = new AbortController();
+    manualHistoryController.current?.abort(); manualHistoryController.current = controller;
+    const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(12 * 60_000)]);
+    const current = () => revision === historyRevision.current && !controller.signal.aborted;
+    setIsFetchingDeepHistory(true); setLoadingHistory(false); setHistoryError(null);
+    setDeepHistoryMsg('Starting BSE archive sync...');
     try {
       const res = await customFetch(`/api/stocks/${encodeURIComponent(scripCode)}/fetch-deep-history`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ symbol, years })
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ symbol, years }), signal
       });
       const data = await res.json();
-      if (data && data.success) {
-        setDeepHistoryMsg(data.message || `History sync requested for ${years} year(s). Completion and new filing counts are not confirmed yet.`);
-        // Reload stock history
-        const histRes = await customFetch(`/api/stock-results-history?symbol=${encodeURIComponent(symbol)}&scripCode=${encodeURIComponent(scripCode)}`);
-        const histData = await histRes.json();
-        if (histData && Array.isArray(histData.history)) {
-          setStockHistory(histData.history);
-        }
-        // Refresh general calendar
-        fetchCalendar(false);
-      } else {
-        setDeepHistoryMsg(`⚠️ Sync notice: ${data?.error || 'Unable to fetch historical filings from BSE'}`);
-      }
+      if (!res.ok || !data.success || !data.job) throw new Error(data.error || 'Unable to start BSE archive sync');
+      const job = await waitForResultArchive(data.job, signal, job => {
+        if (current()) setDeepHistoryMsg(`Syncing BSE archive: ${job.processed} filings saved so far...`);
+      });
+      if (!current()) return;
+      let verifiedResults = 0;
+      await watchResultHistory({ symbol, scripCode }, signal, rows => {
+        if (current()) { setStockHistory(rows); verifiedResults = rows.filter(row => row.isOutcome).length; }
+      }, false);
+      if (!current()) return;
+      setDeepHistoryMsg(archiveCompletionMessage(job, verifiedResults));
+      window.dispatchEvent(new Event('company-filings-changed'));
+      void fetchCalendar(false);
     } catch (err: any) {
-      setDeepHistoryMsg(`❌ Error fetching deep history: ${err.message}`);
+      if (current()) setHistoryError(err.message);
     } finally {
-      setIsFetchingDeepHistory(false);
-      setTimeout(() => setDeepHistoryMsg(null), 7000);
+      if (revision === historyRevision.current) setIsFetchingDeepHistory(false);
     }
   };
 
-  // Boost Priority for 10/20-day Pre-Result Window
+  // The existing admin endpoint owns this shared mutation; recovery never retries it automatically.
   const handleBoostRunupPriority = async (scripCode: string, symbol: string, resultDateStr: string, customDays?: number) => {
-    if (!scripCode || !resultDateStr) return;
-    if (!isAdmin) { setBoostRunupMsg('Shared filing priority changes require an administrator.'); return; }
+    if (!scripCode || !resultDateStr || boostRunupController.current) return;
+    if (!isAdmin) { setBoostRunupMsg({ type: 'error', message: 'Shared filing priority changes require an administrator.' }); return; }
     const daysToUse = customDays || runupWindowDays || 10;
-    setIsBoostingRunup(true);
-    setBoostRunupMsg(null);
-
+    const selection = runupSelectionRef.current;
+    const controller = new AbortController(); boostRunupController.current = controller;
+    const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(30000)]);
+    const current = () => !controller.signal.aborted && runupSelectionRef.current === selection && boostRunupController.current === controller;
+    setIsBoostingRunup(true); setBoostRunupMsg(null);
     try {
-      const res = await customFetch(`/api/stocks/${encodeURIComponent(scripCode)}/boost-runup-priority`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ symbol, resultDate: resultDateStr, windowDays: daysToUse })
-      });
-      const data = await res.json();
-      if (data && data.success) {
-        setBoostRunupMsg(`🔥 Set ${data.boostedCount || 0} announcements from ${daysToUse} days before ${resultDateStr} to HIGH Priority!`);
-        // Refresh runup list if expanded
-        if (expandedRunupDate === resultDateStr) {
-          setRunupAnnouncements(data.announcements || []);
-        }
-        // Reload stock history
-        const histRes = await customFetch(`/api/stock-results-history?symbol=${encodeURIComponent(symbol)}&scripCode=${encodeURIComponent(scripCode)}`);
-        const histData = await histRes.json();
-        if (histData && Array.isArray(histData.history)) {
-          setStockHistory(histData.history);
-        }
-        // Refresh main calendar
-        fetchCalendar(false);
-      } else {
-        setBoostRunupMsg(`⚠️ ${data?.error || 'Could not boost pre-result priority'}`);
+      const data = await changeRunupPriority({ scripCode, symbol, resultDate: resultDateStr, windowDays: daysToUse }, signal);
+      if (!current()) return;
+      const message = `Set ${data.boostedCount} announcements from the ${daysToUse}-day window before ${resultDateStr} to HIGH priority.`;
+      setBoostRunupMsg({ type: 'success', message });
+      if (expandedRunupDate === resultDateStr) setRunupAnnouncements(data.announcements);
+      // A failed optional read does not turn a confirmed mutation into a failed update.
+      try {
+        await watchResultHistory({ symbol, scripCode }, signal, rows => { if (current()) setStockHistory(rows); }, false);
+      } catch {
+        if (current()) setBoostRunupMsg({ type: 'warning', message: `${message} Result cards could not refresh; reopen Details to reload them.` });
       }
-    } catch (err: any) {
-      setBoostRunupMsg(`❌ Boost error: ${err.message}`);
+      if (current()) void fetchCalendar(false);
+    } catch (error: any) {
+      if (!current()) return;
+      const requiresPin = error instanceof RunupPriorityError && error.recovery === 'admin-pin';
+      setBoostRunupMsg({ type: 'error', message: error.message || 'Priority update unavailable. Please retry.', requiresPin });
+      if (requiresPin) setIsAdminPinModalOpen(true);
+      else if (error instanceof RunupPriorityError && error.recovery === 'sign-in') setIsAuthModalOpen(true);
     } finally {
-      setIsBoostingRunup(false);
-      setTimeout(() => setBoostRunupMsg(null), 6000);
+      if (current()) { setIsBoostingRunup(false); boostRunupController.current = null; }
     }
   };
 
   // Toggle & Load Pre-Result 10/20-Day Runup Announcements
-  const toggleRunupAnnouncements = async (scripCode: string, symbol: string, resultDateStr: string, customDays?: number) => {
+  const toggleRunupAnnouncements = async (scripCode: string, symbol: string, resultDateStr: string, customDays?: number, reload = false) => {
     const daysToUse = customDays || runupWindowDays || 10;
-    if (expandedRunupDate === resultDateStr) {
-      setExpandedRunupDate(null);
-      setRunupAnnouncements([]);
+    runupReadController.current?.abort(); runupReadController.current = null;
+    if (expandedRunupDate === resultDateStr && !reload) {
+      setExpandedRunupDate(null); setRunupAnnouncements([]); setRunupError(null); setLoadingRunupAnnouncements(false);
       return;
     }
-
-    setExpandedRunupDate(resultDateStr);
-    setLoadingRunupAnnouncements(true);
+    const controller = new AbortController(); runupReadController.current = controller;
+    const selection = runupSelectionRef.current;
+    const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(30000)]);
+    const current = () => !controller.signal.aborted && runupReadController.current === controller && runupSelectionRef.current === selection;
+    setExpandedRunupDate(resultDateStr); setRunupAnnouncements([]); setRunupError(null); setLoadingRunupAnnouncements(true);
     try {
-      const res = await customFetch(`/api/stocks/${encodeURIComponent(scripCode)}/runup-announcements?symbol=${encodeURIComponent(symbol)}&resultDate=${encodeURIComponent(resultDateStr)}&windowDays=${daysToUse}`);
+      const res = await customFetch(`/api/stocks/${encodeURIComponent(scripCode)}/runup-announcements?symbol=${encodeURIComponent(symbol)}&resultDate=${encodeURIComponent(resultDateStr)}&windowDays=${daysToUse}`, { signal });
       const data = await res.json();
-      if (data && Array.isArray(data.announcements)) {
-        setRunupAnnouncements(data.announcements);
-      } else {
-        setRunupAnnouncements([]);
-      }
+      if (!current()) return;
+      if (!res.ok || data?.success !== true || !Array.isArray(data.announcements)) throw new Error('Pre-result filings could not load. Please retry.');
+      setRunupAnnouncements(data.announcements);
     } catch {
-      setRunupAnnouncements([]);
+      if (current()) setRunupError('Pre-result filings could not load. Please retry.');
     } finally {
-      setLoadingRunupAnnouncements(false);
+      if (current()) { setLoadingRunupAnnouncements(false); runupReadController.current = null; }
     }
   };
 
@@ -375,11 +459,12 @@ export function ResultsCalendar() {
         body: JSON.stringify({ years })
       });
       const data = await res.json();
-      if (data && data.success) {
-        setWatchlistSyncFeedback(`✅ Successfully synced ${years}-Year history across ${data.symbolsCount || 0} watchlist stocks (+${data.newlySaved || 0} historical filings)!`);
+      if (res.ok && data?.success === true) {
+        setWatchlistSyncFeedback(`Archive complete: ${years}-year range, ${data.completedCount ?? data.symbolsCount ?? 0} stocks, ${data.newlySaved || 0} filings processed.`);
         fetchCalendar(true);
       } else {
-        setWatchlistSyncFeedback(`⚠️ Notice: ${data?.error || 'Sync completed with warnings'}`);
+        setWatchlistSyncFeedback(`Notice: ${data?.error || 'Archive completion could not be confirmed'}`);
+        if (res.ok && data?.completedCount > 0) void fetchCalendar(false);
       }
     } catch (err: any) {
       setWatchlistSyncFeedback(`❌ Sync failed: ${err.message}`);
@@ -389,25 +474,28 @@ export function ResultsCalendar() {
     }
   };
 
-  // Fetch previous results history whenever a company is opened
+  // One selection owns the read and archive polling; closed/old-company responses are ignored.
   useEffect(() => {
-    if (selectedModalItem) {
-      setLoadingHistory(true);
-      customFetch(`/api/stock-results-history?symbol=${encodeURIComponent(selectedModalItem.symbol)}&scripCode=${encodeURIComponent(selectedModalItem.scripCode || '')}&companyName=${encodeURIComponent(selectedModalItem.companyName || '')}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data && Array.isArray(data.history)) {
-            setStockHistory(data.history);
-          } else {
-            setStockHistory([]);
-          }
-        })
-        .catch(() => setStockHistory([]))
-        .finally(() => setLoadingHistory(false));
-    } else {
-      setStockHistory([]);
-    }
-  }, [selectedModalItem]);
+    const revision = ++historyRevision.current;
+    const controller = new AbortController(); historyController.current = controller;
+    const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(12 * 60_000)]);
+    const selectionKey = `${user?.uid || 'guest'}:${selectedModalItem?.scripCode || ''}:${selectedModalItem?.symbol || ''}`;
+    if (historySelectionRef.current !== selectionKey) setStockHistory([]);
+    historySelectionRef.current = selectionKey;
+    setHistoryError(null); setDeepHistoryMsg(null); setIsFetchingDeepHistory(false);
+    if (!selectedModalItem) { setLoadingHistory(false); return; }
+    setLoadingHistory(true);
+    void watchResultHistory(selectedModalItem, signal, (rows, sync) => {
+      if (revision !== historyRevision.current) return;
+      setStockHistory(rows); setLoadingHistory(false);
+      setDeepHistoryMsg(sync?.state === 'running' ? `Loading BSE archive: ${sync.processed} filings saved so far...` : sync?.state === 'complete' ? archiveCompletionMessage(sync, rows.filter(row => row.isOutcome).length) : null);
+    }).catch(error => {
+      if (revision === historyRevision.current && !controller.signal.aborted) setHistoryError(error.message);
+    }).finally(() => {
+      if (revision === historyRevision.current) setLoadingHistory(false);
+    });
+    return () => { ++historyRevision.current; controller.abort(); manualHistoryController.current?.abort(); };
+  }, [selectedModalItem, user?.uid, historyRetry]);
 
   // Cycle through AI thinking steps
   useEffect(() => {
@@ -432,10 +520,12 @@ export function ResultsCalendar() {
     setTimeout(() => setLightningId(null), 850);
   };
 
-  const handleCopySummary = (text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedSummary(true);
-    setTimeout(() => setCopiedSummary(false), 2000);
+  const handleCopySummary = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedSummary(true);
+      setTimeout(() => setCopiedSummary(false), 2000);
+    } catch { setCopiedSummary(false); alert('Copy failed. Check clipboard permission and try again.'); }
   };
 
   const { openIntelModal } = useIntelModal();
@@ -446,9 +536,16 @@ export function ResultsCalendar() {
   };
 
   const fetchCalendar = async (force: boolean = false, mode: 'quick' | 'full' = 'quick') => {
+    const key = calendarKey;
+    const sequence = ++requestSequence.current;
+    calendarRequest.current?.abort();
+    const controller = new AbortController();
+    calendarRequest.current = controller;
+    const isCurrent = () => !controller.signal.aborted && sequence === requestSequence.current && key === requestKey.current;
+    setCalendarError(null);
     if (force) {
       setRefreshing(true);
-    } else if (items.length === 0) {
+    } else if (items.length === 0 && !getCacheItem<ResultCalendarItem[]>(key, 12 * 60 * 60 * 1000)?.length) {
       setLoading(true);
     } else {
       // Cached data is showing — indicate the silent background refresh
@@ -461,79 +558,95 @@ export function ResultsCalendar() {
       const wlParam = (selectedWatchlistId && calendarScope === 'watchlist') ? `&watchlistId=${selectedWatchlistId}` : '';
       const url = `${endpoint}?filter=all&scope=${calendarScope}${wlParam}${force && mode === 'full' ? '&mode=full' : ''}`;
 
-      const res = await customFetch(url, { method });
+      const res = await customFetch(url, { method, signal: controller.signal });
+      if (!isCurrent()) return;
+      if (!res.ok) throw new Error(`Calendar request failed (${res.status})`);
       if (res.ok) {
         const data = await res.json();
-        const rawFetched = data.items || [];
+        if (!isCurrent()) return;
+        if (data.success === false || !Array.isArray(data.items)) throw new Error('Invalid calendar response');
+        const rawFetched = data.items;
         const fetchedItems = rawFetched.map((it: any) => ({
           ...it,
           companyName: getCorrectCompanyName(it),
           meetingDate: getResolvedMeetingDate(it) || it.meetingDate
         }));
         setItems(fetchedItems);
-        setCacheItem('results_calendar_items', fetchedItems);
-        setLastUpdated(data.lastUpdated || Date.now());
+        setCacheItem(key, fetchedItems);
+        setLastUpdated(data.lastUpdated || 0);
+        if (data.calendarIncomplete) setCalendarError('Some BSE dates could not be refreshed. Previously available dates are retained.');
+        if (data.calendarHistoryUnavailable) setCalendarError('Stored calendar history could not be fully recovered. Retry to check missing archive dates.');
         
-        const todayCount = data.todayCount ?? 0;
-        const upcomingFutureCount = data.upcomingFutureCount ?? (data.upcomingCount ? Math.max(0, data.upcomingCount - todayCount) : 0);
-        const recentCount = data.recentCount ?? 0;
-        const aiSummaryCount = data.aiSummaryCount ?? fetchedItems.filter((i: any) => Boolean(i.aiSummary)).length;
-
-        setSummaryStats({
-          upcomingCount: data.upcomingCount ?? (todayCount + upcomingFutureCount),
-          upcomingFutureCount,
-          todayCount,
-          todayDeclaredCount: data.todayDeclaredCount ?? 0,
-          todayPendingCount: data.todayPendingCount ?? 0,
-          recentCount,
-          aiSummaryCount
-        });
+        const currentItems = fetchedItems.map((item: ResultCalendarItem) => projectCalendarTiming(item));
+        const todayCount = currentItems.filter((item: ResultCalendarItem) => item.daysLeft === 0).length;
+        const upcomingFutureCount = currentItems.filter((item: ResultCalendarItem) => item.daysLeft > 0).length;
 
         if (data.background) {
           setWatchlistSyncFeedback("⚡ Full library deep scan running seamlessly in the background. Calendar is live and accessible!");
           setTimeout(() => setWatchlistSyncFeedback(null), 6000);
         }
 
-        // Automatically default to Results Archive (declared) if both Today and Upcoming are empty
-        if (todayCount === 0 && upcomingFutureCount === 0) {
-          setStatusFilter('declared');
-        } else if (statusFilter === 'today' && todayCount === 0) {
-          if (upcomingFutureCount > 0) {
-            setStatusFilter('upcoming');
-          } else {
-            setStatusFilter('declared');
-          }
-        } else if (statusFilter === 'upcoming' && upcomingFutureCount === 0) {
-          if (todayCount > 0) {
-            setStatusFilter('today');
-          } else {
-            setStatusFilter('declared');
-          }
-        }
+        // Reconcile with the view selected when the response arrives, not the old request closure.
+        setStatusFilter(selected => {
+          if (selected === 'all' || selected === 'declared' || selected === 'ai') return selected;
+          if (todayCount === 0 && upcomingFutureCount === 0) return 'declared';
+          if (selected === 'today' && todayCount === 0) return upcomingFutureCount > 0 ? 'upcoming' : 'declared';
+          if (selected === 'upcoming' && upcomingFutureCount === 0) return todayCount > 0 ? 'today' : 'declared';
+          return selected;
+        });
       }
     } catch (err) {
+      if (!isCurrent()) return;
+      setCalendarError('Calendar could not be refreshed. Please try again.');
       console.error('Error loading results calendar:', err);
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (isCurrent()) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
   };
 
+  useVisibilityInterval(() => {
+    const nextDay = calendarDayKey();
+    if (nextDay !== dayClock.current) {
+      dayClock.current = nextDay;
+      setCalendarDay(nextDay);
+      setCurrentPage(1);
+      void fetchCalendar(false);
+    }
+  }, 30_000);
+
   const fetchWatchlists = async () => {
+    watchlistsRequest.current?.abort();
     if (!user && !profile) {
       setWatchlists([]);
       return;
     }
+    const controller = new AbortController(); watchlistsRequest.current = controller;
+    const requestedOwner = owner;
+    const current = () => !controller.signal.aborted && watchlistOwner.current === requestedOwner;
     try {
-      const res = await customFetch('/api/watchlists');
-      if (res.ok) {
-        const data = await res.json();
-        setWatchlists(data || []);
-      }
+      const res = await customFetch('/api/watchlists', { signal: controller.signal });
+      if (!res.ok) throw new Error('Watchlists unavailable');
+      const data = await res.json();
+      if (!Array.isArray(data)) throw new Error('Invalid watchlist response');
+      if (current()) setWatchlists(data);
     } catch (err) {
-      console.error('Error loading watchlists:', err);
+      if (current()) setWatchlists([]);
     }
   };
+
+  useEffect(() => {
+    setWatchlists([]);
+    void fetchWatchlists();
+    const changed = () => {
+      void fetchWatchlists();
+      if (calendarScope === 'watchlist') void fetchCalendar(false);
+    };
+    window.addEventListener('watchlists-changed', changed);
+    return () => { watchlistsRequest.current?.abort(); window.removeEventListener('watchlists-changed', changed); };
+  }, [owner, calendarScope, selectedWatchlistId]);
 
   useEffect(() => {
     document.title = 'BSE Results Calendar — Upcoming Quarterly Results & Earnings Dates | Bsenexus';
@@ -548,13 +661,20 @@ export function ResultsCalendar() {
       document.head.appendChild(canonical);
     }
     canonical.setAttribute('href', 'https://bsenexus.in/results-calendar');
-    fetchWatchlists();
   }, []);
 
   useEffect(() => {
-    // Fetch on initial mount or when selected watchlist / calendar scope changes
+    const cached = getCacheItem<ResultCalendarItem[]>(calendarKey, 12 * 60 * 60 * 1000) || [];
+    setItems(cached);
+    setLastUpdated(0);
+    setLoading(cached.length === 0);
+    setSelectedIds(new Set());
     fetchCalendar(false);
-  }, [selectedWatchlistId, calendarScope]);
+    return () => {
+      requestSequence.current++;
+      calendarRequest.current?.abort();
+    };
+  }, [calendarKey]);
 
   // Native Pull to Refresh Hook for Earnings Calendar
   const { 
@@ -570,7 +690,7 @@ export function ResultsCalendar() {
   });
 
   const handleGenerateSummary = async (announcementId?: string) => {
-    if (!announcementId) return;
+    if (!announcementId || aiRequest.current) return;
 
     const isGuestUser = !user || user.isAnonymous;
     if (isGuestUser) {
@@ -592,15 +712,19 @@ export function ResultsCalendar() {
       return;
     }
 
+    const controller = new AbortController(); aiRequest.current = controller;
+    const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(120000)]);
+    const current = () => !controller.signal.aborted && aiRequest.current === controller;
     setIsGeneratingAi(true);
     setAiStepIndex(0);
     try {
       const res = await customFetch(`/api/announcements/${announcementId}/generate-summary`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lang: profile?.notificationPreferences?.aiSummaryLang === 'hinglish' ? 'hinglish' : 'english' })
+        body: JSON.stringify({ lang: profile?.notificationPreferences?.aiSummaryLang === 'hinglish' ? 'hinglish' : 'english' }), signal
       });
       const data = await res.json().catch(() => null);
+      if (!current()) return;
 
       if (res.status === 401 || data?.authRequired) {
         setIsAuthModalOpen(true);
@@ -627,17 +751,18 @@ export function ResultsCalendar() {
         const summaryPatch = data.aiSummaryLang === 'english'
           ? { aiSummaryEn: data.aiSummary }
           : { aiSummary: data.aiSummary };
-        setSelectedModalItem(prev => prev ? { ...prev, ...summaryPatch } : prev);
+        setSelectedModalItem(prev => prev?.declarationAnnouncementId === announcementId ? { ...prev, ...summaryPatch } : prev);
         setItems(prev => prev.map(i => i.declarationAnnouncementId === announcementId ? { ...i, ...summaryPatch } : i));
       } else {
         const errMsg = data?.error || 'Failed to generate AI summary';
         alert(`⚠️ AI Summary Alert: ${errMsg}`);
       }
     } catch (e: any) {
+      if (!current()) return;
       console.error('Failed to generate summary:', e);
       alert(`⚠️ AI processing error: ${e?.message || 'Connection error'}`);
     } finally {
-      setIsGeneratingAi(false);
+      if (current()) { setIsGeneratingAi(false); aiRequest.current = null; }
     }
   };
 
@@ -649,36 +774,18 @@ export function ResultsCalendar() {
     });
   };
 
-  const handleManualSendTelegram = async (item: ResultCalendarItem) => {
-    if (!item) return;
-
-    const isGuestUser = !user || user.isAnonymous;
-    if (isGuestUser) {
-      setIsAuthModalOpen(true);
-      alert('🔒 Google Sign-In Required: Sign in with Google to activate your 1-Week Free Pro trial to broadcast to Telegram!');
-      return;
-    }
-
-    if (!isProOrAdmin) {
-      setIsProModalOpen(true);
-      alert(isPaidPro ? `🔒 Direct Telegram Broadcasting is a Pro & Admin feature.
-
-Your Pro subscription has expired. Renew Pro (one-time plans from ₹${getLowestPlanPrice()}) to dispatch alerts to Telegram!` : `🔒 Direct Telegram Broadcasting is a Pro & Admin feature.
-
-Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to dispatch alerts to Telegram!`);
-      return;
-    }
-
-    setIsSendingTelegram(true);
-    setIsPlaneFlying(true);
-    setTelegramStatus(null);
-
-    const randomMsg = TELEGRAM_SUCCESS_MESSAGES[Math.floor(Math.random() * TELEGRAM_SUCCESS_MESSAGES.length)];
+  const handleManualSendTelegram = async (item: ResultCalendarItem): Promise<boolean> => {
+    if (!item || telegramRequest.current) return false;
+    if (!user || user.isAnonymous) { setIsAuthModalOpen(true); return false; }
+    if (!isAdmin) { alert('Shared channel broadcasting requires an administrator.'); return false; }
+    const controller = new AbortController(); telegramRequest.current = controller;
+    const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(30000)]);
+    const current = () => !controller.signal.aborted && telegramRequest.current === controller;
+    setIsSendingTelegram(true); setIsPlaneFlying(true); setTelegramStatus(null);
     const calendarLink = getCalendarLink(item);
-
     try {
       const res = await customFetch('/api/send-to-telegram-manual', {
-        method: 'POST',
+        method: 'POST', signal,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           newsId: item.declarationAnnouncementId || item.id,
@@ -692,16 +799,19 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
         })
       });
       const data = await res.json();
-      if (res.ok && data.success) {
-        setTelegramStatus(randomMsg);
-      } else {
-        alert(data.error || 'Failed to dispatch to Telegram');
+      if (!current()) return false;
+      if (res.status === 403 && data?.adminElevationRequired) setIsAdminPinModalOpen(true);
+      if (!res.ok || data?.success !== true || !data.messageId) {
+        alert(data?.error || 'Telegram delivery could not be confirmed. Check the channel before retrying.');
+        return false;
       }
-    } catch (err: any) {
-      alert('Failed to dispatch: ' + err.message);
+      setTelegramStatus('Telegram accepted the alert.');
+      return true;
+    } catch {
+      if (current()) alert('Telegram delivery could not be confirmed. Check the channel before retrying.');
+      return false;
     } finally {
-      setIsSendingTelegram(false);
-      setTimeout(() => setIsPlaneFlying(false), 1200);
+      if (current()) { telegramRequest.current = null; setIsSendingTelegram(false); setIsPlaneFlying(false); }
     }
   };
 
@@ -722,11 +832,13 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
     window.location.href = `mailto:?subject=${subject}&body=${body}`;
   };
 
-  const handleCopyCalendarLink = (item: ResultCalendarItem) => {
-    const calendarLink = getCalendarLink(item);
-    navigator.clipboard.writeText(calendarLink);
-    setCopiedCalendarId(item.id);
-    setTimeout(() => setCopiedCalendarId(null), 2000);
+  const handleCopyCalendarLink = async (item: ResultCalendarItem): Promise<boolean> => {
+    try {
+      await navigator.clipboard.writeText(getCalendarLink(item));
+      setCopiedCalendarId(item.id);
+      setTimeout(() => setCopiedCalendarId(null), 2000);
+      return true;
+    } catch { alert('Copy failed. Check clipboard permission and try again.'); return false; }
   };
 
   // Selection handlers
@@ -793,23 +905,22 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
       return;
     }
 
-    if (!isProOrAdmin) {
-      setIsProModalOpen(true);
-      alert(`🔒 Telegram Broadcasting is a Pro feature.
-
-Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to broadcast to Telegram!`);
-      return;
-    }
+    if (!isAdmin) { alert('Shared channel broadcasting requires an administrator.'); return; }
+    if (bulkTelegramRequest.current) return;
+    const controller = new AbortController(); bulkTelegramRequest.current = controller;
+    const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(120000)]);
+    const current = () => !controller.signal.aborted && bulkTelegramRequest.current === controller;
 
     setIsBulkBroadcasting(true);
     setBulkBroadcastMsg(`Broadcasting ${selectedItems.length} selected board meeting(s) to Telegram...`);
 
     let sent = 0;
     for (const item of selectedItems) {
+      if (!current()) return;
       try {
         const calLink = getCalendarLink(item);
         const res = await customFetch('/api/send-to-telegram-manual', {
-          method: 'POST',
+          method: 'POST', signal,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             newsId: item.declarationAnnouncementId || item.id,
@@ -822,15 +933,24 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
             calendarUrl: calLink
           })
         });
-        if (res.ok) sent++;
+        const data = await res.json();
+        if (!current()) return;
+        if (res.ok && data?.success === true && data.messageId) sent++;
+        else {
+          if (res.status === 403 && data?.adminElevationRequired) setIsAdminPinModalOpen(true);
+          break;
+        }
       } catch (e) {
         console.error('Error sending item in bulk:', e);
+        break;
       }
     }
 
+    if (!current()) return;
+    bulkTelegramRequest.current = null;
     setIsBulkBroadcasting(false);
-    setBulkBroadcastMsg(`✅ Successfully sent ${sent}/${selectedItems.length} selected meeting(s) to Telegram!`);
-    setTimeout(() => setBulkBroadcastMsg(null), 4000);
+    setBulkBroadcastMsg(sent === selectedItems.length ? `Telegram accepted ${sent}/${selectedItems.length} selected alerts.` : `Telegram accepted ${sent}/${selectedItems.length} alerts. Remaining deliveries are unconfirmed; check the channel before retrying.`);
+
   };
 
   // Broadcast All Upcoming Board Meetings to Telegram
@@ -842,24 +962,24 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
       return;
     }
 
-    if (!isProOrAdmin) {
-      setIsProModalOpen(true);
-      alert(`🔒 Telegram Broadcasting is a Pro feature.
-
-Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to broadcast to Telegram!`);
-      return;
-    }
+    if (!isAdmin) { alert('Shared channel broadcasting requires an administrator.'); return; }
+    if (bulkTelegramRequest.current) return;
+    const controller = new AbortController(); bulkTelegramRequest.current = controller;
+    const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(120000)]);
+    const current = () => !controller.signal.aborted && bulkTelegramRequest.current === controller;
 
     setIsBulkBroadcasting(true);
     setBulkBroadcastMsg('Broadcasting upcoming board meetings schedule to Telegram...');
 
     try {
       const res = await customFetch('/api/results-calendar/telegram-broadcast', {
-        method: 'POST',
+        method: 'POST', signal,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ forceAll })
       });
       const data = await res.json();
+      if (!current()) return;
+      if (res.status === 403 && data?.adminElevationRequired) setIsAdminPinModalOpen(true);
       if (res.ok && data.success) {
         setBulkBroadcastMsg(`✅ ${data.message || `Broadcast ${data.count} meetings to Telegram.`}`);
       } else {
@@ -867,51 +987,19 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
         setBulkBroadcastMsg(null);
       }
     } catch (err: any) {
+      if (!current()) return;
       alert('Error broadcasting to Telegram: ' + err.message);
       setBulkBroadcastMsg(null);
     } finally {
-      setIsBulkBroadcasting(false);
-      setTimeout(() => setBulkBroadcastMsg(null), 4500);
+      if (current()) { bulkTelegramRequest.current = null; setIsBulkBroadcasting(false); }
     }
   };
 
   // Filter and sort items with useMemo
   const filteredAndSortedItems = useMemo(() => {
     let result = [...items];
-    const isSearching = Boolean(searchQuery.trim());
-
-    // Build active watchlist symbols & scrips
-    const activeWatchlistSymbols = new Set<string>();
-    const activeWatchlistScrips = new Set<string>();
-
-    const targetLists = selectedWatchlistId 
-      ? watchlists.filter(w => String(w.id) === String(selectedWatchlistId))
-      : watchlists.filter(w => w.is_active !== 0);
-
-    targetLists.forEach(w => {
-      (w.items || []).forEach((it: any) => {
-        const sym = typeof it === 'string' ? it.split(':')[0] : (it?.symbol || '');
-        if (sym) activeWatchlistSymbols.add(sym.toUpperCase().trim());
-        const scrip = typeof it === 'object' && it.scripCode ? String(it.scripCode).trim() : '';
-        if (scrip) activeWatchlistScrips.add(scrip);
-      });
-    });
-
-    // If NOT searching and in watchlist scope, filter by active watchlist stocks.
-    // In market scope the server already returns the market-wide set.
-    if (!isSearching && calendarScope === 'watchlist') {
-      if (watchlists.length > 0 && activeWatchlistSymbols.size === 0 && selectedWatchlistId) {
-        return [];
-      }
-
-      if (activeWatchlistSymbols.size > 0) {
-        result = result.filter(item => {
-          const sym = (item.symbol || '').toUpperCase().trim();
-          const scrip = item.scripCode ? String(item.scripCode).trim() : '';
-          return activeWatchlistSymbols.has(sym) || (scrip && activeWatchlistScrips.has(scrip));
-        });
-      }
-    }
+    // Membership is enforced once by the owner/scope-aware server response.
+    // Searching must never broaden an empty watchlist into the public calendar.
 
     // 1. Status Filter
     if (statusFilter === 'today') {
@@ -919,10 +1007,10 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
     } else if (statusFilter === 'upcoming') {
       result = result.filter(i => i.status === 'UPCOMING' || i.daysLeft > 0);
     } else if (statusFilter === 'declared') {
-      // Declared or Recent past 30 days
-      result = result.filter(i => i.isDeclared || i.status === 'RECENT' || (i.daysLeft < 0 && i.daysLeft >= -30));
+      // Keep all recorded past meetings accessible without inventing a declaration.
+      result = result.filter(i => i.isDeclared || i.daysLeft < 0);
     } else if (statusFilter === 'ai') {
-      result = result.filter(i => Boolean(i.aiSummary));
+      result = result.filter(i => Boolean(displaySummary(i)));
     }
 
     // 2. Contextual Sub-Filter
@@ -937,7 +1025,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
     } else if (declarationFilter === 'month_30d') {
       result = result.filter(i => i.daysLeft >= 1 && i.daysLeft <= 30);
     } else if (declarationFilter === 'has_ai') {
-      result = result.filter(i => Boolean(i.aiSummary));
+      result = result.filter(i => Boolean(displaySummary(i)));
     }
 
     // 3. Search Query
@@ -974,12 +1062,12 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
     }
 
     return result;
-  }, [items, statusFilter, declarationFilter, searchQuery, sortBy, calendarScope]);
+  }, [items, statusFilter, declarationFilter, searchQuery, sortBy, calendarScope, summaryLang]);
 
   // Reset page when filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [statusFilter, declarationFilter, searchQuery, selectedWatchlistId, sortBy, calendarScope]);
+  }, [statusFilter, declarationFilter, searchQuery, selectedWatchlistId, sortBy, calendarScope, summaryLang]);
 
   // Dynamic live horizon counts for upcoming tab
   const upcomingItems = useMemo(() => items.filter(i => i.status === 'UPCOMING' || i.daysLeft > 0), [items]);
@@ -989,19 +1077,21 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
 
   // Dynamic counts for recent & all sub-filters
   const recentItems = useMemo(() => items.filter(i => i.status === 'RECENT' || (i.daysLeft < 0 && i.daysLeft >= -30)), [items]);
-  const recentAiCount = useMemo(() => recentItems.filter(i => Boolean(i.aiSummary)).length, [recentItems]);
+  const recentAiCount = useMemo(() => recentItems.filter(i => Boolean(displaySummary(i))).length, [recentItems, summaryLang]);
   const recentDeclaredCount = useMemo(() => recentItems.filter(i => i.isDeclared === true).length, [recentItems]);
 
-  const allAiCount = useMemo(() => items.filter(i => Boolean(i.aiSummary)).length, [items]);
+  const allAiCount = useMemo(() => items.filter(i => Boolean(displaySummary(i))).length, [items, summaryLang]);
   const allDeclaredCount = useMemo(() => items.filter(i => i.isDeclared === true).length, [items]);
   const allPendingCount = useMemo(() => items.filter(i => !i.isDeclared && i.daysLeft >= 0).length, [items]);
 
   // Pagination calculation
   const totalPages = Math.max(1, Math.ceil(filteredAndSortedItems.length / itemsPerPage));
+  const visiblePage = Math.min(currentPage, totalPages);
+  useEffect(() => { setCurrentPage(page => Math.min(page, totalPages)); }, [totalPages]);
   const paginatedItems = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
+    const startIndex = (visiblePage - 1) * itemsPerPage;
     return filteredAndSortedItems.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredAndSortedItems, currentPage, itemsPerPage]);
+  }, [filteredAndSortedItems, visiblePage, itemsPerPage]);
 
   const formatLastUpdated = (ts: number) => {
     if (!ts) return 'Never';
@@ -1073,7 +1163,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
 
   // Split history into Financial Results (1 canonical Result per Quarter) vs Board Meetings
   const financialResultsHistory = useMemo(() => {
-    const rawResults = stockHistory.filter(h => (h.isOutcome || h.status === 'Declared' || h.status === 'Outcome Declared') && !h.periodOrMeeting?.toLowerCase().startsWith('board meeting:'));
+    const rawResults = stockHistory.filter(h => String(h.scripCode) === String(selectedModalItem?.scripCode) && (h.isOutcome || h.status === 'Declared' || h.status === 'Outcome Declared') && !h.periodOrMeeting?.toLowerCase().startsWith('board meeting:'));
     const map = new Map<string, any>();
     
     rawResults.forEach(item => {
@@ -1089,68 +1179,28 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
       }
     });
 
-    if (selectedModalItem && selectedModalItem.isDeclared) {
-      const modalQuarterKey = selectedModalItem.quarterKey || `current-${selectedModalItem.meetingDate}`;
-      const existing = map.get(modalQuarterKey) || Array.from(map.values()).find(x => 
-        (x.quarterKey && selectedModalItem.quarterKey && x.quarterKey === selectedModalItem.quarterKey) ||
-        x.meetingDate === selectedModalItem.meetingDate || 
-        x.declarationDate === selectedModalItem.meetingDate
-      );
-      if (existing) {
-        if (!existing.declarationTime && selectedModalItem.resultDeclarationTime) {
-          existing.declarationTime = formatTimeOnly(selectedModalItem.resultDeclarationTime);
-          existing.declaredAtFormatted = selectedModalItem.resultDeclarationTime;
-        }
-        if (!existing.pdfLink && selectedModalItem.declarationPdfLink) {
-          existing.pdfLink = selectedModalItem.declarationPdfLink;
-        }
-      } else {
-        map.set(modalQuarterKey, {
-          id: selectedModalItem.id,
-          quarterKey: selectedModalItem.quarterKey,
-          periodOrMeeting: selectedModalItem.purpose || `Financial Results (${selectedModalItem.meetingDate})`,
-          meetingDate: selectedModalItem.meetingDate,
-          boardMeetingDate: selectedModalItem.meetingDate,
-          declarationDate: selectedModalItem.resultDeclarationTime ? formatDateOnly(selectedModalItem.resultDeclarationTime) : selectedModalItem.meetingDate,
-          declarationTime: selectedModalItem.resultDeclarationTime ? formatTimeOnly(selectedModalItem.resultDeclarationTime) : '',
-          declaredAtFormatted: selectedModalItem.resultDeclarationTime || `${selectedModalItem.meetingDate} IST`,
-          exactDateTimeStr: selectedModalItem.resultDeclarationTime ? formatFullDateTime(selectedModalItem.resultDeclarationTime) : selectedModalItem.meetingDate,
-          submissionTimestamp: selectedModalItem.meetingTimestamp || Date.now(),
-          subject: selectedModalItem.declarationSubject || selectedModalItem.purpose,
-          details: selectedModalItem.purpose,
-          pdfLink: selectedModalItem.declarationPdfLink,
-          aiSummary: selectedModalItem.aiSummary,
-          isOutcome: true,
-          status: "Declared",
-          priority: 'HIGH',
-          followUpFilings: [],
-          followUpCount: 0
-        });
-      }
-    }
-
     return Array.from(map.values()).sort((a, b) => (b.submissionTimestamp || 0) - (a.submissionTimestamp || 0));
   }, [stockHistory, selectedModalItem]);
 
   const boardMeetingsHistory = useMemo(() => {
-    return stockHistory.filter(h => !h.isOutcome || h.periodOrMeeting?.toLowerCase().includes('board meeting') || h.status?.includes('Upcoming') || h.status?.includes('Meeting'));
-  }, [stockHistory]);
+    return stockHistory.filter(h => String(h.scripCode) === String(selectedModalItem?.scripCode) && (!h.isOutcome || h.periodOrMeeting?.toLowerCase().includes('board meeting') || h.status?.includes('Upcoming') || h.status?.includes('Meeting')));
+  }, [stockHistory, selectedModalItem]);
 
   return (
     <div ref={calendarContainerRef} className="space-y-2 overscroll-y-contain relative">
       {/* Pull to Refresh Animated Indicator for Earnings & Results Calendar */}
-      <PullToRefreshIndicator 
-        pullDistance={calPullDist}
-        isPulling={isCalPulling}
-        isRefreshing={isCalRefreshing}
-        progress={calPullProg}
-        label="Results Calendar"
-      />
 
+
+      {calendarError && (
+        <div role="alert" className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">
+          <span>{calendarError}{items.length > 0 ? ' Previously loaded entries are still shown.' : ''}</span>
+          <button type="button" onClick={() => fetchCalendar(false)} className="min-h-10 rounded px-3 font-semibold underline">Retry</button>
+        </div>
+      )}
       {/* Compact Streamlined Unified Toolbar: Sticky below navbar - Title, Search, Filter & Single Tab Row */}
-      <div className="sticky top-14 md:top-[89px] z-30 bg-white/95 dark:bg-[#1A1926]/95 backdrop-blur-md border border-slate-200/90 dark:border-[#2D283E] rounded-xl p-2.5 sm:p-3 shadow-xs flex flex-col gap-2">
-        {/* Row 1: Title, Search Box & Filter Bottom Sheet Trigger */}
-        <div className="results-toolbar flex items-center gap-2 justify-between">
+      <div ref={toolbarRef} className="sticky top-14 md:top-[89px] z-30 bg-white/95 dark:bg-[#1A1926]/95 backdrop-blur-md border border-slate-200/90 dark:border-[#2D283E] rounded-xl p-2.5 sm:p-3 shadow-xs flex flex-col gap-2">
+        {/* Stable title row; search and coverage get their own space below. */}
+        <div className="results-heading flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
           
           {/* Left: Scope Title, Count & Timestamp */}
           <div className="flex items-center gap-1.5 shrink-0">
@@ -1161,12 +1211,11 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
             <span className="text-xs text-slate-500 font-mono">
               ({filteredAndSortedItems.length})
             </span>
-            {lastUpdated > 0 && (
-              <span className="hidden sm:inline text-[11px] text-slate-400 font-mono">
-                • Updated {formatTimeOnly(lastUpdated)}
-              </span>
-            )}
           </div>
+          {lastUpdated > 0 && <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">Updated {formatTimeOnly(lastUpdated)}</span>}
+        </div>
+
+        <div className="results-toolbar flex items-center gap-2 justify-between">
 
           {/* Center: Search Box (44px min height on mobile) */}
           <div className="results-search relative flex-1 min-w-0 max-w-lg min-h-[44px] sm:min-h-[36px] flex items-center">
@@ -1175,13 +1224,15 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
               type="text" 
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Search symbol, company, scrip..."
+              aria-label="Search earnings calendar"
+              placeholder="Search companies or symbols"
               className="w-full h-10 sm:h-9 pl-8 pr-7 bg-slate-50 dark:bg-[#15141E] border border-slate-200 dark:border-[#2D283E] rounded-lg text-xs font-medium focus:outline-none focus:ring-1 focus:ring-slate-400 text-slate-900 dark:text-white"
             />
             {searchQuery && (
               <button 
                 type="button" 
                 onClick={() => setSearchQuery('')}
+                aria-label="Clear calendar search"
                 className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
               >
                 <X size={12} />
@@ -1191,42 +1242,27 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
 
           {/* Right: Filter & View Controls */}
           <div className="flex items-center gap-1.5 shrink-0">
-            {/* Calendar Scope Switcher: Market-wide vs Watchlist */}
-            <div className="flex items-center gap-0.5 bg-slate-100 dark:bg-[#201E2E] p-0.5 rounded-lg border border-slate-200 dark:border-[#2D283E]" role="tablist" aria-label="Calendar scope">
-              <button
-                type="button"
-                role="tab"
-                aria-selected={calendarScope === 'market'}
-                onClick={() => setCalendarScope('market')}
-                className={cn(
-                  "px-2.5 py-1.5 rounded-md text-xs transition-all cursor-pointer select-none",
-                  calendarScope === 'market'
-                    ? "bg-white dark:bg-[#2E2A42] text-slate-900 dark:text-white font-bold shadow-2xs"
-                    : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-                )}
-                title="Market-wide results: companies beyond any watchlist"
-              >
-                Market
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={calendarScope === 'watchlist'}
-                onClick={() => setCalendarScope('watchlist')}
-                className={cn(
-                  "px-2.5 py-1.5 rounded-md text-xs transition-all cursor-pointer select-none",
-                  calendarScope === 'watchlist'
-                    ? "bg-white dark:bg-[#2E2A42] text-slate-900 dark:text-white font-bold shadow-2xs"
-                    : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-                )}
-                title="Your watchlist results"
-              >
-                Watchlist
-              </button>
+            {/* Stock coverage and the existing date tabs are independent. */}
+            <div className="ui-segmented flex items-center gap-0.5 bg-slate-100 dark:bg-[#201E2E] p-0.5 rounded-lg border border-slate-200 dark:border-[#2D283E]" role="group" aria-label="Calendar scope">
+              {([
+                ['all', 'All', 'Your watchlist and F&O stocks, without duplicate meetings'],
+                ['fno', 'F&O Stocks', 'All stocks from the F&O calendar list'],
+                ['watchlist', 'Watchlist', 'Only your active watchlist stocks'],
+              ] as const).map(([scope, label, description]) => (
+                <button key={scope} type="button" aria-pressed={calendarScope === scope}
+                  onClick={() => handleCalendarScopeChange(scope)} title={description}
+                  className={cn(
+                    "px-2.5 py-1.5 min-h-9 rounded-md text-xs whitespace-nowrap transition-all cursor-pointer select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500",
+                    calendarScope === scope
+                      ? "bg-white dark:bg-[#2E2A42] text-slate-900 dark:text-white font-bold shadow-2xs"
+                      : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                  )}
+                >{label}</button>
+              ))}
             </div>
 
             {/* Desktop View Switcher */}
-            <div className="hidden md:flex items-center gap-0.5 bg-slate-100 dark:bg-[#201E2E] p-0.5 rounded-lg border border-slate-200 dark:border-[#2D283E]">
+            <div className="ui-segmented hidden md:flex items-center gap-0.5 bg-slate-100 dark:bg-[#201E2E] p-0.5 rounded-lg border border-slate-200 dark:border-[#2D283E]">
               <button
                 type="button"
                 onClick={() => handleSetViewMode('grid')}
@@ -1328,6 +1364,14 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
         </div>
       </div>
 
+      <PullToRefreshIndicator
+        pullDistance={calPullDist}
+        isPulling={isCalPulling}
+        isRefreshing={isCalRefreshing}
+        progress={calPullProg}
+        label="Results Calendar"
+      />
+
       {/* Filter & Operations Bottom Sheet */}
       <AnimatePresence>
         {isFilterSheetOpen && (
@@ -1343,6 +1387,8 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
 
             {/* Sheet Content */}
             <motion.div
+              {...filtersDialog}
+              aria-label="Calendar filters and operations"
               initial={{ y: "100%", opacity: 0.5 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: "100%", opacity: 0 }}
@@ -1402,7 +1448,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                       onClick={() => handleBroadcastAllUpcoming(false)}
                       isLoading={isBulkBroadcasting}
                       loadingText="Broadcasting..."
-                      disabled={summaryStats.upcomingFutureCount === 0}
+                      disabled={summaryStats.upcomingCount === 0}
                       variant="secondary"
                       size="md"
                       className="min-h-[44px] justify-center col-span-2 sm:col-span-1 bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800"
@@ -1620,7 +1666,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
         <div className="px-3 py-2 bg-slate-50 dark:bg-[#1A1926] border border-slate-200/90 dark:border-[#2D283E] rounded-xl text-xs text-slate-600 dark:text-slate-300 flex items-center justify-between gap-2 shadow-2xs">
           <div className="flex items-center gap-2">
             <Info size={14} className="text-slate-400 dark:text-slate-400 shrink-0" />
-            <span>No board meetings today or upcoming &middot; <strong className="text-slate-900 dark:text-white">{summaryStats.recentCount || allDeclaredCount}</strong> results declared in last 30 days</span>
+            <span>No board meetings today or upcoming &middot; {summaryStats.recentCount > 0 ? <><strong className="text-slate-900 dark:text-white">{summaryStats.recentCount}</strong> meetings archived in last 30 days</> : 'Declared results are available in Results Archive'}</span>
           </div>
           {statusFilter !== 'declared' && (
             <button
@@ -1628,7 +1674,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
               onClick={() => handleTabChange('declared')}
               className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer flex items-center gap-1 shrink-0"
             >
-              <span>View Declared Results</span>
+              <span>View Results Archive</span>
               <ChevronRight size={12} />
             </button>
           )}
@@ -1715,7 +1761,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                 <span>Add Selected ({selectedIds.size}) to Calendar</span>
               </button>
 
-              <ActionButton
+              {isAdmin && <ActionButton
                 type="button"
                 onClick={handleBulkSendSelectedTelegram}
                 isLoading={isBulkBroadcasting}
@@ -1727,7 +1773,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                 title="Broadcast selected board meetings to Telegram channel"
               >
                 Broadcast to Telegram ({selectedIds.size})
-              </ActionButton>
+              </ActionButton>}
 
               <button
                 type="button"
@@ -1912,7 +1958,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-[#252233] dark:hover:bg-[#2D2840] border border-slate-200 dark:border-[#3E3854] text-slate-700 dark:text-slate-200 rounded-lg text-xs font-bold transition-all cursor-pointer"
                   >
                     <Clock size={13} />
-                    <span>View {summaryStats.recentCount} Recent Declared</span>
+                    <span>View {summaryStats.recentCount} Recently Archived</span>
                   </button>
                 )}
 
@@ -1966,8 +2012,14 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
               const isDeclared = item.isDeclared === true;
               const isFlashing = lightningId === item.id;
               const isSelected = selectedIds.has(item.id);
+              const dateLabel = formatDateOnly(getResolvedMeetingDate(item)).replace('N/A', '') || 'Date to be confirmed';
+              const startsDate = idx === 0 || dateLabel !== (formatDateOnly(getResolvedMeetingDate(paginatedItems[idx - 1])).replace('N/A', '') || 'Date to be confirmed');
 
               return (
+                <React.Fragment key={`${item.id || 'cal'}-${idx}`}>
+                {startsDate && <h2 style={{ '--calendar-toolbar-height': `${toolbarHeight}px` } as React.CSSProperties} className="calendar-date-heading sticky top-[calc(56px+var(--calendar-toolbar-height))] md:top-[calc(89px+var(--calendar-toolbar-height))] z-20 col-span-full flex items-center gap-3 rounded-lg border border-slate-200 dark:border-[#3E3854] bg-slate-100 dark:bg-[#222030] px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 shadow-xs">
+                  <CalendarDays size={15} aria-hidden="true" /><span>{dateLabel}</span>{isToday && <span className="text-amber-700 dark:text-amber-300">Today</span>}
+                </h2>}
                 <motion.div
                   id={`calendar-item-${item.id || item.scripCode || idx}`}
                   key={`${item.id || 'cal'}-${idx}`}
@@ -1976,6 +2028,8 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                   transition={springSnappy}
                   onClick={() => handleSelectItem(item)}
                   className={cn(
+                    "calendar-entry",
+                    isToday && isDeclared && "calendar-declared-today",
                     viewMode === 'grid'
                       ? cn(heliosCard, calCardPad, calCardGap, "transition-all flex flex-col cursor-pointer relative group hover:shadow-[0_16px_40px_rgba(15,23,42,0.10)] dark:hover:shadow-[0_16px_40px_rgba(0,0,0,0.55)]")
                       : cn(heliosCard, calCardPad, "transition-all flex flex-col md:flex-row md:items-center justify-between gap-2.5 cursor-pointer relative group hover:shadow-[0_12px_28px_rgba(15,23,42,0.09)] dark:hover:shadow-[0_12px_28px_rgba(0,0,0,0.5)]"),
@@ -1993,9 +2047,9 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                 )}
 
                 {/* Left Stock info with Select Checkbox & Calendar Tile */}
-                <div className={cn("flex gap-2.5 min-w-0", viewMode === 'grid' ? "flex-col items-stretch" : "items-start flex-1")}>
+                <div className="calendar-stock-info flex flex-col gap-2.5 min-w-0 flex-1">
                   {/* Top row in Grid view OR Header strip in List view */}
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="calendar-card-header flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 min-w-0">
                       {/* Select Checkbox */}
                       <button
@@ -2020,7 +2074,8 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                         );
                       })()}
 
-                      <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                      <div className="calendar-identity flex flex-col items-start gap-0.5 min-w-0">
+                        <div className="flex items-center gap-1.5 min-w-0 w-full">
                         {/* Pulsing Live Dot for today's scheduled or active meetings */}
                         {isToday && (
                           <span className="relative flex h-2 w-2 shrink-0" title="Board meeting scheduled today">
@@ -2031,10 +2086,10 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
 
                         <span 
                           onClick={(e) => handleOpenIntel(item.scripCode, item.symbol, getCorrectCompanyName(item), e)}
-                          className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors cursor-pointer truncate"
+                          className="calendar-company-title font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors cursor-pointer break-words"
                           title="Open 360° Stock Intelligence"
                         >
-                          {item.symbol}
+                          {getCorrectCompanyName(item)}
                         </span>
 
                         {/* 360° Company Intel Icon with informative tooltip */}
@@ -2048,19 +2103,21 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                           <Building2 size={12} />
                         </button>
 
-                        <HeliosPill tone="slate" dot={false} className="font-mono">
-                          {item.scripCode}
-                        </HeliosPill>
+                        </div>
+                    <div className="calendar-company-meta">
+                      {item.symbol && !/^[0-9]+$/.test(item.symbol) && item.symbol !== getCorrectCompanyName(item) && <span className="calendar-symbol">{item.symbol}</span>}
+                      <span className="calendar-purpose">{item.purpose || 'Board meeting'}</span>
+                    </div>
                       </div>
                     </div>
 
                     {/* Status Badge in Grid View top corner */}
                     {viewMode === 'grid' && (
                       <div className="shrink-0">
-                        {isDeclared && item.resultDeclarationTime ? (
-                          <HeliosPill tone="emerald">Declared</HeliosPill>
+                        {isDeclared ? (
+                          <HeliosPill tone="emerald">{isToday ? 'Declared today' : 'Declared'}</HeliosPill>
                         ) : isToday ? (
-                          <HeliosPill tone="amber" pulseDot>Today</HeliosPill>
+                          <HeliosPill tone="amber" pulseDot>Today · Awaiting filing</HeliosPill>
                         ) : isUpcoming ? (
                           <HeliosPill tone="sky" dot={false} className="font-mono">
                             {item.daysLeft === 1 ? 'Tomorrow' : `In ${item.daysLeft}d`}
@@ -2072,68 +2129,18 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                     )}
                   </div>
 
-                  <div className="space-y-0.5 flex-1 min-w-0">
-                    <div className="text-xs font-semibold text-slate-800 dark:text-slate-200 line-clamp-1">
-                      {getCorrectCompanyName(item)}
-                    </div>
-
-                    <div className="text-[10px] text-slate-600 dark:text-slate-400 flex items-center gap-1 flex-wrap">
-                      <span className="font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-[#222030] px-1.5 py-0.2 rounded border border-slate-200/60 dark:border-[#2D283E] line-clamp-1 max-w-[300px]">
-                        {item.purpose}
-                      </span>
-                    </div>
-
-                    {isDeclared && item.aiSummary && (
+                    {isDeclared && displaySummary(item) && (
                       <div className="p-1.5 bg-slate-50 dark:bg-[#201E2E] border border-slate-200/80 dark:border-[#2D283E] rounded text-[11px] text-slate-700 dark:text-slate-300 mt-1 flex items-start gap-1">
                         <Sparkles size={11} className="text-amber-500 shrink-0 mt-0.5" />
-                        <span className={cn(viewMode === 'grid' ? "line-clamp-2" : "line-clamp-1")}>{item.aiSummary}</span>
+                        <span className={cn(viewMode === 'grid' ? "line-clamp-2" : "line-clamp-1")}>{displaySummary(item)}</span>
                       </div>
                     )}
-                  </div>
                 </div>
 
-                {/* Right Date & Action Controls */}
-                <div className={cn(
-                  "flex items-center justify-between gap-1.5 shrink-0 border-t border-slate-100 dark:border-[#2D283E] pt-2",
-                  viewMode === 'grid' ? "w-full" : "md:flex-col md:items-end md:justify-center md:border-t-0 md:pt-0"
-                )}>
-                  {(() => {
-                    const meetingDateStr = getResolvedMeetingDate(item);
-                    return (
-                      <div className={cn("space-y-0.2", viewMode === 'grid' ? "text-left" : "text-left md:text-right")}>
-                        <div className={cn("text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1 min-h-[18px]", viewMode !== 'grid' && "md:justify-end")}>
-                          <Clock size={11} className="text-slate-400 shrink-0" />
-                          {meetingDateStr ? (
-                            <span>{meetingDateStr}</span>
-                          ) : (
-                            <span className="inline-block w-20 h-3.5 bg-slate-200 dark:bg-slate-700/60 rounded animate-pulse" aria-label="Loading meeting date" />
-                          )}
-                        </div>
-                        
-                        {viewMode !== 'grid' && (
-                          <>
-                            {isDeclared && item.resultDeclarationTime ? (
-                              <div className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 md:justify-end">
-                                <CheckCircle2 size={10} className="text-emerald-500 shrink-0" />
-                                <span>Declared {formatShortDateTime(item.resultDeclarationTime)}</span>
-                              </div>
-                            ) : isToday ? (
-                              <div className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1 md:justify-end">
-                                <Clock size={10} className="text-amber-500 shrink-0" />
-                                <span>Outcome Pending</span>
-                              </div>
-                            ) : (
-                              <div className="text-[10px] font-mono text-slate-400 flex items-center gap-0.5 md:justify-end">
-                                {isUpcoming ? (item.daysLeft === 1 ? 'Tomorrow' : `In ${item.daysLeft}d`) : 'Past'}
-                              </div>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    );
-                  })()}
-
-                  <div className="relative flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                {/* Full date/year remains in the sticky date heading and Details. */}
+                <div className="calendar-card-footer border-t border-slate-100 dark:border-[#2D283E] pt-2">
+                  {viewMode !== 'grid' && <span className="calendar-list-status text-[11px] text-slate-500 dark:text-slate-400">{isDeclared ? (isToday ? '✓ Declared today' : 'Declared') : isToday ? 'Awaiting filing' : isUpcoming ? (item.daysLeft === 1 ? 'Tomorrow' : `In ${item.daysLeft}d`) : 'Past'}</span>}
+                  <div ref={activeActionMenuId === item.id ? activeMenuAnchor : undefined} className="calendar-card-actions relative" onClick={(e) => e.stopPropagation()}>
                     {isDeclared ? (
                       <button
                         type="button"
@@ -2141,7 +2148,9 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                           e.stopPropagation();
                           setActiveActionMenuId(activeActionMenuId === item.id ? null : item.id);
                         }}
-                        className="px-2.5 py-1.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 text-[11px] font-semibold border border-emerald-200/80 dark:border-emerald-800/80 transition-all flex items-center gap-1 cursor-pointer shadow-2xs select-none min-h-[36px] active:scale-95"
+                        className="calendar-action-button px-2.5 py-1.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 text-[11px] font-semibold border border-emerald-200/80 dark:border-emerald-800/80 transition-all flex items-center gap-1 cursor-pointer shadow-2xs select-none min-h-[36px] active:scale-95"
+                        aria-expanded={activeActionMenuId === item.id}
+                        aria-haspopup="dialog"
                         title="Share declared result update"
                       >
                         <Share2 size={11} className="text-emerald-600 dark:text-emerald-400" />
@@ -2155,7 +2164,9 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                           e.stopPropagation();
                           setActiveActionMenuId(activeActionMenuId === item.id ? null : item.id);
                         }}
-                        className="px-2.5 py-1.5 rounded-md bg-slate-100 dark:bg-[#222030] hover:bg-slate-200 dark:hover:bg-[#2A263D] text-slate-700 dark:text-slate-200 text-[11px] font-semibold border border-slate-200 dark:border-[#2D283E] transition-all flex items-center gap-1 cursor-pointer shadow-2xs select-none min-h-[36px] active:scale-95"
+                        className="calendar-action-button px-2.5 py-1.5 rounded-md bg-slate-100 dark:bg-[#222030] hover:bg-slate-200 dark:hover:bg-[#2A263D] text-slate-700 dark:text-slate-200 text-[11px] font-semibold border border-slate-200 dark:border-[#2D283E] transition-all flex items-center gap-1 cursor-pointer shadow-2xs select-none min-h-[36px] active:scale-95"
+                        aria-expanded={activeActionMenuId === item.id}
+                        aria-haspopup="dialog"
                         title="Set meeting reminder or sync to calendar"
                       >
                         <Bell size={11} className="text-slate-500" />
@@ -2170,7 +2181,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                         e.stopPropagation();
                         handleSelectItem(item);
                       }}
-                      className="px-2.5 py-1.5 rounded-md bg-slate-100 dark:bg-[#222030] hover:bg-slate-200 dark:hover:bg-[#2A263D] text-slate-800 dark:text-slate-200 text-[11px] font-semibold border border-slate-200 dark:border-[#2D283E] transition-all flex items-center gap-1 cursor-pointer shadow-2xs select-none min-h-[36px] active:scale-95"
+                      className="calendar-action-button px-2.5 py-1.5 rounded-md bg-slate-100 dark:bg-[#222030] hover:bg-slate-200 dark:hover:bg-[#2A263D] text-slate-800 dark:text-slate-200 text-[11px] font-semibold border border-slate-200 dark:border-[#2D283E] transition-all flex items-center gap-1 cursor-pointer shadow-2xs select-none min-h-[36px] active:scale-95"
                       title="View full filing details & AI analysis"
                     >
                       <span>Details</span>
@@ -2187,20 +2198,9 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                       label={`Save note on ${item.symbol} results`}
                     />
 
-                    {/* Contextual Action Dropdown Popover */}
+                    {/* A portal avoids Soft Glass blur/transform containing blocks. */}
                     {activeActionMenuId === item.id && (
-                      <>
-                        <div
-                          className="fixed inset-0 z-40 bg-transparent"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActiveActionMenuId(null);
-                          }}
-                        />
-                        <div 
-                          className="absolute right-0 top-full mt-1 w-56 bg-white dark:bg-[#1A1926] border border-slate-200 dark:border-[#2D283E] rounded-xl shadow-xl z-50 p-1.5 space-y-1 animate-in fade-in zoom-in-95 duration-100"
-                          onClick={(e) => e.stopPropagation()}
-                        >
+                      <AnchoredPopover anchorRef={activeMenuAnchor} onClose={() => setActiveActionMenuId(null)} label="Calendar actions">
                         {actionFeedback && (
                           <div className="p-1.5 bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold rounded-lg flex items-center gap-1">
                             <CheckCircle2 size={11} />
@@ -2239,24 +2239,23 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                               <span>Apple / Outlook (.ICS)</span>
                             </button>
 
-                            <button
+                            {isAdmin && <button
                               type="button"
-                              onClick={() => {
-                                handleManualSendTelegram(item);
-                                setActionFeedback('Sent to Telegram');
+                              onClick={async () => {
+                                if (!await handleManualSendTelegram(item)) return;
+                                setActionFeedback('Telegram accepted the alert');
                                 setTimeout(() => { setActionFeedback(null); setActiveActionMenuId(null); }, 1500);
                               }}
                               className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#252236] transition-colors cursor-pointer text-left"
                             >
                               <Send size={13} className="text-blue-500" />
                               <span>Telegram Alert</span>
-                            </button>
+                            </button>}
 
                             <button
                               type="button"
-                              onClick={() => {
-                                const calUrl = getCalendarLink(item);
-                                navigator.clipboard.writeText(calUrl);
+                              onClick={async () => {
+                                if (!await handleCopyCalendarLink(item)) return;
                                 setActionFeedback('Calendar link copied');
                                 setTimeout(() => { setActionFeedback(null); setActiveActionMenuId(null); }, 1500);
                               }}
@@ -2268,18 +2267,18 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                           </>
                         ) : (
                           <>
-                            <button
+                            {isAdmin && <button
                               type="button"
-                              onClick={() => {
-                                handleManualSendTelegram(item);
-                                setActionFeedback('Broadcasted to Telegram');
+                              onClick={async () => {
+                                if (!await handleManualSendTelegram(item)) return;
+                                setActionFeedback('Telegram accepted the alert');
                                 setTimeout(() => { setActionFeedback(null); setActiveActionMenuId(null); }, 1500);
                               }}
                               className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#252236] transition-colors cursor-pointer text-left"
                             >
                               <Send size={13} className="text-blue-500" />
                               <span>Broadcast to Telegram</span>
-                            </button>
+                            </button>}
 
                             {item.declaredDetails?.pdfUrl && (
                               <button
@@ -2311,12 +2310,12 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                             </button>
                           </>
                         )}
-                      </div>
-                    </>
-                  )}
+                      </AnchoredPopover>
+                    )}
                   </div>
                 </div>
               </motion.div>
+              </React.Fragment>
             );
           })}
         </motion.div>
@@ -2354,20 +2353,20 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
 
             <div className="flex items-center gap-1.5 w-full sm:w-auto justify-between sm:justify-end">
               <button 
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(Math.max(1, visiblePage - 1))}
+                disabled={visiblePage === 1}
                 className="px-2.5 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 rounded text-[11px] font-bold text-slate-700 dark:text-slate-300 transition-colors cursor-pointer shadow-2xs"
               >
                 Prev
               </button>
               
               <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 px-1">
-                Page {currentPage} of {totalPages}
+                Page {visiblePage} of {totalPages}
               </span>
 
               <button 
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(Math.min(totalPages, visiblePage + 1))}
+                disabled={visiblePage === totalPages}
                 className="px-2.5 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 rounded text-[11px] font-bold text-slate-700 dark:text-slate-300 transition-colors cursor-pointer shadow-2xs"
               >
                 Next
@@ -2393,7 +2392,9 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
             className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 z-50 overscroll-contain"
             onClick={() => setSelectedModalItem(null)}
           >
-            <motion.div 
+            <motion.div
+              {...detailsDialog}
+              aria-labelledby="calendar-details-title"
               initial={{ scale: 0.96, opacity: 0, y: 16 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.96, opacity: 0, y: 16 }}
@@ -2408,7 +2409,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
               <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-start justify-between gap-3 bg-slate-50/50 dark:bg-slate-900/40">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-base font-extrabold text-slate-900 dark:text-white truncate">
+                    <h3 id="calendar-details-title" className="text-base font-extrabold text-slate-900 dark:text-white truncate">
                       {getCorrectCompanyName(selectedModalItem)} ({selectedModalItem.symbol})
                     </h3>
                     <span className="text-[10px] font-mono px-1.5 py-0.5 bg-slate-200/80 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded font-bold shrink-0">
@@ -2446,6 +2447,11 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                       symbol={selectedModalItem.symbol}
                       pdfUrl={selectedModalItem.declarationPdfLink}
                       url={resultsPageUrlFor(selectedModalItem) || `https://bsenexus.in/results-calendar?scrip=${selectedModalItem.scripCode || ''}`}
+                      calendarActions={{
+                        onEmail: () => handleShareEmail(selectedModalItem),
+                        onCopyLink: () => handleCopyCalendarLink(selectedModalItem),
+                        copied: copiedCalendarId === selectedModalItem.id,
+                      }}
                       size="xs"
                     />
                   </div>
@@ -2455,6 +2461,8 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                 </div>
 
                 <button
+                  type="button"
+                  aria-label="Close calendar details"
                   onClick={() => setSelectedModalItem(null)}
                   className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
                 >
@@ -2463,7 +2471,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
               </div>
 
               {/* Modal Segmented Tabs */}
-              <div className="flex border-b border-slate-200 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-900/60 p-1 gap-1">
+              <div className="ui-segmented flex border-b border-slate-200 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-900/60 p-1 gap-1">
                 <button
                   type="button"
                   onClick={() => setModalTab('results')}
@@ -2492,26 +2500,26 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                   )}
                 >
                   <CalendarDays size={15} />
-                  <span>Upcoming Board Meetings</span>
+                  <span>Board Meetings &amp; History</span>
                   <span className="text-[10px] font-mono px-1.5 py-0.2 bg-slate-200 dark:bg-slate-700 rounded-full">
-                    {boardMeetingsHistory.length || 1}
+                    {boardMeetingsHistory.length}
                   </span>
                 </button>
               </div>
 
               {/* Modal Tab Content */}
-              <div className="p-6 overflow-y-auto space-y-5 flex-1 overscroll-contain">
+              <div className="p-3 sm:p-4 overflow-y-auto space-y-3 flex-1 min-h-0 overscroll-contain">
               {/* TAB 1: FINANCIAL RESULTS & OUTCOMES */}
               {modalTab === 'results' && (
                 <div className="space-y-4 animate-in fade-in duration-150">
                   {/* Results Status Banner */}
-                  <div className={cn(heliosCard, "p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3")}>
+                  <div className={cn(heliosCard, "px-3 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2")}>
                     <div className="flex items-start gap-3">
                       <div className="space-y-1.5">
                         <HeliosPill tone={selectedModalItem.isDeclared ? "emerald" : "amber"} pulseDot={!selectedModalItem.isDeclared}>
                           {selectedModalItem.isDeclared
-                            ? "Financial Result Declared & Verified on BSE"
-                            : "Result Declaration Awaiting Submission"}
+                            ? "Result declared on BSE"
+                            : "Awaiting result filing"}
                         </HeliosPill>
                         {selectedModalItem.isDeclared && selectedModalItem.resultDeclarationTime ? (
                           <div className="text-xs text-emerald-700 dark:text-emerald-300 font-mono font-bold flex items-center gap-1">
@@ -2520,7 +2528,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                           </div>
                         ) : (
                           <div className="text-xs text-slate-500">
-                            Board meeting scheduled on {selectedModalItem.meetingDate}. Company filing will appear live here as soon as published on BSE.
+                            Meeting: {selectedModalItem.meetingDate} · Result filing will appear here once published on BSE.
                           </div>
                         )}
                       </div>
@@ -2539,35 +2547,21 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                     )}
                   </div>
 
-                  {/* Pre-Result Window Priority Booster Card (10 or 20 Days Horizon) */}
-                  <div className="p-4 bg-linear-to-r from-amber-500/10 via-orange-500/10 to-rose-500/10 border border-amber-300/60 dark:border-amber-700/60 rounded-xl space-y-3 shadow-2xs">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div className="flex items-start gap-2.5">
-                        <div className="p-2 rounded-lg bg-amber-500 text-white shadow-2xs shrink-0 mt-0.5">
-                          <Flame size={16} />
-                        </div>
-                        <div>
-                          <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-2 flex-wrap">
-                            <span>Pre-Result Window Priority &amp; Run-Up Disclosures</span>
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
-                              Priority Window
-                            </span>
-                          </div>
-                          <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
-                            Filter and prioritize precursor announcements (board meeting intimation, window closure) in the <strong>{runupWindowDays} days prior</strong> to result date ({selectedModalItem.meetingDate}).
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                  {/* Compact pre-result controls; existing request/priority owners retained. */}
+                  <div className="px-3 py-2.5 bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/70 dark:border-amber-800/50 rounded-xl space-y-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-200 inline-flex items-center gap-1.5"><Flame size={14} className="text-amber-500" />Pre-result filings</span>
+                      <div className="flex items-center gap-2 flex-wrap">
                         {/* 10 vs 20 Days Horizon Toggle */}
                         <div className="inline-flex rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-0.5 shadow-2xs">
                           <button
                             type="button"
                             onClick={() => {
+                              if (runupWindowDays === 10) return;
+                              runupSelectionRef.current = `${owner}:${selectedModalItem.scripCode}:${selectedModalItem.meetingDate}:10`;
                               setRunupWindowDays(10);
                               if (expandedRunupDate) {
-                                toggleRunupAnnouncements(selectedModalItem.scripCode, selectedModalItem.symbol, selectedModalItem.meetingDate, 10);
+                                toggleRunupAnnouncements(selectedModalItem.scripCode, selectedModalItem.symbol, selectedModalItem.meetingDate, 10, true);
                               }
                             }}
                             className={cn(
@@ -2577,14 +2571,16 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                                 : "text-slate-600 dark:text-slate-300 hover:text-slate-900"
                             )}
                           >
-                            10 Days Prior
+                            10 days
                           </button>
                           <button
                             type="button"
                             onClick={() => {
+                              if (runupWindowDays === 20) return;
+                              runupSelectionRef.current = `${owner}:${selectedModalItem.scripCode}:${selectedModalItem.meetingDate}:20`;
                               setRunupWindowDays(20);
                               if (expandedRunupDate) {
-                                toggleRunupAnnouncements(selectedModalItem.scripCode, selectedModalItem.symbol, selectedModalItem.meetingDate, 20);
+                                toggleRunupAnnouncements(selectedModalItem.scripCode, selectedModalItem.symbol, selectedModalItem.meetingDate, 20, true);
                               }
                             }}
                             className={cn(
@@ -2594,7 +2590,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                                 : "text-slate-600 dark:text-slate-300 hover:text-slate-900"
                             )}
                           >
-                            20 Days Prior
+                            20 days
                           </button>
                         </div>
 
@@ -2607,7 +2603,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                           <span>{expandedRunupDate === selectedModalItem.meetingDate ? `Hide ${runupWindowDays}D Filings` : `View ${runupWindowDays}D Filings`}</span>
                         </button>
 
-                        <ActionButton
+                        {isAdmin && <ActionButton
                           onClick={() => handleBoostRunupPriority(selectedModalItem.scripCode, selectedModalItem.symbol, selectedModalItem.meetingDate, runupWindowDays)}
                           isLoading={isBoostingRunup}
                           loadingText="Boosting..."
@@ -2617,15 +2613,20 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                           icon={<Zap size={13} />}
                         >
                           Set {runupWindowDays}D to HIGH
-                        </ActionButton>
+                        </ActionButton>}
                       </div>
                     </div>
 
-                    {/* Pre-Result Boost Alert Notice */}
+                    {/* A denied update must never display a success checkmark. */}
                     {boostRunupMsg && (
-                      <div className="p-2.5 bg-amber-100/90 dark:bg-amber-950/80 border border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-200 text-xs rounded-lg flex items-center gap-2 animate-in fade-in">
-                        <CheckCircle2 size={15} className="text-amber-600 shrink-0" />
-                        <span className="font-bold">{boostRunupMsg}</span>
+                      <div role={boostRunupMsg.type === 'error' ? 'alert' : 'status'} className={cn('p-2.5 rounded-lg text-xs flex items-start gap-2 border',
+                        boostRunupMsg.type === 'success'
+                          ? 'bg-emerald-50 border-emerald-200 text-emerald-900 dark:bg-emerald-950/60 dark:border-emerald-800 dark:text-emerald-200'
+                          : 'bg-amber-50 border-amber-300 text-amber-900 dark:bg-amber-950/60 dark:border-amber-700 dark:text-amber-200')}>
+                        {boostRunupMsg.type === 'success' ? <CheckCircle2 size={15} className="shrink-0 mt-0.5" /> : <AlertTriangle size={15} className="shrink-0 mt-0.5" />}
+                        <div><p className="font-semibold">{boostRunupMsg.message}</p>
+                          {boostRunupMsg.requiresPin && <button type="button" onClick={() => setIsAdminPinModalOpen(true)} className="mt-2 font-semibold underline">Verify admin PIN</button>}
+                        </div>
                       </div>
                     )}
 
@@ -2638,7 +2639,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                             <span>Pre-Result Filings ({runupWindowDays} Days before {selectedModalItem.meetingDate})</span>
                           </span>
                           <span className="text-[10px] font-mono px-2 py-0.5 bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 rounded-full font-bold">
-                            {runupAnnouncements.length} Disclosures Found
+                            {loadingRunupAnnouncements ? 'Loading…' : runupError ? 'Unavailable' : `${runupAnnouncements.length} Disclosures Found`}
                           </span>
                         </div>
 
@@ -2650,6 +2651,11 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                                 <div className="h-2.5 w-1/3 bg-slate-200/70 dark:bg-slate-700/70 rounded" />
                               </div>
                             ))}
+                          </div>
+                        ) : runupError ? (
+                          <div role="alert" className="py-2 text-xs text-amber-800 dark:text-amber-200">
+                            <p>{runupError}</p>
+                            <button type="button" className="mt-2 underline font-semibold" onClick={() => toggleRunupAnnouncements(selectedModalItem.scripCode, selectedModalItem.symbol, selectedModalItem.meetingDate, runupWindowDays, true)}>Retry pre-result filings</button>
                           </div>
                         ) : runupAnnouncements.length > 0 ? (
                           <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
@@ -2683,7 +2689,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                           </div>
                         ) : (
                           <div className="py-2 text-center text-xs text-slate-400">
-                            No separate corporate filings recorded in this {runupWindowDays}-day pre-result window yet. Use <strong>Fetch 1-5 Yr History</strong> below to pull past filings directly from BSE.
+                            No separate corporate filings recorded in this {runupWindowDays}-day pre-result window yet. Use <strong>Sync BSE History</strong> below to pull past filings directly from BSE.
                           </div>
                         )}
                       </div>
@@ -2691,65 +2697,6 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                   </div>
 
                   {/* 1-5 Years Historical BSE Filings Fetcher Card */}
-                  <div className={cn(heliosCard, "p-4 space-y-3")}>
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div className="flex items-start gap-2.5">
-                        <div className="p-2 rounded-lg bg-emerald-600 text-white shadow-2xs shrink-0 mt-0.5">
-                          <History size={16} />
-                        </div>
-                        <div>
-                          <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                            <span>BSE 1–5 Year Historical Results & Filings Sync</span>
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">
-                              Deep History
-                            </span>
-                          </div>
-                          <div className="text-[11px] text-slate-500 mt-0.5">
-                            Fetch 1 to 5 years of historical quarterly financial results, board meetings & time-stamped outcomes for <strong>{selectedModalItem.symbol}</strong>.
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                        <CustomDropdown
-                          options={[
-                            { value: 1, label: '1 Year (1 yr)' },
-                            { value: 2, label: '2 Years (2 yrs)' },
-                            { value: 3, label: '3 Years (3 yrs)' },
-                            { value: 5, label: '5 Years (5 yrs)' }
-                          ]}
-                          value={selectedYears}
-                          onChange={(val) => {
-                            const y = Number(val);
-                            setSelectedYears(y);
-                            handleFetchDeepHistory(selectedModalItem.scripCode, selectedModalItem.symbol, y);
-                          }}
-                          size="sm"
-                          menuWidth="w-36"
-                          align="right"
-                        />
-
-                        <button
-                          type="button"
-                          onClick={() => handleFetchDeepHistory(selectedModalItem.scripCode, selectedModalItem.symbol, selectedYears)}
-                          disabled={isFetchingDeepHistory}
-                          className="rich-action rich-action-primary px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold rounded-lg shadow-2xs flex items-center gap-1.5 disabled:opacity-50 transition-all cursor-pointer"
-                        >
-                          <Download size={13} className={cn(isFetchingDeepHistory && "animate-bounce")} />
-                          <span>{isFetchingDeepHistory ? "Fetching History..." : `Fetch ${selectedYears} Yr History`}</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Deep History Feedback Message */}
-                    {deepHistoryMsg && (
-                      <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 text-xs rounded-lg flex items-center gap-2 animate-in fade-in">
-                        <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
-                        <span className="font-semibold">{deepHistoryMsg}</span>
-                      </div>
-                    )}
-                  </div>
-
                   {/* Gemini AI Financial Metrics Breakdown */}
                   <div className="p-4 bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-800/60 rounded-xl space-y-2.5">
                     <div className="flex items-center justify-between">
@@ -2836,7 +2783,9 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                       symbol={selectedModalItem.symbol}
                       scripCode={selectedModalItem.scripCode}
                       companyName={selectedModalItem.companyName}
-                      isLoading={loadingHistory}
+                      isLoading={loadingHistory && stockHistory.length === 0}
+                      errorMessage={historyError}
+                      onRefresh={() => setHistoryRetry(value => value + 1)}
                       onFetchDeepHistory={(years) => handleFetchDeepHistory(selectedModalItem.scripCode, selectedModalItem.symbol, years)}
                       isFetchingDeep={isFetchingDeepHistory}
                       deepHistoryMsg={deepHistoryMsg}
@@ -2851,7 +2800,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                   {/* Meeting Scheduled Card */}
                   {(() => {
                     const holidayCheck = checkIfDateIsTradingHoliday(selectedModalItem.meetingDate);
-                    const isPast = !selectedModalItem.isDeclared && selectedModalItem.daysLeft < 0;
+                    const isPast = selectedModalItem.daysLeft < 0;
                     const isToday = selectedModalItem.status === 'TODAY' || selectedModalItem.daysLeft === 0;
 
                     return (
@@ -2914,18 +2863,6 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                               <Download size={14} />
                               <span>.ICS (Apple / Outlook)</span>
                             </button>
-                          </div>
-                        </div>
-
-                        {/* Calendar Device Tip */}
-                        <div className="p-3 bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-800/60 rounded-xl text-xs text-blue-800 dark:text-blue-300 flex items-start gap-2">
-                          <Info size={15} className="text-blue-500 shrink-0 mt-0.5" />
-                          <div>
-                            <span className="font-bold">Device Compatibility: </span>
-                            <span>
-                              <strong>Google Calendar link</strong> opens directly on all devices (Android, Windows, iOS). 
-                              <strong> .ICS file</strong> automatically imports the reminder into <strong>Apple Calendar on iPhone/Mac</strong> and <strong>Outlook on Windows</strong>.
-                            </span>
                           </div>
                         </div>
 
@@ -3053,7 +2990,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
             <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 flex items-center justify-between gap-3 flex-wrap">
               {selectedModalItem.declarationPdfLink ? (
                 <a
-                  href={selectedModalItem.declarationPdfLink}
+                  href={getSafePdfUrl(selectedModalItem.declarationPdfLink, undefined, selectedModalItem.declarationAnnouncementId, selectedModalItem.scripCode)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-800 dark:text-slate-200 text-xs font-bold rounded-lg transition-colors"
@@ -3073,46 +3010,19 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                   symbol={selectedModalItem.symbol}
                   pdfUrl={selectedModalItem.declarationPdfLink}
                   url={resultsPageUrlFor(selectedModalItem) || `https://bsenexus.in/results-calendar?scrip=${selectedModalItem.scripCode || ''}`}
+                  calendarActions={{
+                    onEmail: () => handleShareEmail(selectedModalItem),
+                    onCopyLink: () => handleCopyCalendarLink(selectedModalItem),
+                    copied: copiedCalendarId === selectedModalItem.id,
+                  }}
+                  buttonLabel="Share"
                   size="sm"
                 />
 
-                {/* 1-Click Share via Email (Mailto) */}
-                <motion.button
-                  whileTap={buttonTap}
-                  transition={springSnappy}
-                  onClick={() => handleShareEmail(selectedModalItem)}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 transition-colors shadow-2xs cursor-pointer touch-manipulation min-h-[38px]"
-                  title="Send 1-Click Calendar Invite via Email"
-                >
-                  <Mail size={14} className="text-amber-500" />
-                  <span>Share via Email</span>
-                </motion.button>
-
-                {/* Copy 1-Click Calendar URL */}
-                <motion.button
-                  whileTap={buttonTap}
-                  transition={springSnappy}
-                  onClick={() => handleCopyCalendarLink(selectedModalItem)}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 transition-colors shadow-2xs cursor-pointer touch-manipulation min-h-[38px]"
-                  title="Copy direct Google Calendar add link"
-                >
-                  {copiedCalendarId === selectedModalItem.id ? (
-                    <>
-                      <Check size={14} className="text-emerald-500" />
-                      <span className="text-emerald-600 dark:text-emerald-400">Link Copied!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy size={14} />
-                      <span>Copy Calendar Link</span>
-                    </>
-                  )}
-                </motion.button>
-
                 {/* Dispatch to Telegram with Calendar Link */}
-                <ActionButton
+                {isAdmin && <ActionButton
                   type="button"
-                  onClick={() => handleManualSendTelegram(selectedModalItem)}
+                  onClick={async () => { await handleManualSendTelegram(selectedModalItem); }}
                   isLoading={isSendingTelegram}
                   loadingText="Broadcasting..."
                   variant="primary"
@@ -3126,7 +3036,7 @@ Your 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${g
                   title="Broadcast to Telegram with 1-Click Calendar Link"
                 >
                   Dispatch to Telegram
-                </ActionButton>
+                </ActionButton>}
               </div>
             </div>
           </motion.div>

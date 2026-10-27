@@ -1,4 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { archiveCompletionMessage } from '../shared/resultFiling';
+import { pageItems } from '../shared/companyFilings';
+import { ListPagination } from './ui/ListPagination';
+import '../styles/overnight-adr.css';
+import { CompanyAdr } from './adr/OvernightAdr';
+import React, { useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback } from 'react';
 import { 
   X, Building2, TrendingUp, TrendingDown, Calendar, Sparkles, 
   ExternalLink, Clock, Shield, BarChart3, FileText, Download, 
@@ -17,6 +22,7 @@ import { getSafePdfUrl } from '../utils/pdfHelper';
 import { formatFullDateTime, formatShortDateTime, formatTimeOnly, formatDateOnly } from '../utils/timeFormat';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { useIntelModal } from '../context/IntelModalContext';
 import { useAuth } from '../context/AuthContext';
 import { useAiQuota, syncQuotaFromResponse } from '../utils/aiQuota';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
@@ -49,6 +55,7 @@ export function CompanyIntelligenceModal({
   symbol = '',
   companyName = ''
 }: CompanyIntelligenceModalProps) {
+  const { openIntelModal } = useIntelModal();
   const { user, profile, isAdmin, isPro, adminUnlocked, setIsAuthModalOpen, setIsProModalOpen } = useAuth();
   const [activeTab, setActiveTab] = useState<'hub' | 'timeline' | 'results' | 'filings' | 'research'>('hub');
   const [timelineFilter, setTimelineFilter] = useState<string>('ALL');
@@ -57,11 +64,21 @@ export function CompanyIntelligenceModal({
   const [isGeneratingAi, setIsGeneratingAi] = useState<boolean>(false);
   const [aiOverview, setAiOverview] = useState<string>('');
   const [copiedAi, setCopiedAi] = useState<boolean>(false);
-  const [selectedYears, setSelectedYears] = useState<number>(3);
+  const [selectedYears, setSelectedYears] = useState<number>(1);
   const [isFetchingHistory, setIsFetchingHistory] = useState<boolean>(false);
   const [historySuccessMsg, setHistorySuccessMsg] = useState<string | null>(null);
+  const [historyError, setHistoryError] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
+  const [historyJob, setHistoryJob] = useState<any>(null);
+  const [listPages, setListPages] = useState({ filings: 1, timeline: 1 });
+  const readRevision = useRef(0);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const pageHeadingRef = useRef<HTMLHeadingElement>(null);
+  const pageChangePending = useRef(false);
+  const readController = useRef<AbortController | null>(null);
+  const syncController = useRef<AbortController | null>(null);
+  const syncRevision = useRef(0);
   // Non-intrusive Toast Notifications
   const [toastMsg, setToastMsg] = useState<{ text: string; type: 'info' | 'error' | 'success' } | null>(null);
 
@@ -78,48 +95,68 @@ export function CompanyIntelligenceModal({
   // Lock body scroll when 360 intelligence modal is open
   useBodyScrollLock(isOpen);
 
-  const effectiveSymbol = symbol || intelData?.symbol || '';
-  const effectiveScrip = scripCode || intelData?.scripCode || '';
-  const effectiveName = companyName || intelData?.companyName || effectiveSymbol || 'Company Intelligence';
+  const selectionKey = `${user?.uid || 'guest'}:${scripCode}:${symbol}`;
+  const visibleIntel = intelData?._selectionKey === selectionKey ? intelData : null;
+  const effectiveSymbol = symbol || visibleIntel?.symbol || '';
+  const effectiveScrip = scripCode || visibleIntel?.scripCode || '';
+  const effectiveName = companyName || visibleIntel?.companyName || effectiveSymbol || 'Company Intelligence';
 
-  useEffect(() => {
-    if (!isOpen || (!scripCode && !symbol)) return;
-    loadIntelligence();
-  }, [isOpen, scripCode, symbol]);
-
-  const loadIntelligence = async () => {
-    setLoading(true);
-    setLoadError(null);
-    setHistorySuccessMsg(null);
-
-    // Signal 06: Fail out loud - give every load a deadline (12s timeout)
-    const timeoutId = setTimeout(() => {
-      setLoadError("We couldn't reach the BSE data feed within 12 seconds. Your session is safe.");
-      setLoading(false);
-    }, 12000);
-
+  const loadIntelligence = useCallback(async () => {
+    const revision = ++readRevision.current;
+    readController.current?.abort();
+    const controller = new AbortController();
+    readController.current = controller;
+    const timer = setTimeout(() => controller.abort(), 15_000);
+    setLoading(true); setLoadError(null);
     try {
-      const identifier = effectiveScrip || effectiveSymbol;
-      const res = await customFetch(`/api/company-intel/${identifier}?scripCode=${effectiveScrip}&symbol=${effectiveSymbol}`);
-      clearTimeout(timeoutId);
-      if (res.ok) {
-        const data = await res.json();
-        setIntelData(data);
-        if (data.aiSnapshot) {
-          setAiOverview(data.aiSnapshot);
-        }
-      } else {
-        setLoadError(`BSE service returned status ${res.status}. Please try again.`);
-      }
-    } catch (err: any) {
-      clearTimeout(timeoutId);
-      console.error("Failed to load company intelligence", err);
-      setLoadError("Connection error: Unable to load company intelligence from server.");
+      const query = new URLSearchParams({ scripCode, symbol });
+      const res = await customFetch(`/api/company-intel/${encodeURIComponent(scripCode || symbol)}?${query}`, { signal: controller.signal });
+      const data = await res.json();
+      if (revision !== readRevision.current) return;
+      if (controller.signal.aborted) throw new Error('Company read timed out. Please retry.');
+      if (!res.ok || !Array.isArray(data.recentFilings)) throw new Error(data.error || 'Company data unavailable. Please retry.');
+      setIntelData({ ...data, _selectionKey: `${user?.uid || 'guest'}:${scripCode}:${symbol}` });
+      if (data.aiSnapshot) setAiOverview(data.aiSnapshot);
+    } catch (error: any) {
+      if (revision === readRevision.current) setLoadError(controller.signal.aborted ? 'Company read timed out. Please retry.' : error.message);
     } finally {
-      clearTimeout(timeoutId);
-      setLoading(false);
+      clearTimeout(timer);
+      if (revision === readRevision.current) setLoading(false);
     }
-  };
+  }, [scripCode, symbol, user?.uid]);
+  useEffect(() => {
+    setActiveTab('hub'); contentRef.current?.scrollTo({ top: 0 });
+    setIntelData(null); setAiOverview(''); setHistoryJob(null); setHistorySuccessMsg(null); setHistoryError(false);
+    setIsFetchingHistory(false); setListPages({ filings: 1, timeline: 1 });
+    ++syncRevision.current; syncController.current?.abort();
+    if (isOpen && (scripCode || symbol)) void loadIntelligence();
+    return () => { ++readRevision.current; readController.current?.abort(); ++syncRevision.current; syncController.current?.abort(); };
+  }, [isOpen, scripCode, symbol, user?.uid, loadIntelligence]);
+  useEffect(() => {
+    if (!isOpen || historyJob?.state !== 'running') return;
+    let alive = true;
+    const controller = new AbortController();
+    let timer: ReturnType<typeof setTimeout>;
+    const poll = async () => {
+      try {
+        const query = new URLSearchParams({ years: String(historyJob.years), id: historyJob.id });
+        const res = await customFetch(`/api/stocks/${encodeURIComponent(historyJob.scripCode)}/fetch-deep-history?${query}`, { signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15_000)]) });
+        const data = await res.json();
+        if (!alive) return;
+        if (!res.ok || !data.job) throw new Error(data.error || 'Archive status unavailable. Retry sync to check saved records.');
+        setHistoryJob(data.job);
+        if (data.job.state === 'running') { timer = setTimeout(poll, 3000); return; }
+        setIsFetchingHistory(false); setHistoryError(data.job.state !== 'complete');
+        setHistorySuccessMsg(data.job.state === 'complete' ? archiveCompletionMessage(data.job) : data.job.error || 'Archive incomplete; saved pages remain available.');
+        await loadIntelligence();
+        if (alive) window.dispatchEvent(new Event('company-filings-changed'));
+      } catch (error: any) {
+        if (alive) { setIsFetchingHistory(false); setHistoryError(true); setHistorySuccessMsg(error.message); setHistoryJob(null); }
+      }
+    };
+    timer = setTimeout(poll, 1500);
+    return () => { alive = false; controller.abort(); clearTimeout(timer); };
+  }, [isOpen, historyJob?.id, historyJob?.state, loadIntelligence]);
 
   const handleGenerateAiOverview = async () => {
     const isGuestUser = !user || user.isAnonymous;
@@ -189,32 +226,34 @@ export function CompanyIntelligenceModal({
   };
 
   const handleFetchDeepHistory = async (years?: number | React.MouseEvent) => {
-    if (!effectiveScrip && !effectiveSymbol) return;
+    if (isFetchingHistory) return;
+    if (!user || user.isAnonymous) { setIsAuthModalOpen(true); return; }
+    if (!isProOrAdmin) { setIsProModalOpen(true); return; }
+    if (!/^\d{6}$/.test(effectiveScrip) || effectiveSymbol === 'BSE') { showToast('A verified BSE security code is needed for this archive.', 'error'); return; }
     const yearsToUse = typeof years === 'number' ? years : selectedYears;
-    if (typeof years === 'number' && years !== selectedYears) {
-      setSelectedYears(years);
-    }
-    setIsFetchingHistory(true);
-    setHistorySuccessMsg(null);
+    const revision = ++syncRevision.current;
+    const controller = new AbortController(); syncController.current = controller;
+    const timer = setTimeout(() => controller.abort(), 15_000);
+    setSelectedYears(yearsToUse); setIsFetchingHistory(true); setHistorySuccessMsg(null); setHistoryError(false);
     try {
-      const res = await customFetch(`/api/stocks/${effectiveScrip || effectiveSymbol}/fetch-deep-history`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await customFetch(`/api/stocks/${encodeURIComponent(effectiveScrip)}/fetch-deep-history`, {
+        method: 'POST', signal: controller.signal, headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ symbol: effectiveSymbol, years: yearsToUse })
       });
       const data = await res.json();
-      if (res.ok && data.success) {
-        setHistorySuccessMsg(`✅ Synced ${data.totalHistoryCount || data.newlySaved} historical BSE filings across ${yearsToUse} years!`);
-        showToast(`✅ Synced ${data.totalHistoryCount || data.newlySaved} historical filings!`, 'success');
-        await loadIntelligence();
-      } else {
-        showToast(data.error || 'Failed to fetch historical filings', 'error');
+      if (revision !== syncRevision.current) return;
+      if (res.status === 401) { setIsAuthModalOpen(true); throw new Error(data.error || 'Sign in to sync the archive'); }
+      if (res.status === 403) { setIsProModalOpen(true); throw new Error(data.error || 'Pro access required'); }
+      if (controller.signal.aborted || !res.ok || !data.job) throw new Error(data.error || 'Sync start could not be confirmed. Retry to check the worker.');
+      setHistoryJob(data.job);
+      if (data.job.state !== 'running') {
+        setIsFetchingHistory(false); setHistoryError(data.job.state !== 'complete');
+        setHistorySuccessMsg(data.job.state === 'complete' ? archiveCompletionMessage(data.job) : data.job.error);
+        await loadIntelligence(); window.dispatchEvent(new Event('company-filings-changed'));
       }
-    } catch (e: any) {
-      showToast('Error fetching history: ' + e.message, 'error');
-    } finally {
-      setIsFetchingHistory(false);
-    }
+    } catch (error: any) {
+      if (revision === syncRevision.current) { setIsFetchingHistory(false); setHistoryError(true); setHistorySuccessMsg(controller.signal.aborted ? 'Sync start timed out. Retry to check whether the worker started.' : error.message); }
+    } finally { clearTimeout(timer); }
   };
 
   const handleCopyAi = () => {
@@ -224,7 +263,8 @@ export function CompanyIntelligenceModal({
     setTimeout(() => setCopiedAi(false), 2000);
   };
 
-  const quote = intelData?.quote;
+
+  const quote = visibleIntel?.quote;
   const price = quote?.price;
   const change = quote?.change || 0;
   const changePct = quote?.changePercent || 0;
@@ -237,7 +277,7 @@ export function CompanyIntelligenceModal({
     range52Pct = Math.min(100, Math.max(0, ((price - low52) / (high52 - low52)) * 100));
   }
 
-  const timelineEvents = intelData?.materialTimeline || [];
+  const timelineEvents = visibleIntel?.materialTimeline || [];
   const filteredTimeline = timelineEvents.filter((ev: any) => {
     if (timelineFilter === 'ALL') return true;
     if (timelineFilter === 'DIVIDEND') return ev.eventType === 'DIVIDEND' || ev.eventType === 'BONUS' || ev.eventType === 'SPLIT' || ev.eventType === 'BUYBACK';
@@ -247,9 +287,9 @@ export function CompanyIntelligenceModal({
     return true;
   });
 
-  const quarterlyResults = intelData?.quarterlyResults || [];
-  const upcoming = intelData?.upcomingEvent;
-  const recentFilings = intelData?.recentFilings || [];
+  const quarterlyResults = visibleIntel?.quarterlyResults || [];
+  const upcoming = visibleIntel?.upcomingEvent;
+  const recentFilings = visibleIntel?.recentFilings || [];
   const latestFiling = recentFilings[0] || (timelineEvents[0] ? {
     subject: timelineEvents[0].title,
     headline: timelineEvents[0].description,
@@ -267,13 +307,8 @@ export function CompanyIntelligenceModal({
     const now = Date.now();
     const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
 
-    // 1. Filing pace — only when the loaded 25 filings fully cover the last 30 days,
-    //    so the count is never an undercount from the per-stock cap.
-    const oldestLoaded = recentFilings.length ? (recentFilings[recentFilings.length - 1]?.timestamp || 0) : 0;
-    const fullCoverage = recentFilings.length < 25 || oldestLoaded <= thirtyDaysAgo;
-    const paceCount = recentFilings.filter((f: any) => (f.timestamp || 0) >= thirtyDaysAgo).length;
-    if (fullCoverage && paceCount > 0) {
-      facts.push({ value: String(paceCount), label: 'filings in the last 30 days', icon: FileText });
+    if (visibleIntel?.filingCoverage === 'stored' && visibleIntel?.filingStats) {
+      facts.push({ value: String(visibleIntel.filingStats.last30Days), label: 'stored filings in the last 30 days', icon: FileText });
     }
 
     // 2. Most frequent disclosure type (full timeline history, not capped).
@@ -307,7 +342,7 @@ export function CompanyIntelligenceModal({
     }
 
     return facts.slice(0, 5);
-  }, [recentFilings, timelineEvents, quarterlyResults]);
+  }, [recentFilings, timelineEvents, quarterlyResults, visibleIntel?.filingStats, visibleIntel?.filingCoverage]);
 
   // Disclosure Trend — 12-week filing activity chart (reel-style "all time high"
   // concept, built from the company's official BSE filings — nothing external).
@@ -337,10 +372,20 @@ export function CompanyIntelligenceModal({
     return { buckets, max, callout };
   }, [recentFilings]);
 
-  // Hooks above must run unconditionally (React invariant); the closed-state
-  // early return lives here, after every hook call.
+  const filingsPage = pageItems<any>(recentFilings, listPages.filings);
+  const timelinePage = pageItems<any>(filteredTimeline, listPages.timeline);
+  useLayoutEffect(() => {
+    if (!pageChangePending.current) return;
+    pageChangePending.current = false;
+    // Reset after the new rows commit. The modal body is the only scroll owner.
+    if (contentRef.current) contentRef.current.scrollTop = 0;
+    pageHeadingRef.current?.focus({ preventScroll: true });
+  }, [listPages.filings, listPages.timeline]);
+  const changePage = (list: 'filings' | 'timeline', page: number) => {
+    pageChangePending.current = true;
+    setListPages(previous => ({ ...previous, [list]: page }));
+  };
   if (!isOpen) return null;
-
   return (
     <div 
       className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/75 backdrop-blur-xs animate-in fade-in duration-150 overscroll-contain"
@@ -484,7 +529,8 @@ export function CompanyIntelligenceModal({
         </div>
 
         {/* Modal Body Container - Scrollable area (flex-1 min-h-0 overflow-y-auto) */}
-        <div className="p-4 sm:p-6 flex-1 min-h-0 overflow-y-auto space-y-4 overscroll-contain">
+        <div ref={contentRef} className="p-4 sm:p-6 flex-1 min-h-0 overflow-y-auto space-y-4 overscroll-contain">
+          <CompanyAdr symbol={effectiveSymbol} scripCode={effectiveScrip} />
           {loadError ? (
             <div className="py-8">
               <TimeoutRetryState
@@ -755,53 +801,27 @@ export function CompanyIntelligenceModal({
                         </div>
                       )}
 
-                      {/* Recent Financial Results Highlight */}
-                      {quarterlyResults.length > 0 && (
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                              Recent Results ({quarterlyResults.length} quarters)
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => setActiveTab('results')}
-                              className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-0.5 cursor-pointer"
-                            >
-                              <span>View complete ledger</span>
-                              <ChevronRight size={12} />
-                            </button>
-                          </div>
-
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                            {quarterlyResults.slice(0, 2).map((qr: any, qIdx: number) => (
-                              <div key={qIdx} className={cn(heliosCard, "p-3 space-y-1 text-xs")}>
-                                <div className="flex items-center justify-between">
-                                  <span className="font-bold text-slate-900 dark:text-white">
-                                    {qr.quarter || `Quarter ended ${formatDateOnly(qr.date)}`}
-                                  </span>
-                                  <span className="font-mono text-[10px] text-slate-400">
-                                    {formatDateOnly(qr.date)}
-                                  </span>
-                                </div>
-                                {qr.revenue && (
-                                  <div className="text-slate-600 dark:text-slate-300 flex items-center justify-between">
-                                    <span>Revenue:</span>
-                                    <strong className="font-mono text-slate-900 dark:text-white">₹{qr.revenue} Cr</strong>
-                                  </div>
-                                )}
-                                {qr.netProfit && (
-                                  <div className="text-slate-600 dark:text-slate-300 flex items-center justify-between">
-                                    <span>Net Profit:</span>
-                                    <strong className="font-mono text-slate-900 dark:text-white">₹{qr.netProfit} Cr</strong>
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
                     </>
                   )}
+                      <section aria-label="Similar Stocks" className={cn(heliosCard, "p-3 space-y-2")}>
+                        <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                          <h3 className="text-xs font-bold text-slate-700 dark:text-slate-200">Similar Stocks</h3>
+                          {visibleIntel?.similarStocks?.industry && <span className="text-[10px] text-slate-500 dark:text-slate-400">{visibleIntel.similarStocks.industry}</span>}
+                        </div>
+                        {visibleIntel?.similarStocks?.stocks?.length ? (
+                          <div className="grid grid-cols-1 min-[480px]:grid-cols-2 gap-2">
+                            {visibleIntel.similarStocks.stocks.map((peer: { symbol: string; scripCode: string; name: string }) => (
+                              <button key={peer.scripCode} type="button"
+                                onClick={() => openIntelModal({ symbol: peer.symbol, scripCode: peer.scripCode, companyName: peer.name })}
+                                className="flex items-center justify-between gap-2 min-h-11 px-3 py-2 rounded-xl text-left border border-slate-200 dark:border-slate-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 focus-visible:outline-2 focus-visible:outline-emerald-500 transition-colors">
+                                <span className="min-w-0"><span className="block text-xs font-semibold text-slate-800 dark:text-slate-200">{peer.name}</span><span className="block text-[10px] text-slate-500 dark:text-slate-400">{peer.symbol}</span></span>
+                                <ChevronRight size={14} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
+                              </button>
+                            ))}
+                          </div>
+                        ) : <p className="text-xs text-slate-500 dark:text-slate-400">Same-industry stocks are not available for this company yet.</p>}
+                      </section>
+
                 </div>
               )}
 
@@ -820,7 +840,7 @@ export function CompanyIntelligenceModal({
                       return (
                         <button
                           key={f.id}
-                          onClick={() => setTimelineFilter(f.id)}
+                          onClick={() => { setTimelineFilter(f.id); setListPages(previous => ({ ...previous, timeline: 1 })); }}
                           className={cn(
                             "px-3 py-1 text-xs font-bold rounded-lg border flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs",
                             timelineFilter === f.id
@@ -848,7 +868,7 @@ export function CompanyIntelligenceModal({
                     </div>
                   ) : (
                     <div className="relative border-l-2 border-slate-200 dark:border-slate-800 ml-4 pl-5 space-y-4">
-                      {filteredTimeline.map((ev: any, idx: number) => {
+                      {timelinePage.items.map((ev: any, idx: number) => {
                         const isDividend = ev.eventType === 'DIVIDEND';
                         const isBonus = ev.eventType === 'BONUS' || ev.eventType === 'SPLIT';
                         const isOrder = ev.eventType === 'ORDER_WIN';
@@ -938,21 +958,22 @@ export function CompanyIntelligenceModal({
               )}
 
               {/* TAB 4: ALL BSE FILINGS FEED */}
+              {visibleIntel?.filingCoverage === 'partial' && <p role="status" className="text-xs">Stored history could not be fully read. These are available cached records; retry to check counts.</p>}
               {activeTab === 'filings' && (
                 <div className="space-y-3 animate-in fade-in duration-150">
-                  <div className="text-xs font-bold text-slate-900 dark:text-white">
+                  <h3 ref={pageHeadingRef} tabIndex={-1} className="text-xs font-bold text-slate-900 dark:text-white">
                     Chronological BSE Filings Archive ({recentFilings.length} items)
-                  </div>
+                  </h3>
 
                   {recentFilings.length === 0 ? (
                     <div className="py-12 text-center text-xs text-slate-400">
-                      No filings found in current memory cache.
+                      No stored filings found for this company.
                     </div>
                   ) : (
-                    <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
-                      {recentFilings.map((filing: any, fIdx: number) => (
+                    <div className="space-y-2">
+                      {filingsPage.items.map((filing: any, fIdx: number) => (
                         <div 
-                          key={fIdx}
+                          key={filing.id || fIdx}
                           className={cn(heliosCard, "p-3 text-xs flex items-center justify-between gap-3 transition-all hover:shadow-[0_16px_40px_rgba(15,23,42,0.10)] dark:hover:shadow-[0_16px_40px_rgba(0,0,0,0.55)]")}
                         >
                           <div className="min-w-0 flex-1 space-y-0.5">
@@ -982,6 +1003,8 @@ export function CompanyIntelligenceModal({
                 </div>
               )}
 
+              {activeTab === 'filings' && <ListPagination {...filingsPage} onPage={page => changePage('filings', page)} />}
+              {activeTab === 'timeline' && <ListPagination {...timelinePage} onPage={page => changePage('timeline', page)} />}
               {/* TAB 5: RESEARCH TOOLS */}
               {activeTab === 'research' && (
                 <div className="space-y-4 animate-in fade-in duration-150">
@@ -1039,7 +1062,7 @@ export function CompanyIntelligenceModal({
                         <span>Pull Historical BSE Archive</span>
                       </div>
                       <p className="text-[11px] text-slate-500">
-                        Retrieves 1 to 5 years of financial disclosures and earnings records from official BSE repository.
+                        Retrieves all available disclosure categories for the selected period. Links and metadata are saved; PDFs are not downloaded.
                       </p>
                     </div>
 
@@ -1066,10 +1089,11 @@ export function CompanyIntelligenceModal({
                     </div>
                   </div>
 
+                  {historyJob?.state === 'running' && <p role="status" className="text-xs">Archive running · {historyJob.processed} filings saved · {historyJob.pages} pages checked. Keep this window open to follow progress.</p>}
                   {historySuccessMsg && (
-                    <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 text-xs rounded-lg flex items-center gap-2 animate-in fade-in">
-                      <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
-                      <span className="font-semibold">{historySuccessMsg}</span>
+                    <div className={cn("p-2.5 border text-xs rounded-lg flex items-center gap-2", historyError ? "bg-rose-50 dark:bg-rose-950/60 border-rose-200 dark:border-rose-800 text-rose-900 dark:text-rose-200" : "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200")}>
+                      {historyError ? <AlertTriangle size={15} className="shrink-0" /> : <CheckCircle2 size={15} className="shrink-0" />}
+                      <span role="status" className="font-semibold">{historySuccessMsg}</span>
                     </div>
                   )}
                 </div>

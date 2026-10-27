@@ -1,3 +1,4 @@
+import { triggerNavigationHaptic } from '../utils/haptics';
 import { UserAvatar } from './ui/UserAvatar';
 import '../styles/mobile-repairs.css';
 import { RichIcon } from './ui/RichVisual';
@@ -9,7 +10,7 @@ import {
   User, Bell, ShieldAlert, Building2, BookOpen, ShieldCheck,
   AlertTriangle, X, WifiOff, Newspaper, Home,
   Flame, Layers,
-  Search, Sun, Moon, RotateCcw, Bot
+  Search, Sun, Moon, RotateCcw
 } from 'lucide-react';
 import { MarketClock } from './ui/MarketClock';
 import { BseNexusLogo } from './ui/BseNexusLogo';
@@ -368,6 +369,7 @@ export function Layout({
             {/* Brand Logo & Title with Circular Story Ring */}
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 select-none">
               <motion.button 
+                type="button"
                 whileHover={{ scale: 1.06 }}
                 whileTap={{ scale: 0.94 }}
                 transition={springSnappy}
@@ -390,20 +392,18 @@ export function Layout({
                 )}
               </motion.button>
 
-              <div 
+              <button
+                type="button"
                 className="flex items-center gap-1 sm:gap-1.5 cursor-pointer select-none"
-                onClick={() => onTabChange('dashboard')}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onTabChange('dashboard'); }}
-                aria-label="Bsenexus Dashboard"
+                onClick={() => handleTabClick('home')}
+                aria-label="BSE Nexus home — For You"
               >
                 <span className="font-extrabold text-[12px] sm:text-base tracking-tight text-slate-900 dark:text-white font-display">
                   BSE<span className="text-emerald-500">NEXUS</span>
                 </span>
                 {/* PRO badge — paid subscription active (or admin). Simple monochrome pill;
                     a one-time gold sheen sweeps across on mount, then it stays simple. */}
-                {isPaidProActive && (
+                {(isPaidProActive || profile?.subscriptionAccess?.gift && profile.subscriptionAccess.gift.expiresAt > Date.now()) && (
                   <span
                     className="relative overflow-hidden inline-flex items-center shrink-0 text-[9px] font-black tracking-[1.2px] px-1.5 py-[3px] rounded-md bg-slate-900/[0.07] text-slate-900 dark:bg-white/10 dark:text-white border border-slate-900/10 dark:border-white/15"
                     aria-label="Pro subscriber"
@@ -421,7 +421,7 @@ export function Layout({
                 )}
                 
 
-              </div>
+              </button>
             </div>
 
             {/* Right Tools: Status, Clock, Theme, Profile */}
@@ -488,19 +488,6 @@ export function Layout({
                 </span>
               </motion.button>
 
-              {/* AI Plugin Header Pill */}
-              <a
-                href="/plugin"
-                aria-label="Universal AI Plugin for ChatGPT and Gemini"
-                className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 border border-emerald-300/80 dark:border-emerald-700/60 text-emerald-800 dark:text-emerald-200 cursor-pointer select-none shadow-xs shrink-0 min-h-[32px] transition-colors"
-                title="AI Plugin — Connect ChatGPT & Gemini to BSE live filings"
-              >
-                <Bot size={13} className="text-emerald-500 shrink-0" />
-                <span className="text-xs font-semibold">AI Plugin</span>
-                <span className="text-[9px] font-bold px-1 py-0.2 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 leading-none">
-                  OpenAPI
-                </span>
-              </a>
 
               {/* Item 9: Quick Sun/Moon Dark Mode Toggle - Hidden on Settings tab to prevent duplicate appearance controls */}
               {activeTab !== 'settings' && (
@@ -526,9 +513,10 @@ export function Layout({
                 whileHover={{ scale: 1.02 }}
                 whileTap={buttonTap}
                 transition={springSnappy}
-                onClick={() => onTabChange('settings')}
+                onClick={() => { triggerNavigationHaptic(); onTabChange('settings'); }}
+                aria-pressed={activeTab === 'settings'}
                 aria-label="Open Settings and Preferences"
-                className="flex items-center justify-center p-2 sm:p-1.5 rounded-lg bg-slate-100 dark:bg-[#252233] hover:bg-slate-200 dark:hover:bg-[#2F2B40] border border-slate-200/90 dark:border-[#352F48] text-slate-700 dark:text-slate-200 cursor-pointer select-none shadow-xs shrink-0 min-w-[44px] min-h-[44px] sm:min-w-[32px] sm:min-h-[32px]"
+                className="shell-settings-button flex items-center justify-center p-2 sm:p-1.5 rounded-lg bg-slate-100 dark:bg-[#252233] hover:bg-slate-200 dark:hover:bg-[#2F2B40] border border-slate-200/90 dark:border-[#352F48] text-slate-700 dark:text-slate-200 cursor-pointer select-none shadow-xs shrink-0 min-w-[44px] min-h-[44px] sm:min-w-[32px] sm:min-h-[32px]"
                 title="Open Settings & Preferences"
               >
                 <Settings size={15} className="text-slate-600 dark:text-slate-300" />
@@ -611,18 +599,6 @@ export function Layout({
               );
             })}
 
-            {/* Direct AI Plugin Link in Navigation Tabs Bar */}
-            <a
-              href="/plugin"
-              className="ml-auto hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/50 transition-colors shrink-0"
-              title="Connect ChatGPT & Google Gemini to BSE live filings"
-            >
-              <Bot size={13} className="text-emerald-500 shrink-0" />
-              <span>AI Plugin</span>
-              <span className="text-[9px] font-bold px-1 py-0.2 rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/30">
-                GPT &amp; Gemini
-              </span>
-            </a>
           </nav>
         </div>
 
@@ -668,19 +644,6 @@ export function Layout({
                   </motion.button>
                 );
               })}
-
-              <a
-                href="/plugin"
-                className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm text-emerald-600 dark:text-emerald-400 hover:bg-slate-100 dark:hover:bg-[#222030] font-bold transition-colors"
-              >
-                <div className="flex items-center gap-2.5">
-                  <Bot size={16} className="text-emerald-500" />
-                  <span>AI Plugin (ChatGPT &amp; Gemini)</span>
-                </div>
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/30 font-mono">
-                  OpenAPI
-                </span>
-              </a>
 
               {!isPro && (
                 <button
@@ -885,8 +848,9 @@ export function Layout({
         onOpenPrivacyPolicy={() => handleOpenTermsModal('privacy')}
         onOpenCookiePolicy={() => handleOpenTermsModal('cookies')}
       />
-      {notificationInboxOpen && (
+      {/* Keep confirmed same-owner inbox snapshots while its dialog is closed. */}
         <NotificationInbox
+          key={user?.uid || profile?.uid || 'guest'}
           isOpen={notificationInboxOpen}
           onClose={() => setNotificationInboxOpen(false)}
           onOpenCompanyIntel={handleOpenCompanyIntel}
@@ -897,7 +861,6 @@ export function Layout({
           unreadCount={unreadNotifCount}
           onRefreshCount={fetchUnreadCount}
         />
-      )}
       {alertRulesModalOpen && (
         <AlertRulesModal
           isOpen={alertRulesModalOpen}

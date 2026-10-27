@@ -295,11 +295,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (idToken && idToken.split('.').length === 3) {
         try {
+          const sessionSecurity = await executeRecaptcha('SESSION');
           const sessionRes = await customFetch('/auth/session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               idToken: idToken,
+              recaptchaToken: sessionSecurity.bypassed ? undefined : sessionSecurity.token,
               uid: uid,
               email: firebaseUser.email,
               displayName: firebaseUser.displayName || 'Trader'
@@ -895,11 +897,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           idToken = localStorage.getItem('bse_nexus_fb_id_token') || '';
         }
         if (idToken && idToken.split('.').length === 3) {
+          const sessionSecurity = await executeRecaptcha('SESSION');
           await customFetch('/auth/session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               idToken,
+              recaptchaToken: sessionSecurity.bypassed ? undefined : sessionSecurity.token,
               uid: user.uid,
               email: user.email,
               displayName: profile?.displayName
@@ -1309,6 +1313,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  useEffect(() => {
+    if (!user || user.isAnonymous) return;
+    const uid=user.uid;let last=0;let pending:AbortController|null=null;
+    const refresh = () => {
+      if (document.visibilityState !== 'visible' || Date.now()-last<2000) return;
+      last=Date.now();pending?.abort();pending=new AbortController();const signal=pending.signal;
+      const expectedProfile=preferenceStateRef.current.profile;
+      void customFetch('/api/users/profile',{signal,cache:'no-store'}).then(async res=>{
+        if(!res.ok)return;const data=await res.json();
+        if(signal.aborted||data.profile?.uid!==uid||auth.currentUser?.uid!==uid)return;
+        setProfile(old=>old?.uid===uid&&old===expectedProfile?{...data.profile,photoURL:old.photoURL}:old);
+        setProfileUnavailable(false);
+        window.dispatchEvent(new Event('notes-changed'));
+      }).catch(()=>{});
+    };
+    window.addEventListener('focus',refresh);document.addEventListener('visibilitychange',refresh);
+    return()=>{pending?.abort();window.removeEventListener('focus',refresh);document.removeEventListener('visibilitychange',refresh);};
+  },[user?.uid,user?.isAnonymous]);
+
   const isOwner = Boolean(
     user && user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()
   );
@@ -1344,7 +1367,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // excluded by design. Auto on at grant, auto off at expiry.
   const isPaidProActive = Boolean(
     isAdmin ||
-    (isPro && isPaidPro && profile?.proExpiresAt && profile.proExpiresAt > now)
+    (isPro && isPaidPro && (profile?.subscriptionAccess ? profile.subscriptionAccess.paidExpiresAt > now : profile?.proExpiresAt && profile.proExpiresAt > now))
   );
 
   return (

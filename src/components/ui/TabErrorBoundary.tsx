@@ -1,42 +1,55 @@
 import React from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { sendTelemetryEvent, getBreadcrumbs } from '../../utils/telemetry';
+import { usePaymentDialog } from '../../hooks/usePaymentDialog';
 
 interface TabErrorBoundaryProps {
   /** Short label for telemetry (e.g. "settings", "watchlists"). */
   label: string;
   /** Optional "back to safety" action (e.g. switch to the Filings tab). */
   onBack?: () => void;
+  backLabel?: string;
   children: React.ReactNode;
+  /** Dialog-chunk errors must stay in the viewport, above the underlying page. */
+  overlay?: boolean;
+}
+
+function ErrorSurface({ overlay, onClose, children }: { overlay?: boolean; onClose: () => void; children: React.ReactNode }) {
+  const dialog = usePaymentDialog(Boolean(overlay), onClose);
+  return <div
+    ref={dialog}
+    className={`flex flex-col items-center justify-center px-6 py-16 text-center ${overlay ? 'fixed inset-0 z-[160] bg-white/95 dark:bg-slate-950/95' : ''}`}
+    role={overlay ? 'alertdialog' : 'alert'}
+    aria-modal={overlay || undefined}
+    aria-label={overlay ? 'Section could not load' : undefined}
+  >{children}</div>;
 }
 
 interface TabErrorBoundaryState {
   hasError: boolean;
   reloading: boolean;
+  moduleLoadFailure: boolean;
 }
 
 const RELOAD_FLAG = 'bse_eb_reloaded';
+const IS_DEV_PREVIEW = (import.meta as any).env?.DEV === true;
 
 /**
  * Safety net for lazily-loaded sections.
  *
- * Why this exists: after a new deploy, a browser can briefly hold a mix of
- * chunks from two app versions (cached HTML/chunks vs. freshly deployed
- * ones). A stale lazy chunk then runs against a different React instance and
- * crashes with "Cannot read properties of null (reading 'useState')"
- * (React's invalid-hook-call). Without a boundary that unmounts the WHOLE
- * app (blank screen). With this boundary, only the section fails and the
- * user gets a one-tap recovery.
+ * Keep a section's loading/rendering failure inside that section and offer
+ * recovery. A failed import can follow a deployment, network failure or preview
+ * restart; it does not identify a React hook-order or duplicate-runtime cause.
  *
- * Recovery strategy: the first failure in a tab session auto-reloads once
- * (fresh chunks fix stale mixes). If it still fails after the reload, we
- * show the card instead of looping forever.
+ * Production retains its one-reload recovery. A development server may still
+ * be stopped after an import fails, so the preview keeps its document and
+ * offers explicit recovery instead of navigating to an unavailable server.
  */
 export class TabErrorBoundary extends React.Component<TabErrorBoundaryProps, TabErrorBoundaryState> {
-  state: TabErrorBoundaryState = { hasError: false, reloading: false };
+  state: TabErrorBoundaryState = { hasError: false, reloading: false, moduleLoadFailure: false };
 
-  static getDerivedStateFromError(): Partial<TabErrorBoundaryState> {
-    return { hasError: true };
+  static getDerivedStateFromError(error: Error): Partial<TabErrorBoundaryState> {
+    return { hasError: true, moduleLoadFailure: /Failed to fetch dynamically imported module|error loading dynamically imported module|Importing a module script failed|ChunkLoadError|ERR_CLOSED_SERVER|Request is outdated/i.test(`${error?.name || ''} ${error?.message || ''}`) };
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
@@ -54,6 +67,10 @@ export class TabErrorBoundary extends React.Component<TabErrorBoundaryProps, Tab
         },
       });
     } catch {}
+
+    // Reloading while Vite is unavailable replaces this recoverable UI with a
+    // failed document. Let the user restart the preview and choose when to reload.
+    if (IS_DEV_PREVIEW) return;
 
     try {
       if (!sessionStorage.getItem(RELOAD_FLAG)) {
@@ -74,11 +91,11 @@ export class TabErrorBoundary extends React.Component<TabErrorBoundaryProps, Tab
   };
 
   handleRetry = () => {
-    this.setState({ hasError: false, reloading: false });
+    this.setState({ hasError: false, reloading: false, moduleLoadFailure: false });
   };
 
   handleBack = () => {
-    this.setState({ hasError: false, reloading: false });
+    this.setState({ hasError: false, reloading: false, moduleLoadFailure: false });
     this.props.onBack?.();
   };
 
@@ -86,7 +103,7 @@ export class TabErrorBoundary extends React.Component<TabErrorBoundaryProps, Tab
     if (!this.state.hasError) return this.props.children;
 
     return (
-      <div className="flex flex-col items-center justify-center px-6 py-16 text-center" role="alert">
+      <ErrorSurface overlay={this.props.overlay} onClose={this.handleBack}>
         <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-400">
           <AlertTriangle className="h-6 w-6" aria-hidden="true" />
         </div>
@@ -94,10 +111,12 @@ export class TabErrorBoundary extends React.Component<TabErrorBoundaryProps, Tab
           This section couldn't load
         </h2>
         <p className="mt-2 max-w-sm text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-          The app may have just been updated, or a file failed to load. Reloading usually fixes this.
+          {IS_DEV_PREVIEW && this.state.moduleLoadFailure
+            ? 'A preview file could not load. Wait for the preview server to be ready, then reload this page. Reloading may discard unsaved changes.'
+            : 'The app may have just been updated, or a file failed to load. Reloading usually fixes this.'}
         </p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-          <button
+          {!(IS_DEV_PREVIEW && this.state.moduleLoadFailure) && <button
             type="button"
             onClick={this.handleRetry}
             disabled={this.state.reloading}
@@ -105,7 +124,7 @@ export class TabErrorBoundary extends React.Component<TabErrorBoundaryProps, Tab
           >
             <RefreshCw className="h-4 w-4" aria-hidden="true" />
             Try again
-          </button>
+          </button>}
           <button
             type="button"
             onClick={this.handleManualReload}
@@ -122,11 +141,11 @@ export class TabErrorBoundary extends React.Component<TabErrorBoundaryProps, Tab
               disabled={this.state.reloading}
               className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:opacity-60 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
             >
-              Back to Filings
+              {this.props.backLabel || 'Back to Filings'}
             </button>
           )}
         </div>
-      </div>
+      </ErrorSurface>
     );
   }
 }

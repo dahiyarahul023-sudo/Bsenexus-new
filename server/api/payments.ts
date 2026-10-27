@@ -1,3 +1,4 @@
+import { getAccessProfile } from '../services/subscriptionAccess.js';
 /**
  * Cashfree Payment Gateway integration — one-time Pro payments.
  *
@@ -502,13 +503,14 @@ paymentsRouter.post('/create-order', requireAuth, async (req, res) => {
       currency: plan.currency,
     });
   } catch (err: any) {
-    console.error('[Payments] create-order error:', err?.message || err);
     if (isPaymentStoreUnavailable(err) || err instanceof ReferralError) {
+      console.warn('[Payments] create-order: store temporarily unavailable:', err?.message || err);
       return paymentUnavailable(
         res,
         'Payments are temporarily unavailable. Please retry in a moment; no payment was started.',
       );
     }
+    console.error('[Payments] create-order error:', err?.message || err);
     return res.status(200).json({ success: false, error: 'Could not start payment: ' + (err?.message || 'unexpected error') });
   }
 });
@@ -561,8 +563,8 @@ paymentsRouter.get('/verify', requireAuth, async (req, res) => {
 
     return res.json({ success: true, paid: false, orderStatus: order.order_status, orderId });
   } catch (err: any) {
-    console.error('[Payments] verify error:', err?.message || err);
     if (isPaymentStoreUnavailable(err) || err instanceof ReferralError) {
+      console.warn('[Payments] verify: store temporarily unavailable:', err?.message || err);
       return res.status(503).json({
         success: false,
         paid: true,
@@ -570,6 +572,7 @@ paymentsRouter.get('/verify', requireAuth, async (req, res) => {
         error: 'Payment confirmed by Cashfree, but Pro activation is temporarily delayed. Do not pay again. It will be checked automatically on your next visit.',
       });
     }
+    console.error('[Payments] verify error:', err?.message || err);
     if (isPaymentOrderOwnershipError(err)) {
       return res.status(200).json({ success: false, paid: false, error: 'This order does not appear to belong to your account.' });
     }
@@ -619,8 +622,10 @@ paymentsRouter.get('/status', requireAuth, async (req, res) => {
 
     // Paid expiry always wins over a trial/profile expiry. A missing paid
     // entitlement is the only case where the profile can describe a trial.
-    const proExpiresAt = isPaidPro ? paidExpiresAt : Number(profile?.proExpiresAt || 0);
-    const isPro = isAdmin || paidActive || (!isPaidPro && proExpiresAt > now && (profile?.tier === 'pro' || profile?.tier === 'admin'));
+    const accessProfile = await getAccessProfile(uid, { durable: true });
+    const access = accessProfile?.subscriptionAccess;
+    const proExpiresAt = access?.expiresAt ?? (isPaidPro ? paidExpiresAt : Number(profile?.proExpiresAt || 0));
+    const isPro = isAdmin || paidActive || Boolean(access ? proExpiresAt > now : !isPaidPro && proExpiresAt > now && (profile?.tier === 'pro' || profile?.tier === 'admin'));
 
     return res.json({
       success: true,
@@ -628,6 +633,7 @@ paymentsRouter.get('/status', requireAuth, async (req, res) => {
       isPro,
       isPaidPro,
       paidActive,
+      subscriptionAccess: access || null,
       entitlementSource: entitlement?.source || null,
       repairedEntitlement: repaired,
       store: 'firestore' as const,
@@ -640,13 +646,14 @@ paymentsRouter.get('/status', requireAuth, async (req, res) => {
       autoRenew: 'coming_soon' as const,
     });
   } catch (err: any) {
-    console.error('[Payments] status error:', err?.message || err);
     if (isPaymentStoreUnavailable(err) || err instanceof ReferralError) {
+      console.warn('[Payments] status: store temporarily unavailable:', err?.message || err);
       return paymentUnavailable(
         res,
         'Subscription status is temporarily unavailable. Your payment record is not lost; please retry in a moment.',
       );
     }
+    console.error('[Payments] status error:', err?.message || err);
     return res.status(503).json({ success: false, error: 'Could not load subscription status.' });
   }
 });
@@ -769,13 +776,14 @@ paymentsRouter.post('/recover', requireAuth, paymentRecoveryLimiter, async (req,
       repairedEntitlement: reconciled.repaired,
     });
   } catch (err: any) {
-    console.error('[Payments] recover error:', err?.message || err);
     if (isPaymentStoreUnavailable(err) || err instanceof ReferralError) {
+      console.warn('[Payments] recover: store temporarily unavailable:', err?.message || err);
       return paymentUnavailable(
         res,
         'Payment recovery is temporarily unavailable. Do not pay again; your payment will be checked automatically.',
       );
     }
+    console.error('[Payments] recover error:', err?.message || err);
     return res.status(503).json({ success: false, error: 'Recovery check failed. Please try again.' });
   }
 });
@@ -845,13 +853,14 @@ paymentsRouter.post('/claim', requireAuth, paymentRecoveryLimiter, async (req, r
     console.log(`[Payments] claim granted Pro: uid=${uid} order=${orderId} plan=${planId} already=${alreadyGranted}`);
     return res.json({ success: true, alreadyGranted, proExpiresAt, orderId, receipt });
   } catch (err: any) {
-    console.error('[Payments] claim error:', err?.message || err);
     if (isPaymentStoreUnavailable(err) || err instanceof ReferralError) {
+      console.warn('[Payments] claim: store temporarily unavailable:', err?.message || err);
       return paymentUnavailable(
         res,
         'Your payment was confirmed, but Pro activation is temporarily delayed. Do not pay again; it will be checked automatically.',
       );
     }
+    console.error('[Payments] claim error:', err?.message || err);
     if (isPaymentOrderOwnershipError(err)) {
       return res.status(200).json({ success: false, error: 'This order does not appear to belong to your account.' });
     }
@@ -890,13 +899,14 @@ paymentsRouter.get('/history', requireAuth, async (req, res) => {
     });
     return res.json({ success: true, payments });
   } catch (err: any) {
-    console.error('[Payments] history error:', err?.message || err);
     if (isPaymentStoreUnavailable(err) || err instanceof ReferralError) {
+      console.warn('[Payments] history: store temporarily unavailable:', err?.message || err);
       return paymentUnavailable(
         res,
         'Payment history is temporarily unavailable. Your receipts are not lost; please retry in a moment.',
       );
     }
+    console.error('[Payments] history error:', err?.message || err);
     return res.status(503).json({ success: false, error: 'Could not load payment history.' });
   }
 });
@@ -1012,7 +1022,14 @@ paymentsRouter.post('/webhook', async (req, res) => {
 
     const expectedBase64 = crypto.createHmac('sha256', cfg.secret).update(timestamp + rawBody).digest('base64');
     const expectedHex = crypto.createHmac('sha256', cfg.secret).update(timestamp + rawBody).digest('hex');
-    const valid = signature === expectedBase64 || signature === expectedHex;
+    // Constant-time comparison: a plain === leaks how many leading characters
+    // matched. Lengths are compared first because timingSafeEqual throws on mismatch.
+    const sigBuf = Buffer.from(signature);
+    const safeEqual = (expected: string) => {
+      const expBuf = Buffer.from(expected);
+      return sigBuf.length === expBuf.length && crypto.timingSafeEqual(sigBuf, expBuf);
+    };
+    const valid = safeEqual(expectedBase64) || safeEqual(expectedHex);
     if (!valid) {
       console.warn('[Payments] webhook signature mismatch');
       return res.status(200).json({ ok: false, reason: 'bad-signature' });

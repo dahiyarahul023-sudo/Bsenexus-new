@@ -79,3 +79,6 @@
 .dark .watchlist-editor :is(.watchlist-editor-list-name span,.watchlist-editor-stock-name>span,.watchlist-editor-count) { color:#a7b2c5; }
 @media(max-width:850px) { .watchlist-editor { grid-template-columns:minmax(0,1fr); gap:12px; } .watchlist-editor-lists,.watchlist-editor-main { padding:12px; } .watchlist-editor-list>button:not(.watchlist-editor-list-name) { width:44px; } }
 @media(max-width:480px) { .watchlist-editor input:not([type="checkbox"]),.watchlist-editor select { font-size:16px; } .watchlist-editor-stock { gap:6px; } .watchlist-editor-stock-actions .watchlist-editor-priority { min-width:50px; padding-inline:5px; } }
+.watchlist-editor button,.watchlist-editor input:not([type="checkbox"]),.watchlist-editor select { border-radius:var(--rich-control-radius,12px); }
+.watchlist-editor-lists,.watchlist-editor-main,.watchlist-editor-add,.watchlist-editor-options>div,.watchlist-editor-suggestions { border-color:var(--rich-border,#dce4e9); background:var(--rich-surface,#fff); }
+[data-design-theme="softglass"] .watchlist-editor :is(button,input:not([type="checkbox"]),select) { border-radius:var(--rich-control-radius,999px); }

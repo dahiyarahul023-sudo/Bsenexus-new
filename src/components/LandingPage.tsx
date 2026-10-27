@@ -1,6 +1,7 @@
 import { TOP_COMPANIES } from '../config/topCompanies';
 import React, { useState } from 'react';
-import { motion, AnimatePresence, MotionConfig, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, MotionConfig, useReducedMotion } from 'framer-motion';
+import * as motion from 'framer-motion/m';
 import { 
   Zap, Sparkles, Activity, Bell, Send, Shield, List, Calendar,
   ArrowRight, ArrowUpRight, CheckCircle2, ChevronRight, FileText,
@@ -8,7 +9,7 @@ import {
   ExternalLink, BarChart3, Clock, Check, RefreshCw, Sun, Moon,
   User, BookOpen, AlertCircle, Award, Terminal, Flame, Database,
   Building2, Target, Volume2, ShieldCheck, HelpCircle, CheckCheck,
-  Share2, Compass, X, MoreVertical, Bot, Code2
+  Share2, Compass, X, MoreVertical, Code2
 } from 'lucide-react';
 import { BseNexusLogo } from './ui/BseNexusLogo';
 import {
@@ -395,14 +396,6 @@ export function LandingPage({
               >
                 About
               </button>
-              <a 
-                href="/plugin" 
-                className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-all flex items-center gap-1.5 font-bold text-emerald-600 dark:text-emerald-400 min-h-[32px] px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300/80 dark:border-emerald-700/60 whitespace-nowrap select-none shadow-2xs hover:scale-105"
-              >
-                <Bot className="w-3.5 h-3.5 text-emerald-500" />
-                <span>AI Plugin</span>
-                <span className="text-[9px] px-1 py-0.2 rounded bg-emerald-500 text-white font-mono font-bold leading-none">GPT &amp; Gemini</span>
-              </a>
             </nav>
 
             {/* Right CTAs — shrink-0 so this group can never be pushed off-screen */}
@@ -422,7 +415,7 @@ export function LandingPage({
               {user || profile ? (
                 <motion.button
                   whileTap={{ scale: 0.96 }}
-                  onClick={() => onEnterTerminal('dashboard')}
+                  onClick={() => onEnterTerminal('home')}
                   aria-label={`User profile: ${profile?.displayName || 'User profile'}`}
                   className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-[#222030] hover:bg-slate-200 dark:hover:bg-[#2C293D] text-slate-900 dark:text-white text-xs font-bold transition-all border border-slate-200 dark:border-[#332E45] cursor-pointer shadow-xs min-h-[38px] whitespace-nowrap select-none"
                 >
@@ -446,7 +439,7 @@ export function LandingPage({
               {/* Main Launch Live Terminal CTA */}
               <motion.button
                 whileTap={{ scale: 0.95 }}
-                onClick={() => onEnterTerminal('dashboard')}
+                onClick={() => onEnterTerminal('home')}
                 aria-label="Launch Live Terminal Dashboard"
                 className="hidden sm:flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white text-xs font-black shadow-md shadow-emerald-700/25 transition-all cursor-pointer select-none shrink-0 min-h-[38px]"
               >
@@ -566,22 +559,11 @@ export function LandingPage({
                   <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
                 </button>
 
-                <a
-                  href="/plugin"
-                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:bg-slate-100 dark:hover:bg-[#1C1A27] transition-colors text-left"
-                >
-                  <div className="flex items-center gap-2">
-                    <Bot className="w-3.5 h-3.5 text-emerald-500" />
-                    <span>AI Plugin (ChatGPT &amp; Gemini)</span>
-                  </div>
-                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-mono">OpenAPI</span>
-                </a>
-
                 <div className="pt-3 pb-1 border-t border-slate-200/80 dark:border-[#2D283E]">
                   <button
                     onClick={() => {
                       setIsMobileNavOpen(false);
-                      onEnterTerminal('dashboard');
+                      onEnterTerminal('home');
                     }}
                     className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow-xs"
                   >
@@ -2065,7 +2047,7 @@ export function LandingPage({
                 'Board Meeting & Earnings Calendar',
               ]}
               ctaLabel={<span className="inline-flex items-center gap-2">Launch Terminal (Free) <ArrowRight className="w-4 h-4" /></span>}
-              onCta={() => onEnterTerminal('dashboard')}
+              onCta={() => onEnterTerminal('home')}
               className="h-full"
             />
 
@@ -2233,9 +2215,9 @@ export function LandingPage({
             <h2 id="top-companies-heading" className="text-xl font-bold text-slate-900 dark:text-white mb-4">Track Companies</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {TOP_COMPANIES.map(company => (
-                <a key={company.scripCode} href={`/company/${encodeURIComponent(company.symbol)}`} className="p-4 rounded-2xl bg-slate-50 dark:bg-[#15141F] border border-slate-200/80 dark:border-slate-800/80 hover:border-emerald-500/50 transition-colors">
+                <a key={company.symbol} href={`/company/${encodeURIComponent(company.symbol)}`} className="p-4 rounded-2xl bg-slate-50 dark:bg-[#15141F] border border-slate-200/80 dark:border-slate-800/80 hover:border-emerald-500/50 transition-colors">
                   <span className="block text-sm font-bold text-slate-900 dark:text-white">{company.name}</span>
-                  <span className="block text-xs text-slate-500 dark:text-slate-400 mt-1">BSE: {company.scripCode}</span>
+                  <span className="block text-xs text-slate-500 dark:text-slate-400 mt-1">{company.listingLabel || `BSE: ${company.scripCode}`}</span>
                 </a>
               ))}
             </div>
@@ -2340,7 +2322,7 @@ export function LandingPage({
 
           <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
             <button
-              onClick={() => onEnterTerminal('dashboard')}
+              onClick={() => onEnterTerminal('home')}
               className="px-8 py-4 bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-black text-sm rounded-xl shadow-xl shadow-emerald-500/25 transition-all cursor-pointer flex items-center gap-2"
             >
               <Zap className="w-4 h-4 fill-slate-950" />
@@ -2375,79 +2357,6 @@ export function LandingPage({
         </div>
       </section>
 
-      {/* Universal AI Plugin & Bot Action Gateway Spotlight Section */}
-      <section className="py-14 sm:py-20 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 text-white relative overflow-hidden border-t border-slate-800">
-        <div className="absolute -top-24 right-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            <div className="lg:col-span-7 space-y-5 text-left">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold border border-emerald-500/30">
-                <Bot className="w-3.5 h-3.5" />
-                <span>Zero-Code Universal AI Action &amp; OpenAPI 3.1</span>
-              </div>
-              <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight leading-snug">
-                Connect ChatGPT, Google Gemini &amp; Custom Bots Directly to BSE Filings
-              </h2>
-              <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-xl">
-                Feed real-time regulatory disclosures, quarterly financial results, upcoming board meetings, and BSE company intelligence directly into your favorite AI model or automated Telegram bot with one click.
-              </p>
-              <div className="flex flex-wrap items-center gap-3 pt-2">
-                <a
-                  href="/plugin"
-                  className="px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs sm:text-sm rounded-xl shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2 cursor-pointer"
-                >
-                  <Bot className="w-4 h-4" />
-                  <span>Open AI Plugin &amp; Schema Hub</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </a>
-                <a
-                  href="/api/ai/openapi.json"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-5 py-3 bg-slate-800/90 hover:bg-slate-700 text-slate-200 font-semibold text-xs sm:text-sm rounded-xl border border-slate-700/80 transition-all flex items-center gap-2 font-mono"
-                >
-                  <Code2 className="w-4 h-4 text-emerald-400" />
-                  <span>View OpenAPI Spec (JSON)</span>
-                </a>
-              </div>
-            </div>
-
-            <div className="lg:col-span-5 bg-slate-950/80 rounded-2xl border border-slate-800 p-5 space-y-3.5 font-mono text-xs shadow-2xl">
-              <div className="flex items-center justify-between border-b border-slate-800/80 pb-2 text-[11px] text-slate-400">
-                <span className="flex items-center gap-1.5 text-emerald-400 font-bold">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  Live AI Action Endpoints
-                </span>
-                <span>OpenAPI 3.1.0</span>
-              </div>
-              <div className="space-y-2 text-[11.5px]">
-                <div className="p-2.5 rounded-lg bg-slate-900/90 border border-slate-800/70">
-                  <div className="text-slate-400 text-[10px]">ChatGPT Custom GPT Action URL</div>
-                  <div className="text-emerald-300 break-all select-all font-semibold mt-0.5">
-                    https://bsenexus.in/api/ai/openapi.json
-                  </div>
-                </div>
-                <div className="p-2.5 rounded-lg bg-slate-900/90 border border-slate-800/70">
-                  <div className="text-slate-400 text-[10px]">Plugin Manifest (GPT Plugin)</div>
-                  <div className="text-amber-300 break-all select-all font-semibold mt-0.5">
-                    https://bsenexus.in/.well-known/ai-plugin.json
-                  </div>
-                </div>
-                <div className="p-2.5 rounded-lg bg-slate-900/90 border border-slate-800/70">
-                  <div className="text-slate-400 text-[10px]">Google Gemini Function Declarations</div>
-                  <div className="text-sky-300 break-all select-all font-semibold mt-0.5">
-                    https://bsenexus.in/api/ai/gemini-tools.json
-                  </div>
-                </div>
-              </div>
-              <div className="text-[11px] text-slate-400 flex items-center justify-between pt-1">
-                <span>⚡ Rate limit: 40 req/min per IP</span>
-                <span className="text-emerald-400">Instant Open Access</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Common Questions FAQ Section */}
       <section className="py-12 sm:py-16 bg-slate-50/60 dark:bg-[#0E0C17]/60 border-t border-slate-200/80 dark:border-slate-800/80">
@@ -2517,7 +2426,6 @@ export function LandingPage({
                 <li><a href="/about" className="hover:text-emerald-500 transition-colors text-slate-700 dark:text-slate-300 block">About Bsenexus</a></li>
                 <li><a href="/companies" className="hover:text-emerald-500 transition-colors text-emerald-600 dark:text-emerald-400 font-semibold block">BSE Listed Companies</a></li>
                 <li><a href="/pricing" className="hover:text-emerald-500 transition-colors text-slate-700 dark:text-slate-300 block">Pricing &amp; Plans</a></li>
-                <li><a href="/plugin" className="hover:text-emerald-500 transition-colors text-emerald-600 dark:text-emerald-400 font-semibold block">AI Plugin (ChatGPT &amp; Gemini)</a></li>
                 <li><a href="/guides" className="hover:text-emerald-500 transition-colors text-slate-700 dark:text-slate-300 block">Market Research Guides</a></li>
                 <li><a href="/faq" className="hover:text-emerald-500 transition-colors text-slate-700 dark:text-slate-300 block">SEBI Disclosures FAQ</a></li>
                 <li><a href="/rss.xml" target="_blank" rel="noopener noreferrer" className="hover:text-emerald-500 transition-colors text-slate-700 dark:text-slate-300 block">RSS Feed</a></li>

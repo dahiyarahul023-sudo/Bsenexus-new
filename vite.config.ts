@@ -2,17 +2,24 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig} from 'vite';
+import {disabledHmrClient} from './scripts/vite-preview-client.mjs';
 
 export default defineConfig(() => {
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [react(), tailwindcss(), disabledHmrClient()],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
+        
+        
       },
-      dedupe: ['react', 'react-dom', 'react-dom/client', 'framer-motion'],
+      dedupe: ['react', 'react-dom', 'react-dom/client', 'framer-motion', '@sentry/react'],
     },
     optimizeDeps: {
+      // A static AI Studio preview cannot reload when late dependency discovery
+      // replaces React's shared chunks. Prepare the complete browser set once.
+      // devRuntime.test.ts rejects newly added runtime imports missing below.
+      noDiscovery: true,
       include: [
         'react',
         'react-dom',
@@ -20,12 +27,15 @@ export default defineConfig(() => {
         'react/jsx-runtime',
         'react/jsx-dev-runtime',
         'framer-motion',
+        'framer-motion/m',
         'lucide-react',
         'clsx',
         'tailwind-merge',
         'date-fns',
         'firebase/app',
         'firebase/auth',
+        'firebase/app-check',
+        '@sentry/react',
       ],
       esbuildOptions: {
         target: 'es2020',
@@ -42,6 +52,7 @@ export default defineConfig(() => {
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
     build: {
+      manifest: true,
       minify: 'esbuild' as const,
       target: 'es2020',
       chunkSizeWarningLimit: 1200,
