@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "bd39ea8cf21896e30ba94938a1a8ec22015f3dd1c4a9503a70e2eab81b44d856",
+  "sourceDigest": "a2ed52233d74e0dbfe5c3761f93b18a4114de3d305f938d01b92623275e16b42",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -700,13 +700,14 @@
     },
     {
       "path": "server/database/paymentEntitlementsDao.ts",
-      "sha256": "fd4867b27b3d10c45907e965267b5ea27252a0c86dae5d92458c480d72c94b0d",
+      "sha256": "3817f9ba62226457e3065422c270e83de5ce56483cd6d40e5c465482432fd1db",
       "importedBy": [
         "server/ai/tools.ts",
         "server/api/payments.ts",
         "server/api/routes.ts",
         "server/security/auth.ts",
-        "server/services/subscriptionAccess.ts"
+        "server/services/subscriptionAccess.ts",
+        "server/tests/studioMigrationReview.test.ts"
       ]
     },
     {
@@ -821,7 +822,8 @@
         "server/tests/aiWatchlistConcurrency.test.ts",
         "server/tests/batchOperations.test.ts",
         "server/tests/deepAuditAuth.test.ts",
-        "server/tests/followupAudit.test.ts"
+        "server/tests/followupAudit.test.ts",
+        "server/tests/studioMigrationReview.test.ts"
       ]
     },
     {
@@ -866,7 +868,7 @@
     },
     {
       "path": "server/database/watchlistDao.ts",
-      "sha256": "02a20dbba38676957255577565efc8f686a6f7172173492d4df75944b839ee42",
+      "sha256": "3b7725347cc04b4f23f6a63459e6f53672a6f8c56cf514a05fffc9c264f2f12b",
       "importedBy": [
         "server.ts",
         "server/ai/tools.ts",
@@ -881,6 +883,7 @@
         "server/services/storageMonitor.ts",
         "server/tests/aiWatchlistConcurrency.test.ts",
         "server/tests/followupAudit.test.ts",
+        "server/tests/studioMigrationReview.test.ts",
         "server/tests/watchlistMetadata.test.ts"
       ]
     },
@@ -1405,7 +1408,7 @@
     },
     {
       "path": "server/services/stockNewsService.ts",
-      "sha256": "4741161e470e064800c1519ff4d3899620d46e63f8f835710a2d142cbc27724e",
+      "sha256": "680310bad294c8ba12681d352dc8d1fb0d2111be87829d6282bbdb7f10a921b4",
       "importedBy": [
         "server.ts",
         "server/api/routes.ts",
@@ -2130,6 +2133,11 @@
     {
       "path": "server/tests/storyButtons.test.ts",
       "sha256": "083acbb9ee359eeb89e5fc1c2e4b9b08b997d2540867770a84fe12d9b5ef367b",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/studioMigrationReview.test.ts",
+      "sha256": "396309b42173b79012bffc04e57489fe5f16fb7b6f3e5b76e60b2558832d08e5",
       "importedBy": []
     },
     {
@@ -9759,6 +9767,30 @@
       "line": 1
     },
     {
+      "source": "server/tests/studioMigrationReview.test.ts",
+      "target": "server/database/supabase.ts",
+      "kind": "dynamic",
+      "line": 12
+    },
+    {
+      "source": "server/tests/studioMigrationReview.test.ts",
+      "target": "server/database/watchlistDao.ts",
+      "kind": "dynamic",
+      "line": 13
+    },
+    {
+      "source": "server/tests/studioMigrationReview.test.ts",
+      "target": "server/database/supabase.ts",
+      "kind": "dynamic",
+      "line": 82
+    },
+    {
+      "source": "server/tests/studioMigrationReview.test.ts",
+      "target": "server/database/paymentEntitlementsDao.ts",
+      "kind": "dynamic",
+      "line": 84
+    },
+    {
       "source": "server/tests/subjectCleaner.test.ts",
       "target": "src/utils/cleanBseSubject.ts",
       "kind": "import",
@@ -14123,7 +14155,8 @@
         "server/tests/paymentEntitlement.test.ts",
         "server/tests/pricingSync.test.ts",
         "server/tests/deepAuditSql.test.ts",
-        "server/tests/deepAuditAuth.test.ts"
+        "server/tests/deepAuditAuth.test.ts",
+        "server/tests/studioMigrationReview.test.ts"
       ],
       "reason": "Create, webhook, verify, recover and claim must agree on owner, plan, amount/currency and exactly-once durable grant. Profile edits must preserve paid rights. Deep-audit repair moves reconciliation into the same account lock as granting; profile fields cannot become paid provenance. Modern-schema forward migration is required before runtime deployment."
     },
@@ -14277,7 +14310,8 @@
         "server/tests/calendarTelegramDelivery.test.ts",
         "server/tests/calendarTelegramSql.test.ts",
         "server/tests/resultHistory.test.ts",
-        "server/tests/resultDocumentEvidence.test.ts"
+        "server/tests/resultDocumentEvidence.test.ts",
+        "server/tests/studioMigrationReview.test.ts"
       ],
       "reason": "Poll → normalize/dedupe → persistence → feed and alert decisions → recipient-specific delivery/inbox. Global and personal recipients must remain distinct. Preset saves replace stable per-owner IDs atomically; confirmed cloud settings feed every poll. Personal channels supersede inherited defaults once presets are saved. Live polling has a CRON_SECRET bearer-protected HTTP trigger, a 60-second in-container watchdog timer, a continuous 15-second active poller, and a 15-second-stale traffic trigger. The shared process-local monitor lock skips running cycles without queueing. Request lifetime covers bounded ingestion, raw delivery/write drain and then result AI after releasing the ingestion lock; cron source failure eligibility is capped at 60 seconds. External Scheduler remains necessary for idle request-based Cloud Run; legacy cron returns 410. Numbered IST worker summaries and cron request summaries have distinct event fields. Automatic Telegram AI applies only to actual financial results with a stable security-code/period identity. Private durable claims share one valid analysis per period/language and reserve one reply per chat across exchange copies, languages and restart. Failed evidence uses a bounded newer-source retry; uncertain send acceptance never replays. Private admin delivery timings retain exchange, observed, processed and Telegram acceptance dates without recipient identity. Migration must precede runtime release. Confirmed public filing changes queue company/announcements IndexNow URLs after successful upsert; the poll collection hold is idempotently released in finally. Indexing I/O runs outside ingestion and does not change alert recipients or intake. Overnight ADR adds one existing Market pulse screen and an opt-in private morning inbox digest; source dates and fetch times remain distinct, and durable insertion prevents per-session repeats. Stored 30-day filing counts share one exact-company projection with company detail, independently of the seven-day updates feed. Durable per-company history uses keyset pages; company Filings and Material Actions expose numbered pages. Explicit paid archive imports all categories over selected years with bounded workers, source failure and storage confirmation, and does not persist PDFs. Process restart or another instance may make worker status unavailable; saved evidence remains and no success is invented. Financial result titles include Results For Quarter/Q1 and board Outcome - Results. Generic outcomes need identity-bound proof from bounded official BSE PDF text; no PDF is persisted. Archive receipts distinguish saved filings from documents awaiting verification. Calendar retains one lower history control; Stock 360 and automatic readers share completion copy."
     },
@@ -14344,7 +14378,8 @@
         "server/tests/storageQuotaSwitch.test.ts",
         "server/tests/startupRecovery.test.ts",
         "server/tests/productionAudit.test.ts",
-        "server/tests/indexNowSql.test.ts"
+        "server/tests/indexNowSql.test.ts",
+        "server/tests/studioMigrationReview.test.ts"
       ],
       "reason": "Supabase and privileged RPCs are server-only. Cache/fallback behavior varies per DAO: local success never proves durable payment success. Review migrations with caller changes. IndexNow public-URL claims use service-role-only RLS/invoker RPCs and reserve a durable 24-hour cooldown before HTTP; browser grants and local fallback authority are absent."
     },
@@ -14415,7 +14450,8 @@
         "server/tests/referralDurability.test.ts",
         "server/tests/referralContract.test.ts",
         "server/tests/referralApi.test.ts",
-        "server/tests/referralInput.test.ts"
+        "server/tests/referralInput.test.ts",
+        "server/tests/studioMigrationReview.test.ts"
       ],
       "reason": "Verified UID owns immutable unique code aliases. Application creates a private pending intent; checkout snapshots attribution and reward mode; a paid-grant trigger settles the unique reward transactionally. SSE carries owner-only snapshots with reconciliation. See rule/REFERRALS.md for legacy cutover requirements."
     },
@@ -14486,7 +14522,8 @@
         "server/tests/resultDocumentEvidence.test.ts",
         "server/tests/calendarAudit.test.ts",
         "server/tests/companyPeers.test.ts",
-        "server/tests/forYouPersonal.test.ts"
+        "server/tests/forYouPersonal.test.ts",
+        "server/tests/studioMigrationReview.test.ts"
       ],
       "reason": "Upstream timestamps, stock identity and market sessions affect cached API results, screen freshness and alert timing. Public market data availability does not establish trading-data accuracy. Verified security identities repair IndusInd/J&K and current Eternal naming; conflicting legacy cache entries cannot overwrite them. Watchlist, Story and F&O fallback maps use the shared verified codes. Connector read projections follow security code and mark legacy conflicts rather than silently rewriting personal lists. Financial result titles include Results For Quarter/Q1 and board Outcome - Results. Generic outcomes need identity-bound proof from bounded official BSE PDF text; no PDF is persisted. Archive receipts distinguish saved filings from documents awaiting verification. Calendar retains one lower history control; Stock 360 and automatic readers share completion copy. Global watchlist archive counts completed and failed/unresolved imports separately; partial source failure cannot become an all-success receipt. English summary variants survive calendar/history reads. Company Hub peers reuse catalogue identities and explicit industry membership, with exact-sector fallback and a four-stock limit. Calendar email/reminder-copy actions live inside both shared Share menus; other share consumers keep their existing options. For You uses exact active-watchlist projections for results, news, Radar, ADR and company Stories, with explicit target/new-list stock additions through existing guarded routes. Canonical result history supplies first-declaration IST timing dots, a supported one/two-hour concentration and labelled exceptions; no scheduled or ingestion clocks imply release times. Today preserves declared results with distinct wording and accent."
     },
@@ -15114,7 +15151,8 @@
         "server/tests/announcementCron.test.ts",
         "server/tests/radarCompanyGroups.test.ts",
         "server/tests/radarSourceChecks.test.ts",
-        "server/tests/brandRefreshInbox.test.ts"
+        "server/tests/brandRefreshInbox.test.ts",
+        "server/tests/studioMigrationReview.test.ts"
       ],
       "reason": "Two Home previews open a native modal Radar dashboard and immediate detail. Watchlist scope stays separate from durable event follows. Both exchange disclosures and shared RSS intake carry source/date provenance; explicit jurisdiction/case references alone may join evidence. Future events have no predictions. Observed NSE final daily closes are a separate bounded, cached read with per-session source, missing-data states and no causal attribution. Account cancellation, modal focus/scroll, themes and reduced motion remain explicit contracts. The list is read-only; existing watchdog drives bounded intake. Server-only DB categories, strict real company identity, typed proceedings, source-domain rules and offset timestamps gate publishing. Reviewed PNC source backfill retains explicit news timestamps and separately sourced NSE daily ranges. Following outages preserve closed records. Additional material event terms come from private DB rules and match bounded literal phrases independently of source type or authority. Explicit RSS timestamps normalize to UTC. Publisher/report attribution and related-topic links preserve uncertainty. Selected company final NSE session values persist as small, private, duplicate-safe snapshots and can survive upstream outages. Routine corporate transactions and statutory takeover boilerplate are excluded independently of configured discovery terms. Insolvency/disputes retain the stable deals category ID with a focused label. Read projections hide legacy routine/vague cards while retaining immutable evidence and follows; all headings use source wording and original timeline titles remain intact. Official filing names and exact-code title prefixes repair numeric identities without assigning a guessed NSE symbol. Exchange daily rows may match one exact full company name; NSE SME and BSE scrip-keyed reports retain explicit source identity. Future hearing dates do not suppress prior publication-day history. Sparse details render known facts and collapsed source/method sections. Report requests use a private proxy-aware dispatcher and a bounded concurrency queue with an overall response budget. Security-code/ticker aliases share immutable prices across reports. Previous-session, event-window and latest-company context remain separately labelled. A bounded rotating worker captures the last eight dates on boot/watchdog and authenticated cron, with explicit read/write/source diagnostics and retry; request-based hosting still requires its external Scheduler. Related reports query the company directly, independently of feed caps or selected report age. Compact selectable daily bars retain exact source/price details and reduced-motion support. Latest persisted company context remains visible even beyond the eight-day event lookback, with its original date and source. Presentation groups exact company sets without merging durable proceedings. A private seven-day scan ledger supplies latest check health across hosting instances; missing history is pending, and optional RSS outage is distinct from filing-scan success. October 22 inspection found recent durable checks healthy. Client refresh resumes explicitly on visible/online/pageshow; timed-out abort-resolving reads expose retry and release the read lock. Source policy and scheduling are unchanged. Source scan freshness ages from the actual persisted scan timestamp, separately from the browser read time. Heading actions retain a single-line label and wrap as a group on narrow screens."
     },
@@ -15229,7 +15267,8 @@
         "server/tests/publicCalendarCoverage.test.ts",
         "server/tests/calendarDiscovery.test.ts",
         "server/tests/deepAuditSql.test.ts",
-        "server/tests/deepAuditAuth.test.ts"
+        "server/tests/deepAuditAuth.test.ts",
+        "server/tests/studioMigrationReview.test.ts"
       ],
       "reason": "Website sign-in approves a public PKCE client with explicit permissions. External opaque credentials never accept website cookies or client-supplied owners/roles. Live durable entitlement and shared per-account quotas precede bounded tools; writes recheck grant and plan in a transaction with an idempotent receipt. Website watchlists use request-local revision CAS while enabled, and reads do not restore stale backups. Connection/consent responses bypass browser, CDN and SW caches. Profile/watchlist/notes refresh on return; account changes suppress late responses. Root OAuth endpoints, MCP and the four compatibility GET routes share the same authorization owner. The disabled-by-default flag is required until an approved service-only schema rollout and live client/browser checks; source tests do not certify deployment or marketplace publication. Connection discovery uses the configured Express trusted-proxy hostname while all issuer/resource URLs remain canonical. Exact browser-Origin checks cover MCP requests and preflights. Settings owns the sole visible entry; client-specific web setup distinguishes public URL copying, approved grants and completed client setup. Same-account refresh retains content and account/request changes hide obsolete responses. Approved-access cards use a minmax content column and non-wrapping action column, with permission rows and a single-column phone layout; confirmed revoke and account guards are unchanged. Every wire tool has a title and complete read/write hints; descriptions are factual. PDF analysis has an independent provenance cache, language/coverage validation and shared-quota refunds, with no heuristic success. Service-only owner predicates and request receipts survive guessed IDs; local wire/SQL tests and rolled-back staging checks are distinct from a clean deployed Claude/Inspector flow. DCR supports exact loopback hosts with port relaxation and rejects client_credentials. Public docs/privacy describe partial coverage, upstream processing and retention; reviewer fixtures/expiring UID-specific limits never grant a paid entitlement."
     },
@@ -15266,7 +15305,8 @@
         "server/tests/adrSnapshotStore.test.ts",
         "server/tests/marketStories.test.ts",
         "server/tests/companyStoryBudget.test.ts",
-        "server/tests/notificationStartup.test.ts"
+        "server/tests/notificationStartup.test.ts",
+        "server/tests/studioMigrationReview.test.ts"
       ],
       "reason": "One reviewed company registry and completed-US-session snapshot supplies Home, company intelligence, Market pulse and the opt-in watchlist inbox worker. Public validated snapshots persist under service-only immutable settings session keys and browser localStorage. Partial refresh retains missing symbols; restored, failed or older-source reads cannot renew freshness. Repeated failures back off from one to fifteen minutes. Current US bars, pre/post market, bad identities/currency, stale/partial data and split/thin-volume alerts are guarded. Home uses shared Helios/density/actions and exact company navigation; Stories use one existing chapter. Morning alerts honor fresh owner/list/mute/priority checks and a durable private per-session insert-once key. The existing cron/watchdog supplies the execution lifetime without another timer, migration or public broadcast. Browser/device, live delivery, hosting and source redistribution evidence remain separate."
     },
@@ -15314,7 +15354,8 @@
         "server/tests/pollerStall.test.ts",
         "scripts/verify-gift-access.mjs",
         "server/tests/giftAccessMount.test.ts",
-        "server/tests/previewBackendReload.test.ts"
+        "server/tests/previewBackendReload.test.ts",
+        "server/tests/studioMigrationReview.test.ts"
       ],
       "reason": "Owner PIN elevation creates an email-bound invitation with a server-owned custom duration and separate claim deadline. Hash-only secrets, immutable input/idempotency checks and one DB transaction bind each grant once to a freshly verified Firebase identity. Resend rotates the pending verifier without extending the deadline; revoke never touches paid/trial/referral rows. Read-only unified access projections reach website gates, billing, profile refresh, AI quota and connector writes. Personal Telegram checks consult live gift access at dispatch; ingestion remains independent of gift-store availability. Fragment capture precedes optional monitoring; activation is no-store/noindex and excluded from SW/telemetry. Browser fixture evidence is distinct from real sender/Firebase/database release checks; feature stays off until additive migration verification. The actual root API mount distinguishes disabled 409 from auth denial and genuine 404. Admin missing-server recovery preserves drafts and blocks writes until a successful history reload. HTML API pages with HTTP 200 become typed transport failures without automatic write replay; deliberate feature-off state is GIFT_ACCESS_DISABLED, not a transient outage."
     }
@@ -21087,37 +21128,7 @@
     },
     {
       "file": "server/database/paymentEntitlementsDao.ts",
-      "line": 89,
-      "function": "sb\n        .from",
-      "key": "'users'"
-    },
-    {
-      "file": "server/database/paymentEntitlementsDao.ts",
-      "line": 97,
-      "function": "sb\n        .from",
-      "key": "ENTITLEMENTS_TABLE"
-    },
-    {
-      "file": "server/database/paymentEntitlementsDao.ts",
-      "line": 104,
-      "function": "sb\n        .from",
-      "key": "'payment_orders'"
-    },
-    {
-      "file": "server/database/paymentEntitlementsDao.ts",
-      "line": 125,
-      "function": "sb.from",
-      "key": "ENTITLEMENTS_TABLE"
-    },
-    {
-      "file": "server/database/paymentEntitlementsDao.ts",
-      "line": 137,
-      "function": "sb.from",
-      "key": "'users'"
-    },
-    {
-      "file": "server/database/paymentEntitlementsDao.ts",
-      "line": 192,
+      "line": 132,
       "function": "getSupabase().rpc",
       "key": "'grant_payment_atomic'"
     },
@@ -21315,19 +21326,19 @@
     },
     {
       "file": "server/database/watchlistDao.ts",
-      "line": 521,
+      "line": 531,
       "function": "getSupabase().from",
       "key": "WATCHLISTS_TABLE"
     },
     {
       "file": "server/database/watchlistDao.ts",
-      "line": 840,
+      "line": 851,
       "function": "getSupabase().from",
       "key": "WATCHLISTS_TABLE"
     },
     {
       "file": "server/database/watchlistDao.ts",
-      "line": 873,
+      "line": 884,
       "function": "getSupabase()\n        .from",
       "key": "WATCHLISTS_TABLE"
     },
@@ -23365,12 +23376,12 @@
     },
     {
       "file": "server/database/watchlistDao.ts",
-      "line": 428,
+      "line": 438,
       "name": "LEGACY_ADMIN_UID"
     },
     {
       "file": "server/database/watchlistDao.ts",
-      "line": 512,
+      "line": 522,
       "name": "NODE_ENV"
     },
     {
@@ -23835,7 +23846,7 @@
     },
     {
       "file": "server/services/stockNewsService.ts",
-      "line": 709,
+      "line": 691,
       "name": "TELEGRAM_CHAT_ID"
     },
     {
@@ -24686,6 +24697,76 @@
     {
       "file": "server/tests/referralApi.test.ts",
       "line": 7,
+      "name": "SUPABASE_SERVICE_ROLE_KEY"
+    },
+    {
+      "file": "server/tests/studioMigrationReview.test.ts",
+      "line": 8,
+      "name": "<computed>"
+    },
+    {
+      "file": "server/tests/studioMigrationReview.test.ts",
+      "line": 9,
+      "name": "SUPABASE_URL"
+    },
+    {
+      "file": "server/tests/studioMigrationReview.test.ts",
+      "line": 10,
+      "name": "SUPABASE_SERVICE_ROLE_KEY"
+    },
+    {
+      "file": "server/tests/studioMigrationReview.test.ts",
+      "line": 11,
+      "name": "AI_CONNECTIONS_ENABLED"
+    },
+    {
+      "file": "server/tests/studioMigrationReview.test.ts",
+      "line": 42,
+      "name": "<computed>"
+    },
+    {
+      "file": "server/tests/studioMigrationReview.test.ts",
+      "line": 42,
+      "name": "<computed>"
+    },
+    {
+      "file": "server/tests/studioMigrationReview.test.ts",
+      "line": 79,
+      "name": "SUPABASE_URL"
+    },
+    {
+      "file": "server/tests/studioMigrationReview.test.ts",
+      "line": 79,
+      "name": "SUPABASE_SERVICE_ROLE_KEY"
+    },
+    {
+      "file": "server/tests/studioMigrationReview.test.ts",
+      "line": 80,
+      "name": "SUPABASE_URL"
+    },
+    {
+      "file": "server/tests/studioMigrationReview.test.ts",
+      "line": 81,
+      "name": "SUPABASE_SERVICE_ROLE_KEY"
+    },
+    {
+      "file": "server/tests/studioMigrationReview.test.ts",
+      "line": 92,
+      "name": "SUPABASE_URL"
+    },
+    {
+      "file": "server/tests/studioMigrationReview.test.ts",
+      "line": 92,
+      "name": "SUPABASE_URL"
+    },
+    {
+      "file": "server/tests/studioMigrationReview.test.ts",
+      "line": 93,
+      "name": "SUPABASE_SERVICE_ROLE_KEY"
+    },
+    {
+      "file": "server/tests/studioMigrationReview.test.ts",
+      "line": 93,
       "name": "SUPABASE_SERVICE_ROLE_KEY"
     },
     {

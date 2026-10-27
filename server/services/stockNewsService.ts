@@ -687,6 +687,10 @@ export async function processAutomatedNewsAlerts(): Promise<{ checked: number; d
     // For each recipient, check their active watchlist (read-only: never
     // manufacture default watchlists as a side effect of the scan)
     for (const rec of recipients) {
+      if (rec.userId) {
+        try { await requireVerifiedTelegramTarget(rec.userId, rec.chatId, settings.chatId || process.env.TELEGRAM_CHAT_ID); }
+        catch { continue; } // Deny this destination without stopping later recipients.
+      }
       const { items: matchedNews } = await getWatchlistNews(rec.userId, undefined, { noCreate: true });
 
       for (const news of matchedNews) {
@@ -706,7 +710,6 @@ export async function processAutomatedNewsAlerts(): Promise<{ checked: number; d
         // Check if this news item was already sent to this recipient
         if (!isNewsAlertSentToTarget(rec.targetId, news.id)) {
           // Send Telegram notification
-          if (rec.userId) await requireVerifiedTelegramTarget(rec.userId, rec.chatId, settings.chatId || process.env.TELEGRAM_CHAT_ID);
           const sendRes = await sendNewsToTelegram(news, rec.chatId);
           if (sendRes.success) {
             await markNewsAlertSentToTarget(rec.targetId, news.id);

@@ -410,7 +410,17 @@ export async function getAllWatchlists(userId?: string, opts?: GetWatchlistsOpti
       // Connected AI and website writers share CAS. Reads never upload old local
       // backups or run legacy whole-document migrations over a concurrent edit.
       if(connectionsEnabled()) {
-        const lists=cloudLists===null ? (noCreate?[]:createDefaultWatchlists()) : sanitizeWatchlistArray(cloudLists);
+        if (cloudLists === null) {
+          if (noCreate) return []; // Do not cache an unsaved empty/default row.
+          return withUidLock(uid, async () => {
+            const current = await getAllWatchlists(uid);
+            // Insert only if still absent. A concurrent creator wins; the CAS
+            // conflict retry rereads and returns their lists without replacing.
+            if (mutationContext.getStore()!.revision === null) await persistUserWatchlists(uid, current);
+            return current;
+          });
+        }
+        const lists=sanitizeWatchlistArray(cloudLists);
         userWatchlistsCache[uid]={lists,fetchedAt:Date.now()};userWatchlistsDirty[uid]=false;
         return JSON.parse(JSON.stringify(lists));
       }
@@ -677,6 +687,7 @@ export async function clearAllWatchlistsSymbols(userId?: string): Promise<void> 
 export async function resetUserWatchlistsToDefault(userId?: string): Promise<any[]> {
   const uid = sanitizeUserId(userId);
   return withUidLock(uid, async () => {
+    if (durableMutation(uid)) await runPaymentStore('read watchlists for reset', readWatchlistsRow(uid));
     const initial = createDefaultWatchlists();
     await persistUserWatchlists(uid, initial);
     return JSON.parse(JSON.stringify(initial));

@@ -84,68 +84,8 @@ export async function reconcilePaymentEntitlement(uid: string): Promise<{
     if (!error) {
       return normalizePaymentEntitlement(uid, data);
     }
-    // If the RPC is missing in schema cache (PGRST202), perform durable reconciliation directly via Supabase tables
-    if (error.code === 'PGRST202' || String(error.message || '').includes('Could not find the function')) {
-      const { data: userRow, error: userErr } = await sb
-        .from('users')
-        .select('uid, tier')
-        .eq('uid', uid)
-        .maybeSingle();
-      if (userErr) throw userErr;
-      if (!userRow) return null;
-
-      const { data: peRow, error: peErr } = await sb
-        .from(ENTITLEMENTS_TABLE)
-        .select('*')
-        .eq('uid', uid)
-        .maybeSingle();
-      if (peErr) throw peErr;
-
-      const { data: orders, error: poErr } = await sb
-        .from('payment_orders')
-        .select('*')
-        .eq('uid', uid)
-        .eq('status', 'granted');
-      if (poErr) throw poErr;
-
-      if (!peRow && (!orders || orders.length === 0)) {
-        return null;
-      }
-
-      const existingPe = peRow ? fromRow(peRow) : null;
-      const orderEntitlement = orders && orders.length > 0 ? deriveEntitlementFromOrders(uid, orders) : null;
-      const merged = mergePaymentEntitlementCandidates(uid, [
-        existingPe ? normalizePaymentEntitlement(uid, existingPe) : null,
-        orderEntitlement,
-      ]);
-
-      if (!merged) return null;
-
-      const now = Date.now();
-      const { error: upsertErr } = await sb.from(ENTITLEMENTS_TABLE).upsert({
-        uid,
-        pro_expires_at: merged.proExpiresAt,
-        pro_plan_id: merged.proPlanId,
-        last_payment_at: merged.lastPaymentAt,
-        last_order_id: merged.lastOrderId,
-        granted_order_ids: merged.grantedOrderIds,
-        updated_at: now,
-        source: 'ledger-repair',
-      });
-      if (upsertErr) throw upsertErr;
-
-      const { error: userUpdateErr } = await sb.from('users').update({
-        pro_expires_at: merged.proExpiresAt,
-        pro_plan_id: merged.proPlanId,
-        last_payment_at: merged.lastPaymentAt,
-        last_order_id: merged.lastOrderId,
-        tier: userRow.tier === 'admin' ? 'admin' : 'pro',
-        max_watchlist_stocks: 9999,
-      }).eq('uid', uid);
-      if (userUpdateErr) throw userUpdateErr;
-
-      return merged;
-    }
+    // Missing RPC is an unavailable release prerequisite. Never repair paid
+    // state using unlocked table reads/upserts: purchases share the SQL lock.
     throw error;
   })(), 12_000);
   invalidateUserProfileCache(uid);

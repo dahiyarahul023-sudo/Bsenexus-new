@@ -26,3 +26,12 @@
 - Host preview and live release checks remain with the user; no deployment claim. Remote CI and merge reported separately in delivery.
 
 - Make npm test use the same four-worker concurrency as the completed 849-test local run. The unconstrained run ended without a TAP completion summary; bounded workers avoid launching the entire heavy backend suite at once on constrained runners. This changes scheduling only, with all tests and assertions retained.
+
+## Migration review corrections
+
+- Review found five real regressions in the migrated source. Five new behavior regressions failed before repair. Remove the unlocked missing-RPC paid reconciliation fallback entirely: missing SQL returns retryable PAYMENT_STORE_UNAVAILABLE, with no table read/write repair. This also removes the raw snake_case ledger-mapping defect; authoritative repair remains inside the existing SQL transaction, sharing its purchase lock. Auth/payment/profile callers preserve their existing unavailable handling; install the security migration before runtime release.
+- Restore-default watchlists reads its row/revision inside the existing mutation context before CAS. New-account starter lists insert only while absent; a simultaneous creator wins and is reread, never overwritten. A noCreate scan does not create or cache an unsaved list. Tests cover reset, durable first display, uncached monitor visibility and insert conflict.
+- Personal news recipients are verified individually before dispatch. Denied/unavailable verification skips that recipient without stopping later verified destinations; no denied send or receipt occurs. Actual worker loop regression runs with offline provider boundaries and verifies one accepted later delivery.
+- Existing paid grant, connector revision checks, explicit reset intent, master toggles, source/category filters and sent-item checks remain compatible. No production data or migrations changed. Full test/build/map results for this revision recorded after completion.
+
+- Review-focused run with configured test NODE_ENV/JWT: 20/20 passed, including all five new regressions. Lint and production build pass again (startup 621603 raw / 174002 gzip); six map tests and freshness pass at 581 files / 1549 edges. The latest local full-run output did not include a final summary and is not claimed as completed; require remote full-suite success for this final revision. Prior revision CI run 144 passed all four jobs.
