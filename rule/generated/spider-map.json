@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "bcc6c0198f601b786a0712f8a8d7d8073d6f0f39b5a14d6fb540d68a84f23352",
+  "sourceDigest": "f17657d431f8d6f88adf589f6ea2238a98df50463be890ccbef0b74ca36f8209",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -16,11 +16,6 @@
     {
       "path": "eslint.config.mjs",
       "sha256": "19401d83b4bcfbc08fdc003ad77af6a28667ffbdae86258af06a0b8b48c55e18",
-      "importedBy": []
-    },
-    {
-      "path": "firebase-applet-config.json",
-      "sha256": "b259e6ecadd726427194a15673d71624cfc5cba229b12a96763c7069f3440f5f",
       "importedBy": []
     },
     {
@@ -45,7 +40,7 @@
     },
     {
       "path": "package-lock.json",
-      "sha256": "3ed7c0e163b71c467a5c9faaba90f4b3d3de15cb13b87cb2b30c61db650fc258",
+      "sha256": "7e3c08f22015f3fd874dfb9c22876cce63663b5eb1ef5dfde770a0efc27b68f9",
       "importedBy": []
     },
     {
@@ -4547,7 +4542,7 @@
     },
     {
       "path": "src/version.ts",
-      "sha256": "d3163192df619fb1892d25a7b39bb46a84b3dde25d9ae865de5658c0676c0a95",
+      "sha256": "f8e42dfab1b724ec2a69b1a1f4c59db0066f54cc78bafa5a50ccd71254dabdf9",
       "importedBy": [
         "src/components/SettingsTab.tsx",
         "src/lib/sentry.ts"
