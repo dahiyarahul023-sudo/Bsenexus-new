@@ -552,9 +552,10 @@
         "server/tests/calendarAlertTiming.test.ts",
         "server/tests/calendarBroadcast.test.ts",
         "server/tests/calendarTelegramDelivery.test.ts",
-        "server/tests/calendarTelegramSql.test.ts"
+        "server/tests/calendarTelegramSql.test.ts",
+        "server/tests/previewBackendReload.test.ts"
       ],
-      "reason": "Startup and settings influence background jobs, provider calls, abuse limits and logs. A live HTTP listener does not establish that durable stores or external providers are ready. Poller stage deadlines release the monitor lock without resuming abandoned workers; dedicated local poller history is not cloud deployment durability. IndexNow starts only after listen, uses the existing provider circuit and reports configured primary mode/HTTP status in diagnostics. Its background failures never fail filing storage; production Crawler Hints state requires independent inspection. MCP request logs expose only generated trace IDs, bounded operation/error labels and irreversible connection tags; no tool arguments, tokens or private text. Quota/idempotency errors provide actionable recovery. A failed docs fingerprint cannot interrupt other indexing/startup."
+      "reason": "Startup and settings influence background jobs, provider calls, abuse limits and logs. A live HTTP listener does not establish that durable stores or external providers are ready. Poller stage deadlines release the monitor lock without resuming abandoned workers; dedicated local poller history is not cloud deployment durability. IndexNow starts only after listen, uses the existing provider circuit and reports configured primary mode/HTTP status in diagnostics. Its background failures never fail filing storage; production Crawler Hints state requires independent inspection. MCP request logs expose only generated trace IDs, bounded operation/error labels and irreversible connection tags; no tool arguments, tokens or private text. Quota/idempotency errors provide actionable recovery. A failed docs fingerprint cannot interrupt other indexing/startup. Development uses Node watch with the existing tsx import hook to restart imported backend modules; production start and Vite HMR policy remain independent. Imported route changes have a process-level regression check."
     },
     {
       "id": "frontend-navigation",
@@ -1253,9 +1254,11 @@
         "server/tests/giftAccessApi.test.ts",
         "server/tests/giftAccessSql.test.ts",
         "server/tests/pollerStall.test.ts",
-        "scripts/verify-gift-access.mjs"
+        "scripts/verify-gift-access.mjs",
+        "server/tests/giftAccessMount.test.ts",
+        "server/tests/previewBackendReload.test.ts"
       ],
-      "reason": "Owner PIN elevation creates an email-bound invitation with a server-owned custom duration and separate claim deadline. Hash-only secrets, immutable input/idempotency checks and one DB transaction bind each grant once to a freshly verified Firebase identity. Resend rotates the pending verifier without extending the deadline; revoke never touches paid/trial/referral rows. Read-only unified access projections reach website gates, billing, profile refresh, AI quota and connector writes. Personal Telegram checks consult live gift access at dispatch; ingestion remains independent of gift-store availability. Fragment capture precedes optional monitoring; activation is no-store/noindex and excluded from SW/telemetry. Browser fixture evidence is distinct from real sender/Firebase/database release checks; feature stays off until additive migration verification."
+      "reason": "Owner PIN elevation creates an email-bound invitation with a server-owned custom duration and separate claim deadline. Hash-only secrets, immutable input/idempotency checks and one DB transaction bind each grant once to a freshly verified Firebase identity. Resend rotates the pending verifier without extending the deadline; revoke never touches paid/trial/referral rows. Read-only unified access projections reach website gates, billing, profile refresh, AI quota and connector writes. Personal Telegram checks consult live gift access at dispatch; ingestion remains independent of gift-store availability. Fragment capture precedes optional monitoring; activation is no-store/noindex and excluded from SW/telemetry. Browser fixture evidence is distinct from real sender/Firebase/database release checks; feature stays off until additive migration verification. The actual root API mount distinguishes disabled 503 from auth denial and genuine 404. Admin missing-server recovery preserves drafts and blocks writes until a successful history reload."
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "7a3ec8990593df0aca378e69e6cfc72bea7bdfe1984c28099eee386f15a62b6a",
+  "sourceDigest": "db7217571244f9edabde993f58ab503bdf8cbc4547a5903496819c686a631429",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -45,7 +45,7 @@
     },
     {
       "path": "package.json",
-      "sha256": "d24117939ad4fd070c6c279b64bdc2af2c2d1c4b875fe1a732b25588997cfefa",
+      "sha256": "cc398b0dd871efcec9a77d8283a4e9ac64a153ae0cce39c2ea02a98970a4f229",
       "importedBy": []
     },
     {
@@ -213,7 +213,7 @@
     },
     {
       "path": "scripts/verify-gift-access.mjs",
-      "sha256": "620c71c5fb0d4293145f1d02085ddabeae0a303d699e9979f8ee72309ded9e34",
+      "sha256": "fcdac7a08e1580c8c07ca6f9483ba433694a03f6164f6ab288e149cae137ee28",
       "importedBy": []
     },
     {
@@ -443,6 +443,7 @@
         "server.ts",
         "server/tests/alertRulesApi.test.ts",
         "server/tests/auditSecurity.test.ts",
+        "server/tests/giftAccessMount.test.ts",
         "server/tests/notificationCountApi.test.ts"
       ]
     },
@@ -1787,6 +1788,11 @@
       "importedBy": []
     },
     {
+      "path": "server/tests/giftAccessMount.test.ts",
+      "sha256": "daa9b91eb0b74f0546964ca559fa8506fc5874a8720d369f7bbd605e93effa4c",
+      "importedBy": []
+    },
+    {
       "path": "server/tests/giftAccessSql.test.ts",
       "sha256": "f3f41e502c434da98ee951082b9147a85f40f4e23b6f37d2070b5177d540df4b",
       "importedBy": []
@@ -1914,6 +1920,11 @@
     {
       "path": "server/tests/preferenceSaveQueue.test.ts",
       "sha256": "feff074882ee8bad2995f771a4fd5776fe1289a2bfd8f4510c919ab195dc5ca9",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/previewBackendReload.test.ts",
+      "sha256": "979e5519b6f3cf1db95af33b7463fc78861aca1e86b54dde9a169a286b938c0e",
       "importedBy": []
     },
     {
@@ -2483,7 +2494,7 @@
     },
     {
       "path": "src/components/AdminGiftAccess.tsx",
-      "sha256": "cf1c9e1e3a35e520ecfefee849ae164e7406ab6b033eef485d295a17825e39bc",
+      "sha256": "c927d48c7a6158059aef187ae46071b66bb27fbe72e56aed8ad10fc1c899fd8a",
       "importedBy": [
         "src/components/SettingsTab.tsx"
       ]
@@ -8820,6 +8831,12 @@
       "line": 7
     },
     {
+      "source": "server/tests/giftAccessMount.test.ts",
+      "target": "server/api/routes.ts",
+      "kind": "import",
+      "line": 4
+    },
+    {
       "source": "server/tests/homeNews.test.ts",
       "target": "src/utils/homeNews.ts",
       "kind": "import",
@@ -14537,9 +14554,10 @@
         "server/tests/calendarAlertTiming.test.ts",
         "server/tests/calendarBroadcast.test.ts",
         "server/tests/calendarTelegramDelivery.test.ts",
-        "server/tests/calendarTelegramSql.test.ts"
+        "server/tests/calendarTelegramSql.test.ts",
+        "server/tests/previewBackendReload.test.ts"
       ],
-      "reason": "Startup and settings influence background jobs, provider calls, abuse limits and logs. A live HTTP listener does not establish that durable stores or external providers are ready. Poller stage deadlines release the monitor lock without resuming abandoned workers; dedicated local poller history is not cloud deployment durability. IndexNow starts only after listen, uses the existing provider circuit and reports configured primary mode/HTTP status in diagnostics. Its background failures never fail filing storage; production Crawler Hints state requires independent inspection. MCP request logs expose only generated trace IDs, bounded operation/error labels and irreversible connection tags; no tool arguments, tokens or private text. Quota/idempotency errors provide actionable recovery. A failed docs fingerprint cannot interrupt other indexing/startup."
+      "reason": "Startup and settings influence background jobs, provider calls, abuse limits and logs. A live HTTP listener does not establish that durable stores or external providers are ready. Poller stage deadlines release the monitor lock without resuming abandoned workers; dedicated local poller history is not cloud deployment durability. IndexNow starts only after listen, uses the existing provider circuit and reports configured primary mode/HTTP status in diagnostics. Its background failures never fail filing storage; production Crawler Hints state requires independent inspection. MCP request logs expose only generated trace IDs, bounded operation/error labels and irreversible connection tags; no tool arguments, tokens or private text. Quota/idempotency errors provide actionable recovery. A failed docs fingerprint cannot interrupt other indexing/startup. Development uses Node watch with the existing tsx import hook to restart imported backend modules; production start and Vite HMR policy remain independent. Imported route changes have a process-level regression check."
     },
     {
       "id": "frontend-navigation",
@@ -15238,9 +15256,11 @@
         "server/tests/giftAccessApi.test.ts",
         "server/tests/giftAccessSql.test.ts",
         "server/tests/pollerStall.test.ts",
-        "scripts/verify-gift-access.mjs"
+        "scripts/verify-gift-access.mjs",
+        "server/tests/giftAccessMount.test.ts",
+        "server/tests/previewBackendReload.test.ts"
       ],
-      "reason": "Owner PIN elevation creates an email-bound invitation with a server-owned custom duration and separate claim deadline. Hash-only secrets, immutable input/idempotency checks and one DB transaction bind each grant once to a freshly verified Firebase identity. Resend rotates the pending verifier without extending the deadline; revoke never touches paid/trial/referral rows. Read-only unified access projections reach website gates, billing, profile refresh, AI quota and connector writes. Personal Telegram checks consult live gift access at dispatch; ingestion remains independent of gift-store availability. Fragment capture precedes optional monitoring; activation is no-store/noindex and excluded from SW/telemetry. Browser fixture evidence is distinct from real sender/Firebase/database release checks; feature stays off until additive migration verification."
+      "reason": "Owner PIN elevation creates an email-bound invitation with a server-owned custom duration and separate claim deadline. Hash-only secrets, immutable input/idempotency checks and one DB transaction bind each grant once to a freshly verified Firebase identity. Resend rotates the pending verifier without extending the deadline; revoke never touches paid/trial/referral rows. Read-only unified access projections reach website gates, billing, profile refresh, AI quota and connector writes. Personal Telegram checks consult live gift access at dispatch; ingestion remains independent of gift-store availability. Fragment capture precedes optional monitoring; activation is no-store/noindex and excluded from SW/telemetry. Browser fixture evidence is distinct from real sender/Firebase/database release checks; feature stays off until additive migration verification. The actual root API mount distinguishes disabled 503 from auth denial and genuine 404. Admin missing-server recovery preserves drafts and blocks writes until a successful history reload."
     }
   ],
   "routes": [
@@ -18488,6 +18508,32 @@
       ]
     },
     {
+      "file": "server/tests/giftAccessMount.test.ts",
+      "line": 9,
+      "receiver": "app",
+      "method": "USE",
+      "path": "express.json()",
+      "middleware": []
+    },
+    {
+      "file": "server/tests/giftAccessMount.test.ts",
+      "line": 10,
+      "receiver": "app",
+      "method": "USE",
+      "path": "/api",
+      "middleware": [
+        "apiRouter"
+      ]
+    },
+    {
+      "file": "server/tests/giftAccessMount.test.ts",
+      "line": 11,
+      "receiver": "app",
+      "method": "USE",
+      "path": "(_req, res) => res.status(404).json({ success: false, error: 'API route not found' })",
+      "middleware": []
+    },
+    {
       "file": "server/tests/impactRadarApi.test.ts",
       "line": 21,
       "receiver": "app",
@@ -19176,6 +19222,30 @@
       "target": "base+'/api/gifts/admin'"
     },
     {
+      "file": "server/tests/giftAccessMount.test.ts",
+      "line": 17,
+      "function": "fetch",
+      "target": "base + '/api/gifts/admin?offset=0'"
+    },
+    {
+      "file": "server/tests/giftAccessMount.test.ts",
+      "line": 21,
+      "function": "fetch",
+      "target": "base + '/api/gifts/admin'"
+    },
+    {
+      "file": "server/tests/giftAccessMount.test.ts",
+      "line": 22,
+      "function": "fetch",
+      "target": "base + '/api/gifts/claim'"
+    },
+    {
+      "file": "server/tests/giftAccessMount.test.ts",
+      "line": 23,
+      "function": "fetch",
+      "target": "base + '/api/gift-route-that-does-not-exist'"
+    },
+    {
       "file": "server/tests/indexNowKeyRoute.test.ts",
       "line": 14,
       "function": "fetch",
@@ -19192,6 +19262,12 @@
       "line": 7,
       "function": "fetch",
       "target": "'https://fixture.invalid/private-test-body'"
+    },
+    {
+      "file": "server/tests/previewBackendReload.test.ts",
+      "line": 33,
+      "function": "fetch",
+      "target": "`http://127.0.0.1:${ports.at(-1)![1]}/api/gifts/admin`"
     },
     {
       "file": "server/tests/startupRecovery.test.ts",
@@ -19351,13 +19427,13 @@
     },
     {
       "file": "src/components/AdminGiftAccess.tsx",
-      "line": 23,
+      "line": 24,
       "function": "customFetch",
       "target": "'/api/gifts/admin?offset=' + page"
     },
     {
       "file": "src/components/AdminGiftAccess.tsx",
-      "line": 32,
+      "line": 33,
       "function": "customFetch",
       "target": "path"
     },
@@ -24282,6 +24358,31 @@
       "file": "server/tests/followupAudit.test.ts",
       "line": 199,
       "name": "NODE_ENV"
+    },
+    {
+      "file": "server/tests/giftAccessMount.test.ts",
+      "line": 7,
+      "name": "GIFT_ACCESS_ENABLED"
+    },
+    {
+      "file": "server/tests/giftAccessMount.test.ts",
+      "line": 16,
+      "name": "GIFT_ACCESS_ENABLED"
+    },
+    {
+      "file": "server/tests/giftAccessMount.test.ts",
+      "line": 20,
+      "name": "GIFT_ACCESS_ENABLED"
+    },
+    {
+      "file": "server/tests/giftAccessMount.test.ts",
+      "line": 25,
+      "name": "GIFT_ACCESS_ENABLED"
+    },
+    {
+      "file": "server/tests/giftAccessMount.test.ts",
+      "line": 25,
+      "name": "GIFT_ACCESS_ENABLED"
     },
     {
       "file": "server/tests/impactRadarApi.test.ts",
