@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "db7217571244f9edabde993f58ab503bdf8cbc4547a5903496819c686a631429",
+  "sourceDigest": "6b1611185824efedabb7b76c1d0338fd7d3e074d11da5ac35d50521c0ac35ad6",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -45,7 +45,7 @@
     },
     {
       "path": "package.json",
-      "sha256": "cc398b0dd871efcec9a77d8283a4e9ac64a153ae0cce39c2ea02a98970a4f229",
+      "sha256": "90d6a569c54f9cfadaba89d0ad344bd60d529fd07691c4df16dec7d5f5f8921c",
       "importedBy": []
     },
     {
@@ -149,6 +149,11 @@
       "importedBy": [
         "server/tests/performanceBudget.test.ts"
       ]
+    },
+    {
+      "path": "scripts/check-preview-restart.mjs",
+      "sha256": "6a9c80230ddd2c20d9920a08ba8a874c29c1a807de5b493fabebefc9bfb1274f",
+      "importedBy": []
     },
     {
       "path": "scripts/generateIcons.ts",
@@ -1924,7 +1929,7 @@
     },
     {
       "path": "server/tests/previewBackendReload.test.ts",
-      "sha256": "979e5519b6f3cf1db95af33b7463fc78861aca1e86b54dde9a169a286b938c0e",
+      "sha256": "ede63f4a258fa997da1f25ec73212780153d2a436630d0bb139a13309992d498",
       "importedBy": []
     },
     {
@@ -3489,7 +3494,7 @@
     },
     {
       "path": "src/components/ui/TabErrorBoundary.tsx",
-      "sha256": "900af704751d31d98249105cacf73d219f80acb1ea7ddc8502794e70bc512378",
+      "sha256": "8f5e48b0d90de62535ac9304ba868525ee2911c64e211347377b40e981d850dd",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -14555,9 +14560,10 @@
         "server/tests/calendarBroadcast.test.ts",
         "server/tests/calendarTelegramDelivery.test.ts",
         "server/tests/calendarTelegramSql.test.ts",
-        "server/tests/previewBackendReload.test.ts"
+        "server/tests/previewBackendReload.test.ts",
+        "scripts/check-preview-restart.mjs"
       ],
-      "reason": "Startup and settings influence background jobs, provider calls, abuse limits and logs. A live HTTP listener does not establish that durable stores or external providers are ready. Poller stage deadlines release the monitor lock without resuming abandoned workers; dedicated local poller history is not cloud deployment durability. IndexNow starts only after listen, uses the existing provider circuit and reports configured primary mode/HTTP status in diagnostics. Its background failures never fail filing storage; production Crawler Hints state requires independent inspection. MCP request logs expose only generated trace IDs, bounded operation/error labels and irreversible connection tags; no tool arguments, tokens or private text. Quota/idempotency errors provide actionable recovery. A failed docs fingerprint cannot interrupt other indexing/startup. Development uses Node watch with the existing tsx import hook to restart imported backend modules; production start and Vite HMR policy remain independent. Imported route changes have a process-level regression check."
+      "reason": "Startup and settings influence background jobs, provider calls, abuse limits and logs. A live HTTP listener does not establish that durable stores or external providers are ready. Poller stage deadlines release the monitor lock without resuming abandoned workers; dedicated local poller history is not cloud deployment durability. IndexNow starts only after listen, uses the existing provider circuit and reports configured primary mode/HTTP status in diagnostics. Its background failures never fail filing storage; production Crawler Hints state requires independent inspection. MCP request logs expose only generated trace IDs, bounded operation/error labels and irreversible connection tags; no tool arguments, tokens or private text. Quota/idempotency errors provide actionable recovery. A failed docs fingerprint cannot interrupt other indexing/startup. Development retains one Node process with the existing tsx import hook during source edits. Backend adoption requires a coordinated explicit restart and document reload; production start and Vite HMR policy remain independent. Actual App/browser tests cover an interrupted Settings import, closed Vite, stable recovery and a fresh document against a replacement server."
     },
     {
       "id": "frontend-navigation",
@@ -14601,7 +14607,8 @@
         "server/tests/sevenFixes.test.ts",
         "server/tests/brandRefreshInbox.test.ts",
         "server/tests/calendarEntry.test.ts",
-        "server/tests/routeHeading.test.ts"
+        "server/tests/routeHeading.test.ts",
+        "scripts/check-preview-restart.mjs"
       ],
       "reason": "URL and active tab must agree across direct links, refresh, browser Back/Forward and share pages. Loading, focus and scroll restoration are part of navigation; route tests do not prove browser behavior. Saved scroll positions restore silently; App does not mount the restored-position notification. Settings Companies/AI entries use the App route owner and existing PageSkeleton during cold lazy imports; native history/popstate preserves Back/Forward without a full document reload. Ordinary login and generic app launch retain For You; explicit feed/calendar/watchlist/share intents remain. Original Nexus branding replaces text tiles. The shell keeps the same-owner inbox mounted while closed, and Settings supplies quiet vibration plus visual pressed/focus feedback."
     },
@@ -14989,7 +14996,8 @@
         "server/tests/diagnosticsPopulation.test.ts",
         "server/tests/sentryIsolation.test.ts",
         "server/tests/offlineTests.test.ts",
-        "server/tests/devRuntime.test.ts"
+        "server/tests/devRuntime.test.ts",
+        "scripts/check-preview-restart.mjs"
       ],
       "reason": "Canonical document headers preserve OAuth popups, AI Studio preview and public embeds. Deferred optional SDKs preserve authentication assessment, configured monitoring and explicit push requests without blocking public paint. Generic HTML has a neutral brand/loading root, never synthetic filings or an unrelated directory. Real announcements use an explicit route-only insertion marker and public calendar SSR retains its own source-backed document. Static development previews prepare an explicit complete browser dependency set before serving React; disabled HMR keeps CSS helpers without opening a socket. Sentry uses the static trace lifecycle so OAuth redaction is executed. A cold Chromium smoke checks real lazy screens separately from the production build."
     },
@@ -19265,7 +19273,7 @@
     },
     {
       "file": "server/tests/previewBackendReload.test.ts",
-      "line": 33,
+      "line": 46,
       "function": "fetch",
       "target": "`http://127.0.0.1:${ports.at(-1)![1]}/api/gifts/admin`"
     },
@@ -22171,19 +22179,19 @@
     },
     {
       "file": "src/components/ui/TabErrorBoundary.tsx",
-      "line": 74,
+      "line": 76,
       "function": "sessionStorage.getItem",
       "key": "RELOAD_FLAG"
     },
     {
       "file": "src/components/ui/TabErrorBoundary.tsx",
-      "line": 75,
+      "line": 77,
       "function": "sessionStorage.setItem",
       "key": "RELOAD_FLAG"
     },
     {
       "file": "src/components/ui/TabErrorBoundary.tsx",
-      "line": 87,
+      "line": 89,
       "function": "sessionStorage.removeItem",
       "key": "RELOAD_FLAG"
     },
@@ -22703,6 +22711,46 @@
       "file": "scripts/check-dev-runtime.mjs",
       "line": 35,
       "name": "PLAYWRIGHT_CHROMIUM_ARGS"
+    },
+    {
+      "file": "scripts/check-preview-restart.mjs",
+      "line": 10,
+      "name": "DISABLE_HMR"
+    },
+    {
+      "file": "scripts/check-preview-restart.mjs",
+      "line": 11,
+      "name": "VITE_SENTRY_DSN"
+    },
+    {
+      "file": "scripts/check-preview-restart.mjs",
+      "line": 26,
+      "name": "PLAYWRIGHT_CHROMIUM_EXECUTABLE"
+    },
+    {
+      "file": "scripts/check-preview-restart.mjs",
+      "line": 26,
+      "name": "PLAYWRIGHT_CHROMIUM_EXECUTABLE"
+    },
+    {
+      "file": "scripts/check-preview-restart.mjs",
+      "line": 27,
+      "name": "PLAYWRIGHT_CHROMIUM_ARGS"
+    },
+    {
+      "file": "scripts/check-preview-restart.mjs",
+      "line": 27,
+      "name": "PLAYWRIGHT_CHROMIUM_ARGS"
+    },
+    {
+      "file": "scripts/check-preview-restart.mjs",
+      "line": 28,
+      "name": "RESTART_TEST_WIDTH"
+    },
+    {
+      "file": "scripts/check-preview-restart.mjs",
+      "line": 28,
+      "name": "RESTART_TEST_WIDTH"
     },
     {
       "file": "scripts/provision-ai-reviewer.ts",

@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 const pause = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-async function exercise(watch: boolean) {
+async function exercise(manualRestart: boolean) {
   const dir = await mkdtemp(path.join(tmpdir(), 'bnx-backend-reload-'));
   const route = path.join(dir, 'route.ts'), entry = path.join(dir, 'server.ts');
   await writeFile(route, 'export const installed = false;');
@@ -15,15 +15,28 @@ async function exercise(watch: boolean) {
     server.listen(0,'127.0.0.1',()=>console.log('FIXTURE_READY:'+server.address().port));
     for(const signal of ['SIGINT','SIGTERM'])process.on(signal,()=>server.close(()=>process.exit(0)));`);
   const manifest = JSON.parse(await readFile('package.json', 'utf8'));
-  const command = watch ? manifest.scripts.dev.split(' ').slice(1, -1) : ['--import', 'tsx'];
-  const child = spawn(process.execPath, [...command, entry], {
-    cwd: process.cwd(), detached: process.platform !== 'win32', stdio: ['ignore', 'pipe', 'pipe'],
-    env: { ...process.env, NODE_OPTIONS: '' },
-  });
+  const command = manifest.scripts.dev.split(' ').slice(1, -1);
+  let child: ReturnType<typeof spawn>, stopped: Promise<void>;
   let output = '', errors = '', closed = false;
-  child.stdout.on('data', data => { output += data; });
-  child.stderr.on('data', data => { errors += data; });
-  const stopped = new Promise<void>(resolve => child.once('close', () => { closed = true; resolve(); }));
+  function launch() {
+    output = ''; errors = ''; closed = false;
+    child = spawn(process.execPath, [...command, entry], {
+      cwd: process.cwd(), detached: process.platform !== 'win32', stdio: ['ignore', 'pipe', 'pipe'],
+      env: { ...process.env, NODE_OPTIONS: '' },
+    });
+    child.stdout!.on('data', data => { output += data; });
+    child.stderr!.on('data', data => { errors += data; });
+    stopped = new Promise<void>(resolve => child.once('close', () => { closed = true; resolve(); }));
+  }
+  async function stop() {
+    const kill = (signal: NodeJS.Signals) => {
+      try { process.platform === 'win32' ? child.kill(signal) : process.kill(-child.pid!, signal); } catch {}
+    };
+    kill('SIGTERM');
+    await Promise.race([stopped, pause(1500)]);
+    if (!closed) { kill('SIGKILL'); await stopped; }
+  }
+  launch();
   async function eventually(expected: number) {
     const deadline = Date.now() + 12000;
     while (Date.now() < deadline && !closed) {
@@ -41,24 +54,21 @@ async function exercise(watch: boolean) {
   try {
     await eventually(404);
     await writeFile(route, 'export const installed = true;');
-    if (watch) {
+    // Keep the browser's module owner alive during edits. New API code is
+    // intentionally adopted only after a coordinated preview restart/reload.
+    await pause(700);
+    assert.equal((await (await eventually(404)).json()).error, 'API route not found');
+    assert.equal([...output.matchAll(/FIXTURE_READY:/g)].length, 1);
+    if (manualRestart) {
+      await stop(); launch();
       const response = await eventually(503);
       assert.equal((await response.json()).error, 'Gift access is not enabled yet.');
-      assert.ok([...output.matchAll(/FIXTURE_READY:/g)].length >= 2, 'The backend actually restarted');
-    } else {
-      await pause(350);
-      assert.equal((await (await eventually(404)).json()).error, 'API route not found');
     }
   } finally {
-    const kill = (signal: NodeJS.Signals) => {
-      try { process.platform === 'win32' ? child.kill(signal) : process.kill(-child.pid!, signal); } catch {}
-    };
-    kill('SIGTERM');
-    await Promise.race([stopped, pause(1500)]);
-    if (!closed) { kill('SIGKILL'); await stopped; }
+    await stop();
     await rm(dir, { recursive: true, force: true });
   }
 }
 
-test('a backend loaded with tsx retains stale API routes without a process watcher', () => exercise(false));
-test('the development command reloads an imported backend route without a manual restart', () => exercise(true));
+test('the preview development command keeps its running server stable during source edits', () => exercise(false));
+test('an intentional preview restart adopts the updated API route', () => exercise(true));

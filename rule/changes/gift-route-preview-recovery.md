@@ -1,5 +1,7 @@
 # Gift Access preview route and sharing recovery — 27 October 2026
 
+Superseded development watcher: PR 35's automatic restart was removed by changes/preview-restart-stability.md after the user supplied a Vite-closed/module-fetch failure. Its process-only test did not prove browser safety across restart. The missing-route message, draft/write gates and actual API mount tests remain. The entries below record the earlier implementation and its limits.
+
 - Starting main: 88dff6342a91e07a674bdae04416775b24184f61 (PR 34).
 - Request: investigate the AI Studio sharing banner and Gift Access “API route not found” screenshot; recover the feature without weakening activation/admin safeguards.
 - Verified screenshot: Google AI Studio emits the sharing banner outside the app; AdminGiftAccess displays the app JSON fallback error. Current /api/gifts/admin is mounted by routes.ts under /api; when disabled, its first middleware returns 503 before any storage/send.

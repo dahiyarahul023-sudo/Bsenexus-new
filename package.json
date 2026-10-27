@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "node --watch --watch-preserve-output --import tsx server.ts",
+    "dev": "node --import tsx server.ts",
     "prebuild": "node scripts/bump-version.mjs",
     "build": "tsc --noEmit && vite build && node scripts/check-performance-budget.mjs && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs && rm -rf build && cp -r dist build",
     "perf:budget": "node scripts/check-performance-budget.mjs",
