@@ -221,10 +221,10 @@ export async function addNotificationsBatch(notifs: (Omit<AppNotification,'id'|'
   return added;
 }
 
-export async function markNotificationsReadBatch(ids: string[], userId = 'guest'): Promise<number> {
+async function persistReadNotifications(inbox: AppNotification[], ids: string[], userId: string): Promise<number> {
   if (!Array.isArray(ids) || !ids.length) return 0;
   const requested = new Set(ids.filter(id=>typeof id==='string').slice(0,MAX_CACHED));
-  const changed = (await readInbox(userId)).filter(n=>requested.has(n.id) && !n.isRead);
+  const changed = inbox.filter(n=>requested.has(n.id) && !n.isRead);
   if (!changed.length) return 0;
   if (needsCloud()) {
     await cloud('mark notification receipts', async () => {
@@ -237,14 +237,19 @@ export async function markNotificationsReadBatch(ids: string[], userId = 'guest'
   }
   return changed.length;
 }
+export async function markNotificationsReadBatch(ids: string[], userId = 'guest'): Promise<number> {
+  if (!Array.isArray(ids) || !ids.length) return 0;
+  return persistReadNotifications(await readInbox(userId), ids, userId);
+}
 export async function markNotificationRead(id: string,userId='guest'): Promise<boolean> {
-  const exists=(await readInbox(userId)).some(n=>n.id===id);
-  if (!exists) return false;
-  await markNotificationsReadBatch([id],userId);
+  const inbox = await readInbox(userId);
+  if (!inbox.some(n=>n.id===id)) return false;
+  await persistReadNotifications(inbox,[id],userId);
   return true;
 }
 export async function markAllNotificationsRead(userId='guest'): Promise<void> {
-  await markNotificationsReadBatch((await readInbox(userId)).map(n=>n.id),userId);
+  const inbox = await readInbox(userId);
+  await persistReadNotifications(inbox,inbox.map(n=>n.id),userId);
 }
 
 /** Hide the caller's existing inbox, including broadcasts, without deleting shared rows. */

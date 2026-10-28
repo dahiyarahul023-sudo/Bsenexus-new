@@ -59,6 +59,15 @@ import { PushNotificationBanner } from './PushNotificationPrompt';
 import { ReferralDashboardModal } from './ReferralDashboardModal';
 import { getStorySessionStorageKey, getISTMarketSession } from './story/storyData';
 
+function preloadTabChunk(tabId: string) {
+  if (tabId === 'settings') void import('./SettingsTab').catch(() => {});
+  else if (tabId === 'dashboard') void import('./Announcements').catch(() => {});
+  else if (tabId === 'home') void import('./HomeForYou').catch(() => {});
+  else if (tabId === 'watchlists') void import('./WatchlistManager').catch(() => {});
+  else if (tabId === 'results-calendar') void import('./ResultsCalendar').catch(() => {});
+  else if (tabId === 'news') void import('./NewsPortal').catch(() => {});
+}
+
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -513,6 +522,8 @@ export function Layout({
                 whileHover={{ scale: 1.02 }}
                 whileTap={buttonTap}
                 transition={springSnappy}
+                onMouseEnter={() => preloadTabChunk('settings')}
+                onFocus={() => preloadTabChunk('settings')}
                 onClick={() => { triggerNavigationHaptic(); onTabChange('settings'); }}
                 aria-pressed={activeTab === 'settings'}
                 aria-label="Open Settings and Preferences"
@@ -571,6 +582,8 @@ export function Layout({
               return (
                 <button
                   key={item.id}
+                  onMouseEnter={() => preloadTabChunk(item.id)}
+                  onFocus={() => preloadTabChunk(item.id)}
                   onClick={() => handleTabClick(item.id)}
                   aria-label={item.label}
                   aria-current={isActive ? 'page' : undefined}

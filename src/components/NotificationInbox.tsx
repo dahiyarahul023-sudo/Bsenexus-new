@@ -124,24 +124,6 @@ export function NotificationInbox({
     }
   }, [isOpen, activeFilter, user?.uid, profile?.uid]);
 
-  useEffect(() => { if (isOpen) void fetchMuteStatus(); }, [isOpen, owner]);
-
-  const fetchMuteStatus = async () => {
-    if (!user && !profile) return;
-    const seq = muteSeqRef.current, account = owner;
-    try {
-      const res = await customFetch('/api/settings');
-      if (muteSeqRef.current !== seq || ownerRef.current !== account) return; // stale — a manual toggle happened since
-      if (res.ok) {
-        const data = await res.json();
-        if (muteSeqRef.current !== seq || ownerRef.current !== account) return;
-        setIsMuted(Boolean(data.muteInAppNotifications ?? data.settings?.muteInAppNotifications));
-      }
-    } catch (err) {
-      console.error("Failed to fetch settings:", err);
-    }
-  };
-
   const handleToggleMute = async () => {
     const account = owner;
     const prevState = isMuted;
@@ -166,18 +148,19 @@ export function NotificationInbox({
         }
       } else {
         setIsMuted(prevState); // Rollback on error
+        setActionFeedback({ error: true, message: 'Failed to toggle notification mute state.' });
       }
     } catch (err) {
       if (ownerRef.current !== account) return;
       setIsMuted(prevState); // Rollback on error
-      alert("Failed to toggle notification mute state");
+      setActionFeedback({ error: true, message: 'Failed to toggle notification mute state.' });
     } finally {
       if (ownerRef.current === account) setIsTogglingMute(false);
     }
   };
 
   const loadNotifications = async (background = false) => {
-    if (readBusy.current.size || isClearing) return;
+    if (isClearing || (background && readBusy.current.size > 0)) return;
     if (!user && !profile) {
       setNotifications([]);
       setLoading(false);
@@ -223,30 +206,47 @@ export function NotificationInbox({
   const handleMarkAsRead = async (id: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
     if (readBusy.current.has(id)) return;
-    const account = owner; readBusy.current.add(id); ++loadSeqRef.current; setLoading(false);
+    const account = owner;
+    const prevSnapshots = snapshots;
+    readBusy.current.add(id);
+    ++loadSeqRef.current;
+    setLoading(false);
+    setActionFeedback(null);
+    // Optimistically mark as read immediately so the UI responds on click
+    setNotifications(prev => prev.map(n => n.id === id ? {...n,isRead:true} : n));
     try {
       const res = await customFetch(`/api/notifications/${encodeURIComponent(id)}/read`, { method: 'POST' });
       if (!res.ok) throw new Error('Read status could not be saved. Please retry.');
       if (ownerRef.current !== account) return;
-      setNotifications(prev => prev.map(n => n.id === id ? {...n,isRead:true} : n));
       onRefreshCount();
     } catch {
-      if (ownerRef.current === account) setActionFeedback({error:true,message:'Read status could not be saved. Please retry.'});
+      if (ownerRef.current === account) {
+        setSnapshots(prevSnapshots);
+        setActionFeedback({error:true,message:'Read status could not be saved. Please retry.'});
+      }
     } finally { if (ownerRef.current === account) readBusy.current.delete(id); }
   };
 
   const handleMarkAllRead = async () => {
     if (readBusy.current.has('all')) return;
     const account = owner;
-    readBusy.current.add('all'); ++loadSeqRef.current; setLoading(false);
+    const prevSnapshots = snapshots;
+    readBusy.current.add('all');
+    ++loadSeqRef.current;
+    setLoading(false);
+    setActionFeedback(null);
+    // Optimistically mark all items as read immediately
+    setNotifications(prev => prev.map(n => ({...n,isRead:true})));
     try {
       const res = await customFetch('/api/notifications/read-all', { method: 'POST' });
       if (!res.ok) throw new Error('Read status could not be saved.');
       if (ownerRef.current !== account) return;
-      setNotifications(prev => prev.map(n => ({...n,isRead:true})));
       onRefreshCount();
     } catch {
-      if (ownerRef.current === account) setActionFeedback({error:true,message:'Read status could not be saved. Please retry.'});
+      if (ownerRef.current === account) {
+        setSnapshots(prevSnapshots);
+        setActionFeedback({error:true,message:'Read status could not be saved. Please retry.'});
+      }
     } finally { if (ownerRef.current === account) readBusy.current.delete('all'); }
   };
 

@@ -2428,15 +2428,15 @@ apiRouter.get("/notifications", async (req, res) => {
     const type = typeof req.query.type === 'string' ? req.query.type : undefined;
     const unreadOnly = req.query.unreadOnly === 'true';
 
-    const inbox = await getAllNotifications(uid, 500, { watchlistOnly: false });
+    const [inbox, profile] = await Promise.all([
+      getAllNotifications(uid, 500, { watchlistOnly: false }),
+      uid && uid !== 'guest' ? getUserProfile(uid) : Promise.resolve(null),
+    ]);
     const notifs = filterNotifications(inbox, limitParam, { watchlistOnly, type, unreadOnly });
 
     let isMuted = false;
-    if (uid && uid !== 'guest') {
-      const profile = await getUserProfile(uid);
-      if (profile) {
-        isMuted = Boolean(profile.muteInAppNotifications ?? profile.notificationPreferences?.muteInAppNotifications);
-      }
+    if (profile) {
+      isMuted = Boolean(profile.muteInAppNotifications ?? profile.notificationPreferences?.muteInAppNotifications);
     }
 
     // While muted, the bell stays silent: unread badges report zero.
@@ -2455,14 +2455,14 @@ apiRouter.get("/notifications/unread-count", requireAuth, async (req, res) => {
   try {
     const uid = getReqUserId(req);
     const watchlistOnly = req.query.watchlistOnly === 'true';
-    let isMuted = false;
-    if (uid && uid !== 'guest') {
-      const profile = await getUserProfile(uid);
-      if (profile) {
-        isMuted = Boolean(profile.muteInAppNotifications ?? profile.notificationPreferences?.muteInAppNotifications);
-      }
-    }
-    const count = isMuted ? 0 : await getUnreadNotificationCount(uid, watchlistOnly);
+    const [profile, rawCount] = await Promise.all([
+      uid && uid !== 'guest' ? getUserProfile(uid) : Promise.resolve(null),
+      getUnreadNotificationCount(uid, watchlistOnly),
+    ]);
+    const isMuted = profile
+      ? Boolean(profile.muteInAppNotifications ?? profile.notificationPreferences?.muteInAppNotifications)
+      : false;
+    const count = isMuted ? 0 : rawCount;
     res.json({ unreadCount: count });
   } catch (err: any) {
     res.status(isPaymentStoreUnavailable(err) ? 503 : 500).json({ success: false, error: isPaymentStoreUnavailable(err) ? "Notification storage is unavailable. Please retry shortly." : err.message });

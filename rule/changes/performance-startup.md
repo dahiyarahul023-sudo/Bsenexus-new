@@ -70,3 +70,15 @@ Rollback: revert the bounded commit and rebuild/publish; no schema, account, ent
 - The first TCP-only temporary fence did not complete approval: another existing dummy Radar host triggered the review. No rejected run is counted or rerouted through CI. The permanent HTTP/TCP test fence passed 15 affected checks (Radar API/scope and independent network-denial checks) before the final full-suite retry. Mock fetch fixtures remain explicit; a missed mock fails locally instead of contacting a provider.
 
 - Final local validation: npm test completed with 725 passing tests, 0 failed/skipped, using the permanent offline HTTP/TCP fence. npm run lint, npm run build --ignore-scripts, map:generate/check, six map tests and git diff --check passed. Final bundle remains 1,007,826 raw / 272,481 gzip bytes. No latest CI or deployment is inferred from these local results.
+
+## Follow-up: Notification responsiveness, Gift Access diagnostics, Sign-in pre-warm & Layout/Settings lazy modals (2026-10-28)
+
+- **Changed consumers**:
+  - `server/database/notificationDao.ts`: Extracted `persistReadNotifications` so `markNotificationRead` and `markAllNotificationsRead` read the inbox once instead of twice per mutation.
+  - `server/api/routes.ts`: Parallelized `getAllNotifications`/`getUnreadNotificationCount` and `getUserProfile` in `GET /api/notifications` and `GET /api/notifications/unread-count`.
+  - `src/components/NotificationInbox.tsx`: Added immediate optimistic read state updates with snapshot rollback on failure for single and mark-all read actions, removed redundant `/api/settings` fetch on inbox open, and allowed foreground filter switching while background read mutations are in flight.
+  - `src/components/AdminGiftAccess.tsx` & `server/api/giftAccess.ts`: Added actionable guidance when `GIFT_ACCESS_DISABLED` (`409`) is returned (`GIFT_ACCESS_ENABLED=true` required after `gift_pro_access` migration) and allowed AI Studio preview origins for `POST` actions.
+  - `src/App.tsx`, `src/components/Layout.tsx`, `src/components/SettingsTab.tsx`: Pre-warmed `AuthModal` during browser idle time to prevent flashing `PendingOverlay` (`Opening sign in…`) on normal sign-in clicks, deferred `/api/settings` on cold public landing loads, preloaded tab chunks on nav pointer/focus intent, and lazy-loaded closed secondary modals in `Layout.tsx` and `SettingsTab.tsx`.
+- **Reviewed-and-compatible consumers**:
+  - `src/hooks/useUnreadNotificationCount.ts`, `src/utils/notificationSnapshots.ts`, `server/services/giftAccessPolicy.ts`, `scripts/check-performance-budget.mjs`.
+

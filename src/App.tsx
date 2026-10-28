@@ -915,7 +915,20 @@ function AppContent() {
   };
 
   useEffect(() => {
-    fetchSettings();
+    if (user || activeTab !== 'home') {
+      fetchSettings();
+    }
+  }, [ Boolean(user), activeTab === 'home' ]);
+
+  // Pre-warm the Sign In modal and terminal shell chunks during browser idle
+  // time so clicking "Sign in" or entering the app opens immediately without
+  // flashing "Opening sign in…".
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void import('./components/AuthModal').catch(() => {});
+      void import('./components/Layout').catch(() => {});
+    }, 250);
+    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {

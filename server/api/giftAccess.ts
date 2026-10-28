@@ -39,7 +39,7 @@ export function createGiftAccessRouter(overrides: Partial<{
   router.use((req, res, next) => {
     if (req.method === 'GET') return next();
     const origin = req.get('Origin') || '';
-    const allowed = origin === 'https://bsenexus.in' || (process.env.NODE_ENV !== 'production' && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin));
+    const allowed = origin === 'https://bsenexus.in' || /^https:\/\/ais-(dev|pre)-[a-z0-9-]+\.run\.app$/.test(origin) || (process.env.NODE_ENV !== 'production' && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin));
     if (!allowed || req.get('X-Gift-Action') !== '1') return res.status(403).json({ success: false, error: 'Open this action on BSE Nexus.' });
     next();
   });

@@ -91,5 +91,8 @@ function giftAdminError(response: Response, data: { error?: string; code?: strin
   if (response.status === 404) {
     return 'Gift Access is missing from the connected server. Sync the latest code, restart the app preview, then refresh invitations. If this preview uses a separate API server, update that server too.';
   }
+  if (data.code === 'GIFT_ACCESS_DISABLED' || response.status === 409) {
+    return `${data.error || 'Gift access is not enabled yet.'} Set GIFT_ACCESS_ENABLED=true in the server environment (after running the gift_pro_access database migration) and restart the server, then click Refresh invitations.`;
+  }
   return data.error || fallback;
 }
