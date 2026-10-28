@@ -1,3 +1,4 @@
+import { readCalendarOutcomes } from './calendarOutcomeRead.js';
 import { isPureResultOutcomeFiling, isIntimationOrNoticeFiling, isVerifiedResultFiling, resultFilingText } from '../../src/shared/resultFiling.js';
 export { isPureResultOutcomeFiling, isIntimationOrNoticeFiling } from '../../src/shared/resultFiling.js';
 import { startHistorySync, waitHistorySync, historySyncStatus } from './historicalFilings.js';
@@ -703,6 +704,7 @@ let enrichedCache: {
   day: number;
   items: ResultCalendarItem[];
   byWatchlist: Map<string, ResultCalendarItem[]>;
+  outcomesUnavailable?: boolean;
 } | null = null;
 
 export function invalidateEnrichedCalendarCache() {
@@ -719,7 +721,7 @@ export function readCachedResultsCalendar() {
 
 // Public calendar facts only. Account visibility remains in the caller;
 // website callers keep their original scope/filter semantics below.
-export async function getResultsCalendarSnapshot() {
+export async function getResultsCalendarSnapshot(): Promise<{items:ResultCalendarItem[];lastUpdated:number;outcomesUnavailable?:boolean}> {
   await hydrateStoredCalendar();
   const now = Date.now();
   if (calendarUniverseVersion !== FNO_CALENDAR_VERSION || cachedCalendar.length === 0 ||
@@ -729,19 +731,30 @@ export async function getResultsCalendarSnapshot() {
 
   // Use cached enriched items if fresh (< 45s old)
   let allEnrichedItems: ResultCalendarItem[] = [];
+  let outcomesUnavailable = false;
   if (enrichedCache && enrichedCache.day === calendarDayKey(now) && (now - enrichedCache.ts < 45000)) {
     allEnrichedItems = enrichedCache.items;
+    outcomesUnavailable = !!enrichedCache.outcomesUnavailable;
   } else {
     const todayStartTs = getIstMidnightTs(new Date());
-    const recentAnnouncements = await getRecentAnnouncements(10000);
+    const recentAnnouncements = [...await getRecentAnnouncements(10000)];
+    const recentMeetings = cachedCalendar.filter(item=>item.meetingTimestamp<=now && item.meetingTimestamp>=now-31*86400000);
+    if (recentMeetings.length) {
+      try {
+        const since = Math.min(...recentMeetings.map(item=>item.meetingTimestamp))-6*3600000;
+        const stored = await readCalendarOutcomes(recentMeetings.map(item=>String(item.scripCode)),since);
+        const ids = new Set(recentAnnouncements.map(item=>item.id));
+        for (const row of stored) if (!ids.has(row.id)) {recentAnnouncements.push(row);ids.add(row.id);}
+      } catch { outcomesUnavailable=true; console.warn('[ResultsCalendar] Stored result evidence unavailable; recent-cache evidence retained'); }
+    }
 
     // Build O(1) indexed lookup by scrip_cd and normalized symbol
     const annByScrip = new Map<string, any[]>();
     const annBySym = new Map<string, any[]>();
 
     for (const a of recentAnnouncements) {
-      if (a.scrip_cd) {
-        const scStr = String(a.scrip_cd).trim();
+      if (a.scrip_cd || a.SCRIP_CD || a.scripCode) {
+        const scStr = String(a.scrip_cd || a.SCRIP_CD || a.scripCode).trim();
         if (!annByScrip.has(scStr)) annByScrip.set(scStr, []);
         annByScrip.get(scStr)!.push(a);
       }
@@ -837,11 +850,11 @@ export async function getResultsCalendarSnapshot() {
       ts: now,
       day: calendarDayKey(now),
       items: allEnrichedItems,
-      byWatchlist: new Map()
+      byWatchlist: new Map(), outcomesUnavailable
     };
   }
 
-  return { items: allEnrichedItems, lastUpdated: lastCalendarFetchTime };
+  return { items: allEnrichedItems, lastUpdated: lastCalendarFetchTime, outcomesUnavailable };
 }
 
 export async function getResultsCalendarData(
@@ -920,7 +933,7 @@ export async function getResultsCalendarData(
   return {
     lastUpdated: lastCalendarFetchTime,
     calendarIncomplete: lastCalendarSyncIncomplete,
-    calendarHistoryUnavailable,
+    calendarHistoryUnavailable: calendarHistoryUnavailable || snapshot.outcomesUnavailable,
     totalCount: items.length,
     allCount: scopedCount,
     todayCount,

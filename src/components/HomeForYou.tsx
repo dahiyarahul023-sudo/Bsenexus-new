@@ -1,3 +1,4 @@
+import { readHomeResource } from '../utils/homeResources';
 import { useVisibilityInterval } from '../hooks/useVisibilityInterval';
 import { ADR_COMPANIES } from '../shared/adr';
 import { selectPersonalResults, watchlistTerms } from '../utils/forYou';
@@ -69,10 +70,12 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
   const [density] = useFeedDensity();
   const homeCardPad = density === 'comfortable' ? 'p-5' : density === 'dense' ? 'p-3' : 'p-3.5';
   const homeGridGap = density === 'comfortable' ? 'gap-3.5' : density === 'dense' ? 'gap-2' : 'gap-2.5';
-  const { user, profile, setIsAuthModalOpen } = useAuth();
+  const { user, profile, loading: accountLoading, authLoading, setIsAuthModalOpen } = useAuth();
   const { openIntelModal } = useIntelModal();
 
   const [watchlists, setWatchlists] = useState<any[]>([]);
+  const verifiedLists = useRef<{owner:string; lists:any[]} | null>(null);
+  const [homeWarning, setHomeWarning] = useState('');
   const [homeRefresh, setHomeRefresh] = useState(0);
   const [watchlistStatus, setWatchlistStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [watchlistSymbols, setWatchlistSymbols] = useState<Set<string>>(new Set());
@@ -111,7 +114,7 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
   // Prevent background scroll chaining when any modal or sheet is open
   useBodyScrollLock(Boolean(isAddModalOpen || selectedFiling || selectedResult));
 
-  const identity = user?.uid || profile?.uid || 'guest';
+  const identity = user?.isAnonymous ? 'guest' : user?.uid || profile?.uid || 'guest';
   const loadedIdentity = useRef(identity); ownerRef.current = identity;
   useEffect(() => { ++mutationVersion.current; addingRef.current=null; setAddingStock(null);setModalSearch('');setSearchResults([]);setIsAddModalOpen(false); setTargetListId(''); setNewWatchlistName(''); setAddError(''); setAddSuccess(''); }, [identity]);
   useEffect(() => { if (!targetListId && watchlists.length) setTargetListId(String((watchlists.find(w=>w.is_active===1||w.is_active===true)||watchlists[0]).id)); }, [watchlists,targetListId]);
@@ -123,71 +126,54 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
     return () => { window.removeEventListener('bse_nav_tab_refresh', refresh); window.removeEventListener('watchlists-changed', changed); };
   }, [isActive]);
   useEffect(() => {
-    if (!isActive) return;
-    const controller = new AbortController();
-    const signal = controller.signal;
+    if (!isActive || accountLoading || authLoading) return;
+    const controller = new AbortController(), signal = controller.signal;
     if (loadedIdentity.current !== identity) {
-      loadedIdentity.current = identity;
+      loadedIdentity.current = identity; verifiedLists.current = null; setHomeWarning('');
       setWatchlistStatus('loading'); setWatchlists([]); setWatchlistSymbols(new Set()); setUpcomingResults([]); setAllAnnouncements([]); setHasLoaded(false);
     }
     const fetchHomeData = async () => {
+      setLoading(true); setWatchlistStatus(previous=>previous==='ready'?'ready':'loading');
       try {
-        setLoading(true); setWatchlistStatus(previous=>previous==='ready'?'ready':'loading');
-        const [wlRes, calRes] = await Promise.all([
-          (user || profile) ? customFetch('/api/watchlists', { signal }).catch(() => null) : Promise.resolve(null),
-          (user || profile) ? customFetch('/api/results-calendar?filter=all&scope=watchlist', { signal }).catch(() => null) : Promise.resolve(null),
+        const signedIn = identity !== 'guest';
+        const [wl, cal] = await Promise.all([
+          signedIn ? readHomeResource<any[]>(customFetch, '/api/watchlists', signal, Array.isArray) : Promise.resolve({ok:true as const,value:[]}),
+          signedIn ? readHomeResource<any>(customFetch, '/api/results-calendar?filter=all&scope=watchlist', signal, value=>value?.success!==false && Array.isArray(value?.items)) : Promise.resolve({ok:true as const,value:{items:[]}}),
         ]);
-
         if (signal.aborted) return;
-        const syms = new Set<string>();
-        let currentLists: any[] = [];
-        if (wlRes && wlRes.ok) {
-          const wlData = await wlRes.json();
-          if (signal.aborted) return;
-          if (!Array.isArray(wlData)) throw new Error('Invalid watchlist response');
-          const list = wlData; currentLists = list;
-          setWatchlists(list); setWatchlistStatus('ready');
-          activeWatchlistIdentities(list).forEach(stock => { syms.add(stock.symbol); if (stock.scripCode) syms.add(stock.scripCode); });
+        let currentLists:any[] = [];
+        if (wl.ok === true) {
+          currentLists=wl.value; verifiedLists.current={owner:identity,lists:currentLists}; setHomeWarning(''); setWatchlistStatus('ready');
+        } else if ('status' in wl && wl.status!==401 && wl.status!==403 && verifiedLists.current?.owner===identity) {
+          currentLists=verifiedLists.current.lists; setWatchlistStatus('ready');
+          setHomeWarning('Watchlist refresh unavailable. Showing your last verified list.');
+        } else {
+          verifiedLists.current=null; setWatchlistStatus('error'); setHomeWarning('');
         }
-        if (!wlRes || !wlRes.ok) setWatchlistStatus((user || profile) ? 'error' : 'ready');
-        setWatchlistSymbols(syms);
-
-        if (calRes && calRes.ok) {
-          const calData = await calRes.json();
-          const valid = calData.success!==false && Array.isArray(calData.items);
-          setResultError(!valid);
-          if (signal.aborted) return;
-          const items = valid ? calData.items : [];
-          setUpcomingResults(selectPersonalResults(items, currentLists));
-        }
-
-        if (!calRes?.ok) { setUpcomingResults([]); setResultError(Boolean(user||profile)); }
-        const filRes = syms.size ? await customFetch(`/api/announcements?limit=100&symbols=${encodeURIComponent([...syms].join(','))}`, {signal}).catch(() => null) : null;
-        if (signal.aborted) return;
-        if (filRes && filRes.ok) {
-          const filData = await filRes.json();
-          if (signal.aborted) return;
-          if (Array.isArray(filData)) {
-            setAllAnnouncements(filData);
-          }
-        }
-
-      } catch (e) {
-        if (!signal.aborted) {
-          setWatchlistStatus('error');
-          setWatchlistSymbols(new Set());
-          setUpcomingResults([]);
-          setAllAnnouncements([]);
-        }
-        console.warn("Error loading Home For You data:", e);
-      } finally {
-        if (!signal.aborted) { setLoading(false); setHasLoaded(true); }
-      }
+        const syms=new Set<string>();
+        activeWatchlistIdentities(currentLists).forEach(stock=>{syms.add(stock.symbol);if(stock.scripCode)syms.add(stock.scripCode);});
+        setWatchlists(currentLists); setWatchlistSymbols(syms);
+        setResultError(!cal.ok && signedIn);
+        if (cal.ok) setUpcomingResults(selectPersonalResults(cal.value.items,currentLists));
+        else setUpcomingResults(previous=>selectPersonalResults(previous,currentLists));
+        if (!syms.size) { setAllAnnouncements([]); return; }
+        const filings=await readHomeResource<any[]>(customFetch, `/api/announcements?limit=100&symbols=${encodeURIComponent([...syms].join(','))}`,signal,Array.isArray);
+        if (!signal.aborted && filings.ok) setAllAnnouncements(filings.value);
+      } finally { if (!signal.aborted) {setLoading(false);setHasLoaded(true);} }
     };
+    void fetchHomeData().catch(()=>{}); // Parent cancellation; resource errors are handled independently.
+    return ()=>controller.abort();
+  }, [identity,isActive,homeRefresh,accountLoading,authLoading]);
 
-    void fetchHomeData();
-    return () => controller.abort();
-  }, [identity, isActive, homeRefresh]);
+  useEffect(()=>{
+    if (watchlistStatus==='ready' && loadedIdentity.current===identity && verifiedLists.current?.owner===identity)
+      verifiedLists.current={owner:identity,lists:watchlists};
+  },[watchlists,watchlistStatus,identity]);
+  useEffect(()=>{
+    const resume=()=>{if(isActive && !document.hidden)setHomeRefresh(value=>value+1);};
+    window.addEventListener('online',resume);document.addEventListener('visibilitychange',resume);
+    return()=>{window.removeEventListener('online',resume);document.removeEventListener('visibilitychange',resume);};
+  },[isActive]);
 
   useEffect(() => {
     if (!isAddModalOpen || !modalSearch.trim()) { setSearchResults([]); setSearching(false); return; }
@@ -286,7 +272,7 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
       </div>
 
       {/* Groww-Style Live Market Story Top Carousel Bar */}
-      <StoryCarouselBar watched={personalTerms}
+      <StoryCarouselBar active={isActive} watchlistStatus={sameIdentity ? watchlistStatus : 'loading'} watched={personalTerms}
         onOpenStory={(chapterId) => {
           setSelectedStoryChapter(chapterId);
           setStoryModalOpen(true);
@@ -297,9 +283,10 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
       {ADR_COMPANIES.some(company=>watchlistSymbols.has(company.symbol)||watchlistSymbols.has(company.scripCode)) && <OvernightAdr key={`adr-${identity}`} active={isActive && watchlistStatus==='ready'} watchlistOnly density={density} watched={sameIdentity && watchlistStatus==='ready' ? [...watchlistSymbols] : []}
         onOpenCompany={company => openIntelModal({ scripCode: company.scripCode, symbol: company.symbol, companyName: company.name })}
         onOpenStory={() => { setSelectedStoryChapter(undefined); setStoryModalOpen(true); }} />}
-      <ImpactRadar key={identity} watchlistOnly active={isActive} identity={identity} onNavigate={onNavigate} density={density} watched={sameIdentity && watchlistStatus==='ready' ? [...watchlistSymbols] : []} watchlistStatus={sameIdentity ? watchlistStatus : 'loading'} onRefreshWatchlist={() => setHomeRefresh(v => v + 1)} />
+      <ImpactRadar key={identity} active={isActive} identity={identity} onNavigate={onNavigate} density={density} watched={sameIdentity && watchlistStatus==='ready' ? [...watchlistSymbols] : []} watchlistStatus={sameIdentity ? watchlistStatus : 'loading'} onRefreshWatchlist={() => setHomeRefresh(v => v + 1)} />
       <HomeMarketNews key={`news-${identity}`} watchlistOnly watchlistStatus={sameIdentity ? watchlistStatus : 'loading'} active={isActive} identity={identity} watched={personalTerms} onNavigate={onNavigate} density={density} />
 
+      {homeWarning && <p role="status" className="text-xs text-slate-500">{homeWarning} <button type="button" className="underline" onClick={()=>setHomeRefresh(value=>value+1)}>Retry refresh</button></p>}
       {/* 2. Focused Sections or Calm Summary */}
       {!sameIdentity || (loading && !hasLoaded) ? <HomeSkeleton /> : (
       <div className="space-y-6">

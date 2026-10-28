@@ -146,8 +146,7 @@ async function generateLocalizedSummary(company: string, subject: string, detail
     }
 
     // Fast-fail if circuit breaker is OPEN with heuristic summary fallback
-    if (geminiCircuitBreaker.getState() === 'OPEN') {
-      if (strictResult) return '';
+    if (!strictResult && geminiCircuitBreaker.getState() === 'OPEN') {
       const remainingCooldown = Math.round(geminiCircuitBreaker.getStatus().resetTimeoutMs / 1000);
       addLog('INFO', 'GEMINI', `[${company}] Gemini circuit breaker is OPEN (${remainingCooldown}s cooldown). Providing instant extraction summary.`);
       // NOTE: fallback ko CACHE nahi karte — warna "Regenerate" hamesha purana
@@ -206,7 +205,7 @@ async function generateLocalizedSummary(company: string, subject: string, detail
 
     // Automatic result analysis requires the actual document. A headline-only
     // fallback cannot produce financial comparisons and must use zero AI quota.
-    if (strictResult && !pdfData && extractedPdfText.trim().length < 100) return '';
+    if (strictResult && !pdfData && extractedPdfText.trim().length < 100) { addLog('WARNING','GEMINI',`[${company}] Result analysis skipped: document_unavailable`); return ''; }
     const combinedDetails = (details + (extractedPdfText ? "\n\nEXTRACTED PDF TEXT:\n" + extractedPdfText : "")).substring(0, strictResult ? 80000 : 15000);
     let prompt = "";
     // Language instruction shared by all three prompt shapes below
@@ -223,7 +222,7 @@ Read the attached financial results document/text for ${company} and analyze the
 ${langInstruction}
 
 INSTRUCTIONS FOR METRICS & PERCENTAGES:
-1. Extract numbers for Current Period, Same Period Last Year (YoY), and Previous Quarter (QoQ) if explicitly available in the document.
+1. Show actual current and comparable amounts beside signed QoQ and YoY percentages for Revenue and PAT. Never mix consolidated/standalone or quarter/YTD figures. If a baseline is zero or negative, explain the transition; growth % is not meaningful. Extract numbers for Current Period, Same Period Last Year (YoY), and Previous Quarter (QoQ) if explicitly available in the document.
 2. CALCULATE and show YoY % change = ((Current - Same Period Last Year) / Same Period Last Year) * 100 for metrics ONLY when both figures exist in the filing.
 3. CALCULATE and show QoQ % change = ((Current - Previous Quarter) / Previous Quarter) * 100 ONLY when previous quarter data exists in the filing.
 4. For EBITDA/Operating Margins, show margin % and change in basis points (bps) or percentage points.
@@ -312,7 +311,7 @@ Subject: ${subject}\nSource details:\n${combinedDetails}`;
     let lastError: any = null;
 
     try {
-      const gw = await geminiCircuitBreaker.execute(async () => {
+      const requestSummary = async () => {
         return await aiComplete('SUMMARY', {
           prompt,
           pdfInline: pdfData ? { data: pdfData.inlineData.data, mimeType: pdfData.inlineData.mimeType } : undefined,
@@ -320,7 +319,9 @@ Subject: ${subject}\nSource details:\n${combinedDetails}`;
           taskLabel: `[${company}]`,
           timeoutMs: pdfData ? 45000 : 25000,
         });
-      }, undefined, 60000);
+      };
+      // Strict extracted text uses the gateway's provider cooldowns, not the inline-Gemini breaker.
+      const gw = strictResult ? await requestSummary() : await geminiCircuitBreaker.execute(requestSummary, undefined, 60000);
       gwText = gw.text || "";
       successfulModel = `${gw.provider}/${gw.modelId}`;
     } catch (cbErr: any) {
@@ -328,7 +329,7 @@ Subject: ${subject}\nSource details:\n${combinedDetails}`;
     }
 
     if (!gwText) {
-      if (strictResult) return '';
+      if (strictResult) { addLog('WARNING','GEMINI',`[${company}] Result analysis skipped: provider_unavailable`); return ''; }
       const msg = lastError?.message || "No response text generated";
       const is429 = msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED") || msg.includes("Quota exceeded") || msg.includes("quota") ||
         (lastError instanceof AllProvidersFailedError && lastError.quotaExhausted);
@@ -349,13 +350,13 @@ Subject: ${subject}\nSource details:\n${combinedDetails}`;
     const expectedPeriod = telegramResultIdentity({ company, subject, details, category, scripCode: '000000' })?.split(':').pop() || '';
     const expectedKind = /quarter/i.test(subject) ? 'quarter' : /half[ -]?year/i.test(subject) ? 'half-year' : /year/i.test(subject) ? 'year' : undefined;
     let summaryText = strictResult ? renderGroundedResult(gwText, extractedPdfText, expectedPeriod, lang, expectedKind) : gwText || "";
-    if (strictResult && !isValidTelegramResultSummary(summaryText)) return '';
+    if (strictResult && !isValidTelegramResultSummary(summaryText)) { addLog('WARNING','GEMINI',`[${company}] Result analysis skipped: grounded_numeric_validation_failed`); return ''; }
     if (summaryText) {
       summaryText = summaryText
         .replace(/<br\s*\/?>/gi, '\n')
         .replace(/<\/?b>/gi, '**');
       
-      if (newsId && !strictResult) {
+      if (newsId) {
         await updateAnnouncementSummary(newsId, summaryText, cacheVariant);
       }
     }
