@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "8c9fe6e6aea0f268efe0f736dc7cd09b1bd0f873391c90d0d1a2ee62b3e1b5b9",
+  "sourceDigest": "50e1fc755b73baea275c74ae37bdcda4e5bed5110440561a04775fddd17f6bdc",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -923,7 +923,7 @@
     },
     {
       "path": "server/security/firebaseAdmin.ts",
-      "sha256": "b8c9768ab7e590ded081978c3254913ca3da1438896abdcd5e9c2b67f92e1de0",
+      "sha256": "b8b77ca39f5902da7758375d7f54f2d1da27012fec9345415908f04e688fe80d",
       "importedBy": [
         "scripts/provision-ai-reviewer.ts",
         "server/api/giftAccess.ts",
@@ -1791,6 +1791,11 @@
     {
       "path": "server/tests/filingSource.test.ts",
       "sha256": "f3b18fba42ada76faf43acf18dc39642df7c54c440c0b7d9a1b0af1da1be83f3",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/firebaseCredentialExport.test.ts",
+      "sha256": "2ff73317212e62f14c2f927a151466c9063ac889be1c9629fe8f13b13d1f6be2",
       "importedBy": []
     },
     {
@@ -14235,6 +14240,7 @@
       ],
       "tests": [
         "server/tests/authIdentity.test.ts",
+        "server/tests/firebaseCredentialExport.test.ts",
         "server/tests/accountProtection.test.ts",
         "server/tests/recaptchaSecurity.test.ts",
         "server/tests/avatar.test.ts",
@@ -21484,7 +21490,7 @@
     },
     {
       "file": "server/security/firebaseAdmin.ts",
-      "line": 48,
+      "line": 50,
       "function": "Buffer.from",
       "key": "trimmed"
     },
@@ -23680,33 +23686,33 @@
     },
     {
       "file": "server/security/firebaseAdmin.ts",
-      "line": 80,
+      "line": 82,
       "name": "GOOGLE_APPLICATION_CREDENTIALS"
     },
     {
       "file": "server/security/firebaseAdmin.ts",
-      "line": 86,
-      "name": "GOOGLE_APPLICATION_CREDENTIALS"
-    },
-    {
-      "file": "server/security/firebaseAdmin.ts",
-      "line": 103,
+      "line": 98,
       "name": "FIREBASE_PROJECT_ID"
     },
     {
       "file": "server/security/firebaseAdmin.ts",
-      "line": 114,
+      "line": 109,
       "name": "FIREBASE_SERVICE_ACCOUNT_KEY"
     },
     {
       "file": "server/security/firebaseAdmin.ts",
-      "line": 115,
+      "line": 110,
       "name": "FIREBASE_SERVICE_ACCOUNT"
     },
     {
       "file": "server/security/firebaseAdmin.ts",
-      "line": 116,
+      "line": 111,
       "name": "SERVICE_ACCOUNT_KEY"
+    },
+    {
+      "file": "server/security/firebaseAdmin.ts",
+      "line": 112,
+      "name": "GOOGLE_APPLICATION_CREDENTIALS"
     },
     {
       "file": "server/security/firebaseAdmin.ts",
@@ -23715,37 +23721,32 @@
     },
     {
       "file": "server/security/firebaseAdmin.ts",
-      "line": 122,
+      "line": 117,
       "name": "GOOGLE_APPLICATION_CREDENTIALS"
     },
     {
       "file": "server/security/firebaseAdmin.ts",
-      "line": 122,
+      "line": 121,
       "name": "GOOGLE_APPLICATION_CREDENTIALS"
     },
     {
       "file": "server/security/firebaseAdmin.ts",
-      "line": 126,
-      "name": "GOOGLE_APPLICATION_CREDENTIALS"
-    },
-    {
-      "file": "server/security/firebaseAdmin.ts",
-      "line": 145,
+      "line": 140,
       "name": "FIREBASE_CLIENT_EMAIL"
     },
     {
       "file": "server/security/firebaseAdmin.ts",
-      "line": 145,
+      "line": 140,
       "name": "CLIENT_EMAIL"
     },
     {
       "file": "server/security/firebaseAdmin.ts",
-      "line": 146,
+      "line": 141,
       "name": "FIREBASE_PRIVATE_KEY"
     },
     {
       "file": "server/security/firebaseAdmin.ts",
-      "line": 146,
+      "line": 141,
       "name": "PRIVATE_KEY"
     },
     {
@@ -24482,6 +24483,11 @@
       "file": "server/tests/deepAuditSql.test.ts",
       "line": 7,
       "name": "AUDIT_MIGRATION"
+    },
+    {
+      "file": "server/tests/firebaseCredentialExport.test.ts",
+      "line": 41,
+      "name": "PATH"
     },
     {
       "file": "server/tests/followupAudit.test.ts",

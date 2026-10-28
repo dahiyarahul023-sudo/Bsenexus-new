@@ -11,6 +11,10 @@ firebase-applet-config.json
 *.jks
 *.p12
 service-account*.json
+*service-account*.json
+*credentials*.json
+*.pem
+*.key
 test.keystore
 dist/
 build/
