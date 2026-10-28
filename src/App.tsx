@@ -42,6 +42,18 @@ function lazyWithRetry<T extends React.ComponentType<any>>(
                 attempt(remaining - 1);
               }, interval);
             } else {
+              if (typeof window !== 'undefined' && isFetchError) {
+                try {
+                  const flag = 'bse_chunk_retry_reload';
+                  const last = sessionStorage.getItem(flag);
+                  const now = Date.now();
+                  if (!last || now - Number(last) > 10000) {
+                    sessionStorage.setItem(flag, String(now));
+                    window.location.reload();
+                    return;
+                  }
+                } catch {}
+              }
               reject(error);
             }
           });

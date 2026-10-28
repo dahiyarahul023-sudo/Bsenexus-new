@@ -22,11 +22,17 @@ class ClientErrorBoundary extends Component<{ children: ReactNode; fallback: Rea
   static getDerivedStateFromError() { return { failed: true }; }
   componentDidCatch(error: Error) {
     captureClientException(error);
-    if (/Invalid hook call|Cannot read properties of null \(reading 'use/i.test(error?.message || '')) {
+    const msg = String(error?.message || '');
+    if (
+      /Invalid hook call|Cannot read properties of null \(reading 'use/i.test(msg) ||
+      /Importing a module script failed|Failed to fetch dynamically imported module|error loading dynamically imported module/i.test(msg)
+    ) {
       try {
         const flag = 'bse_vite_hash_mismatch';
-        if (!sessionStorage.getItem(flag)) {
-          sessionStorage.setItem(flag, '1');
+        const last = sessionStorage.getItem(flag);
+        const now = Date.now();
+        if (!last || now - Number(last) > 10000) {
+          sessionStorage.setItem(flag, String(now));
           window.location.reload();
         }
       } catch {}

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "0521f937a0f78ec64b0e0fff63c2571930029590abfb622f5a648fad4c1a0618",
+  "sourceDigest": "6ac92b59614079d668a2b2cf56c74a3eb9503bc2dea8dbe8e21d6ad386763070",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -2455,7 +2455,7 @@
     },
     {
       "path": "src/App.tsx",
-      "sha256": "8387470c9e2d605920eb925c87abe49d0c5bea6bb42d8b3878da3057c555aaeb",
+      "sha256": "e4465471ca02b404104089fd6935676371507155cfdb81fdb00a7be7315f60d2",
       "importedBy": [
         "src/main.tsx"
       ]
@@ -3946,7 +3946,7 @@
     },
     {
       "path": "src/main.tsx",
-      "sha256": "eece6f110d152cd8539647ecb52e733b184d74b6374c5850d6a5eb9508fd884b",
+      "sha256": "25a71e2bf96db31f1fb61a92ee2af2109bc02a54a9dc2ddbaaa5dcdc3abd7853",
       "importedBy": []
     },
     {
@@ -10105,181 +10105,181 @@
       "source": "src/App.tsx",
       "target": "src/components/Announcements.tsx",
       "kind": "dynamic",
-      "line": 54
+      "line": 66
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/HomeForYou.tsx",
       "kind": "dynamic",
-      "line": 55
+      "line": 67
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/WatchlistManager.tsx",
       "kind": "dynamic",
-      "line": 58
+      "line": 70
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/ResultsCalendar.tsx",
       "kind": "dynamic",
-      "line": 59
+      "line": 71
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/NewsPortal.tsx",
       "kind": "dynamic",
-      "line": 60
+      "line": 72
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/StorageManager.tsx",
       "kind": "dynamic",
-      "line": 61
+      "line": 73
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/AdminDiagnostics.tsx",
       "kind": "dynamic",
-      "line": 62
+      "line": 74
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/LogsTab.tsx",
       "kind": "dynamic",
-      "line": 63
+      "line": 75
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/SettingsTab.tsx",
       "kind": "dynamic",
-      "line": 64
+      "line": 76
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/seo/SeoStudio.tsx",
       "kind": "dynamic",
-      "line": 65
+      "line": 77
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/Layout.tsx",
       "kind": "dynamic",
-      "line": 125
+      "line": 137
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/AuthModal.tsx",
       "kind": "dynamic",
-      "line": 126
+      "line": 138
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/ProUpgradeModal.tsx",
       "kind": "dynamic",
-      "line": 127
+      "line": 139
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/AdminPinModal.tsx",
       "kind": "dynamic",
-      "line": 128
+      "line": 140
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/ProCheckoutView.tsx",
       "kind": "dynamic",
-      "line": 129
+      "line": 141
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/ProReceiptView.tsx",
       "kind": "dynamic",
-      "line": 130
+      "line": 142
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/filing/FilingPage.tsx",
       "kind": "dynamic",
-      "line": 131
+      "line": 143
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/results/ResultsPage.tsx",
       "kind": "dynamic",
-      "line": 132
+      "line": 144
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/notes/NoteEditor.tsx",
       "kind": "dynamic",
-      "line": 133
+      "line": 145
     },
     {
       "source": "src/App.tsx",
       "target": "src/hooks/useScrollRestoration.ts",
       "kind": "import",
-      "line": 156
+      "line": 168
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/ui/TabErrorBoundary.tsx",
       "kind": "import",
-      "line": 157
+      "line": 169
     },
     {
       "source": "src/App.tsx",
       "target": "src/utils/scrollState.ts",
       "kind": "import",
-      "line": 158
+      "line": 170
     },
     {
       "source": "src/App.tsx",
       "target": "src/utils/shareUrls.ts",
       "kind": "import",
-      "line": 159
+      "line": 171
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/PricingPage.tsx",
       "kind": "dynamic",
-      "line": 160
+      "line": 172
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/GuidesPage.tsx",
       "kind": "dynamic",
-      "line": 161
+      "line": 173
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/CompaniesPage.tsx",
       "kind": "dynamic",
-      "line": 162
+      "line": 174
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/TrustPages.tsx",
       "kind": "dynamic",
-      "line": 163
+      "line": 175
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/AiPluginPage.tsx",
       "kind": "dynamic",
-      "line": 164
+      "line": 176
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/GiftActivationPage.tsx",
       "kind": "dynamic",
-      "line": 165
+      "line": 177
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/NotFoundPage.tsx",
       "kind": "dynamic",
-      "line": 166
+      "line": 178
     },
     {
       "source": "src/api.ts",
@@ -19516,37 +19516,37 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 451,
+      "line": 463,
       "function": "fetch",
       "target": "'/api/referrals/track-visit'"
     },
     {
       "file": "src/App.tsx",
-      "line": 847,
+      "line": 859,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/App.tsx",
-      "line": 864,
+      "line": 876,
       "function": "customFetch",
       "target": "'/auth/status'"
     },
     {
       "file": "src/App.tsx",
-      "line": 884,
+      "line": 896,
       "function": "customFetch",
       "target": "'/api/settings'"
     },
     {
       "file": "src/App.tsx",
-      "line": 894,
+      "line": 906,
       "function": "customFetch",
       "target": "'/api/logs?limit=400'"
     },
     {
       "file": "src/App.tsx",
-      "line": 925,
+      "line": 937,
       "function": "customFetch",
       "target": "'/api/toggle'"
     },
@@ -21906,67 +21906,79 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 257,
+      "line": 48,
+      "function": "sessionStorage.getItem",
+      "key": "flag"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 51,
+      "function": "sessionStorage.setItem",
+      "key": "flag"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 269,
       "function": "sessionStorage.setItem",
       "key": "'cf_pending_order_id'"
     },
     {
       "file": "src/App.tsx",
-      "line": 300,
+      "line": 312,
       "function": "sessionStorage.removeItem",
       "key": "'cf_pending_order_id'"
     },
     {
       "file": "src/App.tsx",
-      "line": 422,
+      "line": 434,
       "function": "localStorage.getItem",
       "key": "'theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 450,
+      "line": 462,
       "function": "localStorage.setItem",
       "key": "'bse_referral_code'"
     },
     {
       "file": "src/App.tsx",
-      "line": 619,
+      "line": 631,
       "function": "sessionStorage.setItem",
       "key": "'bse_shared_query'"
     },
     {
       "file": "src/App.tsx",
-      "line": 761,
+      "line": 773,
       "function": "localStorage.setItem",
       "key": "'theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 776,
+      "line": 788,
       "function": "localStorage.getItem",
       "key": "'bse_design_theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 793,
+      "line": 805,
       "function": "localStorage.setItem",
       "key": "'bse_design_theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 794,
+      "line": 806,
       "function": "localStorage.setItem",
       "key": "`bse_design_theme_${user.uid}`"
     },
     {
       "file": "src/App.tsx",
-      "line": 826,
+      "line": 838,
       "function": "localStorage.getItem",
       "key": "user?.uid ? `bse_design_theme_${user.uid}` : 'bse_design_theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 835,
+      "line": 847,
       "function": "localStorage.setItem",
       "key": "user?.uid ? `bse_design_theme_${user.uid}` : 'bse_design_theme'"
     },
@@ -22668,13 +22680,13 @@
     },
     {
       "file": "src/main.tsx",
-      "line": 28,
+      "line": 32,
       "function": "sessionStorage.getItem",
       "key": "flag"
     },
     {
       "file": "src/main.tsx",
-      "line": 29,
+      "line": 35,
       "function": "sessionStorage.setItem",
       "key": "flag"
     },
@@ -24918,12 +24930,12 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 768,
+      "line": 780,
       "name": "DEV"
     },
     {
       "file": "src/App.tsx",
-      "line": 775,
+      "line": 787,
       "name": "DEV"
     },
     {
@@ -24950,7 +24962,7 @@
   "browserEvents": [
     {
       "file": "src/App.tsx",
-      "line": 620,
+      "line": 632,
       "target": "window",
       "kind": "dispatch",
       "name": "bse-share-target",
@@ -24958,7 +24970,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 629,
+      "line": 641,
       "target": "window",
       "kind": "listen",
       "name": "popstate",
@@ -24966,7 +24978,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 630,
+      "line": 642,
       "target": "window",
       "kind": "remove",
       "name": "popstate",
@@ -24974,7 +24986,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 743,
+      "line": 755,
       "target": "window",
       "kind": "listen",
       "name": "popstate",
@@ -24982,7 +24994,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 745,
+      "line": 757,
       "target": "window",
       "kind": "remove",
       "name": "popstate",
@@ -24990,7 +25002,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 858,
+      "line": 870,
       "target": "window",
       "kind": "listen",
       "name": "watchlists-changed",
@@ -24998,7 +25010,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 859,
+      "line": 871,
       "target": "window",
       "kind": "remove",
       "name": "watchlists-changed",
@@ -25006,7 +25018,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 878,
+      "line": 890,
       "target": "window",
       "kind": "listen",
       "name": "auth-expired",
@@ -25014,7 +25026,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 879,
+      "line": 891,
       "target": "window",
       "kind": "remove",
       "name": "auth-expired",
