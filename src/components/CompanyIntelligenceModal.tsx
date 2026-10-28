@@ -819,7 +819,7 @@ export function CompanyIntelligenceModal({
                               </button>
                             ))}
                           </div>
-                        ) : <p className="text-xs text-slate-500 dark:text-slate-400">Same-industry stocks are not available for this company yet.</p>}
+                        ) : <p className="text-xs text-slate-500 dark:text-slate-400">Industry classification is not available for this company yet.</p>}
                       </section>
 
                 </div>

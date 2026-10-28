@@ -1219,7 +1219,7 @@ function AppContent() {
           <div data-screen-page="results-calendar" hidden={tabMotion.displayedKey !== 'results-calendar'}>
             <TabErrorBoundary label="results-calendar">
             <Suspense fallback={<PageSkeleton page="results-calendar" />}>
-              <ResultsCalendar />
+              <ResultsCalendar isActive={activeTab === 'results-calendar'} />
             </Suspense>
             </TabErrorBoundary>
           </div>

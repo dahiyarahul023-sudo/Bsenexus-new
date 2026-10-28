@@ -32,3 +32,12 @@ test('exact sector fallback deduplicates codes, excludes self, rejects broad or 
   assert.deepEqual(selectCompanyPeers([{...target,sector:'Financial Services'}],'ALPHA','500001').stocks,[]);
   assert.deepEqual(selectCompanyPeers([{...target,sector:undefined}],'ALPHA','500001').stocks,[]);
 });
+
+test('BEL has exact catalogue defence peers independent of watchlist, quotes or F&O selection',()=>{
+  const entries=getAllStockEntries(), peers=selectCompanyPeers(entries,'BEL','500049');
+  assert.equal(peers.industry,'Defence, aerospace & shipbuilding');
+  assert.ok(peers.stocks.some(s=>s.symbol==='HAL'&&s.scripCode==='541154'));
+  assert.ok(peers.stocks.some(s=>s.symbol==='BDL'&&s.scripCode==='541143'));
+  assert.ok(peers.stocks.length<=4);assert.ok(peers.stocks.every(s=>s.scripCode!=='500049'));
+  assert.deepEqual(selectCompanyPeers(entries,'BEL','999999').stocks,[]);
+});

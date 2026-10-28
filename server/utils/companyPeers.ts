@@ -1,5 +1,15 @@
 /** Industry membership only; identity/name/code always come from the stock catalogue. */
 const INDUSTRIES: ReadonlyArray<readonly [string, readonly string[]]> = [
+  ['Defence, aerospace & shipbuilding', ['BEL', 'BDL', 'HAL', 'MAZDOCK', 'COCHINSHIP']],
+  ['Alcoholic beverages', ['RADICO', 'UNITDSPR', 'UBL', 'SULA', 'GLOBUSSPR', 'TI']],
+  ['Hospitals', ['APOLLOHOSP', 'MAXHEALTH', 'FORTIS', 'NH', 'ASTERDM']],
+  ['Stock exchanges', ['BSE', 'MCX']],
+  ['Housing finance', ['LICHSGFIN', 'PNBHOUSING', 'AAVAS', 'APTUS', 'CANFINHOME']],
+  ['Gold finance', ['MUTHOOTFIN', 'MANAPPURAM']],
+  ['Power finance', ['PFC', 'RECLTD', 'IREDA']],
+  ['General insurance', ['ICICIGI', 'NIACL', 'GICRE', 'STARHEALTH']],
+  ['Telecom operators', ['BHARTIARTL', 'IDEA', 'MTNL']],
+  ['Packaged foods', ['NESTLEIND', 'BRITANNIA', 'BIKAJI', 'BECTORFOOD']],
   ['Private sector banks', ['FEDERALBNK', 'RBLBANK', 'IDFCFIRSTB', 'BANDHANBNK', 'HDFCBANK', 'ICICIBANK', 'AXISBANK', 'KOTAKBANK', 'INDUSINDBK', 'YESBANK']],
   ['Public sector banks', ['SBIN', 'CANBK', 'BANKBARODA', 'PNB', 'UNIONBANK', 'INDIANB', 'IOB', 'MAHABANK', 'UCOBANK', 'CENTRALBK']],
   ['Two & three wheelers', ['BAJAJ-AUTO', 'TVSMOTOR', 'HEROMOTOCO', 'EICHERMOT']],
@@ -28,7 +38,7 @@ export function selectCompanyPeers(entries: readonly PeerStock[], symbol: string
   if (!target) return { industry: '', stocks: [] as PeerStock[] };
   const group = INDUSTRIES.find(([, members]) => members.some(member => key(member) === key(target.symbol)));
   const industry = group?.[0] || target.sector?.trim() || '';
-  if (!industry || /^(equities|other|unknown|financial services|financials)$/i.test(industry)) return { industry: '', stocks: [] as PeerStock[] };
+  if (!industry || /^(equities|other|unknown|financial services|financials|industrials|consumer cyclical|consumer defensive)$/i.test(industry)) return { industry: '', stocks: [] as PeerStock[] };
   const seen = new Set<string>();
   const candidates = entries.filter(entry => {
     if (!entry.name || !/^\d{6}$/.test(entry.scripCode) || entry.scripCode === target.scripCode || key(entry.symbol) === key(target.symbol)) return false;

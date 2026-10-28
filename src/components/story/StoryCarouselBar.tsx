@@ -17,7 +17,7 @@ function topicHint(chapters: StoryChapter[], id: StoryTopic, fallback: string) {
   return fallback;
 }
 
-export function StoryCarouselBar({ onOpenStory, className = '', watched }: { onOpenStory: (chapterId?: string) => void; className?: string; watched?: string[] }) {
+export function StoryCarouselBar({ onOpenStory, className = '', watched, active = true, watchlistStatus = 'ready' }: { onOpenStory: (chapterId?: string) => void; className?: string; watched?: string[]; active?: boolean; watchlistStatus?: 'loading'|'ready'|'error' }) {
   const [rawChapters, setChapters] = useState(getInitialStoryChapters);
   const chapters=personalStoryChapters(rawChapters,watched);
   const [loaded, setLoaded] = useState(false);
@@ -26,6 +26,7 @@ export function StoryCarouselBar({ onOpenStory, className = '', watched }: { onO
   const [seen, setSeen] = useState(false);
   const updateSeen = useCallback(() => { try { setSeen(localStorage.getItem(getStorySessionStorageKey()) === 'true'); } catch {} }, []);
   useEffect(() => {
+    if (!active) return;
     let cancelled = false;
     updateSeen();
     const load = (force = false) => {
@@ -35,7 +36,7 @@ export function StoryCarouselBar({ onOpenStory, className = '', watched }: { onO
     const visibility = () => load(false);
     load(retry > 0); document.addEventListener('visibilitychange', visibility);
     return () => { cancelled = true; document.removeEventListener('visibilitychange', visibility); };
-  }, [retry, updateSeen]);
+  }, [retry, updateSeen, active]);
   const topics = loaded && !failed ? STORY_TOPICS.filter(topic => chapters.some(chapter => chapter.id === topic.id)) : watched ? STORY_TOPICS.filter(topic=>chapters.some(chapter=>chapter.id===topic.id)) : STORY_TOPICS;
   return <section className={`story-carousel ${className}`} aria-label="Market stories" onFocusCapture={updateSeen}>
     <div className="story-carousel-heading"><strong>{watched ? 'Your stock stories' : 'Market stories'}</strong><button type="button" onClick={() => onOpenStory()} disabled={watched ? !chapters.length : loaded && !failed && !chapters.length}>Watch all<ChevronRight size={14} /></button></div>
@@ -43,6 +44,6 @@ export function StoryCarouselBar({ onOpenStory, className = '', watched }: { onO
       <span className="story-capsule-ring" data-seen={seen}><StoryTopicMark topic={topic.id} /></span>
       <span className="story-capsule-label">{topic.label}</span><span className="story-capsule-hint">{topicHint(chapters, topic.id, topic.hint)}</span>
     </button>)}</div>}
-    {loaded && (failed || !chapters.length) && <div className="story-carousel-status"><span>{failed ? 'Stories couldn’t update' : 'No fresh stories right now'}</span><button type="button" onClick={() => setRetry(value => value + 1)}>Retry</button></div>}
+    {watched && watchlistStatus!=='ready' ? <div className="story-carousel-status"><span>{watchlistStatus==='loading'?'Checking your watchlist…':'Reconnect your watchlist to see stock stories.'}</span></div> : loaded && (failed || !chapters.length) && <div className="story-carousel-status"><span>{failed ? 'Stories couldn’t update' : 'No fresh stories right now'}</span>{failed && <button type="button" onClick={() => setRetry(value => value + 1)}>Retry</button>}</div>}
   </section>;
 }
