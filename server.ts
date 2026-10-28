@@ -30,7 +30,7 @@ import { refreshRadarIntake } from "./server/services/impactRadarService.js";
 import { refreshRadarPriceSnapshots } from "./server/services/radarPriceSync.js";
 import { processAutomatedNewsAlerts } from "./server/services/stockNewsService.js";
 import { addLog } from "./server/database/logDao.js";
-import { getPollingIntervalMs, parseBseDate } from "./server/utils/helpers.js";
+import { getPollingIntervalMs, parseBseDate, scriptSafeJson } from "./server/utils/helpers.js";
 import { getAnnouncementById, getRecentAnnouncements } from "./server/database/announcementDao.js";
 import { getScripCode, getAllStockEntries } from "./server/utils/stockResolver.js";
 import { getCompanyIntelligence } from "./server/services/companyIntelService.js";
@@ -464,7 +464,7 @@ ${AI_STUDIO_REDIRECT_SCRIPT}
 
   <!-- Structured Data / JSON-LD -->
   <script type="application/ld+json">
-${JSON.stringify(jsonLd, null, 2)}
+${scriptSafeJson(JSON.stringify(jsonLd, null, 2))}
   </script>
 
   <style>
@@ -1006,7 +1006,7 @@ ${AI_STUDIO_REDIRECT_SCRIPT}
 
   <!-- Structured Data (JSON-LD) -->
   <script type="application/ld+json">
-${jsonLd}
+${scriptSafeJson(jsonLd)}
   </script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1847,7 +1847,7 @@ ${AI_STUDIO_REDIRECT_SCRIPT}
 
   <!-- Structured Data (JSON-LD) -->
   <script type="application/ld+json">
-${jsonLd}
+${scriptSafeJson(jsonLd)}
   </script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2205,7 +2205,7 @@ ${AI_STUDIO_REDIRECT_SCRIPT}
 
   <!-- Structured Data (JSON-LD) -->
   <script type="application/ld+json">
-${jsonLd}
+${scriptSafeJson(jsonLd)}
   </script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2771,7 +2771,7 @@ ${AI_STUDIO_REDIRECT_SCRIPT}
 
   <!-- Structured Data (JSON-LD) -->
   <script type="application/ld+json">
-${jsonLd}
+${scriptSafeJson(jsonLd)}
   </script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3139,7 +3139,7 @@ ${AI_STUDIO_REDIRECT_SCRIPT}
 
   <!-- Structured Data (JSON-LD) -->
   <script type="application/ld+json">
-${jsonLd}
+${scriptSafeJson(jsonLd)}
   </script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -4033,7 +4033,7 @@ ${AI_STUDIO_REDIRECT_SCRIPT}
     }
   </style>
 
-  ${options.schemaJson ? `<script type="application/ld+json">\n${options.schemaJson}\n</script>` : ''}
+  ${options.schemaJson ? `<script type="application/ld+json">\n${scriptSafeJson(options.schemaJson)}\n</script>` : ''}
 </head>
 <body>
   <nav class="top-banner">
@@ -4845,9 +4845,9 @@ ${AI_STUDIO_REDIRECT_SCRIPT}
 
   <!-- Structured Data (JSON-LD) -->
   <script type="application/ld+json">
-${jsonLd}
+${scriptSafeJson(jsonLd)}
   </script>
-${faqJsonLd ? `  <script type="application/ld+json">\n${faqJsonLd}\n  </script>` : ''}
+${faqJsonLd ? `  <script type="application/ld+json">\n${scriptSafeJson(faqJsonLd)}\n  </script>` : ''}
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

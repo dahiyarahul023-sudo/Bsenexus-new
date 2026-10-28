@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "b028e135deaa6df2a486471eceed3ecf3c7fc0d5947962203248306f88416b3e",
+  "sourceDigest": "32d3efe9bb65587d9d033a2519ab35cd4a25d4d75a31a35fa24504a3c67d54f0",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -246,7 +246,7 @@
     },
     {
       "path": "server.ts",
-      "sha256": "23651f89c69ee061ad5178227b10af40719ce73f1c55538e5c4e2864c3c1f2c2",
+      "sha256": "11b0920846bbde211fa044ebb5be43edf5a0d83cad35325b53237211c2b7756e",
       "importedBy": [
         "server/tests/routeResolution.test.ts"
       ]
@@ -1395,7 +1395,7 @@
     },
     {
       "path": "server/services/seoPrerender.ts",
-      "sha256": "45aa4c87333a91b23e74fc3443dc98838af936aa352bfcd9ec50afed9524c9da",
+      "sha256": "092582511beb29507f2c53ee282198a3e9a286f530a9691438249ca1f499db74",
       "importedBy": [
         "server.ts",
         "server/tests/routeHeading.test.ts",
@@ -1874,6 +1874,11 @@
       "importedBy": []
     },
     {
+      "path": "server/tests/jsonLdScriptSafety.test.ts",
+      "sha256": "f77cfd1ac0fdff3ecfbe3b032d68b983e3aa8e54e22c11e3f13468d07bf51306",
+      "importedBy": []
+    },
+    {
       "path": "server/tests/keywordGuides.test.ts",
       "sha256": "37037f9370cbc5704f5a67c60b2fd05f27a9850a97f4397a1edc421222e07d0a",
       "importedBy": []
@@ -2275,7 +2280,7 @@
     },
     {
       "path": "server/utils/helpers.ts",
-      "sha256": "f4f294afa7b1fe35d25a8407c5a896b9fe398cfc2bb596d9831ba789602735e0",
+      "sha256": "b0bfd3527b124bd2fa9cd3aad5bb18a75fdb1df00dc4d7f7c0743bbd0daad908",
       "importedBy": [
         "server.ts",
         "server/ai/market.ts",
@@ -2289,6 +2294,7 @@
         "server/services/resultsCalendarService.ts",
         "server/services/seoPrerender.ts",
         "server/services/storyFeedService.ts",
+        "server/tests/jsonLdScriptSafety.test.ts",
         "server/tests/resultDocumentEvidence.test.ts",
         "server/tests/resultHistory.test.ts",
         "server/tests/sevenFixes.test.ts"
@@ -4725,7 +4731,7 @@
     },
     {
       "path": "src/version.ts",
-      "sha256": "f8e42dfab1b724ec2a69b1a1f4c59db0066f54cc78bafa5a50ccd71254dabdf9",
+      "sha256": "f3ecebca4fc1aafe1e52e03880e34404ad29624569bc3296304193d7f17223d6",
       "importedBy": [
         "src/components/SettingsTab.tsx",
         "src/lib/sentry.ts"
@@ -9081,6 +9087,12 @@
       "line": 5
     },
     {
+      "source": "server/tests/jsonLdScriptSafety.test.ts",
+      "target": "server/utils/helpers.ts",
+      "kind": "import",
+      "line": 5
+    },
+    {
       "source": "server/tests/keywordGuides.test.ts",
       "target": "src/content/keywordGuides.ts",
       "kind": "import",
@@ -9996,7 +10008,7 @@
       "source": "server/utils/helpers.ts",
       "target": "server/utils/stockResolver.ts",
       "kind": "import",
-      "line": 9
+      "line": 21
     },
     {
       "source": "server/utils/newsPublicationTime.ts",

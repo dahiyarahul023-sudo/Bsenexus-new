@@ -1,4 +1,16 @@
 import { hasExactScripCode } from '../../src/shared/scripMatching.js';
+/**
+ * SECURITY (XSS-1): serialise JSON for a <script type="application/ld+json"> block.
+ * JSON.stringify does not escape "<", so a headline or company name containing
+ * "</script><script>..." would close the block and run attacker markup on our
+ * origin (where the sign-in token lives in localStorage). "<" can only occur
+ * inside JSON strings, so "\\u003c" is an exact, valid replacement; U+2028/2029
+ * are escaped for older parsers.
+ */
+export function scriptSafeJson(json: string): string {
+  return String(json ?? '').replace(/</g, '\\u003c').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
+}
+
 export function escapeHTML(str: string): string {
   if (!str) return "";
   // Replace <br>, <br/>, <br > etc. with newline
