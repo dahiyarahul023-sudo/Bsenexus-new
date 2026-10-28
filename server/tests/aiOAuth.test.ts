@@ -23,6 +23,13 @@ test("OAuth provider rejects unsafe registration metadata before touching storag
     },
   ])
     await assert.rejects(provider.clientsStore.registerClient(meta as any));
+  // Omitted token_endpoint_auth_method defaults to "none" (RFC 7591) and proceeds to URL validation
+  await assert.rejects(
+    provider.clientsStore.registerClient({
+      redirect_uris: ["http://insecure-http.example.org/cb"],
+    } as any),
+    /Callbacks must be public HTTPS URLs/,
+  );
 });
 test("the pinned OAuth SDK enforces S256 PKCE before exchanging a code", async () => {
   const verifier = "v".repeat(50),

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "50e1fc755b73baea275c74ae37bdcda4e5bed5110440561a04775fddd17f6bdc",
+  "sourceDigest": "b028e135deaa6df2a486471eceed3ecf3c7fc0d5947962203248306f88416b3e",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -36,11 +36,6 @@
     {
       "path": "metadata.json",
       "sha256": "ac2598b6aaa999a40b1a001a27752a4f684c896ccf7494ed934af6742c1e6303",
-      "importedBy": []
-    },
-    {
-      "path": "package-lock.json",
-      "sha256": "7e3c08f22015f3fd874dfb9c22876cce63663b5eb1ef5dfde770a0efc27b68f9",
       "importedBy": []
     },
     {
@@ -1545,7 +1540,7 @@
     },
     {
       "path": "server/tests/aiOAuth.test.ts",
-      "sha256": "1d33d355f3289f9be93a817c225b43368b9e2c9984906764842febf3685607a6",
+      "sha256": "2c8d5b1750fcf1cf88b3077ab609ac6885eacf1e7b5816bdf331198e94964c03",
       "importedBy": []
     },
     {
@@ -3951,7 +3946,7 @@
     },
     {
       "path": "src/main.tsx",
-      "sha256": "df307aff2555941bedd005b138aed6b17c83555cfab5e77e133c55625bd085b2",
+      "sha256": "eece6f110d152cd8539647ecb52e733b184d74b6374c5850d6a5eb9508fd884b",
       "importedBy": []
     },
     {
@@ -4838,7 +4833,7 @@
     },
     {
       "path": "vite.config.ts",
-      "sha256": "5d161b5e2d9328e7fd14316f911176fc3a00cbac56c7b280f1cbe8e1bf21d0cf",
+      "sha256": "a9583af0e901b86026e999dc871e7d692f1795e19d0cba3a8a2c603838be9f2c",
       "importedBy": []
     }
   ],
@@ -18469,7 +18464,7 @@
     },
     {
       "file": "server/tests/aiOAuth.test.ts",
-      "line": 54,
+      "line": 61,
       "receiver": "app",
       "method": "USE",
       "path": "/token",
@@ -18479,7 +18474,7 @@
     },
     {
       "file": "server/tests/aiOAuth.test.ts",
-      "line": 90,
+      "line": 97,
       "receiver": "app",
       "method": "USE",
       "path": "/register",
@@ -18489,7 +18484,7 @@
     },
     {
       "file": "server/tests/aiOAuth.test.ts",
-      "line": 90,
+      "line": 97,
       "receiver": "app",
       "method": "USE",
       "path": "/authorize",
@@ -19196,25 +19191,25 @@
     },
     {
       "file": "server/tests/aiOAuth.test.ts",
-      "line": 59,
+      "line": 66,
       "function": "fetch",
       "target": "url"
     },
     {
       "file": "server/tests/aiOAuth.test.ts",
-      "line": 93,
+      "line": 100,
       "function": "fetch",
       "target": "base+'/register'"
     },
     {
       "file": "server/tests/aiOAuth.test.ts",
-      "line": 95,
+      "line": 102,
       "function": "fetch",
       "target": "base+'/authorize?'+new URLSearchParams({client_id:client.client_id,redirect_uri:redirect,response_type:'code',scope:'market:read',state:'synthetic-state',code_challenge:'c'.repeat(43),code_challenge_method:method,resource:'https://bsenexus."
     },
     {
       "file": "server/tests/aiOAuth.test.ts",
-      "line": 99,
+      "line": 106,
       "function": "fetch",
       "target": "base+'/register'"
     },
@@ -22675,6 +22670,18 @@
       "line": 49,
       "function": "Array.from",
       "key": "page.children"
+    },
+    {
+      "file": "src/main.tsx",
+      "line": 28,
+      "function": "sessionStorage.getItem",
+      "key": "flag"
+    },
+    {
+      "file": "src/main.tsx",
+      "line": 29,
+      "function": "sessionStorage.setItem",
+      "key": "flag"
     },
     {
       "file": "src/services/adrClient.ts",

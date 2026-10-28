@@ -20,7 +20,18 @@ if (window.location.pathname.replace(/\/+$/, '').toLowerCase() !== '/activate-gi
 class ClientErrorBoundary extends Component<{ children: ReactNode; fallback: ReactNode }, { failed: boolean }> {
   state = { failed: false };
   static getDerivedStateFromError() { return { failed: true }; }
-  componentDidCatch(error: Error) { captureClientException(error); }
+  componentDidCatch(error: Error) {
+    captureClientException(error);
+    if (/Invalid hook call|Cannot read properties of null \(reading 'use/i.test(error?.message || '')) {
+      try {
+        const flag = 'bse_vite_hash_mismatch';
+        if (!sessionStorage.getItem(flag)) {
+          sessionStorage.setItem(flag, '1');
+          window.location.reload();
+        }
+      } catch {}
+    }
+  }
   render() { return this.state.failed ? this.props.fallback : this.props.children; }
 }
 
