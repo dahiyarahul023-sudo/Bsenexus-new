@@ -1,4 +1,3 @@
-import { reconcileDeclaredCalendar } from '../shared/resultDeclaration';
 import { AnchoredPopover } from './ui/AnchoredPopover';
 import { useCalendarDialog } from '../hooks/useCalendarDialog';
 import { changeRunupPriority, RunupPriorityError } from '../utils/runupPriorityClient';
@@ -157,12 +156,12 @@ export function calendarLinkedScrip(): string {
   catch { return ''; }
 }
 
-export function ResultsCalendar({ isActive = true }: { isActive?: boolean }) {
+export function ResultsCalendar({ isActive }: { isActive?: boolean } = {}) {
   const { user } = useAuth();
-  return <ResultsCalendarView isActive={isActive} key={user && !user.isAnonymous ? user.uid : 'guest'} />;
+  return <ResultsCalendarView key={user && !user.isAnonymous ? user.uid : 'guest'} isActive={isActive} />;
 }
 
-function ResultsCalendarView({ isActive }: { isActive: boolean }) {
+function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
   const toolbarRef = useRef<HTMLDivElement>(null);
   const [toolbarHeight, setToolbarHeight] = useState(0);
   useEffect(() => {
@@ -489,7 +488,6 @@ function ResultsCalendarView({ isActive }: { isActive: boolean }) {
     void watchResultHistory(selectedModalItem, signal, (rows, sync) => {
       if (revision !== historyRevision.current) return;
       setStockHistory(rows); setLoadingHistory(false);
-      setItems(previous=>reconcileDeclaredCalendar(previous,rows,String(selectedModalItem.scripCode)));
       setDeepHistoryMsg(sync?.state === 'running' ? `Loading BSE archive: ${sync.processed} filings saved so far...` : sync?.state === 'complete' ? archiveCompletionMessage(sync, rows.filter(row => row.isOutcome).length) : null);
     }).catch(error => {
       if (revision === historyRevision.current && !controller.signal.aborted) setHistoryError(error.message);
@@ -608,8 +606,6 @@ function ResultsCalendarView({ isActive }: { isActive: boolean }) {
       }
     }
   };
-
-  useVisibilityInterval(()=>{if(!selectedModalItem)void fetchCalendar(false);},60000,isActive);
 
   useVisibilityInterval(() => {
     const nextDay = calendarDayKey();
