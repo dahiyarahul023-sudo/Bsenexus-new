@@ -3,8 +3,10 @@ import { getAuth, Auth } from 'firebase-admin/auth';
 import { getAppCheck, AppCheck } from 'firebase-admin/app-check';
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 
 let firebaseAdminApp: App | null = null;
+let serviceAccountFile: string | null = null;
 
 /**
  * Normalizes and parses raw Service Account credentials from JSON, Base64, or text fragments.
@@ -71,23 +73,16 @@ function parseServiceAccount(raw: string | undefined): any | null {
  */
 function ensureServiceAccountFile(saJson: any): string {
   try {
-    const dataDir = path.resolve(process.cwd(), 'data');
-    if (!fs.existsSync(dataDir)) {
-      fs.mkdirSync(dataDir, { recursive: true });
+    // Keep runtime credentials outside the app/export tree in a private directory.
+    if (!serviceAccountFile) {
+      const credentialDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bsenexus-firebase-'));
+      serviceAccountFile = path.join(credentialDir, 'service-account.json');
     }
-    const saFilePath = path.join(dataDir, 'firebase-service-account.json');
-    fs.writeFileSync(saFilePath, JSON.stringify(saJson, null, 2), 'utf8');
-    process.env.GOOGLE_APPLICATION_CREDENTIALS = saFilePath;
-    return saFilePath;
+    fs.writeFileSync(serviceAccountFile, JSON.stringify(saJson, null, 2), { encoding: 'utf8', mode: 0o600 });
+    process.env.GOOGLE_APPLICATION_CREDENTIALS = serviceAccountFile;
+    return serviceAccountFile;
   } catch {
-    const tmpPath = '/tmp/firebase-service-account.json';
-    try {
-      fs.writeFileSync(tmpPath, JSON.stringify(saJson, null, 2), 'utf8');
-      process.env.GOOGLE_APPLICATION_CREDENTIALS = tmpPath;
-      return tmpPath;
-    } catch {
-      return '';
-    }
+    return '';
   }
 }
 
