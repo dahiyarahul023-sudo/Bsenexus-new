@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "af1315f7058f6bc692d10a6037c77fdd2a507cda948ddaea8833600c33de714f",
+  "sourceDigest": "bb82c18d6e7e00342e6ade93a3e7fa6c53f791fd07a13b14785fee2fdece2743",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -36,6 +36,11 @@
     {
       "path": "metadata.json",
       "sha256": "ac2598b6aaa999a40b1a001a27752a4f684c896ccf7494ed934af6742c1e6303",
+      "importedBy": []
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "7e3c08f22015f3fd874dfb9c22876cce63663b5eb1ef5dfde770a0efc27b68f9",
       "importedBy": []
     },
     {
@@ -147,7 +152,7 @@
     },
     {
       "path": "scripts/check-preview-restart.mjs",
-      "sha256": "6a9c80230ddd2c20d9920a08ba8a874c29c1a807de5b493fabebefc9bfb1274f",
+      "sha256": "2d06a977e9c4f0beaf01a9079751a98f16645a3ae664f2c3fa03d1f1159ad599",
       "importedBy": []
     },
     {
@@ -213,7 +218,7 @@
     },
     {
       "path": "scripts/verify-gift-access.mjs",
-      "sha256": "05d7835fd298fe7cbb186dc8847b1522b461fe4e10b9179fba4252e7fa7d04c5",
+      "sha256": "84bf802224b4b5f2b40272f9328014dceb325ada9f73ece0b75339fd994ceabe",
       "importedBy": []
     },
     {
@@ -400,7 +405,7 @@
     },
     {
       "path": "server/api/giftAccess.ts",
-      "sha256": "8150c26f701b4b1d409063494255c7a0212b437ff4e9abda0f8f1715fa2a3fa9",
+      "sha256": "840b562bafd3c60a5fd94504b4d9d41318c7f4e121a9938eb0836665e5db767e",
       "importedBy": [
         "server/api/routes.ts",
         "server/tests/giftAccessApi.test.ts"
@@ -1152,7 +1157,7 @@
     },
     {
       "path": "server/services/giftAccessPolicy.ts",
-      "sha256": "c75236c4837fd88adfcebcebb04cba8d1f3e1e3f00b1d3bc28c2b227c1d94b7b",
+      "sha256": "66b9a662ddb082952b2b802466748180d877de44aaa39a6b9f669c1f209762c8",
       "importedBy": [
         "server/api/giftAccess.ts",
         "server/database/giftAccessDao.ts",
@@ -1540,7 +1545,7 @@
     },
     {
       "path": "server/tests/aiOAuth.test.ts",
-      "sha256": "2c8d5b1750fcf1cf88b3077ab609ac6885eacf1e7b5816bdf331198e94964c03",
+      "sha256": "505968dffc5a700f786f309b3bc72e981e6210e39e62b39ea2c90ddb06ac3846",
       "importedBy": []
     },
     {
@@ -1580,7 +1585,7 @@
     },
     {
       "path": "server/tests/announcementCadence.test.ts",
-      "sha256": "a4c43cf58739d545a01b4be8be68d913d61669e99abda168a6296c1f2799249d",
+      "sha256": "271a482fcd9aaa0b9cdfecf918552dbcf8bc5b22211182f0d032570764d7c5a6",
       "importedBy": []
     },
     {
@@ -1810,7 +1815,7 @@
     },
     {
       "path": "server/tests/giftAccessApi.test.ts",
-      "sha256": "075f76c2367232bf0799576c2fb584619f1a650341b9c72f62a8700b3c580b67",
+      "sha256": "c14fd800688824c5cf8d09c99270418db492c94168e464264e07f6f948ad0980",
       "importedBy": []
     },
     {
@@ -2455,7 +2460,7 @@
     },
     {
       "path": "src/App.tsx",
-      "sha256": "470cfcf2e9e8e8f10474252e3ba561e79d50d3acf0a6190f1a895612b0376706",
+      "sha256": "4c69da1a0a0ceb09907a0c3c5b36889c3f704292aa4e8f71d13797ee5515deb5",
       "importedBy": [
         "src/main.tsx"
       ]
@@ -2530,7 +2535,7 @@
     },
     {
       "path": "src/components/AdminGiftAccess.tsx",
-      "sha256": "4cdba6f553720c76296f9375289665dd1c6cd53b36c66e7afceb81377a5d695f",
+      "sha256": "dd207df404c04ef9b96bedb505f4d2b570e3fe8f3e3967a0a30d7d08b886c2bb",
       "importedBy": [
         "src/components/SettingsTab.tsx"
       ]
@@ -2637,7 +2642,7 @@
     },
     {
       "path": "src/components/GiftActivationPage.tsx",
-      "sha256": "35549026085ab01ca05e24e6039701cdd8e75c637db769efd97222fc37a28174",
+      "sha256": "eb7f4dbdb5d1a76c845823a7613eeaa45188809d8fcc8b1fd6a51a6f759eb271",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -2937,7 +2942,7 @@
     },
     {
       "path": "src/components/gift-access.css",
-      "sha256": "62a89e6e1e2f6e98931c44be64e94e9cf170c670f1d4b2eadb66dd66c7688450",
+      "sha256": "3fd2c91f5029aaffd7ebed1c4ec9b6ee29ddf9095efc226d65a3a3b7b9f93ae3",
       "importedBy": [
         "src/components/AdminGiftAccess.tsx",
         "src/components/GiftActivationPage.tsx"
@@ -3952,7 +3957,7 @@
     },
     {
       "path": "src/main.tsx",
-      "sha256": "25a71e2bf96db31f1fb61a92ee2af2109bc02a54a9dc2ddbaaa5dcdc3abd7853",
+      "sha256": "66c9dac4c72cf14376b53154a66a9b6d5c34d57ae05a2e246f044c8fde133b9d",
       "importedBy": []
     },
     {
@@ -4730,7 +4735,7 @@
     },
     {
       "path": "src/version.ts",
-      "sha256": "ae1c5617f467027d52f0666343182c47c4ce32e86547578a1b73c026179d848d",
+      "sha256": "f3ecebca4fc1aafe1e52e03880e34404ad29624569bc3296304193d7f17223d6",
       "importedBy": [
         "src/components/SettingsTab.tsx",
         "src/lib/sentry.ts"
@@ -15539,7 +15544,7 @@
         "server/tests/previewBackendReload.test.ts",
         "server/tests/studioMigrationReview.test.ts"
       ],
-      "reason": "Owner PIN elevation creates an email-bound invitation with a server-owned custom duration and separate claim deadline. Hash-only secrets, immutable input/idempotency checks and one DB transaction bind each grant once to a freshly verified Firebase identity. Resend rotates the pending verifier without extending the deadline; revoke never touches paid/trial/referral rows. Read-only unified access projections reach website gates, billing, profile refresh, AI quota and connector writes. Personal Telegram checks consult live gift access at dispatch; ingestion remains independent of gift-store availability. Fragment capture precedes optional monitoring; activation is no-store/noindex and excluded from SW/telemetry. Browser fixture evidence is distinct from real sender/Firebase/database release checks; feature stays off until additive migration verification. The actual root API mount distinguishes disabled 409 from auth denial and genuine 404. Admin missing-server recovery preserves drafts and blocks writes until a successful history reload. HTML API pages with HTTP 200 become typed transport failures without automatic write replay; deliberate feature-off state is GIFT_ACCESS_DISABLED, not a transient outage."
+      "reason": "Owner PIN elevation creates an email-bound invitation with a server-owned custom duration and separate claim deadline. Hash-only secrets, immutable input/idempotency checks and one DB transaction bind each grant once to a freshly verified Firebase identity. Resend rotates the pending verifier without extending the deadline; revoke never touches paid/trial/referral rows. Read-only unified access projections reach website gates, billing, profile refresh, AI quota and connector writes. Personal Telegram checks consult live gift access at dispatch; ingestion remains independent of gift-store availability. Fragment capture precedes optional monitoring; activation is no-store/noindex and excluded from SW/telemetry. Browser fixture evidence is distinct from real sender/Firebase/database release checks; feature stays off until additive migration verification. The actual root API mount distinguishes disabled 409 from auth denial and genuine 404. Admin missing-server recovery preserves drafts and blocks writes until a successful history reload. HTML API pages with HTTP 200 become typed transport failures without automatic write replay; deliberate feature-off state is GIFT_ACCESS_DISABLED, not a transient outage. Owner can explicitly generate/copy an email-bound fragment link without a mail provider; only a newly committed verifier is returned, never a retry token. Link rotation reuses the existing cooldown, original claim deadline and PIN-elevated route. Generated links remain transient account-scoped UI state and are masked from recording."
     }
   ],
   "routes": [
@@ -16376,12 +16381,12 @@
       "line": 39,
       "receiver": "router",
       "method": "USE",
-      "path": "(req, res, next) => { if (req.method === 'GET') return next(); const origin = req.get('Origin') || ''; const allowed = origin === 'https://bsenexus.in' || /^https:\\/\\/ais-(dev|pre)-[a-z0-9-]+\\.run\\.app$/.test(origin) || (process.env.NODE_EN",
+      "path": "(req, res, next) => { if (req.method === 'GET') return next(); const origin = req.get('Origin') || ''; const allowed = origin === 'https://bsenexus.in' || origin === 'https://bse-studio.ai.studio' || /^https:\\/\\/ais-(dev|pre)-[a-z0-9-]+\\.ru",
       "middleware": []
     },
     {
       "file": "server/api/giftAccess.ts",
-      "line": 58,
+      "line": 65,
       "receiver": "router",
       "method": "GET",
       "path": "/admin",
@@ -16392,7 +16397,7 @@
     },
     {
       "file": "server/api/giftAccess.ts",
-      "line": 65,
+      "line": 72,
       "receiver": "router",
       "method": "POST",
       "path": "/admin",
@@ -16403,7 +16408,7 @@
     },
     {
       "file": "server/api/giftAccess.ts",
-      "line": 74,
+      "line": 81,
       "receiver": "router",
       "method": "POST",
       "path": "'/admin/:id/' + action",
@@ -16414,7 +16419,7 @@
     },
     {
       "file": "server/api/giftAccess.ts",
-      "line": 84,
+      "line": 93,
       "receiver": "router",
       "method": "POST",
       "path": "'/' + action",
@@ -18511,7 +18516,7 @@
     },
     {
       "file": "server/tests/aiOAuth.test.ts",
-      "line": 61,
+      "line": 70,
       "receiver": "app",
       "method": "USE",
       "path": "/token",
@@ -18521,7 +18526,7 @@
     },
     {
       "file": "server/tests/aiOAuth.test.ts",
-      "line": 97,
+      "line": 106,
       "receiver": "app",
       "method": "USE",
       "path": "/register",
@@ -18531,7 +18536,7 @@
     },
     {
       "file": "server/tests/aiOAuth.test.ts",
-      "line": 97,
+      "line": 106,
       "receiver": "app",
       "method": "USE",
       "path": "/authorize",
@@ -19238,25 +19243,25 @@
     },
     {
       "file": "server/tests/aiOAuth.test.ts",
-      "line": 66,
+      "line": 75,
       "function": "fetch",
       "target": "url"
     },
     {
       "file": "server/tests/aiOAuth.test.ts",
-      "line": 100,
+      "line": 109,
       "function": "fetch",
       "target": "base+'/register'"
     },
     {
       "file": "server/tests/aiOAuth.test.ts",
-      "line": 102,
+      "line": 111,
       "function": "fetch",
       "target": "base+'/authorize?'+new URLSearchParams({client_id:client.client_id,redirect_uri:redirect,response_type:'code',scope:'market:read',state:'synthetic-state',code_challenge:'c'.repeat(43),code_challenge_method:method,resource:'https://bsenexus."
     },
     {
       "file": "server/tests/aiOAuth.test.ts",
-      "line": 106,
+      "line": 115,
       "function": "fetch",
       "target": "base+'/register'"
     },
@@ -19724,13 +19729,13 @@
     },
     {
       "file": "src/components/AdminGiftAccess.tsx",
-      "line": 24,
+      "line": 26,
       "function": "customFetch",
       "target": "'/api/gifts/admin?offset=' + page"
     },
     {
       "file": "src/components/AdminGiftAccess.tsx",
-      "line": 33,
+      "line": 35,
       "function": "customFetch",
       "target": "path"
     },
@@ -24991,6 +24996,11 @@
     },
     {
       "file": "src/App.tsx",
+      "line": 45,
+      "name": "DEV"
+    },
+    {
+      "file": "src/App.tsx",
       "line": 780,
       "name": "DEV"
     },
@@ -25008,6 +25018,11 @@
       "file": "src/lib/sentry.ts",
       "line": 55,
       "name": "VITE_SENTRY_DSN"
+    },
+    {
+      "file": "src/main.tsx",
+      "line": 26,
+      "name": "DEV"
     },
     {
       "file": "vite.config.ts",

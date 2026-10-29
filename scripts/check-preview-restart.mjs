@@ -51,7 +51,7 @@ try {
     if(width===390)await page.screenshot({path:'/tmp/preview-restart-recovery-390.png',fullPage:true});
     server=await start(port);
     await page.unroute('**/src/components/SettingsTab.tsx*');
-    await Promise.all([page.waitForNavigation({waitUntil:'networkidle'}),page.getByRole('button',{name:'Reload app',exact:true}).click()]);
+    await Promise.all([page.waitForNavigation({waitUntil:'domcontentloaded'}),page.getByRole('button',{name:'Reload app',exact:true}).click()]);
     await page.getByRole('heading',{name:'Settings',exact:true}).waitFor();
     assert.equal(navigations,before+1);assert.deepEqual(unexpected,[]);
     console.log('PREVIEW_RESTART',JSON.stringify({width,heldSettingsImport:true,serverClosed:true,noAutoReload:true,manualFreshDocument:true,settingsRecovered:true,unexpectedErrors:unexpected.length}));

@@ -10,6 +10,8 @@ export const giftCreateInput = z.object({
   validityDays: z.number().int().min(1).max(3650),
   claimDays: z.number().int().min(1).max(30).default(7),
   note: z.string().trim().max(500).default(''),
+  deliveryMethod: z.enum(['link', 'email']).default('email'),
 }).strict();
 export const giftActionInput = z.object({ requestId: z.string().uuid() }).strict();
+export const giftDeliveryInput = giftActionInput.extend({ deliveryMethod: z.enum(['link', 'email']).default('email') });
 export const giftRedeemInput = z.object({ token: z.string().regex(giftTokenPattern), firebaseIdToken: z.string().min(20).max(8192) }).strict();

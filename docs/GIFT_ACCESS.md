@@ -2,6 +2,12 @@
 
 Owner UI: **Settings → Admin Engine → Gift Pro Access**. Verify the current owner PIN (15-minute elevation); server authorization remains mandatory even when the section is visible.
 
+## Share a link yourself
+
+Choose **Generate link — I will share it**, enter the recipient email and duration, review, then **Generate link**. Copy the returned activation link and send it personally. This mode needs no email provider. Only the invited, verified email can preview/claim it after signing in; opening a link never grants access automatically.
+
+The link is displayed only after a newly committed create/rotation and stays in this account's screen memory. Copy before leaving. History cannot recover a raw token; **Generate new link** rotates it after the existing one-minute cooldown, invalidates the old link and keeps the original claim deadline. Repeating an uncertain creation request never returns a newly generated token that was not stored. Optional **Send activation email** still requires the verified sender.
+
 ## Release order
 
 1. Apply the additive `supabase/migrations/20261026192403_gift_pro_access.sql` on an isolated/staging database first. It creates service-only invite/audit tables and updates the existing connector's explicit Pro predicate. An unexpected connector contract fails the migration instead of silently omitting gift access. Apply after existing payment/security and connector migrations; never edit applied history.

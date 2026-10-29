@@ -23,12 +23,21 @@ test("OAuth provider rejects unsafe registration metadata before touching storag
     },
   ])
     await assert.rejects(provider.clientsStore.registerClient(meta as any));
-  // Omitted token_endpoint_auth_method defaults to "none" (RFC 7591) and proceeds to URL validation
+  // This provider requires explicit public-client authentication metadata.
   await assert.rejects(
     provider.clientsStore.registerClient({
       redirect_uris: ["http://insecure-http.example.org/cb"],
     } as any),
-    /Callbacks must be public HTTPS URLs/,
+    /Only public authorization-code\/refresh PKCE clients/,
+  );
+  // Once the public-client contract is satisfied, an external HTTP callback is
+  // still rejected by URL validation before storage is touched.
+  await assert.rejects(
+    provider.clientsStore.registerClient({
+      token_endpoint_auth_method: "none",
+      redirect_uris: ["http://insecure-http.example.org/cb"],
+    } as any),
+    /Callbacks require public HTTPS/,
   );
 });
 test("the pinned OAuth SDK enforces S256 PKCE before exchanging a code", async () => {
