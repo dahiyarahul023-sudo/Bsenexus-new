@@ -35,10 +35,10 @@ const server = await createServer({configFile:false,cacheDir:cache,server:{host:
   res.setHeader('Content-Type','application/json');res.setHeader('Cache-Control','no-store');
   if(fixtures.delay)await new Promise(r=>setTimeout(r,200));
   const reply=(data,status=200)=>{res.statusCode=status;res.end(JSON.stringify(data));};
-  if(req.method==='GET')return fixtures.failRead?reply({success:false,error:fixtures.readError},fixtures.readStatus):reply({success:true,items:fixtures.items,hasMore:false,mailConfigured:true});
-  if(req.url==='/api/gifts/admin') {const item={id:inviteId,email:input.email,validityDays:input.validityDays,note:input.note,claimUntil:Date.now()+7*86400000,createdAt:Date.now(),status:'pending',delivery:'accepted',activatedAt:null,expiresAt:null};fixtures.items=[item];return reply({success:true,invite:item});}
+  if(req.method==='GET')return fixtures.failRead?reply({success:false,error:fixtures.readError},fixtures.readStatus):reply({success:true,items:fixtures.items,hasMore:false,mailConfigured:false});
+  if(req.url==='/api/gifts/admin') {const item={id:inviteId,email:input.email,validityDays:input.validityDays,note:input.note,claimUntil:Date.now()+7*86400000,createdAt:Date.now(),status:'pending',delivery:'accepted',activatedAt:null,expiresAt:null};fixtures.items=[item];return reply({success:true,invite:item,...(input.deliveryMethod==='link'?{activationUrl:'https://bsenexus.in/activate-gift#token='+token}:{})});}
   if(req.url.endsWith('/revoke')){fixtures.items[0].status='revoked';return reply({success:true,invite:fixtures.items[0]});}
-  if(req.url.endsWith('/resend'))return reply({success:true,invite:fixtures.items[0]});
+  if(req.url.endsWith('/resend'))return reply({success:true,invite:fixtures.items[0],...(input.deliveryMethod==='link'?{activationUrl:'https://bsenexus.in/activate-gift#token='+token}:{})});
   if(input.firebaseIdToken?.endsWith('other'))return reply({success:false,error:'Use the email this invitation was sent to.'},409);
   const claimed=req.url.endsWith('/claim');return reply({success:true,invite:{id:inviteId,email:'recipient@example.com',validityDays:30,claimUntil:Date.now()+86400000,status:claimed?'activated':'pending',activatedAt:claimed?Date.now():null,expiresAt:claimed?Date.now()+30*86400000:null},alreadyActivated:false,paidExpiresAt:Date.now()+10*86400000});
  });}
@@ -52,7 +52,7 @@ try{
   await context.route('**/*',r=>new URL(r.request().url()).origin===origin?r.continue():r.abort());const page=await context.newPage();page.on('pageerror',e=>{errors.push(e.message);console.error('BROWSER_PAGE_ERROR',e.message)});
   await page.goto(origin+'/fixture?mode=admin',{waitUntil:'networkidle'});if(errors.length)throw new Error(errors.join(' | '));await page.getByText('No invitations yet.').waitFor();
   await page.getByLabel('Email',{exact:true}).fill('recipient@example.com');await page.getByLabel('Pro access (days)').fill('30');await page.getByRole('button',{name:'Review invitation'}).click();
-  assert.equal(fixtures.calls.filter(c=>c.method==='POST').length,0,'Review cannot send');await page.getByRole('button',{name:'Send activation email'}).click();await page.getByRole('button',{name:'Resend new link'}).waitFor();
+  assert.equal(fixtures.calls.filter(c=>c.method==='POST').length,0,'Review cannot send');await page.getByRole('button',{name:'Generate link',exact:true}).click();await page.getByRole('button',{name:'Generate new link'}).waitFor();assert.equal(await page.getByLabel('Activation link').inputValue(),'https://bsenexus.in/activate-gift#token='+token);assert.equal(fixtures.calls.find(c=>c.url==='/api/gifts/admin'&&c.method==='POST').input.deliveryMethod,'link');assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));if(width===390)await page.screenshot({path:'/tmp/gift-link-390.png',fullPage:true});
   await page.getByRole('button',{name:'Revoke',exact:true}).click();assert.equal(fixtures.calls.filter(c=>c.url.endsWith('/revoke')).length,0);await page.getByRole('button',{name:'Confirm revoke'}).click();await page.getByText(/30 days · revoked/).waitFor();
   fixtures.failRead=true;await page.getByRole('button',{name:'Refresh',exact:true}).click();await page.getByRole('alert').waitFor();fixtures.failRead=false;await page.getByRole('button',{name:'Refresh invitations'}).click();await page.getByRole('alert').waitFor({state:'hidden'});
   await page.getByLabel('Email',{exact:true}).fill('draft@example.com');await page.getByLabel('Pro access (days)').fill('45');

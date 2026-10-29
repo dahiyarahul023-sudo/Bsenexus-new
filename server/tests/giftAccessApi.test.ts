@@ -50,6 +50,31 @@ test('creation binds normalized email, sends no plaintext token into storage, an
   assert.equal(response.headers.get('cache-control'),'private, no-store');
  });
 });
+test('owner can generate an email-bound link without a mail provider; only the committed hash is stored',async()=>{
+ await serve(async(base,calls,sent)=>{
+  const response=await post(base+'/api/gifts/admin',{...create(),deliveryMethod:'link'});
+  assert.equal(response.status,200);const body=await response.json();
+  const link=new URL(body.activationUrl);assert.equal(link.origin,'https://bsenexus.in');assert.equal(link.pathname,'/activate-gift');
+  const secret=new URLSearchParams(link.hash.slice(1)).get('token')!;
+  assert.equal(hashGiftToken(secret),calls[0].data.hash);assert.equal(calls[0].data.email,'recipient@example.com');
+  assert.equal(sent.length,0);assert.equal(calls.length,1);assert.equal(body.invite.status,'pending');
+  assert.equal(response.headers.get('cache-control'),'private, no-store');
+ },{dependencies:{configured:()=>false}});
+});
+test('link rotation works without email and an idempotent replay never returns an uncommitted token',async()=>{
+ await serve(async(base,calls,sent)=>{
+  const response=await post(base+`/api/gifts/admin/${id}/resend`,{requestId:randomUUID(),deliveryMethod:'link'});
+  assert.equal(response.status,200);assert.ok((await response.json()).activationUrl);assert.equal(calls[0].action,'resend');assert.equal(sent.length,0);
+ },{dependencies:{configured:()=>false}});
+ await serve(async(base,_calls,sent)=>{
+  const response=await post(base+'/api/gifts/admin',{...create(),deliveryMethod:'link'});
+  assert.equal(response.status,200);assert.equal((await response.json()).activationUrl,undefined);assert.equal(sent.length,0);
+ },{dependencies:{command:async()=>({invite:{id},shouldSend:false})}});
+});
+test('unconfigured email delivery fails without a mutation while link access still requires elevated owner identity',async()=>{
+ await serve(async(base,calls)=>{assert.equal((await post(base+'/api/gifts/admin',create())).status,503);assert.equal(calls.length,0);},{dependencies:{configured:()=>false}});
+ await serve(async(base,calls)=>{assert.equal((await post(base+'/api/gifts/admin',{...create(),deliveryMethod:'link'})).status,403);assert.equal(calls.length,0);},{user:recipient});
+});
 test('cross-site calls and duration manipulation are rejected before mutation',async()=>{
  await serve(async(base,calls)=>{
   assert.equal((await post(base+'/api/gifts/admin',create(),{Origin:'https://attacker.invalid'})).status,403);

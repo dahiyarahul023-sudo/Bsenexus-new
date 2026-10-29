@@ -53,7 +53,7 @@ function GiftActivationAccount({ token, user, loadingAuth, signIn, refresh, logo
   }
   return <main className="gift-page"><section className="gift-access" aria-labelledby="gift-activation-title">
     <a href="/">BSE Nexus</a><h1 id="gift-activation-title">Your Pro invitation</h1>
-    {!token ? <p>Open the activation link from your invitation email. After a page reload, reopen that email link.</p> : loadingAuth ? <p role="status">Checking your account…</p> : !user ? <><p>Sign in with the email this invitation was sent to. Opening the link does not activate access.</p><button type="button" onClick={signIn}>Sign in to continue</button></> : <>
+    {!token ? <p>Open the activation link shared with you. After a page reload, reopen that invitation link.</p> : loadingAuth ? <p role="status">Checking your account…</p> : !user ? <><p>Sign in with the email this invitation was sent to. Opening the link does not activate access.</p><button type="button" onClick={signIn}>Sign in to continue</button></> : <>
       <p>Signed in as <strong>{user.email}</strong></p>
       {error && <p role="alert" className="gift-error">{error}</p>}
       {success && invite ? <div role="status" className="gift-status"><h2>Gift Pro is active</h2><p>{invite.validityDays} days · Valid until {new Date(invite.expiresAt!).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' })} IST.</p><p>No payment or auto-charge.</p><a href="/settings">View your subscription</a></div> : <>
