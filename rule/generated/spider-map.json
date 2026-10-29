@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "fe067e1598b5727624c1d9ab61d2365c6add11e3b6d8359218ea49b8fe42a8aa",
+  "sourceDigest": "d649ceb17af11b229c087d533e6cfed2459bb60813ef753cb8ceb0c41c7ba354",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -40,7 +40,7 @@
     },
     {
       "path": "package-lock.json",
-      "sha256": "3ed7c0e163b71c467a5c9faaba90f4b3d3de15cb13b87cb2b30c61db650fc258",
+      "sha256": "7e3c08f22015f3fd874dfb9c22876cce63663b5eb1ef5dfde770a0efc27b68f9",
       "importedBy": []
     },
     {
@@ -1545,7 +1545,7 @@
     },
     {
       "path": "server/tests/aiOAuth.test.ts",
-      "sha256": "2c8d5b1750fcf1cf88b3077ab609ac6885eacf1e7b5816bdf331198e94964c03",
+      "sha256": "505968dffc5a700f786f309b3bc72e981e6210e39e62b39ea2c90ddb06ac3846",
       "importedBy": []
     },
     {
@@ -1585,7 +1585,7 @@
     },
     {
       "path": "server/tests/announcementCadence.test.ts",
-      "sha256": "a4c43cf58739d545a01b4be8be68d913d61669e99abda168a6296c1f2799249d",
+      "sha256": "271a482fcd9aaa0b9cdfecf918552dbcf8bc5b22211182f0d032570764d7c5a6",
       "importedBy": []
     },
     {
@@ -18516,7 +18516,7 @@
     },
     {
       "file": "server/tests/aiOAuth.test.ts",
-      "line": 61,
+      "line": 70,
       "receiver": "app",
       "method": "USE",
       "path": "/token",
@@ -18526,7 +18526,7 @@
     },
     {
       "file": "server/tests/aiOAuth.test.ts",
-      "line": 97,
+      "line": 106,
       "receiver": "app",
       "method": "USE",
       "path": "/register",
@@ -18536,7 +18536,7 @@
     },
     {
       "file": "server/tests/aiOAuth.test.ts",
-      "line": 97,
+      "line": 106,
       "receiver": "app",
       "method": "USE",
       "path": "/authorize",
@@ -19243,25 +19243,25 @@
     },
     {
       "file": "server/tests/aiOAuth.test.ts",
-      "line": 66,
+      "line": 75,
       "function": "fetch",
       "target": "url"
     },
     {
       "file": "server/tests/aiOAuth.test.ts",
-      "line": 100,
+      "line": 109,
       "function": "fetch",
       "target": "base+'/register'"
     },
     {
       "file": "server/tests/aiOAuth.test.ts",
-      "line": 102,
+      "line": 111,
       "function": "fetch",
       "target": "base+'/authorize?'+new URLSearchParams({client_id:client.client_id,redirect_uri:redirect,response_type:'code',scope:'market:read',state:'synthetic-state',code_challenge:'c'.repeat(43),code_challenge_method:method,resource:'https://bsenexus."
     },
     {
       "file": "server/tests/aiOAuth.test.ts",
-      "line": 106,
+      "line": 115,
       "function": "fetch",
       "target": "base+'/register'"
     },

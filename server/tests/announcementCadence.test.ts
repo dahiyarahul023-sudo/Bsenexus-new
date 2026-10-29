@@ -8,7 +8,9 @@ import ts from 'typescript';
 const source = readFileSync(new URL('../../server.ts', import.meta.url), 'utf8');
 const ast = ts.createSourceFile('server.ts', source, ts.ScriptTarget.Latest, true);
 function executeStatement(needle: string, globals: Record<string, unknown>) {
-  const statement = ast.statements.find(s => ts.isExpressionStatement(s) && s.getText(ast).includes(needle));
+  const workers = ast.statements.find((s): s is ts.FunctionDeclaration => ts.isFunctionDeclaration(s) && s.name?.text === 'startBackgroundWorkers');
+  const statements = [...ast.statements, ...(workers?.body?.statements || [])];
+  const statement = statements.find(s => ts.isExpressionStatement(s) && s.getText(ast).includes(needle));
   assert.ok(statement, `missing server wiring: ${needle}`);
   const code = ts.transpileModule(statement.getText(ast), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
   vm.runInNewContext(code, globals);
