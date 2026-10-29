@@ -17,3 +17,14 @@
   - `compile_applet` passed.
   - `lint_applet` (`tsc --noEmit`) passed.
   - Dev server HTTP probe on `http://localhost:3000/` returns `200 OK`.
+
+## Follow-up: Dev server pre-warming & immediate port release on restart (2026-10-29)
+- Root cause of `Pre-warming failed: dev server process died`:
+  - `gracefulShutdown` in `server.ts` awaited `addLog(...)` before calling `httpServer.close()`, did not close active/idle keep-alive connections in development, and waited for an 8-second force-exit timer instead of exiting once `httpServer.close()` completed.
+  - During rapid dev server restarts/pre-warming (`node --import tsx server.ts --port 3000 --port 3000 --host 0.0.0.0`), the previous process kept port 3000 bound for up to 8s, causing the newly spawned dev server to fail with `EADDRINUSE` and exit.
+  - Background `setInterval`/`setTimeout` jobs in `server.ts` also registered at module load time before `listenForStartup(httpServer, PORT)` completed.
+- Bounded repair:
+  - Wrapped background intervals and boot timeouts in `startBackgroundWorkers()`, invoked only after `listenForStartup` binds port 3000, and tracked `setTimeout` handles alongside `setInterval` handles.
+  - Updated `gracefulShutdown` to clear all timers immediately, close idle/active connections and `httpServer` before non-blocking log writes, and exit cleanly once `httpServer.close` and `vite?.close()` settle.
+  - Added bounded `EADDRINUSE` retry (`6 x 250ms`) in non-production startup in `server.ts` to tolerate transient socket teardown overlaps during dev server restarts.
+

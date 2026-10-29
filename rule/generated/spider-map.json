@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "9dd76e86c0f2e48114b641b1563d3dec663fa1a1cf958090272fbb023afae0ca",
+  "sourceDigest": "af1315f7058f6bc692d10a6037c77fdd2a507cda948ddaea8833600c33de714f",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -246,7 +246,7 @@
     },
     {
       "path": "server.ts",
-      "sha256": "23651f89c69ee061ad5178227b10af40719ce73f1c55538e5c4e2864c3c1f2c2",
+      "sha256": "70f9da0ab08a6fe8c08c3f70f2cfb61402c081220b030b86e70fce1848b700c5",
       "importedBy": [
         "server/tests/routeResolution.test.ts"
       ]
@@ -16151,7 +16151,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6857,
+      "line": 6863,
       "receiver": "app",
       "method": "GET",
       "path": "SPA_PATHS",
@@ -16161,7 +16161,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6891,
+      "line": 6897,
       "receiver": "app",
       "method": "USE",
       "path": "(req, res, next) => { if (req.method !== 'GET' && req.method !== 'HEAD') return next(); const p = normalizeSpaPath(req.path); if ( p === '/' || p === '/announcements' || p === '/results-calendar' || p === '/watchlist' || p === '/watchlists'",
@@ -16169,7 +16169,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6929,
+      "line": 6935,
       "receiver": "app",
       "method": "USE",
       "path": "vite.middlewares",
@@ -16177,7 +16177,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6941,
+      "line": 6947,
       "receiver": "app",
       "method": "USE",
       "path": "express.static(distPath, { maxAge: '1y', immutable: true, index: false, setHeaders: (res, filePath) => { if (filePath.endsWith('.html')) { res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600'); } } }",
@@ -16185,7 +16185,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6961,
+      "line": 6967,
       "receiver": "app",
       "method": "GET",
       "path": "['/announcements', '/announcements/']",
@@ -16195,7 +16195,7 @@
     },
     {
       "file": "server.ts",
-      "line": 7008,
+      "line": 7014,
       "receiver": "app",
       "method": "GET",
       "path": "*",
@@ -18974,7 +18974,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6561,
+      "line": 6566,
       "function": "fetch",
       "target": "`http://127.0.0.1:${port}/api/health`"
     },
@@ -23096,22 +23096,37 @@
     },
     {
       "file": "server.ts",
-      "line": 6846,
+      "line": 6852,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6851,
+      "line": 6857,
       "name": "DISABLE_HMR"
     },
     {
       "file": "server.ts",
-      "line": 7123,
+      "line": 7075,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 7123,
+      "line": 7127,
+      "name": "NODE_ENV"
+    },
+    {
+      "file": "server.ts",
+      "line": 7142,
+      "name": "NODE_ENV"
+    },
+    {
+      "file": "server.ts",
+      "line": 7156,
+      "name": "NODE_ENV"
+    },
+    {
+      "file": "server.ts",
+      "line": 7156,
       "name": "TEST_RUNNER"
     },
     {
