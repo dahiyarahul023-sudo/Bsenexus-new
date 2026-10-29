@@ -23,10 +23,10 @@ class ClientErrorBoundary extends Component<{ children: ReactNode; fallback: Rea
   componentDidCatch(error: Error) {
     captureClientException(error);
     const msg = String(error?.message || '');
-    if (
+    if (!import.meta.env.DEV && (
       /Invalid hook call|Cannot read properties of null \(reading 'use/i.test(msg) ||
       /Importing a module script failed|Failed to fetch dynamically imported module|error loading dynamically imported module/i.test(msg)
-    ) {
+    )) {
       try {
         const flag = 'bse_vite_hash_mismatch';
         const last = sessionStorage.getItem(flag);

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "d649ceb17af11b229c087d533e6cfed2459bb60813ef753cb8ceb0c41c7ba354",
+  "sourceDigest": "bb82c18d6e7e00342e6ade93a3e7fa6c53f791fd07a13b14785fee2fdece2743",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -152,7 +152,7 @@
     },
     {
       "path": "scripts/check-preview-restart.mjs",
-      "sha256": "6a9c80230ddd2c20d9920a08ba8a874c29c1a807de5b493fabebefc9bfb1274f",
+      "sha256": "2d06a977e9c4f0beaf01a9079751a98f16645a3ae664f2c3fa03d1f1159ad599",
       "importedBy": []
     },
     {
@@ -2460,7 +2460,7 @@
     },
     {
       "path": "src/App.tsx",
-      "sha256": "470cfcf2e9e8e8f10474252e3ba561e79d50d3acf0a6190f1a895612b0376706",
+      "sha256": "4c69da1a0a0ceb09907a0c3c5b36889c3f704292aa4e8f71d13797ee5515deb5",
       "importedBy": [
         "src/main.tsx"
       ]
@@ -3957,7 +3957,7 @@
     },
     {
       "path": "src/main.tsx",
-      "sha256": "25a71e2bf96db31f1fb61a92ee2af2109bc02a54a9dc2ddbaaa5dcdc3abd7853",
+      "sha256": "66c9dac4c72cf14376b53154a66a9b6d5c34d57ae05a2e246f044c8fde133b9d",
       "importedBy": []
     },
     {
@@ -24996,6 +24996,11 @@
     },
     {
       "file": "src/App.tsx",
+      "line": 45,
+      "name": "DEV"
+    },
+    {
+      "file": "src/App.tsx",
       "line": 780,
       "name": "DEV"
     },
@@ -25013,6 +25018,11 @@
       "file": "src/lib/sentry.ts",
       "line": 55,
       "name": "VITE_SENTRY_DSN"
+    },
+    {
+      "file": "src/main.tsx",
+      "line": 26,
+      "name": "DEV"
     },
     {
       "file": "vite.config.ts",

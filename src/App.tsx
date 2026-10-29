@@ -42,7 +42,7 @@ function lazyWithRetry<T extends React.ComponentType<any>>(
                 attempt(remaining - 1);
               }, interval);
             } else {
-              if (typeof window !== 'undefined' && isFetchError) {
+              if (!import.meta.env.DEV && typeof window !== 'undefined' && isFetchError) {
                 try {
                   const flag = 'bse_chunk_retry_reload';
                   const last = sessionStorage.getItem(flag);
