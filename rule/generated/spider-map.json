@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "d1bf5ea977b4bc0a3ae7bc411701e05f757e54a99836142dfb37ba78de9f9d7e",
+  "sourceDigest": "4f55b37604969c94a195896a261aa1684fac78a68f4d4723d43422a393d1eb3d",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -730,6 +730,7 @@
         "server/database/notificationDao.ts",
         "server/database/paymentEntitlementsDao.ts",
         "server/database/paymentOrdersDao.ts",
+        "server/database/settingsDao.ts",
         "server/database/telegramLinksDao.ts",
         "server/database/usersDao.ts",
         "server/database/watchlistDao.ts",
@@ -764,7 +765,7 @@
     },
     {
       "path": "server/database/settingsDao.ts",
-      "sha256": "64cc07b3049991ca6b798228753e762fb1f02cfd884ece7c31320f64f16d7689",
+      "sha256": "8770f1c46f7f2e25c60c9538f0eb47219228cfc505a66769ae95bd30a7f9d52b",
       "importedBy": [
         "server/api/routes.ts",
         "server/api/telegramLinks.ts",
@@ -776,7 +777,8 @@
         "server/services/monitor.ts",
         "server/services/resultsCalendarService.ts",
         "server/services/stockNewsService.ts",
-        "server/services/telegram.ts"
+        "server/services/telegram.ts",
+        "server/tests/adminPin.test.ts"
       ]
     },
     {
@@ -818,6 +820,7 @@
         "server/services/indexNow.ts",
         "server/services/resultsCalendarService.ts",
         "server/services/stockNewsService.ts",
+        "server/tests/adminPin.test.ts",
         "server/tests/adrInbox.test.ts",
         "server/tests/aiAuthorize.test.ts",
         "server/tests/aiWatchlistConcurrency.test.ts",
@@ -902,8 +905,17 @@
       ]
     },
     {
+      "path": "server/security/adminPin.ts",
+      "sha256": "44d9d7a07561639e3bf5fe1d4cf202ddbfbbf1e3738de37caf22a617a09ac66b",
+      "importedBy": [
+        "server/database/settingsDao.ts",
+        "server/security/auth.ts",
+        "server/tests/adminPin.test.ts"
+      ]
+    },
+    {
       "path": "server/security/auth.ts",
-      "sha256": "8330e6988d8a8e85ebba52806a5657033e95fcd239cb326bd49ac96d08917a61",
+      "sha256": "cdb09c75dda5f2d3958f20be6716716ecd924b56d4d563db7ac8744a4ace6e63",
       "importedBy": [
         "server.ts",
         "server/ai/http.ts",
@@ -914,6 +926,7 @@
         "server/api/referrals.ts",
         "server/api/routes.ts",
         "server/api/telegramLinks.ts",
+        "server/tests/adminPin.test.ts",
         "server/tests/auditSecurity.test.ts",
         "server/tests/authIdentity.test.ts",
         "server/tests/deepAuditAuth.test.ts",
@@ -1491,6 +1504,11 @@
     {
       "path": "server/tests/accountProtection.test.ts",
       "sha256": "4bac77072b34dd2201e78fdd2ce5fa76549b68e0bff77bd4ee206a3cb9dc1401",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/adminPin.test.ts",
+      "sha256": "a97c53a00039689808c63995d1500089dfc16bd8319ac2ab86b3c984b59f7cf7",
       "importedBy": []
     },
     {
@@ -6530,6 +6548,18 @@
       "line": 2
     },
     {
+      "source": "server/database/settingsDao.ts",
+      "target": "server/database/paymentStore.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "server/database/settingsDao.ts",
+      "target": "server/security/adminPin.ts",
+      "kind": "import",
+      "line": 5
+    },
+    {
       "source": "server/database/telegramLinksDao.ts",
       "target": "server/database/supabase.ts",
       "kind": "import",
@@ -6652,6 +6682,12 @@
     {
       "source": "server/security/auth.ts",
       "target": "server/database/settingsDao.ts",
+      "kind": "import",
+      "line": 4
+    },
+    {
+      "source": "server/security/auth.ts",
+      "target": "server/security/adminPin.ts",
       "kind": "import",
       "line": 5
     },
@@ -8016,6 +8052,30 @@
       "target": "server/security/accountRateLimiter.ts",
       "kind": "dynamic",
       "line": 18
+    },
+    {
+      "source": "server/tests/adminPin.test.ts",
+      "target": "server/security/adminPin.ts",
+      "kind": "import",
+      "line": 8
+    },
+    {
+      "source": "server/tests/adminPin.test.ts",
+      "target": "server/database/settingsDao.ts",
+      "kind": "dynamic",
+      "line": 14
+    },
+    {
+      "source": "server/tests/adminPin.test.ts",
+      "target": "server/database/supabase.ts",
+      "kind": "dynamic",
+      "line": 15
+    },
+    {
+      "source": "server/tests/adminPin.test.ts",
+      "target": "server/security/auth.ts",
+      "kind": "dynamic",
+      "line": 16
     },
     {
       "source": "server/tests/adr.test.ts",
@@ -14302,7 +14362,8 @@
         "supabase/migrations/20261024193046_deep_audit_security.sql",
         "server/api/telegramLinks.ts",
         "server/database/telegramLinksDao.ts",
-        "scripts/verify-deep-audit-staging.sql"
+        "scripts/verify-deep-audit-staging.sql",
+        "server/security/adminPin.ts"
       ],
       "tests": [
         "server/tests/authIdentity.test.ts",
@@ -14313,7 +14374,8 @@
         "server/tests/userSkeletonPrivileges.test.ts",
         "server/tests/deepAuditSql.test.ts",
         "server/tests/deepAuditAuth.test.ts",
-        "server/tests/clientIpSpoofing.test.ts"
+        "server/tests/clientIpSpoofing.test.ts",
+        "server/tests/adminPin.test.ts"
       ],
       "reason": "Verified token → server session → current durable profile → route authorization. Browser roles are display state; never authority. The server-only ensure_user_skeleton RPC denies browser EXECUTE, uses SECURITY INVOKER and a fixed empty search path with a qualified users relation. Its narrow production permission repair preserves existing paid rows on retry."
     },
@@ -18449,7 +18511,7 @@
     },
     {
       "file": "server/security/auth.ts",
-      "line": 503,
+      "line": 504,
       "receiver": "authRouter",
       "method": "POST",
       "path": "/login",
@@ -18461,7 +18523,7 @@
     },
     {
       "file": "server/security/auth.ts",
-      "line": 645,
+      "line": 625,
       "receiver": "authRouter",
       "method": "POST",
       "path": "/verify-pin",
@@ -18473,7 +18535,7 @@
     },
     {
       "file": "server/security/auth.ts",
-      "line": 777,
+      "line": 736,
       "receiver": "authRouter",
       "method": "POST",
       "path": "/logout",
@@ -18483,12 +18545,38 @@
     },
     {
       "file": "server/security/auth.ts",
-      "line": 782,
+      "line": 741,
       "receiver": "authRouter",
       "method": "GET",
       "path": "/status",
       "middleware": [
         "<handler>"
+      ]
+    },
+    {
+      "file": "server/tests/adminPin.test.ts",
+      "line": 19,
+      "receiver": "app",
+      "method": "USE",
+      "path": "express.json()",
+      "middleware": []
+    },
+    {
+      "file": "server/tests/adminPin.test.ts",
+      "line": 20,
+      "receiver": "app",
+      "method": "USE",
+      "path": "(req, _res, next) => { (req as any).user = { uid: 'verified-owner', email: 'dahiyarahul023@gmail.com', emailVerified: true, isAnonymous: false }; next(); }",
+      "middleware": []
+    },
+    {
+      "file": "server/tests/adminPin.test.ts",
+      "line": 21,
+      "receiver": "app",
+      "method": "USE",
+      "path": "/auth",
+      "middleware": [
+        "authRouter"
       ]
     },
     {
@@ -19169,6 +19257,12 @@
       "line": 127,
       "function": "fetch",
       "target": "url"
+    },
+    {
+      "file": "server/tests/adminPin.test.ts",
+      "line": 23,
+      "function": "fetch",
+      "target": "`http://127.0.0.1:${(server.address() as any).port}/auth/${route}`"
     },
     {
       "file": "server/tests/adrInbox.test.ts",
@@ -21388,14 +21482,26 @@
     },
     {
       "file": "server/database/settingsDao.ts",
-      "line": 65,
+      "line": 68,
       "function": "sb\n    .from",
       "key": "'settings'"
     },
     {
       "file": "server/database/settingsDao.ts",
-      "line": 136,
+      "line": 139,
       "function": "getSupabase()\n      .from",
+      "key": "'settings'"
+    },
+    {
+      "file": "server/database/settingsDao.ts",
+      "line": 167,
+      "function": "getSupabase().from",
+      "key": "'settings'"
+    },
+    {
+      "file": "server/database/settingsDao.ts",
+      "line": 168,
+      "function": "getSupabase().from",
       "key": "'settings'"
     },
     {
@@ -23525,43 +23631,48 @@
     },
     {
       "file": "server/database/settingsDao.ts",
-      "line": 28,
+      "line": 31,
       "name": "TELEGRAM_BOT_TOKEN"
     },
     {
       "file": "server/database/settingsDao.ts",
-      "line": 29,
+      "line": 32,
       "name": "TELEGRAM_CHAT_ID"
-    },
-    {
-      "file": "server/database/settingsDao.ts",
-      "line": 50,
-      "name": "TELEGRAM_BOT_TOKEN"
-    },
-    {
-      "file": "server/database/settingsDao.ts",
-      "line": 51,
-      "name": "TELEGRAM_BOT_TOKEN"
     },
     {
       "file": "server/database/settingsDao.ts",
       "line": 53,
-      "name": "TELEGRAM_CHAT_ID"
-    },
-    {
-      "file": "server/database/settingsDao.ts",
-      "line": 54,
-      "name": "TELEGRAM_CHAT_ID"
-    },
-    {
-      "file": "server/database/settingsDao.ts",
-      "line": 116,
       "name": "TELEGRAM_BOT_TOKEN"
     },
     {
       "file": "server/database/settingsDao.ts",
-      "line": 119,
+      "line": 54,
+      "name": "TELEGRAM_BOT_TOKEN"
+    },
+    {
+      "file": "server/database/settingsDao.ts",
+      "line": 56,
       "name": "TELEGRAM_CHAT_ID"
+    },
+    {
+      "file": "server/database/settingsDao.ts",
+      "line": 57,
+      "name": "TELEGRAM_CHAT_ID"
+    },
+    {
+      "file": "server/database/settingsDao.ts",
+      "line": 119,
+      "name": "TELEGRAM_BOT_TOKEN"
+    },
+    {
+      "file": "server/database/settingsDao.ts",
+      "line": 122,
+      "name": "TELEGRAM_CHAT_ID"
+    },
+    {
+      "file": "server/database/settingsDao.ts",
+      "line": 172,
+      "name": "NODE_ENV"
     },
     {
       "file": "server/database/supabase.ts",
@@ -23735,52 +23846,52 @@
     },
     {
       "file": "server/security/auth.ts",
-      "line": 545,
+      "line": 546,
       "name": "NODE_ENV"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 545,
+      "line": 546,
       "name": "RECAPTCHA_ENFORCE"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 586,
+      "line": 572,
       "name": "APP_PIN"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 587,
+      "line": 576,
       "name": "APP_PIN"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 618,
+      "line": 598,
       "name": "NODE_ENV"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 682,
+      "line": 662,
       "name": "NODE_ENV"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 682,
+      "line": 662,
       "name": "RECAPTCHA_ENFORCE"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 723,
+      "line": 688,
       "name": "APP_PIN"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 724,
+      "line": 692,
       "name": "APP_PIN"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 754,
+      "line": 713,
       "name": "NODE_ENV"
     },
     {
@@ -24111,6 +24222,106 @@
     {
       "file": "server/tests/accountProtection.test.ts",
       "line": 9,
+      "name": "SUPABASE_SERVICE_ROLE_KEY"
+    },
+    {
+      "file": "server/tests/adminPin.test.ts",
+      "line": 11,
+      "name": "SUPABASE_URL"
+    },
+    {
+      "file": "server/tests/adminPin.test.ts",
+      "line": 11,
+      "name": "SUPABASE_SERVICE_ROLE_KEY"
+    },
+    {
+      "file": "server/tests/adminPin.test.ts",
+      "line": 12,
+      "name": "RECAPTCHA_ENFORCE"
+    },
+    {
+      "file": "server/tests/adminPin.test.ts",
+      "line": 12,
+      "name": "FIREBASE_APPCHECK_ENFORCE"
+    },
+    {
+      "file": "server/tests/adminPin.test.ts",
+      "line": 13,
+      "name": "NODE_ENV"
+    },
+    {
+      "file": "server/tests/adminPin.test.ts",
+      "line": 13,
+      "name": "JWT_SECRET"
+    },
+    {
+      "file": "server/tests/adminPin.test.ts",
+      "line": 31,
+      "name": "APP_PIN"
+    },
+    {
+      "file": "server/tests/adminPin.test.ts",
+      "line": 41,
+      "name": "APP_PIN"
+    },
+    {
+      "file": "server/tests/adminPin.test.ts",
+      "line": 45,
+      "name": "APP_PIN"
+    },
+    {
+      "file": "server/tests/adminPin.test.ts",
+      "line": 46,
+      "name": "APP_PIN"
+    },
+    {
+      "file": "server/tests/adminPin.test.ts",
+      "line": 56,
+      "name": "NODE_ENV"
+    },
+    {
+      "file": "server/tests/adminPin.test.ts",
+      "line": 58,
+      "name": "NODE_ENV"
+    },
+    {
+      "file": "server/tests/adminPin.test.ts",
+      "line": 62,
+      "name": "SUPABASE_URL"
+    },
+    {
+      "file": "server/tests/adminPin.test.ts",
+      "line": 62,
+      "name": "SUPABASE_SERVICE_ROLE_KEY"
+    },
+    {
+      "file": "server/tests/adminPin.test.ts",
+      "line": 68,
+      "name": "SUPABASE_URL"
+    },
+    {
+      "file": "server/tests/adminPin.test.ts",
+      "line": 68,
+      "name": "SUPABASE_SERVICE_ROLE_KEY"
+    },
+    {
+      "file": "server/tests/adminPin.test.ts",
+      "line": 71,
+      "name": "SUPABASE_URL"
+    },
+    {
+      "file": "server/tests/adminPin.test.ts",
+      "line": 71,
+      "name": "SUPABASE_SERVICE_ROLE_KEY"
+    },
+    {
+      "file": "server/tests/adminPin.test.ts",
+      "line": 95,
+      "name": "SUPABASE_URL"
+    },
+    {
+      "file": "server/tests/adminPin.test.ts",
+      "line": 95,
       "name": "SUPABASE_SERVICE_ROLE_KEY"
     },
     {

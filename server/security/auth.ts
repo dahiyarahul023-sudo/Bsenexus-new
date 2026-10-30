@@ -1,8 +1,8 @@
 import express from 'express';
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import rateLimit from 'express-rate-limit';
-import { getSettings, saveSettings } from '../database/settingsDao.js';
+import { getSettings, saveAdminPinHash } from '../database/settingsDao.js';
+import { verifyAndMigrateAdminPin } from './adminPin.js';
 import { addLog } from '../database/logDao.js';
 import { getFirebaseAuth, getFirebaseAppCheck } from './firebaseAdmin.js';
 import { getUserProfile, claimTrialAtomically } from '../database/usersDao.js';
@@ -495,6 +495,7 @@ authRouter.post('/session', authRateLimiter, requireAppCheck, async (req, res) =
 const authAttempt = (handler: (req: express.Request, res: express.Response) => Promise<any>) => (req: express.Request, res: express.Response, next: express.NextFunction) => {
   handler(req, res).catch(error => {
     if (isAccountProtectionUnavailable(error)) return res.status(503).json({ success: false, error: 'Sign-in protection is temporarily unavailable. Please retry.' });
+    if (isPaymentStoreUnavailable(error)) return res.status(503).json({ success: false, error: 'PIN verification is temporarily unavailable. Please retry.' });
     next(error);
   });
 };
@@ -568,32 +569,11 @@ authRouter.post('/login', authRateLimiter, requireAppCheck, authAttempt(async (r
   }
 
   const strPin = String(pin).trim();
-  let isValid = false;
-
-  // 1. If PIN is stored in settings as hash or plain
-  if (settings.appPinHash) {
-    try {
-      if (settings.appPinHash.startsWith('$2a$') || settings.appPinHash.startsWith('$2b$')) {
-        isValid = await bcrypt.compare(strPin, settings.appPinHash);
-      } else {
-        isValid = settings.appPinHash === strPin;
-      }
-    } catch {
-      isValid = settings.appPinHash === strPin;
-    }
-  } 
-  // 2. If APP_PIN environment variable is set
-  else if (process.env.APP_PIN) {
-    isValid = strPin === process.env.APP_PIN.trim();
-    if (isValid) {
-      await saveSettings({ appPinHash: bcrypt.hashSync(strPin, 10) });
-    }
-  } 
-  // 3. Fail closed if no PIN configured
-  else {
+  if (!settings.appPinHash && !process.env.APP_PIN) {
     await simulateCredentialVerificationDelay();
     return res.status(400).json({ success: false, error: "Master PIN is not configured yet. Please configure APP_PIN in environment or initialize in settings." });
   }
+  const isValid = await verifyAndMigrateAdminPin(strPin, settings.appPinHash, process.env.APP_PIN, hash => saveAdminPinHash(hash, strPin));
 
   if (isValid) {
     // Authentication succeeded: safely reset account protection counter
@@ -705,32 +685,11 @@ authRouter.post('/verify-pin', authRateLimiter, requireAppCheck, authAttempt(asy
   }
 
   const strPin = String(pin).trim();
-  let isValid = false;
-
-  // 1. If PIN is stored in settings as hash or plain
-  if (settings.appPinHash) {
-    try {
-      if (settings.appPinHash.startsWith('$2a$') || settings.appPinHash.startsWith('$2b$')) {
-        isValid = await bcrypt.compare(strPin, settings.appPinHash);
-      } else {
-        isValid = settings.appPinHash === strPin;
-      }
-    } catch {
-      isValid = settings.appPinHash === strPin;
-    }
-  } 
-  // 2. If APP_PIN environment variable is set
-  else if (process.env.APP_PIN) {
-    isValid = strPin === process.env.APP_PIN.trim();
-    if (isValid) {
-      await saveSettings({ appPinHash: bcrypt.hashSync(strPin, 10) });
-    }
-  } 
-  // 3. Fail closed if no PIN configured
-  else {
+  if (!settings.appPinHash && !process.env.APP_PIN) {
     await simulateCredentialVerificationDelay();
     return res.status(400).json({ success: false, error: "Master PIN is not configured yet. Please configure APP_PIN in environment or initialize in settings." });
   }
+  const isValid = await verifyAndMigrateAdminPin(strPin, settings.appPinHash, process.env.APP_PIN, hash => saveAdminPinHash(hash, strPin));
 
   if (isValid) {
     await resetAccountProtection(accountKey);
