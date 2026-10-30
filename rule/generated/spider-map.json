@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "b5511a653f16127d6387cccde4d14403557a50d4f45ff2c47f94504cf898c4b6",
+  "sourceDigest": "c37e36d7dd0fd2cfd30df1761eb8a047e29fc37fc1d1643a1f064eb51ff1d4be",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -1621,6 +1621,11 @@
     {
       "path": "server/tests/authIdentity.test.ts",
       "sha256": "b1993622fe9d542759663a92443cc6fc7040a83c854a2a77b42b0b9cb57cf149",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/authLimitsSql.test.ts",
+      "sha256": "40a5a5a479ea2a8006dbd3c49b4935ddaba400f87b8d45c414a41101805d9dd2",
       "importedBy": []
     },
     {
@@ -4841,6 +4846,11 @@
     {
       "path": "supabase/migrations/20261026192403_gift_pro_access.sql",
       "sha256": "f47b3bfe703ec404be4577191bcb372817ebc361199f2c8ae6916b2a42401560",
+      "importedBy": []
+    },
+    {
+      "path": "supabase/migrations/20261030120109_auth_account_limits_schema.sql",
+      "sha256": "2123fa915d231e887e51bcc1eab19b0bcc9c1a558a2fefce1fb4a54fb3352800",
       "importedBy": []
     },
     {
@@ -14302,7 +14312,8 @@
         "supabase/migrations/20261024193046_deep_audit_security.sql",
         "server/api/telegramLinks.ts",
         "server/database/telegramLinksDao.ts",
-        "scripts/verify-deep-audit-staging.sql"
+        "scripts/verify-deep-audit-staging.sql",
+        "supabase/migrations/20261030120109_auth_account_limits_schema.sql"
       ],
       "tests": [
         "server/tests/authIdentity.test.ts",
@@ -14313,7 +14324,8 @@
         "server/tests/userSkeletonPrivileges.test.ts",
         "server/tests/deepAuditSql.test.ts",
         "server/tests/deepAuditAuth.test.ts",
-        "server/tests/clientIpSpoofing.test.ts"
+        "server/tests/clientIpSpoofing.test.ts",
+        "server/tests/authLimitsSql.test.ts"
       ],
       "reason": "Verified token → server session → current durable profile → route authorization. Browser roles are display state; never authority. The server-only ensure_user_skeleton RPC denies browser EXECUTE, uses SECURITY INVOKER and a fixed empty search path with a qualified users relation. Its narrow production permission repair preserves existing paid rows on retry."
     },
@@ -14568,14 +14580,16 @@
         "supabase/migrations/005_user_notification_inbox_clear.sql",
         "supabase/migrations/006_durable_referrals.sql",
         "server/database/indexNowDao.ts",
-        "supabase/migrations/20261021133613_indexnow_url_cooldown.sql"
+        "supabase/migrations/20261021133613_indexnow_url_cooldown.sql",
+        "supabase/migrations/20261030120109_auth_account_limits_schema.sql"
       ],
       "tests": [
         "server/tests/storageQuotaSwitch.test.ts",
         "server/tests/startupRecovery.test.ts",
         "server/tests/productionAudit.test.ts",
         "server/tests/indexNowSql.test.ts",
-        "server/tests/studioMigrationReview.test.ts"
+        "server/tests/studioMigrationReview.test.ts",
+        "server/tests/authLimitsSql.test.ts"
       ],
       "reason": "Supabase and privileged RPCs are server-only. Cache/fallback behavior varies per DAO: local success never proves durable payment success. Review migrations with caller changes. IndexNow public-URL claims use service-role-only RLS/invoker RPCs and reserve a durable 24-hour cooldown before HTTP; browser grants and local fallback authority are absent."
     },
