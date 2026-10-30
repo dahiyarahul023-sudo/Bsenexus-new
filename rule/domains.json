@@ -128,7 +128,8 @@
         "supabase/migrations/20261019065115_telegram_result_delivery.sql",
         "server/ai/filingSummary.ts",
         "server/ai/tools.ts",
-        "server/ai/filingText.ts"
+        "server/ai/filingText.ts",
+        "server/api/pdfOpen.ts"
       ],
       "tests": [
         "server/tests/aiGateway.test.ts",
@@ -137,7 +138,8 @@
         "server/tests/telegramResults.test.ts",
         "server/tests/telegramResultSql.test.ts",
         "server/tests/telegramResultDocument.test.ts",
-        "server/tests/mcpPdfSummary.test.ts"
+        "server/tests/mcpPdfSummary.test.ts",
+        "server/tests/pdfOpen.test.ts"
       ],
       "reason": "Authenticated request → quota → allowlisted document fetch → provider budget/fallback → response/cache. Retrieved documents are untrusted content, not instructions. Telegram filing delivery is BSE-only. Strict result summaries extract literal PDF rows, headings and units, validate numeric order and period/basis evidence, then compute YoY/QoQ and bounded prose in code. Unreadable or invalid evidence suppresses the AI reply, not the original filing alert. Website prose cache is separate; versioned summary keys retain unchanged per-chat delivery receipts. Site-requested AI remains independent. The public BSE proxy retains its original BSE-only allowlist. Explicit connector PDF analysis uses the existing gateway and bounded official-document fetcher without changing website/Telegram fallback policy. Evidence stores language, coverage, input truncation and document hash; provider/extraction/output failure refunds the generation reservation. Grounded strict result summaries persist the selected website language field after validation. Text-provider failover is independent of the legacy Gemini breaker; provider quotas, PDF evidence and Telegram delivery claims remain owners."
     },
