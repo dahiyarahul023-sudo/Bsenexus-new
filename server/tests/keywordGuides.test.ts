@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
+import { scriptSafeJson } from '../utils/helpers.js';
 import { KEYWORD_GUIDES, getKeywordGuide, KEYWORD_GUIDE_CSS } from '../../src/content/keywordGuides.js';
 import { getMarketGuideBySlug, getIndexableMarketGuides, FALLBACK_MARKET_GUIDES, getGuidePrimaryAction } from '../services/marketGuidesService.js';
 
@@ -13,7 +14,7 @@ const node = tree.statements.find(item => ts.isFunctionDeclaration(item) && item
 assert.ok(node, 'server guide renderer exists');
 const rendererCode = ts.transpileModule(node.getText(tree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
 const escape = (value: unknown) => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]!));
-const context = vm.createContext({ getKeywordGuide, KEYWORD_GUIDE_CSS, getGuidePrimaryAction, escapeHtmlText: escape, escapeHtmlAttr: escape, getRelatedCompaniesForGuide: () => [], AI_STUDIO_REDIRECT_SCRIPT: '' });
+const context = vm.createContext({ getKeywordGuide, KEYWORD_GUIDE_CSS, getGuidePrimaryAction, scriptSafeJson, escapeHtmlText: escape, escapeHtmlAttr: escape, getRelatedCompaniesForGuide: () => [], AI_STUDIO_REDIRECT_SCRIPT: '' });
 vm.runInContext(rendererCode, context);
 
 for (const guide of KEYWORD_GUIDES) {

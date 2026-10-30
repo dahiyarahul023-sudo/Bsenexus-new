@@ -6,7 +6,7 @@ import { getFirebaseAuth } from '../security/firebaseAdmin.js';
 import { getFirebaseIdentity } from '../security/firebaseIdentity.js';
 import { giftCommand } from '../database/giftAccessDao.js';
 import { getAccessProfile } from '../services/subscriptionAccess.js';
-import { giftActionInput, giftCreateInput, giftRedeemInput, giftsEnabled, hashGiftToken, newGiftToken } from '../services/giftAccessPolicy.js';
+import { giftActionInput, giftDeliveryInput, giftCreateInput, giftRedeemInput, giftsEnabled, hashGiftToken, newGiftToken } from '../services/giftAccessPolicy.js';
 import { isResendConfigured, sendReceiptEmail, escHtml } from '../services/resendMailer.js';
 
 export function buildGiftEmail(invite: { validityDays: number; claimUntil: number }, token: string) {
@@ -39,11 +39,18 @@ export function createGiftAccessRouter(overrides: Partial<{
   router.use((req, res, next) => {
     if (req.method === 'GET') return next();
     const origin = req.get('Origin') || '';
-    const allowed = origin === 'https://bsenexus.in' || (process.env.NODE_ENV !== 'production' && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin));
+    const allowed = origin === 'https://bsenexus.in' || origin === 'https://bse-studio.ai.studio' || /^https:\/\/ais-(dev|pre)-[a-z0-9-]+\.run\.app$/.test(origin) || (process.env.NODE_ENV !== 'production' && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin));
     if (!allowed || req.get('X-Gift-Action') !== '1') return res.status(403).json({ success: false, error: 'Open this action on BSE Nexus.' });
     next();
   });
   const failure = (res: express.Response, err: unknown) => res.status(err instanceof z.ZodError ? 400 : 503).json({ success: false, error: err instanceof z.ZodError ? 'Check the email, duration and request details.' : 'Gift access could not be confirmed. Refresh the list before retrying a change.' });
+  async function deliver(actor: string, result: any, token: string, key: string, method: 'link' | 'email') {
+    if (!result.shouldSend) return result;
+    // Return only the verifier just committed by this operation. A duplicate
+    // request cannot return its newly generated (but never stored) token.
+    if (method === 'link') return { ...result, activationUrl: 'https://bsenexus.in/activate-gift#token=' + token };
+    return send(actor, result, token, key);
+  }
   async function send(actor: string, result: any, token: string, key: string) {
     if (!result.shouldSend) return result;
     let delivery = 'unknown';
@@ -64,21 +71,23 @@ export function createGiftAccessRouter(overrides: Partial<{
   });
   router.post('/admin', requireAdmin, async (req, res) => {
     try {
-      if (!dep.configured()) return res.status(503).json({ success: false, error: 'Configure the verified BSE Nexus email sender first.' });
       const input = giftCreateInput.parse(req.body), token = newGiftToken(), actor = (req as any).user.uid;
+      if (input.deliveryMethod === 'email' && !dep.configured()) return res.status(503).json({ success: false, error: 'Email sender is unavailable. Choose Generate link to share the invitation yourself.' });
       const result = await dep.command('create', actor, { ...input, id: input.requestId, hash: hashGiftToken(token) });
       if (result.error) return res.status(429).json({ success: false, error: 'Invitation limit reached: up to 50 new invitations per 24 hours.' });
-      res.json({ success: true, ...(await send(actor, result, token, input.requestId)) });
+      res.json({ success: true, ...(await deliver(actor, result, token, input.requestId, input.deliveryMethod)) });
     } catch (err) { failure(res, err); }
   });
   for (const action of ['resend', 'revoke'] as const) router.post('/admin/:id/' + action, requireAdmin, async (req, res) => {
     try {
-      const id = z.string().uuid().parse(req.params.id), input = giftActionInput.parse(req.body);
-      if (action === 'resend' && !dep.configured()) return res.status(503).json({ success: false, error: 'Email sender is unavailable.' });
+      const id = z.string().uuid().parse(req.params.id);
+      const input = action === 'resend' ? giftDeliveryInput.parse(req.body) : giftActionInput.parse(req.body);
+      const method = 'deliveryMethod' in input && input.deliveryMethod === 'link' ? 'link' : 'email';
+      if (action === 'resend' && method === 'email' && !dep.configured()) return res.status(503).json({ success: false, error: 'Email sender is unavailable. Generate a new link to share it yourself.' });
       const token = newGiftToken(), actor = (req as any).user.uid;
       const result = await dep.command(action, actor, { id, requestId: input.requestId, hash: hashGiftToken(token) });
       if (result.error) return res.status(result.error === 'wait' ? 429 : 409).json({ success: false, error: result.error === 'wait' ? 'Wait one minute before resending.' : 'This invitation is unavailable for that action. Refresh the list.' });
-      res.json({ success: true, ...(action === 'resend' ? await send(actor, result, token, input.requestId) : result) });
+      res.json({ success: true, ...(action === 'resend' ? await deliver(actor, result, token, input.requestId, method) : result) });
     } catch (err) { failure(res, err); }
   });
   for (const action of ['preview', 'claim'] as const) router.post('/' + action, async (req, res) => {

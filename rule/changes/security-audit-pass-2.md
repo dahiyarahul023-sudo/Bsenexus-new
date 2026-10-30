@@ -40,3 +40,17 @@
 | DEP-1 | Unknown | Not done | `npm audit` could not run in this session |
 | OAUTH-1 | Low | Open | Dynamic client registration is public; `client_name` is caller-chosen (80 chars) so a hostile app can look like a well-known one on the consent screen; make sure the consent UI shows the callback origin prominently |
 | WF-1 | Info | Open | Workflow actions are pinned by tag, not commit SHA |
+
+## Review and merge preparation — 30 Oct 2026
+
+- Reviewed PR head `391dcf191e6e147c22d862813a380f05e87f6742` against current main `34952ee7652ffd83ee448366c5d656ca2327669b`. The initial merge attempt returned HTTP 405 (merge conflicts), despite earlier cached metadata reporting mergeable.
+- Preserved current main and applied the original source patch cleanly. Regenerated both spider-map outputs from the combined source rather than selecting either conflicting generated version.
+- Consumer compatibility: all original JSON-LD renderer changes retained; newer Gift Pro/server changes on main preserved. No API, schema, entitlement, or background-job policy changes.
+- The full suite exposed 13 failures because VM renderer fixtures in `keywordGuides.test.ts` and `sevenFixes.test.ts` lacked the newly imported helper. Added the real `scriptSafeJson` to those test contexts; existing assertions are unchanged.
+- Local verification: focused JSON-LD tests 3/3; JSON-LD plus SEO prehydration tests 13/13; guide/company fixture checks pass; full `npm test` 873/873 (0 skipped); `npm run lint` passes; `npm run build --ignore-scripts` passes; map generation/check and map tests 6/6 pass.
+- Environment limitation: validation reused an existing dependency installation (TypeScript 5.8.3); a fresh `npm ci` was not rerun. Local success is separate from GitHub CI.
+- Original GitHub run 40680561084 failed all four jobs: npm installation rejected a missing lockfile, the Bun job could not move that file, and subsequent test/build commands failed on missing packages. No green GitHub CI is claimed.
+- `npm audit --json --fetch-retries=0 --fetch-timeout=10000` completed with exit 1 and reported 4 vulnerabilities: body-parser and zod high; fast-uri and vite moderate. No dependency upgrade was included in this bounded XSS fix.
+- Remaining verification: clean installation and GitHub checks for the updated commit, dependency remediation/re-audit, deployed rendered-page XSS/JSON-LD smoke test, and cache expiry or explicit invalidation after deployment.
+- Delivery at preparation time: changes locally verified; merge confirmation must come from GitHub. No deployment, production database action, or live-browser validation performed.
+

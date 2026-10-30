@@ -6455,9 +6455,9 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   next(err);
 });
 
-// PERF-006 (1 Oct 2026 audit): Track all setInterval handles for graceful shutdown.
+// PERF-006 (1 Oct 2026 audit): Track all setInterval/setTimeout handles for graceful shutdown.
 // Cloud Run sends SIGTERM ~10s before killing the instance. Without clearing
-// these intervals, in-flight work (Telegram dispatches, BSE polls) is cut mid-
+// these timers, in-flight work (Telegram dispatches, BSE polls) is cut mid-
 // operation, and any state that should have been persisted is lost.
 const trackedIntervals: NodeJS.Timeout[] = [];
 function trackInterval(handle: NodeJS.Timeout): NodeJS.Timeout {
@@ -6465,103 +6465,109 @@ function trackInterval(handle: NodeJS.Timeout): NodeJS.Timeout {
   return handle;
 }
 
-// Live announcements poller: /api/cron/poll-announcements is the primary external cron trigger.
-// As a safety net to prevent feed stalls if Cloud Scheduler is paused, misconfigured, or delayed,
-// Attempt every 60s while the container has CPU. The monitor skips running cycles;
-// Cloud Scheduler is still required when request-based Cloud Run is idle.
-trackInterval(setInterval(async () => {
-  // Reuse the watchdog; intake has its own 60s single-flight guard and never dispatches alerts.
-  void refreshRadarIntake();
-  void refreshRadarPriceSnapshots();
-  void processAdrAlerts().catch(() => console.warn("[ADR] Morning alert pass unavailable"));
-  try {
-    await processAnnouncements();
-  } catch (err: any) {
-    console.warn("[PollerWatchdog] Notice:", err?.message || err);
-  }
-}, 60 * 1000));
+let backgroundWorkersStarted = false;
+function startBackgroundWorkers() {
+  if (backgroundWorkersStarted) return;
+  backgroundWorkersStarted = true;
 
-// High-Frequency Real-Time Poller:
-// Continuous 15-second polling cycle delivers live filings and sub-15s Telegram push alerts.
-// Uses getBseFeedStaleness() to ensure requests are not fired if a cycle completed <14s ago
-// or if BSE is flagged blocked. The monitor's process-local mutex skips running cycles automatically.
-trackInterval(setInterval(async () => {
-  try {
-    const { blocked, lastSuccessfulFetchMs } = getBseFeedStaleness();
-    if (!blocked && (Date.now() - lastSuccessfulFetchMs >= 14_000)) {
+  // Live announcements poller: /api/cron/poll-announcements is the primary external cron trigger.
+  // As a safety net to prevent feed stalls if Cloud Scheduler is paused, misconfigured, or delayed,
+  // Attempt every 60s while the container has CPU. The monitor skips running cycles;
+  // Cloud Scheduler is still required when request-based Cloud Run is idle.
+  trackInterval(setInterval(async () => {
+    // Reuse the watchdog; intake has its own 60s single-flight guard and never dispatches alerts.
+    void refreshRadarIntake();
+    void refreshRadarPriceSnapshots();
+    void processAdrAlerts().catch(() => console.warn("[ADR] Morning alert pass unavailable"));
+    try {
       await processAnnouncements();
+    } catch (err: any) {
+      console.warn("[PollerWatchdog] Notice:", err?.message || err);
     }
-  } catch (err: any) {
-    console.warn("[FastPoller] Notice:", err?.message || err);
-  }
-}, 15 * 1000));
+  }, 60 * 1000));
 
-// Independent Storage Capacity & Pruning (Every 15 minutes, completely decoupled from critical poller path)
-setTimeout(() => {
-  pruneAndCheckStorageCapacity().catch(e => console.error("Initial storage check err:", e.message));
-}, 10000);
-trackInterval(setInterval(() => {
-  pruneAndCheckStorageCapacity().catch(e => console.error("Periodic storage check err:", e.message));
-}, 15 * 60 * 1000));
-
-// Results Calendar Sync, Watchlists Init & Historical Sync.
-// STAGGERED on boot: firing all BSE-heavy jobs at once (cold start burst) trips
-// BSE's Akamai rate-limiting and gets our cloud IP 403-blocked right after every
-// deploy. Light/local jobs run at +3s; BSE network jobs are spread over ~3 min.
-setTimeout(() => {
-  initWatchlists().catch(e => console.info("[WatchlistDao] Initial watchlist check:", e?.message || e));
-  updateTelegramHealth().catch(e => console.error("Initial telegram health check err:", e.message));
-}, 3000);
-setTimeout(() => {
-  fetchAndSyncResultsCalendar().catch(e => console.error("Initial results calendar sync err:", e.message));
-}, 45 * 1000);
-setTimeout(() => {
-  backfillRecentAnnouncements().catch(e => console.error("Initial backfill announcements err:", e.message));
-}, 100 * 1000);
-setTimeout(() => {
-  // Heaviest job (per-stock historical walk): runs last, well after the poller
-  // has warmed up and the boot backfill has settled.
-  syncWatchlistHistoricalData().catch(e => console.error("Initial watchlist historical sync err:", e.message));
-}, 170 * 1000);
-trackInterval(setInterval(() => {
-  fetchAndSyncResultsCalendar(true).catch(e => console.error("Periodic results calendar sync err:", e.message));
-  syncWatchlistHistoricalData().catch(e => console.error("Periodic watchlist historical sync err:", e.message));
-}, 24 * 60 * 60 * 1000));
-
-// 24/7 Background Multi-Source RSS News Worker (Runs every 3 minutes to auto-dispatch watchlist stock news to Telegram)
-setTimeout(() => {
-  void refreshRadarIntake();
-  void refreshRadarPriceSnapshots();
-  processAutomatedNewsAlerts().catch(e => console.warn("[StockNewsWorker] Initial pass notice:", e.message));
-}, 8000);
-trackInterval(setInterval(() => {
-  processAutomatedNewsAlerts().catch(e => console.warn("[StockNewsWorker] Interval pass error:", e.message));
-}, 3 * 60 * 1000));
-
-// Auto-Recovery Check: Every 10 minutes, verify if Pacific Midnight passed / quota flag cleared / permission lock expired, and resume Firestore network
-trackInterval(setInterval(async () => {
-  try {
-    const mode = getManualStorageMode();
-    if (mode !== 'FORCE_LOCAL') {
-      resetAdminPermissionDenied();
-      const isExceeded = isFirestoreQuotaExceeded();
-      if (!isExceeded) {
-        await resumeFirestoreNetwork();
+  // High-Frequency Real-Time Poller:
+  // Continuous 15-second polling cycle delivers live filings and sub-15s Telegram push alerts.
+  // Uses getBseFeedStaleness() to ensure requests are not fired if a cycle completed <14s ago
+  // or if BSE is flagged blocked. The monitor's process-local mutex skips running cycles automatically.
+  trackInterval(setInterval(async () => {
+    try {
+      const { blocked, lastSuccessfulFetchMs } = getBseFeedStaleness();
+      if (!blocked && (Date.now() - lastSuccessfulFetchMs >= 14_000)) {
+        await processAnnouncements();
       }
+    } catch (err: any) {
+      console.warn("[FastPoller] Notice:", err?.message || err);
     }
-  } catch (err: any) {
-    console.warn("Storage auto-recovery interval error:", err?.message || err);
-  }
-}, 10 * 60 * 1000));
+  }, 15 * 1000));
 
-// Self-KeepAlive Heartbeat: Periodically pings local HTTP listener to keep Node.js event loop active
-trackInterval(setInterval(() => {
-  try {
-    const port = resolveServerPort();
-    fetch(`http://127.0.0.1:${port}/api/health`, { signal: AbortSignal.timeout(3000) })
-      .catch(() => {});
-  } catch {}
-}, 2.5 * 60 * 1000));
+  // Independent Storage Capacity & Pruning (Every 15 minutes, completely decoupled from critical poller path)
+  trackInterval(setTimeout(() => {
+    pruneAndCheckStorageCapacity().catch(e => console.error("Initial storage check err:", e.message));
+  }, 10000));
+  trackInterval(setInterval(() => {
+    pruneAndCheckStorageCapacity().catch(e => console.error("Periodic storage check err:", e.message));
+  }, 15 * 60 * 1000));
+
+  // Results Calendar Sync, Watchlists Init & Historical Sync.
+  // STAGGERED on boot: firing all BSE-heavy jobs at once (cold start burst) trips
+  // BSE's Akamai rate-limiting and gets our cloud IP 403-blocked right after every
+  // deploy. Light/local jobs run at +3s; BSE network jobs are spread over ~3 min.
+  trackInterval(setTimeout(() => {
+    initWatchlists().catch(e => console.info("[WatchlistDao] Initial watchlist check:", e?.message || e));
+    updateTelegramHealth().catch(e => console.error("Initial telegram health check err:", e.message));
+  }, 3000));
+  trackInterval(setTimeout(() => {
+    fetchAndSyncResultsCalendar().catch(e => console.error("Initial results calendar sync err:", e.message));
+  }, 45 * 1000));
+  trackInterval(setTimeout(() => {
+    backfillRecentAnnouncements().catch(e => console.error("Initial backfill announcements err:", e.message));
+  }, 100 * 1000));
+  trackInterval(setTimeout(() => {
+    // Heaviest job (per-stock historical walk): runs last, well after the poller
+    // has warmed up and the boot backfill has settled.
+    syncWatchlistHistoricalData().catch(e => console.error("Initial watchlist historical sync err:", e.message));
+  }, 170 * 1000));
+  trackInterval(setInterval(() => {
+    fetchAndSyncResultsCalendar(true).catch(e => console.error("Periodic results calendar sync err:", e.message));
+    syncWatchlistHistoricalData().catch(e => console.error("Periodic watchlist historical sync err:", e.message));
+  }, 24 * 60 * 60 * 1000));
+
+  // 24/7 Background Multi-Source RSS News Worker (Runs every 3 minutes to auto-dispatch watchlist stock news to Telegram)
+  trackInterval(setTimeout(() => {
+    void refreshRadarIntake();
+    void refreshRadarPriceSnapshots();
+    processAutomatedNewsAlerts().catch(e => console.warn("[StockNewsWorker] Initial pass notice:", e.message));
+  }, 8000));
+  trackInterval(setInterval(() => {
+    processAutomatedNewsAlerts().catch(e => console.warn("[StockNewsWorker] Interval pass error:", e.message));
+  }, 3 * 60 * 1000));
+
+  // Auto-Recovery Check: Every 10 minutes, verify if Pacific Midnight passed / quota flag cleared / permission lock expired, and resume Firestore network
+  trackInterval(setInterval(async () => {
+    try {
+      const mode = getManualStorageMode();
+      if (mode !== 'FORCE_LOCAL') {
+        resetAdminPermissionDenied();
+        const isExceeded = isFirestoreQuotaExceeded();
+        if (!isExceeded) {
+          await resumeFirestoreNetwork();
+        }
+      }
+    } catch (err: any) {
+      console.warn("Storage auto-recovery interval error:", err?.message || err);
+    }
+  }, 10 * 60 * 1000));
+
+  // Self-KeepAlive Heartbeat: Periodically pings local HTTP listener to keep Node.js event loop active
+  trackInterval(setInterval(() => {
+    try {
+      const port = resolveServerPort();
+      fetch(`http://127.0.0.1:${port}/api/health`, { signal: AbortSignal.timeout(3000) })
+        .catch(() => {});
+    } catch {}
+  }, 2.5 * 60 * 1000));
+}
 
 // Tab-specific SEO metadata mapping matching sitemap.xml and search engine requirements
 interface TabSeoMeta {
@@ -7066,12 +7072,25 @@ async function startServer() {
   }
 
   try {
-    await listenForStartup(httpServer, PORT);
+    const maxAttempts = process.env.NODE_ENV !== 'production' ? 6 : 1;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        await listenForStartup(httpServer, PORT);
+        break;
+      } catch (err: any) {
+        if (err?.code === 'EADDRINUSE' && attempt < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 250));
+          continue;
+        }
+        throw err;
+      }
+    }
   } catch (error) {
     await vite?.close();
     throw error;
   }
   console.log(`Server running on port ${PORT}`);
+  startBackgroundWorkers();
   // Restore the admin's durable storage mode and auto-recover from quota
   // fallback without waiting for a manual switch or Pacific midnight.
   startStorageRecoveryProbe();
@@ -7093,27 +7112,41 @@ async function startServer() {
     if (isShuttingDown) return;
     isShuttingDown = true;
     console.log(`[Shutdown] ${signal} received, draining...`);
-    try { await addLog('INFO', 'SYSTEM', `Server shutdown initiated (${signal})`); } catch {}
 
-    // 1. Stop accepting new HTTP requests
-    httpServer.close((err: any) => {
-      if (err) console.error('[Shutdown] HTTP server close error:', err.message);
-      else console.log('[Shutdown] HTTP server closed (no new connections)');
-    });
-
-    // 2. Clear all tracked intervals so background workers stop firing
+    // 1. Clear all tracked intervals/timeouts first so background workers stop firing immediately
     for (const handle of trackedIntervals) {
-      try { clearInterval(handle); } catch {}
+      try {
+        clearInterval(handle);
+        clearTimeout(handle);
+      } catch {}
     }
     console.log(`[Shutdown] Cleared ${trackedIntervals.length} background intervals`);
-    void vite?.close().catch(error => console.error('[Shutdown] Vite close error:', error));
 
-    // 3. Give in-flight requests up to 8s to complete, then force-exit
-    // (Cloud Run's SIGTERM grace is ~10s; leave 2s buffer for cleanup)
+    // 2. Stop accepting new HTTP requests and close idle connections immediately so the port is freed
+    httpServer.closeIdleConnections?.();
+    if (process.env.NODE_ENV !== 'production') {
+      httpServer.closeAllConnections?.();
+    }
+    const serverClosed = new Promise<void>(resolve => {
+      httpServer.close((err: any) => {
+        if (err) console.error('[Shutdown] HTTP server close error:', err.message);
+        else console.log('[Shutdown] HTTP server closed (no new connections)');
+        resolve();
+      });
+    });
+
+    const viteClosed = vite ? vite.close().catch(error => console.error('[Shutdown] Vite close error:', error)) : Promise.resolve();
+    void addLog('INFO', 'SYSTEM', `Server shutdown initiated (${signal})`).catch(() => {});
+
+    // 3. Give in-flight requests up to 8s in production (1s in dev) to complete, then exit cleanly
+    const drainTimeoutMs = process.env.NODE_ENV === 'production' ? 8000 : 1000;
     setTimeout(() => {
       console.log('[Shutdown] Forcing exit');
       process.exit(0);
-    }, 8000).unref();
+    }, drainTimeoutMs).unref();
+
+    await Promise.allSettled([serverClosed, viteClosed]);
+    process.exit(0);
   }
 
   process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
@@ -7123,7 +7156,10 @@ async function startServer() {
 if (process.env.NODE_ENV !== 'test' && !process.env.TEST_RUNNER && !process.argv.some(a => a.includes('test'))) {
   startServer().catch(error => {
     console.error('[Startup] Server failed to start:', error?.message || error);
-    for (const handle of trackedIntervals) clearInterval(handle);
+    for (const handle of trackedIntervals) {
+      clearInterval(handle);
+      clearTimeout(handle);
+    }
     process.exit(1);
   });
 }
