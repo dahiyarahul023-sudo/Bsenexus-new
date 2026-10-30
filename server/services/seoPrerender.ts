@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { getRecentAnnouncements } from '../database/announcementDao.js';
-import { parseBseDate } from '../utils/helpers.js';
+import { parseBseDate, scriptSafeJson } from '../utils/helpers.js';
 
 /**
  * Escapes characters for safe inclusion inside HTML text nodes.
@@ -195,7 +195,7 @@ export function buildPrehydratedHtml(options: PrehydrateOptions, customTemplate?
 
   // 7. Inject JSON-LD Structured Data
   if (options.jsonLd) {
-    const jsonString = JSON.stringify(options.jsonLd, null, 2);
+    const jsonString = scriptSafeJson(JSON.stringify(options.jsonLd, null, 2));
     const jsonLdScript = `  <script type="application/ld+json">\n${jsonString}\n  </script>\n`;
     html = html.replace('</head>', `${jsonLdScript}</head>`);
   }
@@ -731,7 +731,7 @@ export async function buildAnnouncementsCollectionJsonLd(): Promise<string> {
       },
     };
     // JSON.stringify escapes the payload; neutralize any stray </script in data.
-    const json = JSON.stringify(schema, null, 2).replace(/<\/(script)/gi, '<\\/$1');
+    const json = scriptSafeJson(JSON.stringify(schema, null, 2));
     return `  <script type="application/ld+json">\n${json}\n  </script>`;
   } catch {
     return '';

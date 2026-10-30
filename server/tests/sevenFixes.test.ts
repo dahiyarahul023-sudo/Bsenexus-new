@@ -12,12 +12,12 @@ import { TOP_COMPANIES } from '../../src/config/topCompanies.js';
 import { EXCHANGE_COMPANIES, exchangeCompany } from '../../src/config/exchangeCompanies.js';
 import { DIRECTORY_COMPANIES, directoryDescription, directoryBadge } from '../../src/config/companyDirectory';
 import { getScripCode } from '../utils/stockResolver.js';
-import { isSymbolMatch } from '../utils/helpers.js';
+import { isSymbolMatch, scriptSafeJson } from '../utils/helpers.js';
 
 const targets = [['RELIANCE', '500325'], ['CLEAN', '543318'], ['CONCOR', '531344'], ['HAL', '541154'], ['IDEA', '532822'], ['OIL', '533106']];
 function load(source: string, globals: any = {}) {
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-  const context = vm.createContext({ exports: {}, console, injectRouteHeading, DIRECTORY_COMPANIES, directoryDescription, directoryBadge, exchangeCompany, matchesCompanyFiling, ...globals });
+  const context = vm.createContext({ exports: {}, console, injectRouteHeading, DIRECTORY_COMPANIES, directoryDescription, directoryBadge, exchangeCompany, matchesCompanyFiling, scriptSafeJson, ...globals });
   vm.runInContext(code, context);
   return context;
 }

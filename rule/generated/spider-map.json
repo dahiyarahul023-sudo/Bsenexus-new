@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "bb82c18d6e7e00342e6ade93a3e7fa6c53f791fd07a13b14785fee2fdece2743",
+  "sourceDigest": "d1bf5ea977b4bc0a3ae7bc411701e05f757e54a99836142dfb37ba78de9f9d7e",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -251,7 +251,7 @@
     },
     {
       "path": "server.ts",
-      "sha256": "70f9da0ab08a6fe8c08c3f70f2cfb61402c081220b030b86e70fce1848b700c5",
+      "sha256": "380eb28455e2ae1052a75515c98e644467a25f16cc3feab328ecb78a9bbbbab2",
       "importedBy": [
         "server/tests/routeResolution.test.ts"
       ]
@@ -1400,7 +1400,7 @@
     },
     {
       "path": "server/services/seoPrerender.ts",
-      "sha256": "45aa4c87333a91b23e74fc3443dc98838af936aa352bfcd9ec50afed9524c9da",
+      "sha256": "092582511beb29507f2c53ee282198a3e9a286f530a9691438249ca1f499db74",
       "importedBy": [
         "server.ts",
         "server/tests/routeHeading.test.ts",
@@ -1879,8 +1879,13 @@
       "importedBy": []
     },
     {
+      "path": "server/tests/jsonLdScriptSafety.test.ts",
+      "sha256": "f77cfd1ac0fdff3ecfbe3b032d68b983e3aa8e54e22c11e3f13468d07bf51306",
+      "importedBy": []
+    },
+    {
       "path": "server/tests/keywordGuides.test.ts",
-      "sha256": "37037f9370cbc5704f5a67c60b2fd05f27a9850a97f4397a1edc421222e07d0a",
+      "sha256": "36dc3061d9a75958a1ca797b2a2474a405647a23f39e60f90847bf9a402fe141",
       "importedBy": []
     },
     {
@@ -2140,7 +2145,7 @@
     },
     {
       "path": "server/tests/sevenFixes.test.ts",
-      "sha256": "25973471799883fab3078855e2434866bae8648906c7d61f8dc789d42a5b2570",
+      "sha256": "5238fb65a65675049286f03ba1185c73e6db385f8ebf61dda2b6eb43150a978e",
       "importedBy": []
     },
     {
@@ -2280,7 +2285,7 @@
     },
     {
       "path": "server/utils/helpers.ts",
-      "sha256": "f4f294afa7b1fe35d25a8407c5a896b9fe398cfc2bb596d9831ba789602735e0",
+      "sha256": "b0bfd3527b124bd2fa9cd3aad5bb18a75fdb1df00dc4d7f7c0743bbd0daad908",
       "importedBy": [
         "server.ts",
         "server/ai/market.ts",
@@ -2294,6 +2299,8 @@
         "server/services/resultsCalendarService.ts",
         "server/services/seoPrerender.ts",
         "server/services/storyFeedService.ts",
+        "server/tests/jsonLdScriptSafety.test.ts",
+        "server/tests/keywordGuides.test.ts",
         "server/tests/resultDocumentEvidence.test.ts",
         "server/tests/resultHistory.test.ts",
         "server/tests/sevenFixes.test.ts"
@@ -9091,16 +9098,28 @@
       "line": 5
     },
     {
+      "source": "server/tests/jsonLdScriptSafety.test.ts",
+      "target": "server/utils/helpers.ts",
+      "kind": "import",
+      "line": 5
+    },
+    {
       "source": "server/tests/keywordGuides.test.ts",
-      "target": "src/content/keywordGuides.ts",
+      "target": "server/utils/helpers.ts",
       "kind": "import",
       "line": 6
     },
     {
       "source": "server/tests/keywordGuides.test.ts",
-      "target": "server/services/marketGuidesService.ts",
+      "target": "src/content/keywordGuides.ts",
       "kind": "import",
       "line": 7
+    },
+    {
+      "source": "server/tests/keywordGuides.test.ts",
+      "target": "server/services/marketGuidesService.ts",
+      "kind": "import",
+      "line": 8
     },
     {
       "source": "server/tests/marketStories.test.ts",
@@ -10006,7 +10025,7 @@
       "source": "server/utils/helpers.ts",
       "target": "server/utils/stockResolver.ts",
       "kind": "import",
-      "line": 9
+      "line": 21
     },
     {
       "source": "server/utils/newsPublicationTime.ts",
