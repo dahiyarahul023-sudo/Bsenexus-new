@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "d1bf5ea977b4bc0a3ae7bc411701e05f757e54a99836142dfb37ba78de9f9d7e",
+  "sourceDigest": "18a660b2214f7d91bd867c8cc7a6623e5da3b008dba360a6ad13847c2ef9c416",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -40,12 +40,12 @@
     },
     {
       "path": "package-lock.json",
-      "sha256": "7e3c08f22015f3fd874dfb9c22876cce63663b5eb1ef5dfde770a0efc27b68f9",
+      "sha256": "d24f19a39922cf912e150c992352f9d97e0f03d2e3c2a9db044440e7ec3b3338",
       "importedBy": []
     },
     {
       "path": "package.json",
-      "sha256": "c26f83ec4634c541fed6d7f72a5adbde9c6e824e30cd3005dd7d61923a9dc6dc",
+      "sha256": "1d7e859b55f82dbca5ba11b5ed68d1dfb8aada725b9d22efa05240f513a16f87",
       "importedBy": []
     },
     {
@@ -300,7 +300,7 @@
     },
     {
       "path": "server/ai/http.ts",
-      "sha256": "e416fbdc0e426ca73e73e4d49763e95c66c8e5144bd2a28b1473d10ff0efd308",
+      "sha256": "d113ccec969a4bf40645ab26a34fc3f3d3eb765815dcd7aafbf46c2b184c8809",
       "importedBy": [
         "scripts/verify-oauth-routing.mjs",
         "server.ts",
