@@ -18,3 +18,7 @@
 - Final serialized checks all exited **0**: `npm run lint`, `npm test` (**873 passed**, 33 suites, no skipped/failed), `npm run build` (actual prebuild/TypeScript/Vite/budget/server/copy), `npm run map:generate`, `npm run test:map` (**6/6**), `npm run map:check`. Incidental version bump reverted.
 - Independent YAML parse/assertions passed: eight full SHA-pinned checkout/setup-node references, contents:read, every checkout persist-credentials:false, no pull_request_target, exactly two weekly grouped ecosystems. No new unit test or old-code execution; original mutable tags are directly observable in the diff.
 - `git diff --check`: passed. Browser/runtime/migration/deployment checks are not applicable to CI-only changes. Hosted CI must still run on the actual PR SHA; local passing results do not satisfy that separate gate.
+
+## Merge preparation
+
+- Reconciled with main 5407159b92634f0853f7d95eeeb1859ce273e61d; retain earlier merged tasks and this task's implementation. Generated maps rebuilt from combined source. No deployment or hosted migration. Local combined checks recorded in the PR.
