@@ -27,7 +27,7 @@ import { aiDb, aiRpc, relation } from "../database/aiConnectionsDao.js";
 import { runAiTool, accountState, connectedState } from "./tools.js";
 import { requireAuth } from "../security/auth.js";
 
-// The SDK accepts Zod v4 at runtime. Its v3/v4 generic compatibility union can
+// The SDK accepts Zod v3 at runtime. Its v3/v4 generic compatibility union can
 // exceed TypeScript's depth limit under fresh peer resolution. Constrain only
 // this registration boundary; retain concrete Zod schemas and text results.
 type RegisterAiTool = (
@@ -35,8 +35,8 @@ type RegisterAiTool = (
   config: {
     title: string;
     description: string;
-    inputSchema: z.ZodRawShape | z.ZodObject;
-    outputSchema?: z.ZodRawShape | z.ZodObject;
+    inputSchema: z.ZodRawShape | z.AnyZodObject;
+    outputSchema?: z.ZodRawShape | z.AnyZodObject;
     annotations: {
       readOnlyHint: boolean;
       destructiveHint: boolean;
