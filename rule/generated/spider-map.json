@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "06abe64e17cd81f0664f7be54b55d4a71cffb72efb9f9632868bf0c72dbdd31f",
+  "sourceDigest": "60f353c3014233f5cd1d0343d58f66d87abb1377d051e180d34aefe05cc9fe77",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -218,7 +218,7 @@
     },
     {
       "path": "scripts/verify-gift-access.mjs",
-      "sha256": "84bf802224b4b5f2b40272f9328014dceb325ada9f73ece0b75339fd994ceabe",
+      "sha256": "f71aaf7a76c81da5a8441c02af49b241313afb28dec96fab8c70e5cdf82041f8",
       "importedBy": []
     },
     {

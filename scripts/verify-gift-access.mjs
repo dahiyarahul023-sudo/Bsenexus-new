@@ -8,7 +8,7 @@ import path from 'node:path';
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
 const token = 'bnx_gift_' + 'a'.repeat(43), inviteId = '11111111-1111-4111-8111-111111111111';
-const bootstrap = fs.readFileSync('index.html','utf8').match(/<script>([\s\S]*?)<\/script>/)[1];
+const bootstrap = fs.readFileSync('index.html','utf8').match(/<script\b[^>]*>([\s\S]*?)<\/script>/)[1];
 const fixtures = { items: [], calls: [], failRead: false, readStatus: 503, readError: 'Fixture storage unavailable', delay: false };
 const cache = await mkdtemp(path.join(os.tmpdir(), 'gift-browser-'));
 const auth = `import {useSyncExternalStore} from 'react';

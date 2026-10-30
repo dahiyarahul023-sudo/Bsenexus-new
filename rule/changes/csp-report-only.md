@@ -35,3 +35,5 @@
 - Final security review: placeholder substitution also runs on preview/embed responses (without adding CSP/frame restrictions), so requesting another Host cannot leak the process-private template marker. Added a regression assertion for this boundary. Full checks rerun after this adjustment.
 
 - Final serialized verification after the preview-marker fix: npm run lint, npm test (878/878, 0 skipped), npm run build, npm run map:generate, npm run test:map (6/6) and npm run map:check each exited **0**, captured individually. This supersedes incomplete/interfered exploratory logs.
+
+- Hosted run 41053248244: application, Bun and map jobs passed; development-preview passed test:dev-runtime, then failed because scripts/verify-gift-access.mjs matched only literal <script> and could not extract the nonce-bearing first boot block. Updated that fixture regex to accept attributes; no behavior assertions removed. Local VM executes the extracted real gift bootstrap and confirms token capture/fragment cleanup. Map generation/check and 6 map tests passed after the fixture fix. Full provider journeys remain unverified; hosted retry is separate evidence.
