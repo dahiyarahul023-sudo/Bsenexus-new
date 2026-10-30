@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "d1bf5ea977b4bc0a3ae7bc411701e05f757e54a99836142dfb37ba78de9f9d7e",
+  "sourceDigest": "19a4fd92716e4a017f1e6e5a5c0560e64d4094058ecabb5b0ac9f96aad715ca5",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -398,9 +398,10 @@
     },
     {
       "path": "server/api/faq.ts",
-      "sha256": "5b95c851b17e89fbd0ae4582d360e1444f2c9a9c5be9d7bf1ff873ad6d9eda79",
+      "sha256": "19ffd056a54df3ff5b3df6ed366152a705b76f1fa60e93e48a2801d0785cd047",
       "importedBy": [
-        "server/api/routes.ts"
+        "server/api/routes.ts",
+        "server/tests/faqQuota.test.ts"
       ]
     },
     {
@@ -574,6 +575,14 @@
       ]
     },
     {
+      "path": "server/database/faqQuotaDao.ts",
+      "sha256": "f14379c287e990f41f5eee9788f796800a10f21acac1f6e24b021c3f087880ed",
+      "importedBy": [
+        "server/api/faq.ts",
+        "server/tests/faqQuota.test.ts"
+      ]
+    },
+    {
       "path": "server/database/feedbackDao.ts",
       "sha256": "6b164f8efaf11457d7ab5cf8743eaf9ba2a90a9e46d27e4e76492fa65676e68b",
       "importedBy": [
@@ -620,7 +629,6 @@
       "sha256": "c58f7aa052d215b8b71316054e0fd051ead5cb94fd7e531351d2668f57d79864",
       "importedBy": [
         "server.ts",
-        "server/api/faq.ts",
         "server/api/routes.ts",
         "server/database/adrSnapshotDao.ts",
         "server/database/alertRulesDao.ts",
@@ -726,6 +734,7 @@
         "server/api/routes.ts",
         "server/api/telegramLinks.ts",
         "server/database/aiQuotaDao.ts",
+        "server/database/faqQuotaDao.ts",
         "server/database/giftAccessDao.ts",
         "server/database/notificationDao.ts",
         "server/database/paymentEntitlementsDao.ts",
@@ -793,6 +802,7 @@
         "server/database/announcementDao.ts",
         "server/database/calendarHistoryDao.ts",
         "server/database/calendarTelegramDao.ts",
+        "server/database/faqQuotaDao.ts",
         "server/database/feedbackDao.ts",
         "server/database/giftAccessDao.ts",
         "server/database/impactRadarDao.ts",
@@ -823,6 +833,7 @@
         "server/tests/aiWatchlistConcurrency.test.ts",
         "server/tests/batchOperations.test.ts",
         "server/tests/deepAuditAuth.test.ts",
+        "server/tests/faqQuota.test.ts",
         "server/tests/followupAudit.test.ts",
         "server/tests/studioMigrationReview.test.ts"
       ]
@@ -1122,7 +1133,16 @@
       "sha256": "eafb88dcc301ffc4e8f1596d789e9666056e5d7afc6f1afc6576c92fe05cf73d",
       "importedBy": [
         "server/api/faq.ts",
-        "server/tests/faqBank.test.ts"
+        "server/tests/faqBank.test.ts",
+        "server/tests/faqQuota.test.ts"
+      ]
+    },
+    {
+      "path": "server/services/faqQuestionLog.ts",
+      "sha256": "abb488043048024c2d149129d1ae298f1ccfbf3e4f852fc3c0b944815dc75c52",
+      "importedBy": [
+        "server/api/faq.ts",
+        "server/tests/faqQuota.test.ts"
       ]
     },
     {
@@ -1786,6 +1806,16 @@
     {
       "path": "server/tests/faqBank.test.ts",
       "sha256": "05cede51293ba68572527e60cdbeabff2a6636da6dc394d229d87b8240c841e0",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/faqQuota.test.ts",
+      "sha256": "97f7285fcef6cd81ffe38bc3930afa4b858289045dce8c49f8938445441303cd",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/faqQuotaSql.test.ts",
+      "sha256": "8dc5275abd678a942365086058aacf6abe7ca9c186ebac735668c8e7230ab325",
       "importedBy": []
     },
     {
@@ -4844,6 +4874,11 @@
       "importedBy": []
     },
     {
+      "path": "supabase/migrations/20261030114813_durable_faq_quota.sql",
+      "sha256": "a67ce8329c53cc7e5e7ee42f266a4df0d0800831e73ac9c3673d01610b4ddda5",
+      "importedBy": []
+    },
+    {
       "path": "tsconfig.json",
       "sha256": "e93e15c3794e43a117964ea191ae985cbedea70c41d3d82b2e20aa8d07374fe4",
       "importedBy": []
@@ -5487,15 +5522,21 @@
     },
     {
       "source": "server/api/faq.ts",
-      "target": "server/database/localStore.ts",
+      "target": "server/security/accountRateLimiter.ts",
       "kind": "import",
       "line": 6
     },
     {
       "source": "server/api/faq.ts",
-      "target": "server/security/accountRateLimiter.ts",
+      "target": "server/database/faqQuotaDao.ts",
       "kind": "import",
       "line": 7
+    },
+    {
+      "source": "server/api/faq.ts",
+      "target": "server/services/faqQuestionLog.ts",
+      "kind": "import",
+      "line": 8
     },
     {
       "source": "server/api/giftAccess.ts",
@@ -6294,6 +6335,18 @@
       "target": "src/shared/performanceSummary.ts",
       "kind": "import",
       "line": 5
+    },
+    {
+      "source": "server/database/faqQuotaDao.ts",
+      "target": "server/database/supabase.ts",
+      "kind": "import",
+      "line": 1
+    },
+    {
+      "source": "server/database/faqQuotaDao.ts",
+      "target": "server/database/paymentStore.ts",
+      "kind": "import",
+      "line": 2
     },
     {
       "source": "server/database/feedbackDao.ts",
@@ -8802,6 +8855,36 @@
       "target": "server/services/faqBank.ts",
       "kind": "import",
       "line": 3
+    },
+    {
+      "source": "server/tests/faqQuota.test.ts",
+      "target": "server/api/faq.ts",
+      "kind": "import",
+      "line": 11
+    },
+    {
+      "source": "server/tests/faqQuota.test.ts",
+      "target": "server/database/faqQuotaDao.ts",
+      "kind": "import",
+      "line": 12
+    },
+    {
+      "source": "server/tests/faqQuota.test.ts",
+      "target": "server/services/faqQuestionLog.ts",
+      "kind": "import",
+      "line": 13
+    },
+    {
+      "source": "server/tests/faqQuota.test.ts",
+      "target": "server/services/faqBank.ts",
+      "kind": "import",
+      "line": 14
+    },
+    {
+      "source": "server/tests/faqQuota.test.ts",
+      "target": "server/database/supabase.ts",
+      "kind": "import",
+      "line": 15
     },
     {
       "source": "server/tests/filingSource.test.ts",
@@ -14376,13 +14459,19 @@
         "src/components/LandingPage.tsx",
         "supabase/migrations/003_durable_ai_quota.sql",
         "supabase/migrations/20261024193046_deep_audit_security.sql",
-        "scripts/verify-deep-audit-staging.sql"
+        "scripts/verify-deep-audit-staging.sql",
+        "server/api/faq.ts",
+        "server/database/faqQuotaDao.ts",
+        "server/services/faqQuestionLog.ts",
+        "supabase/migrations/20261030114813_durable_faq_quota.sql"
       ],
       "tests": [
         "server/tests/aiQuotaFrontend.test.ts",
         "server/tests/followupAudit.test.ts",
         "server/tests/deepAuditSql.test.ts",
-        "server/tests/deepAuditAuth.test.ts"
+        "server/tests/deepAuditAuth.test.ts",
+        "server/tests/faqQuota.test.ts",
+        "server/tests/faqQuotaSql.test.ts"
       ],
       "reason": "Trial duration and paid-vs-trial labels cross backend, client and copy. Quota consumption and rollback must survive races and restart; reset boundaries use IST."
     },
@@ -14568,14 +14657,20 @@
         "supabase/migrations/005_user_notification_inbox_clear.sql",
         "supabase/migrations/006_durable_referrals.sql",
         "server/database/indexNowDao.ts",
-        "supabase/migrations/20261021133613_indexnow_url_cooldown.sql"
+        "supabase/migrations/20261021133613_indexnow_url_cooldown.sql",
+        "server/api/faq.ts",
+        "server/database/faqQuotaDao.ts",
+        "server/services/faqQuestionLog.ts",
+        "supabase/migrations/20261030114813_durable_faq_quota.sql"
       ],
       "tests": [
         "server/tests/storageQuotaSwitch.test.ts",
         "server/tests/startupRecovery.test.ts",
         "server/tests/productionAudit.test.ts",
         "server/tests/indexNowSql.test.ts",
-        "server/tests/studioMigrationReview.test.ts"
+        "server/tests/studioMigrationReview.test.ts",
+        "server/tests/faqQuota.test.ts",
+        "server/tests/faqQuotaSql.test.ts"
       ],
       "reason": "Supabase and privileged RPCs are server-only. Cache/fallback behavior varies per DAO: local success never proves durable payment success. Review migrations with caller changes. IndexNow public-URL claims use service-role-only RLS/invoker RPCs and reserve a durable 24-hour cooldown before HTTP; browser grants and local fallback authority are absent."
     },
@@ -16357,23 +16452,23 @@
     },
     {
       "file": "server/api/faq.ts",
-      "line": 126,
-      "receiver": "faqRouter",
+      "line": 33,
+      "receiver": "router",
       "method": "POST",
       "path": "/ask",
       "middleware": [
-        "faqFloodLimiter",
+        "floodLimiter",
         "<handler>"
       ]
     },
     {
       "file": "server/api/faq.ts",
-      "line": 194,
-      "receiver": "faqRouter",
+      "line": 70,
+      "receiver": "router",
       "method": "GET",
       "path": "/status",
       "middleware": [
-        "faqFloodLimiter",
+        "floodLimiter",
         "<handler>"
       ]
     },
@@ -18766,6 +18861,24 @@
       ]
     },
     {
+      "file": "server/tests/faqQuota.test.ts",
+      "line": 36,
+      "receiver": "app",
+      "method": "USE",
+      "path": "express.json()",
+      "middleware": []
+    },
+    {
+      "file": "server/tests/faqQuota.test.ts",
+      "line": 36,
+      "receiver": "app",
+      "method": "USE",
+      "path": "/faq",
+      "middleware": [
+        "router"
+      ]
+    },
+    {
       "file": "server/tests/followupAudit.test.ts",
       "line": 108,
       "receiver": "app",
@@ -21075,6 +21188,12 @@
       "key": "'calendar_telegram_deliveries'"
     },
     {
+      "file": "server/database/faqQuotaDao.ts",
+      "line": 9,
+      "function": "getSupabase().rpc",
+      "key": "'manage_faq_quota'"
+    },
+    {
       "file": "server/database/feedbackDao.ts",
       "line": 50,
       "function": "getSupabase()\n      .from",
@@ -21823,6 +21942,12 @@
       "line": 40,
       "function": "Array.from",
       "key": "{ length: 100 }"
+    },
+    {
+      "file": "server/tests/faqQuotaSql.test.ts",
+      "line": 15,
+      "function": "Array.from",
+      "key": "{ length: 8 }"
     },
     {
       "file": "server/tests/forYouPersonal.test.ts",
@@ -24582,6 +24707,56 @@
       "file": "server/tests/deepAuditSql.test.ts",
       "line": 7,
       "name": "AUDIT_MIGRATION"
+    },
+    {
+      "file": "server/tests/faqQuota.test.ts",
+      "line": 20,
+      "name": "FAQ_ROUTER_SOURCE"
+    },
+    {
+      "file": "server/tests/faqQuota.test.ts",
+      "line": 30,
+      "name": "FAQ_ROUTER_SOURCE"
+    },
+    {
+      "file": "server/tests/faqQuota.test.ts",
+      "line": 84,
+      "name": "SUPABASE_URL"
+    },
+    {
+      "file": "server/tests/faqQuota.test.ts",
+      "line": 84,
+      "name": "SUPABASE_SERVICE_ROLE_KEY"
+    },
+    {
+      "file": "server/tests/faqQuota.test.ts",
+      "line": 85,
+      "name": "SUPABASE_URL"
+    },
+    {
+      "file": "server/tests/faqQuota.test.ts",
+      "line": 85,
+      "name": "SUPABASE_SERVICE_ROLE_KEY"
+    },
+    {
+      "file": "server/tests/faqQuota.test.ts",
+      "line": 91,
+      "name": "SUPABASE_URL"
+    },
+    {
+      "file": "server/tests/faqQuota.test.ts",
+      "line": 91,
+      "name": "SUPABASE_URL"
+    },
+    {
+      "file": "server/tests/faqQuota.test.ts",
+      "line": 92,
+      "name": "SUPABASE_SERVICE_ROLE_KEY"
+    },
+    {
+      "file": "server/tests/faqQuota.test.ts",
+      "line": 92,
+      "name": "SUPABASE_SERVICE_ROLE_KEY"
     },
     {
       "file": "server/tests/firebaseCredentialExport.test.ts",
