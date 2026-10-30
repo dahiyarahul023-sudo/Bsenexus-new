@@ -21,3 +21,7 @@
 - Focused mocked-fetch/stream/allowlist + existing audit tests: **14 passed**. Unknown-length oversize reader is cancelled after 12 bytes read with only 6 written (10-byte fixture cap); a declared oversize response is cancelled before headers. In-flight cap/release, 21st-request denial, XFF spoofing, safe filename/type and hostile redirect behavior all pass.
 - Old-source comparison was **not run**: these tests target the new focused router/stream seam, which did not exist on main. Original source inspection establishes the prior buffering/no-dedicated-limit behavior; do not claim an executed old-code failure. Existing BSE allowlist tests remain green.
 - Not run: live BSE downloads, browser/device PDF viewer and fleet load test. No real upstream/provider traffic, migrations or deployment. Cap is eight per process, not a fleet-wide distributed semaphore.
+
+## Merge preparation
+
+- Reconciled with main b9764e370e84f718028aec2af78f1ecb88dcada4; retain earlier merged tasks and this task's implementation. Generated maps rebuilt from combined source. No deployment or hosted migration. Local combined checks recorded in the PR.

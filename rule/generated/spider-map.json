@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "3622dcdbd930dcfde2b7850888ae5501a052bc134449e92dac93f87ea8c692c5",
+  "sourceDigest": "54320cd6b356c12f37502452aca6c6a1a2118b4a5016b664a51b25381be33bb9",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -40,12 +40,12 @@
     },
     {
       "path": "package-lock.json",
-      "sha256": "7e3c08f22015f3fd874dfb9c22876cce63663b5eb1ef5dfde770a0efc27b68f9",
+      "sha256": "d24f19a39922cf912e150c992352f9d97e0f03d2e3c2a9db044440e7ec3b3338",
       "importedBy": []
     },
     {
       "path": "package.json",
-      "sha256": "c26f83ec4634c541fed6d7f72a5adbde9c6e824e30cd3005dd7d61923a9dc6dc",
+      "sha256": "1d7e859b55f82dbca5ba11b5ed68d1dfb8aada725b9d22efa05240f513a16f87",
       "importedBy": []
     },
     {
@@ -300,7 +300,7 @@
     },
     {
       "path": "server/ai/http.ts",
-      "sha256": "e416fbdc0e426ca73e73e4d49763e95c66c8e5144bd2a28b1473d10ff0efd308",
+      "sha256": "d113ccec969a4bf40645ab26a34fc3f3d3eb765815dcd7aafbf46c2b184c8809",
       "importedBy": [
         "scripts/verify-oauth-routing.mjs",
         "server.ts",
@@ -1629,6 +1629,11 @@
     {
       "path": "server/tests/authIdentity.test.ts",
       "sha256": "b1993622fe9d542759663a92443cc6fc7040a83c854a2a77b42b0b9cb57cf149",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/authLimitsSql.test.ts",
+      "sha256": "40a5a5a479ea2a8006dbd3c49b4935ddaba400f87b8d45c414a41101805d9dd2",
       "importedBy": []
     },
     {
@@ -4856,6 +4861,11 @@
     {
       "path": "supabase/migrations/20261026192403_gift_pro_access.sql",
       "sha256": "f47b3bfe703ec404be4577191bcb372817ebc361199f2c8ae6916b2a42401560",
+      "importedBy": []
+    },
+    {
+      "path": "supabase/migrations/20261030120109_auth_account_limits_schema.sql",
+      "sha256": "2123fa915d231e887e51bcc1eab19b0bcc9c1a558a2fefce1fb4a54fb3352800",
       "importedBy": []
     },
     {
@@ -14341,7 +14351,8 @@
         "supabase/migrations/20261024193046_deep_audit_security.sql",
         "server/api/telegramLinks.ts",
         "server/database/telegramLinksDao.ts",
-        "scripts/verify-deep-audit-staging.sql"
+        "scripts/verify-deep-audit-staging.sql",
+        "supabase/migrations/20261030120109_auth_account_limits_schema.sql"
       ],
       "tests": [
         "server/tests/authIdentity.test.ts",
@@ -14352,7 +14363,8 @@
         "server/tests/userSkeletonPrivileges.test.ts",
         "server/tests/deepAuditSql.test.ts",
         "server/tests/deepAuditAuth.test.ts",
-        "server/tests/clientIpSpoofing.test.ts"
+        "server/tests/clientIpSpoofing.test.ts",
+        "server/tests/authLimitsSql.test.ts"
       ],
       "reason": "Verified token → server session → current durable profile → route authorization. Browser roles are display state; never authority. The server-only ensure_user_skeleton RPC denies browser EXECUTE, uses SECURITY INVOKER and a fixed empty search path with a qualified users relation. Its narrow production permission repair preserves existing paid rows on retry."
     },
@@ -14609,14 +14621,16 @@
         "supabase/migrations/005_user_notification_inbox_clear.sql",
         "supabase/migrations/006_durable_referrals.sql",
         "server/database/indexNowDao.ts",
-        "supabase/migrations/20261021133613_indexnow_url_cooldown.sql"
+        "supabase/migrations/20261021133613_indexnow_url_cooldown.sql",
+        "supabase/migrations/20261030120109_auth_account_limits_schema.sql"
       ],
       "tests": [
         "server/tests/storageQuotaSwitch.test.ts",
         "server/tests/startupRecovery.test.ts",
         "server/tests/productionAudit.test.ts",
         "server/tests/indexNowSql.test.ts",
-        "server/tests/studioMigrationReview.test.ts"
+        "server/tests/studioMigrationReview.test.ts",
+        "server/tests/authLimitsSql.test.ts"
       ],
       "reason": "Supabase and privileged RPCs are server-only. Cache/fallback behavior varies per DAO: local success never proves durable payment success. Review migrations with caller changes. IndexNow public-URL claims use service-role-only RLS/invoker RPCs and reserve a durable 24-hour cooldown before HTTP; browser grants and local fallback authority are absent."
     },
@@ -14888,7 +14902,7 @@
         "server/tests/previewBackendReload.test.ts",
         "scripts/check-preview-restart.mjs"
       ],
-      "reason": "Startup and settings influence background jobs, provider calls, abuse limits and logs. A live HTTP listener does not establish that durable stores or external providers are ready. Poller stage deadlines release the monitor lock without resuming abandoned workers; dedicated local poller history is not cloud deployment durability. IndexNow starts only after listen, uses the existing provider circuit and reports configured primary mode/HTTP status in diagnostics. Its background failures never fail filing storage; production Crawler Hints state requires independent inspection. MCP request logs expose only generated trace IDs, bounded operation/error labels and irreversible connection tags; no tool arguments, tokens or private text. Quota/idempotency errors provide actionable recovery. A failed docs fingerprint cannot interrupt other indexing/startup. Development retains one Node process with the existing tsx import hook during source edits. Backend adoption requires a coordinated explicit restart and document reload; production start and Vite HMR policy remain independent. Actual App/browser tests cover an interrupted Settings import, closed Vite, stable recovery and a fresh document against a replacement server."
+      "reason": "Startup and settings influence background jobs, provider calls, abuse limits and logs. A live HTTP listener does not establish that durable stores or external providers are ready. Poller stage deadlines release the monitor lock without resuming abandoned workers; dedicated local poller history is not cloud deployment durability. IndexNow starts only after listen, uses the existing provider circuit and reports configured primary mode/HTTP status in diagnostics. Its background failures never fail filing storage; production Crawler Hints state requires independent inspection. MCP request logs expose only generated trace IDs, bounded operation/error labels and irreversible connection tags; no tool arguments, tokens or private text. Quota/idempotency errors provide actionable recovery. A failed docs fingerprint cannot interrupt other indexing/startup. Development retains one Node process with the existing tsx import hook during source edits. Backend adoption requires a coordinated explicit restart and document reload; production start and Vite HMR policy remain independent. Actual App/browser tests cover an interrupted Settings import, closed Vite, stable recovery and a fresh document against a replacement server. GitHub workflow checkout/setup-node actions are pinned to reviewed full v7 commit SHAs; weekly grouped Dependabot updates maintain action/npm review. The .github configuration lies outside this source scanner and requires manual and hosted-CI evidence."
     },
     {
       "id": "frontend-navigation",
