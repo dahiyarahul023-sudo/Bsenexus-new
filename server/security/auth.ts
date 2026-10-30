@@ -11,6 +11,7 @@ import { reconcilePaymentEntitlement } from '../database/paymentEntitlementsDao.
 import { isPaymentStoreUnavailable } from '../database/paymentStore.js';
 import { verifyRecaptchaToken } from './recaptchaService.js';
 import { getFirebaseIdentity, hasTrustedSessionRoles } from './firebaseIdentity.js';
+import { createVerifiedTokenCache, resolveVerifyCacheMs } from './verifiedTokenCache.js';
 import { 
   getAccountKey, 
   checkAccountProtection, 
@@ -104,6 +105,12 @@ export const telegramRateLimiter = rateLimit({
   message: { success: false, error: "Telegram broadcast rate limit reached. Please wait a moment before broadcasting again." }
 });
 
+// PERF-1: revocation-checked Firebase verification is a network call to Google.
+// Reuse one successful verification for a short window (default 60 s, never past
+// the token's own expiry) and let parallel requests share it. Disabled in tests
+// and with FIREBASE_VERIFY_CACHE_MS=0. /auth/session still verifies fresh.
+const firebaseTokenCache = createVerifiedTokenCache<any>({ ttlMs: resolveVerifyCacheMs() });
+
 export const authMiddleware = async (req: express.Request, _res: express.Response, next: express.NextFunction) => {
   try {
     const authHeader = req.headers.authorization;
@@ -130,7 +137,7 @@ export const authMiddleware = async (req: express.Request, _res: express.Respons
             const adminAuth = getFirebaseAuth();
             if (adminAuth) {
               try {
-                const fbDecoded = await adminAuth.verifyIdToken(token, true);
+                const fbDecoded = await firebaseTokenCache.verify(token, (t) => adminAuth.verifyIdToken(t, true));
                 const identity = getFirebaseIdentity(fbDecoded, ADMIN_EMAIL);
                 const isAnonymous = !identity;
                 const isOwner = identity?.isOwner === true;

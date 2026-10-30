@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "d1bf5ea977b4bc0a3ae7bc411701e05f757e54a99836142dfb37ba78de9f9d7e",
+  "sourceDigest": "adf2079353e0b8e55eb258bb19efc2e54b0aee7a54d39a8bf054a67055c05a6d",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -903,7 +903,7 @@
     },
     {
       "path": "server/security/auth.ts",
-      "sha256": "8330e6988d8a8e85ebba52806a5657033e95fcd239cb326bd49ac96d08917a61",
+      "sha256": "5f76333ecdae7e32295e57dbb9c59603a128e95b14ffc8a989e397733bfa1d9a",
       "importedBy": [
         "server.ts",
         "server/ai/http.ts",
@@ -965,6 +965,14 @@
       "importedBy": [
         "server.ts",
         "server/tests/responseHeaders.test.ts"
+      ]
+    },
+    {
+      "path": "server/security/verifiedTokenCache.ts",
+      "sha256": "2ecfb2c62ca777a6d95e2da50365ac051969f273b0150308b9b5f05d9f6f98b5",
+      "importedBy": [
+        "server/security/auth.ts",
+        "server/tests/verifiedTokenCache.test.ts"
       ]
     },
     {
@@ -2201,6 +2209,11 @@
     {
       "path": "server/tests/userSkeletonPrivileges.test.ts",
       "sha256": "015a81b2ec16e20a79b43ea40409b3619204968268fba0edd69b05d98048586d",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/verifiedTokenCache.test.ts",
+      "sha256": "4ba1da7f736ea696866571786e6960eee04a87db120a6513f163ffd7a84df06a",
       "importedBy": []
     },
     {
@@ -6705,9 +6718,15 @@
     },
     {
       "source": "server/security/auth.ts",
-      "target": "server/security/accountRateLimiter.ts",
+      "target": "server/security/verifiedTokenCache.ts",
       "kind": "import",
       "line": 14
+    },
+    {
+      "source": "server/security/auth.ts",
+      "target": "server/security/accountRateLimiter.ts",
+      "kind": "import",
+      "line": 15
     },
     {
       "source": "server/sentry.ts",
@@ -9978,6 +9997,12 @@
       "target": "server/utils/bseDocument.ts",
       "kind": "import",
       "line": 5
+    },
+    {
+      "source": "server/tests/verifiedTokenCache.test.ts",
+      "target": "server/security/verifiedTokenCache.ts",
+      "kind": "import",
+      "line": 3
     },
     {
       "source": "server/tests/watchlistIdentity.test.ts",
@@ -18437,7 +18462,7 @@
     },
     {
       "file": "server/security/auth.ts",
-      "line": 304,
+      "line": 311,
       "receiver": "authRouter",
       "method": "POST",
       "path": "/session",
@@ -18449,7 +18474,7 @@
     },
     {
       "file": "server/security/auth.ts",
-      "line": 503,
+      "line": 510,
       "receiver": "authRouter",
       "method": "POST",
       "path": "/login",
@@ -18461,7 +18486,7 @@
     },
     {
       "file": "server/security/auth.ts",
-      "line": 645,
+      "line": 652,
       "receiver": "authRouter",
       "method": "POST",
       "path": "/verify-pin",
@@ -18473,7 +18498,7 @@
     },
     {
       "file": "server/security/auth.ts",
-      "line": 777,
+      "line": 784,
       "receiver": "authRouter",
       "method": "POST",
       "path": "/logout",
@@ -18483,7 +18508,7 @@
     },
     {
       "file": "server/security/auth.ts",
-      "line": 782,
+      "line": 789,
       "receiver": "authRouter",
       "method": "GET",
       "path": "/status",
@@ -21957,6 +21982,12 @@
       "key": "{length:8}"
     },
     {
+      "file": "server/tests/verifiedTokenCache.test.ts",
+      "line": 48,
+      "function": "Array.from",
+      "key": "{ length: 8 }"
+    },
+    {
       "file": "server/utils/bloomFilter.ts",
       "line": 171,
       "function": "Buffer.from",
@@ -23695,12 +23726,7 @@
     },
     {
       "file": "server/security/auth.ts",
-      "line": 32,
-      "name": "JWT_SECRET"
-    },
-    {
-      "file": "server/security/auth.ts",
-      "line": 32,
+      "line": 33,
       "name": "JWT_SECRET"
     },
     {
@@ -23710,77 +23736,82 @@
     },
     {
       "file": "server/security/auth.ts",
-      "line": 35,
+      "line": 34,
+      "name": "JWT_SECRET"
+    },
+    {
+      "file": "server/security/auth.ts",
+      "line": 36,
       "name": "NODE_ENV"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 199,
+      "line": 206,
       "name": "FIREBASE_APPCHECK_ENFORCE"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 329,
+      "line": 336,
       "name": "NODE_ENV"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 329,
+      "line": 336,
       "name": "RECAPTCHA_ENFORCE"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 465,
+      "line": 472,
       "name": "NODE_ENV"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 545,
+      "line": 552,
       "name": "NODE_ENV"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 545,
+      "line": 552,
       "name": "RECAPTCHA_ENFORCE"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 586,
+      "line": 593,
       "name": "APP_PIN"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 587,
+      "line": 594,
       "name": "APP_PIN"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 618,
+      "line": 625,
       "name": "NODE_ENV"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 682,
+      "line": 689,
       "name": "NODE_ENV"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 682,
+      "line": 689,
       "name": "RECAPTCHA_ENFORCE"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 723,
+      "line": 730,
       "name": "APP_PIN"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 724,
+      "line": 731,
       "name": "APP_PIN"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 754,
+      "line": 761,
       "name": "NODE_ENV"
     },
     {
