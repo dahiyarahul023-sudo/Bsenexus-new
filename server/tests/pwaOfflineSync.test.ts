@@ -15,13 +15,11 @@ describe('PWA Offline Shell Sync & Offline Access (Step 07)', () => {
     assert.ok(swContent.includes('clients.claim'), 'sw.js must claim clients on activation');
   });
 
-  test('STATIC_ASSETS precaches critical offline application shell files', () => {
+  test('STATIC_ASSETS caches icons/manifests but never nonce-bearing HTML', () => {
     const swPath = path.join(process.cwd(), 'public', 'sw.js');
     const swContent = fs.readFileSync(swPath, 'utf8');
 
     const criticalShellFiles = [
-      '/',
-      '/index.html',
       '/manifest.json',
       '/opensearch.xml',
       '/favicon.ico',
@@ -30,6 +28,9 @@ describe('PWA Offline Shell Sync & Offline Access (Step 07)', () => {
       '/icon-512.png'
     ];
 
+    const staticAssets = swContent.match(/const STATIC_ASSETS = \[([\s\S]*?)\];/)![1];
+    assert.ok(!staticAssets.includes("'/index.html'"), 'Nonce HTML must not be precached');
+    assert.ok(!staticAssets.includes("'/'"), 'Home HTML must not be precached');
     for (const file of criticalShellFiles) {
       assert.ok(
         swContent.includes(`'${file}'`) || swContent.includes(`"${file}"`),

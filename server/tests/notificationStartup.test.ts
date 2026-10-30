@@ -218,7 +218,7 @@ test('a late native Allow cannot undo a newer explicit Off choice', async () => 
 
 test('preview cleanup unregisters the PWA worker without deleting existing push registration', async () => {
   const html = fs.readFileSync('index.html', 'utf8');
-  const script = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(match => match[1]).find(source => source.includes('serviceWorker'))!;
+  const script = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)].map(match => match[1]).find(source => source.includes('serviceWorker'))!;
   const removed: string[] = [];
   const worker = (path: string) => ({ active: { scriptURL: 'https://preview.example' + path }, unregister() { removed.push(path); } });
   vm.runInNewContext(script, {
