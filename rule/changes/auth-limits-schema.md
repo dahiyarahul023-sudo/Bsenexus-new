@@ -23,3 +23,7 @@
 - Final isolated checks each exited **0**: `npm run lint`, `npm test` (**874 passed**, 33 suites, 0 failed/skipped), `npm run build` (prebuild/TypeScript/Vite/budget/server/copy), `npm run map:generate`, `npm run test:map` (**6/6**), `npm run map:check`. Incidental version bump reverted.
 - New PGlite SQL test: 1 passed. Its first query on the old empty migration fixture rejects relation does not exist; new DDL creates exact columns and privileges, rejects anon/authenticated reads and inserts, allows service_role writes and preserves a populated lockout row/catalog on replay. This is an executed old-absence assertion, not a hosted old-runtime test.
 - `git diff --check`: passed. No hosted migration, database write, production inspection, browser session or runtime deployment. Catalog reads were confined to Bsenexus-staging. Production schema equivalence must be checked by owner before applying; no unconditional production no-op claim.
+
+## Merge preparation
+
+- Reconciled with main 89049b514e8f6af61bd09a7a87df0618541c92a8; retain earlier merged tasks and this task's implementation. Generated maps rebuilt from combined source. No deployment or hosted migration. Local combined checks recorded in the PR.
