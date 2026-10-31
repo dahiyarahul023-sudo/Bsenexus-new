@@ -42,6 +42,14 @@
 ## Recovery reconciliation — 1 November 2026 IST
 
 - Reconciled with merged main d6d6ca19836f7c3025a9d603a51fa76923e8f449, including restoration PR 52, FAQ quota PR 43, PIN PR 46 and the newer Gift login fix. Domain memberships were combined; neither side of conflicting generated maps was selected.
-- Final combined source passed 903 backend tests, TypeScript lint, actual production build, six map tests, map freshness and diff checks locally. Generated JSON/HTML blob hashes match local outputs. Only delivery documentation changed afterward.
+- Final combined source passed 903 backend tests, TypeScript lint, actual production build, six map tests, map freshness and diff checks locally. Generated JSON/HTML blob hashes match local outputs. Subsequent fixture corrections are recorded below.
 - The local Chromium executable is absent; hosted current-head CI and its synthetic browser fixtures are recorded in the PR. Real Google/email/CAPTCHA, Cashfree, OneSignal/Clarity and OAuth journeys/report review are still open. This remains a report-only draft; script enforcement and dependent Task 8 are not claimed.
 - No deployment, hosted migration, production SQL, paid provider call or real notification was performed. See security-recovery-status.md for verified merge heads and CI evidence.
+
+### Hosted fixture correction
+
+- Run 41242027239 passed test:dev-runtime, then verify-gift-access.mjs failed with `Component auth has not been registered yet`. The newer GiftActivationPage imports Firebase readiness and onAuthStateChanged directly; the old offline fixture replaced AuthContext but inadvertently loaded the real Firebase modules, causing late Vite optimizer discovery and an unregistered Auth component.
+- Impact checked before editing scripts/verify-gift-access.mjs. The fixture now maps only the two Gift components' direct Firebase imports to its shared synthetic account owner, models readiness/currentUser/subscribe/unsubscribe and asynchronous account notifications, and explicitly refuses any unexpected real Firebase import. Prepares the fixed React dependency set without late discovery. Production Gift/Firebase code and every existing browser assertion are unchanged; this is a test isolation repair, not a claimed provider fix.
+- Browser regression, map regeneration/check and hosted final CI results are recorded in the PR; local browser availability is reported separately. No new provider call or production change.
+
+- Shared CI correction PR 53 merged as bbd4867bfb672195fa8156ff105e10c321c8100c after all four hosted jobs passed in run 41242539946. This CSP branch is reconciled with that latest main and retains the same adapter repair. Local VM lifecycle and actual Vite module-transform probes passed. Production auth implementation is unchanged; provider-journey gate remains open.

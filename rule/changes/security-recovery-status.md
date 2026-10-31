@@ -40,10 +40,11 @@ The owner explicitly approved uploading the regenerated maps and completing the 
 | Restoration / PR 52 | 120e17cb619bf2abd81521d2afb6d65d5a32dbcc | 41240810762 | 7f0579bf43f1c10ce8630030fef62613041058b3 |
 | FAQ quota / PR 43 | b668a928241752c5a26f2dfa6b56341fc66cefad | 41241192189 | bc4d318bf9b5eec5d8bea7567ca1642adf983c23 |
 | Admin PIN / PR 46 | 85fa090b24a444b761030b2043914d5b1301f34c | 41241523545 | d6d6ca19836f7c3025a9d603a51fa76923e8f449 |
+| Gift CI isolation / PR 53 | 7dbf5e683ebf9a4922eb488901772030184dde4f | 41242539946 | bbd4867bfb672195fa8156ff105e10c321c8100c |
 
 All four jobs passed at each listed head: rules-map, application, bun-application and development-preview. Hosted checks performed fresh npm installs, a separate fresh Bun resolution/build, full tests, type checks, production builds, generated-map checks and the existing Chromium runtime/Gift/restart fixtures. These synthetic fixtures do not establish real provider or physical-device acceptance.
 
-Current merged main at CSP reconciliation: d6d6ca19836f7c3025a9d603a51fa76923e8f449. CSP PR 41 is reconciled with that exact main and remains draft under its established provider-journey/report-only release gate. The PR body records the current pushed head and CI result. Original Task 8 remains dependent on enforcing CSP. No deployment or hosted migration was performed.
+Current merged main at CSP reconciliation: bbd4867bfb672195fa8156ff105e10c321c8100c. CSP PR 41 is reconciled with that exact main and remains draft under its established provider-journey/report-only release gate. The PR body records the current pushed head and CI result. Original Task 8 remains dependent on enforcing CSP. No deployment or hosted migration was performed.
 
 ## Remaining release gates
 
@@ -54,3 +55,7 @@ Current merged main at CSP reconciliation: d6d6ca19836f7c3025a9d603a51fa76923e8f
 - Local/mock/PGlite checks establish bounded code behavior, not current production protection or a security certification. Moderate dependency findings remain.
 
 Rollback and consumer dispositions are documented in restore-security-sync-regression.md and each recovered task's change record. Retain quota receipts and auth counters during runtime rollback; do not replay the broad source sync.
+
+## Browser fixture follow-up
+
+CSP run 41242027239 passed application/Bun/map checks but failed its Gift browser fixture because newly introduced direct Firebase readiness imports escaped the older synthetic AuthContext adapter. PR 53 fixes that shared CI boundary on main without changing production auth or removing assertions. Its current-head CI passed all four jobs. Local VM lifecycle and actual Vite transform probes also passed; real SDK imports are explicitly rejected in this offline fixture. Both generated maps were refreshed. The CSP draft includes that exact repair and the new main; its final CI result is recorded in PR 41.

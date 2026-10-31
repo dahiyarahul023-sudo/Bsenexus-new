@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "896a3bcd5bd68b8abe49af1847664be2ceca1dac67af7d0eaa45d159f8ab9234",
+  "sourceDigest": "60db7263d3ac172fecb9ee23afe469d6227ca3f630ad8bfe517526688b5b5ba7",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -218,7 +218,7 @@
     },
     {
       "path": "scripts/verify-gift-access.mjs",
-      "sha256": "f71aaf7a76c81da5a8441c02af49b241313afb28dec96fab8c70e5cdf82041f8",
+      "sha256": "6f0b45d747b7f46d8cd86c5972d3b12e72c23c6574d14ab4cdcd9c3b2a2815af",
       "importedBy": []
     },
     {
@@ -23495,22 +23495,22 @@
     },
     {
       "file": "scripts/verify-gift-access.mjs",
-      "line": 49,
+      "line": 53,
       "name": "PLAYWRIGHT_CHROMIUM_EXECUTABLE"
     },
     {
       "file": "scripts/verify-gift-access.mjs",
-      "line": 49,
+      "line": 53,
       "name": "PLAYWRIGHT_CHROMIUM_EXECUTABLE"
     },
     {
       "file": "scripts/verify-gift-access.mjs",
-      "line": 49,
+      "line": 53,
       "name": "PLAYWRIGHT_CHROMIUM_ARGS"
     },
     {
       "file": "scripts/verify-gift-access.mjs",
-      "line": 49,
+      "line": 53,
       "name": "PLAYWRIGHT_CHROMIUM_ARGS"
     },
     {
