@@ -8,23 +8,27 @@ import path from 'node:path';
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
 const token = 'bnx_gift_' + 'a'.repeat(43), inviteId = '11111111-1111-4111-8111-111111111111';
-const bootstrap = fs.readFileSync('index.html','utf8').match(/<script>([\s\S]*?)<\/script>/)[1];
+const bootstrap = fs.readFileSync('index.html','utf8').match(/<script\b[^>]*>([\s\S]*?)<\/script>/)[1];
 const fixtures = { items: [], calls: [], failRead: false, readStatus: 503, readError: 'Fixture storage unavailable', delay: false };
 const cache = await mkdtemp(path.join(os.tmpdir(), 'gift-browser-'));
 const auth = `import {useSyncExternalStore} from 'react';
-let account=null;const listeners=new Set();
+let account=null;const listeners=new Set(),firebaseListeners=new Set();
 const person=uid=>({uid,email:uid==='owner'?'owner@example.com':uid==='other'?'other@example.com':'recipient@example.com',isAnonymous:false,getIdToken:async()=> 'fixture-firebase-token-'+uid});
-window.giftSetAccount=uid=>{account=uid?person(uid):null;listeners.forEach(f=>f())};
+export const auth={get currentUser(){return account},authStateReady:async()=>{}};
+export function onAuthStateChanged(instance,listener){if(instance!==auth)throw new Error('Unexpected fixture auth instance');firebaseListeners.add(listener);queueMicrotask(()=>{if(firebaseListeners.has(listener))listener(account)});return()=>firebaseListeners.delete(listener)};
+window.giftSetAccount=uid=>{account=uid?person(uid):null;const next=account;firebaseListeners.forEach(f=>queueMicrotask(()=>{if(firebaseListeners.has(f))f(next)}));listeners.forEach(f=>f())};
 export function useAuth(){const user=useSyncExternalStore(f=>{listeners.add(f);return()=>listeners.delete(f)},()=>account);return {user,authLoading:false,setIsAuthModalOpen:()=>window.giftSetAccount('recipient'),setIsAdminPinModalOpen:()=>{},refreshProfile:async()=>{},logout:async()=>window.giftSetAccount(null)}};`;
 const entry = `import React from 'react';import {createRoot} from 'react-dom/client';import {AdminGiftAccess} from '/src/components/AdminGiftAccess.tsx';import {GiftActivationPage} from '/src/components/GiftActivationPage.tsx';
 const mode=new URLSearchParams(location.search).get('mode');if(mode==='admin')window.giftSetAccount('owner');createRoot(document.getElementById('root')).render(React.createElement(React.StrictMode,null,React.createElement(mode==='admin'?AdminGiftAccess:GiftActivationPage)));`;
-const server = await createServer({configFile:false,cacheDir:cache,server:{host:'127.0.0.1',port:0,hmr:false},optimizeDeps:{entries:[],include:['react','react-dom','react-dom/client','react/jsx-runtime','react/jsx-dev-runtime']},plugins:[{
+const server = await createServer({configFile:false,cacheDir:cache,server:{host:'127.0.0.1',port:0,hmr:false},optimizeDeps:{noDiscovery:true,entries:[],include:['react','react-dom','react-dom/client','react/jsx-runtime','react/jsx-dev-runtime']},plugins:[{
  name:'gift-offline-adapters',enforce:'pre',resolveId(source,importer){
   if(source==='/@gift-fixture')return '\0gift-entry';
   if(importer && /\/(AdminGiftAccess|GiftActivationPage)\.tsx$/.test(importer)) {
    if(source==='../context/AuthContext')return '\0gift-auth';
+   if(source==='../firebase'||source==='firebase/auth')return '\0gift-auth';
    if(source==='../api')return '\0gift-api';
   }
+  if(source.startsWith('firebase/')||/\/src\/firebase(?:\.ts)?$/.test(source))throw new Error('Unexpected real Firebase import in offline Gift fixture: '+source);
  },load(id){if(id==='\0gift-entry')return entry;if(id==='\0gift-auth')return auth;if(id==='\0gift-api')return 'export const customFetch=(...args)=>fetch(...args);';},
  configureServer(vite){vite.middlewares.use(async(req,res,next)=>{
   if(req.url.startsWith('/fixture') || req.url.startsWith('/activate-gift')){
