@@ -17,7 +17,8 @@ import { resolvePersonalTelegramTarget } from '../utils/telegramTarget.js';
 import { resumeFirestoreNetwork, pauseFirestoreNetwork, persistStorageMode } from "../database/firebase.js";
 import { requireAuth, requireAdmin, requireProOrAdmin, aiRateLimiter, telegramRateLimiter, apiRateLimiter } from "../security/auth.js";
 import { runSecurityAudit, executeSimulatedPenTest } from "../security/hardening.js";
-import { fetchBseDocument, isAllowedBseDocumentUrl, readBoundedDocument } from '../utils/bseDocument.js';
+import { isAllowedBseDocumentUrl } from '../utils/bseDocument.js';
+import { pdfOpenRouter } from './pdfOpen.js';
 import {
   getAllWatchlists,
   renameWatchlist,
@@ -2197,81 +2198,8 @@ apiRouter.post("/help/ask-ai", requireProOrAdmin, aiRateLimiter, async (req, res
   }
 });
 
-// Resilient BSE PDF Resolver & Proxy (SSRF-protected, strictly restricted to BSE domains)
-apiRouter.get("/pdf-open", async (req, res) => {
-  try {
-    const rawUrl = (req.query.url as string) || '';
-    const filename = (req.query.file as string) || '';
-    const newsId = (req.query.newsId as string) || '';
-
-    const candidateUrls: string[] = [];
-
-    if (rawUrl && isAllowedBseUrl(rawUrl)) {
-      candidateUrls.push(rawUrl);
-      if (rawUrl.includes('/AttachLive/')) {
-        candidateUrls.push(rawUrl.replace('/AttachLive/', '/AttachHis/'));
-      } else if (rawUrl.includes('/AttachHis/')) {
-        candidateUrls.push(rawUrl.replace('/AttachHis/', '/AttachLive/'));
-      }
-    }
-
-    if (filename) {
-      const cleanFile = filename.replace(/^.*[\\\/]/, '').replace(/[^a-zA-Z0-9_\-\.]/g, '').trim();
-      if (cleanFile) {
-        candidateUrls.push(`https://www.bseindia.com/xml-data/corpfiling/AttachLive/${cleanFile}`);
-        candidateUrls.push(`https://www.bseindia.com/xml-data/corpfiling/AttachHis/${cleanFile}`);
-      }
-    }
-
-    if (newsId) {
-      const cleanNewsId = newsId.replace(/[^a-zA-Z0-9_\-]/g, '');
-      if (cleanNewsId) {
-        candidateUrls.push(`https://www.bseindia.com/corporates/anndet_new.aspx?origid=${encodeURIComponent(cleanNewsId)}`);
-      }
-    }
-
-    // Try candidates in order with standard browser headers to prevent hotlink blocks
-    for (const testUrl of candidateUrls) {
-      // Re-verify each candidate is on bseindia.com
-      if (!isAllowedBseUrl(testUrl)) continue;
-
-      try {
-        const response = await fetchBseDocument(testUrl, {
-          method: 'GET',
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-            'Accept': 'application/pdf,text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            'Referer': 'https://www.bseindia.com/'
-          },
-          signal: AbortSignal.timeout(5000)
-        });
-
-        if (response.ok) {
-          const contentType = response.headers.get('content-type') || '';
-          if (contentType.includes('application/pdf') || testUrl.toLowerCase().endsWith('.pdf')) {
-            const cleanSafeName = (filename || 'bse_filing.pdf').replace(/[^a-zA-Z0-9_\-\.]/g, '');
-            res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400');
-            res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', `inline; filename="${cleanSafeName}"`);
-            return res.send(await readBoundedDocument(response));
-          } else if (testUrl.includes('anndet_new.aspx')) {
-            return res.redirect(testUrl);
-          }
-        }
-      } catch {
-        // Try next candidate url
-      }
-    }
-
-    // Direct fallback if proxy fetch fails
-    if (candidateUrls.length > 0 && isAllowedBseUrl(candidateUrls[0])) {
-      return res.redirect(candidateUrls[0]);
-    }
-    return res.redirect('https://www.bseindia.com/corporates/ann.html');
-  } catch (err: any) {
-    return res.redirect('https://www.bseindia.com/corporates/ann.html');
-  }
-});
+// Dedicated rate-limited, bounded streaming proxy; exact BSE allowlist retained.
+apiRouter.use(pdfOpenRouter);
 
 // ==========================================
 // FEATURE 1: COMPANY INTELLIGENCE & QUOTE

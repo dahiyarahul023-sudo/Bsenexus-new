@@ -21,7 +21,8 @@
         "supabase/migrations/20261024193046_deep_audit_security.sql",
         "server/api/telegramLinks.ts",
         "server/database/telegramLinksDao.ts",
-        "scripts/verify-deep-audit-staging.sql"
+        "scripts/verify-deep-audit-staging.sql",
+        "supabase/migrations/20261030120109_auth_account_limits_schema.sql"
       ],
       "tests": [
         "server/tests/authIdentity.test.ts",
@@ -32,7 +33,8 @@
         "server/tests/userSkeletonPrivileges.test.ts",
         "server/tests/deepAuditSql.test.ts",
         "server/tests/deepAuditAuth.test.ts",
-        "server/tests/clientIpSpoofing.test.ts"
+        "server/tests/clientIpSpoofing.test.ts",
+        "server/tests/authLimitsSql.test.ts"
       ],
       "reason": "Verified token → server session → current durable profile → route authorization. Browser roles are display state; never authority. The server-only ensure_user_skeleton RPC denies browser EXECUTE, uses SECURITY INVOKER and a fixed empty search path with a qualified users relation. Its narrow production permission repair preserves existing paid rows on retry."
     },
@@ -126,7 +128,8 @@
         "supabase/migrations/20261019065115_telegram_result_delivery.sql",
         "server/ai/filingSummary.ts",
         "server/ai/tools.ts",
-        "server/ai/filingText.ts"
+        "server/ai/filingText.ts",
+        "server/api/pdfOpen.ts"
       ],
       "tests": [
         "server/tests/aiGateway.test.ts",
@@ -135,7 +138,8 @@
         "server/tests/telegramResults.test.ts",
         "server/tests/telegramResultSql.test.ts",
         "server/tests/telegramResultDocument.test.ts",
-        "server/tests/mcpPdfSummary.test.ts"
+        "server/tests/mcpPdfSummary.test.ts",
+        "server/tests/pdfOpen.test.ts"
       ],
       "reason": "Authenticated request → quota → allowlisted document fetch → provider budget/fallback → response/cache. Retrieved documents are untrusted content, not instructions. Telegram filing delivery is BSE-only. Strict result summaries extract literal PDF rows, headings and units, validate numeric order and period/basis evidence, then compute YoY/QoQ and bounded prose in code. Unreadable or invalid evidence suppresses the AI reply, not the original filing alert. Website prose cache is separate; versioned summary keys retain unchanged per-chat delivery receipts. Site-requested AI remains independent. The public BSE proxy retains its original BSE-only allowlist. Explicit connector PDF analysis uses the existing gateway and bounded official-document fetcher without changing website/Telegram fallback policy. Evidence stores language, coverage, input truncation and document hash; provider/extraction/output failure refunds the generation reservation. Grounded strict result summaries persist the selected website language field after validation. Text-provider failover is independent of the legacy Gemini breaker; provider quotas, PDF evidence and Telegram delivery claims remain owners."
     },
@@ -287,14 +291,16 @@
         "supabase/migrations/005_user_notification_inbox_clear.sql",
         "supabase/migrations/006_durable_referrals.sql",
         "server/database/indexNowDao.ts",
-        "supabase/migrations/20261021133613_indexnow_url_cooldown.sql"
+        "supabase/migrations/20261021133613_indexnow_url_cooldown.sql",
+        "supabase/migrations/20261030120109_auth_account_limits_schema.sql"
       ],
       "tests": [
         "server/tests/storageQuotaSwitch.test.ts",
         "server/tests/startupRecovery.test.ts",
         "server/tests/productionAudit.test.ts",
         "server/tests/indexNowSql.test.ts",
-        "server/tests/studioMigrationReview.test.ts"
+        "server/tests/studioMigrationReview.test.ts",
+        "server/tests/authLimitsSql.test.ts"
       ],
       "reason": "Supabase and privileged RPCs are server-only. Cache/fallback behavior varies per DAO: local success never proves durable payment success. Review migrations with caller changes. IndexNow public-URL claims use service-role-only RLS/invoker RPCs and reserve a durable 24-hour cooldown before HTTP; browser grants and local fallback authority are absent."
     },
@@ -566,7 +572,7 @@
         "server/tests/previewBackendReload.test.ts",
         "scripts/check-preview-restart.mjs"
       ],
-      "reason": "Startup and settings influence background jobs, provider calls, abuse limits and logs. A live HTTP listener does not establish that durable stores or external providers are ready. Poller stage deadlines release the monitor lock without resuming abandoned workers; dedicated local poller history is not cloud deployment durability. IndexNow starts only after listen, uses the existing provider circuit and reports configured primary mode/HTTP status in diagnostics. Its background failures never fail filing storage; production Crawler Hints state requires independent inspection. MCP request logs expose only generated trace IDs, bounded operation/error labels and irreversible connection tags; no tool arguments, tokens or private text. Quota/idempotency errors provide actionable recovery. A failed docs fingerprint cannot interrupt other indexing/startup. Development retains one Node process with the existing tsx import hook during source edits. Backend adoption requires a coordinated explicit restart and document reload; production start and Vite HMR policy remain independent. Actual App/browser tests cover an interrupted Settings import, closed Vite, stable recovery and a fresh document against a replacement server."
+      "reason": "Startup and settings influence background jobs, provider calls, abuse limits and logs. A live HTTP listener does not establish that durable stores or external providers are ready. Poller stage deadlines release the monitor lock without resuming abandoned workers; dedicated local poller history is not cloud deployment durability. IndexNow starts only after listen, uses the existing provider circuit and reports configured primary mode/HTTP status in diagnostics. Its background failures never fail filing storage; production Crawler Hints state requires independent inspection. MCP request logs expose only generated trace IDs, bounded operation/error labels and irreversible connection tags; no tool arguments, tokens or private text. Quota/idempotency errors provide actionable recovery. A failed docs fingerprint cannot interrupt other indexing/startup. Development retains one Node process with the existing tsx import hook during source edits. Backend adoption requires a coordinated explicit restart and document reload; production start and Vite HMR policy remain independent. Actual App/browser tests cover an interrupted Settings import, closed Vite, stable recovery and a fresh document against a replacement server. GitHub workflow checkout/setup-node actions are pinned to reviewed full v7 commit SHAs; weekly grouped Dependabot updates maintain action/npm review. The .github configuration lies outside this source scanner and requires manual and hosted-CI evidence."
     },
     {
       "id": "frontend-navigation",
