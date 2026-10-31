@@ -37,3 +37,11 @@
 - Final serialized verification after the preview-marker fix: npm run lint, npm test (878/878, 0 skipped), npm run build, npm run map:generate, npm run test:map (6/6) and npm run map:check each exited **0**, captured individually. This supersedes incomplete/interfered exploratory logs.
 
 - Hosted run 41053248244: application, Bun and map jobs passed; development-preview passed test:dev-runtime, then failed because scripts/verify-gift-access.mjs matched only literal <script> and could not extract the nonce-bearing first boot block. Updated that fixture regex to accept attributes; no behavior assertions removed. Local VM executes the extracted real gift bootstrap and confirms token capture/fragment cleanup. Map generation/check and 6 map tests passed after the fixture fix. Full provider journeys remain unverified; hosted retry is separate evidence.
+
+
+## Recovery reconciliation — 1 November 2026 IST
+
+- Reconciled with merged main d6d6ca19836f7c3025a9d603a51fa76923e8f449, including restoration PR 52, FAQ quota PR 43, PIN PR 46 and the newer Gift login fix. Domain memberships were combined; neither side of conflicting generated maps was selected.
+- Final combined source passed 903 backend tests, TypeScript lint, actual production build, six map tests, map freshness and diff checks locally. Generated JSON/HTML blob hashes match local outputs. Only delivery documentation changed afterward.
+- The local Chromium executable is absent; hosted current-head CI and its synthetic browser fixtures are recorded in the PR. Real Google/email/CAPTCHA, Cashfree, OneSignal/Clarity and OAuth journeys/report review are still open. This remains a report-only draft; script enforcement and dependent Task 8 are not claimed.
+- No deployment, hosted migration, production SQL, paid provider call or real notification was performed. See security-recovery-status.md for verified merge heads and CI evidence.
