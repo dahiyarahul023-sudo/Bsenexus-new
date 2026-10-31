@@ -1,5 +1,8 @@
 import { getSupabase, isSupabaseConfigured } from './supabase.js';
 import { readLocalJson, writeLocalJson } from './localStore.js';
+import { runPaymentStore, PaymentStoreUnavailableError } from './paymentStore.js';
+import bcrypt from 'bcryptjs';
+import { timingSafePinEqual } from '../security/adminPin.js';
 
 export interface AppSettings {
   botToken: string;
@@ -140,4 +143,38 @@ export async function saveSettings(settings: Partial<AppSettings>) {
   } catch (err: any) {
     console.warn('[Settings] Supabase write failed (local copy kept):', err?.message || err);
   }
+}
+
+/** PIN migration must be confirmed durably before owner elevation. */
+export async function saveAdminPinHash(hash: string, pin?: string): Promise<void> {
+  if (!/^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(hash)) throw new Error('Invalid PIN hash');
+  let confirmedHash = hash;
+  if (isSupabaseConfigured()) {
+    await runPaymentStore('admin PIN migration', Promise.resolve().then(async () => {
+      if (!pin) throw new Error('PIN migration proof required');
+      const cloud = await readCloudSettings();
+      const stored = cloud?.appPinHash;
+      if (stored?.startsWith('$2')) {
+        // A different instance may already have migrated/rotated the PIN.
+        // Accept only the current bcrypt verifier; never overwrite it.
+        if (!await bcrypt.compare(pin, stored).catch(() => false)) throw new Error('PIN changed during migration');
+        confirmedHash = stored;
+        return;
+      }
+      if (stored && !timingSafePinEqual(pin, stored)) throw new Error('PIN changed during migration');
+      const value = sanitizeSettings({ ...(cloud || {}), appPinHash: hash });
+      const update = cloud
+        ? getSupabase().from('settings').update({ value }).eq('key', SETTINGS_KEY).eq('value', JSON.stringify(cloud))
+        : getSupabase().from('settings').insert({ key: SETTINGS_KEY, value });
+      const { data, error } = await update.select('key').abortSignal(AbortSignal.timeout(4000));
+      if (error || data?.length !== 1) throw error || new Error('Settings changed during PIN migration');
+    }), 5000);
+  } else if (process.env.NODE_ENV === 'production') {
+    throw new PaymentStoreUnavailableError('admin PIN migration');
+  }
+  const disk = readLocalJson<AppSettings | null>(SETTINGS_FILE, null) || defaultSettings;
+  const updated = sanitizeSettings({ ...disk, appPinHash: confirmedHash });
+  writeLocalJson(SETTINGS_FILE, updated);
+  cachedSettings = updated;
+  lastSettingsFetchTime = Date.now();
 }

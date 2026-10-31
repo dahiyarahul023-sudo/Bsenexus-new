@@ -22,7 +22,8 @@
         "server/api/telegramLinks.ts",
         "server/database/telegramLinksDao.ts",
         "scripts/verify-deep-audit-staging.sql",
-        "supabase/migrations/20261030120109_auth_account_limits_schema.sql"
+        "supabase/migrations/20261030120109_auth_account_limits_schema.sql",
+        "server/security/adminPin.ts"
       ],
       "tests": [
         "server/tests/authIdentity.test.ts",
@@ -34,7 +35,8 @@
         "server/tests/deepAuditSql.test.ts",
         "server/tests/deepAuditAuth.test.ts",
         "server/tests/clientIpSpoofing.test.ts",
-        "server/tests/authLimitsSql.test.ts"
+        "server/tests/authLimitsSql.test.ts",
+        "server/tests/adminPin.test.ts"
       ],
       "reason": "Verified token → server session → current durable profile → route authorization. Browser roles are display state; never authority. The server-only ensure_user_skeleton RPC denies browser EXECUTE, uses SECURITY INVOKER and a fixed empty search path with a qualified users relation. Its narrow production permission repair preserves existing paid rows on retry."
     },
