@@ -59,3 +59,7 @@ Closing a dialog must not discard its confirmed same-owner snapshots: check the 
 ## Deep security audit repair — release prerequisite
 
 See changes/deep-audit-repair.md before deploying its branch. The forward migration requires the verified modern payment contract; payment/trial/reconcile and shared auth counters are service-only transactions. Do not auto-promote profile plan fields to paid provenance. Owner administration needs a same-UID PIN elevation valid for 15 minutes. Personal Telegram linking is bot-proven with expiring one-use challenges; an old typed chat ID cannot authorize a send. The runtime is not deployed. Following explicit approval, the staging migration and rolled-back service-role checks passed on 25 October 2026 IST; production rollout is pending.
+
+## Supabase transfer budget
+
+See changes/supabase-egress.md for the November baseline and measurement limits. Background watchlist scans share a complete, versioned inventory; unchanged owners do not download full lists. Do not extend owner freshness on a cache hit or use snapshots to authorize CAS writes. Local mutations invalidate and remote changes refresh within the existing 60-second window. Public filing lookup caches invalidate on queued and confirmed writes and deletes. The spare Supabase Cached Egress quota is for Storage CDN hits; HTTP headers alone do not convert PostgREST egress. Publication, runtime deployment and an observed monthly-budget reduction are separate facts.
