@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "fa11ebe43833b8a02b3fefe56ab2b47b4631178ddd861349d1c8abce4e64d06b",
+  "sourceDigest": "4ac004ccaa586b2a15c3dd8dbfcfbf1418821b02bb441127f31494125060417c",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -537,7 +537,7 @@
     },
     {
       "path": "server/database/announcementDao.ts",
-      "sha256": "43136a939c3c29324a8fc658b2d473f8d3da1a8633d2234d8b31f412c7c4e53d",
+      "sha256": "74b983f21885a12a31b2c76ac0d7908feb4e2db37f0497fb634622e29613473b",
       "importedBy": [
         "server.ts",
         "server/ai/market.ts",
@@ -891,7 +891,7 @@
     },
     {
       "path": "server/database/watchlistDao.ts",
-      "sha256": "3b7725347cc04b4f23f6a63459e6f53672a6f8c56cf514a05fffc9c264f2f12b",
+      "sha256": "d7ee42a1f313aa4764196cd7366c68ddff7fc830293991062f656f9309179d33",
       "importedBy": [
         "server.ts",
         "server/ai/tools.ts",
@@ -1640,6 +1640,11 @@
       "importedBy": []
     },
     {
+      "path": "server/tests/announcementEgress.test.ts",
+      "sha256": "1d0395db4413d44a6397f01924b5dc105609638443c3b2a3d095ce40848c4cf5",
+      "importedBy": []
+    },
+    {
       "path": "server/tests/announcementFeed.test.ts",
       "sha256": "ef6ec7b9345de2107d5026b7285518ab4beddae65a1742545332f75ee6444f98",
       "importedBy": []
@@ -1786,7 +1791,7 @@
     },
     {
       "path": "server/tests/companyFilingHistory.test.ts",
-      "sha256": "5f557dc0195cd761c3de087d3a9c7fe870d4cc4ad1f6c9b0654ffba70cdbb087",
+      "sha256": "e2bdc0d5a4aa78376feddf27c5bc2ce5d98f1a711f520618d316b0306ae9b883",
       "importedBy": []
     },
     {
@@ -1827,6 +1832,11 @@
     {
       "path": "server/tests/diagnosticsPopulation.test.ts",
       "sha256": "b60724b58d39e403bb65e3340ef2b55b4984bb25f45a7078d144d1d9d3f84e31",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/egressCache.test.ts",
+      "sha256": "cc1cbad2360cc291a762af062ed7bd26edf1d7f51351d01140c02ba7de19ae9a",
       "importedBy": []
     },
     {
@@ -2275,6 +2285,11 @@
       "importedBy": []
     },
     {
+      "path": "server/tests/watchlistEgress.test.ts",
+      "sha256": "217cd96f1112ebc3c859dfd516c779f7ba4c204d6d6684090acc1dc5142b08b0",
+      "importedBy": []
+    },
+    {
       "path": "server/tests/watchlistIdentity.test.ts",
       "sha256": "c0b5e1c976c8cd89ba71f04d29e4bd7621ba4df5117ee722cee7a5fbe7618974",
       "importedBy": []
@@ -2416,6 +2431,16 @@
       ]
     },
     {
+      "path": "server/utils/readCache.ts",
+      "sha256": "06f8a524a9394897fd3edd90f51369d9f8e7f1631fc91a2d1ca312685813a7a8",
+      "importedBy": [
+        "server/database/announcementDao.ts",
+        "server/tests/announcementEgress.test.ts",
+        "server/tests/companyFilingHistory.test.ts",
+        "server/tests/egressCache.test.ts"
+      ]
+    },
+    {
       "path": "server/utils/referralValidation.ts",
       "sha256": "90090fcf1b49810b3d9cfad7c69ad60cb54917b947e6d5dfe53d5593b72b42ed",
       "importedBy": [
@@ -2531,6 +2556,15 @@
       "importedBy": [
         "server/api/routes.ts",
         "server/tests/auditData.test.ts"
+      ]
+    },
+    {
+      "path": "server/utils/versionedSnapshot.ts",
+      "sha256": "6c7b0ab52a5b20b460ca97e4ba1cbe39c2303ebf271fb4c14116e5d1bb792a6e",
+      "importedBy": [
+        "server/database/watchlistDao.ts",
+        "server/tests/egressCache.test.ts",
+        "server/tests/watchlistEgress.test.ts"
       ]
     },
     {
@@ -6340,9 +6374,15 @@
     },
     {
       "source": "server/database/announcementDao.ts",
+      "target": "server/utils/readCache.ts",
+      "kind": "import",
+      "line": 11
+    },
+    {
+      "source": "server/database/announcementDao.ts",
       "target": "server/services/storageMonitor.ts",
       "kind": "dynamic",
-      "line": 671
+      "line": 681
     },
     {
       "source": "server/database/calendarHistoryDao.ts",
@@ -6751,6 +6791,12 @@
       "target": "server/database/logDao.ts",
       "kind": "import",
       "line": 8
+    },
+    {
+      "source": "server/database/watchlistDao.ts",
+      "target": "server/utils/versionedSnapshot.ts",
+      "kind": "import",
+      "line": 9
     },
     {
       "source": "server/security/accountRateLimiter.ts",
@@ -8499,6 +8545,12 @@
       "line": 5
     },
     {
+      "source": "server/tests/announcementEgress.test.ts",
+      "target": "server/utils/readCache.ts",
+      "kind": "import",
+      "line": 6
+    },
+    {
       "source": "server/tests/announcementFeed.test.ts",
       "target": "src/utils/announcementFeed.ts",
       "kind": "import",
@@ -8830,27 +8882,33 @@
     },
     {
       "source": "server/tests/companyFilingHistory.test.ts",
-      "target": "src/shared/companyFilings.ts",
+      "target": "server/utils/readCache.ts",
       "kind": "import",
       "line": 7
     },
     {
       "source": "server/tests/companyFilingHistory.test.ts",
-      "target": "src/shared/scripMatching.ts",
+      "target": "src/shared/companyFilings.ts",
       "kind": "import",
       "line": 8
     },
     {
       "source": "server/tests/companyFilingHistory.test.ts",
-      "target": "src/shared/filingSource.ts",
+      "target": "src/shared/scripMatching.ts",
       "kind": "import",
       "line": 9
     },
     {
       "source": "server/tests/companyFilingHistory.test.ts",
-      "target": "server/services/historicalFilings.ts",
+      "target": "src/shared/filingSource.ts",
       "kind": "import",
       "line": 10
+    },
+    {
+      "source": "server/tests/companyFilingHistory.test.ts",
+      "target": "server/services/historicalFilings.ts",
+      "kind": "import",
+      "line": 11
     },
     {
       "source": "server/tests/companyPeers.test.ts",
@@ -8929,6 +8987,18 @@
       "target": "src/shared/performanceSummary.ts",
       "kind": "import",
       "line": 6
+    },
+    {
+      "source": "server/tests/egressCache.test.ts",
+      "target": "server/utils/readCache.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "server/tests/egressCache.test.ts",
+      "target": "server/utils/versionedSnapshot.ts",
+      "kind": "import",
+      "line": 4
     },
     {
       "source": "server/tests/exchangeProfiles.test.ts",
@@ -10171,6 +10241,12 @@
       "target": "server/utils/bseDocument.ts",
       "kind": "import",
       "line": 5
+    },
+    {
+      "source": "server/tests/watchlistEgress.test.ts",
+      "target": "server/utils/versionedSnapshot.ts",
+      "kind": "import",
+      "line": 7
     },
     {
       "source": "server/tests/watchlistIdentity.test.ts",
@@ -14685,7 +14761,9 @@
         "server/services/resultHistoryRead.ts",
         "src/utils/resultHistoryClient.ts",
         "src/shared/resultFiling.ts",
-        "server/services/resultDocumentEvidence.ts"
+        "server/services/resultDocumentEvidence.ts",
+        "server/utils/versionedSnapshot.ts",
+        "server/utils/readCache.ts"
       ],
       "tests": [
         "server/tests/bseBackfill.test.ts",
@@ -14718,9 +14796,12 @@
         "server/tests/calendarTelegramSql.test.ts",
         "server/tests/resultHistory.test.ts",
         "server/tests/resultDocumentEvidence.test.ts",
-        "server/tests/studioMigrationReview.test.ts"
+        "server/tests/studioMigrationReview.test.ts",
+        "server/tests/watchlistEgress.test.ts",
+        "server/tests/egressCache.test.ts",
+        "server/tests/announcementEgress.test.ts"
       ],
-      "reason": "Poll → normalize/dedupe → persistence → feed and alert decisions → recipient-specific delivery/inbox. Global and personal recipients must remain distinct. Preset saves replace stable per-owner IDs atomically; confirmed cloud settings feed every poll. Personal channels supersede inherited defaults once presets are saved. Live polling has a CRON_SECRET bearer-protected HTTP trigger, a 60-second in-container watchdog timer, a continuous 15-second active poller, and a 15-second-stale traffic trigger. The shared process-local monitor lock skips running cycles without queueing. Request lifetime covers bounded ingestion, raw delivery/write drain and then result AI after releasing the ingestion lock; cron source failure eligibility is capped at 60 seconds. External Scheduler remains necessary for idle request-based Cloud Run; legacy cron returns 410. Numbered IST worker summaries and cron request summaries have distinct event fields. Automatic Telegram AI applies only to actual financial results with a stable security-code/period identity. Private durable claims share one valid analysis per period/language and reserve one reply per chat across exchange copies, languages and restart. Failed evidence uses a bounded newer-source retry; uncertain send acceptance never replays. Private admin delivery timings retain exchange, observed, processed and Telegram acceptance dates without recipient identity. Migration must precede runtime release. Confirmed public filing changes queue company/announcements IndexNow URLs after successful upsert; the poll collection hold is idempotently released in finally. Indexing I/O runs outside ingestion and does not change alert recipients or intake. Overnight ADR adds one existing Market pulse screen and an opt-in private morning inbox digest; source dates and fetch times remain distinct, and durable insertion prevents per-session repeats. Stored 30-day filing counts share one exact-company projection with company detail, independently of the seven-day updates feed. Durable per-company history uses keyset pages; company Filings and Material Actions expose numbered pages. Explicit paid archive imports all categories over selected years with bounded workers, source failure and storage confirmation, and does not persist PDFs. Process restart or another instance may make worker status unavailable; saved evidence remains and no success is invented. Financial result titles include Results For Quarter/Q1 and board Outcome - Results. Generic outcomes need identity-bound proof from bounded official BSE PDF text; no PDF is persisted. Archive receipts distinguish saved filings from documents awaiting verification. Calendar retains one lower history control; Stock 360 and automatic readers share completion copy."
+      "reason": "Poll → normalize/dedupe → persistence → feed and alert decisions → recipient-specific delivery/inbox. Global and personal recipients must remain distinct. Preset saves replace stable per-owner IDs atomically; confirmed cloud settings feed every poll. Personal channels supersede inherited defaults once presets are saved. Live polling has a CRON_SECRET bearer-protected HTTP trigger, a 60-second in-container watchdog timer, a continuous 15-second active poller, and a 15-second-stale traffic trigger. The shared process-local monitor lock skips running cycles without queueing. Request lifetime covers bounded ingestion, raw delivery/write drain and then result AI after releasing the ingestion lock; cron source failure eligibility is capped at 60 seconds. External Scheduler remains necessary for idle request-based Cloud Run; legacy cron returns 410. Numbered IST worker summaries and cron request summaries have distinct event fields. Automatic Telegram AI applies only to actual financial results with a stable security-code/period identity. Private durable claims share one valid analysis per period/language and reserve one reply per chat across exchange copies, languages and restart. Failed evidence uses a bounded newer-source retry; uncertain send acceptance never replays. Private admin delivery timings retain exchange, observed, processed and Telegram acceptance dates without recipient identity. Migration must precede runtime release. Confirmed public filing changes queue company/announcements IndexNow URLs after successful upsert; the poll collection hold is idempotently released in finally. Indexing I/O runs outside ingestion and does not change alert recipients or intake. Overnight ADR adds one existing Market pulse screen and an opt-in private morning inbox digest; source dates and fetch times remain distinct, and durable insertion prevents per-session repeats. Stored 30-day filing counts share one exact-company projection with company detail, independently of the seven-day updates feed. Durable per-company history uses keyset pages; company Filings and Material Actions expose numbered pages. Explicit paid archive imports all categories over selected years with bounded workers, source failure and storage confirmation, and does not persist PDFs. Process restart or another instance may make worker status unavailable; saved evidence remains and no success is invented. Financial result titles include Results For Quarter/Q1 and board Outcome - Results. Generic outcomes need identity-bound proof from bounded official BSE PDF text; no PDF is persisted. Archive receipts distinguish saved filings from documents awaiting verification. Calendar retains one lower history control; Stock 360 and automatic readers share completion copy. Background watchlist readers share a paged uid/revision/update-time inventory, fetching only changed list bodies and retaining the original 60-second check time in owner read caches. Writes keep fresh CAS; local changes invalidate snapshots. Public cloud-only filing lookups are bounded/coalesced and invalidated before and after writes; failures never become cached successful empties."
     },
     {
       "id": "user-data",
@@ -21272,61 +21353,61 @@
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 90,
+      "line": 94,
       "function": "getSupabase()\n      .from",
       "key": "ANNOUNCEMENTS_TABLE"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 124,
+      "line": 128,
       "function": "Array.from",
       "key": "mergedMap.values()"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 190,
+      "line": 195,
+      "function": "getSupabase()\n        .from",
+      "key": "ANNOUNCEMENTS_TABLE"
+    },
+    {
+      "file": "server/database/announcementDao.ts",
+      "line": 232,
       "function": "getSupabase()\n      .from",
       "key": "ANNOUNCEMENTS_TABLE"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 227,
-      "function": "getSupabase()\n      .from",
-      "key": "ANNOUNCEMENTS_TABLE"
-    },
-    {
-      "file": "server/database/announcementDao.ts",
-      "line": 321,
+      "line": 326,
       "function": "getSupabase()\n          .from",
       "key": "ANNOUNCEMENTS_TABLE"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 340,
+      "line": 345,
       "function": "getSupabase()\n          .from",
       "key": "ANNOUNCEMENTS_TABLE"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 483,
+      "line": 492,
       "function": "getSupabase()\n          .from",
       "key": "ANNOUNCEMENTS_TABLE"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 752,
+      "line": 762,
       "function": "getSupabase().from",
       "key": "ANNOUNCEMENTS_TABLE"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 774,
+      "line": 784,
       "function": "Array.from",
       "key": "byId.values()"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 787,
+      "line": 797,
       "function": "getSupabase().from",
       "key": "ANNOUNCEMENTS_TABLE"
     },
@@ -21776,50 +21857,50 @@
     },
     {
       "file": "server/database/watchlistDao.ts",
-      "line": 19,
+      "line": 20,
       "function": "getSupabase()\n      .from",
       "key": "WATCHLISTS_TABLE"
     },
     {
       "file": "server/database/watchlistDao.ts",
-      "line": 28,
+      "line": 30,
       "function": "getSupabase()\n    .from",
       "key": "WATCHLISTS_TABLE"
     },
     {
       "file": "server/database/watchlistDao.ts",
-      "line": 337,
+      "line": 241,
       "function": "getSupabase().from",
       "key": "WATCHLISTS_TABLE"
     },
     {
       "file": "server/database/watchlistDao.ts",
-      "line": 338,
+      "line": 259,
       "function": "getSupabase().from",
       "key": "WATCHLISTS_TABLE"
     },
     {
       "file": "server/database/watchlistDao.ts",
-      "line": 359,
+      "line": 397,
+      "function": "getSupabase().from",
+      "key": "WATCHLISTS_TABLE"
+    },
+    {
+      "file": "server/database/watchlistDao.ts",
+      "line": 398,
+      "function": "getSupabase().from",
+      "key": "WATCHLISTS_TABLE"
+    },
+    {
+      "file": "server/database/watchlistDao.ts",
+      "line": 420,
       "function": "getSupabase()\n        .from",
       "key": "WATCHLISTS_TABLE"
     },
     {
       "file": "server/database/watchlistDao.ts",
-      "line": 531,
+      "line": 593,
       "function": "getSupabase().from",
-      "key": "WATCHLISTS_TABLE"
-    },
-    {
-      "file": "server/database/watchlistDao.ts",
-      "line": 851,
-      "function": "getSupabase().from",
-      "key": "WATCHLISTS_TABLE"
-    },
-    {
-      "file": "server/database/watchlistDao.ts",
-      "line": 884,
-      "function": "getSupabase()\n        .from",
       "key": "WATCHLISTS_TABLE"
     },
     {
@@ -22064,13 +22145,13 @@
     },
     {
       "file": "server/tests/companyFilingHistory.test.ts",
-      "line": 14,
+      "line": 15,
       "function": "Array.from",
       "key": "{ length: 83 }"
     },
     {
       "file": "server/tests/companyFilingHistory.test.ts",
-      "line": 45,
+      "line": 47,
       "function": "Array.from",
       "key": "{length:1103}"
     },
@@ -23770,12 +23851,12 @@
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 738,
+      "line": 748,
       "name": "NODE_ENV"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 779,
+      "line": 789,
       "name": "NODE_ENV"
     },
     {
@@ -23920,22 +24001,22 @@
     },
     {
       "file": "server/database/watchlistDao.ts",
-      "line": 260,
+      "line": 319,
       "name": "LEGACY_ADMIN_UID"
     },
     {
       "file": "server/database/watchlistDao.ts",
-      "line": 260,
+      "line": 319,
       "name": "LEGACY_ADMIN_UID"
     },
     {
       "file": "server/database/watchlistDao.ts",
-      "line": 438,
+      "line": 500,
       "name": "LEGACY_ADMIN_UID"
     },
     {
       "file": "server/database/watchlistDao.ts",
-      "line": 522,
+      "line": 584,
       "name": "NODE_ENV"
     },
     {

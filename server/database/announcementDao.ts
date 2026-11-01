@@ -8,8 +8,12 @@ import { pageRenderCache, apiResponseCache } from '../utils/renderCache.js';
 import { notifySearchEnginesOfNewPages } from '../services/indexNow.js';
 import { publicFilingVersion, storedFilingIndexPages } from '../services/filingIndexNow';
 import { isBseFiling } from '../../src/shared/filingSource.js';
+import { ReadCache } from '../utils/readCache.js';
 
 const ANNOUNCEMENTS_TABLE = 'announcements';
+const announcementLookupCache = new ReadCache<any | null>({
+  maxEntries: 2000, ttlMs: value => value === null ? 15_000 : 60_000, now: () => Date.now()
+});
 
 // --- Row mapping: the filing is one document (data jsonb); id/scrip_cd/
 // fetched_at are duplicated as columns for the queries the DAO runs. ---
@@ -187,15 +191,16 @@ export async function getAnnouncementById(newsId: string): Promise<any | null> {
   if (!isSupabaseConfigured()) return null;
 
   try {
-    const { data, error } = await getSupabase()
-      .from(ANNOUNCEMENTS_TABLE)
-      .select('*')
-      .eq('id', newsId)
-      .maybeSingle();
-    if (error) throw error;
-    if (data) {
-      return fromRow(data);
-    }
+    const item = await announcementLookupCache.get(newsId, async () => {
+      const { data, error } = await getSupabase()
+        .from(ANNOUNCEMENTS_TABLE)
+        .select('id,data')
+        .eq('id', newsId)
+        .maybeSingle();
+      if (error) throw error;
+      return data ? fromRow(data) : null;
+    });
+    return item === null ? null : structuredClone(item);
   } catch (err: any) {
     console.warn("Notice in getAnnouncementById:", err?.message || err);
   }
@@ -341,6 +346,8 @@ async function processSupabaseQueue() {
           .from(ANNOUNCEMENTS_TABLE)
           .upsert(rowsToUpsert, { onConflict: 'id' });
         if (upsertError) throw upsertError;
+        // Discard any read that raced the queued write before it committed.
+        for (const row of rowsToUpsert) announcementLookupCache.invalidate(row.id);
 
         for (const row of rowsToUpsert) {
           if (!existingById.has(row.id) || publicFilingVersion(existingById.get(row.id)) !== publicFilingVersion(row.data)) changedPublicFilings.set(String(row.id), row.data);
@@ -407,6 +414,7 @@ export function queueAnnouncementsBatchWrite(tasks: { docId: string; data: any; 
 
   for (const t of tasks) {
     if (!t.docId) continue;
+    announcementLookupCache.invalidate(t.docId);
     const existing = supabaseWriteQueue.get(t.docId);
     if (existing) {
       supabaseWriteQueue.set(t.docId, {
@@ -465,6 +473,7 @@ export async function deleteAnnouncementsFromStorageAndCloud(idsToDelete: string
   // 1. Remove from in-memory cache & local sets
   announcementsMemoryCache = announcementsMemoryCache.filter(a => !idSet.has(a.id) && !idSet.has(a.newsId));
   for (const id of idsToDelete) {
+    announcementLookupCache.invalidate(id);
     processedCache.delete(id);
     sentCache.delete(id);
     supabaseWriteQueue.delete(id);
@@ -485,6 +494,7 @@ export async function deleteAnnouncementsFromStorageAndCloud(idsToDelete: string
           .delete()
           .in('id', chunk);
         if (error) throw error;
+        for (const id of chunk) announcementLookupCache.invalidate(id);
       }
     } catch (err: any) {
       console.warn("Supabase delete batch notice:", err?.message || err);
