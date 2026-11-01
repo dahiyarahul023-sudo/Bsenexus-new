@@ -247,7 +247,7 @@ const globalWatchlistSnapshot = new VersionedSnapshot<any[]>({
       versions.push(...data.map(row => ({ id: row.uid, version: watchlistVersion(row) })));
       if (data.length < 500) break;
       const next = String(data[data.length - 1].uid);
-      if (next <= after) throw new Error('Watchlist inventory pagination stalled');
+      if (next === after) throw new Error('Watchlist inventory pagination stalled');
       after = next;
     }
     return versions;

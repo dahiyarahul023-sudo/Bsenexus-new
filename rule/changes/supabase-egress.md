@@ -15,12 +15,12 @@
   - Company history: reviewed-and-compatible; existing full-history pagination remains unchanged. Its VM fixture receives the real new helper; assertions unchanged.
   - Impact Radar, AI Guide, gifts, billing and admin flows: reviewed-and-compatible; no business policy, route, query contract or write behavior changed.
 - Assignment: backend cache behavior. Frontend action/state/style contracts unchanged; browser/device verification is not claimed.
-- Failure/concurrency evidence: tests cover changed/empty/deleted owners, more than one metadata page, original freshness clocks, concurrent reads, invalidation during loads, read failures, eviction, negative caching, caller mutation isolation and reads racing queued/confirmed partial writes.
+- Failure/concurrency evidence: tests cover changed/empty/deleted owners, more than one metadata page, mixed-case database ordering, original freshness clocks, concurrent reads, invalidation during loads, read failures, eviction, negative caching, caller mutation isolation and reads racing queued/confirmed partial writes.
 - Local validation:
   - npm ci --ignore-scripts --no-audit --no-fund: passed; dependencies/lockfile unchanged.
   - Original watchlist regression run before DAO edits: four failed, one passed.
-  - Focused cache/DAO and company-history run: 24/24 passed, including 15 new tests.
-  - Final NODE_ENV=test npm test with local test-only JWT configuration: 913/913 passed, zero skipped.
+  - Focused cache/DAO and company-history run: 25/25 passed, including 16 new tests.
+  - Final NODE_ENV=test npm test with local test-only JWT configuration: 914/914 passed, zero skipped.
   - npm run lint (tsc --noEmit): passed.
   - npm run build --ignore-scripts: passed TypeScript, Vite, performance budget and server bundle. The flag skips only the unrelated prebuild version bump.
   - npm run map:generate; npm run map:check; npm run test:map: passed; map tests 6/6.

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "d435ebf8dc8e3110ed9e2e632c0f5acf194826d049d9075a5c53535efacaa4f3",
+  "sourceDigest": "4ac004ccaa586b2a15c3dd8dbfcfbf1418821b02bb441127f31494125060417c",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -891,7 +891,7 @@
     },
     {
       "path": "server/database/watchlistDao.ts",
-      "sha256": "dce61cb68b914d0d9189daf8ad9d46003d5cb9aedaa8d6bbe815267c02167950",
+      "sha256": "d7ee42a1f313aa4764196cd7366c68ddff7fc830293991062f656f9309179d33",
       "importedBy": [
         "server.ts",
         "server/ai/tools.ts",
@@ -2286,7 +2286,7 @@
     },
     {
       "path": "server/tests/watchlistEgress.test.ts",
-      "sha256": "452d12f478057e39e51973326dcd484c408ccd040943be2957574aaa840f22a7",
+      "sha256": "217cd96f1112ebc3c859dfd516c779f7ba4c204d6d6684090acc1dc5142b08b0",
       "importedBy": []
     },
     {

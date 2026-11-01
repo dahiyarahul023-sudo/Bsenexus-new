@@ -16,7 +16,7 @@ function harness(size=2) {
     const execute=()=>{
       queries.push({columns,uids,uid,after,patch});
       if(patch){const row=rows.get(uid!);if(!row||row.revision!==expected)return {data:[],error:null};rows.set(uid!,{...row,...structuredClone(patch),revision:row.revision+1});return {data:[{revision:row.revision+1}],error:null};}
-      let selected=[...rows.values()].filter(row=>(!uid||row.uid===uid)&&(!uids||uids.includes(row.uid))&&row.uid>after).sort((a,b)=>a.uid.localeCompare(b.uid)).slice(0,limit);
+      let selected=[...rows.values()].filter(row=>(!uid||row.uid===uid)&&(!uids||uids.includes(row.uid))&&row.uid.localeCompare(after)>0).sort((a,b)=>a.uid.localeCompare(b.uid)).slice(0,limit);
       selected=selected.map(row=>columns==='*'?row:Object.fromEntries(columns.split(',').map(c=>[c.trim(),row[c.trim()]])));
       return {data:structuredClone(selected),error:null};
     };
@@ -96,4 +96,15 @@ test('inactive numeric-zero lists stay out of global symbols and priority maps',
   const h=harness();h.rows.get('owner-0000').lists[0].is_active=0;
   assert.deepEqual(plain(await h.dao.getActiveWatchlistSymbols('all',{noCreate:true})),['INFY']);
   assert.equal((await h.dao.getActiveWatchlistSymbolMap('all',{noCreate:true})).TCS,undefined);
+});
+
+
+test('keyset pagination follows database collation across mixed-case owner IDs',async()=>{
+  const h=harness(1001);const saved=[...h.rows.values()];h.rows.clear();
+  saved.forEach((row,index)=>{
+    const uid=index<500?`a${String(index).padStart(4,'0')}`:index<1000?`B${String(index).padStart(4,'0')}`:'c-last';
+    h.rows.set(uid,{...row,uid});
+  });
+  assert.equal((await h.dao.getCalendarWatchlistStocks()).length,1001);
+  assert.equal(h.queries.filter(q=>!q.columns.includes('lists')).length,3);
 });
