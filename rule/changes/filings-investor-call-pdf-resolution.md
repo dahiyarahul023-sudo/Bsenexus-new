@@ -1,0 +1,14 @@
+# Filings Investor Call Highlighting & PDF Resolution Hardening
+
+- Scope: Resolve missing PDF button on board meeting/results cards in CompanyIntelligenceModal, eliminate LODR Regulation 30 boilerplate truncation to prominently highlight Investor Call / Con Call announcements across feeds, and harden `/api/pdf-open` streaming against slow response timeouts, false-positive HTML error page handling, and HTTP/HTTPS protocol mismatches.
+- Verified before changes:
+  1. In `CompanyIntelligenceModal.tsx`, the Filings tab strictly gated the PDF button on `filing.pdfLink &&`, leaving board meeting intimations and announcements with only `newsId` without a button.
+  2. In `cleanBseSubject.ts` and `Announcements.tsx`, `detectHumanTitle` lacked checks for `analyst`, `investor meet`, `con call`, and `institutional investor`, defaulting to generic `Corporate announcement`. On mobile, raw text truncated to `Announcement under Regulation 30...`, masking the investor call substance.
+  3. In `server/api/pdfOpen.ts`, the hard timeout was 5000ms (too short for BSE's AttachLive infrastructure), and responses with `text/html` for `.pdf` URLs were incorrectly streamed with `Content-Type: application/pdf`, creating corrupt/blank downloads.
+- Implemented:
+  1. `src/utils/cleanBseSubject.ts`: Enhanced `detectHumanTitle` with high-priority pattern matching for Investor Call / Analyst Meet / Con Call (`isInvestorCall`, sky badge tone), Press Release, Financial Results, Board Meeting Intimations, SEBI DP Reg 74(5), and Reg 39(3) Share Certificate updates. Enhanced regex to clean `Announcement under Regulation 30...`, `Compliances-...`, and company name prefixes.
+  2. `src/components/CompanyIntelligenceModal.tsx`: Applied `cleanBseSubject` across both Hub tab (`latestFiling`) and Filings tab (`filingsPage.items`). Rendered substantive category badges (`Investor Call / Concall`, `Financial Results`, `Board Meeting Intimation`, etc.) with 2-line clean headline. Guaranteed PDF button on all filing cards by falling back across `pdfLink`, `attachmentName`, and `newsId`.
+  3. `server/api/pdfOpen.ts`: Increased timeout from 5s to 20s, added `http://` -> `https://` normalization, added extraction of filenames from URL paths for AttachHis fallback, added rejection of `text/html` error bodies before streaming as PDF, increased rate limit to 60 req/min, and redirected rather than returning 503 under concurrency saturation.
+  4. `server/services/companyIntelService.ts`: Populated `attachmentName` and multi-source `pdfLink` fallback in `allStockFilings`.
+  5. `src/components/Announcements.tsx`: Extended `isConcall` to reflect `cleanSub.isInvestorCall` and surfaced substantive badges in drawer headers.
+  6. `server/tests/subjectCleaner.test.ts`: Added unit tests verifying investor call detection, badge tones, and SEBI DP Reg 74(5) compliance parsing.

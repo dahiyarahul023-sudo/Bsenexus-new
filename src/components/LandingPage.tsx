@@ -1,48 +1,22 @@
-import { TOP_COMPANIES } from '../config/topCompanies';
 import React, { useState } from 'react';
-import { AnimatePresence, MotionConfig, useReducedMotion } from 'framer-motion';
-import * as motion from 'framer-motion/m';
 import { 
-  Zap, Sparkles, Activity, Bell, Send, Shield, List, Calendar,
-  ArrowRight, ArrowUpRight, CheckCircle2, ChevronRight, FileText,
-  TrendingUp, Search, Eye, Filter, Lock, Play, Cpu, Layers,
-  ExternalLink, BarChart3, Clock, Check, RefreshCw, Sun, Moon,
-  User, BookOpen, AlertCircle, Award, Terminal, Flame, Database,
-  Building2, Target, Volume2, ShieldCheck, HelpCircle, CheckCheck,
-  Share2, Compass, X, MoreVertical, Code2
+  Zap, Send, Shield, Terminal, ArrowRight, ArrowUpRight, 
+  Sparkles, CheckCircle2, ChevronRight, Sun, Moon, Lock, 
+  ExternalLink, BarChart3, Clock, Filter, Eye, Activity,
+  Calendar as CalendarIcon
 } from 'lucide-react';
 import { BseNexusLogo } from './ui/BseNexusLogo';
-import {
-  IntelDossierIcon, ResultsLedgerIcon, WatchlistsIcon,
-  AlertRulesIcon, IndicesIcon, QuotaIcon,
-} from './landing/FeatureIcons';
 import { MarketClock } from './ui/MarketClock';
 import { MarketTickerTape } from './ui/MarketTickerTape';
-import { MarketGuide } from '../types';
-import { ComponentSkeleton } from './ui/ComponentSkeleton';
-import { useAuth } from '../context/AuthContext';
-import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-import MarketGuidesSection from './MarketGuidesSection';
-import { BlogReaderModal } from './BlogReaderModal';
-import { scrollToElementWithOffset } from '../utils/scrollState';
-import { FollowBseNexusBlock, SocialIconsRow } from './ui/SocialLinks';
-import { CommonQuestionsFAQ } from './ui/CommonQuestionsFAQ';
-import { AiFaqSection } from './ui/AiFaqSection';
-import { getPlanDisplay, getLowestPlanPrice } from '../utils/cashfree';
+import { UpcomingCatalystsGrid } from './landing/UpcomingCatalystsGrid';
+import { ResultsScrollDeck } from './landing/ResultsScrollDeck';
+import { CoreCapabilitiesBento } from './landing/CoreCapabilitiesBento';
+import { CommunitySocialBanner } from './landing/CommunitySocialBanner';
+import { LandingFooterAbout } from './landing/LandingFooterAbout';
+import { PRO_PLAN_LIST, getLowestPlanPrice } from '../config/plans';
 import { PlanCard } from './ui/PlanCard';
 import ParticleRibbons from './ui/ParticleRibbons';
-import MagneticButton from './ui/MagneticButton';
-import Reveal from './ui/Reveal';
-import { CreativeHero } from './landing/CreativeHero';
-import { FeatureTabs } from './landing/FeatureTabs';
-import { FilingJourney } from './landing/FilingJourney';
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+import { AiIntelligenceLogo } from './ui/AiIntelligenceLogo';
 
 interface LandingPageProps {
   onEnterTerminal: (tab?: string) => void;
@@ -52,2436 +26,247 @@ interface LandingPageProps {
   telegramHealth?: { status: string; latency?: number };
 }
 
-// Sample mock announcements for the interactive Hero preview
-const SAMPLE_HERO_ANNOUNCEMENTS = [
-  {
-    symbol: 'TATASTEEL',
-    scripCode: '500470',
-    companyName: 'Tata Steel Limited',
-    category: 'Financial Results',
-    headline: 'Sample filing: quarterly financial results with AI-extracted trends',
-    time: 'Sample',
-    badge: 'EARNINGS',
-    badgeColor: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
-    aiMetrics: { rev: '+12.4% YoY', pat: '+24.8% YoY', ebitda: '18.2%' },
-    summary: 'Sample card — shows how a results filing is condensed into key YoY trends. Figures here are illustrative, not real company data.'
-  },
-  {
-    symbol: 'RELIANCE',
-    scripCode: '500325',
-    companyName: 'Reliance Industries Ltd',
-    category: 'Board Meeting',
-    headline: 'Sample: board meeting intimation — results & dividend agenda',
-    time: 'Sample',
-    badge: 'DIVIDEND',
-    badgeColor: 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30',
-    aiMetrics: { rev: 'Board Meeting', pat: 'Dividend Agenda', ebitda: 'LODR Reg 29' },
-    summary: 'Sample card — shows how a board meeting intimation is condensed: agenda and record dates at a glance. Illustrative content.'
-  },
-  {
-    symbol: 'INFY',
-    scripCode: '500209',
-    companyName: 'Infosys Limited',
-    category: 'Acquisition / M&A',
-    headline: 'Sample: strategic acquisition announcement',
-    time: 'Sample',
-    badge: 'M&A',
-    badgeColor: 'bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30',
-    aiMetrics: { rev: 'Deal size', pat: 'Equity terms', ebitda: 'Synergy view' },
-    summary: 'Sample card — shows how an acquisition filing is condensed: deal size, structure and strategic rationale. Illustrative content.'
-  },
-  {
-    symbol: 'HDFCBANK',
-    scripCode: '500180',
-    companyName: 'HDFC Bank Limited',
-    category: 'General Disclosure',
-    headline: 'Sample: bond issuance disclosure under SEBI Reg 30',
-    time: 'Sample',
-    badge: 'REG 30',
-    badgeColor: 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30',
-    aiMetrics: { rev: 'Credit rating', pat: 'Issue size', ebitda: 'Coupon terms' },
-    summary: 'Sample card — shows how a debt issuance filing is condensed: rating, size and terms at a glance. Illustrative content.'
-  }
-];
-
-// Interactive Demo Companies for 360° Company Dossier
-const DEMO_COMPANIES: Record<string, {
-  symbol: string;
-  scripCode: string;
-  name: string;
-  sector: string;
-  mktCap: string;
-  conviction: 'Ultra High' | 'High' | 'Medium';
-  price: string;
-  change: string;
-  pe: string;
-  pb: string;
-  roe: string;
-  dividendYield: string;
-  description: string;
-  actions: Array<{
-    date: string;
-    type: string;
-    badgeColor: string;
-    title: string;
-    impact: string;
-    reg: string;
-  }>;
-  results: Array<{
-    quarter: string;
-    revenue: string;
-    revYoy: string;
-    pat: string;
-    patYoy: string;
-    ebitdaMargin: string;
-    status: 'SAMPLE';
-  }>;
-  filings: Array<{
-    date: string;
-    category: string;
-    headline: string;
-    pdfSize: string;
-  }>;
-}> = {
-  TATASTEEL: {
-    symbol: 'TATASTEEL',
-    scripCode: '500470',
-    name: 'Tata Steel Limited',
-    sector: 'Iron & Steel / Heavy Industrials',
-    mktCap: '₹1,95,420 Cr (Large Cap)',
-    conviction: 'Ultra High',
-    price: '₹164.20',
-    change: '+2.4%',
-    pe: '18.4x',
-    pb: '1.9x',
-    roe: '14.2%',
-    dividendYield: '2.18%',
-    description: 'One of the world\'s top steel manufacturing companies with an annual crude steel capacity of 35 MTPA across India and Europe.',
-    actions: [
-      { date: 'Aug 24, 2026', type: 'SEBI Reg 30', badgeColor: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30', title: 'Commissioning of 5 MTPA Kalinganagar Blast Furnace', impact: 'Boosts high-margin domestic automotive flat steel capacity by 25%.', reg: 'LODR Reg 30(2)' },
-      { date: 'Jul 18, 2026', type: 'UK Restructuring', badgeColor: 'bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30', title: 'Transition to Electric Arc Furnace at Port Talbot', impact: 'Reduces recurring European carbon penalty cash outflows by £120M annually.', reg: 'LODR Reg 30' },
-      { date: 'Jun 05, 2026', type: 'Dividend', badgeColor: 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30', title: 'Annual Final Dividend of ₹3.60 per share approved', impact: 'Total cash payout of ₹4,420 Cr; Record Date Jul 12.', reg: 'Reg 42' }
-    ],
-    results: [
-      { quarter: 'Q1 FY27', revenue: '₹57,084 Cr', revYoy: '+12.4%', pat: '₹1,420 Cr', patYoy: '+24.8%', ebitdaMargin: '18.2%', status: 'SAMPLE' },
-      { quarter: 'Q4 FY26', revenue: '₹53,905 Cr', revYoy: '+8.2%', pat: '₹1,180 Cr', patYoy: '+16.5%', ebitdaMargin: '16.8%', status: 'SAMPLE' },
-      { quarter: 'Q3 FY26', revenue: '₹54,771 Cr', revYoy: '+5.4%', pat: '₹918 Cr', patYoy: '-4.2%', ebitdaMargin: '14.9%', status: 'SAMPLE' },
-      { quarter: 'Q2 FY27 (Upcoming)', revenue: '₹59,200 Cr (Est)', revYoy: '+14.1%', pat: '₹1,650 Cr (Est)', patYoy: '+32.0%', ebitdaMargin: '19.0%', status: 'SAMPLE' },
-    ],
-    filings: [
-      { date: 'Today, 11:24 AM', category: 'Financial Results', headline: 'Outcome of Board Meeting: Unaudited Financial Results for Q1 FY27', pdfSize: '1.4 MB' },
-      { date: 'Yesterday', category: 'Company Update', headline: 'Operational Update: Record crude steel production in 9M FY26', pdfSize: '420 KB' },
-      { date: '3 days ago', category: 'SEBI Reg 30', headline: 'Disclosure under Regulation 30: Execution of long-term pellet supply contract', pdfSize: '680 KB' }
-    ]
-  },
-  RELIANCE: {
-    symbol: 'RELIANCE',
-    scripCode: '500325',
-    name: 'Reliance Industries Limited',
-    sector: 'Oil, Retail & Telecom',
-    mktCap: '₹20,15,400 Cr (Mega Cap)',
-    conviction: 'High',
-    price: '₹2,980.40',
-    change: '+1.1%',
-    pe: '26.8x',
-    pb: '2.4x',
-    roe: '12.8%',
-    dividendYield: '0.34%',
-    description: 'India\'s largest private sector enterprise spanning hydrocarbon exploration, retail digital ecosystems (Jio), and renewable green energy.',
-    actions: [
-      { date: 'Aug 20, 2026', type: 'Board Meeting', badgeColor: 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30', title: 'Board to consider Interim Dividend & Green Energy Unit IPO', impact: 'Value unlocking across clean energy & solar giga-factories.', reg: 'LODR Reg 29' },
-      { date: 'Jul 30, 2026', type: 'SEBI Reg 30', badgeColor: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30', title: 'Jio Platforms crosses 500 Million 5G Subscriber Milestone', impact: 'ARPU expands to ₹198 per month with AI data pack upsells.', reg: 'Press & Reg 30' }
-    ],
-    results: [
-      { quarter: 'Q1 FY27', revenue: '₹2,48,200 Cr', revYoy: '+9.8%', pat: '₹19,650 Cr', patYoy: '+11.2%', ebitdaMargin: '17.6%', status: 'SAMPLE' },
-      { quarter: 'Q4 FY26', revenue: '₹2,35,480 Cr', revYoy: '+7.4%', pat: '₹18,240 Cr', patYoy: '+8.9%', ebitdaMargin: '17.1%', status: 'SAMPLE' },
-      { quarter: 'Q2 FY27 (Upcoming)', revenue: '₹2,55,000 Cr (Est)', revYoy: '+12.0%', pat: '₹20,800 Cr (Est)', patYoy: '+14.5%', ebitdaMargin: '18.0%', status: 'SAMPLE' }
-    ],
-    filings: [
-      { date: 'Aug 20, 2026', category: 'Board Meeting Notice', headline: 'Notice of Board Meeting to consider Audited Results & Dividend', pdfSize: '890 KB' },
-      { date: 'Aug 14, 2026', category: 'SEBI Reg 30', headline: 'Partnership disclosure: Global Cloud AI infrastructure agreement', pdfSize: '1.1 MB' }
-    ]
-  },
-  LT: {
-    symbol: 'LT',
-    scripCode: '500510',
-    name: 'Larsen & Toubro Limited',
-    sector: 'Infrastructure & EPC Heavy Engineering',
-    mktCap: '₹5,14,200 Cr (Large Cap)',
-    conviction: 'Ultra High',
-    price: '₹3,740.00',
-    change: '+3.2%',
-    pe: '32.1x',
-    pb: '4.8x',
-    roe: '16.5%',
-    dividendYield: '1.05%',
-    description: 'Indian multinational engaged in EPC projects, hi-tech manufacturing, defense systems, and international power transmission infrastructure.',
-    actions: [
-      { date: 'Aug 22, 2026', type: 'Major Order Win', badgeColor: 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30', title: '₹4,200 Cr Offshore Gas Separation Platform in Middle East', impact: 'Order inflow for FY26 crosses ₹1.25 Lakh Cr; margin profile 10.2%.', reg: 'LODR Reg 30' },
-      { date: 'Aug 04, 2026', type: 'Defense Disclosures', badgeColor: 'bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30', title: 'Ministry of Defense signs contract for Naval Artillery systems', impact: 'Strategic sovereign defense order with high indigenous content.', reg: 'SEBI LODR Reg 30' }
-    ],
-    results: [
-      { quarter: 'Q3 FY26', revenue: '₹62,180 Cr', revYoy: '+18.4%', pat: '₹3,620 Cr', patYoy: '+21.5%', ebitdaMargin: '10.8%', status: 'SAMPLE' },
-      { quarter: 'Q2 FY26', revenue: '₹58,400 Cr', revYoy: '+15.2%', pat: '₹3,220 Cr', patYoy: '+17.4%', ebitdaMargin: '10.4%', status: 'SAMPLE' }
-    ],
-    filings: [
-      { date: 'Aug 22, 2026', category: 'SEBI Reg 30', headline: 'L&T Energy Hydrocarbon secures Mega Offshore Order Win', pdfSize: '540 KB' },
-      { date: 'Aug 10, 2026', category: 'Shareholding', headline: 'Quarterly statement on institutional shareholding pattern', pdfSize: '310 KB' }
-    ]
-  },
-  INFY: {
-    symbol: 'INFY',
-    scripCode: '500209',
-    name: 'Infosys Limited',
-    sector: 'IT Consulting & Enterprise Software',
-    mktCap: '₹7,58,900 Cr (Large Cap)',
-    conviction: 'High',
-    price: '₹1,820.00',
-    change: '+0.8%',
-    pe: '27.4x',
-    pb: '7.8x',
-    roe: '31.2%',
-    dividendYield: '2.45%',
-    description: 'Global leader in next-generation digital services and enterprise consulting, pioneering enterprise Generative AI integrations across Fortune 500s.',
-    actions: [
-      { date: 'Aug 19, 2026', type: 'Acquisition', badgeColor: 'bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30', title: 'Strategic Acquisition of German AI Engineering Firm for €140M', impact: 'Expands Topaz Generative AI client footprint across European banks.', reg: 'LODR Reg 30' },
-      { date: 'Jul 26, 2026', type: 'Dividend', badgeColor: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30', title: 'Interim Dividend of ₹18.00 per share with record date Aug 02', impact: 'Free cash flow payout ratio maintained at 85%.', reg: 'Reg 42' }
-    ],
-    results: [
-      { quarter: 'Q3 FY26', revenue: '₹41,250 Cr', revYoy: '+7.8%', pat: '₹6,850 Cr', patYoy: '+9.4%', ebitdaMargin: '21.4%', status: 'SAMPLE' },
-      { quarter: 'Q2 FY26', revenue: '₹40,986 Cr', revYoy: '+5.1%', pat: '₹6,506 Cr', patYoy: '+4.7%', ebitdaMargin: '21.1%', status: 'SAMPLE' }
-    ],
-    filings: [
-      { date: 'Aug 19, 2026', category: 'SEBI Reg 30', headline: 'Disclosure under Regulation 30: Material Strategic M&A Agreement in Europe', pdfSize: '1.2 MB' },
-      { date: 'Jul 26, 2026', category: 'Financial Results', headline: 'Consolidated Audited Financial Results for the quarter', pdfSize: '2.8 MB' }
-    ]
-  }
-};
-
 export function LandingPage({
   onEnterTerminal,
   theme,
   setTheme,
-  bseHealth = { status: 'unknown', latency: 0 },
-  telegramHealth = { status: 'unknown', latency: 0 }
+  bseHealth,
+  telegramHealth
 }: LandingPageProps) {
-  const { user, profile, isPro, isAdmin, setIsAuthModalOpen, setIsProModalOpen } = useAuth();
-
-  // Pricing comes from the single source of truth (src/config/plans.ts) —
-  // never hardcode plan prices in this component.
-  const monthlyPlan = getPlanDisplay('pro_monthly');
-  
-  // Interactive States
-  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
-  const reduced = useReducedMotion();
-  const [activeAiDemoTab, setActiveAiDemoTab] = useState<'earnings' | 'acquisition' | 'dividend' | 'reg30'>('earnings');
-  const [selectedCompanyKey, setSelectedCompanyKey] = useState<'TATASTEEL' | 'RELIANCE' | 'LT' | 'INFY'>('TATASTEEL');
-  const [activeCompanyHubTab, setActiveCompanyHubTab] = useState<'hub' | 'timeline' | 'results' | 'filings' | 'research'>('hub');
-  const [selectedGuide, setSelectedGuide] = useState<MarketGuide | null>(null);
-
-  // Lock body scroll when mobile navigation drawer is open
-  useBodyScrollLock(isMobileNavOpen);
-
-  const scrollToSection = (id: string) => {
-    setIsMobileNavOpen(false);
-    // Wait for the mobile menu to close and the body scroll lock to release
-    // before smooth-scrolling. Scrolling while the lock is still applied does
-    // nothing (overflow:hidden), and the lock's position-restore on release
-    // would cancel the scroll — the menu tap then appears to "go nowhere".
-    window.setTimeout(() => scrollToElementWithOffset(id, 88, reduced ? 'auto' : 'smooth'), 120);
-  };
+  const lowestPrice = getLowestPlanPrice();
+  const proWeekly = PRO_PLAN_LIST.find(p => p.id === 'pro_weekly') || PRO_PLAN_LIST[0];
+  const proMonthly = PRO_PLAN_LIST.find(p => p.id === 'pro_monthly') || PRO_PLAN_LIST[1];
+  const proAnnual = PRO_PLAN_LIST.find(p => p.id === 'pro_yearly') || PRO_PLAN_LIST[2];
 
   return (
-    <MotionConfig reducedMotion="user" transition={reduced ? { duration: 0, delay: 0 } : undefined}>
-    <div className="landing-ambient min-h-screen bg-[#F8FAFC] dark:bg-[#12131C] text-slate-900 dark:text-slate-100 font-sans transition-colors duration-200 selection:bg-emerald-500 selection:text-white">
-      {/* Full-page ambient ribbon animation (fixed canvas behind everything) */}
-      <ParticleRibbons />
-      {/* Accessibility: Skip to main content bypass link for keyboard & screen reader users (WCAG 2.4.1) */}
-      <a 
-        href="#main-content" 
-        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2.5 focus:bg-emerald-600 focus:text-white focus:font-bold focus:text-xs focus:rounded-lg focus:shadow-xl focus:outline-none focus:ring-2 focus:ring-white"
-      >
-        Skip to main content
-      </a>
+    <div className="min-h-screen bg-slate-50 dark:bg-[#080d1a] text-slate-900 dark:text-slate-100 font-sans selection:bg-sky-500/20 selection:text-sky-600 dark:selection:text-sky-300 transition-colors relative overflow-x-hidden">
       
-      {/* 1. TOP LIVE REAL-TIME MARKET TICKER TAPE */}
-      <MarketTickerTape bseLatency={bseHealth.latency || 0} />
+      {/* Living Ambient Particle Canvas (flowing ribbons & cursor bloom) */}
+      <ParticleRibbons />
 
-      {/* 2. NAVBAR (Apple Frosted Glass Chrome) */}
-      <header className="sticky top-0 z-40 bg-white/80 dark:bg-[#12131C]/80 backdrop-blur-xl backdrop-saturate-180 border-b border-slate-200/60 dark:border-white/10 shadow-xs transition-colors">
-        {/* Full nav needs ~1570px (measured upper bound); below 1700px the menu button owns navigation.
-            Container widens in lockstep so the row can never overflow it. */}
-        <div className="max-w-7xl min-[1700px]:max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 gap-3">
-            
-            {/* Brand Logo */}
-            <motion.div 
-              whileTap={{ scale: 0.98 }}
-              className="flex items-center gap-2.5 sm:gap-3 cursor-pointer select-none group"
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            >
-              <BseNexusLogo className="w-8 h-8 sm:w-9 sm:h-9 transition-transform group-hover:scale-105" />
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <span className="font-black text-lg tracking-tight text-slate-900 dark:text-white">
-                    BSE<span className="text-emerald-500">NEXUS</span>
-                  </span>
-                  <span className="hidden sm:inline text-[9px] font-black px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 whitespace-nowrap select-none">
-                    TERMINAL
-                  </span>
-                </div>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium leading-none hidden sm:block">
-                  Corporate Intelligence & Filings
-                </p>
-              </div>
-            </motion.div>
+      {/* 1. TOP MARKET TICKER TAPE (Single-row hardware accelerated, replaces 30-stock clutter) */}
+      <div className="w-full border-b border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-950/70 backdrop-blur-md sticky top-0 z-40">
+        <MarketTickerTape />
+      </div>
 
-            {/* Nav Menu Links */}
-            <nav aria-label="Landing Navigation" className="hidden min-[1700px]:flex items-center gap-5 text-xs font-semibold text-slate-600 dark:text-slate-300">
-              <button 
-                onClick={() => scrollToSection('whats-new')} 
-                className="text-emerald-600 dark:text-emerald-400 font-bold hover:opacity-80 transition-opacity cursor-pointer flex items-center gap-1 min-h-[32px] px-1.5 py-1 whitespace-nowrap select-none"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                <span>What's New</span>
-                <span className="text-[8.5px] px-1.5 py-0.2 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 font-mono">2.0</span>
-              </button>
-              <button 
-                onClick={() => scrollToSection('company-hub')} 
-                className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer min-h-[32px] px-1.5 py-1 whitespace-nowrap select-none"
-              >
-                Company Hub
-              </button>
-              <button 
-                onClick={() => scrollToSection('features')} 
-                className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer min-h-[32px] px-1.5 py-1 whitespace-nowrap select-none"
-              >
-                AI Summarizer
-              </button>
-              <button 
-                onClick={() => onEnterTerminal('results-calendar')} 
-                className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer flex items-center gap-1 min-h-[32px] px-1.5 py-1 whitespace-nowrap select-none"
-              >
-                <span>Earnings Ledger</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-              </button>
-              <button 
-                onClick={() => onEnterTerminal('watchlists')} 
-                className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer min-h-[32px] px-1.5 py-1 whitespace-nowrap select-none"
-              >
-                Watchlists
-              </button>
-              <button 
-                onClick={() => scrollToSection('telegram-alerts')} 
-                className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer min-h-[32px] px-1.5 py-1 whitespace-nowrap select-none"
-              >
-                Telegram Bot
-              </button>
-              <button 
-                onClick={() => scrollToSection('pricing')} 
-                className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer flex items-center gap-1 font-bold text-emerald-600 dark:text-emerald-400 min-h-[32px] px-1.5 py-1 whitespace-nowrap select-none"
-              >
-                <span>Pricing</span>
-                <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-mono">from ₹{getLowestPlanPrice()}</span>
-              </button>
-              <button 
-                onClick={() => scrollToSection('market-guides')} 
-                className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer min-h-[32px] px-1.5 py-1 whitespace-nowrap select-none"
-              >
-                Guides
-              </button>
-              <button 
-                onClick={() => scrollToSection('about')} 
-                className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer min-h-[32px] px-1.5 py-1 whitespace-nowrap select-none"
-              >
-                About
-              </button>
-            </nav>
-
-            {/* Right CTAs — shrink-0 so this group can never be pushed off-screen */}
-            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-              {/* Theme Toggle */}
-              <motion.button
-                whileTap={{ scale: 0.92 }}
-                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                aria-label={theme === 'dark' ? "Switch to light theme" : "Switch to dark theme"}
-                className="p-2 rounded-xl bg-slate-100 dark:bg-[#252233] hover:bg-slate-200 dark:hover:bg-[#2F2B40] text-slate-600 dark:text-slate-300 transition-colors cursor-pointer shadow-2xs border border-transparent dark:border-[#352F48] min-h-[38px] min-w-[38px] flex items-center justify-center"
-                title="Toggle Theme"
-              >
-                {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
-              </motion.button>
-
-              {/* User Sign In / Profile status (all screens — visible on mobile too) */}
-              {user || profile ? (
-                <motion.button
-                  whileTap={{ scale: 0.96 }}
-                  onClick={() => onEnterTerminal('home')}
-                  aria-label={`User profile: ${profile?.displayName || 'User profile'}`}
-                  className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-[#222030] hover:bg-slate-200 dark:hover:bg-[#2C293D] text-slate-900 dark:text-white text-xs font-bold transition-all border border-slate-200 dark:border-[#332E45] cursor-pointer shadow-xs min-h-[38px] whitespace-nowrap select-none"
-                >
-                  <div className="w-5 h-5 rounded-full bg-emerald-500 text-white text-[10px] font-black flex items-center justify-center shrink-0">
-                    {(profile?.displayName || profile?.email || 'U').substring(0, 1).toUpperCase()}
-                  </div>
-                  <span className="max-w-[70px] sm:max-w-[100px] truncate">{profile?.displayName?.split(' ')[0] || 'Account'}</span>
-                </motion.button>
-              ) : (
-                <motion.button
-                  whileTap={{ scale: 0.96 }}
-                  onClick={() => setIsAuthModalOpen(true)}
-                  aria-label="Sign in to your account"
-                  className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-[#222030] hover:bg-slate-200 dark:hover:bg-[#2C293D] text-slate-700 dark:text-slate-200 text-xs font-bold transition-all border border-slate-200 dark:border-[#332E45] cursor-pointer shrink-0 min-h-[38px] whitespace-nowrap select-none"
-                >
-                  <User className="w-3.5 h-3.5 text-slate-600 dark:text-slate-300 shrink-0" />
-                  <span>Sign In</span>
-                </motion.button>
-              )}
-
-              {/* Main Launch Live Terminal CTA */}
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                onClick={() => onEnterTerminal('home')}
-                aria-label="Launch Live Terminal Dashboard"
-                className="hidden sm:flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white text-xs font-black shadow-md shadow-emerald-700/25 transition-all cursor-pointer select-none shrink-0 min-h-[38px]"
-              >
-                <Zap className="w-3.5 sm:w-4 h-3.5 sm:h-4 fill-white shrink-0" />
-                <span className="hidden xs:inline sm:inline">Launch Live Terminal</span>
-                <span className="inline xs:hidden sm:hidden">Terminal</span>
-                <ArrowRight className="w-3.5 h-3.5 hidden sm:inline shrink-0" />
-              </motion.button>
-
-              {/* Three-dot menu (below 1700px — full nav only shows where it provably fits) — rightmost */}
-              <motion.button
-                whileTap={{ scale: 0.92 }}
-                onClick={() => setIsMobileNavOpen(prev => !prev)}
-                aria-label={isMobileNavOpen ? "Close menu" : "Open navigation menu"}
-                aria-expanded={isMobileNavOpen}
-                className="min-[1700px]:hidden p-2 rounded-xl bg-slate-100 dark:bg-[#252233] hover:bg-slate-200 dark:hover:bg-[#2F2B40] text-slate-700 dark:text-slate-200 transition-colors cursor-pointer shadow-2xs border border-slate-200/80 dark:border-[#352F48] min-h-[38px] min-w-[38px] flex items-center justify-center shrink-0"
-                title="Open Menu"
-              >
-                {isMobileNavOpen ? <X className="w-4 h-4" /> : <MoreVertical className="w-4 h-4" />}
-              </motion.button>
+      {/* 2. TRANSLUCENT APPLE-STYLE FLOATING NAV */}
+      <header className="sticky top-[37px] z-30 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+        <div className="flex items-center justify-between px-5 py-3 rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 shadow-sm transition-all">
+          {/* Brand lockup */}
+          <div className="flex items-center gap-3">
+            <BseNexusLogo size="sm" />
+            <div className="hidden sm:block">
+              <span className="text-sm font-black tracking-tight text-slate-900 dark:text-white">BSE NEXUS</span>
+              <span className="text-[10px] block text-slate-500 font-mono -mt-0.5">EXCHANGE INTELLIGENCE</span>
             </div>
           </div>
-        </div>
 
-        {/* Mobile / Tablet / Laptop Slide-down Navigation Menu (visible below 1700px) */}
-        <AnimatePresence>
-          {isMobileNavOpen && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.22, ease: 'easeInOut' }}
-              className="min-[1700px]:hidden overflow-hidden border-t border-slate-200/80 dark:border-[#2D283E] bg-white/95 dark:bg-[#12131C]/95 backdrop-blur-2xl shadow-xl"
+          {/* Quick status & links */}
+          <div className="flex items-center gap-2 sm:gap-4">
+            <div className="hidden md:flex items-center gap-2 text-xs font-mono text-slate-500 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>BSE FEED 0.8s</span>
+            </div>
+
+            <a
+              href="/plugin"
+              className="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors px-2 py-1"
             >
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 space-y-1">
-                <button
-                  onClick={() => scrollToSection('whats-new')}
-                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors text-left"
-                >
-                  <span className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-amber-500" />
-                    <span>What's New</span>
-                  </span>
-                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 font-mono">2.0</span>
-                </button>
+              AI Plugin
+            </a>
 
-                <button
-                  onClick={() => scrollToSection('company-hub')}
-                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1C1A27] transition-colors text-left"
-                >
-                  <span>Company Hub</span>
-                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                </button>
+            {/* Theme switcher */}
+            <button
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+              aria-label="Toggle theme"
+            >
+              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
 
-                <button
-                  onClick={() => scrollToSection('features')}
-                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1C1A27] transition-colors text-left"
-                >
-                  <span>AI Summarizer</span>
-                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                </button>
-
-                <button
-                  onClick={() => {
-                    setIsMobileNavOpen(false);
-                    onEnterTerminal('results-calendar');
-                  }}
-                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1C1A27] transition-colors text-left"
-                >
-                  <span className="flex items-center gap-1.5">
-                    <span>Earnings Ledger</span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                  </span>
-                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                </button>
-
-                <button
-                  onClick={() => {
-                    setIsMobileNavOpen(false);
-                    onEnterTerminal('watchlists');
-                  }}
-                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1C1A27] transition-colors text-left"
-                >
-                  <span>Watchlists</span>
-                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                </button>
-
-                <button
-                  onClick={() => scrollToSection('telegram-alerts')}
-                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1C1A27] transition-colors text-left"
-                >
-                  <span>Telegram Bot</span>
-                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                </button>
-
-                <button
-                  onClick={() => scrollToSection('pricing')}
-                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:bg-slate-100 dark:hover:bg-[#1C1A27] transition-colors text-left"
-                >
-                  <span>Pricing</span>
-                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-mono">from ₹{getLowestPlanPrice()}</span>
-                </button>
-
-                <button
-                  onClick={() => scrollToSection('market-guides')}
-                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1C1A27] transition-colors text-left"
-                >
-                  <span>Guides</span>
-                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                </button>
-
-                <button
-                  onClick={() => scrollToSection('about')}
-                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1C1A27] transition-colors text-left"
-                >
-                  <span>About</span>
-                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                </button>
-
-                <div className="pt-3 pb-1 border-t border-slate-200/80 dark:border-[#2D283E]">
-                  <button
-                    onClick={() => {
-                      setIsMobileNavOpen(false);
-                      onEnterTerminal('home');
-                    }}
-                    className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow-xs"
-                  >
-                    <Zap className="w-3.5 h-3.5 fill-white" />
-                    <span>Terminal</span>
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            {/* Primary Action Button */}
+            <button
+              onClick={() => onEnterTerminal('dashboard')}
+              className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-1.5"
+            >
+              <Terminal className="w-4 h-4" />
+              <span>Launch Terminal</span>
+            </button>
+          </div>
+        </div>
       </header>
 
-      {/* Primary Semantic Main Landmark for Screen Readers & Lighthouse Compliance */}
-      <main id="main-content" role="main" tabIndex={-1} className="focus:outline-none relative z-[2]">
+      {/* 3. SLEEK HERO SECTION WITH WIDE SPACIOUS RHYTHM */}
+      <section className="relative pt-16 sm:pt-24 pb-16 sm:pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center overflow-hidden">
+        {/* Glow ambient background */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-gradient-to-r from-sky-500/10 via-blue-500/15 to-emerald-500/10 blur-[130px] pointer-events-none -z-10" />
 
-      {/* 3. CREATIVE HERO (Finexa-style) + FEATURE TABS */}
-      <CreativeHero onEnterTerminal={onEnterTerminal} />
-      <FeatureTabs onEnterTerminal={onEnterTerminal} />
-      <FilingJourney />
-
-      {/* 3.5 WHAT'S NEW IN BSENEXUS 2.0 SECTION */}
-      <section id="whats-new" className="py-16 sm:py-24 bg-gradient-to-b from-slate-50 to-white dark:from-[#0B0F17] dark:to-[#0F172A] border-b border-slate-200/80 dark:border-slate-800/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          <Reveal className="text-center max-w-3xl mx-auto space-y-3 mb-12 sm:mb-16">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 text-xs font-black border border-amber-500/30">
-              <Sparkles className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
-              <span>MAJOR PLATFORM UPDATE • VERSION 2.0</span>
-            </div>
-            <h2 className="text-2xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
-              Everything newly built & enhanced in Bsenexus
-            </h2>
-            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
-              Explore the latest suite of institutional tools designed for active Indian equity investors, forensic analysts, and prop desks.
-            </p>
-          </Reveal>
-
-          {/* 6-Card Bento Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            
-            {/* New Feature 1: Company Intelligence Dossier */}
-            <motion.div
-              whileHover={{ y: -4, transition: { type: 'spring', bounce: 0, duration: 0.3 } }}
-              className="feat-icon-parent bg-white dark:bg-[#131B2E] p-6 rounded-2xl border-2 border-emerald-500/30 dark:border-emerald-500/30 hover:border-emerald-500 transition-all shadow-sm flex flex-col justify-between group select-none"
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 shrink-0">
-                    <IntelDossierIcon className="feat-icon w-full h-full" />
-                  </div>
-                  <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-500 text-slate-950 uppercase tracking-wider whitespace-nowrap select-none">
-                    ✨ NEW CORE HUB
-                  </span>
-                </div>
-                <h3 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-emerald-500 transition-colors">
-                  360° Company Intelligence Dossier
-                </h3>
-                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Deep multi-tab dossier for every BSE ticker. Access corporate fundamentals, historical filings, SEBI Reg 30 material actions timeline, earnings ledgers, and one-click Screener.in research sync.
-                </p>
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 whitespace-nowrap select-none">Material Actions</span>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 whitespace-nowrap select-none">Quarterly Results</span>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 whitespace-nowrap select-none">Screener Sync</span>
-                </div>
-              </div>
-              <div className="pt-5 mt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <motion.button
-                  whileTap={{ scale: 0.96 }}
-                  onClick={() => scrollToSection('company-hub')}
-                  className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 hover:underline cursor-pointer min-h-[36px] select-none"
-                >
-                  <span>Interactive Preview Below</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </motion.button>
-              </div>
-            </motion.div>
-
-            {/* New Feature 2: Quarterly Results Ledger & Historical Sync */}
-            <motion.div
-              whileHover={{ y: -4, transition: { type: 'spring', bounce: 0, duration: 0.3 } }}
-              className="feat-icon-parent bg-white dark:bg-[#131B2E] p-6 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-emerald-500/50 transition-all shadow-sm flex flex-col justify-between group select-none"
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 shrink-0">
-                    <ResultsLedgerIcon className="feat-icon w-full h-full" />
-                  </div>
-                  <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 uppercase tracking-wider whitespace-nowrap select-none">
-                    ⚡ ENHANCED
-                  </span>
-                </div>
-                <h3 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-blue-500 transition-colors">
-                  Quarterly Results Ledger & 1-3Y Historical Sync
-                </h3>
-                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Filter by <strong>Declared Results</strong> vs <strong>Upcoming Board Meetings</strong>. Audit YoY% and QoQ% revenue, PAT, and EBITDA margin expansions with 1 to 3-year automated history synchronization.
-                </p>
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 whitespace-nowrap select-none">Declared Filter</span>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 whitespace-nowrap select-none">YoY/QoQ Margins</span>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 whitespace-nowrap select-none">Docket Export</span>
-                </div>
-              </div>
-              <div className="pt-5 mt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <motion.button
-                  whileTap={{ scale: 0.96 }}
-                  onClick={() => onEnterTerminal('results-calendar')}
-                  className="text-xs font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1 hover:underline cursor-pointer min-h-[36px] select-none"
-                >
-                  <span>Open Results Ledger</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </motion.button>
-              </div>
-            </motion.div>
-
-            {/* New Feature 3: Multi-Tier Conviction Watchlists */}
-            <motion.div
-              whileHover={{ y: -4, transition: { type: 'spring', bounce: 0, duration: 0.3 } }}
-              className="feat-icon-parent bg-white dark:bg-[#131B2E] p-6 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-emerald-500/50 transition-all shadow-sm flex flex-col justify-between group select-none"
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 shrink-0">
-                    <WatchlistsIcon className="feat-icon w-full h-full" />
-                  </div>
-                  <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 uppercase tracking-wider whitespace-nowrap select-none">
-                    🎯 SMART TIERS
-                  </span>
-                </div>
-                <h3 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-purple-500 transition-colors">
-                  Conviction-Tiered Watchlists
-                </h3>
-                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Categorize portfolio ideas by conviction level (Ultra High, High, Medium, Low). Includes live filing counters, price targets, research notes, and 1-click dossier launch.
-                </p>
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 whitespace-nowrap select-none">Conviction Tiers</span>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 whitespace-nowrap select-none">Live Counters</span>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 whitespace-nowrap select-none">CSV Export</span>
-                </div>
-              </div>
-              <div className="pt-5 mt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <motion.button
-                  whileTap={{ scale: 0.96 }}
-                  onClick={() => onEnterTerminal('watchlists')}
-                  className="text-xs font-bold text-purple-600 dark:text-purple-400 flex items-center gap-1 hover:underline cursor-pointer min-h-[36px] select-none"
-                >
-                  <span>Manage Watchlists</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </motion.button>
-              </div>
-            </motion.div>
-
-            {/* New Feature 4: Telegram Rules & Audio Chimes */}
-            <motion.div
-              whileHover={{ y: -4, transition: { type: 'spring', bounce: 0, duration: 0.3 } }}
-              className="feat-icon-parent bg-white dark:bg-[#131B2E] p-6 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-emerald-500/50 transition-all shadow-sm flex flex-col justify-between group select-none"
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 shrink-0">
-                    <AlertRulesIcon className="feat-icon w-full h-full" />
-                  </div>
-                  <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 uppercase tracking-wider whitespace-nowrap select-none">
-                    ⚡ ZERO DELAY
-                  </span>
-                </div>
-                <h3 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-rose-500 transition-colors">
-                  Smart Telegram Alert Rules & Sound Chimes
-                </h3>
-                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Build custom rule filters triggering on Dividend, Bonus, Buyback, Order Win, Loss, Resignation keywords. Supports formatted Telegram alerts to your saved personal destination; shared channel broadcasts are managed by the administrator.
-                </p>
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 whitespace-nowrap select-none">Keyword Rules</span>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 whitespace-nowrap select-none">Audio Chimes</span>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 whitespace-nowrap select-none">Telegram Bot</span>
-                </div>
-              </div>
-              <div className="pt-5 mt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <motion.button
-                  whileTap={{ scale: 0.96 }}
-                  onClick={() => onEnterTerminal('settings')}
-                  className="text-xs font-bold text-rose-600 dark:text-rose-400 flex items-center gap-1 hover:underline cursor-pointer min-h-[36px] select-none"
-                >
-                  <span>Configure Alert Rules</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </motion.button>
-              </div>
-            </motion.div>
-
-            {/* New Feature 5: Live Market Indices & Market Session Hours */}
-            <motion.div
-              whileHover={{ y: -4, transition: { type: 'spring', bounce: 0, duration: 0.3 } }}
-              className="feat-icon-parent bg-white dark:bg-[#131B2E] p-6 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-emerald-500/50 transition-all shadow-sm flex flex-col justify-between group select-none"
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 shrink-0">
-                    <IndicesIcon className="feat-icon w-full h-full" />
-                  </div>
-                  <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 uppercase tracking-wider whitespace-nowrap select-none">
-                    📈 LIVE CLOCK
-                  </span>
-                </div>
-                <h3 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-amber-500 transition-colors">
-                  Indian Indices & Session Hours Clock
-                </h3>
-                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Continuous monitoring across BSE Sensex, Nifty 50, BSE Midcap, BSE Smallcap, and India VIX. Dynamic badges indicate Pre-Open, Regular Trading, and Post-Close market statuses.
-                </p>
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 whitespace-nowrap select-none">Sensex & Nifty</span>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 whitespace-nowrap select-none">India VIX</span>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 whitespace-nowrap select-none">Session Clocks</span>
-                </div>
-              </div>
-              <div className="pt-5 mt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <motion.button
-                  whileTap={{ scale: 0.96 }}
-                  onClick={() => onEnterTerminal('dashboard')}
-                  className="text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1 hover:underline cursor-pointer min-h-[36px] select-none"
-                >
-                  <span>View Live Indices</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </motion.button>
-              </div>
-            </motion.div>
-
-            {/* New Feature 6: Storage Quota Optimizer & Offline Failover */}
-            <motion.div
-              whileHover={{ y: -4, transition: { type: 'spring', bounce: 0, duration: 0.3 } }}
-              className="feat-icon-parent bg-white dark:bg-[#131B2E] p-6 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-emerald-500/50 transition-all shadow-sm flex flex-col justify-between group select-none"
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 shrink-0">
-                    <QuotaIcon className="feat-icon w-full h-full" />
-                  </div>
-                  <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-teal-100 dark:bg-teal-950 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800 uppercase tracking-wider whitespace-nowrap select-none">
-                    🛡️ ROBUST
-                  </span>
-                </div>
-                <h3 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-teal-500 transition-colors">
-                  Quota Optimizer & Offline Failover
-                </h3>
-                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Automatic data retention cleanup prevents Firestore quota overflow. Seamless offline fallbacks cache live filings locally so you never miss a filing during connectivity dips.
-                </p>
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 whitespace-nowrap select-none">Auto-Pruning</span>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 whitespace-nowrap select-none">Zero Data Loss</span>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 whitespace-nowrap select-none">Instant Failover</span>
-                </div>
-              </div>
-              <div className="pt-5 mt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <motion.button
-                  whileTap={{ scale: 0.96 }}
-                  onClick={() => onEnterTerminal('diagnostics')}
-                  className="text-xs font-bold text-teal-600 dark:text-teal-400 flex items-center gap-1 hover:underline cursor-pointer min-h-[36px] select-none"
-                >
-                  <span>Check Engine Health</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </motion.button>
-              </div>
-            </motion.div>
-
+        <div className="max-w-4xl mx-auto space-y-6">
+          {/* Subtle live indicator badge */}
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/80 dark:bg-slate-800/80 border border-slate-200/90 dark:border-slate-700/60 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-xs">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+            <span>Sub-Second Exchange Disclosures &amp; Earnings Intelligence</span>
           </div>
 
-        </div>
-      </section>
-
-      {/* 3.8 INTERACTIVE SHOWCASE: 360° COMPANY INTELLIGENCE DOSSIER */}
-      <section id="company-hub" className="py-16 sm:py-24 bg-white dark:bg-[#0A0E1A] border-b border-slate-200/80 dark:border-slate-800/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
-            <Reveal className="space-y-2 max-w-2xl">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 text-xs font-bold border border-emerald-200 dark:border-emerald-800">
-                <Building2 className="w-3.5 h-3.5" />
-                <span>INTERACTIVE FEATURE DEMO</span>
-              </div>
-              <h2 className="text-2xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
-                360° Company Intelligence & Material Actions Hub
-              </h2>
-              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                Click across the companies and explore all 5 dossier tabs below. See how Bsenexus transforms dense disclosures into actionable alpha.
-              </p>
-            </Reveal>
-
-            {/* Company Selector Pills */}
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
-              {(['TATASTEEL', 'RELIANCE', 'LT', 'INFY'] as const).map((key) => {
-                const isSelected = selectedCompanyKey === key;
-                return (
-                  <button
-                    key={key}
-                    onClick={() => setSelectedCompanyKey(key)}
-                    className={cn(
-                      "px-3.5 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap",
-                      isSelected
-                        ? "bg-slate-900 text-white dark:bg-emerald-500 dark:text-slate-950 shadow-md scale-105"
-                        : "bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
-                    )}
-                  >
-                    <span>{DEMO_COMPANIES[key].symbol}</span>
-                    <span className={cn(
-                      "text-[10px] font-mono px-1.5 py-0.2 rounded",
-                      isSelected ? "bg-white/20 text-white dark:text-slate-950 dark:bg-slate-950/20" : "text-slate-500"
-                    )}>
-                      {DEMO_COMPANIES[key].price}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Interactive Modal-Like Container Box */}
-          {(() => {
-            const company = DEMO_COMPANIES[selectedCompanyKey];
-            return (
-              <div className="bg-slate-50 dark:bg-[#111625] rounded-2xl border-2 border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden">
-                {/* Sample-data ribbon: every figure inside this dossier is illustrative */}
-                <div className="px-4 sm:px-6 py-2 bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-900/60 text-[10px] font-mono font-bold text-amber-800 dark:text-amber-300 flex items-center justify-between select-none">
-                  <span>⚡ SAMPLE DOSSIER</span>
-                  <span>All prices & figures below are illustrative — not live company data</span>
-                </div>
-                {/* Dossier Header Bar */}
-                <div className="p-4 sm:p-6 bg-white dark:bg-[#161D31] border-b border-slate-200 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="flex items-start sm:items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center font-mono font-black text-emerald-600 dark:text-emerald-400 text-sm shrink-0">
-                      {company.symbol.substring(0, 3)}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white">
-                          {company.name}
-                        </h3>
-                        <span className="font-mono text-xs text-slate-500 px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded">
-                          BSE: {company.scripCode}
-                        </span>
-                        <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                          {company.conviction} Conviction
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        {company.sector} • {company.mktCap}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Price & Action */}
-                  <div className="flex items-center gap-3 self-end md:self-auto">
-                    <div className="text-right">
-                      <div className="text-lg font-mono font-black text-slate-900 dark:text-white tabular-nums">
-                        {company.price}
-                      </div>
-                      <div className="text-xs font-bold font-mono text-emerald-600 dark:text-emerald-400 tabular-nums">
-                        {company.change} Today
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => onEnterTerminal('dashboard')}
-                      className="py-2.5 px-5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-black flex items-center gap-1.5 shadow-md shadow-emerald-600/20 cursor-pointer transition-all active:scale-95 min-h-[40px] whitespace-nowrap"
-                    >
-                      <Zap className="w-3.5 h-3.5 fill-white" />
-                      <span>Open in Terminal</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* 5 Dossier Navigation Tabs */}
-                <div className="flex items-center gap-1 px-4 sm:px-6 pt-3 border-b border-slate-200 dark:border-slate-800 overflow-x-auto no-scrollbar bg-slate-100/70 dark:bg-[#13192B]">
-                  {[
-                    { id: 'hub', label: 'Company Hub', icon: Building2 },
-                    { id: 'timeline', label: 'Material Actions (LODR Reg 30)', icon: Activity, count: company.actions.length },
-                    { id: 'results', label: 'Quarterly Results Ledger', icon: BarChart3 },
-                    { id: 'filings', label: 'BSE Filings & Disclosures', icon: FileText, count: company.filings.length },
-                    { id: 'research', label: 'Research Tools & Links', icon: ExternalLink }
-                  ].map((tab) => {
-                    const Icon = tab.icon;
-                    const isActive = activeCompanyHubTab === tab.id;
-                    return (
-                      <button
-                        key={tab.id}
-                        onClick={() => setActiveCompanyHubTab(tab.id as any)}
-                        className={cn(
-                          "flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-t-lg transition-all cursor-pointer whitespace-nowrap border-t-2",
-                          isActive
-                            ? "bg-white dark:bg-[#111625] text-slate-900 dark:text-white border-emerald-500 shadow-xs"
-                            : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 border-transparent hover:bg-white/50 dark:hover:bg-slate-800/40"
-                        )}
-                      >
-                        <Icon className={cn("w-3.5 h-3.5", isActive ? "text-emerald-500" : "text-slate-400")} />
-                        <span>{tab.label}</span>
-                        {tab.count !== undefined && (
-                          <span className={cn(
-                            "text-[10px] px-1.5 py-0.2 rounded-full font-mono font-black",
-                            isActive ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300" : "bg-slate-200 dark:bg-slate-800 text-slate-600"
-                          )}>
-                            {tab.count}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Tab Content Display */}
-                <div className="p-4 sm:p-6 min-h-[300px]">
-                  
-                  {/* TAB 1: COMPANY HUB */}
-                  {activeCompanyHubTab === 'hub' && (
-                    <div className="space-y-6">
-                      <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed max-w-4xl">
-                        {company.description}
-                      </p>
-
-                      {/* 4 Financial Key Metrics Tiles */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                        <div className="bg-white dark:bg-[#161D31] p-4 rounded-lg border border-slate-200 dark:border-slate-800">
-                          <div className="text-xs font-semibold text-slate-600 dark:text-slate-400">P/E Ratio</div>
-                          <div className="text-lg font-mono font-black text-slate-900 dark:text-white mt-1 tabular-nums">{company.pe}</div>
-                          <div className="text-[10px] text-slate-600 dark:text-slate-400 mt-0.5">Industry Median: 22.4x</div>
-                        </div>
-                        <div className="bg-white dark:bg-[#161D31] p-4 rounded-lg border border-slate-200 dark:border-slate-800">
-                          <div className="text-xs font-semibold text-slate-600 dark:text-slate-400">Price to Book</div>
-                          <div className="text-lg font-mono font-black text-slate-900 dark:text-white mt-1 tabular-nums">{company.pb}</div>
-                          <div className="text-[10px] text-slate-600 dark:text-slate-400 mt-0.5">Book Value: High safety</div>
-                        </div>
-                        <div className="bg-white dark:bg-[#161D31] p-4 rounded-lg border border-slate-200 dark:border-slate-800">
-                          <div className="text-xs font-semibold text-slate-600 dark:text-slate-400">Return on Equity</div>
-                          <div className="text-lg font-mono font-black text-emerald-700 dark:text-emerald-400 mt-1 tabular-nums">{company.roe}</div>
-                          <div className="text-[10px] text-slate-600 dark:text-slate-400 mt-0.5">Annualized Average</div>
-                        </div>
-                        <div className="bg-white dark:bg-[#161D31] p-4 rounded-lg border border-slate-200 dark:border-slate-800">
-                          <div className="text-xs font-semibold text-slate-600 dark:text-slate-400">Dividend Yield</div>
-                          <div className="text-lg font-mono font-black text-blue-700 dark:text-blue-400 mt-1 tabular-nums">{company.dividendYield}</div>
-                          <div className="text-[10px] text-slate-600 dark:text-slate-400 mt-0.5">Regular Payout</div>
-                        </div>
-                      </div>
-
-                      {/* Quick Snapshot List */}
-                      <div className="bg-white dark:bg-[#161D31] p-4 rounded-lg border border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                          <span className="font-semibold text-slate-800 dark:text-slate-200">Continuous BSE filing stream active for {company.symbol}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-slate-600 dark:text-slate-400 font-mono text-[11px]">Direct PDF Ingestion Enabled</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* TAB 2: MATERIAL ACTIONS TIMELINE (SEBI LODR REG 30) */}
-                  {activeCompanyHubTab === 'timeline' && (
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                          Chronological Corporate Material Events (SEBI LODR)
-                        </p>
-                        <span className="text-[11px] font-mono text-emerald-700 dark:text-emerald-400 font-bold">
-                          Continuous Ingestion Active
-                        </span>
-                      </div>
-
-                      <div className="space-y-3">
-                        {company.actions.map((act, i) => (
-                          <div key={i} className="bg-white dark:bg-[#161D31] p-4 rounded-lg border border-slate-200 dark:border-slate-800 space-y-2 hover:border-emerald-500/40 transition-colors">
-                            <div className="flex items-center justify-between flex-wrap gap-2">
-                              <div className="flex items-center gap-2">
-                                <span className={cn("text-[10px] font-black px-2 py-0.5 rounded-full border", act.badgeColor)}>
-                                  {act.type}
-                                </span>
-                                <span className="text-[10px] font-mono text-slate-600 dark:text-slate-400">{act.reg}</span>
-                              </div>
-                              <span className="text-xs text-slate-600 dark:text-slate-400 font-mono flex items-center gap-1">
-                                <Clock className="w-3 h-3" />
-                                {act.date}
-                              </span>
-                            </div>
-                            <div className="text-sm font-bold text-slate-900 dark:text-white">
-                              {act.title}
-                            </div>
-                            <div className="text-xs text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/60 p-2.5 rounded-lg border border-slate-100 dark:border-slate-800">
-                              <span className="font-bold text-slate-800 dark:text-slate-200">Financial Impact: </span>
-                              {act.impact}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* TAB 3: QUARTERLY RESULTS LEDGER */}
-                  {activeCompanyHubTab === 'results' && (
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                          Consolidated Financial Trajectory & Margin Expansion
-                        </p>
-                        <span className="text-[11px] font-mono text-blue-600 dark:text-blue-400 font-bold">
-                          YoY & QoQ Normalized
-                        </span>
-                      </div>
-
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-xs text-left border-collapse">
-                          <thead>
-                            <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 font-semibold bg-slate-100/60 dark:bg-slate-900/50">
-                              <th className="py-2.5 px-3">Quarter</th>
-                              <th className="py-2.5 px-3">Status</th>
-                              <th className="py-2.5 px-3">Revenue (YoY)</th>
-                              <th className="py-2.5 px-3">PAT (YoY)</th>
-                              <th className="py-2.5 px-3">EBITDA Margin</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-mono">
-                            {company.results.map((res, idx) => (
-                              <tr key={idx} className="hover:bg-white dark:hover:bg-[#161D31] transition-colors">
-                                <td className="py-3 px-3 font-sans font-bold text-slate-900 dark:text-white">{res.quarter}</td>
-                                <td className="py-3 px-3">
-                                  <span className={cn(
-                                    "text-[10px] font-bold px-2 py-0.5 rounded-full",
-                                    "bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300"
-                                  )}>
-                                    {res.status}
-                                  </span>
-                                </td>
-                                <td className="py-3 px-3 font-semibold text-slate-800 dark:text-slate-200">
-                                  {res.revenue} <span className="text-emerald-600 dark:text-emerald-400 text-[11px] ml-1">{res.revYoy}</span>
-                                </td>
-                                <td className="py-3 px-3 font-semibold text-slate-800 dark:text-slate-200">
-                                  {res.pat} <span className={cn("text-[11px] ml-1", res.patYoy.startsWith('+') ? "text-emerald-600 dark:text-emerald-400" : "text-rose-500")}>{res.patYoy}</span>
-                                </td>
-                                <td className="py-3 px-3 font-bold text-purple-600 dark:text-purple-400">{res.ebitdaMargin}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* TAB 4: BSE FILINGS & DISCLOSURES */}
-                  {activeCompanyHubTab === 'filings' && (
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                          Original Exchange Disclosures (PDF Archive)
-                        </p>
-                        <span className="text-[11px] font-mono text-slate-600 dark:text-slate-400">Showing recent 3 filings</span>
-                      </div>
-
-                      {company.filings.map((filing, fIdx) => (
-                        <div key={fIdx} className="bg-white dark:bg-[#161D31] p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 hover:border-emerald-500/40 transition-colors">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-500 flex items-center justify-center font-bold text-[10px] shrink-0">
-                              PDF
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="text-[10px] font-bold px-2 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                                  {filing.category}
-                                </span>
-                                <span className="text-[10px] text-slate-600 dark:text-slate-400 font-mono">{filing.date}</span>
-                              </div>
-                              <div className="text-xs font-bold text-slate-900 dark:text-white mt-1">
-                                {filing.headline}
-                              </div>
-                            </div>
-                          </div>
-                          <span className="text-[11px] font-mono text-slate-600 dark:text-slate-400 shrink-0">{filing.pdfSize}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* TAB 5: RESEARCH TOOLS */}
-                  {activeCompanyHubTab === 'research' && (
-                    <div className="space-y-4">
-                      <p className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                        Synchronized External Equity Research Portals
-                      </p>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <a
-                          href={`https://www.bseindia.com/stock-share-price/${company.symbol.toLowerCase()}/${company.scripCode}/`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="bg-white dark:bg-[#161D31] p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-emerald-500 transition-all flex flex-col justify-between group"
-                        >
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-bold text-slate-900 dark:text-white">BSE Official Corporate Page</span>
-                              <ExternalLink className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-500" />
-                            </div>
-                            <p className="text-[11px] text-slate-500">View official shareholding patterns, corp actions, and order books on BSE India.</p>
-                          </div>
-                          <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 mt-3 flex items-center gap-1">
-                            <span>Open BSE Page</span>
-                            <ArrowUpRight className="w-3 h-3" />
-                          </span>
-                        </a>
-
-                        <a
-                          href={`https://www.screener.in/company/${company.symbol}/`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="bg-white dark:bg-[#161D31] p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-emerald-500 transition-all flex flex-col justify-between group"
-                        >
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-bold text-slate-900 dark:text-white">Screener.in Financials</span>
-                              <ExternalLink className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-500" />
-                            </div>
-                            <p className="text-[11px] text-slate-500">Audit 10-year balance sheets, cash flows, debtor days, and shareholding changes.</p>
-                          </div>
-                          <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 mt-3 flex items-center gap-1">
-                            <span>Open Screener.in</span>
-                            <ArrowUpRight className="w-3 h-3" />
-                          </span>
-                        </a>
-
-                        <a
-                          href={`https://www.moneycontrol.com/india/stockpricequote/`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="bg-white dark:bg-[#161D31] p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-emerald-500 transition-all flex flex-col justify-between group"
-                        >
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-bold text-slate-900 dark:text-white">Moneycontrol News Sync</span>
-                              <ExternalLink className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-500" />
-                            </div>
-                            <p className="text-[11px] text-slate-500">Live broker targets, analyst upgrades/downgrades, and market rumors.</p>
-                          </div>
-                          <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 mt-3 flex items-center gap-1">
-                            <span>Open Moneycontrol</span>
-                            <ArrowUpRight className="w-3 h-3" />
-                          </span>
-                        </a>
-                      </div>
-                    </div>
-                  )}
-
-                </div>
-
-              </div>
-            );
-          })()}
-
-        </div>
-      </section>
-
-      {/* 4. HOW IT WORKS SECTION */}
-      <section id="how-it-works" className="py-16 sm:py-24 bg-white dark:bg-[#0F172A] border-b border-slate-200/80 dark:border-slate-800/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          <Reveal className="text-center max-w-3xl mx-auto space-y-3 mb-12 sm:mb-16">
-            <span className="text-xs font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/80 px-3 py-1 rounded-full border border-emerald-200 dark:border-emerald-800">
-              End-to-End Workflow
-            </span>
-            <h2 className="text-2xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
-              Connect your watchlist, receive BSE announcements, and get AI filing summaries
-            </h2>
-            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
-              Read exchange filings and request AI summaries with links to the source document.
-            </p>
-          </Reveal>
-
-          {/* 4 Steps Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            
-            {/* Step 1 */}
-            <motion.div 
-              whileHover={{ y: -3 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => onEnterTerminal('watchlists')}
-              className="bg-[#F8FAFC] dark:bg-[#0B0F17] p-6 rounded-2xl border border-slate-200 dark:border-slate-800 relative group hover:border-emerald-500/50 transition-all shadow-xs cursor-pointer flex flex-col justify-between"
-            >
-              <div>
-                <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-mono font-black text-base mb-4 border border-emerald-200 dark:border-emerald-800">
-                  01
-                </div>
-                <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">
-                  Curate Watchlist
-                </h3>
-                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed mb-4">
-                  Add your portfolio stocks or track all 5,000+ BSE equities. Filter by high-priority categories like Financials, Board Meetings, Dividends, or Acquisitions.
-                </p>
-              </div>
-              <div className="pt-2 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-                <span>Manage Watchlists →</span>
-                <CheckCircle2 className="w-3.5 h-3.5" />
-              </div>
-            </motion.div>
-
-            {/* Step 2 */}
-            <motion.div 
-              whileHover={{ y: -3 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => onEnterTerminal('dashboard')}
-              className="bg-[#F8FAFC] dark:bg-[#0B0F17] p-6 rounded-2xl border border-blue-300/80 dark:border-blue-900/60 relative group hover:border-blue-500 transition-all shadow-xs cursor-pointer flex flex-col justify-between ring-1 ring-blue-500/20"
-            >
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center font-mono font-black text-base border border-blue-200 dark:border-blue-800">
-                    02
-                  </div>
-                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 text-[10px] font-bold border border-blue-200 dark:border-blue-800">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                    <span>Live Stream</span>
-                  </span>
-                </div>
-                <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-1.5">
-                  <span>Continuous BSE Stream</span>
-                </h3>
-                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed mb-4">
-                  Our server polls BSE India disclosure endpoints. Filing freshness depends on exchange availability, polling, caching and retries.
-                </p>
-              </div>
-              <div className="pt-2 border-t border-blue-200/60 dark:border-blue-900/60 flex items-center justify-between text-[11px] font-bold text-blue-600 dark:text-blue-400">
-                <span>Open Live BSE Feed →</span>
-                <CheckCircle2 className="w-3.5 h-3.5" />
-              </div>
-            </motion.div>
-
-            {/* Step 3 */}
-            <motion.div 
-              whileHover={{ y: -3 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => onEnterTerminal('dashboard')}
-              className="bg-[#F8FAFC] dark:bg-[#0B0F17] p-6 rounded-2xl border border-slate-200 dark:border-slate-800 relative group hover:border-purple-500/50 transition-all shadow-xs cursor-pointer flex flex-col justify-between"
-            >
-              <div>
-                <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-950 text-purple-600 dark:text-purple-400 flex items-center justify-center font-mono font-black text-base mb-4 border border-purple-200 dark:border-purple-800">
-                  03
-                </div>
-                <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">
-                  Gemini AI Synthesis
-                </h3>
-                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed mb-4">
-                  Gemini model digests complex corporate disclosures and financial PDFs, extracting YoY/QoQ revenue, PAT, EBITDA margins, and management commentary highlights.
-                </p>
-              </div>
-              <div className="pt-2 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between text-[11px] font-bold text-purple-600 dark:text-purple-400">
-                <span>Explore AI Summaries →</span>
-                <CheckCircle2 className="w-3.5 h-3.5" />
-              </div>
-            </motion.div>
-
-            {/* Step 4 */}
-            <motion.div 
-              whileHover={{ y: -3 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => onEnterTerminal('settings')}
-              className="bg-[#F8FAFC] dark:bg-[#0B0F17] p-6 rounded-2xl border border-slate-200 dark:border-slate-800 relative group hover:border-rose-500/50 transition-all shadow-xs cursor-pointer flex flex-col justify-between"
-            >
-              <div>
-                <div className="w-10 h-10 rounded-xl bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-400 flex items-center justify-center font-mono font-black text-base mb-4 border border-rose-200 dark:border-rose-800">
-                  04
-                </div>
-                <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">
-                  Instant Alerts
-                </h3>
-                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed mb-4">
-                  Eligible alerts are sent to your saved Telegram destination and notification inbox. Delivery times vary with source availability, processing and Telegram.
-                </p>
-              </div>
-              <div className="pt-2 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between text-[11px] font-bold text-rose-600 dark:text-rose-400">
-                <span>Setup Telegram Alerts →</span>
-                <CheckCircle2 className="w-3.5 h-3.5" />
-              </div>
-            </motion.div>
-
-          </div>
-
-        </div>
-      </section>
-
-      {/* 5. FEATURE SECTION 1: GEMINI AI SUMMARIES OF CORPORATE FILINGS */}
-      <section id="features" className="py-16 sm:py-24 border-b border-slate-200/80 dark:border-slate-800/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-            
-            {/* Left: Info */}
-            <Reveal className="lg:col-span-5 space-y-5">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 text-xs font-bold border border-purple-200 dark:border-purple-800">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Feature 01 • Neural Analysis</span>
-              </div>
-
-              <h2 className="text-2xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
-                Gemini AI summaries of corporate filings and financial results
-              </h2>
-
-              <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
-                Reading 40-page unstructured earnings PDFs under market pressure is prone to errors. Our server-side Gemini AI engine extracts clean YoY and QoQ comparisons, detects EBITDA margin trajectory, and highlights key regulatory disclosures automatically.
-              </p>
-
-              <div className="space-y-3 pt-2">
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
-                    <Check className="w-3.5 h-3.5" />
-                  </div>
-                  <div>
-                    <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">YoY & QoQ Profitability Matrices</h3>
-                    <p className="text-xs text-slate-500">Separates organic operational revenue from one-time exceptional gains.</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-purple-100 dark:bg-purple-950 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 mt-0.5">
-                    <Check className="w-3.5 h-3.5" />
-                  </div>
-                  <div>
-                    <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">SEBI Regulation 30 Impact Scoring</h3>
-                    <p className="text-xs text-slate-500">Evaluates business materiality of order wins, plant shutdowns, and management changes.</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 mt-0.5">
-                    <Check className="w-3.5 h-3.5" />
-                  </div>
-                  <div>
-                    <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">Direct Official PDF Verification</h3>
-                    <p className="text-xs text-slate-500">Every AI summary links directly to the verified BSE India original document.</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-2">
-                <button
-                  onClick={() => onEnterTerminal('dashboard')}
-                  className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer shadow-xs"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  <span>Test AI Summary in Live Feed</span>
-                </button>
-              </div>
-            </Reveal>
-
-            {/* Right: Interactive AI Demo Card */}
-            <div className="lg:col-span-7">
-              <div className="bg-white dark:bg-[#0F172A] rounded-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-6 shadow-xl space-y-4">
-                {/* Sample Selector Tabs */}
-                <div className="flex items-center justify-between flex-wrap gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-                  <div className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <Cpu className="w-3.5 h-3.5 text-purple-500" />
-                    <span>Interactive Gemini AI Demo:</span>
-                  </div>
-
-                  <div className="flex items-center gap-1">
-                    {[
-                      { id: 'earnings', label: 'Financials' },
-                      { id: 'acquisition', label: 'M&A Deal' },
-                      { id: 'dividend', label: 'Bonus & Dividend' },
-                      { id: 'reg30', label: 'Order Win' },
-                    ].map(tab => (
-                      <button
-                        key={tab.id}
-                        onClick={() => setActiveAiDemoTab(tab.id as any)}
-                        className={cn(
-                          "px-2.5 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer",
-                          activeAiDemoTab === tab.id
-                            ? "bg-purple-600 text-white shadow-2xs"
-                            : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
-                        )}
-                      >
-                        {tab.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Card-level sample honesty ribbon — covers all four demo tabs */}
-                <div className="flex items-center justify-between text-[10px] px-3 py-1.5 bg-purple-50 dark:bg-purple-950/40 text-purple-800 dark:text-purple-300 rounded-lg border border-purple-200 dark:border-purple-900/60 font-mono select-none">
-                  <span>⚡ SAMPLE AI DEMO</span>
-                  <span>All companies &amp; figures are illustrative — not real data</span>
-                </div>
-
-                {/* Demo Content Showcase */}
-                {activeAiDemoTab === 'earnings' && (
-                  <div className="space-y-3.5 animate-in fade-in-50 duration-200">
-                    <div className="flex items-center justify-between text-[10px] px-2.5 py-1 bg-purple-50 dark:bg-purple-950/40 text-purple-800 dark:text-purple-300 rounded-lg border border-purple-200 dark:border-purple-900/60 font-mono">
-                      <span>⚡ SAMPLE AI EXTRACTION</span>
-                      <span>Sample figures for format demo • Not real company data</span>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-xs font-bold font-mono text-emerald-600 dark:text-emerald-400">TATASTEEL (500470) — sample</span>
-                        <div className="text-sm font-extrabold text-slate-900 dark:text-white">Sample: quarterly results filing — AI extraction format</div>
-                      </div>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
-                        YoY Growth
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
-                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
-                        <div className="text-[10px] text-slate-600 dark:text-slate-400 font-semibold uppercase">Revenue</div>
-                        <div className="text-sm font-black text-slate-900 dark:text-white">₹57,084 Cr</div>
-                        <div className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400">+12.4% YoY</div>
-                      </div>
-
-                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
-                        <div className="text-[10px] text-slate-600 dark:text-slate-400 font-semibold uppercase">Net Profit (PAT)</div>
-                        <div className="text-sm font-black text-slate-900 dark:text-white">₹1,420 Cr</div>
-                        <div className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400">+24.8% YoY</div>
-                      </div>
-
-                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
-                        <div className="text-[10px] text-slate-600 dark:text-slate-400 font-semibold uppercase">EBITDA Margin</div>
-                        <div className="text-sm font-black text-purple-700 dark:text-purple-400">18.2%</div>
-                        <div className="text-[10px] font-bold text-purple-700 dark:text-purple-400">+140 bps</div>
-                      </div>
-
-                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
-                        <div className="text-[10px] text-slate-600 dark:text-slate-400 font-semibold uppercase">Basic EPS</div>
-                        <div className="text-sm font-black text-slate-900 dark:text-white">₹1.16</div>
-                        <div className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400">+22.1% YoY</div>
-                      </div>
-                    </div>
-
-                    <div className="p-3 rounded-xl bg-purple-50/70 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-900/50 space-y-1.5 text-xs">
-                      <div className="font-bold text-purple-800 dark:text-purple-300 flex items-center gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>AI Key Operational Takeaways:</span>
-                      </div>
-                      <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
-                        • Sample takeaway: production and volume trends extracted from the filing narrative.<br />
-                        • Sample takeaway: debt and leverage movement summarised in one line.<br />
-                        • Sample takeaway: margin drivers condensed — illustrates the extraction format, not real figures.
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {activeAiDemoTab === 'acquisition' && (
-                  <div className="space-y-3.5 animate-in fade-in-50 duration-200">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-xs font-bold font-mono text-purple-600 dark:text-purple-400">INFY (500209)</span>
-                        <div className="text-sm font-extrabold text-slate-900 dark:text-white">Acquisition of Cloud AI Leader in Germany</div>
-                      </div>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300">
-                        M&A Disclosed
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-2 text-center">
-                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
-                        <div className="text-[10px] text-slate-600 dark:text-slate-400 font-semibold uppercase">Enterprise Value</div>
-                        <div className="text-sm font-black text-slate-900 dark:text-white">€140 Million</div>
-                        <div className="text-[10px] font-bold text-slate-700 dark:text-slate-400">100% Cash</div>
-                      </div>
-                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
-                        <div className="text-[10px] text-slate-600 dark:text-slate-400 font-semibold uppercase">Target CY25 Rev</div>
-                        <div className="text-sm font-black text-slate-900 dark:text-white">€45 Million</div>
-                        <div className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400">+35% YoY</div>
-                      </div>
-                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
-                        <div className="text-[10px] text-slate-600 dark:text-slate-400 font-semibold uppercase">Closing Timeline</div>
-                        <div className="text-sm font-black text-purple-700 dark:text-purple-400">Q1 FY27</div>
-                        <div className="text-[10px] font-bold text-slate-700 dark:text-slate-400">Subject to Regs</div>
-                      </div>
-                    </div>
-
-                    <div className="p-3 rounded-xl bg-purple-50/70 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-900/50 space-y-1.5 text-xs">
-                      <div className="font-bold text-purple-800 dark:text-purple-300 flex items-center gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>AI Strategic Impact:</span>
-                      </div>
-                      <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
-                        • Adds 350+ deep-tech AI engineers across Frankfurt and Munich offices.<br />
-                        • Strengthens automotive Tier-1 autonomous software contracts.<br />
-                        • Expected to be EPS accretive from year two of integration.
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {activeAiDemoTab === 'dividend' && (
-                  <div className="space-y-3.5 animate-in fade-in-50 duration-200">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-xs font-bold font-mono text-blue-600 dark:text-blue-400">ITC (500875)</span>
-                        <div className="text-sm font-extrabold text-slate-900 dark:text-white">Special Interim Dividend of ₹7.50 per Share</div>
-                      </div>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
-                        Record Date Set
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-2 text-center">
-                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
-                        <div className="text-[10px] text-slate-600 dark:text-slate-400 font-semibold uppercase">Dividend / Share</div>
-                        <div className="text-sm font-black text-emerald-700 dark:text-emerald-400">₹7.50 (750%)</div>
-                        <div className="text-[10px] font-bold text-slate-700 dark:text-slate-400">Face Value ₹1.00</div>
-                      </div>
-                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
-                        <div className="text-[10px] text-slate-600 dark:text-slate-400 font-semibold uppercase">Record Date</div>
-                        <div className="text-sm font-black text-slate-900 dark:text-white">Aug 28, 2026</div>
-                        <div className="text-[10px] font-bold text-blue-700 dark:text-blue-400">T+1 Settlement</div>
-                      </div>
-                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
-                        <div className="text-[10px] text-slate-600 dark:text-slate-400 font-semibold uppercase">Payout Date</div>
-                        <div className="text-sm font-black text-slate-900 dark:text-white">Sep 15, 2026</div>
-                        <div className="text-[10px] font-bold text-slate-700 dark:text-slate-400">Direct Bank Credit</div>
-                      </div>
-                    </div>
-
-                    <div className="p-3 rounded-xl bg-purple-50/70 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-900/50 space-y-1.5 text-xs">
-                      <div className="font-bold text-purple-800 dark:text-purple-300 flex items-center gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>AI Dividend Assessment:</span>
-                      </div>
-                      <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
-                        • Implies annualized dividend yield of ~3.4% at current market price.<br />
-                        • Total cash outflow of approx ₹9,340 Cr funded via strong cigarette & FMCG free cash flow.
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {activeAiDemoTab === 'reg30' && (
-                  <div className="space-y-3.5 animate-in fade-in-50 duration-200">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-xs font-bold font-mono text-amber-600 dark:text-amber-400">LT (500510)</span>
-                        <div className="text-sm font-extrabold text-slate-900 dark:text-white">Major Hydrocarbon Offshore Order Win of ₹4,200 Cr</div>
-                      </div>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300">
-                        Major Order
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-2 text-center">
-                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
-                        <div className="text-[10px] text-slate-600 dark:text-slate-400 font-semibold uppercase">Contract Size</div>
-                        <div className="text-sm font-black text-amber-700 dark:text-amber-400">₹4,200 Cr</div>
-                        <div className="text-[10px] font-bold text-slate-700 dark:text-slate-400">L&T Energy</div>
-                      </div>
-                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
-                        <div className="text-[10px] text-slate-600 dark:text-slate-400 font-semibold uppercase">Client Entity</div>
-                        <div className="text-sm font-black text-slate-900 dark:text-white">Middle East Major</div>
-                        <div className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400">International</div>
-                      </div>
-                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
-                        <div className="text-[10px] text-slate-600 dark:text-slate-400 font-semibold uppercase">Execution Period</div>
-                        <div className="text-sm font-black text-slate-900 dark:text-white">36 Months</div>
-                        <div className="text-[10px] font-bold text-slate-700 dark:text-slate-400">EPC Fixed Price</div>
-                      </div>
-                    </div>
-
-                    <div className="p-3 rounded-xl bg-purple-50/70 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-900/50 space-y-1.5 text-xs">
-                      <div className="font-bold text-purple-800 dark:text-purple-300 flex items-center gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>AI Materiality Check:</span>
-                      </div>
-                      <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
-                        • Order book expands to record ₹4.9 Lakh Crore with international share exceeding 38%.<br />
-                        • Fall under 'Mega' order classification according to L&T's project size criteria.
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-          </div>
-
-        </div>
-      </section>
-
-      {/* 6. FEATURE SECTION 2: CUSTOM STOCK WATCHLISTS */}
-      <section className="py-16 sm:py-24 bg-white dark:bg-[#0F172A] border-b border-slate-200/80 dark:border-slate-800/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-            
-            {/* Left Interactive Watchlist Builder Showcase */}
-            <div className="lg:col-span-7 order-2 lg:order-1">
-              <div className="bg-[#F8FAFC] dark:bg-[#0B0F17] rounded-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-6 shadow-xl space-y-4">
-                
-                <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-                  <div className="flex items-center gap-2">
-                    <List className="w-4 h-4 text-emerald-500" />
-                    <span className="text-sm font-extrabold text-slate-900 dark:text-white">Active Watchlist: Core Largecaps & Midcaps</span>
-                  </div>
-                  <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
-                    5 Stocks
-                  </span>
-                </div>
-
-                {/* Stock Items in Watchlist */}
-                <div className="space-y-2 font-mono text-xs">
-                  {[
-                    { symbol: 'RELIANCE', name: 'Reliance Industries Ltd', price: '₹2,980.40', cat: 'Oil & Telecom', priority: 'HIGH', filings: 3 },
-                    { symbol: 'TATASTEEL', name: 'Tata Steel Limited', price: '₹164.20', cat: 'Metals & Mining', priority: 'HIGH', filings: 5 },
-                    { symbol: 'HDFCBANK', name: 'HDFC Bank Limited', price: '₹1,640.80', cat: 'Banking & Fin', priority: 'MEDIUM', filings: 2 },
-                    { symbol: 'INFY', name: 'Infosys Limited', price: '₹1,820.00', cat: 'IT Services', priority: 'HIGH', filings: 4 },
-                    { symbol: 'ITC', name: 'ITC Limited', price: '₹480.20', cat: 'FMCG & Hotels', priority: 'MEDIUM', filings: 1 },
-                  ].map((stk) => (
-                    <div 
-                      key={stk.symbol}
-                      className="p-3 bg-white dark:bg-[#0F172A] rounded-xl border border-slate-200/80 dark:border-slate-800 flex items-center justify-between hover:border-emerald-500/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold flex items-center justify-center text-xs">
-                          {stk.symbol.substring(0, 2)}
-                        </div>
-                        <div>
-                          <div className="font-black text-slate-900 dark:text-white flex items-center gap-1.5">
-                            <span>{stk.symbol}</span>
-                            <span className="text-[10px] font-normal text-slate-400">({stk.cat})</span>
-                          </div>
-                          <div className="text-[11px] text-slate-500 font-sans">{stk.name}</div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <span className={cn(
-                          "px-2 py-0.5 rounded text-[10px] font-bold uppercase",
-                          stk.priority === 'HIGH' ? "bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-400 border border-rose-300" : "bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400"
-                        )}>
-                          {stk.priority}
-                        </span>
-                        <div className="text-right">
-                          <div className="font-bold text-slate-900 dark:text-white">{stk.price}</div>
-                          <div className="text-[10px] text-emerald-500 font-bold">{stk.filings} new filings</div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="pt-2 flex items-center justify-between text-xs text-slate-500">
-                  <span>⚡ Instant category filtering applied</span>
-                  <button 
-                    onClick={() => onEnterTerminal('watchlists')}
-                    className="font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer"
-                  >
-                    <span>Manage Full Watchlists</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-
-              </div>
-            </div>
-
-            {/* Right: Info */}
-            <div className="lg:col-span-5 space-y-5 order-1 lg:order-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-xs font-bold border border-emerald-200 dark:border-emerald-800">
-                <List className="w-3.5 h-3.5" />
-                <span>Feature 02 • Precision Watchlists</span>
-              </div>
-
-              <h2 className="text-2xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
-                Custom stock watchlists with BSE corporate announcements
-              </h2>
-
-              <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
-                Filter out general market noise. Organize watchlists by theme (e.g. Dividend Yielders, Defense Order Winners, SME Breakouts) and receive announcements exclusively for the tickers you hold.
-              </p>
-
-              <div className="space-y-3 pt-2">
-                <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <span>One-click Symbol search across all 5,000+ BSE Scrips</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <span>Priority Tagging: High, Medium, and Routine</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <span>Mute Routine Administrative Filings (e.g., duplicate certificate loss)</span>
-                </div>
-              </div>
-
-              <div className="pt-2">
-                <button
-                  onClick={() => onEnterTerminal('watchlists')}
-                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer shadow-xs"
-                >
-                  <List className="w-4 h-4" />
-                  <span>Create Your First Watchlist</span>
-                </button>
-              </div>
-            </div>
-
-          </div>
-
-        </div>
-      </section>
-
-      {/* 7. FEATURE SECTION 3: EARNINGS CALENDAR */}
-      <section className="py-16 sm:py-24 border-b border-slate-200/80 dark:border-slate-800/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-            
-            {/* Left: Info */}
-            <div className="lg:col-span-5 space-y-5">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300 text-xs font-bold border border-rose-200 dark:border-rose-800">
-                <Calendar className="w-3.5 h-3.5" />
-                <span>Feature 03 • Earnings Intelligence</span>
-              </div>
-
-              <h2 className="text-2xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
-                Earnings calendar tracking all BSE India financial results
-              </h2>
-
-              <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
-                Stay prepared before numbers hit the wire. Track scheduled Board Meetings for quarterly results, interim dividends, and stock splits days in advance with automated reminders.
-              </p>
-
-              <div className="space-y-3 pt-2">
-                <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
-                  <CheckCircle2 className="w-4 h-4 text-rose-500 shrink-0" />
-                  <span>Quarterly Result Dates (Q1, Q2, Q3, Q4 & Audited Annuals)</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
-                  <CheckCircle2 className="w-4 h-4 text-rose-500 shrink-0" />
-                  <span>Pre-Meeting Dividend & Bonus Agenda Tracking</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
-                  <CheckCircle2 className="w-4 h-4 text-rose-500 shrink-0" />
-                  <span>Post-Result YoY Performance Scorecard Linking</span>
-                </div>
-              </div>
-
-              <div className="pt-2">
-                <button
-                  onClick={() => onEnterTerminal('results-calendar')}
-                  className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer shadow-xs"
-                >
-                  <Calendar className="w-4 h-4" />
-                  <span>Open Full Earnings Calendar</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Right: Earnings Calendar Preview Table */}
-            <div className="lg:col-span-7">
-              <div className="bg-white dark:bg-[#0F172A] rounded-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-6 shadow-xl space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-rose-500" />
-                    <span className="text-sm font-extrabold text-slate-900 dark:text-white">Upcoming Board Meetings for Results</span>
-                  </div>
-                  <span className="text-xs font-mono font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950 px-2 py-0.5 rounded border border-rose-200 dark:border-rose-800">
-                    Live BSE Docket
-                  </span>
-                </div>
-
-                <div className="overflow-x-auto font-mono text-xs">
-                  <table className="w-full text-left">
-                    <thead>
-                      <tr className="border-b border-slate-200 dark:border-slate-800 text-[10px] text-slate-700 dark:text-slate-300 uppercase font-bold">
-                        <th className="pb-2 font-black">Company & Scrip</th>
-                        <th className="pb-2 font-black">Board Meeting Date</th>
-                        <th className="pb-2 font-black">Quarter</th>
-                        <th className="pb-2 font-black text-right">Agenda</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
-                      {[
-                        { symbol: 'TCS', scrip: '532540', date: 'October 08, 2026', q: 'Q2 FY27 (Unaudited)', agenda: 'Results & Interim Div', color: 'text-blue-700 dark:text-blue-400' },
-                        { symbol: 'HCLTECH', scrip: '532281', date: 'October 12, 2026', q: 'Q2 FY27 (Unaudited)', agenda: 'Results & Dividend', color: 'text-emerald-700 dark:text-emerald-400' },
-                        { symbol: 'HDFCBANK', scrip: '500180', date: 'October 17, 2026', q: 'Q2 FY27 (Unaudited)', agenda: 'Financial Results', color: 'text-purple-700 dark:text-purple-400' },
-                        { symbol: 'INFY', scrip: '500209', date: 'October 23, 2026', q: 'Q2 FY27 (Unaudited)', agenda: 'Results & Interim Div', color: 'text-amber-700 dark:text-amber-400' },
-                        { symbol: 'RELIANCE', scrip: '500325', date: 'October 24, 2026', q: 'Q2 FY27 (Unaudited)', agenda: 'Results & Dividend', color: 'text-rose-700 dark:text-rose-400' },
-                      ].map((row, i) => (
-                        <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-900/40 transition-colors">
-                          <td className="py-2.5">
-                            <div className="font-bold text-slate-900 dark:text-white">{row.symbol}</div>
-                            <div className="text-[10px] text-slate-600 dark:text-slate-400">Scrip {row.scrip}</div>
-                          </td>
-                          <td className="py-2.5 text-slate-800 dark:text-slate-200 font-semibold">
-                            {row.date}
-                          </td>
-                          <td className="py-2.5 text-slate-700 dark:text-slate-300 font-medium">
-                            {row.q}
-                          </td>
-                          <td className={cn("py-2.5 text-right font-bold text-[11px]", row.color)}>
-                            {row.agenda}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className="pt-2 flex items-center justify-between text-xs text-slate-700 dark:text-slate-300 font-medium">
-                  <span>📅 Updated with official BSE Section 29 notices</span>
-                  <button 
-                    onClick={() => onEnterTerminal('results-calendar')}
-                    className="font-bold text-rose-600 dark:text-rose-400 hover:underline flex items-center gap-1 cursor-pointer"
-                  >
-                    <span>View All 200+ Scheduled Meetings</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-        </div>
-      </section>
-
-      {/* 8. FEATURE SECTION 4: INSTANT TELEGRAM ALERTS */}
-      <section id="telegram-alerts" className="py-16 sm:py-24 bg-white dark:bg-[#0F172A] border-b border-slate-200/80 dark:border-slate-800/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-            
-            {/* Left: Interactive Telegram Alert Bot Simulator */}
-            <div className="lg:col-span-7 order-2 lg:order-1">
-              <div className="bg-[#1E293B] rounded-2xl border border-slate-700 p-5 sm:p-6 shadow-2xl space-y-4 text-white">
-                
-                {/* Telegram Header */}
-                <div className="flex items-center justify-between border-b border-slate-700 pb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-xs">
-                      <Send className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-bold text-white flex items-center gap-1.5">
-                        <span>Bsenexus Intelligence Bot</span>
-                        <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                      </div>
-                      <div className="text-[11px] text-slate-400 font-mono">@BseNexusBot • bot</div>
-                    </div>
-                  </div>
-
-                  <span className="text-[10px] font-mono font-bold bg-blue-900/60 text-blue-300 px-2 py-1 rounded border border-blue-700">
-                    DELIVERY ~2s
-                  </span>
-                </div>
-
-                {/* Simulated Telegram Message Bubble */}
-                <div className="bg-slate-800/90 rounded-2xl p-4 border border-slate-700 space-y-2.5 font-sans text-xs sm:text-sm">
-                  <div className="flex items-center justify-between text-xs font-mono">
-                    <span className="font-bold text-emerald-400">⚡ BREAKING BSE FILING</span>
-                    <span className="text-slate-400">12:34:02 PM</span>
-                  </div>
-
-                  <div className="font-black text-sm sm:text-base text-white">
-                    📊 TATA STEEL LTD (500470) | Q1 RESULTS
-                  </div>
-
-                  <div className="p-3 bg-slate-900/90 rounded-xl font-mono text-xs space-y-1 text-slate-200 border border-slate-700/60">
-                    <p>• <span className="text-emerald-400 font-bold">Revenue:</span> ₹57,084 Cr (+12.4% YoY)</p>
-                    <p>• <span className="text-emerald-400 font-bold">Net Profit:</span> ₹1,420 Cr (+24.8% YoY)</p>
-                    <p>• <span className="text-purple-400 font-bold">EBITDA Margin:</span> 18.2% (+140 bps YoY)</p>
-                    <p>• <span className="text-blue-400 font-bold">Key Driver:</span> Lower UK transition costs & strong India deliveries.</p>
-                  </div>
-
-                  {/* Telegram Inline Buttons */}
-                  <div className="grid grid-cols-2 gap-2 pt-1">
-                    <button 
-                      onClick={() => onEnterTerminal('dashboard')}
-                      className="py-2 px-3 bg-blue-600 hover:bg-blue-500 rounded-lg text-xs font-bold text-white flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                    >
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>View in AI Terminal</span>
-                    </button>
-
-                    <button 
-                      onClick={() => window.open('https://www.bseindia.com', '_blank')}
-                      className="py-2 px-3 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs font-bold text-slate-200 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                      <span>Official BSE PDF</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Keyword Alert Customizer Bar */}
-                <div className="pt-2 border-t border-slate-700/60 flex items-center justify-between text-xs text-slate-400">
-                  <span>Keyword Trigger: <span className="text-emerald-400 font-mono font-bold">RESULTS, DIVIDEND, ORDER_WIN</span></span>
-                  <span className="text-emerald-400 font-bold">Instant Delivery Active</span>
-                </div>
-
-              </div>
-            </div>
-
-            {/* Right: Info */}
-            <Reveal className="lg:col-span-5 space-y-5 order-1 lg:order-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 text-xs font-bold border border-blue-200 dark:border-blue-800">
-                <Send className="w-3.5 h-3.5" />
-                <span>Feature 04 • Telegram Broadcast</span>
-              </div>
-
-              <h2 className="text-2xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
-                Instant Telegram alerts for critical corporate filings
-              </h2>
-
-              <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
-                Connect your private channel or group. Receive formatted corporate filing alerts at your saved destination. Availability and delivery times depend on the source and processing.
-              </p>
-
-              <div className="space-y-3 pt-2">
-                <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
-                  <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0" />
-                  <span>Custom Chat ID & Bot Token Integration</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
-                  <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0" />
-                  <span>High-Priority Filter: Ignore noisy routine filings</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
-                  <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0" />
-                  <span>Pro Plan: Personal Telegram Alerts (one-time plans from ₹{getLowestPlanPrice()} after 1-week free trial)</span>
-                </div>
-              </div>
-
-              <div className="pt-2 flex items-center gap-3">
-                <button
-                  onClick={() => setIsProModalOpen(true)}
-                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer shadow-xs"
-                >
-                  <Send className="w-4 h-4" />
-                  <span>Connect Telegram Bot</span>
-                </button>
-                <button
-                  onClick={() => scrollToSection('pricing')}
-                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold transition-all cursor-pointer"
-                >
-                  <span>View Pro Features & Trial</span>
-                </button>
-              </div>
-            </Reveal>
-
-          </div>
-
-        </div>
-      </section>
-
-      {/* 8. PRICING SECTION: FREE VS PRO COMPARISON */}
-      <section id="pricing" className="py-16 sm:py-24 bg-slate-50 dark:bg-[#0B0F17] border-b border-slate-200/80 dark:border-slate-800/80 relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          
-          <Reveal className="text-center max-w-3xl mx-auto space-y-3 mb-12 sm:mb-16">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-xs font-bold border border-emerald-200 dark:border-emerald-800">
-              <Zap className="w-3.5 h-3.5 fill-emerald-500" />
-              <span>Free Viewing • 7-Day Pro Trial</span>
-            </div>
-            <h2 className="text-2xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
-              Free Filing Feed, Optional Pro Features
-            </h2>
-            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
-              View the filing feed for free. Eligible signed-in accounts receive a 7-day Pro trial. Paid Pro plans are one-time purchases; AI generation is limited to 100 summaries per day.
-            </p>
-          </Reveal>
-
-          {/* Pricing Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-12">
-            
-            <PlanCard
-              title="Community Free"
-              subtitle="For retail traders & individual investors"
-              tag="Forever Free"
-              price="0"
-              priceSuffix="/month"
-              features={[
-                'BSE announcements, updated continuously',
-                'Full coverage across all 5,000+ BSE Equities',
-                'One one-time AI filing summary demo',
-                'Board Meeting & Earnings Calendar',
-              ]}
-              ctaLabel={<span className="inline-flex items-center gap-2">Launch Terminal (Free) <ArrowRight className="w-4 h-4" /></span>}
-              onCta={() => onEnterTerminal('home')}
-              className="h-full"
-            />
-
-            <PlanCard
-              title="Pro Intelligence"
-              subtitle="For serious traders, research desks & Telegram channels"
-              tag="1-Week Free Trial"
-              wasPrice={String(monthlyPlan.wasPrice)}
-              price={String(monthlyPlan.price)}
-              priceSuffix="/month"
-              sub={monthlyPlan.sub}
-              features={[
-                'Everything in Free, plus:',
-                'Watchlists & Priority Ticker Groups',
-                'Personal Telegram Filing Alerts',
-                'Up to 100 AI summaries per day (IST reset)',
-                'Filter & Mute Routine Administrative Filings',
-                'Export Watchlists & Financial Summaries (CSV / JSON)',
-              ]}
-              ctaLabel={<span className="inline-flex items-center gap-2"><Zap className="w-4 h-4" /> Claim 1-Week Free Trial — ₹0</span>}
-              onCta={() => setIsProModalOpen(true)}
-              footnote={<>1st week free — no card required. Then one-time plans from ₹{getLowestPlanPrice()}, no automatic renewal.</>}
-              className="h-full"
-            />
-
-          </div>
-
-          {/* Feature Comparison Matrix Table */}
-          <div className="max-w-4xl mx-auto bg-white dark:bg-[#15141E] rounded-2xl border border-slate-200 dark:border-[#2D283E] overflow-hidden shadow-xs">
-            <div className="px-6 py-4 bg-slate-50 dark:bg-[#1A1926] border-b border-slate-200 dark:border-[#2D283E]">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white">Detailed Plan Comparison</h3>
-            </div>
-
-            <div className="divide-y divide-slate-100 dark:divide-[#242033] text-xs">
-              <div className="grid grid-cols-12 px-6 py-3 font-semibold text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-[#171622]">
-                <div className="col-span-6 sm:col-span-7">Capability</div>
-                <div className="col-span-3 sm:col-span-2 text-center">Free (₹0)</div>
-                <div className="col-span-3 text-center text-emerald-600 dark:text-emerald-400 font-bold">Pro (one-time plans from ₹{getLowestPlanPrice()})</div>
-              </div>
-
-              {[
-                { feature: 'BSE India disclosure ingestion', free: 'Included', pro: 'Included (Priority Server)' },
-                { feature: 'Coverage across 5,000+ Listed Scrips', free: 'Full 5,000+', pro: 'Full 5,000+' },
-                { feature: 'AI filing summaries', free: '1 one-time demo', pro: '100 summaries/day' },
-                { feature: 'Watchlist Capacity', free: '—', pro: 'Watchlist tools' },
-                { feature: 'Telegram Notifications', free: '—', pro: 'Saved personal destination' },
-                { feature: 'Routine Administrative Filter', free: 'Basic', pro: 'Advanced Smart Mute' },
-                { feature: 'Earnings & Board Meeting Calendar', free: 'Included', pro: 'Included + Docket Export' },
-                { feature: 'Data Export (Watchlists, CSV)', free: '—', pro: 'Included' },
-              ].map((row, idx) => (
-                <div key={idx} className="grid grid-cols-12 px-6 py-3 items-center">
-                  <div className="col-span-6 sm:col-span-7 font-medium text-slate-800 dark:text-slate-200">{row.feature}</div>
-                  <div className="col-span-3 sm:col-span-2 text-center text-slate-500 font-mono text-[11px]">{row.free}</div>
-                  <div className="col-span-3 text-center font-bold text-emerald-600 dark:text-emerald-400 font-mono text-[11px]">{row.pro}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* AI FAQ section: static FAQs (SEO) + ask-the-AI box (limited v1) */}
-          <AiFaqSection onLoginRequest={() => onEnterTerminal()} />
-
-        </div>
-      </section>
-
-      {/* 9. BLOG LIST SECTION: MARKET INSIGHTS & BSE GUIDES */}
-      <MarketGuidesSection onSelectGuide={(guide) => setSelectedGuide(guide)} />
-
-      {/* 9.2. POPULAR GUIDES SECTION: PLAIN ANCHOR LINKS FOR FAST SEARCH ENGINE DISCOVERY */}
-      <section className="py-12 bg-slate-100/70 dark:bg-[#0E131F] border-b border-slate-200/80 dark:border-slate-800/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-            <div>
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold border border-emerald-500/20 mb-2">
-                <BookOpen className="w-3 h-3" />
-                <span>Popular Research Guides</span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-                Popular Guides &amp; Regulatory Manuals
-              </h2>
-              <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-                Essential regulatory playbooks for Dalal Street investors &amp; equity research analysts
-              </p>
-            </div>
-            <a href="/guides" className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline">
-              <span>View all research guides</span>
-              <ArrowRight className="w-3 h-3" />
-            </a>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-            <a href="/guides/sebi-lodr-regulation-30" className="p-4 rounded-xl bg-white dark:bg-[#15141F] border border-slate-200 dark:border-slate-800 hover:border-emerald-500 transition-all block group">
-              <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block mb-1">SEBI Regulations</span>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-emerald-500 transition-colors">SEBI LODR Regulation 30: Material Disclosures &amp; Timelines</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">Master material event disclosure rules, 30-minute to 24-hour timelines, and market-moving filings.</p>
-            </a>
-            <a href="/guides/board-meeting-results-guide" className="p-4 rounded-xl bg-white dark:bg-[#15141F] border border-slate-200 dark:border-slate-800 hover:border-emerald-500 transition-all block group">
-              <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block mb-1">Corporate Actions</span>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-emerald-500 transition-colors">BSE Board Meetings &amp; Financial Results: Outcome Guide</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">Decode board meeting intimations, dividend approvals, bonus share issues, and quarterly earnings.</p>
-            </a>
-            <a href="/guides/auditor-resignations-red-flags" className="p-4 rounded-xl bg-white dark:bg-[#15141F] border border-slate-200 dark:border-slate-800 hover:border-emerald-500 transition-all block group">
-              <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block mb-1">Forensic Analysis</span>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-emerald-500 transition-colors">Auditor Resignations: Forensic Red Flags on Dalal Street</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">Detect early governance warning signs, mid-term auditor exits, and qualified audit opinions.</p>
-            </a>
-            <a href="/guides/insider-trading-pit-regulations" className="p-4 rounded-xl bg-white dark:bg-[#15141F] border border-slate-200 dark:border-slate-800 hover:border-emerald-500 transition-all block group">
-              <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block mb-1">Compliance</span>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-emerald-500 transition-colors">SEBI PIT Regulations &amp; Insider Trading Filings Explained</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">Track trading window closures, designated person disclosures, and promoter transaction signals.</p>
-            </a>
-            <a href="/guides/cash-flow-forensics-india" className="p-4 rounded-xl bg-white dark:bg-[#15141F] border border-slate-200 dark:border-slate-800 hover:border-emerald-500 transition-all block group">
-              <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block mb-1">Accounting Forensics</span>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-emerald-500 transition-colors">Cash Flow Forensics: Auditing Indian Corporate Earnings</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">Evaluate CFO vs PAT conversion, working capital expansion, and aggressive revenue recognition.</p>
-            </a>
-            <a href="/guides/bse-quarterly-results-calendar-guide" className="p-4 rounded-xl bg-white dark:bg-[#15141F] border border-slate-200 dark:border-slate-800 hover:border-emerald-500 transition-all block group">
-              <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block mb-1">Earnings Calendar</span>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-emerald-500 transition-colors">BSE Results Calendar Guide: Earnings &amp; Board Meeting Dates</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">Track Regulation 29 board meeting notices, Regulation 33 quarterly results, and Limited Review Reports.</p>
-            </a>
-            <a href="/guides/bse-shareholding-pattern-explained" className="p-4 rounded-xl bg-white dark:bg-[#15141F] border border-slate-200 dark:border-slate-800 hover:border-emerald-500 transition-all block group">
-              <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block mb-1">Corporate Governance</span>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-emerald-500 transition-colors">How to Read BSE Shareholding Patterns: Regulation 31 Guide</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">Decode promoter stakes, promoter share pledges, institutional FII/DII inflows, and retail holding traps.</p>
-            </a>
-          </div>
-        </div>
-      </section>
-
-      {/* 9.5. ABOUT BSENEXUS SECTION */}
-      <section id="about" aria-labelledby="about-heading" className="py-16 sm:py-24 bg-white dark:bg-[#0B0F17] border-b border-slate-200/80 dark:border-slate-800/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl mx-auto space-y-6 mb-12">
-            <div className="text-center space-y-3">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold border border-emerald-500/20">
-                <Building2 className="w-3.5 h-3.5" />
-                <span>Institutional Equity Analytics &amp; AEO Knowledge Base</span>
-              </div>
-              <h2 id="about-heading" className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
-                About Bsenexus: Corporate Filings &amp; Market Intelligence
-              </h2>
-            </div>
-
-            <div className="prose prose-slate dark:prose-invert max-w-none text-sm sm:text-base text-slate-700 dark:text-slate-300 leading-relaxed space-y-4">
-              <p>
-                <strong>Bsenexus</strong> structures corporate announcements, regulatory disclosures, and earnings releases sourced directly from the official portal of the <a href="https://www.bseindia.com" target="_blank" rel="noopener noreferrer" className="text-emerald-600 dark:text-emerald-400 font-semibold underline hover:text-emerald-500">Bombay Stock Exchange (BSE India)</a>. Built for retail investors, equity research analysts, and market participants who track Indian listed companies.
-              </p>
-
-              <p>
-                The platform continuously monitors regulatory compliance under the SEBI (Listing Obligations and Disclosure Requirements) Regulations, 2015, specifically capturing material events under Regulation 30 and financial outcome declarations under Regulation 33. All regulatory filings mandated by the <a href="https://www.sebi.gov.in" target="_blank" rel="noopener noreferrer" className="text-emerald-600 dark:text-emerald-400 font-semibold underline hover:text-emerald-500">Securities and Exchange Board of India (SEBI)</a>—such as dividend declarations, board meeting intimations, mergers and acquisitions, capital expenditure projects, order wins, management transitions, and forensic auditor resignations—are parsed through an automated neural pipeline powered by Gemini AI. This delivers instantaneous extraction of year-over-year (YoY) and quarter-over-quarter (QoQ) revenue, operating EBITDA, and net profit metrics directly from unformatted corporate PDF documents.
-              </p>
-
-              <p>
-                Beyond the disclosure feed, Bsenexus maintains an updated <a href="/results-calendar" className="text-emerald-600 dark:text-emerald-400 font-semibold underline hover:text-emerald-500">Quarterly Results Calendar</a> tracking scheduled board meetings, audited and unaudited earnings declarations, and historical corporate actions across 5,000+ BSE-listed companies. Investors can navigate directly to dedicated company pages—such as <a href="/company/RELIANCE" className="text-emerald-600 dark:text-emerald-400 font-semibold underline hover:text-emerald-500">Reliance Industries</a>, <a href="/company/TCS" className="text-emerald-600 dark:text-emerald-400 font-semibold underline hover:text-emerald-500">Tata Consultancy Services (TCS)</a>, and HDFC Bank—to review comprehensive regulatory histories, price metrics, and peer group benchmarks.
-              </p>
-
-              <p>
-                To empower investors with actionable domain expertise, our <a href="/guides" className="text-emerald-600 dark:text-emerald-400 font-semibold underline hover:text-emerald-500">Market Research Guides</a> offer step-by-step forensic playbooks on decoding corporate actions, analyzing balance sheets, auditing shareholding patterns under Regulation 31, and interpreting SEBI PIT insider trading disclosures. Users can also configure personalized watchlists and receive Telegram push notifications shortly after target companies submit new filings.
-              </p>
-            </div>
-          </div>
-
-          <section aria-labelledby="top-companies-heading" className="mb-12">
-            <h2 id="top-companies-heading" className="text-xl font-bold text-slate-900 dark:text-white mb-4">Track Companies</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {TOP_COMPANIES.map(company => (
-                <a key={company.symbol} href={`/company/${encodeURIComponent(company.symbol)}`} className="p-4 rounded-2xl bg-slate-50 dark:bg-[#15141F] border border-slate-200/80 dark:border-slate-800/80 hover:border-emerald-500/50 transition-colors">
-                  <span className="block text-sm font-bold text-slate-900 dark:text-white">{company.name}</span>
-                  <span className="block text-xs text-slate-500 dark:text-slate-400 mt-1">{company.listingLabel || `BSE: ${company.scripCode}`}</span>
-                </a>
-              ))}
-            </div>
-          </section>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="p-8 rounded-2xl bg-slate-50 dark:bg-[#15141F] border border-slate-200/80 dark:border-slate-800/80 space-y-4">
-              <div className="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-xl">
-                01
-              </div>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-                Continuous Regulatory Ingestion
-              </h3>
-              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                Bsenexus continuously tracks live regulatory feeds under SEBI LODR Regulation 30 &amp; 33. Announcements from 5,000+ BSE-listed companies are ingested, parsed, and categorized within minutes of filing.
-              </p>
-              <div className="pt-2">
-                <a href="/guides/sebi-lodr-regulation-30" className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline">
-                  <span>SEBI Regulation 30 Guide</span>
-                  <ArrowRight className="w-3 h-3" />
-                </a>
-              </div>
-            </div>
-
-            <div className="p-8 rounded-2xl bg-slate-50 dark:bg-[#15141F] border border-slate-200/80 dark:border-slate-800/80 space-y-4">
-              <div className="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-xl">
-                02
-              </div>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-                Gemini AI Financial Extraction
-              </h3>
-              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                Our neural parsing pipeline extracts YoY &amp; QoQ Revenue, Operating EBITDA, and Net Profit directly from unformatted corporate PDF filings, allowing investors to digest financial results in seconds.
-              </p>
-              <div className="pt-2">
-                <a href="/guides/board-meeting-results-guide" className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline">
-                  <span>Guide to Reading Results</span>
-                  <ArrowRight className="w-3 h-3" />
-                </a>
-              </div>
-            </div>
-
-            <div className="p-8 rounded-2xl bg-slate-50 dark:bg-[#15141F] border border-slate-200/80 dark:border-slate-800/80 space-y-4">
-              <div className="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-xl">
-                03
-              </div>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-                Multi-Channel Alert Dispatch
-              </h3>
-              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                Connect custom watchlists with private Telegram bots to receive immediate push alerts for board meetings, dividends, quarterly earnings, and high-impact disclosures directly on mobile.
-              </p>
-              <div className="pt-2">
-                <a href="/pricing" className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline">
-                  <span>Explore Plans & Trial</span>
-                  <ArrowRight className="w-3 h-3" />
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-12 p-6 rounded-2xl bg-slate-100/70 dark:bg-[#111622] border border-slate-200 dark:border-slate-800/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Entity Notice
-              </p>
-              <p className="text-xs text-slate-600 dark:text-slate-300">
-                Bsenexus is not affiliated with Nexus Select Trust (REIT Scrip: 543913), BSE India Ltd, or SEBI, and is not a SEBI-registered investment adviser.
-              </p>
-            </div>
-            <div className="flex items-center gap-3 shrink-0">
-              <a href="/faq" className="px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-[#1E1B2E] border border-slate-200 dark:border-slate-700 rounded-lg hover:border-emerald-500 transition-colors">
-                Read FAQ
-              </a>
-              <a href="/results-calendar" className="px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-[#1E1B2E] border border-slate-200 dark:border-slate-700 rounded-lg hover:border-emerald-500 transition-colors">
-                Earnings Calendar
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 10. CTA SECTION: START TRACKING BSE TODAY */}
-      <section className="py-16 sm:py-24 bg-slate-900 text-white relative overflow-hidden">
-        {/* Background glow accents */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center space-y-6">
-          
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold border border-emerald-500/40">
-            <Zap className="w-3.5 h-3.5 fill-emerald-400" />
-            <span>Continuous BSE Disclosure Stream</span>
-          </div>
-
-          <h2 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight max-w-3xl mx-auto">
-            Start tracking BSE corporate filings with AI intelligence today
-          </h2>
-
-          <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-2xl mx-auto">
-            Follow official BSE filings with AI-powered summaries — quarterly results, corporate disclosures, and board actions, all in one live terminal.
+          {/* Master Headline (Apple typography: negative tracking, tight leading) */}
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 dark:text-white tracking-[-0.03em] leading-[1.12]">
+            Real-time BSE filings.<br />
+            <span className="bg-gradient-to-r from-sky-500 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              Sub-second Telegram alerts.
+            </span><br />
+            Instant AI analysis.
+          </h1>
+
+          {/* Lead paragraph */}
+          <p className="max-w-2xl mx-auto text-sm sm:text-lg text-slate-600 dark:text-slate-400 font-normal leading-relaxed">
+            The ultra-low-latency market intelligence terminal for Indian equities. 
+            Catch Regulation 30 announcements, quarterly results, and catalysts before they hit broker feeds.
           </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
+          {/* Primary & Secondary Call to Actions */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pt-2">
             <button
-              onClick={() => onEnterTerminal('home')}
-              className="px-8 py-4 bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-black text-sm rounded-xl shadow-xl shadow-emerald-500/25 transition-all cursor-pointer flex items-center gap-2"
+              onClick={() => onEnterTerminal('dashboard')}
+              className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-sky-500 hover:bg-sky-600 active:scale-98 text-white font-extrabold text-sm sm:text-base shadow-lg shadow-sky-500/25 transition-all flex items-center justify-center gap-2"
             >
-              <Zap className="w-4 h-4 fill-slate-950" />
-              <span>Launch Free Live Terminal</span>
+              <span>Open Live Feed Terminal</span>
               <ArrowRight className="w-4 h-4" />
             </button>
 
             <button
-              onClick={() => onEnterTerminal('watchlists')}
-              className="px-6 py-4 bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm rounded-xl border border-slate-700 transition-all cursor-pointer flex items-center gap-2"
+              onClick={() => onEnterTerminal('results-calendar')}
+              className="w-full sm:w-auto px-7 py-3.5 rounded-2xl bg-white/90 dark:bg-slate-900/90 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-98 text-slate-900 dark:text-white border border-slate-200/90 dark:border-slate-800 font-bold text-sm sm:text-base shadow-xs transition-all flex items-center justify-center gap-2.5 cursor-pointer"
             >
-              <List className="w-4 h-4" />
-              <span>Create Custom Watchlist</span>
+              {/* Mini 3D Red Calendar Icon */}
+              <div className="w-5 h-5 rounded-md overflow-hidden bg-gradient-to-b from-red-600 to-rose-600 flex flex-col items-center justify-between shadow-xs shrink-0 border border-red-700/50">
+                <div className="w-full h-1.5 bg-red-700 flex items-center justify-around px-0.5">
+                  <span className="w-0.5 h-0.5 rounded-full bg-white/80" />
+                  <span className="w-0.5 h-0.5 rounded-full bg-white/80" />
+                </div>
+                <div className="flex-1 w-full bg-white dark:bg-slate-900 flex items-center justify-center">
+                  <span className="text-[8px] font-black text-slate-900 dark:text-white leading-none">24</span>
+                </div>
+              </div>
+              <span>Explore Earnings Calendar</span>
             </button>
           </div>
 
-          <div className="flex items-center justify-center gap-6 pt-4 text-xs text-slate-400">
-            <div className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              <span>No credit card required</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              <span>Live filing stream</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              <span>Free tier forever</span>
-            </div>
-          </div>
+          {/* Clean trust statement with authentic brand marks */}
+          <div className="pt-4 flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs text-slate-500 font-medium">
+            <span className="flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+              <span>Direct BSE regulatory connection</span>
+            </span>
 
+            {/* Authentic Telegram mark */}
+            <span className="flex items-center gap-1.5">
+              <div className="w-4 h-4 rounded-full bg-gradient-to-tr from-[#2AABEE] to-[#229ED9] flex items-center justify-center shrink-0 shadow-xs">
+                <svg viewBox="0 0 24 24" width={10} height={10} fill="white" aria-hidden="true">
+                  <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
+                </svg>
+              </div>
+              <span className="font-semibold text-slate-700 dark:text-slate-300">Instant Telegram bot alerts</span>
+            </span>
+
+            <span className="flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+              <span>Zero clutter, no ad spam</span>
+            </span>
+          </div>
         </div>
       </section>
 
+      {/* 4. EXPANSIVE MULTI-COMPANY CATALYSTS GRID (Wide spacing, rich agendas, zero sticky voids) */}
+      <UpcomingCatalystsGrid onEnterTerminal={onEnterTerminal} />
 
-      {/* Common Questions FAQ Section */}
-      <section className="py-12 sm:py-16 bg-slate-50/60 dark:bg-[#0E0C17]/60 border-t border-slate-200/80 dark:border-slate-800/80">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <CommonQuestionsFAQ id="homepage-faq" />
+      {/* 5. INTERACTIVE QUARTERLY RESULTS DECK (TCS, Reliance, Infosys, HDFC Bank) */}
+      <ResultsScrollDeck onEnterTerminal={onEnterTerminal} />
+
+      {/* 6. STREAMLINED 4-PILLAR BENTO GRID */}
+      <CoreCapabilitiesBento onEnterTerminal={onEnterTerminal} />
+
+      {/* 7. TRANSPARENT PRO PRICING OVERVIEW (Distinct Tiers, Zero 299 Duplicates) */}
+      <section className="relative py-16 sm:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-slate-200/80 dark:border-slate-800/80" aria-label="Subscription Plans">
+        <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 text-xs font-semibold text-slate-700 dark:text-slate-300 mb-4">
+            <AiIntelligenceLogo size={16} />
+            <span>Transparent Access</span>
+          </div>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tight leading-[1.15]">
+            Institutional speed.<br />
+            <span className="bg-gradient-to-r from-emerald-500 via-teal-500 to-sky-500 bg-clip-text text-transparent">
+              Starting at just ₹{lowestPrice}
+            </span>
+          </h2>
+          <p className="mt-4 text-sm sm:text-base text-slate-600 dark:text-slate-400 font-normal leading-relaxed">
+            Every plan unlocks sub-second Telegram alerts, unlimited AI earnings breakdowns, and deep historical disclosure archives.
+          </p>
+        </div>
+
+        {/* Distinct 3-Tier Pricing Comparison Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-6xl mx-auto">
+          {/* Tier 1: Weekly Pro */}
+          <PlanCard
+            title={proWeekly.label}
+            subtitle={proWeekly.sub}
+            price={String(proWeekly.price)}
+            priceSuffix={`/${proWeekly.days} days`}
+            features={[
+              'Sub-second Telegram push alerts',
+              'AI Earnings & Concall PDF summaries',
+              'Fast 7-day trial access'
+            ]}
+            ctaLabel="Get Weekly Pass"
+            onCta={() => onEnterTerminal('plans')}
+            className="bg-white/95 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800/80 shadow-md hover:shadow-xl transition-all"
+          />
+
+          {/* Tier 2: Monthly Pro (Most Popular) */}
+          <PlanCard
+            title={proMonthly.label}
+            subtitle={proMonthly.sub}
+            price={String(proMonthly.price)}
+            priceSuffix={`/${proMonthly.days} days`}
+            wasPrice={proMonthly.wasPrice ? String(proMonthly.wasPrice) : undefined}
+            tag={proMonthly.tag || 'Most Popular'}
+            features={[
+              'Sub-second Telegram push alerts',
+              'AI Earnings & Concall PDF summaries',
+              'Unlimited custom watchlist tracking',
+              'LODR Regulation 30 & Board Meeting alerts'
+            ]}
+            ctaLabel="Get Monthly Pro"
+            onCta={() => onEnterTerminal('plans')}
+            className="bg-white/95 dark:bg-slate-900/90 backdrop-blur-xl border border-sky-500/50 dark:border-sky-500/50 ring-2 ring-sky-500/30 shadow-lg hover:shadow-xl transition-all"
+          />
+
+          {/* Tier 3: Annual Pro (Best Value) */}
+          <PlanCard
+            title={proAnnual.label}
+            subtitle={proAnnual.sub}
+            price={String(proAnnual.price)}
+            priceSuffix={`/${proAnnual.days} days`}
+            wasPrice={proAnnual.wasPrice ? String(proAnnual.wasPrice) : undefined}
+            tag={proAnnual.tag || 'Best Value'}
+            features={[
+              'All Pro Monthly capabilities included',
+              'Priority sub-second Telegram pipeline',
+              'Deep 5-year historical filings archive',
+              'Direct API & custom bot access'
+            ]}
+            ctaLabel="Get Annual Pro (Save 40%)"
+            onCta={() => onEnterTerminal('plans')}
+            className="bg-white/95 dark:bg-slate-900/90 backdrop-blur-xl border border-emerald-500/50 dark:border-emerald-500/50 ring-2 ring-emerald-500/30 shadow-lg hover:shadow-xl transition-all"
+          />
         </div>
       </section>
 
-      {/* Follow Bsenexus Social Community Block */}
-      <FollowBseNexusBlock />
-      </main>
+      {/* 8. THEME-MATCHED COMMUNITY & OFFICIAL SOCIAL CHANNELS */}
+      <CommunitySocialBanner />
 
-      {/* 11. FOOTER */}
-      <footer className="relative z-[2] border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0F172A] text-slate-600 dark:text-slate-400 text-xs py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-          
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-            {/* Brand column */}
-            <div className="md:col-span-5 space-y-3">
-              <div className="flex items-center gap-2.5">
-                <BseNexusLogo className="w-7 h-7" />
-                <span className="font-black text-base text-slate-900 dark:text-white">
-                  BSE<span className="text-emerald-500">NEXUS</span>
-                </span>
-              </div>
-              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed max-w-sm">
-                Advanced financial intelligence platform structuring Bombay Stock Exchange (BSE) corporate filings with AI summaries and Telegram alerts.
-              </p>
-              {(() => {
-                const now = new Date();
-                const istOffsetMs = (5 * 60 + 30) * 60 * 1000;
-                const istDate = new Date(now.getTime() + istOffsetMs);
-                const day = istDate.getUTCDay();
-                const mins = istDate.getUTCHours() * 60 + istDate.getUTCMinutes();
-                const isMarket = day >= 1 && day <= 5 && mins >= 555 && mins <= 930;
-                const dynamicStatus = isMarket ? "Live (20s)" : "Relaxed (5m)";
-                return (
-                  <div className="flex items-center gap-2 pt-1 font-mono text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span>BSE Disclosure Poller: Active ({dynamicStatus})</span>
-                  </div>
-                );
-              })()}
-
-              {/* Official Social Links Row */}
-              <div className="pt-2">
-                <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">Official Channels</p>
-                <SocialIconsRow size={22} />
-              </div>
-            </div>
-
-            {/* Quick Links 1 */}
-            <div className="md:col-span-2 space-y-2.5">
-              <p className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider">Terminal</p>
-              <ul className="space-y-2">
-                <li><button onClick={() => onEnterTerminal('dashboard')} className="hover:text-emerald-500 transition-colors cursor-pointer text-slate-700 dark:text-slate-300">Live Announcements</button></li>
-                <li><button onClick={() => onEnterTerminal('watchlists')} className="hover:text-emerald-500 transition-colors cursor-pointer text-slate-700 dark:text-slate-300">Watchlist Manager</button></li>
-                <li><button onClick={() => onEnterTerminal('results-calendar')} className="hover:text-emerald-500 transition-colors cursor-pointer text-slate-700 dark:text-slate-300">Earnings Calendar</button></li>
-                <li><button onClick={() => onEnterTerminal('settings')} className="hover:text-emerald-500 transition-colors cursor-pointer text-slate-700 dark:text-slate-300">Telegram Webhook</button></li>
-              </ul>
-            </div>
-
-            {/* Quick Links 2 */}
-            <div className="md:col-span-2 space-y-2.5">
-              <p className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider">Resources</p>
-              <ul className="space-y-2">
-                <li><a href="/about" className="hover:text-emerald-500 transition-colors text-slate-700 dark:text-slate-300 block">About Bsenexus</a></li>
-                <li><a href="/companies" className="hover:text-emerald-500 transition-colors text-emerald-600 dark:text-emerald-400 font-semibold block">BSE Listed Companies</a></li>
-                <li><a href="/pricing" className="hover:text-emerald-500 transition-colors text-slate-700 dark:text-slate-300 block">Pricing &amp; Plans</a></li>
-                <li><a href="/guides" className="hover:text-emerald-500 transition-colors text-slate-700 dark:text-slate-300 block">Market Research Guides</a></li>
-                <li><a href="/faq" className="hover:text-emerald-500 transition-colors text-slate-700 dark:text-slate-300 block">SEBI Disclosures FAQ</a></li>
-                <li><a href="/rss.xml" target="_blank" rel="noopener noreferrer" className="hover:text-emerald-500 transition-colors text-slate-700 dark:text-slate-300 block">RSS Feed</a></li>
-                <li><a href="/sitemap.xml" target="_blank" rel="noopener noreferrer" className="hover:text-emerald-500 transition-colors text-slate-700 dark:text-slate-300 block">XML Sitemap</a></li>
-                <li><a href="/embed/widget?symbol=RELIANCE" target="_blank" rel="noopener noreferrer" className="hover:text-emerald-500 transition-colors text-slate-700 dark:text-slate-300 block">Free Embed Widget</a></li>
-              </ul>
-            </div>
-
-            {/* Compliance & Trust */}
-            <div className="md:col-span-3 space-y-2.5">
-              <p className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider">Trust &amp; Legal</p>
-              <ul className="space-y-2">
-                <li><a href="/about" className="hover:text-emerald-500 transition-colors text-slate-700 dark:text-slate-300 block">About Us</a></li>
-                <li><a href="/contact" className="hover:text-emerald-500 transition-colors text-slate-700 dark:text-slate-300 block">Contact &amp; Support</a></li>
-                <li><a href="/disclaimer" className="hover:text-emerald-500 transition-colors text-slate-700 dark:text-slate-300 block">Disclaimer</a></li>
-                <li><a href="/privacy-policy" className="hover:text-emerald-500 transition-colors text-slate-700 dark:text-slate-300 block">Privacy Policy</a></li>
-                <li><a href="/terms" className="hover:text-emerald-500 transition-colors text-slate-700 dark:text-slate-300 block">Terms of Service</a></li>
-              </ul>
-              <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed pt-1">
-                Bsenexus is not affiliated with BSE India Ltd, SEBI, or any exchange; informational use only; not investment advice; verify filings on bseindia.com.
-              </p>
-            </div>
-          </div>
-
-          <div className="border-t border-slate-200 dark:border-slate-800 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-700 dark:text-slate-300 font-medium">
-            <div>© {new Date().getFullYear()} Bsenexus. Not affiliated with BSE Limited or NSE. Built and operated by Rahul Dahiya (admin@bsenexus.in).</div>
-            <div className="flex flex-wrap items-center gap-3">
-              <a href="/about" className="hover:text-emerald-500 transition-colors">About</a>
-              <span>•</span>
-              <a href="/contact" className="hover:text-emerald-500 transition-colors">Contact</a>
-              <span>•</span>
-              <a href="/disclaimer" className="hover:text-emerald-500 transition-colors">Disclaimer</a>
-              <span>•</span>
-              <a href="/privacy-policy" className="hover:text-emerald-500 transition-colors">Privacy</a>
-              <span>•</span>
-              <a href="/terms" className="hover:text-emerald-500 transition-colors">Terms</a>
-            </div>
-          </div>
-
-        </div>
-      </footer>
-
-      {/* Global Blog Reader Modal */}
-      {selectedGuide && (
-        <BlogReaderModal
-          guide={selectedGuide}
-          isOpen={!!selectedGuide}
-          onClose={() => setSelectedGuide(null)}
-          onOpenTerminal={() => {
-            setSelectedGuide(null);
-            onEnterTerminal('dashboard');
-          }}
-        />
-      )}
+      {/* 9. CONSOLIDATED AUTHORITATIVE ABOUT, FAQ & QUIET FOOTER */}
+      <LandingFooterAbout onEnterTerminal={onEnterTerminal} />
 
     </div>
-    </MotionConfig>
   );
 }

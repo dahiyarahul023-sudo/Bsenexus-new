@@ -33,37 +33,62 @@ export async function streamPdf(response: Response, res: express.Response, signa
   }
 }
 
-export function createPdfOpenRouter({ fetchDocument = fetchBseDocument, maxInFlight = 8, maxBytes = MAX_PDF_BYTES } = {}) {
+export function createPdfOpenRouter({ fetchDocument = fetchBseDocument, maxInFlight = 16, maxBytes = MAX_PDF_BYTES } = {}) {
   const router = express.Router();
   // One instance of this router is mounted in apiRouter: shared across all IPs
   // in the Cloud Run process; never a per-IP semaphore or queued download.
   let inFlight = 0;
   router.get('/pdf-open', rateLimit({
-    windowMs: 60_000, limit: 20, standardHeaders: true, legacyHeaders: false,
+    windowMs: 60_000, limit: 60, standardHeaders: true, legacyHeaders: false,
     validate: { xForwardedForHeader: false, forwardedHeader: false, default: true },
     message: { success: false, error: 'Too many PDF requests. Please try again in a minute.' },
   }), async (req, res) => {
-    if (inFlight >= maxInFlight) return res.status(503).set('Retry-After', '5').json({ success: false, error: 'PDF downloads are busy. Please retry shortly.' });
+    let rawUrl = typeof req.query.url === 'string' ? req.query.url.trim() : '';
+    if (rawUrl.startsWith('http://')) {
+      rawUrl = 'https://' + rawUrl.slice(7);
+    }
+    const filename = typeof req.query.file === 'string' ? req.query.file.trim() : '';
+    const newsId = typeof req.query.newsId === 'string' ? req.query.newsId.trim() : '';
+    const scrip = typeof req.query.scrip === 'string' ? req.query.scrip.trim() : '';
+
+    let cleanFile = filename.replace(/^.*[\\/]/, '').replace(/[^a-zA-Z0-9_\-.]/g, '').trim();
+    if (!cleanFile && rawUrl) {
+      const lastPart = rawUrl.split('/').pop()?.split('?')[0] || '';
+      if (/\.pdf$/i.test(lastPart)) {
+        cleanFile = lastPart.replace(/[^a-zA-Z0-9_\-.]/g, '').trim();
+      }
+    }
+
+    if (inFlight >= maxInFlight) {
+      const redirectTarget = isAllowedBseDocumentUrl(rawUrl) ? rawUrl : (cleanFile ? `https://www.bseindia.com/xml-data/corpfiling/AttachLive/${cleanFile}` : 'https://www.bseindia.com/corporates/ann.html');
+      return res.redirect(redirectTarget);
+    }
     inFlight++;
     const controller = new AbortController();
     const closed = () => { if (!res.writableFinished) controller.abort(); };
     res.once('close', closed);
     const candidates: string[] = [];
     try {
-      const rawUrl = typeof req.query.url === 'string' ? req.query.url : '';
-      const filename = typeof req.query.file === 'string' ? req.query.file : '';
-      const newsId = typeof req.query.newsId === 'string' ? req.query.newsId : '';
       if (isAllowedBseDocumentUrl(rawUrl)) {
         candidates.push(rawUrl);
         if (rawUrl.includes('/AttachLive/')) candidates.push(rawUrl.replace('/AttachLive/', '/AttachHis/'));
         else if (rawUrl.includes('/AttachHis/')) candidates.push(rawUrl.replace('/AttachHis/', '/AttachLive/'));
       }
-      const cleanFile = filename.replace(/^.*[\\/]/, '').replace(/[^a-zA-Z0-9_\-.]/g, '').trim();
-      if (cleanFile) candidates.push(`https://www.bseindia.com/xml-data/corpfiling/AttachLive/${cleanFile}`, `https://www.bseindia.com/xml-data/corpfiling/AttachHis/${cleanFile}`);
+      if (cleanFile) {
+        candidates.push(
+          `https://www.bseindia.com/xml-data/corpfiling/AttachLive/${cleanFile}`,
+          `https://www.bseindia.com/xml-data/corpfiling/AttachHis/${cleanFile}`
+        );
+      }
       const cleanNewsId = newsId.replace(/[^a-zA-Z0-9_-]/g, '');
-      if (cleanNewsId) candidates.push(`https://www.bseindia.com/corporates/anndet_new.aspx?origid=${encodeURIComponent(cleanNewsId)}`);
-      // Single deadline covers redirects, all fallback attempts and streaming.
-      const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(5000)]);
+      if (cleanNewsId) {
+        candidates.push(`https://www.bseindia.com/corporates/anndet_new.aspx?origid=${encodeURIComponent(cleanNewsId)}`);
+      }
+      if (scrip && /^\d{5,7}$/.test(scrip)) {
+        candidates.push(`https://www.bseindia.com/stock-share-price/stock/${scrip}/announcements/`);
+      }
+      // Generous 20-second deadline covers slow BSE response, redirects, and streaming.
+      const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(20_000)]);
       for (const url of [...new Set(candidates)]) {
         if (!isAllowedBseDocumentUrl(url)) continue;
         let response: Response;
@@ -73,10 +98,13 @@ export function createPdfOpenRouter({ fetchDocument = fetchBseDocument, maxInFli
             'Accept': 'application/pdf,text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8', 'Referer': 'https://www.bseindia.com/',
           } });
         } catch { if (signal.aborted) break; continue; }
-        if (response.ok && ((response.headers.get('content-type') || '').includes('application/pdf') || new URL(url).pathname.toLowerCase().endsWith('.pdf'))) {
+        const contentType = (response.headers.get('content-type') || '').toLowerCase();
+        const isPdf = contentType.includes('application/pdf') || (!contentType.includes('text/html') && new URL(url).pathname.toLowerCase().endsWith('.pdf'));
+
+        if (response.ok && isPdf) {
           res.set('Cache-Control', 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400');
           res.set('Content-Type', 'application/pdf');
-          res.set('Content-Disposition', `inline; filename="${(filename || 'bse_filing.pdf').replace(/[^a-zA-Z0-9_\-.]/g, '') || 'bse_filing.pdf'}"`);
+          res.set('Content-Disposition', `inline; filename="${cleanFile || 'bse_filing.pdf'}"`);
           try { await streamPdf(response, res, signal, maxBytes); }
           catch (error) {
             controller.abort();

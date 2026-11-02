@@ -30,6 +30,23 @@ describe('BSE Subject Cleaning & PDF Helper Tests', () => {
     assert.strictEqual(detectHumanTitle('Recommendation of Final Dividend of Rs 5 per share'), 'Corporate action');
   });
 
+  test('cleanBseSubject detects Investor/Analyst calls and concalls prominently', () => {
+    const raw = 'Marico Limited - 531642 - Announcement under Regulation 30 (LODR)-Analyst / Investor Meet - Intimation';
+    const res = cleanBseSubject(raw, 'Marico Limited', 531642);
+    assert.strictEqual(res.isInvestorCall, true);
+    assert.strictEqual(res.humanTitle, 'Analysts / Investor Meet / Con. Call');
+    assert.strictEqual(res.headline, 'Analyst / Investor Meet - Intimation');
+    assert.strictEqual(res.badgeTone, 'sky');
+    assert.strictEqual(res.regulation, 'Reg 30 (LODR)');
+  });
+
+  test('cleanBseSubject handles SEBI DP Reg 74(5) compliances', () => {
+    const raw = 'Compliances-Certificate under Reg. 74 (5) of SEBI (DP) Regulations, 2018';
+    const res = cleanBseSubject(raw);
+    assert.strictEqual(res.humanTitle, 'Certificate under SEBI (DP) Reg 74(5)');
+    assert.ok(!res.headline.startsWith('Compliances-'));
+  });
+
   test('getSafePdfUrl constructs correct proxy URL with parameters', () => {
     const safeUrl = getSafePdfUrl('https://www.bseindia.com/xml-data/corpfiling/AttachLive/abc.pdf', 'abc.pdf', '12345', '500570');
     assert.ok(safeUrl.startsWith('/api/pdf-open?'));

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "4ac004ccaa586b2a15c3dd8dbfcfbf1418821b02bb441127f31494125060417c",
+  "sourceDigest": "42e209a7dd72fa986c09c39a12b861362b8ee164dc4f905365828abed3c699c8",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -36,11 +36,6 @@
     {
       "path": "metadata.json",
       "sha256": "ac2598b6aaa999a40b1a001a27752a4f684c896ccf7494ed934af6742c1e6303",
-      "importedBy": []
-    },
-    {
-      "path": "package-lock.json",
-      "sha256": "d24f19a39922cf912e150c992352f9d97e0f03d2e3c2a9db044440e7ec3b3338",
       "importedBy": []
     },
     {
@@ -436,7 +431,7 @@
     },
     {
       "path": "server/api/pdfOpen.ts",
-      "sha256": "afa368b8594187b3fafb360b55d42c619da9b22d05f88f79bbff31cc3a59c061",
+      "sha256": "79621577df1cc929f0a6f3bb9617c0e33583507c6cce4fd769eb90ffdd68b571",
       "importedBy": [
         "server/api/routes.ts",
         "server/tests/pdfOpen.test.ts"
@@ -1136,7 +1131,7 @@
     },
     {
       "path": "server/services/companyIntelService.ts",
-      "sha256": "7acc7a98eb324a6c81a2e2149d6db663e35360be5694d60cb1caef0c199dac91",
+      "sha256": "f29168ea59a3d7d8e3c2e206867e07791d481b5cf6fcc010f14f1d5b8c2bbbe9",
       "importedBy": [
         "server.ts",
         "server/api/routes.ts"
@@ -2251,7 +2246,7 @@
     },
     {
       "path": "server/tests/subjectCleaner.test.ts",
-      "sha256": "c75bfc2b201f9036d1c956866ba0e654d6ccac53884168dd7632c21c6e6ad39e",
+      "sha256": "1117c4458bfa191540264ca1a6063481d199884e932f5a51518b88c104bc8ff7",
       "importedBy": []
     },
     {
@@ -2690,7 +2685,7 @@
     },
     {
       "path": "src/components/Announcements.tsx",
-      "sha256": "d1eb93a39f6a56c0469944777e36cd5cf7fd1fe27e777483b54a1b39e607f03c",
+      "sha256": "797ea2e635d2b80f268e01a5ae2628b842771e7726f615ad5f8dd74ab1475fab",
       "importedBy": [
         "src/App.tsx",
         "src/components/Layout.tsx"
@@ -2716,8 +2711,7 @@
       "path": "src/components/BlogReaderModal.tsx",
       "sha256": "1eb11e522d8602141b3a5ce72e21caa9c4fb38216c5f1241afe7d0dfd35d2d75",
       "importedBy": [
-        "src/components/GuidesPage.tsx",
-        "src/components/LandingPage.tsx"
+        "src/components/GuidesPage.tsx"
       ]
     },
     {
@@ -2729,7 +2723,7 @@
     },
     {
       "path": "src/components/CompanyIntelligenceModal.tsx",
-      "sha256": "23b3e100b556a24cc770b589230e8c3b9b31d8caba136b51422a5abc36a4f061",
+      "sha256": "5335a8956820f7b8ae291436ac110f56d30003ea5c86068c0dc0ec6ce5708cdd",
       "importedBy": [
         "src/components/Layout.tsx"
       ]
@@ -2795,7 +2789,7 @@
     },
     {
       "path": "src/components/LandingPage.tsx",
-      "sha256": "cd35abc43e8a869336efd0f4723b9e99868d3b9fcb71de1a324ce6fb5f75021b",
+      "sha256": "3537a4d8b48b82868b40b7ab2d1b96330409f76ed87afa04a378369cbde696e5",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -2823,8 +2817,7 @@
       "path": "src/components/MarketGuidesSection.tsx",
       "sha256": "877976236a7da7dfe94e3a623cfc9c286b1d5a1cebb9ab490a74dce41fc5ca3c",
       "importedBy": [
-        "src/components/GuidesPage.tsx",
-        "src/components/LandingPage.tsx"
+        "src/components/GuidesPage.tsx"
       ]
     },
     {
@@ -3066,39 +3059,75 @@
       ]
     },
     {
-      "path": "src/components/landing/CompanyLogos.tsx",
-      "sha256": "6faec51a5e2b1410f871d93c56ba43a180099e0f58d2ef886ad53f99f59b3f1a",
-      "importedBy": [
-        "src/components/landing/CreativeHero.tsx",
-        "src/components/landing/FeatureTabs.tsx",
-        "src/components/landing/FilingJourney.tsx"
-      ]
+      "path": "src/components/landing/CalendarTelegramMorph.tsx",
+      "sha256": "e2614db994786740698873e27dcbd9056a9cc1ec8e65477600e0392f0556ab31",
+      "importedBy": []
     },
     {
-      "path": "src/components/landing/CreativeHero.tsx",
-      "sha256": "b75e402fc2f6fe9d48f051313054745231e1662645ae1b702d6cc31b344b7922",
+      "path": "src/components/landing/CommunitySocialBanner.tsx",
+      "sha256": "a53e58771576d9cb519d3890cca17ca3eff6fbd21b8734c0523ff850a47fef17",
       "importedBy": [
         "src/components/LandingPage.tsx"
       ]
     },
     {
+      "path": "src/components/landing/CompanyLogos.tsx",
+      "sha256": "e0cb53aeb64abaf499e16fe3e95817896b9171617f20c1b08c33f200d717e3fa",
+      "importedBy": [
+        "src/components/landing/CalendarTelegramMorph.tsx",
+        "src/components/landing/CreativeHero.tsx",
+        "src/components/landing/FeatureTabs.tsx",
+        "src/components/landing/FilingJourney.tsx",
+        "src/components/landing/ResultsScrollDeck.tsx",
+        "src/components/landing/UpcomingCatalystsGrid.tsx"
+      ]
+    },
+    {
+      "path": "src/components/landing/CoreCapabilitiesBento.tsx",
+      "sha256": "7a1e9be630d4defb1135a11171fd204200cb6c89f02afdb0a8a5af32dac47589",
+      "importedBy": [
+        "src/components/LandingPage.tsx"
+      ]
+    },
+    {
+      "path": "src/components/landing/CreativeHero.tsx",
+      "sha256": "b75e402fc2f6fe9d48f051313054745231e1662645ae1b702d6cc31b344b7922",
+      "importedBy": []
+    },
+    {
       "path": "src/components/landing/FeatureIcons.tsx",
       "sha256": "a6762be9eb531ced767c286ac5bebe5d063817e2212dfbe89f3816759bdd4d34",
       "importedBy": [
-        "src/components/LandingPage.tsx",
         "src/components/landing/FeatureTabs.tsx"
       ]
     },
     {
       "path": "src/components/landing/FeatureTabs.tsx",
       "sha256": "555920147f0bbafdbddf52f5f11a754ca7e64d0d573fc1fbd94edc1e288c8a01",
+      "importedBy": []
+    },
+    {
+      "path": "src/components/landing/FilingJourney.tsx",
+      "sha256": "e6adee018313b399bcf880118d34700479af1a62809ea1395bdf742220183748",
+      "importedBy": []
+    },
+    {
+      "path": "src/components/landing/LandingFooterAbout.tsx",
+      "sha256": "81eaa9d1967c74b832f949b0d087495849068eb35a4a1541378a83a828899fdf",
       "importedBy": [
         "src/components/LandingPage.tsx"
       ]
     },
     {
-      "path": "src/components/landing/FilingJourney.tsx",
-      "sha256": "e6adee018313b399bcf880118d34700479af1a62809ea1395bdf742220183748",
+      "path": "src/components/landing/ResultsScrollDeck.tsx",
+      "sha256": "c89b067eb0bd5f50ecc0041f299f7692fdd717bf46aebce0ea4836f9151be39b",
+      "importedBy": [
+        "src/components/LandingPage.tsx"
+      ]
+    },
+    {
+      "path": "src/components/landing/UpcomingCatalystsGrid.tsx",
+      "sha256": "7c530bd7b7e98763b9e3dd9363beb8f7c855314d71facdf77249ae8e6ab1955d",
       "importedBy": [
         "src/components/LandingPage.tsx"
       ]
@@ -3361,8 +3390,15 @@
     {
       "path": "src/components/ui/AiFaqSection.tsx",
       "sha256": "38dfc43460c7a1b95b24e9cb4b5f0c41c81c07acea7a268ea067c9ec4e191281",
+      "importedBy": []
+    },
+    {
+      "path": "src/components/ui/AiIntelligenceLogo.tsx",
+      "sha256": "aeca4819d02cb7e1c5ff630d74a6239b49f86a0f44ec222ce199aace8ce341c4",
       "importedBy": [
-        "src/components/LandingPage.tsx"
+        "src/components/LandingPage.tsx",
+        "src/components/landing/CoreCapabilitiesBento.tsx",
+        "src/components/landing/UpcomingCatalystsGrid.tsx"
       ]
     },
     {
@@ -3400,7 +3436,15 @@
         "src/components/TodayMarketStoryModal.tsx",
         "src/components/TrustPages.tsx",
         "src/components/landing/CreativeHero.tsx",
+        "src/components/landing/LandingFooterAbout.tsx",
         "src/components/ui/ModernAuthCard.tsx"
+      ]
+    },
+    {
+      "path": "src/components/ui/CalendarDateBadge3D.tsx",
+      "sha256": "21f5f4e4080cd208fc4b2faf2f6d105ee9dc868c77182ba140251a5ef9fe9659",
+      "importedBy": [
+        "src/components/landing/UpcomingCatalystsGrid.tsx"
       ]
     },
     {
@@ -3414,7 +3458,6 @@
       "path": "src/components/ui/CommonQuestionsFAQ.tsx",
       "sha256": "1792a16db7680b877e874a7569d9d86d06d62d0cee47ccccb385ca6e4fc4ad67",
       "importedBy": [
-        "src/components/LandingPage.tsx",
         "src/components/ResultsCalendar.tsx"
       ]
     },
@@ -3423,7 +3466,6 @@
       "sha256": "4dda8d135dcbe0648197b1e9a5da5209b94677268079b8a1ffcbf47c99bc9bc5",
       "importedBy": [
         "src/components/CompanyIntelligenceModal.tsx",
-        "src/components/LandingPage.tsx",
         "src/components/Layout.tsx",
         "src/components/NotificationInbox.tsx",
         "src/components/WatchlistManager.tsx"
@@ -3483,9 +3525,7 @@
     {
       "path": "src/components/ui/MagneticButton.tsx",
       "sha256": "6f9705a00e38d1d021f73a66d29a469ff1141d43eeb0a744a1a0c55c2a36d076",
-      "importedBy": [
-        "src/components/LandingPage.tsx"
-      ]
+      "importedBy": []
     },
     {
       "path": "src/components/ui/MarketClock.tsx",
@@ -3540,7 +3580,7 @@
     },
     {
       "path": "src/components/ui/ParticleRibbons.tsx",
-      "sha256": "3377c0bba068ef7febb4ea8f910603ca90e9e957fffe65d83c7c21c6d3135ddd",
+      "sha256": "028273861bd331007b791626c52d5a01620cd47033d9ee343a5782c14c8d5807",
       "importedBy": [
         "src/components/LandingPage.tsx"
       ]
@@ -3575,9 +3615,7 @@
     {
       "path": "src/components/ui/Reveal.tsx",
       "sha256": "80eea6e160cc116f258559755e16d3b315972c7a385b61d87603a87f541c10a3",
-      "importedBy": [
-        "src/components/LandingPage.tsx"
-      ]
+      "importedBy": []
     },
     {
       "path": "src/components/ui/RichVisual.tsx",
@@ -3612,10 +3650,10 @@
       "importedBy": [
         "src/components/CompaniesPage.tsx",
         "src/components/GuidesPage.tsx",
-        "src/components/LandingPage.tsx",
         "src/components/Layout.tsx",
         "src/components/NotFoundPage.tsx",
-        "src/components/TrustPages.tsx"
+        "src/components/TrustPages.tsx",
+        "src/components/landing/LandingFooterAbout.tsx"
       ]
     },
     {
@@ -3773,6 +3811,7 @@
       "importedBy": [
         "server/tests/pricingSync.test.ts",
         "server/tests/referrals.test.ts",
+        "src/components/LandingPage.tsx",
         "src/components/PricingPage.tsx",
         "src/utils/cashfree.ts"
       ]
@@ -3782,8 +3821,7 @@
       "sha256": "c0ee163dd0f2e89252acb45d1583ab4955e163d3e7d719e0b4dae9c8aedab6b2",
       "importedBy": [
         "server/tests/exchangeProfiles.test.ts",
-        "server/tests/sevenFixes.test.ts",
-        "src/components/LandingPage.tsx"
+        "server/tests/sevenFixes.test.ts"
       ]
     },
     {
@@ -3815,7 +3853,6 @@
         "src/components/HelpModal.tsx",
         "src/components/HomeForYou.tsx",
         "src/components/ImpactRadar.tsx",
-        "src/components/LandingPage.tsx",
         "src/components/Layout.tsx",
         "src/components/NewsPortal.tsx",
         "src/components/NotificationInbox.tsx",
@@ -3896,7 +3933,6 @@
         "src/components/CompanyIntelligenceModal.tsx",
         "src/components/HelpModal.tsx",
         "src/components/HomeForYou.tsx",
-        "src/components/LandingPage.tsx",
         "src/components/NewsPortal.tsx",
         "src/components/NotificationInbox.tsx",
         "src/components/RadarWindow.tsx",
@@ -4419,7 +4455,6 @@
         "src/api/notesApi.ts",
         "src/components/BlogReaderModal.tsx",
         "src/components/GuidesPage.tsx",
-        "src/components/LandingPage.tsx",
         "src/components/MarketGuidesSection.tsx",
         "src/components/NewsPortal.tsx",
         "src/components/SettingsTab.tsx",
@@ -4494,7 +4529,6 @@
         "src/components/Announcements.tsx",
         "src/components/CompanyIntelligenceModal.tsx",
         "src/components/HelpModal.tsx",
-        "src/components/LandingPage.tsx",
         "src/components/NewsPortal.tsx",
         "src/components/PaymentHistory.tsx",
         "src/components/ProCheckoutView.tsx",
@@ -4510,10 +4544,11 @@
     },
     {
       "path": "src/utils/cleanBseSubject.ts",
-      "sha256": "9fd2408e3f9039b505c922d66a4b40c4a1d4990e9b452f16f17b52015b33d5f9",
+      "sha256": "238442afbf1ea54a2b2d6f3912a0a5f4d7c58bf9fc5ecf1175fddb4aa7cf4ae2",
       "importedBy": [
         "server/tests/subjectCleaner.test.ts",
         "src/components/Announcements.tsx",
+        "src/components/CompanyIntelligenceModal.tsx",
         "src/components/HomeForYou.tsx",
         "src/components/WatchlistManager.tsx"
       ]
@@ -4615,6 +4650,8 @@
         "src/components/SettingsTab.tsx",
         "src/components/UserProfileModal.tsx",
         "src/components/WatchlistManager.tsx",
+        "src/components/landing/CalendarTelegramMorph.tsx",
+        "src/components/landing/ResultsScrollDeck.tsx",
         "src/components/ui/AutosaveIndicator.tsx",
         "src/components/ui/BackToTop.tsx",
         "src/components/ui/CommandPalette.tsx",
@@ -4776,7 +4813,6 @@
       "sha256": "131fa74eeed2a2db5eca49ca6d4b36866c200135301668f93f5de55025199f0a",
       "importedBy": [
         "src/App.tsx",
-        "src/components/LandingPage.tsx",
         "src/components/landing/CreativeHero.tsx",
         "src/hooks/useScrollRestoration.ts"
       ]
@@ -4845,7 +4881,7 @@
     },
     {
       "path": "src/version.ts",
-      "sha256": "f3ecebca4fc1aafe1e52e03880e34404ad29624569bc3296304193d7f17223d6",
+      "sha256": "ae1c5617f467027d52f0666343182c47c4ce32e86547578a1b73c026179d848d",
       "importedBy": [
         "src/components/SettingsTab.tsx",
         "src/lib/sentry.ts"
@@ -11150,81 +11186,87 @@
     },
     {
       "source": "src/components/CompanyIntelligenceModal.tsx",
-      "target": "src/utils/timeFormat.ts",
+      "target": "src/utils/cleanBseSubject.ts",
       "kind": "import",
       "line": 22
     },
     {
       "source": "src/components/CompanyIntelligenceModal.tsx",
-      "target": "src/context/IntelModalContext.tsx",
+      "target": "src/utils/timeFormat.ts",
       "kind": "import",
-      "line": 25
+      "line": 23
     },
     {
       "source": "src/components/CompanyIntelligenceModal.tsx",
-      "target": "src/context/AuthContext.tsx",
+      "target": "src/context/IntelModalContext.tsx",
       "kind": "import",
       "line": 26
     },
     {
       "source": "src/components/CompanyIntelligenceModal.tsx",
-      "target": "src/utils/aiQuota.ts",
+      "target": "src/context/AuthContext.tsx",
       "kind": "import",
       "line": 27
     },
     {
       "source": "src/components/CompanyIntelligenceModal.tsx",
-      "target": "src/hooks/useBodyScrollLock.ts",
+      "target": "src/utils/aiQuota.ts",
       "kind": "import",
       "line": 28
     },
     {
       "source": "src/components/CompanyIntelligenceModal.tsx",
-      "target": "src/components/ui/ComponentSkeleton.tsx",
+      "target": "src/hooks/useBodyScrollLock.ts",
       "kind": "import",
       "line": 29
     },
     {
       "source": "src/components/CompanyIntelligenceModal.tsx",
-      "target": "src/components/ui/DesignedSkeletons.tsx",
+      "target": "src/components/ui/ComponentSkeleton.tsx",
       "kind": "import",
       "line": 30
     },
     {
       "source": "src/components/CompanyIntelligenceModal.tsx",
-      "target": "src/components/ui/HonestProgressBar.tsx",
+      "target": "src/components/ui/DesignedSkeletons.tsx",
       "kind": "import",
       "line": 31
     },
     {
       "source": "src/components/CompanyIntelligenceModal.tsx",
-      "target": "src/components/ui/TimeoutRetryState.tsx",
+      "target": "src/components/ui/HonestProgressBar.tsx",
       "kind": "import",
       "line": 32
     },
     {
       "source": "src/components/CompanyIntelligenceModal.tsx",
-      "target": "src/components/ui/ActionButton.tsx",
+      "target": "src/components/ui/TimeoutRetryState.tsx",
       "kind": "import",
       "line": 33
     },
     {
       "source": "src/components/CompanyIntelligenceModal.tsx",
-      "target": "src/components/ui/helios.tsx",
+      "target": "src/components/ui/ActionButton.tsx",
       "kind": "import",
       "line": 34
     },
     {
       "source": "src/components/CompanyIntelligenceModal.tsx",
+      "target": "src/components/ui/helios.tsx",
+      "kind": "import",
+      "line": 35
+    },
+    {
+      "source": "src/components/CompanyIntelligenceModal.tsx",
       "target": "src/components/QuarterlyResultsLedger.tsx",
       "kind": "import",
-      "line": 36
+      "line": 37
     },
     {
       "source": "src/components/CompanyIntelligenceModal.tsx",
       "target": "src/components/AiSummaryViewer.tsx",
       "kind": "import",
-      "line": 37
+      "line": 38
     },
     {
       "source": "src/components/CookieConsentBanner.tsx",
@@ -11606,141 +11648,75 @@
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/config/topCompanies.ts",
-      "kind": "import",
-      "line": 1
-    },
-    {
-      "source": "src/components/LandingPage.tsx",
       "target": "src/components/ui/BseNexusLogo.tsx",
       "kind": "import",
-      "line": 14
-    },
-    {
-      "source": "src/components/LandingPage.tsx",
-      "target": "src/components/landing/FeatureIcons.tsx",
-      "kind": "import",
-      "line": 15
+      "line": 8
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/ui/MarketClock.tsx",
       "kind": "import",
-      "line": 19
+      "line": 9
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/ui/MarketTickerTape.tsx",
       "kind": "import",
-      "line": 20
+      "line": 10
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/types.ts",
+      "target": "src/components/landing/UpcomingCatalystsGrid.tsx",
       "kind": "import",
-      "line": 21
+      "line": 11
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/components/ui/ComponentSkeleton.tsx",
+      "target": "src/components/landing/ResultsScrollDeck.tsx",
       "kind": "import",
-      "line": 22
+      "line": 12
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/context/AuthContext.tsx",
+      "target": "src/components/landing/CoreCapabilitiesBento.tsx",
       "kind": "import",
-      "line": 23
+      "line": 13
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/hooks/useBodyScrollLock.ts",
+      "target": "src/components/landing/CommunitySocialBanner.tsx",
       "kind": "import",
-      "line": 24
+      "line": 14
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/components/MarketGuidesSection.tsx",
+      "target": "src/components/landing/LandingFooterAbout.tsx",
       "kind": "import",
-      "line": 28
+      "line": 15
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/components/BlogReaderModal.tsx",
+      "target": "src/config/plans.ts",
       "kind": "import",
-      "line": 29
-    },
-    {
-      "source": "src/components/LandingPage.tsx",
-      "target": "src/utils/scrollState.ts",
-      "kind": "import",
-      "line": 30
-    },
-    {
-      "source": "src/components/LandingPage.tsx",
-      "target": "src/components/ui/SocialLinks.tsx",
-      "kind": "import",
-      "line": 31
-    },
-    {
-      "source": "src/components/LandingPage.tsx",
-      "target": "src/components/ui/CommonQuestionsFAQ.tsx",
-      "kind": "import",
-      "line": 32
-    },
-    {
-      "source": "src/components/LandingPage.tsx",
-      "target": "src/components/ui/AiFaqSection.tsx",
-      "kind": "import",
-      "line": 33
-    },
-    {
-      "source": "src/components/LandingPage.tsx",
-      "target": "src/utils/cashfree.ts",
-      "kind": "import",
-      "line": 34
+      "line": 16
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/ui/PlanCard.tsx",
       "kind": "import",
-      "line": 35
+      "line": 17
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/ui/ParticleRibbons.tsx",
       "kind": "import",
-      "line": 36
+      "line": 18
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/components/ui/MagneticButton.tsx",
+      "target": "src/components/ui/AiIntelligenceLogo.tsx",
       "kind": "import",
-      "line": 37
-    },
-    {
-      "source": "src/components/LandingPage.tsx",
-      "target": "src/components/ui/Reveal.tsx",
-      "kind": "import",
-      "line": 38
-    },
-    {
-      "source": "src/components/LandingPage.tsx",
-      "target": "src/components/landing/CreativeHero.tsx",
-      "kind": "import",
-      "line": 39
-    },
-    {
-      "source": "src/components/LandingPage.tsx",
-      "target": "src/components/landing/FeatureTabs.tsx",
-      "kind": "import",
-      "line": 40
-    },
-    {
-      "source": "src/components/LandingPage.tsx",
-      "target": "src/components/landing/FilingJourney.tsx",
-      "kind": "import",
-      "line": 41
+      "line": 19
     },
     {
       "source": "src/components/Layout.tsx",
@@ -13441,6 +13417,24 @@
       "line": 9
     },
     {
+      "source": "src/components/landing/CalendarTelegramMorph.tsx",
+      "target": "src/components/landing/CompanyLogos.tsx",
+      "kind": "import",
+      "line": 8
+    },
+    {
+      "source": "src/components/landing/CalendarTelegramMorph.tsx",
+      "target": "src/utils/motionTokens.ts",
+      "kind": "import",
+      "line": 9
+    },
+    {
+      "source": "src/components/landing/CoreCapabilitiesBento.tsx",
+      "target": "src/components/ui/AiIntelligenceLogo.tsx",
+      "kind": "import",
+      "line": 5
+    },
+    {
       "source": "src/components/landing/CreativeHero.tsx",
       "target": "src/utils/scrollState.ts",
       "kind": "import",
@@ -13493,6 +13487,48 @@
       "target": "src/components/landing/CompanyLogos.tsx",
       "kind": "import",
       "line": 5
+    },
+    {
+      "source": "src/components/landing/LandingFooterAbout.tsx",
+      "target": "src/components/ui/BseNexusLogo.tsx",
+      "kind": "import",
+      "line": 6
+    },
+    {
+      "source": "src/components/landing/LandingFooterAbout.tsx",
+      "target": "src/components/ui/SocialLinks.tsx",
+      "kind": "import",
+      "line": 7
+    },
+    {
+      "source": "src/components/landing/ResultsScrollDeck.tsx",
+      "target": "src/components/landing/CompanyLogos.tsx",
+      "kind": "import",
+      "line": 8
+    },
+    {
+      "source": "src/components/landing/ResultsScrollDeck.tsx",
+      "target": "src/utils/motionTokens.ts",
+      "kind": "import",
+      "line": 9
+    },
+    {
+      "source": "src/components/landing/UpcomingCatalystsGrid.tsx",
+      "target": "src/components/landing/CompanyLogos.tsx",
+      "kind": "import",
+      "line": 5
+    },
+    {
+      "source": "src/components/landing/UpcomingCatalystsGrid.tsx",
+      "target": "src/components/ui/AiIntelligenceLogo.tsx",
+      "kind": "import",
+      "line": 6
+    },
+    {
+      "source": "src/components/landing/UpcomingCatalystsGrid.tsx",
+      "target": "src/components/ui/CalendarDateBadge3D.tsx",
+      "kind": "import",
+      "line": 7
     },
     {
       "source": "src/components/notes/NoteCharacter.tsx",
@@ -15502,6 +15538,14 @@
       "label": "Frontend: landing and public content",
       "files": [
         "src/components/LandingPage.tsx",
+        "src/components/landing/UpcomingCatalystsGrid.tsx",
+        "src/components/ui/CalendarDateBadge3D.tsx",
+        "src/components/landing/CommunitySocialBanner.tsx",
+        "src/components/ui/AiIntelligenceLogo.tsx",
+        "src/components/landing/CalendarTelegramMorph.tsx",
+        "src/components/landing/ResultsScrollDeck.tsx",
+        "src/components/landing/CoreCapabilitiesBento.tsx",
+        "src/components/landing/LandingFooterAbout.tsx",
         "src/components/landing/CreativeHero.tsx",
         "src/components/landing/FeatureTabs.tsx",
         "src/components/landing/FilingJourney.tsx",
@@ -16979,7 +17023,7 @@
       "method": "GET",
       "path": "/pdf-open",
       "middleware": [
-        "rateLimit({ windowMs: 60_000, limit: 20, standardHeaders: true, legacyHeaders: false, validate: { xForwardedForHeader: false, forwardedHeader: false, default: true }, message: { success: false, error: 'Too many PDF requests. Please try agai",
+        "rateLimit({ windowMs: 60_000, limit: 60, standardHeaders: true, legacyHeaders: false, validate: { xForwardedForHeader: false, forwardedHeader: false, default: true }, message: { success: false, error: 'Too many PDF requests. Please try agai",
         "<handler>"
       ]
     },
@@ -20205,25 +20249,25 @@
     },
     {
       "file": "src/components/CompanyIntelligenceModal.tsx",
-      "line": 113,
+      "line": 114,
       "function": "customFetch",
       "target": "`/api/company-intel/${encodeURIComponent(scripCode || symbol)}?${query}`"
     },
     {
       "file": "src/components/CompanyIntelligenceModal.tsx",
-      "line": 143,
+      "line": 144,
       "function": "customFetch",
       "target": "`/api/stocks/${encodeURIComponent(historyJob.scripCode)}/fetch-deep-history?${query}`"
     },
     {
       "file": "src/components/CompanyIntelligenceModal.tsx",
-      "line": 183,
+      "line": 184,
       "function": "customFetch",
       "target": "`/api/company-intel/${identifier}/ai-overview?scripCode=${effectiveScrip}&symbol=${effectiveSymbol}`"
     },
     {
       "file": "src/components/CompanyIntelligenceModal.tsx",
-      "line": 239,
+      "line": 240,
       "function": "customFetch",
       "target": "`/api/stocks/${encodeURIComponent(effectiveScrip)}/fetch-deep-history`"
     },
@@ -21965,13 +22009,13 @@
     },
     {
       "file": "server/services/companyIntelService.ts",
-      "line": 279,
+      "line": 282,
       "function": "Array.from",
       "key": "filingMap.values()"
     },
     {
       "file": "server/services/companyIntelService.ts",
-      "line": 283,
+      "line": 286,
       "function": "Array.from",
       "key": "filingMap.values()"
     },
@@ -22817,7 +22861,7 @@
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 187,
+      "line": 260,
       "function": "Array.from",
       "key": "{ length: SEG + 1 }"
     },
@@ -25787,7 +25831,7 @@
     },
     {
       "file": "src/components/CompanyIntelligenceModal.tsx",
-      "line": 152,
+      "line": 153,
       "target": "window",
       "kind": "dispatch",
       "name": "company-filings-changed",
@@ -25795,7 +25839,7 @@
     },
     {
       "file": "src/components/CompanyIntelligenceModal.tsx",
-      "line": 252,
+      "line": 253,
       "target": "window",
       "kind": "dispatch",
       "name": "company-filings-changed",
@@ -26771,7 +26815,7 @@
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 98,
+      "line": 118,
       "target": "window",
       "kind": "listen",
       "name": "resize",
@@ -26779,7 +26823,7 @@
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 101,
+      "line": 132,
       "target": "window",
       "kind": "listen",
       "name": "mousemove",
@@ -26787,7 +26831,31 @@
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 109,
+      "line": 133,
+      "target": "window",
+      "kind": "listen",
+      "name": "touchstart",
+      "expression": "window.addEventListener('touchstart', onTouch, { passive: true })"
+    },
+    {
+      "file": "src/components/ui/ParticleRibbons.tsx",
+      "line": 134,
+      "target": "window",
+      "kind": "listen",
+      "name": "touchmove",
+      "expression": "window.addEventListener('touchmove', onTouch, { passive: true })"
+    },
+    {
+      "file": "src/components/ui/ParticleRibbons.tsx",
+      "line": 144,
+      "target": "window",
+      "kind": "listen",
+      "name": "scroll",
+      "expression": "window.addEventListener('scroll', onScroll, { passive: true })"
+    },
+    {
+      "file": "src/components/ui/ParticleRibbons.tsx",
+      "line": 153,
       "target": "document",
       "kind": "listen",
       "name": "visibilitychange",
@@ -26795,7 +26863,7 @@
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 265,
+      "line": 351,
       "target": "window",
       "kind": "remove",
       "name": "resize",
@@ -26803,7 +26871,7 @@
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 266,
+      "line": 352,
       "target": "window",
       "kind": "remove",
       "name": "mousemove",
@@ -26811,7 +26879,31 @@
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 267,
+      "line": 353,
+      "target": "window",
+      "kind": "remove",
+      "name": "touchstart",
+      "expression": "window.removeEventListener('touchstart', onTouch)"
+    },
+    {
+      "file": "src/components/ui/ParticleRibbons.tsx",
+      "line": 354,
+      "target": "window",
+      "kind": "remove",
+      "name": "touchmove",
+      "expression": "window.removeEventListener('touchmove', onTouch)"
+    },
+    {
+      "file": "src/components/ui/ParticleRibbons.tsx",
+      "line": 355,
+      "target": "window",
+      "kind": "remove",
+      "name": "scroll",
+      "expression": "window.removeEventListener('scroll', onScroll)"
+    },
+    {
+      "file": "src/components/ui/ParticleRibbons.tsx",
+      "line": 356,
       "target": "document",
       "kind": "remove",
       "name": "visibilitychange",
@@ -26819,7 +26911,7 @@
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 279,
+      "line": 372,
       "target": "window",
       "kind": "remove",
       "name": "resize",
@@ -26827,7 +26919,7 @@
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 280,
+      "line": 373,
       "target": "window",
       "kind": "remove",
       "name": "mousemove",
@@ -26835,7 +26927,31 @@
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 281,
+      "line": 374,
+      "target": "window",
+      "kind": "remove",
+      "name": "touchstart",
+      "expression": "window.removeEventListener('touchstart', onTouch)"
+    },
+    {
+      "file": "src/components/ui/ParticleRibbons.tsx",
+      "line": 375,
+      "target": "window",
+      "kind": "remove",
+      "name": "touchmove",
+      "expression": "window.removeEventListener('touchmove', onTouch)"
+    },
+    {
+      "file": "src/components/ui/ParticleRibbons.tsx",
+      "line": 376,
+      "target": "window",
+      "kind": "remove",
+      "name": "scroll",
+      "expression": "window.removeEventListener('scroll', onScroll)"
+    },
+    {
+      "file": "src/components/ui/ParticleRibbons.tsx",
+      "line": 377,
       "target": "document",
       "kind": "remove",
       "name": "visibilitychange",
