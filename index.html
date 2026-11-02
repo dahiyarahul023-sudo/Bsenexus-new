@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <script>
+    <script nonce="__CSP_NONCE__">
       // Fragment secrets never reach HTTP logs. Capture before any optional telemetry.
       if (location.pathname.replace(/\/+$/, '').toLowerCase() === '/activate-gift') {
         var gift = new URLSearchParams(location.hash.slice(1)).get('token') || '';
@@ -11,7 +11,7 @@
     </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script>
+    <script nonce="__CSP_NONCE__">
       /* Payment-return boot splash: when Cashfree redirects back to
          /?cf_order_id=..., the whole SPA cold-boots. Paint a "Confirming your
          payment…" splash instantly (before React/bundle loads) so the user
@@ -36,7 +36,7 @@
         } catch (e) { /* never break page boot */ }
       })();
     </script>
-    <script>
+    <script nonce="__CSP_NONCE__">
       (function() {
         try {
           var isDev = window.location.hostname === 'localhost' || 
@@ -100,7 +100,7 @@
     <meta name="keywords" content="Bsenexus, Bsenexus Terminal, BSE corporate announcements, BSE results calendar, stock filings India, earnings conference calls, Gemini AI stock summary, Telegram stock alerts, NSE BSE trading holidays, Indian stock market clock, SEBI LODR 30" />
     <meta name="author" content="Bsenexus" />
     <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
-    <script>
+    <script nonce="__CSP_NONCE__">
       (function() {
         try {
           if (window.location.hostname && window.self === window.top && window.location.hostname.indexOf('ai.studio') !== -1) {
@@ -421,7 +421,7 @@
          user grants analytics consent (cookie banner "Accept All" or the
          "Anonymous Reliability Telemetry" toggle). Never loads on
          "Essential Only". Async; cannot block or break existing scripts. -->
-    <script type="text/javascript">
+    <script nonce="__CSP_NONCE__" type="text/javascript">
     (function () {
       if (location.pathname.replace(/\/+$/, '').toLowerCase() === '/activate-gift') return;
       var hostname = window.location.hostname;
@@ -533,7 +533,7 @@
         </section>
       </main>
     </noscript>
-    <script type="module" src="/src/main.tsx"></script>
+    <script nonce="__CSP_NONCE__" type="module" src="/src/main.tsx"></script>
   </body>
 </html>
 

@@ -1,10 +1,11 @@
 // Bsenexus - Progressive Web App Service Worker
-// Version: 4.3.0
+// Version: 4.5.0
 
-const CACHE_NAME = 'bse-nexus-v4.3';
+// This value is prefixed by the /sw.js server route, never a request query flag.
+const CSP_REPORT_ONLY_ENABLED = self.__BSENEXUS_CSP_REPORT_ONLY__ === true;
+const CACHE_NAME = `bse-nexus-v4.5-${CSP_REPORT_ONLY_ENABLED ? 'nonce' : 'offline'}`;
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
+  ...(CSP_REPORT_ONLY_ENABLED ? [] : ['/', '/index.html']),
   '/manifest.json',
   '/opensearch.xml',
   '/favicon.ico',
@@ -107,27 +108,30 @@ self.addEventListener('fetch', (event) => {
   // OAuth consent, codes and connection responses never enter offline caches.
   if (url.pathname === '/plugin' || url.pathname === '/ai-plugin' || url.pathname === '/mcp' || ['/authorize','/token','/register','/revoke'].includes(url.pathname) || url.pathname.startsWith('/api/ai/')) return;
 
-  // 1. Navigation requests (HTML pages) -> Network first, fallback to cached index.html
+  // 1. Nonce-bearing HTML must always have a fresh response/header pair.
+  // Do not store navigations in Cache API (it ignores Cache-Control: no-store).
+  // Version activation removes old cached HTML. Public data/assets stay offline.
   if (request.mode === 'navigate') {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          if (response && response.status === 200) {
-            const copy = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
-          }
-          return response;
-        })
-        .catch(async () => {
-          const cached = await caches.match(request);
-          if (cached) return cached;
-          const fallback = await caches.match('/index.html');
-          if (fallback) return fallback;
-          return new Response('Offline - Bsenexus is available once connection resumes.', {
-            headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-          });
-        })
-    );
+    if (CSP_REPORT_ONLY_ENABLED) {
+      event.respondWith(fetch(request).catch(() => new Response(
+        'Offline - Bsenexus is available once connection resumes.',
+        { status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' } }
+      )));
+    } else {
+      const network = fetch(request);
+      event.waitUntil(network.then(response => {
+        if (response && response.status === 200) {
+          const copy = response.clone();
+          return caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+        }
+      }).catch(() => undefined));
+      event.respondWith(network.catch(async () => {
+        const cached = await caches.match(request) || await caches.match('/index.html');
+        return cached || new Response('Offline - Bsenexus is available once connection resumes.', {
+          status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+        });
+      }));
+    }
     return;
   }
 

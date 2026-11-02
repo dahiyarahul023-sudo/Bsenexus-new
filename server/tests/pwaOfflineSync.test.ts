@@ -2,6 +2,8 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert';
 import fs from 'fs';
 import path from 'path';
+import vm from 'node:vm';
+import { renderCspServiceWorker } from '../security/cspNonce.js';
 
 describe('PWA Offline Shell Sync & Offline Access (Step 07)', () => {
   test('Service worker (public/sw.js) exists and contains valid cache configuration', () => {
@@ -15,13 +17,11 @@ describe('PWA Offline Shell Sync & Offline Access (Step 07)', () => {
     assert.ok(swContent.includes('clients.claim'), 'sw.js must claim clients on activation');
   });
 
-  test('STATIC_ASSETS precaches critical offline application shell files', () => {
+  test('worker precaches the normal offline shell and excludes HTML only in the enabled nonce trial', async () => {
     const swPath = path.join(process.cwd(), 'public', 'sw.js');
     const swContent = fs.readFileSync(swPath, 'utf8');
 
     const criticalShellFiles = [
-      '/',
-      '/index.html',
       '/manifest.json',
       '/opensearch.xml',
       '/favicon.ico',
@@ -30,11 +30,28 @@ describe('PWA Offline Shell Sync & Offline Access (Step 07)', () => {
       '/icon-512.png'
     ];
 
-    for (const file of criticalShellFiles) {
-      assert.ok(
-        swContent.includes(`'${file}'`) || swContent.includes(`"${file}"`),
-        `STATIC_ASSETS must include critical file: ${file}`
-      );
+    for (const enabled of [false, true]) {
+      const handlers: Record<string, Function> = {}; let assets: string[] = [], installed!: Promise<any>, activated!: Promise<any>;
+      const deleted: string[] = [];
+      const expectedName = `bse-nexus-v4.5-${enabled ? 'nonce' : 'offline'}`;
+      vm.runInNewContext(renderCspServiceWorker(swContent, enabled), {
+        self: {
+          addEventListener: (name: string, fn: Function) => handlers[name] = fn,
+          skipWaiting: async () => {}, clients: { claim: async () => {} },
+          location: { hostname: 'bsenexus.in', port: '' },
+        },
+        caches: {
+          open: async (name: string) => { assert.equal(name, expectedName); return { addAll: async (paths: string[]) => assets = [...paths] }; },
+          keys: async () => ['bse-nexus-v4.3', 'bse-nexus-v4.5-offline', 'bse-nexus-v4.5-nonce'],
+          delete: async (name: string) => { deleted.push(name); },
+        },
+      });
+      handlers.install({ waitUntil: (p: Promise<any>) => installed = p }); await installed;
+      for (const file of criticalShellFiles) assert.ok(assets.includes(file), `precache must retain ${file}`);
+      for (const file of ['/', '/index.html']) assert.equal(assets.includes(file), !enabled, 'only an enabled nonce trial removes the offline HTML shell');
+      handlers.activate({ waitUntil: (p: Promise<any>) => activated = p }); await activated;
+      assert.equal(deleted.includes(expectedName), false);
+      assert.equal(deleted.length, 2, 'changing rollout mode retires the other HTML cache');
     }
   });
 

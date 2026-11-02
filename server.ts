@@ -11,6 +11,8 @@ import path from "path";
 import fs from "fs";
 import cookieParser from "cookie-parser";
 import { responseHeaders } from './server/security/responseHeaders.js';
+import { CSP_NONCE_PLACEHOLDER, prepareTrustedHtml, isCspReportOnlyEnabled, renderCspServiceWorker } from './server/security/cspNonce.js';
+import { cspReportRouter } from './server/security/cspReports.js';
 import compression from "compression";
 import { createServer as createViteServer } from "vite";
 import { createServer as createHttpServer } from 'node:http';
@@ -107,7 +109,9 @@ app.use(compression({
   }
 }) as unknown as express.RequestHandler);
 
-app.use(responseHeaders());
+const cspTrialEnabled = isCspReportOnlyEnabled();
+app.use(responseHeaders(undefined, cspTrialEnabled));
+if (cspTrialEnabled) app.use(cspReportRouter());
 app.use('/api/payments/webhook', express.raw({ type: 'application/json', limit: '1mb' }));
 app.use(['/mcp','/register'], express.json({ limit: '32kb' }));
 app.use(['/token','/revoke'], express.urlencoded({ extended: false, limit: '8kb' }));
@@ -155,7 +159,7 @@ self.addEventListener('activate', (event) => {
 });
 `);
   } else {
-    res.sendFile(path.join(process.cwd(), 'public', 'sw.js'));
+    res.send(renderCspServiceWorker(fs.readFileSync(path.join(process.cwd(), 'public', 'sw.js'), 'utf8'), cspTrialEnabled));
   }
 });
 
@@ -315,7 +319,7 @@ async function generateDynamicSitemap(): Promise<string> {
   return xml;
 }
 
-const AI_STUDIO_REDIRECT_SCRIPT = `  <script>
+const AI_STUDIO_REDIRECT_SCRIPT = `  <script nonce="${CSP_NONCE_PLACEHOLDER}">
     (function() {
       try {
         if (window.location.hostname && window.self === window.top && window.location.hostname.indexOf('ai.studio') !== -1) {
@@ -6878,7 +6882,7 @@ async function startServer() {
         else if (routePath === '/plugin' || routePath === '/ai-plugin') tab = 'plugin';
       }
       try {
-        const rawIndexHtml = fs.readFileSync(path.join(process.cwd(), "index.html"), "utf-8");
+        const rawIndexHtml = prepareTrustedHtml(fs.readFileSync(path.join(process.cwd(), "index.html"), "utf-8"));
         const transformedHtml = await vite.transformIndexHtml(req.originalUrl, rawIndexHtml);
         let finalHtml = injectTabSeoMetadata(transformedHtml, routePath === "/results-calendar" ? "results-calendar" : tab);
         if (routePath === "/results-calendar") finalHtml = renderPublicCalendarShell(finalHtml, readCachedResultsCalendar());
@@ -6938,10 +6942,12 @@ async function startServer() {
     let cachedIndexHtml = "";
     const getIndexHtml = () => {
       if (!cachedIndexHtml) {
-        cachedIndexHtml = fs.readFileSync(path.join(distPath, "index.html"), "utf-8");
+        cachedIndexHtml = prepareTrustedHtml(fs.readFileSync(path.join(distPath, "index.html"), "utf-8"));
       }
       return cachedIndexHtml;
     };
+
+    app.get("/index.html", (_req, res) => res.type("html").send(getIndexHtml()));
 
     // Serve static assets without auto-serving index.html so navigation requests are processed by SEO middleware
     app.use(express.static(distPath, {
@@ -7054,7 +7060,7 @@ async function startServer() {
           cached = { html, etag };
           tabHtmlCache.set(tabParam, cached);
         } catch {
-          return res.sendFile(path.join(distPath, "index.html"));
+          return res.status(503).type("text").send("The page is temporarily unavailable. Please retry.");
         }
       }
 
