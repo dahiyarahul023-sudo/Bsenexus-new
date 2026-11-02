@@ -1,5 +1,8 @@
 # Project Operating Rules & Guardrails
 
+## Preserve clean installations
+Keep `package-lock.json` tracked during source synchronization. Dependency updates must update the manifest and lockfile together, regenerate the source maps, and pass a fresh `npm ci` plus application checks. A source sync must preserve existing security limits and tests; reconcile intentional new behavior rather than discarding either side.
+
 ## File Deletion & Refactoring Rules (Standing Directive)
 1. **Pre-Deletion Trace**: Before deleting or renaming ANY file, scan the entire codebase (`src/`, `server/`, etc.) for all static imports, dynamic `import()`, re-exports, and string path references.
 2. **Zero Dangling References**: Never delete any module that is still referenced or imported anywhere in the project. Decouple and update all consuming components first.

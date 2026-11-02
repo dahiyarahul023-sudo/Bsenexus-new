@@ -53,7 +53,7 @@ export function getOpenApiSpec() {
     [
       "/filings",
       "getBseFilings",
-      "Retrieve newest-first filings with original source links, time filters and brief/full summaries",
+      "Read requested company filings: use symbol, limit 5 and brief detail; follow up with inclusive after plus seen-ID deduplication, waiting at least recommendedPollIntervalSeconds. Broad market/history reads only when requested.",
       [
         queryParam("symbol"),
         queryParam("category", false, "string", { enum: [...FILING_CATEGORIES] }),

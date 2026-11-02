@@ -9,6 +9,11 @@ export class ReadCache<T> {
     now?: () => number;
   }) {}
 
+  clear() {
+    this.values.clear();
+    this.pending.clear();
+  }
+
   invalidate(key: string) {
     this.values.delete(key);
     // A load that started before a write must not repopulate the cache.

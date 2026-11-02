@@ -68,6 +68,9 @@ export class TabErrorBoundary extends React.Component<TabErrorBoundaryProps, Tab
       });
     } catch {}
 
+    // Keep an interrupted preview mounted while its server is restarted.
+    if (IS_DEV_PREVIEW) return;
+
     try {
       if (!sessionStorage.getItem(RELOAD_FLAG)) {
         sessionStorage.setItem(RELOAD_FLAG, '1');
@@ -108,10 +111,12 @@ export class TabErrorBoundary extends React.Component<TabErrorBoundaryProps, Tab
           This section couldn't load
         </h2>
         <p className="mt-2 max-w-sm text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-          The app may have just been updated, or a file failed to load. Reloading usually fixes this.
+          {IS_DEV_PREVIEW && this.state.moduleLoadFailure
+            ? 'A preview file could not load. Wait for the preview server to be ready, then reload this page. Reloading may discard unsaved changes.'
+            : 'The app may have just been updated, or a file failed to load. Reloading usually fixes this.'}
         </p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-          <button
+          {!(IS_DEV_PREVIEW && this.state.moduleLoadFailure) && <button
             type="button"
             onClick={this.handleRetry}
             disabled={this.state.reloading}
@@ -119,7 +124,7 @@ export class TabErrorBoundary extends React.Component<TabErrorBoundaryProps, Tab
           >
             <RefreshCw className="h-4 w-4" aria-hidden="true" />
             Try again
-          </button>
+          </button>}
           <button
             type="button"
             onClick={this.handleManualReload}

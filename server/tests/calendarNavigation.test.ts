@@ -42,10 +42,9 @@ function componentHarness(path: string, extra: Record<string, any> = {}) {
     if (name.endsWith('/ListPagination')) return { ListPagination };
     if (name.endsWith('/cashfree')) return { getLowestPlanPrice: () => 89 };
     if (name.endsWith('/timeFormat')) return { formatShortDateTime: () => '22 Oct 2026' };
+    if (name.endsWith('/cleanBseSubject') || name.endsWith('/pdfHelper')) return requireActual(name + '.ts');
     if (name.endsWith('/storyData')) return { getStorySessionStorageKey: () => 'story-test' };
-    if (name.endsWith('/pdfHelper')) return { getSafePdfUrl: (u: string) => u || '' };
-    if (name.endsWith('/safeStorage')) return { safeGetItem: () => null, safeSetItem: () => {}, safeRemoveItem: () => {} };
-    if (name.endsWith('/cleanBseSubject')) return { cleanBseSubject: (s: string) => ({ headline: s || '', isCall: false, callType: null, detailsSnippet: '' }) };
+    if (name.endsWith('/safeStorage')) return requireActual(name + '.ts');
     if (name.startsWith('.')) return {};
     return requireActual(name);
   } });

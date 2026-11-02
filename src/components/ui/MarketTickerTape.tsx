@@ -104,19 +104,10 @@ export function MarketTickerTape({
     }
   };
 
-  const FALLBACK_BENCHMARKS: MarketIndexItem[] = [
-    { id: 'bse_sensex', symbol: 'SENSEX', name: 'BSE SENSEX', price: 79942.18, change: 165.25, changePercent: 0.21, currency: 'INR', lastUpdated: 'LIVE', category: 'EQUITY_INDEX' },
-    { id: 'nse_nifty50', symbol: 'NIFTY50', name: 'NIFTY 50', price: 24304.35, change: 48.70, changePercent: 0.20, currency: 'INR', lastUpdated: 'LIVE', category: 'EQUITY_INDEX' },
-    { id: 'nse_banknifty', symbol: 'BANKNIFTY', name: 'BANK NIFTY', price: 51820.90, change: 185.30, changePercent: 0.36, currency: 'INR', lastUpdated: 'LIVE', category: 'EQUITY_INDEX' },
-    { id: 'bse_midcap', symbol: 'MIDCAP', name: 'BSE MIDCAP', price: 46120.75, change: 112.50, changePercent: 0.24, currency: 'INR', lastUpdated: 'LIVE', category: 'EQUITY_INDEX' },
-    { id: 'india_vix', symbol: 'INDIAVIX', name: 'INDIA VIX', price: 14.82, change: -0.35, changePercent: -2.31, currency: 'INR', lastUpdated: 'LIVE', category: 'VOLATILITY' },
-    { id: 'usd_inr', symbol: 'USDINR', name: 'USD / INR', price: 84.12, change: 0.04, changePercent: 0.05, currency: 'INR', lastUpdated: 'LIVE', category: 'CURRENCY' },
-  ];
-
   const sessionStyle = getSessionBadgeStyle();
 
   // Ensure active list is resilient: never blank, seamless infinite loop across all viewport widths
-  const activeList = indices && indices.length > 0 ? indices : FALLBACK_BENCHMARKS;
+  const activeList = indices;
   const tickerItems = [...activeList, ...activeList, ...activeList, ...activeList];
 
   return (
@@ -154,6 +145,11 @@ export function MarketTickerTape({
 
         {/* Center: Seamless Infinite Smooth Auto-Scrolling Ticker (All Viewports) */}
         <div className="flex-1 min-w-0 overflow-hidden relative flex items-center">
+          {indices.length === 0 && (
+            <span role="status" className="px-4 text-slate-500 dark:text-slate-400">
+              {loading ? 'Loading market data…' : 'Market data unavailable'}
+            </span>
+          )}
           {/* Subtle fade edges */}
           <div className="absolute left-0 top-0 bottom-0 w-3 sm:w-4 bg-gradient-to-r from-slate-100 dark:from-[#111019] to-transparent z-1 pointer-events-none" />
           <div className="absolute right-0 top-0 bottom-0 w-3 sm:w-4 bg-gradient-to-l from-slate-100 dark:from-[#111019] to-transparent z-1 pointer-events-none" />

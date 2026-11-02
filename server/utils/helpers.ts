@@ -258,7 +258,12 @@ export function determinePriority(subject: string, details: string): { level: st
     !text.includes('APPROVED THE FINANCIAL') &&
     !text.includes('APPROVAL OF FINANCIAL');
 
-  if (isConsiderOrPriorNotice) {
+  // A legal citation is not evidence that the future meeting already happened.
+  // Preserve real Regulation 33 intimations/outcomes, but do not announce a
+  // declaration from a notice that only says the board will consider results.
+  const explicitFutureNotice = /PRIOR INTIMATION|NOTICE OF BOARD MEETING|BOARD MEETING INTIMATION|INTIMATION OF BOARD MEETING|TO CONSIDER(?: AND APPROVE)? (?:THE )?(?:UNAUDITED |AUDITED )?FINANCIAL/.test(text);
+  const completedOutcome = /OUTCOME OF (?:THE )?BOARD|BOARD MEETING OUTCOME|CONSIDERED AND APPROVED|APPROVED THE FINANCIAL/.test(text);
+  if (isConsiderOrPriorNotice || (explicitFutureNotice && !completedOutcome)) {
     // Shareholder meetings (AGM/EGM) are NOT board meetings — tag as governance
     if (text.includes('SHAREHOLDER') || text.includes('GENERAL MEETING') || text.includes('ANNUAL GENERAL') || text.includes('EXTRAORDINARY GENERAL') || /\bAGM\b/.test(text) || /\bEGM\b/.test(text)) {
       return { level: 'MEDIUM', icon: '🟡', category: 'GOVERNANCE' };
