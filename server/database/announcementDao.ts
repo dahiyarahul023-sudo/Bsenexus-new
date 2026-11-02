@@ -11,6 +11,16 @@ import { isBseFiling } from '../../src/shared/filingSource.js';
 import { ReadCache } from '../utils/readCache.js';
 
 const ANNOUNCEMENTS_TABLE = 'announcements';
+// Only public filing bodies are shared. Identity, permissions and usage reservations
+// are always rechecked by the connector before this cache can be reached.
+const companyFilingReadCache = new ReadCache<any[]>({
+  maxEntries: 16, ttlMs: () => 30_000, now: () => Date.now()
+});
+function invalidateCompanyFilingReads(code?: unknown) {
+  const target = String(code || '');
+  if (/^\d{6}$/.test(target)) companyFilingReadCache.invalidate(target);
+  else companyFilingReadCache.clear(); // Partial writes/deletes may lack identity.
+}
 const announcementLookupCache = new ReadCache<any | null>({
   maxEntries: 2000, ttlMs: value => value === null ? 15_000 : 60_000, now: () => Date.now()
 });
@@ -79,6 +89,7 @@ for (const item of announcementsMemoryCache) {
 }
 
 export async function initAnnouncementCache() {
+  companyFilingReadCache.clear();
   if (!isSupabaseConfigured()) {
     console.warn("[Announcements] Using local file store (Supabase not configured). Items loaded:", announcementsMemoryCache.length);
     return;
@@ -347,7 +358,12 @@ async function processSupabaseQueue() {
           .upsert(rowsToUpsert, { onConflict: 'id' });
         if (upsertError) throw upsertError;
         // Discard any read that raced the queued write before it committed.
-        for (const row of rowsToUpsert) announcementLookupCache.invalidate(row.id);
+        for (const row of rowsToUpsert) {
+          announcementLookupCache.invalidate(row.id);
+          // A repair may also change the previous security identity.
+          if (existingById.has(row.id)) invalidateCompanyFilingReads(existingById.get(row.id)?.scrip_cd);
+          invalidateCompanyFilingReads(row.scrip_cd);
+        }
 
         for (const row of rowsToUpsert) {
           if (!existingById.has(row.id) || publicFilingVersion(existingById.get(row.id)) !== publicFilingVersion(row.data)) changedPublicFilings.set(String(row.id), row.data);
@@ -415,6 +431,8 @@ export function queueAnnouncementsBatchWrite(tasks: { docId: string; data: any; 
   for (const t of tasks) {
     if (!t.docId) continue;
     announcementLookupCache.invalidate(t.docId);
+    // Clear before the write and on confirmation to fence racing reads.
+    invalidateCompanyFilingReads(t.data?.scrip_cd || t.data?.scripCode);
     const existing = supabaseWriteQueue.get(t.docId);
     if (existing) {
       supabaseWriteQueue.set(t.docId, {
@@ -468,6 +486,7 @@ export async function deleteAnnouncementsFromStorageAndCloud(idsToDelete: string
   if (!idsToDelete || idsToDelete.length === 0) return;
 
   const idSet = new Set(idsToDelete);
+  companyFilingReadCache.clear();
   apiResponseCache.invalidate('/api/announcements');
 
   // 1. Remove from in-memory cache & local sets
@@ -495,6 +514,7 @@ export async function deleteAnnouncementsFromStorageAndCloud(idsToDelete: string
           .in('id', chunk);
         if (error) throw error;
         for (const id of chunk) announcementLookupCache.invalidate(id);
+        companyFilingReadCache.clear();
       }
     } catch (err: any) {
       console.warn("Supabase delete batch notice:", err?.message || err);
@@ -782,6 +802,17 @@ export async function getAnnouncementsForScrip(scripCode: string, limitNum: numb
   }
 
   return Array.from(byId.values()).filter(isBseFiling);
+}
+
+/** A bounded public company window for connector reads, not the archive API. */
+export async function getCachedCompanyFilings(scripCode: string): Promise<any[]> {
+  const target = String(scripCode || '').trim();
+  if (!/^\d{6}$/.test(target)) throw new Error('Invalid filing security code');
+  const rows = await companyFilingReadCache.get(target, async () => {
+    const records = await getAnnouncementsForScrip(target, 400, true);
+    return records.sort((a, b) => Number(b.bseTimestamp || 0) - Number(a.bseTimestamp || 0)).slice(0, 400);
+  });
+  return structuredClone(rows);
 }
 
 /** BSE equity has no BSE scrip. Read exact NSE identity, including verified legacy PDFs. */

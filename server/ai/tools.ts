@@ -94,7 +94,9 @@ export function createAiToolRunner(
       );
     if (name === "watchlist_results_upcoming" && !grant.scopes.includes("market:read"))
       throw new AiError("scope_required", 403, "Reconnect and allow market:read and watchlists:read.");
-    if (spec.pro && !pro)
+    if (name === "filings_search" && args.watchlistId && !grant.scopes.includes("watchlists:read"))
+      throw new AiError("scope_required", 403, "Reconnect and allow market:read and watchlists:read for watchlist filings.");
+    if ((spec.pro || name === "filings_search" && args.watchlistId) && !pro)
       throw new AiError(
         "pro_required",
         403,
@@ -153,7 +155,25 @@ export function createAiToolRunner(
               }),
         };
       }
-      if (name === "filings_search") return (overrides.filings || filingsData)(args);
+      if (name === "filings_search") {
+        if (!args.watchlistId) return (overrides.filings || filingsData)(args);
+        const row = await dbCall(db => db.from("user_watchlists").select("lists").eq("uid", uid).maybeSingle());
+        const list = (Array.isArray(row?.lists) ? row.lists : []).find((item: any) => String(item.id) === args.watchlistId);
+        if (!list) throw new AiError("not_found", 404);
+        const codes = new Set<string>();
+        for (const raw of (Array.isArray(list.items) ? list.items : [])) {
+          const stock = compactWatchlistStock(raw);
+          if (stock.scripCode) codes.add(stock.scripCode);
+          else if (stock.symbol) {
+            const matches = companyCandidates(stock.symbol);
+            if (matches.length === 1) codes.add(matches[0].scripCode);
+          }
+        }
+        return {
+          ...await (overrides.filings || filingsData)(args, { scripCodes: [...codes] }),
+          watchlistId: args.watchlistId, watchlistStockCount: codes.size,
+        };
+      }
       if (name === "results_read") return (overrides.results || resultsData)(args.company, args);
       if (name === "meetings_read")
         return (overrides.meetings || meetingsData)(args.company, args.daysAhead, args);

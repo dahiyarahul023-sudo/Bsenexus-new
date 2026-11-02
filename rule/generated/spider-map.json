@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "42e209a7dd72fa986c09c39a12b861362b8ee164dc4f905365828abed3c699c8",
+  "sourceDigest": "3df4a355740c14fe0cf83f7f0b4b5b57f332a4d1eca01846105afe6b28056086",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -266,7 +266,7 @@
     },
     {
       "path": "server/ai/docs.ts",
-      "sha256": "9f49b6c6973dcd054f2d0c510c24254fa5b26662cc1486124622f6b0a2b676ea",
+      "sha256": "04f430975c5cefa30387380b60d35c0e6b627e03689bc26f3092dbdd652f2e25",
       "importedBy": [
         "server.ts",
         "server/services/indexNow.ts",
@@ -295,7 +295,7 @@
     },
     {
       "path": "server/ai/http.ts",
-      "sha256": "d113ccec969a4bf40645ab26a34fc3f3d3eb765815dcd7aafbf46c2b184c8809",
+      "sha256": "333e35301fa3dd76a60c310882be5c47b61e92e5b2606e86fc5f12996ce66632",
       "importedBy": [
         "scripts/verify-oauth-routing.mjs",
         "server.ts",
@@ -309,12 +309,13 @@
     },
     {
       "path": "server/ai/market.ts",
-      "sha256": "fc4c71185a33e1d92cf8212f59cd9e7a4e9102a5f8857a9e6af9f4267b46dff1",
+      "sha256": "3049a3fff6a0161b87bdcbebc6e09ff2a842eec08bc326c85a33a78eb5e433c8",
       "importedBy": [
         "server/ai/tools.ts",
         "server/tests/aiConnections.test.ts",
         "server/tests/aiEvidence.test.ts",
         "server/tests/mcpDirectoryQuality.test.ts",
+        "server/tests/mcpEfficientReads.test.ts",
         "server/tests/mcpToolMatrix.test.ts"
       ]
     },
@@ -330,7 +331,7 @@
     },
     {
       "path": "server/ai/policy.ts",
-      "sha256": "79944becebaa06e52fcbb9e1ff204bcd632c3f39a3880a53eda7c4196ef541eb",
+      "sha256": "f04e0b2bbc78cd261a4ed8779efde744813a2ddfedfdda85723ed61c50f94af9",
       "importedBy": [
         "scripts/verify-oauth-routing.mjs",
         "server/ai/calendarRead.ts",
@@ -350,17 +351,19 @@
         "server/tests/aiEvidence.test.ts",
         "server/tests/aiIngress.test.ts",
         "server/tests/mcpDirectoryQuality.test.ts",
+        "server/tests/mcpEfficientReads.test.ts",
         "server/tests/mcpToolMatrix.test.ts"
       ]
     },
     {
       "path": "server/ai/tools.ts",
-      "sha256": "4171d5eff6fcbda04a6f104f7af00885abdfe8e27b2f8da10de2883dd911eac5",
+      "sha256": "e59d3e8621ef6aaf7a2a0d5a3b1f3665a2103e7989e3a8cfd0d4d0f8e7b42748",
       "importedBy": [
         "server/ai/http.ts",
         "server/api/aiPlugin.ts",
         "server/tests/aiConnections.test.ts",
         "server/tests/aiConnectorQuality.test.ts",
+        "server/tests/mcpEfficientReads.test.ts",
         "server/tests/mcpPdfSummary.test.ts",
         "server/tests/mcpToolMatrix.test.ts"
       ]
@@ -375,7 +378,7 @@
     },
     {
       "path": "server/api/aiPlugin.ts",
-      "sha256": "448ccdee8040a631f4f9723c668a1968b2fc101cae171ccb6e3024d887147b41",
+      "sha256": "d0fb2a39b65119ac24eee4baa0cff0f860e4ee8724785163fcf56fa8acf6bfd8",
       "importedBy": [
         "server.ts",
         "server/api/routes.ts",
@@ -532,7 +535,7 @@
     },
     {
       "path": "server/database/announcementDao.ts",
-      "sha256": "74b983f21885a12a31b2c76ac0d7908feb4e2db37f0497fb634622e29613473b",
+      "sha256": "3b09b29df67713a23bf52b68024aaa0e7db42522f7e0eca456c75dfdb334a05a",
       "importedBy": [
         "server.ts",
         "server/ai/market.ts",
@@ -1636,7 +1639,7 @@
     },
     {
       "path": "server/tests/announcementEgress.test.ts",
-      "sha256": "1d0395db4413d44a6397f01924b5dc105609638443c3b2a3d095ce40848c4cf5",
+      "sha256": "1153a3fffcb008c65a87296400d1569a0346d97524b8f5b92e204e1672f8420a",
       "importedBy": []
     },
     {
@@ -1962,6 +1965,11 @@
     {
       "path": "server/tests/mcpDirectoryQuality.test.ts",
       "sha256": "4b7d531446c67cd809617b8cffabf76405b0fed023a3679675db01a611344b94",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/mcpEfficientReads.test.ts",
+      "sha256": "5496e228bf1a6658e824d6d4711a565dd7a19e982cda3ae6e3bf93cd38fac459",
       "importedBy": []
     },
     {
@@ -2427,12 +2435,13 @@
     },
     {
       "path": "server/utils/readCache.ts",
-      "sha256": "06f8a524a9394897fd3edd90f51369d9f8e7f1631fc91a2d1ca312685813a7a8",
+      "sha256": "af14bc38010976cc3e70bd58bbd74d7a19b68aed81749579119a8f96e78399ba",
       "importedBy": [
         "server/database/announcementDao.ts",
         "server/tests/announcementEgress.test.ts",
         "server/tests/companyFilingHistory.test.ts",
-        "server/tests/egressCache.test.ts"
+        "server/tests/egressCache.test.ts",
+        "server/tests/mcpEfficientReads.test.ts"
       ]
     },
     {
@@ -4881,7 +4890,7 @@
     },
     {
       "path": "src/version.ts",
-      "sha256": "ae1c5617f467027d52f0666343182c47c4ce32e86547578a1b73c026179d848d",
+      "sha256": "f3ecebca4fc1aafe1e52e03880e34404ad29624569bc3296304193d7f17223d6",
       "importedBy": [
         "src/components/SettingsTab.tsx",
         "src/lib/sentry.ts"
@@ -5458,31 +5467,31 @@
       "source": "server/ai/market.ts",
       "target": "server/services/resultsCalendarService.ts",
       "kind": "import",
-      "line": 9
+      "line": 10
     },
     {
       "source": "server/ai/market.ts",
       "target": "server/ai/policy.ts",
       "kind": "import",
-      "line": 13
+      "line": 14
     },
     {
       "source": "server/ai/market.ts",
       "target": "server/utils/helpers.ts",
       "kind": "import",
-      "line": 14
+      "line": 15
     },
     {
       "source": "server/ai/market.ts",
       "target": "server/ai/calendarRead.ts",
       "kind": "import",
-      "line": 15
+      "line": 16
     },
     {
       "source": "server/ai/market.ts",
       "target": "server/ai/filingText.ts",
       "kind": "import",
-      "line": 16
+      "line": 17
     },
     {
       "source": "server/ai/oauth.ts",
@@ -6418,7 +6427,7 @@
       "source": "server/database/announcementDao.ts",
       "target": "server/services/storageMonitor.ts",
       "kind": "dynamic",
-      "line": 681
+      "line": 701
     },
     {
       "source": "server/database/calendarHistoryDao.ts",
@@ -9479,6 +9488,30 @@
       "target": "scripts/provision-ai-reviewer.ts",
       "kind": "import",
       "line": 9
+    },
+    {
+      "source": "server/tests/mcpEfficientReads.test.ts",
+      "target": "server/ai/tools.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "server/tests/mcpEfficientReads.test.ts",
+      "target": "server/ai/market.ts",
+      "kind": "import",
+      "line": 4
+    },
+    {
+      "source": "server/tests/mcpEfficientReads.test.ts",
+      "target": "server/ai/policy.ts",
+      "kind": "import",
+      "line": 5
+    },
+    {
+      "source": "server/tests/mcpEfficientReads.test.ts",
+      "target": "server/utils/readCache.ts",
+      "kind": "import",
+      "line": 6
     },
     {
       "source": "server/tests/mcpPdfSummary.test.ts",
@@ -15795,7 +15828,9 @@
         "supabase/migrations/20261024193046_deep_audit_security.sql",
         "server/services/subscriptionAccess.ts",
         "server/database/giftAccessDao.ts",
-        "supabase/migrations/20261026192403_gift_pro_access.sql"
+        "supabase/migrations/20261026192403_gift_pro_access.sql",
+        "server/database/announcementDao.ts",
+        "server/utils/readCache.ts"
       ],
       "tests": [
         "server/tests/aiConnections.test.ts",
@@ -15818,9 +15853,10 @@
         "server/tests/calendarDiscovery.test.ts",
         "server/tests/deepAuditSql.test.ts",
         "server/tests/deepAuditAuth.test.ts",
-        "server/tests/studioMigrationReview.test.ts"
+        "server/tests/studioMigrationReview.test.ts",
+        "server/tests/mcpEfficientReads.test.ts"
       ],
-      "reason": "Website sign-in approves a public PKCE client with explicit permissions. External opaque credentials never accept website cookies or client-supplied owners/roles. Live durable entitlement and shared per-account quotas precede bounded tools; writes recheck grant and plan in a transaction with an idempotent receipt. Website watchlists use request-local revision CAS while enabled, and reads do not restore stale backups. Connection/consent responses bypass browser, CDN and SW caches. Profile/watchlist/notes refresh on return; account changes suppress late responses. Root OAuth endpoints, MCP and the four compatibility GET routes share the same authorization owner. The disabled-by-default flag is required until an approved service-only schema rollout and live client/browser checks; source tests do not certify deployment or marketplace publication. Connection discovery uses the configured Express trusted-proxy hostname while all issuer/resource URLs remain canonical. Exact browser-Origin checks cover MCP requests and preflights. Settings owns the sole visible entry; client-specific web setup distinguishes public URL copying, approved grants and completed client setup. Same-account refresh retains content and account/request changes hide obsolete responses. Approved-access cards use a minmax content column and non-wrapping action column, with permission rows and a single-column phone layout; confirmed revoke and account guards are unchanged. Every wire tool has a title and complete read/write hints; descriptions are factual. PDF analysis has an independent provenance cache, language/coverage validation and shared-quota refunds, with no heuristic success. Service-only owner predicates and request receipts survive guessed IDs; local wire/SQL tests and rolled-back staging checks are distinct from a clean deployed Claude/Inspector flow. DCR supports exact loopback hosts with port relaxation and rejects client_credentials. Public docs/privacy describe partial coverage, upstream processing and retention; reviewer fixtures/expiring UID-specific limits never grant a paid entitlement."
+      "reason": "Website sign-in approves a public PKCE client with explicit permissions. External opaque credentials never accept website cookies or client-supplied owners/roles. Live durable entitlement and shared per-account quotas precede bounded tools; writes recheck grant and plan in a transaction with an idempotent receipt. Website watchlists use request-local revision CAS while enabled, and reads do not restore stale backups. Connection/consent responses bypass browser, CDN and SW caches. Profile/watchlist/notes refresh on return; account changes suppress late responses. Root OAuth endpoints, MCP and the four compatibility GET routes share the same authorization owner. The disabled-by-default flag is required until an approved service-only schema rollout and live client/browser checks; source tests do not certify deployment or marketplace publication. Connection discovery uses the configured Express trusted-proxy hostname while all issuer/resource URLs remain canonical. Exact browser-Origin checks cover MCP requests and preflights. Settings owns the sole visible entry; client-specific web setup distinguishes public URL copying, approved grants and completed client setup. Same-account refresh retains content and account/request changes hide obsolete responses. Approved-access cards use a minmax content column and non-wrapping action column, with permission rows and a single-column phone layout; confirmed revoke and account guards are unchanged. Every wire tool has a title and complete read/write hints; descriptions are factual. PDF analysis has an independent provenance cache, language/coverage validation and shared-quota refunds, with no heuristic success. Service-only owner predicates and request receipts survive guessed IDs; local wire/SQL tests and rolled-back staging checks are distinct from a clean deployed Claude/Inspector flow. DCR supports exact loopback hosts with port relaxation and rejects client_credentials. Public docs/privacy describe partial coverage, upstream processing and retention; reviewer fixtures/expiring UID-specific limits never grant a paid entitlement. Connector filing reads support exact owner-watchlist scope before pagination; empty scopes never widen. Public company bodies share a bounded 30-second process cache invalidated around writes/deletes, while access and quota checks remain durable. Agent descriptions, initialization instructions and public docs direct small scoped requests, inclusive publication watermarks, seen-ID deduplication and allowance-aware polling; they do not claim lossless ingestion delivery or enforce model compliance."
     },
     {
       "id": "overnight-adr",
@@ -21205,13 +21241,13 @@
     },
     {
       "file": "server/ai/market.ts",
-      "line": 20,
+      "line": 21,
       "function": "Array.from",
       "key": "new Map(getAllStockEntries().map((e) => [e.scripCode, e])).values()"
     },
     {
       "file": "server/ai/market.ts",
-      "line": 38,
+      "line": 39,
       "function": "Array.from",
       "key": "{length:b.length+1}"
     },
@@ -21265,14 +21301,14 @@
     },
     {
       "file": "server/ai/tools.ts",
-      "line": 162,
+      "line": 160,
       "function": "db.from",
       "key": "\"user_watchlists\""
     },
     {
       "file": "server/ai/tools.ts",
-      "line": 187,
-      "function": "db\n            .from",
+      "line": 182,
+      "function": "db.from",
       "key": "\"user_watchlists\""
     },
     {
@@ -21283,19 +21319,25 @@
     },
     {
       "file": "server/ai/tools.ts",
-      "line": 225,
+      "line": 227,
+      "function": "db\n            .from",
+      "key": "\"user_watchlists\""
+    },
+    {
+      "file": "server/ai/tools.ts",
+      "line": 245,
       "function": "db\n            .from",
       "key": "\"user_notes\""
     },
     {
       "file": "server/ai/tools.ts",
-      "line": 305,
+      "line": 325,
       "function": "db\n              .from",
       "key": "\"ai_connection_operations\""
     },
     {
       "file": "server/ai/tools.ts",
-      "line": 352,
+      "line": 372,
       "function": "db\n            .from",
       "key": "\"ai_connection_operations\""
     },
@@ -21397,61 +21439,61 @@
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 94,
+      "line": 105,
       "function": "getSupabase()\n      .from",
       "key": "ANNOUNCEMENTS_TABLE"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 128,
+      "line": 139,
       "function": "Array.from",
       "key": "mergedMap.values()"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 195,
+      "line": 206,
       "function": "getSupabase()\n        .from",
       "key": "ANNOUNCEMENTS_TABLE"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 232,
+      "line": 243,
       "function": "getSupabase()\n      .from",
       "key": "ANNOUNCEMENTS_TABLE"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 326,
+      "line": 337,
       "function": "getSupabase()\n          .from",
       "key": "ANNOUNCEMENTS_TABLE"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 345,
+      "line": 356,
       "function": "getSupabase()\n          .from",
       "key": "ANNOUNCEMENTS_TABLE"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 492,
+      "line": 511,
       "function": "getSupabase()\n          .from",
       "key": "ANNOUNCEMENTS_TABLE"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 762,
+      "line": 782,
       "function": "getSupabase().from",
       "key": "ANNOUNCEMENTS_TABLE"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 784,
+      "line": 804,
       "function": "Array.from",
       "key": "byId.values()"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 797,
+      "line": 828,
       "function": "getSupabase().from",
       "key": "ANNOUNCEMENTS_TABLE"
     },
@@ -23615,12 +23657,12 @@
     },
     {
       "file": "server/ai/policy.ts",
-      "line": 389,
+      "line": 393,
       "name": "AI_REVIEWER_UNTIL"
     },
     {
       "file": "server/ai/policy.ts",
-      "line": 390,
+      "line": 394,
       "name": "AI_REVIEWER_UID"
     },
     {
@@ -23895,12 +23937,12 @@
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 748,
+      "line": 768,
       "name": "NODE_ENV"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 789,
+      "line": 820,
       "name": "NODE_ENV"
     },
     {
