@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "8ff273b679bfcc24948dab8fa20c86f505014e38782ff6162827ccdd99e4aea4",
+  "sourceDigest": "96143739bfc798eab353b06fd6d66f159648a666bf37b8e27e8b9fdfc2d1766e",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -3723,7 +3723,7 @@
     },
     {
       "path": "src/components/ui/TabErrorBoundary.tsx",
-      "sha256": "cfd15df36e7ca86dd80816ef995b3bd5199ade2b84716d474db06b4173798c0c",
+      "sha256": "90339fad5a10d9a331808ff3e120325b1c8c74d258654fa75a53a3307fdd840a",
       "importedBy": [
         "src/App.tsx"
       ]

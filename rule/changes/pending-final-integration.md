@@ -10,3 +10,5 @@
 - CSP #41 is handled separately with an explicit server-only flag disabled by default. Real staging provider journeys/report review remain activation requirements. This integration does not change CSP or offline navigation.
 - Rollback: revert the integration merge as a unit; no data migration. Cache improvements are bounded and invalidated around writes. No measured production egress reduction or live deployment is claimed.
 - Graph/docs: both generated maps rebuilt from this combined source; ownership records and prior change notes remain available as historical evidence. Final committed/CI/merged/deployed states are reported separately in the PR handoff.
+
+- Hosted follow-up: exact-head run 41459512985 passed Bun, maps, development runtime and Gift fixtures; the stopped-preview fixture caught another newer-main regression: a cached failed lazy import still offered an ineffective component retry. Restored the existing preview-only module-failure guard around Try again; explicit Reload app remains available. The existing assertion is retained. Regenerated maps and a fresh exact-head hosted run are required after this correction.

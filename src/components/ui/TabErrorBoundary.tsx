@@ -116,7 +116,7 @@ export class TabErrorBoundary extends React.Component<TabErrorBoundaryProps, Tab
             : 'The app may have just been updated, or a file failed to load. Reloading usually fixes this.'}
         </p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-          <button
+          {!(IS_DEV_PREVIEW && this.state.moduleLoadFailure) && <button
             type="button"
             onClick={this.handleRetry}
             disabled={this.state.reloading}
@@ -124,7 +124,7 @@ export class TabErrorBoundary extends React.Component<TabErrorBoundaryProps, Tab
           >
             <RefreshCw className="h-4 w-4" aria-hidden="true" />
             Try again
-          </button>
+          </button>}
           <button
             type="button"
             onClick={this.handleManualReload}
