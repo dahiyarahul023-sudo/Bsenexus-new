@@ -1,4 +1,4 @@
-import { isRoutineRadarTransaction, radarSourceSummary } from './radarScope.js';
+import { isRoutineRadarTransaction, radarSourceSummary } from './radarScope';
 /** Shared facts-only contract. No prediction, sentiment, target or return estimate fields. */
 export const RADAR_CATEGORIES = {
   restriction: 'Business restrictions', rules: 'Rules & business model',

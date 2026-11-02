@@ -1,5 +1,7 @@
 User-agent: *
 Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
 # Disallow non-indexable parameterized and test URLs to protect crawl budget
 Disallow: /*?query=
 Disallow: /*?action=upgrade*
@@ -8,21 +10,27 @@ Disallow: /announcement/batch_test_*
 Disallow: /api/
 Disallow: /auth/
 
-# AI crawlers explicitly allowed with endpoint boundaries
+# AI crawlers and Agentic Browsers explicitly allowed with endpoint boundaries
 User-agent: GPTBot
+User-agent: ChatGPT-User
 User-agent: OAI-SearchBot
 User-agent: ClaudeBot
+User-agent: Claude-Web
+User-agent: anthropic-ai
 User-agent: Google-Extended
 User-agent: PerplexityBot
+User-agent: Applebot-Extended
+User-agent: meta-externalagent
+User-agent: Amazonbot
 User-agent: CCBot
-User-agent: anthropic-ai
-User-agent: Claude-Web
 Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
 Disallow: /*?query=
 Disallow: /*?action=upgrade*
 Disallow: /announcement/batch_test_*
 Disallow: /api/
 Disallow: /auth/
 
-# Sitemap
+# Sitemaps and AI Agent Specifications
 Sitemap: https://bsenexus.in/sitemap.xml

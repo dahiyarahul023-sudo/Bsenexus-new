@@ -3,6 +3,7 @@ import {
   Zap, Send, Shield, Terminal, ArrowRight, ArrowUpRight, 
   Sparkles, CheckCircle2, ChevronRight, Sun, Moon, Lock, 
   ExternalLink, BarChart3, Clock, Filter, Eye, Activity,
+  LogIn, User,
   Calendar as CalendarIcon
 } from 'lucide-react';
 import { BseNexusLogo } from './ui/BseNexusLogo';
@@ -20,6 +21,7 @@ import { AiIntelligenceLogo } from './ui/AiIntelligenceLogo';
 
 interface LandingPageProps {
   onEnterTerminal: (tab?: string) => void;
+  onSignIn?: () => void;
   theme: string;
   setTheme: (theme: string) => void;
   bseHealth?: { status: string; latency?: number };
@@ -28,6 +30,7 @@ interface LandingPageProps {
 
 export function LandingPage({
   onEnterTerminal,
+  onSignIn,
   theme,
   setTheme,
   bseHealth,
@@ -37,6 +40,14 @@ export function LandingPage({
   const proWeekly = PRO_PLAN_LIST.find(p => p.id === 'pro_weekly') || PRO_PLAN_LIST[0];
   const proMonthly = PRO_PLAN_LIST.find(p => p.id === 'pro_monthly') || PRO_PLAN_LIST[1];
   const proAnnual = PRO_PLAN_LIST.find(p => p.id === 'pro_yearly') || PRO_PLAN_LIST[2];
+
+  const handleOpenAuth = () => {
+    if (onSignIn) {
+      onSignIn();
+    } else {
+      onEnterTerminal();
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#080d1a] text-slate-900 dark:text-slate-100 font-sans selection:bg-sky-500/20 selection:text-sky-600 dark:selection:text-sky-300 transition-colors relative overflow-x-hidden">
@@ -50,19 +61,23 @@ export function LandingPage({
       </div>
 
       {/* 2. TRANSLUCENT APPLE-STYLE FLOATING NAV */}
-      <header className="sticky top-[37px] z-30 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-        <div className="flex items-center justify-between px-5 py-3 rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 shadow-sm transition-all">
+      <header className="sticky top-[37px] z-30 w-full max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-2 sm:py-3">
+        <div className="flex items-center justify-between px-3 sm:px-5 py-2.5 sm:py-3 rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 shadow-sm transition-all">
           {/* Brand lockup */}
-          <div className="flex items-center gap-3">
-            <BseNexusLogo size="sm" />
-            <div className="hidden sm:block">
-              <span className="text-sm font-black tracking-tight text-slate-900 dark:text-white">BSE NEXUS</span>
-              <span className="text-[10px] block text-slate-500 font-mono -mt-0.5">EXCHANGE INTELLIGENCE</span>
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <BseNexusLogo size="sm" className="w-7 h-7 sm:w-9 sm:h-9" />
+            <div className="flex flex-col">
+              <span className="text-sm sm:text-base font-black tracking-tight text-slate-900 dark:text-white leading-tight font-display">
+                BSE<span className="text-emerald-500">NEXUS</span>
+              </span>
+              <span className="text-[9px] sm:text-[10px] hidden sm:block text-slate-500 font-mono -mt-0.5">
+                EXCHANGE INTELLIGENCE
+              </span>
             </div>
           </div>
 
           {/* Quick status & links */}
-          <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             <div className="hidden md:flex items-center gap-2 text-xs font-mono text-slate-500 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <span>BSE FEED 0.8s</span>
@@ -70,7 +85,7 @@ export function LandingPage({
 
             <a
               href="/plugin"
-              className="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors px-2 py-1"
+              className="hidden md:inline-flex text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors px-2 py-1"
             >
               AI Plugin
             </a>
@@ -78,19 +93,30 @@ export function LandingPage({
             {/* Theme switcher */}
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+              className="p-1.5 sm:p-2 rounded-xl bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shrink-0 cursor-pointer"
               aria-label="Toggle theme"
             >
-              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              {theme === 'dark' ? <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+            </button>
+
+            {/* Theme-Matched Sign In Button */}
+            <button
+              type="button"
+              onClick={handleOpenAuth}
+              className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl border border-sky-500/30 dark:border-sky-400/30 hover:border-sky-500/50 bg-sky-500/10 dark:bg-sky-500/15 hover:bg-sky-500/25 text-sky-600 dark:text-sky-300 text-xs sm:text-sm font-bold shadow-2xs hover:shadow-sm transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer shrink-0"
+              title="Sign in to your Bsenexus account"
+            >
+              <LogIn className="w-3.5 h-3.5 text-sky-500 dark:text-sky-400" />
+              <span>Sign In</span>
             </button>
 
             {/* Primary Action Button */}
             <button
               onClick={() => onEnterTerminal('dashboard')}
-              className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-1.5"
+              className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer shrink-0"
             >
-              <Terminal className="w-4 h-4" />
-              <span>Launch Terminal</span>
+              <Terminal className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden xs:inline">Launch</span> <span>Terminal</span>
             </button>
           </div>
         </div>
@@ -127,7 +153,7 @@ export function LandingPage({
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pt-2">
             <button
               onClick={() => onEnterTerminal('dashboard')}
-              className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-sky-500 hover:bg-sky-600 active:scale-98 text-white font-extrabold text-sm sm:text-base shadow-lg shadow-sky-500/25 transition-all flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-sky-500 hover:bg-sky-600 active:scale-98 text-white font-extrabold text-sm sm:text-base shadow-lg shadow-sky-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <span>Open Live Feed Terminal</span>
               <ArrowRight className="w-4 h-4" />
@@ -148,6 +174,19 @@ export function LandingPage({
                 </div>
               </div>
               <span>Explore Earnings Calendar</span>
+            </button>
+          </div>
+
+          {/* Clear Member Sign In / Log In option */}
+          <div className="pt-2 flex items-center justify-center gap-1.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+            <span>Already have an account?</span>
+            <button
+              type="button"
+              onClick={handleOpenAuth}
+              className="font-bold text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 hover:underline flex items-center gap-1 cursor-pointer"
+            >
+              <LogIn className="w-3.5 h-3.5 inline" />
+              <span>Log in to your account &rarr;</span>
             </button>
           </div>
 

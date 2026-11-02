@@ -38,7 +38,7 @@ const defaultSettings: AppSettings = {
   telegramAlertCategory: 'RESULTS_AND_MATERIAL',
   telegramWatchlistOnly: true,
   telegramAlertsEnabled: true,
-  telegramAiSummaryEnabled: true,
+  telegramAiSummaryEnabled: false,
   autoTelegramCalendar: true,
   autoTelegramNews: false,
   telegramNewsSources: ['Economic Times', 'LiveMint', 'Moneycontrol', 'Business Standard'],

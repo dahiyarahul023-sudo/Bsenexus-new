@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "42e209a7dd72fa986c09c39a12b861362b8ee164dc4f905365828abed3c699c8",
+  "sourceDigest": "e9a80be7d1937f69a6a99cabdda34b5dff93cbd1a110f6fc231b64af6ad20800",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -30,7 +30,7 @@
     },
     {
       "path": "index.html",
-      "sha256": "8355790abd5bc131a671fb99d10906bbe576c4493b014ca42ddfd8b8adfec337",
+      "sha256": "609c2f13cc5fa1f877fb0bf1ce9ef874462b3fc2d763b7427bf5639c97cf98b3",
       "importedBy": []
     },
     {
@@ -85,7 +85,7 @@
     },
     {
       "path": "public/llms.txt",
-      "sha256": "797e8340332d83d3bdce224d8fd5b9a55be7d1a0ec387ee22d86fefbd505e700",
+      "sha256": "28c77486eb0d2af83450308c57c1b6edb02084da86a0b4b20d2b01f57756216b",
       "importedBy": []
     },
     {
@@ -100,7 +100,7 @@
     },
     {
       "path": "public/robots.txt",
-      "sha256": "515d671bf15ad2bb405d388bc58261a5a984e11f9ee0957805abfa6393b86345",
+      "sha256": "993a46e66f045e4f373255b182b72629dc62d14ad670ce6ea9f161509aa840f5",
       "importedBy": []
     },
     {
@@ -777,7 +777,7 @@
     },
     {
       "path": "server/database/settingsDao.ts",
-      "sha256": "8770f1c46f7f2e25c60c9538f0eb47219228cfc505a66769ae95bd30a7f9d52b",
+      "sha256": "0e0b01415aa863c703d9833e27dc678e5fc625a8a1cecf070b9d496a5f213d52",
       "importedBy": [
         "server/api/routes.ts",
         "server/api/telegramLinks.ts",
@@ -790,7 +790,8 @@
         "server/services/resultsCalendarService.ts",
         "server/services/stockNewsService.ts",
         "server/services/telegram.ts",
-        "server/tests/adminPin.test.ts"
+        "server/tests/adminPin.test.ts",
+        "server/tests/resultTelegramClassification.test.ts"
       ]
     },
     {
@@ -1292,7 +1293,7 @@
     },
     {
       "path": "server/services/monitor.ts",
-      "sha256": "4ae39bb07b102a1a4d00e8001fe968622141fded317c1c88a1ef8da6e1249d78",
+      "sha256": "c13a1cc94dd7bd63307a0e4cbc0c0caf3c127f7ad42369820e9574f72d57ebe4",
       "importedBy": [
         "server.ts",
         "server/ai/tools.ts",
@@ -1731,7 +1732,7 @@
     },
     {
       "path": "server/tests/calendarNavigation.test.ts",
-      "sha256": "21e06e326d76b4c0e8b9b029ed1ccb27fa58ab57b3bfa3352aea5f41cd90ea30",
+      "sha256": "15be7b0b50c2cec8e7915bf680a5d988902e5262f8a468c26a779d5fdd6d4057",
       "importedBy": []
     },
     {
@@ -2190,6 +2191,11 @@
       "importedBy": []
     },
     {
+      "path": "server/tests/resultTelegramClassification.test.ts",
+      "sha256": "cae378f71ddf34d2a637496ced463df8c96ba2fb5519b6f14d211f8d90f3db76",
+      "importedBy": []
+    },
+    {
       "path": "server/tests/routeHeading.test.ts",
       "sha256": "3c6717927466f3613433e11ca9391ffe2a789b61b9fdfb2d06dde885a763c19a",
       "importedBy": []
@@ -2363,7 +2369,7 @@
     },
     {
       "path": "server/utils/helpers.ts",
-      "sha256": "b0bfd3527b124bd2fa9cd3aad5bb18a75fdb1df00dc4d7f7c0743bbd0daad908",
+      "sha256": "30d4e63dc9787f5dbbf4e08389a85820a2d39a39f792e5fa6461f93db3b63525",
       "importedBy": [
         "server.ts",
         "server/ai/market.ts",
@@ -2381,6 +2387,7 @@
         "server/tests/keywordGuides.test.ts",
         "server/tests/resultDocumentEvidence.test.ts",
         "server/tests/resultHistory.test.ts",
+        "server/tests/resultTelegramClassification.test.ts",
         "server/tests/sevenFixes.test.ts"
       ]
     },
@@ -2564,7 +2571,7 @@
     },
     {
       "path": "src/App.tsx",
-      "sha256": "4c69da1a0a0ceb09907a0c3c5b36889c3f704292aa4e8f71d13797ee5515deb5",
+      "sha256": "8d12fb1d63c4fd75acfff1a0a46b72b18a00b3c329deee83bef0f1d24772701e",
       "importedBy": [
         "src/main.tsx"
       ]
@@ -2789,14 +2796,14 @@
     },
     {
       "path": "src/components/LandingPage.tsx",
-      "sha256": "3537a4d8b48b82868b40b7ab2d1b96330409f76ed87afa04a378369cbde696e5",
+      "sha256": "12c2998b67843da83b3798c0d19cd0eea337f9515ab1e2aa2377661a6d6597c9",
       "importedBy": [
         "src/App.tsx"
       ]
     },
     {
       "path": "src/components/Layout.tsx",
-      "sha256": "5f13c172924826e478ae86e1f91407be8b87687846bc3e16d5d8403d49438eef",
+      "sha256": "ac59af70f8a10215b48716a50ce4ec6b8722428f8d65b90793f772a40074be6b",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -2924,7 +2931,7 @@
     },
     {
       "path": "src/components/ResultsCalendar.tsx",
-      "sha256": "ea57384cb05b7a0b3aa7dbc2cd4b55ca58b0adbc50ab60fddc037dee718585ec",
+      "sha256": "6e423b63f8031d653c6fde947d05a3b1b6eab8a2ad1529bf1cee0ab02f197a38",
       "importedBy": [
         "src/App.tsx",
         "src/components/Layout.tsx"
@@ -3013,7 +3020,7 @@
     },
     {
       "path": "src/components/WatchlistManager.tsx",
-      "sha256": "a32bbe756ca0e54f8bf82423caa5dc133b497cc69752996c922731fe5ce3e418",
+      "sha256": "9cb779d907d7dcd73da0fbedee62cc3c0ac64b35cf9da35920652e99991092bf",
       "importedBy": [
         "src/App.tsx",
         "src/components/Layout.tsx"
@@ -3545,7 +3552,7 @@
     },
     {
       "path": "src/components/ui/MarketTickerTape.tsx",
-      "sha256": "3157dfff1be2085b3a7fc2ebf6e5ef48d0acda048ab46af4a1478660be1f169c",
+      "sha256": "449b514b61c83e43d20f1e6231dcd65252b04fef64c733f2a1e74be0774acd52",
       "importedBy": [
         "src/components/LandingPage.tsx",
         "src/components/Layout.tsx"
@@ -3580,7 +3587,7 @@
     },
     {
       "path": "src/components/ui/ParticleRibbons.tsx",
-      "sha256": "028273861bd331007b791626c52d5a01620cd47033d9ee343a5782c14c8d5807",
+      "sha256": "1176fd9bab621271ef504f9e1440cb1464d7e78ba9f27a61035528b450e67451",
       "importedBy": [
         "src/components/LandingPage.tsx"
       ]
@@ -3683,7 +3690,7 @@
     },
     {
       "path": "src/components/ui/TabErrorBoundary.tsx",
-      "sha256": "8f5e48b0d90de62535ac9304ba868525ee2911c64e211347377b40e981d850dd",
+      "sha256": "b4c7750af728164d2727f50626a438c31e0a5f6357b60cfe355657e5436edcc3",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -4066,7 +4073,7 @@
     },
     {
       "path": "src/index.css",
-      "sha256": "8bf9892b8dc5923fdae02614502973b5ec99f2c86f5f3cd9c34af28cba8dc3c4",
+      "sha256": "0dab72ac2beec68daa6b68371f06c9d2209a07274dbc2dc44f74eab7e223ac98",
       "importedBy": [
         "src/main.tsx"
       ]
@@ -4225,7 +4232,7 @@
     },
     {
       "path": "src/shared/impactRadar.ts",
-      "sha256": "4b38e759490def57e0784c4c4280e7bbde718c6bf78ee0cf5ec952ff195f3324",
+      "sha256": "9d98e9654360983244eae4e3d2675ff0351b6369e1819e138f5bfb4a4ed9e437",
       "importedBy": [
         "server/api/impactRadar.ts",
         "server/database/impactRadarDao.ts",
@@ -4881,7 +4888,7 @@
     },
     {
       "path": "src/version.ts",
-      "sha256": "ae1c5617f467027d52f0666343182c47c4ce32e86547578a1b73c026179d848d",
+      "sha256": "f3ecebca4fc1aafe1e52e03880e34404ad29624569bc3296304193d7f17223d6",
       "importedBy": [
         "src/components/SettingsTab.tsx",
         "src/lib/sentry.ts"
@@ -10075,6 +10082,18 @@
       "line": 199
     },
     {
+      "source": "server/tests/resultTelegramClassification.test.ts",
+      "target": "server/utils/helpers.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "server/tests/resultTelegramClassification.test.ts",
+      "target": "server/database/settingsDao.ts",
+      "kind": "import",
+      "line": 4
+    },
+    {
       "source": "server/tests/routeHeading.test.ts",
       "target": "server/services/seoPrerender.ts",
       "kind": "import",
@@ -11650,73 +11669,73 @@
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/ui/BseNexusLogo.tsx",
       "kind": "import",
-      "line": 8
+      "line": 9
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/ui/MarketClock.tsx",
       "kind": "import",
-      "line": 9
+      "line": 10
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/ui/MarketTickerTape.tsx",
       "kind": "import",
-      "line": 10
+      "line": 11
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/landing/UpcomingCatalystsGrid.tsx",
       "kind": "import",
-      "line": 11
+      "line": 12
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/landing/ResultsScrollDeck.tsx",
       "kind": "import",
-      "line": 12
+      "line": 13
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/landing/CoreCapabilitiesBento.tsx",
       "kind": "import",
-      "line": 13
+      "line": 14
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/landing/CommunitySocialBanner.tsx",
       "kind": "import",
-      "line": 14
+      "line": 15
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/landing/LandingFooterAbout.tsx",
       "kind": "import",
-      "line": 15
+      "line": 16
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/config/plans.ts",
       "kind": "import",
-      "line": 16
+      "line": 17
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/ui/PlanCard.tsx",
       "kind": "import",
-      "line": 17
+      "line": 18
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/ui/ParticleRibbons.tsx",
       "kind": "import",
-      "line": 18
+      "line": 19
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/ui/AiIntelligenceLogo.tsx",
       "kind": "import",
-      "line": 19
+      "line": 20
     },
     {
       "source": "src/components/Layout.tsx",
@@ -20327,7 +20346,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 698,
+      "line": 692,
       "function": "customFetch",
       "target": "'/api/health'"
     },
@@ -20783,7 +20802,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 3461,
+      "line": 3442,
       "function": "customFetch",
       "target": "url"
     },
@@ -22159,7 +22178,7 @@
     },
     {
       "file": "server/tests/calendarNavigation.test.ts",
-      "line": 70,
+      "line": 72,
       "function": "Array.from",
       "key": "{ length: 60 }"
     },
@@ -22861,25 +22880,31 @@
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 260,
+      "line": 261,
       "function": "Array.from",
       "key": "{ length: SEG + 1 }"
     },
     {
       "file": "src/components/ui/TabErrorBoundary.tsx",
-      "line": 76,
+      "line": 72,
       "function": "sessionStorage.getItem",
       "key": "RELOAD_FLAG"
     },
     {
       "file": "src/components/ui/TabErrorBoundary.tsx",
-      "line": 77,
+      "line": 73,
       "function": "sessionStorage.setItem",
       "key": "RELOAD_FLAG"
     },
     {
       "file": "src/components/ui/TabErrorBoundary.tsx",
-      "line": 89,
+      "line": 85,
+      "function": "sessionStorage.removeItem",
+      "key": "RELOAD_FLAG"
+    },
+    {
+      "file": "src/components/ui/TabErrorBoundary.tsx",
+      "line": 90,
       "function": "sessionStorage.removeItem",
       "key": "RELOAD_FLAG"
     },
@@ -24465,7 +24490,7 @@
     },
     {
       "file": "server/services/monitor.ts",
-      "line": 608,
+      "line": 610,
       "name": "TELEGRAM_CHAT_ID"
     },
     {
@@ -25602,11 +25627,6 @@
       "file": "server/utils/serverStartup.ts",
       "line": 3,
       "name": "PORT"
-    },
-    {
-      "file": "src/App.tsx",
-      "line": 45,
-      "name": "DEV"
     },
     {
       "file": "src/App.tsx",
@@ -26815,15 +26835,15 @@
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 118,
+      "line": 119,
       "target": "window",
       "kind": "listen",
       "name": "resize",
-      "expression": "window.addEventListener('resize', resize)"
+      "expression": "window.addEventListener('resize', resize, { passive: true })"
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 132,
+      "line": 133,
       "target": "window",
       "kind": "listen",
       "name": "mousemove",
@@ -26831,7 +26851,7 @@
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 133,
+      "line": 134,
       "target": "window",
       "kind": "listen",
       "name": "touchstart",
@@ -26839,7 +26859,7 @@
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 134,
+      "line": 135,
       "target": "window",
       "kind": "listen",
       "name": "touchmove",
@@ -26847,7 +26867,7 @@
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 144,
+      "line": 145,
       "target": "window",
       "kind": "listen",
       "name": "scroll",
@@ -26855,7 +26875,7 @@
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 153,
+      "line": 154,
       "target": "document",
       "kind": "listen",
       "name": "visibilitychange",
@@ -26863,7 +26883,7 @@
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 351,
+      "line": 352,
       "target": "window",
       "kind": "remove",
       "name": "resize",
@@ -26871,7 +26891,7 @@
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 352,
+      "line": 353,
       "target": "window",
       "kind": "remove",
       "name": "mousemove",
@@ -26879,7 +26899,7 @@
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 353,
+      "line": 354,
       "target": "window",
       "kind": "remove",
       "name": "touchstart",
@@ -26887,7 +26907,7 @@
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 354,
+      "line": 355,
       "target": "window",
       "kind": "remove",
       "name": "touchmove",
@@ -26895,7 +26915,7 @@
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 355,
+      "line": 356,
       "target": "window",
       "kind": "remove",
       "name": "scroll",
@@ -26903,7 +26923,7 @@
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 356,
+      "line": 357,
       "target": "document",
       "kind": "remove",
       "name": "visibilitychange",
@@ -26911,7 +26931,7 @@
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 372,
+      "line": 373,
       "target": "window",
       "kind": "remove",
       "name": "resize",
@@ -26919,7 +26939,7 @@
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 373,
+      "line": 374,
       "target": "window",
       "kind": "remove",
       "name": "mousemove",
@@ -26927,7 +26947,7 @@
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 374,
+      "line": 375,
       "target": "window",
       "kind": "remove",
       "name": "touchstart",
@@ -26935,7 +26955,7 @@
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 375,
+      "line": 376,
       "target": "window",
       "kind": "remove",
       "name": "touchmove",
@@ -26943,7 +26963,7 @@
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 376,
+      "line": 377,
       "target": "window",
       "kind": "remove",
       "name": "scroll",
@@ -26951,7 +26971,7 @@
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 377,
+      "line": 378,
       "target": "document",
       "kind": "remove",
       "name": "visibilitychange",

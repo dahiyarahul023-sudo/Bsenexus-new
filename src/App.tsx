@@ -42,7 +42,7 @@ function lazyWithRetry<T extends React.ComponentType<any>>(
                 attempt(remaining - 1);
               }, interval);
             } else {
-              if (!import.meta.env.DEV && typeof window !== 'undefined' && isFetchError) {
+              if (typeof window !== 'undefined' && isFetchError) {
                 try {
                   const flag = 'bse_chunk_retry_reload';
                   const last = sessionStorage.getItem(flag);
@@ -1134,6 +1134,10 @@ function AppContent() {
                 setIsAuthModalOpen(true);
               }
             }}
+            onSignIn={() => {
+              pendingTerminalTabRef.current = 'home';
+              setIsAuthModalOpen(true);
+            }}
             theme={theme}
             setTheme={setTheme}
             bseHealth={health.bse}
@@ -1178,6 +1182,10 @@ function AppContent() {
               } else {
                 setIsAuthModalOpen(true);
               }
+            }}
+            onSignIn={() => {
+              pendingTerminalTabRef.current = 'home';
+              setIsAuthModalOpen(true);
             }}
             theme={theme}
             setTheme={setTheme}

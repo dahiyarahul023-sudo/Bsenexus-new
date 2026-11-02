@@ -92,7 +92,10 @@
     <link rel="sitemap" type="application/xml" title="Sitemap" href="https://bsenexus.in/sitemap.xml" />
     <link rel="search" type="application/opensearchdescription+xml" title="Bsenexus Search" href="/opensearch.xml" />
     <link rel="alternate" type="application/rss+xml" title="Bsenexus Announcements Feed" href="https://bsenexus.in/rss.xml" />
+    <link rel="llms-txt" href="/llms.txt" />
+    <link rel="alternate" type="text/markdown" href="/llms.txt" title="LLMs.txt Specification" />
     <link rel="alternate" type="text/plain" href="/llms.txt" title="LLMs.txt Specification" />
+    <meta name="ai-content-declarations" content="https://bsenexus.in/llms.txt" />
     <meta name="description" content="Track live BSE corporate announcements, board meetings, Q2/Q3 results calendar &amp; SEBI LODR filings for 5,000+ Indian stocks with AI summaries on Bsenexus." />
     <meta name="keywords" content="Bsenexus, Bsenexus Terminal, BSE corporate announcements, BSE results calendar, stock filings India, earnings conference calls, Gemini AI stock summary, Telegram stock alerts, NSE BSE trading holidays, Indian stock market clock, SEBI LODR 30" />
     <meta name="author" content="Bsenexus" />
@@ -254,6 +257,30 @@
             },
             "query-input": "required name=search_term_string"
           }
+        },
+        {
+          "@type": "Dataset",
+          "@id": "https://bsenexus.in/#dataset",
+          "name": "BSE India Corporate Announcements and Filings Feed",
+          "description": "Real-time structured feed of official Bombay Stock Exchange (BSE) regulatory filings, earnings announcements, board meetings, and AI-extracted financial metrics under SEBI LODR Regulations.",
+          "url": "https://bsenexus.in/",
+          "license": "https://creativecommons.org/licenses/by/4.0/",
+          "creator": {
+            "@id": "https://bsenexus.in/#organization"
+          },
+          "keywords": ["BSE Corporate Announcements", "SEBI LODR Filings", "Indian Equities", "Earnings Calendar", "BSE Results"],
+          "distribution": [
+            {
+              "@type": "DataDownload",
+              "encodingFormat": "text/markdown",
+              "contentUrl": "https://bsenexus.in/llms.txt"
+            },
+            {
+              "@type": "DataDownload",
+              "encodingFormat": "application/rss+xml",
+              "contentUrl": "https://bsenexus.in/rss.xml"
+            }
+          ]
         },
         {
           "@type": "FAQPage",
