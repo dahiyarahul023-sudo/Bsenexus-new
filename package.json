@@ -43,7 +43,7 @@
     "framer-motion": "^13.1.1",
     "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
-    "lucide-react": "^0.546.0",
+    "lucide-react": "^1.64.0",
     "pdf-parse": "^2.4.5",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
