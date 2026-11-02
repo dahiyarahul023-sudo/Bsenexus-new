@@ -90,13 +90,13 @@ export function LandingFooterAbout({ onEnterTerminal }: LandingFooterAboutProps)
         </div>
 
         {/* ================= CLEAN AUTHORITATIVE ABOUT SECTION ================= */}
-        <div className="max-w-4xl mx-auto p-8 sm:p-10 rounded-3xl bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
+        <section id="about" aria-labelledby="about-bsenexus-heading" className="max-w-4xl mx-auto p-8 sm:p-10 rounded-3xl bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center font-bold">
               <Building2 className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-lg font-bold text-slate-900 dark:text-white">About BSE Nexus</h4>
+              <h3 id="about-bsenexus-heading" className="text-lg font-bold text-slate-900 dark:text-white">About Bsenexus</h3>
               <p className="text-xs text-slate-500">Autonomous Financial Intelligence Infrastructure</p>
             </div>
           </div>
@@ -123,7 +123,7 @@ export function LandingFooterAbout({ onEnterTerminal }: LandingFooterAboutProps)
               </button>
             </div>
           </div>
-        </div>
+        </section>
 
         {/* ================= REGULATORY SEBI DISCLAIMER ================= */}
         <div className="max-w-4xl mx-auto text-center space-y-2 text-[11px] text-slate-500 dark:text-slate-500 leading-relaxed px-4">

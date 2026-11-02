@@ -33,13 +33,13 @@ export async function streamPdf(response: Response, res: express.Response, signa
   }
 }
 
-export function createPdfOpenRouter({ fetchDocument = fetchBseDocument, maxInFlight = 16, maxBytes = MAX_PDF_BYTES } = {}) {
+export function createPdfOpenRouter({ fetchDocument = fetchBseDocument, maxInFlight = 8, maxBytes = MAX_PDF_BYTES } = {}) {
   const router = express.Router();
   // One instance of this router is mounted in apiRouter: shared across all IPs
   // in the Cloud Run process; never a per-IP semaphore or queued download.
   let inFlight = 0;
   router.get('/pdf-open', rateLimit({
-    windowMs: 60_000, limit: 60, standardHeaders: true, legacyHeaders: false,
+    windowMs: 60_000, limit: 20, standardHeaders: true, legacyHeaders: false,
     validate: { xForwardedForHeader: false, forwardedHeader: false, default: true },
     message: { success: false, error: 'Too many PDF requests. Please try again in a minute.' },
   }), async (req, res) => {
@@ -60,8 +60,7 @@ export function createPdfOpenRouter({ fetchDocument = fetchBseDocument, maxInFli
     }
 
     if (inFlight >= maxInFlight) {
-      const redirectTarget = isAllowedBseDocumentUrl(rawUrl) ? rawUrl : (cleanFile ? `https://www.bseindia.com/xml-data/corpfiling/AttachLive/${cleanFile}` : 'https://www.bseindia.com/corporates/ann.html');
-      return res.redirect(redirectTarget);
+      return res.status(503).set('Retry-After', '5').json({ success: false, error: 'PDF downloads are busy. Please retry shortly.' });
     }
     inFlight++;
     const controller = new AbortController();
@@ -74,7 +73,9 @@ export function createPdfOpenRouter({ fetchDocument = fetchBseDocument, maxInFli
         if (rawUrl.includes('/AttachLive/')) candidates.push(rawUrl.replace('/AttachLive/', '/AttachHis/'));
         else if (rawUrl.includes('/AttachHis/')) candidates.push(rawUrl.replace('/AttachHis/', '/AttachLive/'));
       }
-      if (cleanFile) {
+      // Deriving a display filename from the URL must not multiply upstream
+      // fetches. Alternate attachment locations require an explicit file hint.
+      if (filename && cleanFile) {
         candidates.push(
           `https://www.bseindia.com/xml-data/corpfiling/AttachLive/${cleanFile}`,
           `https://www.bseindia.com/xml-data/corpfiling/AttachHis/${cleanFile}`

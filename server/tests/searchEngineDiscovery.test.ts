@@ -2,6 +2,9 @@ import { test, describe, beforeEach } from 'node:test';
 import assert from 'node:assert';
 import fs from 'fs';
 import path from 'path';
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { LandingFooterAbout } from '../../src/components/landing/LandingFooterAbout.js';
 import { indexNowQueue, INDEXNOW_KEY, INDEXNOW_HOST, INDEXNOW_KEY_LOCATION } from '../services/indexNow.js';
 
 describe('Search Engine & Cross-Browser Discovery (Step 06: IndexNow & OpenSearch)', () => {
@@ -128,7 +131,9 @@ describe('Search Engine & Cross-Browser Discovery (Step 06: IndexNow & OpenSearc
     const landingPagePath = path.join(process.cwd(), 'src', 'components', 'LandingPage.tsx');
     const content = fs.readFileSync(landingPagePath, 'utf8');
 
-    assert.ok(content.includes('id="about"'), 'LandingPage must include id="about"');
-    assert.ok(content.includes('About Bsenexus'), 'LandingPage must contain About Bsenexus');
+    assert.ok(content.includes('<LandingFooterAbout'), 'LandingPage must mount its shared About footer');
+    const html = renderToStaticMarkup(React.createElement(LandingFooterAbout, { onEnterTerminal() {} }));
+    assert.match(html, /<section[^>]*id="about"[^>]*aria-labelledby="about-bsenexus-heading"/);
+    assert.match(html, /<h3[^>]*id="about-bsenexus-heading"[^>]*>About Bsenexus<\/h3>/);
   });
 });
