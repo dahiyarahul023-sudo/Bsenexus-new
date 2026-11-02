@@ -22,3 +22,7 @@
 - `npm run lint`: passed. Full offline suite: 917/917 passed, 33 suites, zero failures/skips.
 - `npm run build --ignore-scripts`: passed; startup budget 621,958 raw / 173,882 gzip bytes. This executes the complete build body without an unrelated version bump.
 - `npm run map:generate`, `npm run map:check`, `npm run test:map`: passed; map tests 6/6. No module removal/refactor; host-only compile_applet/lint_applet tools are unavailable.
+
+## Explicit map publication approval — 2 November 2026 IST
+
+The owner explicitly approved the requested generated-map updates and merges in the follow-up message. The prior upload hold is resolved by that authorization; repository ownership/privacy and destination remain unchanged. The source preparation at f8bb09103f8ed98d67cf86af1e0d48dc9353251e was restored and all 758 text blobs matched upstream Git hashes. Fresh npm ci installed 662 packages and the Firebase patch reran. Both maps were regenerated from this exact source; map freshness, six map tests and lint passed. Runtime source is unchanged by this map/documentation commit. Previous hosted application/Bun/browser success is recorded in PR #56; new-head hosted checks are required before merging. No deployment or migration is implied.

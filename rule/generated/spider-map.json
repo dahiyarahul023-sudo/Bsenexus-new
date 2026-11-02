@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "42e209a7dd72fa986c09c39a12b861362b8ee164dc4f905365828abed3c699c8",
+  "sourceDigest": "683d1339ff37e29d68f7a9787cf3be8aae5b06bc68f35ca31f759da301c7887d",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -39,8 +39,13 @@
       "importedBy": []
     },
     {
+      "path": "package-lock.json",
+      "sha256": "00d8e2fa9446d65cf7a43c9b979872f5d79e9707f30b297263988a6632c183e0",
+      "importedBy": []
+    },
+    {
       "path": "package.json",
-      "sha256": "1d7e859b55f82dbca5ba11b5ed68d1dfb8aada725b9d22efa05240f513a16f87",
+      "sha256": "4e896c136498c2f12967440dde0e0140760646cd94d800a410c23cab63711eec",
       "importedBy": []
     },
     {
@@ -431,7 +436,7 @@
     },
     {
       "path": "server/api/pdfOpen.ts",
-      "sha256": "79621577df1cc929f0a6f3bb9617c0e33583507c6cce4fd769eb90ffdd68b571",
+      "sha256": "db4ffaa7cd7b5d5a8e5e3cff5bd052ff54ef29eeb9f2e6bfc942553b851df68a",
       "importedBy": [
         "server/api/routes.ts",
         "server/tests/pdfOpen.test.ts"
@@ -929,7 +934,7 @@
     },
     {
       "path": "server/security/auth.ts",
-      "sha256": "cdb09c75dda5f2d3958f20be6716716ecd924b56d4d563db7ac8744a4ace6e63",
+      "sha256": "c77158999f0595442627a78b5b18dbf799077c61141c71a4abb2c2c9f63114fc",
       "importedBy": [
         "server.ts",
         "server/ai/http.ts",
@@ -992,6 +997,14 @@
       "importedBy": [
         "server.ts",
         "server/tests/responseHeaders.test.ts"
+      ]
+    },
+    {
+      "path": "server/security/verifiedTokenCache.ts",
+      "sha256": "b61402e4aa3a14956f5c8b3ec8f74282d269ec9a89396fa7351857fb70d55e62",
+      "importedBy": [
+        "server/security/auth.ts",
+        "server/tests/verifiedTokenCache.test.ts"
       ]
     },
     {
@@ -1731,7 +1744,7 @@
     },
     {
       "path": "server/tests/calendarNavigation.test.ts",
-      "sha256": "21e06e326d76b4c0e8b9b029ed1ccb27fa58ab57b3bfa3352aea5f41cd90ea30",
+      "sha256": "da5e97837c03b0b9efe37bc51fd46620c372c3ac23813583a9173194c1c39e70",
       "importedBy": []
     },
     {
@@ -2011,7 +2024,7 @@
     },
     {
       "path": "server/tests/pdfOpen.test.ts",
-      "sha256": "b2f803d055530e27039397f70aa25d00e32bcf77718f3fa246ae1bf05280a894",
+      "sha256": "2bcab2e6e90e5d68aee511b6433ca685181b87487372cb43a44c4704992bb980",
       "importedBy": []
     },
     {
@@ -2201,7 +2214,7 @@
     },
     {
       "path": "server/tests/searchEngineDiscovery.test.ts",
-      "sha256": "3656e5a93eb11f0047ab744e371149c01b2e8af061d1277e1f84ecd15bb1cce6",
+      "sha256": "a78ba2016395fc645754134cd32f11bacad8f08e94d697aac49aa1d99e29f0cc",
       "importedBy": []
     },
     {
@@ -2272,6 +2285,11 @@
     {
       "path": "server/tests/userSkeletonPrivileges.test.ts",
       "sha256": "015a81b2ec16e20a79b43ea40409b3619204968268fba0edd69b05d98048586d",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/verifiedTokenCache.test.ts",
+      "sha256": "05e0e15d9fee2474264d2705c9b8f249b546976c99a0754902409776723bf7d3",
       "importedBy": []
     },
     {
@@ -3113,8 +3131,9 @@
     },
     {
       "path": "src/components/landing/LandingFooterAbout.tsx",
-      "sha256": "81eaa9d1967c74b832f949b0d087495849068eb35a4a1541378a83a828899fdf",
+      "sha256": "ea50ef0aa66eb8def9ec9427b98b4356cbd278b43fb896e362af0aeafada1f69",
       "importedBy": [
+        "server/tests/searchEngineDiscovery.test.ts",
         "src/components/LandingPage.tsx"
       ]
     },
@@ -4881,7 +4900,7 @@
     },
     {
       "path": "src/version.ts",
-      "sha256": "ae1c5617f467027d52f0666343182c47c4ce32e86547578a1b73c026179d848d",
+      "sha256": "f3ecebca4fc1aafe1e52e03880e34404ad29624569bc3296304193d7f17223d6",
       "importedBy": [
         "src/components/SettingsTab.tsx",
         "src/lib/sentry.ts"
@@ -6914,9 +6933,15 @@
     },
     {
       "source": "server/security/auth.ts",
-      "target": "server/security/accountRateLimiter.ts",
+      "target": "server/security/verifiedTokenCache.ts",
       "kind": "import",
       "line": 14
+    },
+    {
+      "source": "server/security/auth.ts",
+      "target": "server/security/accountRateLimiter.ts",
+      "kind": "import",
+      "line": 15
     },
     {
       "source": "server/sentry.ts",
@@ -10112,9 +10137,15 @@
     },
     {
       "source": "server/tests/searchEngineDiscovery.test.ts",
+      "target": "src/components/landing/LandingFooterAbout.tsx",
+      "kind": "import",
+      "line": 7
+    },
+    {
+      "source": "server/tests/searchEngineDiscovery.test.ts",
       "target": "server/services/indexNow.ts",
       "kind": "import",
-      "line": 5
+      "line": 8
     },
     {
       "source": "server/tests/seoPrehydration.test.ts",
@@ -10277,6 +10308,12 @@
       "target": "server/utils/bseDocument.ts",
       "kind": "import",
       "line": 5
+    },
+    {
+      "source": "server/tests/verifiedTokenCache.test.ts",
+      "target": "server/security/verifiedTokenCache.ts",
+      "kind": "import",
+      "line": 3
     },
     {
       "source": "server/tests/watchlistEgress.test.ts",
@@ -17023,7 +17060,7 @@
       "method": "GET",
       "path": "/pdf-open",
       "middleware": [
-        "rateLimit({ windowMs: 60_000, limit: 60, standardHeaders: true, legacyHeaders: false, validate: { xForwardedForHeader: false, forwardedHeader: false, default: true }, message: { success: false, error: 'Too many PDF requests. Please try agai",
+        "rateLimit({ windowMs: 60_000, limit: 20, standardHeaders: true, legacyHeaders: false, validate: { xForwardedForHeader: false, forwardedHeader: false, default: true }, message: { success: false, error: 'Too many PDF requests. Please try agai",
         "<handler>"
       ]
     },
@@ -18790,7 +18827,7 @@
     },
     {
       "file": "server/security/auth.ts",
-      "line": 304,
+      "line": 311,
       "receiver": "authRouter",
       "method": "POST",
       "path": "/session",
@@ -18802,7 +18839,7 @@
     },
     {
       "file": "server/security/auth.ts",
-      "line": 504,
+      "line": 511,
       "receiver": "authRouter",
       "method": "POST",
       "path": "/login",
@@ -18814,7 +18851,7 @@
     },
     {
       "file": "server/security/auth.ts",
-      "line": 625,
+      "line": 632,
       "receiver": "authRouter",
       "method": "POST",
       "path": "/verify-pin",
@@ -18826,7 +18863,7 @@
     },
     {
       "file": "server/security/auth.ts",
-      "line": 736,
+      "line": 743,
       "receiver": "authRouter",
       "method": "POST",
       "path": "/logout",
@@ -18836,7 +18873,7 @@
     },
     {
       "file": "server/security/auth.ts",
-      "line": 741,
+      "line": 748,
       "receiver": "authRouter",
       "method": "GET",
       "path": "/status",
@@ -22159,7 +22196,7 @@
     },
     {
       "file": "server/tests/calendarNavigation.test.ts",
-      "line": 70,
+      "line": 71,
       "function": "Array.from",
       "key": "{ length: 60 }"
     },
@@ -22390,6 +22427,12 @@
       "line": 17,
       "function": "Array.from",
       "key": "{length:8}"
+    },
+    {
+      "file": "server/tests/verifiedTokenCache.test.ts",
+      "line": 48,
+      "function": "Array.from",
+      "key": "{ length: 8 }"
     },
     {
       "file": "server/utils/bloomFilter.ts",
@@ -24135,12 +24178,7 @@
     },
     {
       "file": "server/security/auth.ts",
-      "line": 32,
-      "name": "JWT_SECRET"
-    },
-    {
-      "file": "server/security/auth.ts",
-      "line": 32,
+      "line": 33,
       "name": "JWT_SECRET"
     },
     {
@@ -24150,77 +24188,82 @@
     },
     {
       "file": "server/security/auth.ts",
-      "line": 35,
+      "line": 34,
+      "name": "JWT_SECRET"
+    },
+    {
+      "file": "server/security/auth.ts",
+      "line": 36,
       "name": "NODE_ENV"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 199,
+      "line": 206,
       "name": "FIREBASE_APPCHECK_ENFORCE"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 329,
+      "line": 336,
       "name": "NODE_ENV"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 329,
+      "line": 336,
       "name": "RECAPTCHA_ENFORCE"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 465,
+      "line": 472,
       "name": "NODE_ENV"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 546,
+      "line": 553,
       "name": "NODE_ENV"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 546,
+      "line": 553,
       "name": "RECAPTCHA_ENFORCE"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 572,
+      "line": 579,
       "name": "APP_PIN"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 576,
+      "line": 583,
       "name": "APP_PIN"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 598,
+      "line": 605,
       "name": "NODE_ENV"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 662,
+      "line": 669,
       "name": "NODE_ENV"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 662,
+      "line": 669,
       "name": "RECAPTCHA_ENFORCE"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 688,
+      "line": 695,
       "name": "APP_PIN"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 692,
+      "line": 699,
       "name": "APP_PIN"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 713,
+      "line": 720,
       "name": "NODE_ENV"
     },
     {
