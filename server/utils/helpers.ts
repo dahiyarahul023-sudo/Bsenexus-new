@@ -197,23 +197,10 @@ export function determinePriority(subject: string, details: string): { level: st
     }
   }
 
-  // 2. Pre-Meeting Intimations, Notices, Window Closures
-  const isPreMeetingNotice = 
-    text.includes('INTIMATION') ||
-    text.includes('NOTICE OF BOARD') ||
-    text.includes('BOARD MEETING INTIMATION') ||
-    text.includes('PRIOR INTIMATION') ||
-    text.includes('UPDATE ON BOARD MEETING') ||
-    text.includes('RESCHEDULED') ||
-    text.includes('POSTPONEMENT') ||
-    text.includes('TRADING WINDOW') ||
-    text.includes('CLOSURE OF TRADING') ||
-    text.includes('NEWSPAPER PUBLICATION') ||
-    text.includes('VOTING RESULTS') ||
-    text.includes('SCRUTINIZER') ||
-    text.includes('REGULATION 29') ||
-    text.includes('REG 29');
-
+  // 2. Genuine Financial Results & Board Meeting Outcomes (SEBI Regulation 33)
+  // CRITICAL: Indian companies routinely title actual result disclosures as "Intimation under Regulation 33",
+  // "Outcome of Board Meeting - Financial Results", or "Intimation of Financial Results".
+  // These are REAL results declarations and must ALWAYS be categorized as RESULTS (HIGH).
   const isExplicitResultsOutcome = 
     text.includes('REGULATION 33') ||
     text.includes('REG 33') ||
@@ -227,54 +214,73 @@ export function determinePriority(subject: string, details: string): { level: st
     text.includes('STATEMENT OF CONSOLIDATED') ||
     text.includes('CONSIDERED AND APPROVED THE FINANCIAL') ||
     text.includes('APPROVED THE FINANCIAL RESULTS') ||
-    text.includes('APPROVAL OF FINANCIAL RESULTS');
+    text.includes('APPROVAL OF FINANCIAL RESULTS') ||
+    text.includes('BOARD MEETING OUTCOME FOR FINANCIAL RESULTS') ||
+    text.includes('OUTCOME OF BOARD MEETING HELD ON') ||
+    text.includes('FINANCIAL RESULTS FOR THE QUARTER') ||
+    text.includes('QUARTERLY RESULTS') ||
+    text.includes('QUARTERLY RESULT') ||
+    text.includes('AUDITED RESULTS') ||
+    text.includes('UNAUDITED RESULTS') ||
+    text.includes('Q1 RESULTS') || text.includes('Q2 RESULTS') ||
+    text.includes('Q3 RESULTS') || text.includes('Q4 RESULTS') ||
+    text.includes('Q1 RESULT') || text.includes('Q2 RESULT') ||
+    text.includes('Q3 RESULT') || text.includes('Q4 RESULT') ||
+    text.includes('ANNUAL RESULTS') || text.includes('HALF YEARLY RESULTS') ||
+    text.includes('FINANCIAL STATEMENTS');
 
-  // 3. Genuine Financial Results & Board Meeting Outcome for Results Detection (Regulation 33)
-  // Pre-meeting notices (board-meeting intimation, newspaper publication of the
-  // notice, trading-window closure) only ANNOUNCE a future meeting — even when
-  // their text carries result keywords ("…to consider financial results"), they
-  // are never the results declaration, so they must never land in RESULTS.
-  if (!isPreMeetingNotice && isExplicitResultsOutcome && !text.includes('INTIMATION OF BOARD') && !text.includes('PRIOR INTIMATION') && !text.includes('TO CONSIDER AND APPROVE')) {
-    return { level: 'HIGH', icon: '🔴', category: 'RESULTS' };
-  }
+  // Pre-Meeting Intimations, Notices, Window Closures (Future notices only)
+  // Check if this is a notice to consider results in the future (NOT yet approved/declared)
+  const isConsiderOrPriorNotice = 
+    (text.includes('NOTICE OF BOARD MEETING') ||
+     text.includes('BOARD MEETING INTIMATION') ||
+     text.includes('INTIMATION OF BOARD MEETING') ||
+     text.includes('PRIOR INTIMATION') ||
+     text.includes('TO CONSIDER AND APPROVE') ||
+     text.includes('TO CONSIDER FINANCIAL') ||
+     text.includes('TO CONSIDER THE FINANCIAL') ||
+     text.includes('TO CONSIDER') ||
+     text.includes('TRADING WINDOW') ||
+     text.includes('CLOSURE OF TRADING') ||
+     text.includes('RESCHEDULED') ||
+     text.includes('POSTPONEMENT') ||
+     text.includes('NEWSPAPER PUBLICATION') ||
+     text.includes('VOTING RESULTS') ||
+     text.includes('SCRUTINIZER') ||
+     text.includes('REGULATION 29') ||
+     text.includes('REG 29')) &&
+    !text.includes('REGULATION 33') &&
+    !text.includes('REG 33') &&
+    !text.includes('OUTCOME OF BOARD') &&
+    !text.includes('BOARD MEETING OUTCOME') &&
+    !text.includes('OUTCOME OF THE BOARD') &&
+    !text.includes('CONSIDERED AND APPROVED') &&
+    !text.includes('APPROVED THE FINANCIAL') &&
+    !text.includes('APPROVAL OF FINANCIAL');
 
-  const resultKeywords = [
-    'FINANCIAL RESULTS', 'FINANCIAL RESULT',
-    'QUARTERLY RESULTS', 'QUARTERLY RESULT',
-    'AUDITED FINANCIAL RESULTS', 'AUDITED FINANCIAL RESULT',
-    'UNAUDITED FINANCIAL RESULTS', 'UNAUDITED FINANCIAL RESULT',
-    'AUDITED RESULTS', 'UNAUDITED RESULTS',
-    'Q1 RESULTS', 'Q2 RESULTS', 'Q3 RESULTS', 'Q4 RESULTS',
-    'Q1 RESULT', 'Q2 RESULT', 'Q3 RESULT', 'Q4 RESULT',
-    'ANNUAL RESULTS', 'HALF YEARLY RESULTS',
-    'FINANCIAL STATEMENTS', 'FINANCIAL STATEMENT',
-    'BOARD MEETING OUTCOME FOR FINANCIAL RESULTS',
-    'OUTCOME OF BOARD MEETING HELD ON'
-  ];
-
-  if (!isPreMeetingNotice) {
-    for (const kw of resultKeywords) {
-      if (text.includes(kw)) {
-        return { level: 'HIGH', icon: '🔴', category: 'RESULTS' };
-      }
-    }
-
-    if (text.includes('OUTCOME OF BOARD') || text.includes('BOARD MEETING OUTCOME') || text.includes('OUTCOME OF THE BOARD')) {
-      // Check if it is a financial results outcome vs a generic governance/allotment outcome
-      if (text.includes('RESULT') || text.includes('FINANCIAL') || text.includes('UNAUDITED') || text.includes('AUDITED') || text.includes('QUARTER ENDED') || text.includes('YEAR ENDED') || text.includes('DIVIDEND')) {
-        return { level: 'HIGH', icon: '🔴', category: 'RESULTS' };
-      }
-      return { level: 'MEDIUM', icon: '🟡', category: 'BOARD_MEETING' };
-    }
-  } else {
+  // A legal citation is not evidence that the future meeting already happened.
+  // Preserve real Regulation 33 intimations/outcomes, but do not announce a
+  // declaration from a notice that only says the board will consider results.
+  const explicitFutureNotice = /PRIOR INTIMATION|NOTICE OF BOARD MEETING|BOARD MEETING INTIMATION|INTIMATION OF BOARD MEETING|TO CONSIDER(?: AND APPROVE)? (?:THE )?(?:UNAUDITED |AUDITED )?FINANCIAL/.test(text);
+  const completedOutcome = /OUTCOME OF (?:THE )?BOARD|BOARD MEETING OUTCOME|CONSIDERED AND APPROVED|APPROVED THE FINANCIAL/.test(text);
+  if (isConsiderOrPriorNotice || (explicitFutureNotice && !completedOutcome)) {
     // Shareholder meetings (AGM/EGM) are NOT board meetings — tag as governance
     if (text.includes('SHAREHOLDER') || text.includes('GENERAL MEETING') || text.includes('ANNUAL GENERAL') || text.includes('EXTRAORDINARY GENERAL') || /\bAGM\b/.test(text) || /\bEGM\b/.test(text)) {
       return { level: 'MEDIUM', icon: '🟡', category: 'GOVERNANCE' };
     }
-    // If it's a Board Meeting Intimation / Notice
-    if (text.includes('BOARD') || text.includes('MEETING')) {
-      return { level: 'MEDIUM', icon: '🟡', category: 'BOARD_MEETING' };
+    return { level: 'MEDIUM', icon: '🟡', category: 'BOARD_MEETING' };
+  }
+
+  if (isExplicitResultsOutcome) {
+    return { level: 'HIGH', icon: '🔴', category: 'RESULTS' };
+  }
+
+  if (text.includes('OUTCOME OF BOARD') || text.includes('BOARD MEETING OUTCOME') || text.includes('OUTCOME OF THE BOARD')) {
+    // Check if it is a financial results outcome vs a generic governance/allotment outcome
+    if (text.includes('RESULT') || text.includes('FINANCIAL') || text.includes('UNAUDITED') || text.includes('AUDITED') || text.includes('QUARTER ENDED') || text.includes('YEAR ENDED') || text.includes('DIVIDEND')) {
+      return { level: 'HIGH', icon: '🔴', category: 'RESULTS' };
     }
+    return { level: 'MEDIUM', icon: '🟡', category: 'BOARD_MEETING' };
   }
 
   // 3. Other Major Material Events (Resignation of Directors/KMP, Merger, Acquisition, Default, Fraud, Buyback)

@@ -106,16 +106,17 @@ export default function ParticleRibbons() {
     };
 
     const resize = () => {
-      dpr = Math.min(window.devicePixelRatio || 1, 1.25);
       w = Math.max(1, window.innerWidth);
       h = Math.max(1, window.innerHeight);
+      const isMobile = w < 640;
+      dpr = isMobile ? 1 : Math.min(window.devicePixelRatio || 1, 1.25);
       canvas.width = Math.floor(w * dpr);
       canvas.height = Math.floor(h * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       build();
     };
     resize();
-    window.addEventListener('resize', resize);
+    window.addEventListener('resize', resize, { passive: true });
 
     // Mouse & Touch Tracking
     const onMouse = (e: MouseEvent) => { 

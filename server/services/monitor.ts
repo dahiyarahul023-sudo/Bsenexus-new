@@ -11,7 +11,7 @@ import { generateAndSendSummary } from './gemini.js';
 import { getActiveWatchlistSymbols, getActiveWatchlistSymbolMap } from '../database/watchlistDao.js';
 import { getAllUserProfiles } from '../database/usersDao.js';
 import { isAnnouncementProcessed, isAnnouncementSent, markAnnouncementSent, saveAnnouncement, pruneAndCheckStorageCapacity, initAnnouncementCache, flushSupabaseWriteQueue, flushLocalDiskSave } from '../database/announcementDao.js';
-import { escapeHTML, determinePriority, isSymbolMatch, parseBseDate, isMarketHoursIST } from '../utils/helpers.js';
+import { escapeHTML, determinePriority, isSymbolMatch, parseBseDate, isMarketHoursIST, getScripCodeForSymbolOrName } from '../utils/helpers.js';
 import { addNotification, initNotificationsFromCloud } from '../database/notificationDao.js';
 import { evaluateAlertRulesForUser, initAlertRulesFromCloud } from '../database/alertRulesDao.js';
 import { classifyMaterialEvent } from './timelineClassifier.js';
@@ -307,7 +307,8 @@ export async function processAnnouncements(): Promise<AnnouncementPollResult> {
         // 2. Watchlist Check & Priority Determination
         const priority = determinePriority(subject, details);
         const pdfLink = item.pdfLink || (item.ATTACHMENTNAME ? `https://www.bseindia.com/xml-data/corpfiling/AttachLive/${item.ATTACHMENTNAME}` : '');
-        const scrip_cd = String(item.SCRIP_CD || item.scrip_cd || item.Scrip_Code || item.SCRIPCODE || "").trim();
+        const rawScrip = String(item.SCRIP_CD || item.scrip_cd || item.Scrip_Code || item.SCRIPCODE || "").trim();
+        const scrip_cd = rawScrip || getScripCodeForSymbolOrName(item.symbol || '') || getScripCodeForSymbolOrName(companyName) || "";
 
         let isWatchlistMatch = false;
         let matchedStockPriority: 'HIGH' | 'MEDIUM' | 'LOW' | null = null;
@@ -448,7 +449,8 @@ export async function processAnnouncements(): Promise<AnnouncementPollResult> {
                 }
                 addLog('SUCCESS', 'TELEGRAM', `Dispatched Admin ${priority.level} alert for ${companyName} (${priority.category})`);
                 
-                if (priority.category === 'RESULTS' && result.messageId && settings.telegramAiSummaryEnabled !== false) {
+                // Telegram Alert Purity: Only dispatch AI summary reply if explicitly opted-in by user/admin
+                if (priority.category === 'RESULTS' && result.messageId && settings.telegramAiSummaryEnabled === true) {
                   generateAndSendSummary(result.messageId, companyName, subject, details, priority.category, pdfLink, newsId, adminChatId, 'english', scrip_cd)
                     .catch(e => addLog('ERROR', 'GEMINI', `[${companyName}] Summary dispatch exception: ${e.message}`));
                 }
@@ -610,7 +612,7 @@ export async function processAnnouncements(): Promise<AnnouncementPollResult> {
                     if (userRes.success && userRes.messageId) {
                       const viaRule = !prefsMatch && userRuleEval.shouldSendTelegram;
                       await addLog('SUCCESS', 'TELEGRAM', `Personal alert -> user ${u.uid}: ${companyName} [${priority.category}] via ${viaRule ? 'alert-rule(telegram-on)' : 'watchlist-prefs'}`);
-                      const userWantsAiSummary = uPrefs?.telegramAiSummaryEnabled !== false;
+                      const userWantsAiSummary = uPrefs?.telegramAiSummaryEnabled === true;
                       if (priority.category === 'RESULTS' && userWantsAiSummary) {
                         const userSummaryLang = (uPrefs as any)?.aiSummaryLang === 'hinglish' ? 'hinglish' : 'english';
                         generateAndSendSummary(userRes.messageId, companyName, subject, details, priority.category, pdfLink, newsId, rawUserChatId, userSummaryLang, scrip_cd, u.uid)

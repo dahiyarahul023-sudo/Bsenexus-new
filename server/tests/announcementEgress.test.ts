@@ -6,11 +6,13 @@ import ts from 'typescript';
 import { ReadCache } from '../utils/readCache.js';
 
 function harness() {
-  let now=1_000_000,reads=0;
+  let now=1_000_000,reads=0,companyReads=0,failCompany=false;
   let hold:Promise<void>|undefined;
   const rows=new Map<string,any>([['filing',{subject:'Original',scrip_cd:'532540'}]]);
-  const db={from(){let deleting=false,id='';return {
-    select(){return this},eq(_field:string,value:string){id=value;return this},
+  const db={from(){let deleting=false,id='',scrip='';return {
+    select(){return this},eq(field:string,value:string){if(field==='scrip_cd')scrip=value;else id=value;return this},
+    order(){return this},limit(){return this},gt(){return this},
+    async abortSignal(){companyReads++;if(failCompany)return {data:null,error:new Error('offline')};return {data:[...rows].filter(([,value])=>value.scrip_cd===scrip).map(([id,data])=>({id,scrip_cd:scrip,data:structuredClone(data)})),error:null}},
     async maybeSingle(){reads++;return {data:rows.has(id)?{id,data:structuredClone(rows.get(id))}:null,error:null}},
     async in(_field:string,ids:string[]){if(deleting){ids.forEach(id=>rows.delete(id));return {error:null}}return {data:ids.filter(id=>rows.has(id)).map(id=>({id,data:structuredClone(rows.get(id))})),error:null}},
     delete(){deleting=true;return this},async upsert(values:any[]){if(hold)await hold;for(const row of values)rows.set(row.id,structuredClone(row.data));return {error:null}}
@@ -24,13 +26,13 @@ function harness() {
     '../services/indexNow.js':{notifySearchEnginesOfNewPages(){}},
     '../services/filingIndexNow':{publicFilingVersion:()=>'',storedFilingIndexPages:()=>[]},
     '../../src/shared/filingSource.js':{isBseFiling:()=>true},
-    '../../src/shared/scripMatching.js':{projectFilingIdentity:(row:any)=>row},
+    '../../src/shared/scripMatching.js':{projectFilingIdentity:(row:any)=>row,hasExactScripCode:(row:any,code:string)=>row.scrip_cd===code},
     '../utils/readCache.js':{ReadCache}
   };
   class Clock extends Date{static now(){return now}}
   const exports:any={};const source=readFileSync(new URL('../database/announcementDao.ts',import.meta.url),'utf8');
-  vm.runInNewContext(ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,require:(p:string)=>{assert.ok(deps[p],p);return deps[p]},Date:Clock,structuredClone,setTimeout,clearTimeout,console,process:{env:{}}});
-  return {dao:exports,rows,reads:()=>reads,advance:(ms:number)=>{now+=ms},hold:(value:Promise<void>|undefined)=>{hold=value}};
+  vm.runInNewContext(ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,require:(p:string)=>{assert.ok(deps[p],p);return deps[p]},Date:Clock,structuredClone,AbortSignal,setTimeout,clearTimeout,console,process:{env:{}}});
+  return {dao:exports,rows,reads:()=>reads,companyReads:()=>companyReads,failCompany:(value:boolean)=>{failCompany=value},advance:(ms:number)=>{now+=ms},hold:(value:Promise<void>|undefined)=>{hold=value}};
 }
 
 test('cloud-only filing reads coalesce, preserve fields, isolate caller mutations and refresh on TTL',async()=>{
@@ -55,4 +57,26 @@ test('queued and confirmed partial writes both invalidate a cloud-only filing lo
   assert.equal((await h.dao.getAnnouncementById('filing')).subject,'Original');assert.equal(h.reads(),2,'enqueue invalidates before confirmation');
   release();await h.dao.flushSupabaseWriteQueue();
   const updated=await h.dao.getAnnouncementById('filing');assert.equal(updated.aiSummaryEn,'Confirmed summary');assert.equal(updated.subject,'Original');assert.equal(h.reads(),3,'confirmation invalidates a read racing the write');
+});
+
+
+test('connector company bodies coalesce across calls, isolate callers and expire without extending freshness',async()=>{
+  const h=harness();
+  const [a,b]=await Promise.all([h.dao.getCachedCompanyFilings('532540'),h.dao.getCachedCompanyFilings('532540')]);
+  assert.equal(h.companyReads(),1);a[0].subject='Caller mutation';assert.equal(b[0].subject,'Original');
+  h.rows.get('filing').subject='Remote change';h.advance(29_999);
+  assert.equal((await h.dao.getCachedCompanyFilings('532540'))[0].subject,'Original');
+  h.advance(1);assert.equal((await h.dao.getCachedCompanyFilings('532540'))[0].subject,'Remote change');
+  assert.equal(h.companyReads(),2);
+});
+
+test('connector company failures are retried, while writes and deletes invalidate cached bodies',async()=>{
+  const h=harness();h.failCompany(true);
+  await assert.rejects(h.dao.getCachedCompanyFilings('532540'),/unavailable/);
+  h.failCompany(false);await h.dao.getCachedCompanyFilings('532540');assert.equal(h.companyReads(),2);
+  h.dao.queueAnnouncementsBatchWrite([{docId:'filing',data:{subject:'Changed'},merge:true}]);
+  await h.dao.flushSupabaseWriteQueue();
+  assert.equal((await h.dao.getCachedCompanyFilings('532540'))[0].subject,'Changed');
+  await h.dao.deleteAnnouncementsFromStorageAndCloud(['filing']);
+  assert.equal((await h.dao.getCachedCompanyFilings('532540')).length,0);
 });

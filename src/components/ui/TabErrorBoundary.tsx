@@ -68,8 +68,7 @@ export class TabErrorBoundary extends React.Component<TabErrorBoundaryProps, Tab
       });
     } catch {}
 
-    // Reloading while Vite is unavailable replaces this recoverable UI with a
-    // failed document. Let the user restart the preview and choose when to reload.
+    // Keep an interrupted preview mounted while its server is restarted.
     if (IS_DEV_PREVIEW) return;
 
     try {
@@ -91,6 +90,7 @@ export class TabErrorBoundary extends React.Component<TabErrorBoundaryProps, Tab
   };
 
   handleRetry = () => {
+    try { sessionStorage.removeItem(RELOAD_FLAG); } catch {}
     this.setState({ hasError: false, reloading: false, moduleLoadFailure: false });
   };
 
@@ -116,7 +116,7 @@ export class TabErrorBoundary extends React.Component<TabErrorBoundaryProps, Tab
             : 'The app may have just been updated, or a file failed to load. Reloading usually fixes this.'}
         </p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-          {!(IS_DEV_PREVIEW && this.state.moduleLoadFailure) && <button
+          <button
             type="button"
             onClick={this.handleRetry}
             disabled={this.state.reloading}
@@ -124,7 +124,7 @@ export class TabErrorBoundary extends React.Component<TabErrorBoundaryProps, Tab
           >
             <RefreshCw className="h-4 w-4" aria-hidden="true" />
             Try again
-          </button>}
+          </button>
           <button
             type="button"
             onClick={this.handleManualReload}
