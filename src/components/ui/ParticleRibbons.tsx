@@ -2,20 +2,16 @@ import { useEffect, useRef } from 'react';
 import { useReducedMotion } from 'framer-motion';
 
 /**
- * ParticleRibbons — full-page ambient animation behind the landing page.
- *
- * A fixed canvas spanning the whole viewport (behind all landing content):
- *  - dozens of glowing light ribbons sweeping in S-curves/arcs from a slowly
- *    drifting glow-burst point, morphing like liquid
- *  - a plexus node field: nodes connect to each other AND to nearby ribbon
- *    heads with faint light threads ("apas me connected")
- *  - a cursor spotlight: a soft glow that follows the pointer, so the
- *    animation feels attached to buttons/interactions
- *  - drifting sparkle dust
- *
- * Dark mode: vivid lime/emerald/teal with additive bloom. Light mode: the
- * same motion rendered as soft emerald strokes at low opacity.
- * Respects prefers-reduced-motion, pauses when the tab is hidden, DPR-capped.
+ * ParticleRibbons — Scroll-Interactive Dynamic Ambient Lighting & Plexus System
+ * 
+ * Features:
+ * - Dynamic Scroll-Tracking Spotlight: Glides smoothly down the page as the user scrolls,
+ *   illuminating the active viewport section (Hero -> Catalysts -> Results -> Bento -> Pricing -> Community)
+ * - Section-Aware Chromatic Shifts: Colors morph organically from Cyan -> Emerald -> Royal Blue -> Violet -> Teal
+ * - Mobile Touch Support: Touch gestures smoothly attract the spotlight to user interaction points
+ * - Interactive Button/Card Magnetism: When hovering or tapping buttons, the ambient light eases in and expands
+ * - Fluid Kinetic Ribbons: S-curve ribbons with velocity-boosted flow on scroll
+ * - Adaptive Light & Dark mode: Luminous bloom in dark mode; soft crystalline opalescent watercolor glazes in light mode
  */
 export default function ParticleRibbons() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -33,7 +29,14 @@ export default function ParticleRibbons() {
     let dpr = 1;
     const reducedMotion = prefersReducedMotion;
     const isDark = () => document.documentElement.classList.contains('dark');
+
+    // Pointer and scroll state
     const mouse = { x: -9999, y: -9999, sx: -9999, sy: -9999 };
+    let scrollY = 0;
+    let smoothScrollY = 0;
+    let scrollProgress = 0;
+    let scrollVelocity = 0;
+    let lastScrollY = 0;
 
     type Ribbon = {
       arc: boolean; angle: number; reach: number; yBase: number;
@@ -51,54 +54,96 @@ export default function ParticleRibbons() {
     const rand = (a: number, b: number) => a + Math.random() * (b - a);
     const pickHue = () => {
       const r = Math.random();
-      if (r < 0.5) return { h: rand(68, 88), s: 95, l: 62 };
-      if (r < 0.78) return { h: rand(150, 168), s: 80, l: 58 };
-      if (r < 0.93) return { h: rand(172, 188), s: 85, l: 60 };
-      return { h: rand(40, 52), s: 95, l: 62 };
+      if (r < 0.4) return { h: rand(185, 205), s: 95, l: 60 }; // Cyan/Azure
+      if (r < 0.7) return { h: rand(150, 175), s: 85, l: 55 }; // Emerald/Teal
+      if (r < 0.88) return { h: rand(215, 240), s: 90, l: 65 }; // Royal Blue
+      return { h: rand(260, 280), s: 90, l: 65 }; // Violet
     };
 
     const build = () => {
-      const count = w < 640 ? 4 : 8;
+      const isMobile = w < 640;
+      const count = isMobile ? 5 : 9;
       ribbons = [];
       for (let i = 0; i < count; i++) {
         const c = pickHue();
         ribbons.push({
-          arc: Math.random() < 0.6,
-          angle: rand(-0.6, 1.4), reach: rand(0.5, 1.2),
+          arc: Math.random() < 0.65,
+          angle: rand(-0.5, 1.5),
+          reach: rand(0.55, 1.25),
           yBase: rand(0.05, 0.95),
-          hue: c.h, sat: c.s, light: c.l,
-          speed: rand(0.22, 0.65), phase: rand(0, Math.PI * 2),
-          amp: rand(12, 42), freq: rand(1.6, 3.4),
-          width: rand(0.8, 1.8), alpha: rand(0.3, 0.75),
-          bend: rand(-1, 1),
+          hue: c.h,
+          sat: c.s,
+          light: c.l,
+          speed: rand(0.2, 0.55),
+          phase: rand(0, Math.PI * 2),
+          amp: rand(14, 40),
+          freq: rand(1.5, 3.2),
+          width: rand(1.0, 2.2),
+          alpha: rand(0.35, 0.8),
+          bend: rand(-0.9, 0.9),
         });
       }
+
       nodes = [];
-      const nn = w < 640 ? 8 : 16;
+      const nn = isMobile ? 8 : 16;
       for (let i = 0; i < nn; i++) {
-        nodes.push({ x: rand(0, w), y: rand(0, h), vx: rand(-14, 14), vy: rand(-12, 12), r: rand(1, 2.2) });
+        nodes.push({ x: rand(0, w), y: rand(0, h), vx: rand(-12, 12), vy: rand(-10, 10), r: rand(1.2, 2.4) });
       }
+
       sparks = [];
-      const sn = w < 640 ? 10 : 20;
+      const sn = isMobile ? 10 : 22;
       for (let i = 0; i < sn; i++) {
-        sparks.push({ x: rand(0, w), y: rand(0, h), vx: rand(-6, 14), vy: rand(-10, 6), r: rand(0.6, 1.8), ph: rand(0, Math.PI * 2), sp: rand(0.6, 2) });
+        sparks.push({ 
+          x: rand(0, w), 
+          y: rand(0, h), 
+          vx: rand(-8, 12), 
+          vy: rand(-8, 8), 
+          r: rand(0.8, 2.0), 
+          ph: rand(0, Math.PI * 2), 
+          sp: rand(0.8, 2.2) 
+        });
       }
     };
 
     const resize = () => {
-      dpr = Math.min(window.devicePixelRatio || 1, 1.25);
       w = Math.max(1, window.innerWidth);
       h = Math.max(1, window.innerHeight);
+      const isMobile = w < 640;
+      dpr = isMobile ? 1 : Math.min(window.devicePixelRatio || 1, 1.25);
       canvas.width = Math.floor(w * dpr);
       canvas.height = Math.floor(h * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       build();
     };
     resize();
-    window.addEventListener('resize', resize);
+    window.addEventListener('resize', resize, { passive: true });
 
-    const onMouse = (e: MouseEvent) => { mouse.x = e.clientX; mouse.y = e.clientY; };
+    // Mouse & Touch Tracking
+    const onMouse = (e: MouseEvent) => { 
+      mouse.x = e.clientX; 
+      mouse.y = e.clientY; 
+    };
+    const onTouch = (e: TouchEvent) => {
+      if (e.touches && e.touches.length > 0) {
+        mouse.x = e.touches[0].clientX;
+        mouse.y = e.touches[0].clientY;
+      }
+    };
+
     window.addEventListener('mousemove', onMouse, { passive: true });
+    window.addEventListener('touchstart', onTouch, { passive: true });
+    window.addEventListener('touchmove', onTouch, { passive: true });
+
+    // Scroll Tracking
+    const onScroll = () => {
+      scrollY = window.scrollY || window.pageYOffset;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      scrollProgress = docHeight > 0 ? Math.min(1, Math.max(0, scrollY / docHeight)) : 0;
+      scrollVelocity = Math.abs(scrollY - lastScrollY);
+      lastScrollY = scrollY;
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
 
     let lastFrame = 0;
     const onVis = () => {
@@ -107,12 +152,6 @@ export default function ParticleRibbons() {
       if (!document.hidden && !reducedMotion) raf = requestAnimationFrame(loop);
     };
     document.addEventListener('visibilitychange', onVis);
-
-    // Glow-burst point drifts slowly across the viewport (lissajous)
-    const burst = (t: number): [number, number] => [
-      w * (0.5 + 0.32 * Math.sin(t * 0.11)),
-      h * (0.42 + 0.3 * Math.sin(t * 0.073 + 1.3)),
-    ];
 
     const SEG = 24;
 
@@ -143,80 +182,119 @@ export default function ParticleRibbons() {
     const draw = (time: number) => {
       const t = time / 1000;
       const dark = isDark();
-      const [bx, by] = burst(t);
+
+      // Smooth scroll smoothing
+      smoothScrollY += (scrollY - smoothScrollY) * 0.1;
+      const currentScrollRatio = Math.min(1, Math.max(0, smoothScrollY / (document.documentElement.scrollHeight - window.innerHeight || 1)));
+
+      // Dynamic scroll beam position:
+      // Glides along an S-curve across the viewport height based on scroll progression
+      const scrollBeamX = w * (0.5 + 0.35 * Math.sin(currentScrollRatio * Math.PI * 2.5 + t * 0.3));
+      const scrollBeamY = h * (0.25 + 0.5 * Math.sin(currentScrollRatio * Math.PI * 1.8 + 0.2));
+
+      // Ease spotlight toward active interaction or scroll beam
+      const targetSpotX = mouse.x > -100 ? mouse.x : scrollBeamX;
+      const targetSpotY = mouse.y > -100 ? mouse.y : scrollBeamY;
+
+      mouse.sx += (targetSpotX - mouse.sx) * 0.08;
+      mouse.sy += (targetSpotY - mouse.sy) * 0.08;
+
       ctx.clearRect(0, 0, w, h);
       ctx.globalCompositeOperation = dark ? 'lighter' : 'source-over';
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
 
-      // ease spotlight toward the cursor
-      mouse.sx += (mouse.x - mouse.sx) * 0.08;
-      mouse.sy += (mouse.y - mouse.sy) * 0.08;
-
-      // 1. Cursor spotlight — attaches the animation to the user's pointer/buttons
-      if (mouse.sx > -100) {
-        const sr = Math.min(w, h) * 0.32;
-        const sg = ctx.createRadialGradient(mouse.sx, mouse.sy, 0, mouse.sx, mouse.sy, sr);
-        sg.addColorStop(0, `hsla(85, 90%, 62%, ${dark ? 0.10 : 0.05})`);
-        sg.addColorStop(1, 'hsla(85, 90%, 62%, 0)');
-        ctx.fillStyle = sg;
-        ctx.fillRect(mouse.sx - sr, mouse.sy - sr, sr * 2, sr * 2);
+      // 1. DYNAMIC SCROLL SPOTLIGHT BEAM (Tracks scroll and expands near buttons/cards)
+      // Color dynamically adapts to page zone:
+      // Zone 1: Cyan (Hero) -> Zone 2: Emerald (Catalysts) -> Zone 3: Royal Blue (Results) -> Zone 4: Purple (Bento) -> Zone 5: Emerald (Pricing)
+      let beamHue = 195; // default Cyan
+      if (currentScrollRatio < 0.2) {
+        beamHue = 195; // Hero
+      } else if (currentScrollRatio < 0.45) {
+        beamHue = 160; // Catalysts (Emerald)
+      } else if (currentScrollRatio < 0.70) {
+        beamHue = 220; // Results (Blue)
+      } else if (currentScrollRatio < 0.88) {
+        beamHue = 270; // Bento (Purple)
+      } else {
+        beamHue = 165; // Pricing & Community (Teal/Emerald)
       }
 
-      // 2. Glow-burst emanation point (drifting + pulsing = bade-chote)
-      const pulse = 1 + Math.sin(t * 1.4) * 0.14;
-      const burstR = Math.min(w, h) * 0.13 * pulse;
-      const bAlpha = dark ? 0.42 : 0.12;
-      const g = ctx.createRadialGradient(bx, by, 0, bx, by, burstR);
-      g.addColorStop(0, `hsla(80, 95%, 68%, ${bAlpha})`);
-      g.addColorStop(0.4, `hsla(90, 90%, 60%, ${bAlpha * 0.5})`);
-      g.addColorStop(1, 'hsla(90, 90%, 60%, 0)');
-      ctx.fillStyle = g;
-      ctx.fillRect(bx - burstR, by - burstR, burstR * 2, burstR * 2);
-      const core = ctx.createRadialGradient(bx, by, 0, bx, by, burstR * 0.3);
-      core.addColorStop(0, `hsla(75, 100%, 80%, ${dark ? 0.85 : 0.3})`);
-      core.addColorStop(1, 'hsla(75, 100%, 80%, 0)');
-      ctx.fillStyle = core;
-      ctx.fillRect(bx - burstR * 0.32, by - burstR * 0.32, burstR * 0.64, burstR * 0.64);
+      const isInteracting = mouse.x > -100;
+      const baseRadius = Math.min(w, h) * (isInteracting ? 0.38 : 0.48);
+      const pulseRadius = baseRadius * (1 + 0.08 * Math.sin(t * 1.5));
 
-      // 3. Ribbons — glow pass + bright core, head-to-tail fade
+      // Outer ambient spotlight wash
+      const spotGrad = ctx.createRadialGradient(mouse.sx, mouse.sy, 0, mouse.sx, mouse.sy, pulseRadius);
+      const spotAlpha = dark ? (isInteracting ? 0.18 : 0.12) : (isInteracting ? 0.09 : 0.06);
+      spotGrad.addColorStop(0, `hsla(${beamHue}, 90%, ${dark ? 65 : 55}%, ${spotAlpha})`);
+      spotGrad.addColorStop(0.5, `hsla(${beamHue + 20}, 85%, ${dark ? 60 : 50}%, ${spotAlpha * 0.5})`);
+      spotGrad.addColorStop(1, `hsla(${beamHue}, 90%, 60%, 0)`);
+      ctx.fillStyle = spotGrad;
+      ctx.fillRect(mouse.sx - pulseRadius, mouse.sy - pulseRadius, pulseRadius * 2, pulseRadius * 2);
+
+      // Core focused beam
+      const coreR = pulseRadius * 0.35;
+      const coreGrad = ctx.createRadialGradient(mouse.sx, mouse.sy, 0, mouse.sx, mouse.sy, coreR);
+      coreGrad.addColorStop(0, `hsla(${beamHue - 15}, 100%, ${dark ? 75 : 60}%, ${dark ? 0.22 : 0.10})`);
+      coreGrad.addColorStop(1, `hsla(${beamHue}, 100%, 75%, 0)`);
+      ctx.fillStyle = coreGrad;
+      ctx.fillRect(mouse.sx - coreR, mouse.sy - coreR, coreR * 2, coreR * 2);
+
+      // 2. Secondary Floating Glow Burst Point (Slow lissajous drift)
+      const burstX = w * (0.5 + 0.3 * Math.sin(t * 0.12 + currentScrollRatio * 2));
+      const burstY = h * (0.4 + 0.28 * Math.sin(t * 0.08 + 1.2));
+      const burstR = Math.min(w, h) * 0.15;
+      const bg = ctx.createRadialGradient(burstX, burstY, 0, burstX, burstY, burstR);
+      const bAlpha = dark ? 0.25 : 0.08;
+      bg.addColorStop(0, `hsla(180, 95%, 65%, ${bAlpha})`);
+      bg.addColorStop(1, 'hsla(180, 95%, 65%, 0)');
+      ctx.fillStyle = bg;
+      ctx.fillRect(burstX - burstR, burstY - burstR, burstR * 2, burstR * 2);
+
+      // 3. Ribbons (Velocity-boosted on scroll)
       const heads: Array<[number, number, number]> = [];
+      const velocityBoost = Math.min(scrollVelocity * 0.02, 1.5);
+
       for (const r of ribbons) {
-        const passes = dark ? [{ m: 4.2, a: 0.13 }, { m: 1, a: 1 }] : [{ m: 2.4, a: 0.15 }];
-        // Adjacent segments and glow passes share the same curve at this time.
-        const points = Array.from({ length: SEG + 1 }, (_, s) => ribbonPoint(r, t, s / SEG, bx, by));
+        const passes = dark ? [{ m: 3.8, a: 0.14 }, { m: 1, a: 0.9 }] : [{ m: 2.2, a: 0.12 }];
+        const points = Array.from({ length: SEG + 1 }, (_, s) => 
+          ribbonPoint(r, t * (1 + velocityBoost * 0.3), s / SEG, burstX, burstY)
+        );
+
         for (const p of passes) {
           for (let s = 1; s <= SEG; s++) {
             const k1 = s / SEG;
             const [x0, y0] = points[s - 1];
             const [x1, y1] = points[s];
-            const fade = Math.pow(1 - k1, 1.6);
-            const a = r.alpha * fade * p.a * (dark ? 1 : 0.5);
-            if (a < 0.004) continue;
-            ctx.strokeStyle = `hsla(${r.hue}, ${r.sat}%, ${dark ? r.light : Math.max(30, r.light - 18)}%, ${a})`;
-            ctx.lineWidth = Math.max(0.4, r.width * p.m * (0.5 + fade * 0.7));
+            const fade = Math.pow(1 - k1, 1.5);
+            const a = r.alpha * fade * p.a * (dark ? 1 : 0.45);
+            if (a < 0.003) continue;
+            ctx.strokeStyle = `hsla(${r.hue}, ${r.sat}%, ${dark ? r.light : Math.max(35, r.light - 16)}%, ${a})`;
+            ctx.lineWidth = Math.max(0.5, r.width * p.m * (0.6 + fade * 0.6));
             ctx.beginPath();
             ctx.moveTo(x0, y0);
             ctx.lineTo(x1, y1);
             ctx.stroke();
           }
         }
-        const [hx, hy] = ribbonPoint(r, t, 0.02, bx, by);
+        const [hx, hy] = ribbonPoint(r, t, 0.02, burstX, burstY);
         heads.push([hx, hy, r.hue]);
-        ctx.fillStyle = `hsla(${r.hue}, 100%, ${dark ? 82 : 55}%, ${r.alpha * (dark ? 0.9 : 0.45)})`;
+        ctx.fillStyle = `hsla(${r.hue}, 100%, ${dark ? 80 : 55}%, ${r.alpha * (dark ? 0.85 : 0.4)})`;
         ctx.beginPath();
-        ctx.arc(hx, hy, r.width * 1.4, 0, Math.PI * 2);
+        ctx.arc(hx, hy, r.width * 1.5, 0, Math.PI * 2);
         ctx.fill();
       }
 
-      // 4. Plexus — nodes drift, connect to each other and to ribbon heads
-      const LINK = w < 640 ? 110 : 135;
+      // 4. Plexus Network
+      const LINK = w < 640 ? 110 : 140;
       for (const n of nodes) {
-        n.x += n.vx * 0.016; n.y += n.vy * 0.016;
+        n.x += n.vx * 0.016; 
+        n.y += n.vy * 0.016;
         if (n.x < -20) n.x = w + 20; if (n.x > w + 20) n.x = -20;
         if (n.y < -20) n.y = h + 20; if (n.y > h + 20) n.y = -20;
       }
-      const linkAlpha = dark ? 0.16 : 0.10;
+      const linkAlpha = dark ? 0.15 : 0.08;
       ctx.lineWidth = 1;
       for (let i = 0; i < nodes.length; i++) {
         const a = nodes[i];
@@ -226,32 +304,41 @@ export default function ParticleRibbons() {
           const d2 = dx * dx + dy * dy;
           if (d2 < LINK * LINK) {
             const al = linkAlpha * (1 - Math.sqrt(d2) / LINK);
-            ctx.strokeStyle = `hsla(95, 85%, ${dark ? 64 : 42}%, ${al})`;
-            ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+            ctx.strokeStyle = `hsla(${beamHue}, 85%, ${dark ? 65 : 45}%, ${al})`;
+            ctx.beginPath(); 
+            ctx.moveTo(a.x, a.y); 
+            ctx.lineTo(b.x, b.y); 
+            ctx.stroke();
           }
         }
-        // connect node to nearby ribbon heads — ribbons "attach" to the network
+        // Connect to nearby ribbon heads
         for (const [hx, hy, hue] of heads) {
           const dx = a.x - hx, dy = a.y - hy;
           const d2 = dx * dx + dy * dy;
           const R = LINK * 0.85;
           if (d2 < R * R) {
-            const al = (dark ? 0.28 : 0.16) * (1 - Math.sqrt(d2) / R);
+            const al = (dark ? 0.25 : 0.12) * (1 - Math.sqrt(d2) / R);
             ctx.strokeStyle = `hsla(${hue}, 90%, ${dark ? 66 : 45}%, ${al})`;
-            ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(hx, hy); ctx.stroke();
+            ctx.beginPath(); 
+            ctx.moveTo(a.x, a.y); 
+            ctx.lineTo(hx, hy); 
+            ctx.stroke();
           }
         }
-        ctx.fillStyle = `hsla(90, 90%, ${dark ? 70 : 48}%, ${dark ? 0.55 : 0.35})`;
-        ctx.beginPath(); ctx.arc(a.x, a.y, a.r, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = `hsla(${beamHue}, 90%, ${dark ? 70 : 50}%, ${dark ? 0.5 : 0.3})`;
+        ctx.beginPath(); 
+        ctx.arc(a.x, a.y, a.r, 0, Math.PI * 2); 
+        ctx.fill();
       }
 
-      // 5. Sparkle dust
+      // 5. Sparkle Dust
       for (const s of sparks) {
-        s.x += s.vx * 0.016; s.y += s.vy * 0.016;
+        s.x += s.vx * 0.016; 
+        s.y += s.vy * 0.016;
         if (s.x < -10) s.x = w + 10; if (s.x > w + 10) s.x = -10;
         if (s.y < -10) s.y = h + 10; if (s.y > h + 10) s.y = -10;
         const tw = 0.25 + 0.75 * Math.abs(Math.sin(t * s.sp + s.ph));
-        ctx.fillStyle = `hsla(80, 90%, ${dark ? 72 : 45}%, ${tw * (dark ? 0.5 : 0.28)})`;
+        ctx.fillStyle = `hsla(${beamHue}, 90%, ${dark ? 75 : 45}%, ${tw * (dark ? 0.45 : 0.22)})`;
         ctx.beginPath();
         ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
         ctx.fill();
@@ -261,23 +348,33 @@ export default function ParticleRibbons() {
     };
 
     if (reducedMotion) {
-      draw(900);
+      draw(1000);
       window.removeEventListener('resize', resize);
       window.removeEventListener('mousemove', onMouse);
+      window.removeEventListener('touchstart', onTouch);
+      window.removeEventListener('touchmove', onTouch);
+      window.removeEventListener('scroll', onScroll);
       document.removeEventListener('visibilitychange', onVis);
       return;
     }
 
     const loop = (time: number) => {
       if (document.hidden) { raf = 0; return; }
-      if (time - lastFrame >= 1000 / 30) { draw(time); lastFrame = time; }
+      if (time - lastFrame >= 1000 / 30) { 
+        draw(time); 
+        lastFrame = time; 
+      }
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
+
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', resize);
       window.removeEventListener('mousemove', onMouse);
+      window.removeEventListener('touchstart', onTouch);
+      window.removeEventListener('touchmove', onTouch);
+      window.removeEventListener('scroll', onScroll);
       document.removeEventListener('visibilitychange', onVis);
     };
   }, [prefersReducedMotion]);

@@ -1003,10 +1003,20 @@ export function Announcements({
         {/* Header Details */}
         <div className="border-b border-slate-200/90 dark:border-[#2D283E] pb-4 space-y-2 relative">
           <div className="flex items-center justify-between flex-wrap gap-2">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <HeliosPill tone="slate" dot={false} className="font-mono">
                 {item.scrip_cd ? `BSE: ${item.scrip_cd}` : 'BSE Listed'}
               </HeliosPill>
+              {cleanSub.isInvestorCall && (
+                <HeliosPill tone="sky" dot={true}>
+                  Investor Call / Concall
+                </HeliosPill>
+              )}
+              {cleanSub.humanTitle && !cleanSub.isInvestorCall && cleanSub.humanTitle !== 'Corporate announcement' && (
+                <HeliosPill tone={cleanSub.badgeTone || 'slate'} dot={false}>
+                  {cleanSub.humanTitle}
+                </HeliosPill>
+              )}
               <HeliosPill tone="slate" dot={false} className="font-mono">
                 {cleanSub.regulation || 'Reg 30 (LODR)'}
               </HeliosPill>
@@ -1778,12 +1788,12 @@ export function Announcements({
               const item = cluster.primaryItem;
               if (!item || (!item.companyName && !item.subject)) return null;
               const isSelected = selectedItem?.id === item.id;
-              const isResults = cluster.hasResults || item.category === 'RESULTS';
-              const isConcall = cluster.hasConcall || item.category === 'CONFERENCE_CALL';
+              const cleanSub = cleanBseSubject(item.subject, item.companyName, item.scrip_cd);
+              const isResults = cluster.hasResults || item.category === 'RESULTS' || cleanSub.humanTitle === 'Financial results';
+              const isConcall = cluster.hasConcall || item.category === 'CONFERENCE_CALL' || Boolean(cleanSub.isInvestorCall);
               const isHigh = cluster.hasHighPriority || item.category === 'HIGH_PRIORITY' || (item.priority === 'HIGH' && !isResults && !isConcall);
               const isFlashActive = lightningId === item.id;
               const isExpanded = Boolean(expandedClusters[cluster.id]);
-              const cleanSub = cleanBseSubject(item.subject, item.companyName, item.scrip_cd);
               const detectedNoiseType = detectFilingType(item.subject);
               const timeInfo = getFilingTimeInfo(item);
 

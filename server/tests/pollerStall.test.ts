@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
 import { isBseFiling } from '../../src/shared/filingSource.js';
+import { getScripCodeForSymbolOrName } from '../utils/helpers.js';
 
 function harness(hanging?: string, failing?: string) {
   let now = 1_000_000;
@@ -63,7 +64,7 @@ function harness(hanging?: string, failing?: string) {
     '../database/usersDao.js': { getAllUserProfiles: async () => [{ uid: 'owner', muteInAppNotifications: false }] },
     '../database/notificationDao.js': { initNotificationsFromCloud: async () => {}, addNotification: () => invoke('inbox', undefined) },
     '../database/alertRulesDao.js': { initAlertRulesFromCloud: async () => [], evaluateAlertRulesForUser: () => ({ shouldSendInApp: true, shouldSendTelegram: false }) },
-    '../utils/helpers.js': { escapeHTML: (s: string) => s, determinePriority: () => ({ level: 'HIGH', category: 'RESULTS' }), isSymbolMatch: () => true, parseBseDate: () => now, isMarketHoursIST: () => true },
+    '../utils/helpers.js': { escapeHTML: (s: string) => s, determinePriority: () => ({ level: 'HIGH', category: 'RESULTS' }), isSymbolMatch: () => true, parseBseDate: () => now, isMarketHoursIST: () => true, getScripCodeForSymbolOrName },
     './timelineClassifier.js': { classifyMaterialEvent: () => null },
     '../utils/alertDecision.js': { doesAnnouncementMatchUserPrefs: () => true, personalAlertChannels: () => ({ inApp: true, telegram: false }) },
     './oneSignal.js': { isOneSignalConfigured: () => false },

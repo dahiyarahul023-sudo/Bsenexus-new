@@ -1,4 +1,6 @@
-# Change: nonce CSP report-only rollout (Task 2 / HDR-1)
+# Historical change: initial nonce CSP report-only candidate (Task 2 / HDR-1)
+
+Current merge and activation contract: see [csp-safe-rollout.md](csp-safe-rollout.md). The owner-approved follow-up makes the trial disabled by default, preserves ordinary HTML/offline caching while disabled, and retains real-provider validation as an activation gate. The initial unconditional candidate and its old draft instructions below are historical evidence.
 
 - Starting commit: `7200ff2cba5bb28b9052c4d05eeb813c3c2650cf`, latest origin/main verified through GitHub before branching.
 - Objective: introduce script-src in REPORT-ONLY mode; preserve framing/OAuth protections, preview and embed exemptions; fresh matching nonce for every HTML response including cached bodies. No script-src enforcement in this PR.

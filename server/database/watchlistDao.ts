@@ -6,6 +6,7 @@ import { readLocalJson, writeLocalJson, isOfflineOrNetworkError } from './localS
 import { resolveStockDetailsSync, resolveStockDetailsStrict } from '../utils/stockResolver.js';
 import { withRetry } from '../utils/retry.js';
 import { addLog } from './logDao.js';
+import { VersionedSnapshot, type SnapshotRow, type SnapshotVersion } from '../utils/versionedSnapshot.js';
 
 const WATCHLISTS_TABLE = 'user_watchlists';
 const mutationContext = new AsyncLocalStorage<{uid:string; revision?:number|null}>();
@@ -20,6 +21,7 @@ async function upsertWatchlistsQuiet(uid: string, lists: any[]): Promise<void> {
       .from(WATCHLISTS_TABLE)
       .upsert({ uid, lists, updated_at: new Date().toISOString() }, { onConflict: 'uid' });
     if (error) throw error;
+    globalWatchlistSnapshot.invalidate();
   } catch { /* background sync is best-effort */ }
 }
 
@@ -225,6 +227,62 @@ const userWatchlistsCache: Record<string, { lists: any[]; fetchedAt: number }> =
 const WATCHLISTS_CACHE_TTL_MS = 60 * 1000;
 const userWatchlistsDirty: Record<string, boolean> = {};
 
+const watchlistVersion = (row: any) => `${row.revision}:${row.updated_at || ''}`;
+// One service-only inventory for monitor, calendar, retention and global maps.
+// Version scans preserve cross-instance freshness without repeatedly shipping lists.
+const globalWatchlistSnapshot = new VersionedSnapshot<any[]>({
+  ttlMs: WATCHLISTS_CACHE_TTL_MS,
+  now: () => Date.now(),
+  loadVersions: async () => {
+    const versions: SnapshotVersion[] = [];
+    const deadline = AbortSignal.timeout(12_000);
+    let after = '';
+    while (true) {
+      let query = getSupabase().from(WATCHLISTS_TABLE).select('uid,revision,updated_at')
+        .order('uid', { ascending: true }).limit(500);
+      if (after) query = query.gt('uid', after);
+      const { data, error } = await query.abortSignal(deadline);
+      if (error) throw error;
+      if (!Array.isArray(data)) throw new Error('Watchlist inventory unavailable');
+      versions.push(...data.map(row => ({ id: row.uid, version: watchlistVersion(row) })));
+      if (data.length < 500) break;
+      const next = String(data[data.length - 1].uid);
+      if (next === after) throw new Error('Watchlist inventory pagination stalled');
+      after = next;
+    }
+    return versions;
+  },
+  loadRows: async ids => {
+    const rows: SnapshotRow<any[]>[] = [];
+    const deadline = AbortSignal.timeout(12_000);
+    for (let offset = 0; offset < ids.length; offset += 50) {
+      const { data, error } = await getSupabase().from(WATCHLISTS_TABLE)
+        .select('uid,lists,revision,updated_at').in('uid', ids.slice(offset, offset + 50)).abortSignal(deadline);
+      if (error) throw error;
+      if (!Array.isArray(data)) throw new Error('Watchlist bodies unavailable');
+      rows.push(...data.map(row => ({ id: row.uid, version: watchlistVersion(row),
+        value: Array.isArray(row.lists) ? row.lists : [] })));
+    }
+    return rows;
+  }
+});
+
+async function getCloudWatchlistRows(): Promise<{ lists: any[] }[]> {
+  let batch = await globalWatchlistSnapshot.get();
+  while (!globalWatchlistSnapshot.isCurrent(batch)) batch = await globalWatchlistSnapshot.get();
+  const { rows, checkedAt } = batch;
+  return rows.map(row => {
+    const lists = sanitizeWatchlistArray(row.value);
+    if (row.id !== 'guest' && !durableMutation(row.id)
+        && (!userWatchlistsCache[row.id] || userWatchlistsCache[row.id].fetchedAt <= checkedAt)) {
+      // Reusing a snapshot must NOT restart the owner's 60-second freshness clock.
+      userWatchlistsCache[row.id] = { lists, fetchedAt: checkedAt };
+      userWatchlistsDirty[row.id] = false;
+    }
+    return { lists: structuredClone(lists) };
+  });
+}
+
 // Per-UID async mutex lock to prevent read-modify-write race conditions
 const uidLocks: Record<string, Promise<void>> = {};
 
@@ -251,6 +309,7 @@ export async function withUidLock<T>(uid: string, fn: () => Promise<T>): Promise
 }
 
 export function invalidateUserWatchlistCache(userId?: string) {
+  globalWatchlistSnapshot.invalidate();
   const uid = sanitizeUserId(userId);
   delete userWatchlistsCache[uid];
   userWatchlistsDirty[uid] = true;
@@ -326,6 +385,7 @@ export async function migrateLegacyAdminWatchlists(targetRealUid: string): Promi
 }
 
 async function persistUserWatchlists(uid: string, lists: any[]): Promise<void> {
+  globalWatchlistSnapshot.invalidate();
   if (durableMutation(uid)) {
     const context=mutationContext.getStore()!;
     const revision=context.revision;
@@ -340,6 +400,7 @@ async function persistUserWatchlists(uid: string, lists: any[]): Promise<void> {
       if(response.error?.code==='23505'||(!response.error&&!data?.length))throw new WatchlistConflict('Watchlist changed. Retry with fresh data.');
       if(response.error)throw response.error;
     } catch(error) {if(error instanceof WatchlistConflict)throw error;throw new PaymentStoreUnavailableError('save watchlist',error);}
+    globalWatchlistSnapshot.invalidate();
     context.revision=Number(data![0].revision);
     userWatchlistsCache[uid]={lists:row.lists,fetchedAt:Date.now()};userWatchlistsDirty[uid]=false;
     try{writeLocalJson(getWatchlistFilename(uid),row.lists);}catch{}
@@ -366,6 +427,7 @@ async function persistUserWatchlists(uid: string, lists: any[]): Promise<void> {
         console.warn(`[WatchlistDao] Retrying Supabase write for watchlist UID ${uid} (attempt ${attempt}):`, err?.message || err);
       }
     });
+    globalWatchlistSnapshot.invalidate();
     console.log(`[WatchlistDao] Cloud sync confirmed in Supabase for UID: ${uid} (${sanitized.length} lists, ${sanitized.reduce((acc, l) => acc + (l.items?.length || 0), 0)} stocks)`);
   } catch (err: any) {
     if (isOfflineOrNetworkError(err)) {
@@ -848,8 +910,7 @@ export async function getCalendarWatchlistStocks(): Promise<any[]> {
     .flatMap(list => Array.isArray(list.items) ? list.items : []);
   if (isSupabaseConfigured()) {
     try {
-      const { data, error } = await getSupabase().from(WATCHLISTS_TABLE).select('lists');
-      if (error) throw error;
+      const data = await getCloudWatchlistRows();
       if (Array.isArray(data)) return data.flatMap(row => activeItems(Array.isArray(row.lists) ? row.lists : []));
     } catch {
       console.warn('[ResultsCalendar] Watchlist intake unavailable; retaining cached meetings and using known local lists.');
@@ -881,14 +942,12 @@ export async function getActiveWatchlistSymbols(userId?: string, opts?: GetWatch
   // This ensures ANY user's watchlist (pro, free, admin) protects their stocks' announcements
   if (isSupabaseConfigured()) {
     try {
-      const { data, error } = await getSupabase()
-        .from(WATCHLISTS_TABLE)
-        .select('lists');
-      if (!error && data) {
+      const data = await getCloudWatchlistRows();
+      if (data) {
         for (const row of data) {
           const lists = Array.isArray(row.lists) ? row.lists : [];
           for (const list of lists) {
-            if (list && list.is_active !== false) {
+            if (list && list.is_active) {
               const listItems = Array.isArray(list.items) ? list.items : [];
               for (const it of listItems) {
                 const sym = extractSymbol(it);
@@ -961,6 +1020,35 @@ export async function getActiveWatchlistSymbolMap(userId?: string, opts?: GetWat
       }
     }
     return map;
+  }
+
+  // Cloud owners may not exist in a local users.json on this instance.
+  if (isSupabaseConfigured()) {
+    try {
+      const listsToScan = (await getCloudWatchlistRows()).flatMap(row => row.lists);
+      for (const list of listsToScan) {
+        if (list.is_active) {
+          const listItems = Array.isArray(list.items) ? list.items : [];
+          for (const it of listItems) {
+            const sym = extractSymbol(it);
+            if (sym) {
+              const itemP = extractPriority(it);
+              const itemCat = extractCategory(it);
+              const resolved = resolveStockDetailsSync(sym);
+              if (!map[sym] || weight[itemP] > weight[map[sym].priority]) {
+                map[sym] = {
+                  priority: itemP,
+                  category: itemCat || map[sym]?.category,
+                  scripCode: resolved?.scripCode || (typeof it === 'object' && it.scripCode ? String(it.scripCode) : undefined),
+                  companyName: resolved?.name || (typeof it === 'object' && it.companyName ? String(it.companyName) : undefined)
+                };
+              }
+            }
+          }
+        }
+      }
+      return map;
+    } catch { /* Retain the existing local fallback during storage failure. */ }
   }
 
   // Aggregate across all known users and primary owner

@@ -1134,6 +1134,10 @@ function AppContent() {
                 setIsAuthModalOpen(true);
               }
             }}
+            onSignIn={() => {
+              pendingTerminalTabRef.current = 'home';
+              setIsAuthModalOpen(true);
+            }}
             theme={theme}
             setTheme={setTheme}
             bseHealth={health.bse}
@@ -1178,6 +1182,10 @@ function AppContent() {
               } else {
                 setIsAuthModalOpen(true);
               }
+            }}
+            onSignIn={() => {
+              pendingTerminalTabRef.current = 'home';
+              setIsAuthModalOpen(true);
             }}
             theme={theme}
             setTheme={setTheme}

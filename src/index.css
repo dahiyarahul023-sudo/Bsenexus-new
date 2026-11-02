@@ -32,7 +32,7 @@
 .animate-ticker-smooth {
   display: flex;
   width: max-content;
-  animation: tickerLoop 38s linear infinite;
+  animation: tickerLoop 95s linear infinite;
   will-change: transform;
 }
 
@@ -742,8 +742,8 @@ body {
 .calendar-symbol { font-size:10px; font-weight:650; }
 .calendar-purpose { color:var(--rich-muted,#586578); }
 .calendar-date-heading { font-size:11px; line-height:1.5; min-height:34px; white-space:nowrap; }
-.calendar-card-footer { display:flex; align-items:center; justify-content:flex-end; flex-wrap:wrap; gap:8px; }
-.calendar-card-actions { display:flex; align-items:center; justify-content:flex-end; flex-wrap:wrap; gap:6px; min-width:0; }
+.calendar-card-footer { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; width:100%; }
+.calendar-card-actions { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px; width:100%; min-width:0; }
 .calendar-action-button { min-height:36px; font-size:11px; }
 .calendar-list-status { margin-right:auto; white-space:nowrap; }
 @media(max-width:767px) {

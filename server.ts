@@ -11,7 +11,7 @@ import path from "path";
 import fs from "fs";
 import cookieParser from "cookie-parser";
 import { responseHeaders } from './server/security/responseHeaders.js';
-import { CSP_NONCE_PLACEHOLDER, prepareTrustedHtml } from './server/security/cspNonce.js';
+import { CSP_NONCE_PLACEHOLDER, prepareTrustedHtml, isCspReportOnlyEnabled, renderCspServiceWorker } from './server/security/cspNonce.js';
 import { cspReportRouter } from './server/security/cspReports.js';
 import compression from "compression";
 import { createServer as createViteServer } from "vite";
@@ -109,8 +109,9 @@ app.use(compression({
   }
 }) as unknown as express.RequestHandler);
 
-app.use(responseHeaders());
-app.use(cspReportRouter());
+const cspTrialEnabled = isCspReportOnlyEnabled();
+app.use(responseHeaders(undefined, cspTrialEnabled));
+if (cspTrialEnabled) app.use(cspReportRouter());
 app.use('/api/payments/webhook', express.raw({ type: 'application/json', limit: '1mb' }));
 app.use(['/mcp','/register'], express.json({ limit: '32kb' }));
 app.use(['/token','/revoke'], express.urlencoded({ extended: false, limit: '8kb' }));
@@ -158,7 +159,7 @@ self.addEventListener('activate', (event) => {
 });
 `);
   } else {
-    res.sendFile(path.join(process.cwd(), 'public', 'sw.js'));
+    res.send(renderCspServiceWorker(fs.readFileSync(path.join(process.cwd(), 'public', 'sw.js'), 'utf8'), cspTrialEnabled));
   }
 });
 

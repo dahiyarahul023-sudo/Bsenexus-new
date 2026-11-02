@@ -379,8 +379,8 @@ export function Layout({
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 select-none">
               <motion.button 
                 type="button"
-                whileHover={{ scale: 1.06 }}
-                whileTap={{ scale: 0.94 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 transition={springSnappy}
                 onClick={() => setStoryModalOpen(true)}
                 className={cn(
@@ -392,29 +392,25 @@ export function Layout({
                 aria-label="View Today's Market Story (Daily Highlights)"
                 title={hasSeenStory ? "Today's Story (Viewed) • Click to replay" : "View Today's Market Story • Live Highlights"}
               >
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white dark:bg-[#0E0C18] flex items-center justify-center overflow-hidden">
-                  <BseNexusLogo className="w-5.5 h-5.5 sm:w-6.5 sm:h-6.5 transition-transform group-hover:scale-105 shrink-0" />
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#0B0F19] flex items-center justify-center overflow-hidden shadow-sm">
+                  <BseNexusLogo className="w-7 h-7 sm:w-8 sm:h-8 transition-transform group-hover:scale-105 shrink-0" />
                 </div>
-                {/* Live indicator dot - only shown when story is NOT yet viewed */}
-                {!hasSeenStory && (
-                  <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-white dark:ring-[#161424] animate-pulse" />
-                )}
               </motion.button>
 
               <button
                 type="button"
-                className="flex items-center gap-1 sm:gap-1.5 cursor-pointer select-none"
+                className="flex items-center gap-1.5 sm:gap-2 cursor-pointer select-none"
                 onClick={() => handleTabClick('home')}
                 aria-label="BSE Nexus home — For You"
               >
-                <span className="font-extrabold text-[12px] sm:text-base tracking-tight text-slate-900 dark:text-white font-display">
+                <span className="font-black text-[15px] sm:text-[18px] tracking-tight text-slate-900 dark:text-white font-display">
                   BSE<span className="text-emerald-500">NEXUS</span>
                 </span>
                 {/* PRO badge — paid subscription active (or admin). Simple monochrome pill;
                     a one-time gold sheen sweeps across on mount, then it stays simple. */}
                 {(isPaidProActive || profile?.subscriptionAccess?.gift && profile.subscriptionAccess.gift.expiresAt > Date.now()) && (
                   <span
-                    className="relative overflow-hidden inline-flex items-center shrink-0 text-[9px] font-black tracking-[1.2px] px-1.5 py-[3px] rounded-md bg-slate-900/[0.07] text-slate-900 dark:bg-white/10 dark:text-white border border-slate-900/10 dark:border-white/15"
+                    className="relative overflow-hidden inline-flex items-center shrink-0 text-[10px] font-black tracking-[1.2px] px-2 py-[2.5px] rounded-md bg-slate-900/10 text-slate-900 dark:bg-white/10 dark:text-white border border-slate-900/15 dark:border-white/20"
                     aria-label="Pro subscriber"
                     title="Pro subscription active"
                   >
@@ -428,8 +424,6 @@ export function Layout({
                     />
                   </span>
                 )}
-                
-
               </button>
             </div>
 

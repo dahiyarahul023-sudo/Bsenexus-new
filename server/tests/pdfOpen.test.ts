@@ -38,7 +38,7 @@ test('global admission cap returns 503/Retry-After and releases after completion
 test('streamed PDF retains content type and sanitized filename; announced oversize is cancelled before sending', async () => {
   await fixture(createPdfOpenRouter({ fetchDocument: async () => new Response('%PDF-bytes'), maxBytes: 100 }), async request => {
     const r = await request('/pdf-open?url=' + encodeURIComponent(url) + '&file=' + encodeURIComponent('../bad"\r\nname.pdf'));
-    assert.equal(r.status, 200); assert.equal(r.headers['content-type'], 'application/pdf'); assert.equal(r.headers['content-disposition'], 'inline; filename="..badname.pdf"'); assert.equal(r.body.toString(), '%PDF-bytes');
+    assert.equal(r.status, 200); assert.equal(r.headers['content-type'], 'application/pdf'); assert.equal(r.headers['content-disposition'], 'inline; filename="badname.pdf"'); assert.equal(r.body.toString(), '%PDF-bytes');
   });
   let cancelled = false;
   await fixture(createPdfOpenRouter({ fetchDocument: async () => new Response(new ReadableStream({ cancel() { cancelled = true; } }), { headers: { 'Content-Length': '101' } }), maxBytes: 100 }), async request => {
@@ -56,5 +56,22 @@ test('dedicated limiter refuses the 21st request and spoofed leftmost XFF cannot
   await fixture(createPdfOpenRouter(), async request => {
     for (let i = 0; i < 20; i++) assert.equal((await request('/pdf-open', `${i}.1.1.1, 198.51.100.30`)).status, 302);
     const r = await request('/pdf-open', 'fresh-spoof, 198.51.100.30'); assert.equal(r.status, 429); assert.ok(r.headers['retry-after']);
+  });
+});
+
+test('HTTP exchange links upgrade to HTTPS and HTML errors never stream as PDF', async () => {
+  const requested: string[] = [];
+  let cancelled = false;
+  const fetchDocument = async (target: string) => {
+    requested.push(target);
+    return new Response(new ReadableStream({ start(c) { c.enqueue(new TextEncoder().encode('<html>upstream error</html>')); }, cancel() { cancelled = true; } }), { headers: { 'Content-Type': 'text/html' } });
+  };
+  await fixture(createPdfOpenRouter({ fetchDocument }), async request => {
+    const r = await request('/pdf-open?url=' + encodeURIComponent('http://www.bseindia.com/filing.pdf'));
+    assert.equal(r.status, 302);
+    assert.equal(r.headers.location, url);
+    assert.deepEqual(requested, [url]);
+    assert.equal(cancelled, true);
+    assert.ok(!r.body.toString().includes('upstream error'));
   });
 });

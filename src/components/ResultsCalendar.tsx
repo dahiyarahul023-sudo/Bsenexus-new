@@ -1215,52 +1215,52 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
           {lastUpdated > 0 && <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">Updated {formatTimeOnly(lastUpdated)}</span>}
         </div>
 
-        <div className="results-toolbar flex items-center gap-2 justify-between">
+        {/* Row 1: Search Box (Full width) */}
+        <div className="results-search relative w-full min-h-[44px] sm:min-h-[36px] flex items-center">
+          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <input 
+            type="text" 
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            aria-label="Search earnings calendar"
+            placeholder="Search companies or symbols"
+            className="w-full h-10 sm:h-9 pl-8 pr-7 bg-slate-50 dark:bg-[#15141E] border border-slate-200 dark:border-[#2D283E] rounded-lg text-xs font-medium focus:outline-none focus:ring-1 focus:ring-slate-400 text-slate-900 dark:text-white"
+          />
+          {searchQuery && (
+            <button 
+              type="button" 
+              onClick={() => setSearchQuery('')}
+              aria-label="Clear calendar search"
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+            >
+              <X size={12} />
+            </button>
+          )}
+        </div>
 
-          {/* Center: Search Box (44px min height on mobile) */}
-          <div className="results-search relative flex-1 min-w-0 max-w-lg min-h-[44px] sm:min-h-[36px] flex items-center">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input 
-              type="text" 
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              aria-label="Search earnings calendar"
-              placeholder="Search companies or symbols"
-              className="w-full h-10 sm:h-9 pl-8 pr-7 bg-slate-50 dark:bg-[#15141E] border border-slate-200 dark:border-[#2D283E] rounded-lg text-xs font-medium focus:outline-none focus:ring-1 focus:ring-slate-400 text-slate-900 dark:text-white"
-            />
-            {searchQuery && (
-              <button 
-                type="button" 
-                onClick={() => setSearchQuery('')}
-                aria-label="Clear calendar search"
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
-              >
-                <X size={12} />
-              </button>
-            )}
+        {/* Row 2: Stock Scope Segmented Control (Left) & Filter / View Controls (Right) */}
+        <div className="flex items-center justify-between gap-2 w-full">
+          {/* Left: Stock coverage scope control */}
+          <div className="ui-segmented flex items-center gap-0.5 bg-slate-100 dark:bg-[#201E2E] p-0.5 rounded-lg border border-slate-200 dark:border-[#2D283E]" role="group" aria-label="Calendar scope">
+            {([
+              ['all', 'All', 'Your watchlist and F&O stocks, without duplicate meetings'],
+              ['fno', 'F&O Stocks', 'All stocks from the F&O calendar list'],
+              ['watchlist', 'Watchlist', 'Only your active watchlist stocks'],
+            ] as const).map(([scope, label, description]) => (
+              <button key={scope} type="button" aria-pressed={calendarScope === scope}
+                onClick={() => handleCalendarScopeChange(scope)} title={description}
+                className={cn(
+                  "px-3 py-1.5 min-h-[32px] sm:min-h-9 rounded-md text-xs whitespace-nowrap transition-all cursor-pointer select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500",
+                  calendarScope === scope
+                    ? "bg-white dark:bg-[#2E2A42] text-slate-900 dark:text-white font-bold shadow-2xs"
+                    : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                )}
+              >{label}</button>
+            ))}
           </div>
 
-          {/* Right: Filter & View Controls */}
-          <div className="flex items-center gap-1.5 shrink-0">
-            {/* Stock coverage and the existing date tabs are independent. */}
-            <div className="ui-segmented flex items-center gap-0.5 bg-slate-100 dark:bg-[#201E2E] p-0.5 rounded-lg border border-slate-200 dark:border-[#2D283E]" role="group" aria-label="Calendar scope">
-              {([
-                ['all', 'All', 'Your watchlist and F&O stocks, without duplicate meetings'],
-                ['fno', 'F&O Stocks', 'All stocks from the F&O calendar list'],
-                ['watchlist', 'Watchlist', 'Only your active watchlist stocks'],
-              ] as const).map(([scope, label, description]) => (
-                <button key={scope} type="button" aria-pressed={calendarScope === scope}
-                  onClick={() => handleCalendarScopeChange(scope)} title={description}
-                  className={cn(
-                    "px-2.5 py-1.5 min-h-9 rounded-md text-xs whitespace-nowrap transition-all cursor-pointer select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500",
-                    calendarScope === scope
-                      ? "bg-white dark:bg-[#2E2A42] text-slate-900 dark:text-white font-bold shadow-2xs"
-                      : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-                  )}
-                >{label}</button>
-              ))}
-            </div>
-
+          {/* Right: Filter & View Controls (Positioned cleanly on the right hand side) */}
+          <div className="flex items-center gap-1.5 shrink-0 ml-auto justify-end">
             {/* Desktop View Switcher */}
             <div className="ui-segmented hidden md:flex items-center gap-0.5 bg-slate-100 dark:bg-[#201E2E] p-0.5 rounded-lg border border-slate-200 dark:border-[#2D283E]">
               <button
@@ -1298,13 +1298,14 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
               transition={springSnappy}
               onClick={() => setIsFilterSheetOpen(true)}
               className={cn(
-                "min-h-[44px] sm:min-h-[36px] px-3 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer select-none border",
+                "min-h-[32px] sm:min-h-9 px-3 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer select-none border shrink-0",
                 (selectedWatchlistId || sortBy !== 'date_asc' || declarationFilter !== 'all')
                   ? "bg-slate-100 dark:bg-[#252233] text-slate-900 dark:text-white border-slate-300 dark:border-[#3E3854]"
                   : "bg-white dark:bg-[#1A1926] hover:bg-slate-50 dark:hover:bg-[#222030] text-slate-700 dark:text-slate-300 border-slate-200 dark:border-[#2D283E]"
               )}
               title="Filter by Watchlist, Sort & Date Horizon"
             >
+              <SlidersHorizontal size={13} className="text-slate-500" />
               <span>Filter</span>
               <ChevronDown size={13} className="text-slate-500" />
               {(selectedWatchlistId || sortBy !== 'date_asc' || declarationFilter !== 'all') && (
@@ -1314,37 +1315,39 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
           </div>
         </div>
 
-        {/* Row 2: Plain Text Tabs with Single Active Underline */}
-        <div className="flex items-center gap-5 overflow-x-auto no-scrollbar pt-1 border-t border-slate-100 dark:border-[#2D283E]/60 text-xs">
-          {[
-            { id: 'upcoming', label: 'Upcoming' },
-            { id: 'today', label: 'Today' },
-            { id: 'declared', label: 'Results Archive' },
-          ].map(tab => {
-            const isTabActive = statusFilter === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => handleTabChange(tab.id as any)}
-                className={cn(
-                  "relative py-1.5 font-medium transition-colors cursor-pointer whitespace-nowrap select-none",
-                  isTabActive
-                    ? "text-slate-900 dark:text-white font-bold"
-                    : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
-                )}
-              >
-                <span>{tab.label}</span>
-                {isTabActive && (
-                  <motion.div
-                    layoutId="activeCalendarTabUnderline"
-                    transition={springSnappy}
-                    className="absolute bottom-0 left-0 right-0 h-[2px] bg-slate-900 dark:bg-white rounded-full"
-                  />
-                )}
-              </button>
-            );
-          })}
+        {/* Row 3: Tabs (Upcoming | Today | Results Archive) */}
+        <div className="flex items-center justify-between gap-3 overflow-x-auto no-scrollbar pt-1 border-t border-slate-100 dark:border-[#2D283E]/60 text-xs">
+          <div className="flex items-center gap-4 sm:gap-5 shrink-0">
+            {[
+              { id: 'upcoming', label: 'Upcoming' },
+              { id: 'today', label: 'Today' },
+              { id: 'declared', label: 'Results Archive' },
+            ].map(tab => {
+              const isTabActive = statusFilter === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => handleTabChange(tab.id as any)}
+                  className={cn(
+                    "relative py-1.5 font-medium transition-colors cursor-pointer whitespace-nowrap select-none",
+                    isTabActive
+                      ? "text-slate-900 dark:text-white font-bold"
+                      : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                  )}
+                >
+                  <span>{tab.label}</span>
+                  {isTabActive && (
+                    <motion.div
+                      layoutId="activeCalendarTabUnderline"
+                      transition={springSnappy}
+                      className="absolute bottom-0 left-0 right-0 h-[2px] bg-slate-900 dark:bg-white rounded-full"
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </div>
 
           {/* Sub-Filter Reset Button if Active */}
           {(selectedWatchlistId || sortBy !== 'date_asc' || declarationFilter !== 'all') && (
@@ -1355,9 +1358,9 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
                 setSortBy('date_asc');
                 setDeclarationFilter('all');
               }}
-              className="py-1 px-2 text-[11px] font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-1 cursor-pointer shrink-0 ml-auto"
+              className="py-1 px-1.5 text-[11px] font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-0.5 cursor-pointer shrink-0 ml-auto"
             >
-              <span>Reset Filters</span>
+              <span>Reset</span>
               <X size={11} />
             </button>
           )}
@@ -2141,6 +2144,7 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
                 <div className="calendar-card-footer border-t border-slate-100 dark:border-[#2D283E] pt-2">
                   {viewMode !== 'grid' && <span className="calendar-list-status text-[11px] text-slate-500 dark:text-slate-400">{isDeclared ? (isToday ? '✓ Declared today' : 'Declared') : isToday ? 'Awaiting filing' : isUpcoming ? (item.daysLeft === 1 ? 'Tomorrow' : `In ${item.daysLeft}d`) : 'Past'}</span>}
                   <div ref={activeActionMenuId === item.id ? activeMenuAnchor : undefined} className="calendar-card-actions relative" onClick={(e) => e.stopPropagation()}>
+                    {/* Left: Set Reminder or Share Update */}
                     {isDeclared ? (
                       <button
                         type="button"
@@ -2175,28 +2179,17 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
                       </button>
                     )}
 
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSelectItem(item);
-                      }}
-                      className="calendar-action-button px-2.5 py-1.5 rounded-md bg-slate-100 dark:bg-[#222030] hover:bg-slate-200 dark:hover:bg-[#2A263D] text-slate-800 dark:text-slate-200 text-[11px] font-semibold border border-slate-200 dark:border-[#2D283E] transition-all flex items-center gap-1 cursor-pointer shadow-2xs select-none min-h-[36px] active:scale-95"
-                      title="View full filing details & AI analysis"
-                    >
-                      <span>Details</span>
-                      <ArrowUpRight size={11} className="text-slate-500" />
-                    </button>
-
-                    {/* Saved Notes: one-tap note linked to this result */}
-                    <SaveNoteButton
-                      link={{
-                        type: 'result',
-                        label: `${item.symbol} · ${item.meetingDate}`,
-                        symbol: item.symbol,
-                      }}
-                      label={`Save note on ${item.symbol} results`}
-                    />
+                    {/* Right: Saved Notes: one-tap note linked to this result */}
+                    <div className="ml-auto">
+                      <SaveNoteButton
+                        link={{
+                          type: 'result',
+                          label: `${item.symbol} · ${item.meetingDate}`,
+                          symbol: item.symbol,
+                        }}
+                        label={`Save note on ${item.symbol} results`}
+                      />
+                    </div>
 
                     {/* A portal avoids Soft Glass blur/transform containing blocks. */}
                     {activeActionMenuId === item.id && (

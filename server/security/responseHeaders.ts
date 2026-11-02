@@ -1,7 +1,7 @@
 import helmet from 'helmet';
 import type { RequestHandler } from 'express';
 import { randomBytes } from 'node:crypto';
-import { renderNonceHtml } from './cspNonce.js';
+import { renderNonceHtml, isCspReportOnlyEnabled } from './cspNonce.js';
 
 export const SCRIPT_HOSTS = [
   'https://apis.google.com', 'https://www.google.com', 'https://www.gstatic.com',
@@ -10,7 +10,7 @@ export const SCRIPT_HOSTS = [
 ];
 
 /** Preview iframes and the public embed widget are explicit exceptions. */
-export function responseHeaders(production = process.env.NODE_ENV === 'production'): RequestHandler {
+export function responseHeaders(production = process.env.NODE_ENV === 'production', reportOnly = isCspReportOnlyEnabled()): RequestHandler {
   const baseline = helmet({
     contentSecurityPolicy: false,
     crossOriginEmbedderPolicy: false,
@@ -37,18 +37,19 @@ export function responseHeaders(production = process.env.NODE_ENV === 'productio
     const hostname = (req.get('host') ?? '').split(':')[0].toLowerCase();
     const canonical = ['bsenexus.in', 'www.bsenexus.in'].includes(hostname);
     const protectedDocument = production && canonical && !req.path.startsWith('/embed/');
+    const trialDocument = protectedDocument && reportOnly;
     const nonce = randomBytes(24).toString('base64');
     // Resolve private placeholders on every host so a preview Host request can
     // never reveal the process template marker used in canonical responses.
     const send = res.send.bind(res);
     res.send = ((body: unknown) => {
       if (typeof body === 'string' && (String(res.getHeader('Content-Type') || '').includes('text/html') || /^\s*<!doctype html|^\s*<html/i.test(body))) {
-        if (protectedDocument) { res.setHeader('Cache-Control', 'private, no-store'); res.removeHeader('ETag'); }
-        return send(renderNonceHtml(body, nonce));
+        if (trialDocument) { res.setHeader('Cache-Control', 'private, no-store'); res.removeHeader('ETag'); }
+        return send(renderNonceHtml(body, trialDocument ? nonce : null));
       }
       return send(body);
     }) as typeof res.send;
-    if (protectedDocument) {
+    if (trialDocument) {
       res.setHeader('Content-Security-Policy-Report-Only', [
         `script-src 'self' 'nonce-${nonce}' ${SCRIPT_HOSTS.join(' ')}`,
         "object-src 'none'", "base-uri 'self'", 'report-uri /api/security/csp-report',
@@ -56,8 +57,8 @@ export function responseHeaders(production = process.env.NODE_ENV === 'productio
       // A 304 with a new header nonce would reuse an old browser body.
       delete req.headers['if-none-match'];
       delete req.headers['if-modified-since'];
-      return documentPolicy(req, res, next);
     }
+    if (protectedDocument) return documentPolicy(req, res, next);
     next();
   });
 }

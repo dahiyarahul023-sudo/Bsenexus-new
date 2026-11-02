@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
 import ts from 'typescript';
+import { ReadCache } from '../utils/readCache.js';
 import { companyFilingStats, pageItems } from '../../src/shared/companyFilings.js';
 import { hasExactScripCode } from '../../src/shared/scripMatching.js';
 import { isBseFiling } from '../../src/shared/filingSource.js';
@@ -28,6 +29,7 @@ function storedReader(rows: any[], unavailable = false) {
   vm.runInNewContext(module,{exports,console,Date,AbortSignal,process:{env:{NODE_ENV:'production'}},require(path:string) {
     if (path.endsWith('/scripMatching.js')) return {hasExactScripCode,projectFilingIdentity:(row:any)=>row};
     if (path.endsWith('/filingSource.js')) return {isBseFiling};
+    if (path.endsWith('/readCache.js')) return {ReadCache};
     if (path.endsWith('/localStore.js')) return {readLocalJson:()=>[]};
     if (path.endsWith('/bloomFilter.js')) return {BloomFilter:class {add() {}}};
     if (path.endsWith('/helpers.js')) return {parseBseDate:(value:string)=>Date.parse(value)||0};

@@ -16,24 +16,22 @@ const LOGO_SRC: Record<CompanySymbol, string> = {
 };
 
 /**
- * CompanyLogo — real company brand marks for the landing mockups.
- * The SVG files in public/company-logos/ are faithful vector depictions
- * of each company's actual logo artwork (sources recorded in
- * docs/COMPANY_LOGOS.md). Shown nominatively next to that company's own
- * filings/disclosures — never altered, never recreated from memory.
+ * CompanyLogo — Official company brand marks for landing cards.
+ * Uses official vector depictions in public/company-logos/
+ * rendered inside a polished, high-contrast, theme-adaptive tile.
  */
-export function CompanyLogo({ symbol, size = 34, className = '' }: CompanyLogoProps) {
+export function CompanyLogo({ symbol, size = 36, className = '' }: CompanyLogoProps) {
   return (
     <span
       aria-hidden="true"
-      className={`inline-flex items-center justify-center rounded-[11px] bg-white border border-slate-200/80 shadow-[0_4px_10px_rgba(2,32,71,0.10)] overflow-hidden shrink-0 ${className}`}
+      className={`inline-flex items-center justify-center rounded-xl bg-white border border-slate-200/90 shadow-[0_2px_8px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.3)] p-1.5 overflow-hidden shrink-0 transition-transform duration-200 group-hover:scale-105 ${className}`}
       style={{ width: size, height: size }}
     >
       <img
         src={LOGO_SRC[symbol]}
-        alt=""
+        alt={`${symbol} brand mark`}
         draggable={false}
-        style={{ width: '80%', height: '80%', objectFit: 'contain' }}
+        className="w-full h-full object-contain select-none"
       />
     </span>
   );

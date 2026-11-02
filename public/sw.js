@@ -1,8 +1,11 @@
 // Bsenexus - Progressive Web App Service Worker
-// Version: 4.4.0
+// Version: 4.5.0
 
-const CACHE_NAME = 'bse-nexus-v4.4';
+// This value is prefixed by the /sw.js server route, never a request query flag.
+const CSP_REPORT_ONLY_ENABLED = self.__BSENEXUS_CSP_REPORT_ONLY__ === true;
+const CACHE_NAME = `bse-nexus-v4.5-${CSP_REPORT_ONLY_ENABLED ? 'nonce' : 'offline'}`;
 const STATIC_ASSETS = [
+  ...(CSP_REPORT_ONLY_ENABLED ? [] : ['/', '/index.html']),
   '/manifest.json',
   '/opensearch.xml',
   '/favicon.ico',
@@ -109,10 +112,26 @@ self.addEventListener('fetch', (event) => {
   // Do not store navigations in Cache API (it ignores Cache-Control: no-store).
   // Version activation removes old cached HTML. Public data/assets stay offline.
   if (request.mode === 'navigate') {
-    event.respondWith(fetch(request).catch(() => new Response(
-      'Offline - Bsenexus is available once connection resumes.',
-      { status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' } }
-    )));
+    if (CSP_REPORT_ONLY_ENABLED) {
+      event.respondWith(fetch(request).catch(() => new Response(
+        'Offline - Bsenexus is available once connection resumes.',
+        { status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' } }
+      )));
+    } else {
+      const network = fetch(request);
+      event.waitUntil(network.then(response => {
+        if (response && response.status === 200) {
+          const copy = response.clone();
+          return caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+        }
+      }).catch(() => undefined));
+      event.respondWith(network.catch(async () => {
+        const cached = await caches.match(request) || await caches.match('/index.html');
+        return cached || new Response('Offline - Bsenexus is available once connection resumes.', {
+          status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+        });
+      }));
+    }
     return;
   }
 

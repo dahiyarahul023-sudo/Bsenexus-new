@@ -68,8 +68,7 @@ export class TabErrorBoundary extends React.Component<TabErrorBoundaryProps, Tab
       });
     } catch {}
 
-    // Reloading while Vite is unavailable replaces this recoverable UI with a
-    // failed document. Let the user restart the preview and choose when to reload.
+    // Keep an interrupted preview mounted while its server is restarted.
     if (IS_DEV_PREVIEW) return;
 
     try {
@@ -91,6 +90,7 @@ export class TabErrorBoundary extends React.Component<TabErrorBoundaryProps, Tab
   };
 
   handleRetry = () => {
+    try { sessionStorage.removeItem(RELOAD_FLAG); } catch {}
     this.setState({ hasError: false, reloading: false, moduleLoadFailure: false });
   };
 

@@ -2691,9 +2691,22 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
                   >
                     {/* Helios pill row: priority · symbol */}
                     <div className="flex items-center gap-2 flex-wrap">
-                      <HeliosPill tone={priorityTone} title={`Priority: ${c.priority}`}>
-                        {priorityLabel}
-                      </HeliosPill>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCyclePriority(c.listId || currentWatchlist?.id || watchlists[0]?.id || '', {
+                            symbol: c.symbol,
+                            priority: c.priority
+                          } as any);
+                        }}
+                        className="inline-flex items-center cursor-pointer active:scale-95 transition-transform"
+                        title="Tap to change priority (High / Medium / Low)"
+                      >
+                        <HeliosPill tone={priorityTone} title={`Priority: ${c.priority} (tap to change)`}>
+                          {priorityLabel}
+                        </HeliosPill>
+                      </button>
                       {c.hasHighImpactUpdate && (
                         <HeliosPill tone="rose">High impact</HeliosPill>
                       )}
@@ -2739,44 +2752,12 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
                           transition={springSnappy}
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleCyclePriority(c.listId || currentWatchlist?.id || watchlists[0]?.id || '', {
-                              symbol: c.symbol,
-                              priority: c.priority
-                            } as any);
-                          }}
-                          className="px-3 py-1.5 text-[11px] font-bold rounded-full text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white bg-slate-100 dark:bg-[#252233] hover:bg-slate-200 dark:hover:bg-[#2F2B40] cursor-pointer select-none min-h-[32px] flex items-center gap-1 active:scale-[0.96] transition-colors"
-                          title="Cycle priority (High / Medium / Low)"
-                        >
-                          {c.priority === 'HIGH' ? 'High' : c.priority === 'MEDIUM' ? 'Med' : 'Low'}
-                        </motion.button>
-
-                        <motion.button
-                          type="button"
-                          whileTap={buttonTap}
-                          transition={springSnappy}
-                          onClick={(e) => {
-                            e.stopPropagation();
                             handleRemoveSymbol(c.listId || currentWatchlist?.id || watchlists[0]?.id || '', c.symbol);
                           }}
                           className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-transparent hover:border-rose-200 dark:hover:border-rose-900/60 cursor-pointer select-none min-h-[32px] min-w-[32px] flex items-center justify-center active:scale-[0.96]"
                           title="Remove from watchlist"
                         >
                           <Trash2 size={13} />
-                        </motion.button>
-
-                        <motion.button
-                          type="button"
-                          whileTap={buttonTap}
-                          transition={springSnappy}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleOpenIntel(c.scripCode, c.symbol, c.name);
-                          }}
-                          className="p-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-full hover:bg-slate-100 dark:hover:bg-[#252233] transition-colors shrink-0 cursor-pointer min-h-[32px] min-w-[32px] flex items-center justify-center select-none active:scale-[0.96]"
-                          title="Open 360° Company Intelligence"
-                          aria-label={`Open ${c.name}`}
-                        >
-                          <ArrowUpRight size={15} />
                         </motion.button>
 
                         {/* Saved Notes: one-tap note linked to this stock */}

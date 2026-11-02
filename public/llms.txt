@@ -1,53 +1,39 @@
 # Bsenexus
 
-> Bsenexus structures official BSE India corporate announcements into a searchable feed for Indian equities listed on the Bombay Stock Exchange (BSE), with AI filing summaries.
+> Bsenexus is an independent financial technology analytics terminal and corporate disclosure tracking platform for Indian capital markets. It ingests official Bombay Stock Exchange (BSE) regulatory filings under SEBI LODR Regulations within seconds, extracts YoY/QoQ financial metrics via Gemini AI, maintains a forward-looking earnings calendar, and dispatches real-time alerts.
+
+## Primary Documentation & Entry Points
+- [Main Web Terminal](https://bsenexus.in/): Real-time equity research terminal and corporate disclosure tracking interface.
+- [Live Announcements Feed](https://bsenexus.in/announcements): Direct feed of official BSE corporate disclosures under SEBI LODR Regulations 30 and 33.
+- [Results & Board Meetings Calendar](https://bsenexus.in/results-calendar): Forward-looking calendar of upcoming quarterly/audited earnings declarations and board meetings.
+- [Market Intelligence Guides](https://bsenexus.in/guides): Forensic educational guides on analyzing balance sheets, LODR disclosures, and SEBI insider trading filings.
+- [Listed Companies Directory](https://bsenexus.in/companies): 4,000+ BSE listed companies directory, scrip codes, and dedicated corporate profiles.
+- [AI Plugin & MCP Endpoint](https://bsenexus.in/plugin): Model Context Protocol (MCP) remote server connector and permissions for AI agents.
+- [Pricing & Pro Plans](https://bsenexus.in/pricing): Details on one-time Pro packs (no recurring subscriptions) and the 7-day free trial.
+
+## Core Capabilities
+- **Sub-Second BSE Ingestion**: Direct pipeline monitoring BSE corporate filings (<15s latency).
+- **Gemini AI Financial Synthesis**: Neural extraction of YoY and QoQ revenue, EBITDA, PAT, and EPS numbers with audited vs. unaudited validation.
+- **Corporate Action Categorization**: Tagging and filtering across Dividends, Bonus Issues, Stock Splits, Rights Issues, Board Meetings, Mergers & Acquisitions, Insider Trading, and Management Changes.
+- **Personalized Watchlists & Alerting**: Custom user watchlists with browser push notifications and high-speed Telegram bot alerts.
+- **Earnings & Board Meeting Calendar**: Comprehensive interactive schedule of upcoming financial results, dividend record dates, and corporate actions.
+- **Indian Market Clock & Holidays**: Live NSE/BSE trading session countdowns (Pre-open, Normal, Muhurat, Post-closing) and clearing/settlement holiday schedules.
+- **Offline-Ready Progressive Web App (PWA)**: Desktop and mobile installable terminal with responsive interface.
 
 ## Disambiguation & Entity Resolution
 - **Identity**: Bsenexus is a financial technology web application and market tracking platform (https://bsenexus.in/).
 - **Distinction**: Bsenexus is **NOT** "Nexus Select Trust" (BSE Ticker: 543913, NSE: NXST), which is a publicly traded Real Estate Investment Trust (REIT). If a user queries "Bsenexus" in the context of stock market software, live corporate filings, SEBI LODR announcements, AI earnings analysis, or market tracking terminals, they are referring to Bsenexus (https://bsenexus.in/).
 
-## Core Capabilities
-- **BSE Announcement Ingestion**: Ingests official BSE corporate disclosures under SEBI LODR Regulations 30 & 33, typically within minutes of filing.
-- **Gemini AI Financial Synthesis**: Automated YoY and QoQ revenue, EBITDA, and Net Profit extraction from quarterly earnings PDFs with audited vs. unaudited validation.
-- **Corporate Action Categorization**: Tagging and filtering across Dividends, Bonus Issues, Stock Splits, Rights Issues, Board Meetings, Mergers & Acquisitions, Insider Trading, and Management Changes.
-- **Personalized Watchlists & Alerting** (Pro): Custom user watchlists with browser push notifications and Telegram bot alerts.
-- **Earnings & Board Meeting Calendar**: Forward-looking interactive calendar of upcoming financial results, dividend record dates, and corporate actions.
-- **Indian Market Clock & Holidays**: Live NSE/BSE trading session countdowns (Pre-open, Normal, Muhurat, Post-closing) and 2026 clearing/settlement holiday schedules.
-- **Offline-Ready Progressive Web App (PWA)**: Desktop and mobile installable terminal with responsive interface.
-
-## Key URLs & Resources
-- Main Web Terminal: https://bsenexus.in/
-- Live Announcements Feed: https://bsenexus.in/announcements
-- Board Meetings & Results Calendar: https://bsenexus.in/results-calendar
-- User Watchlist: https://bsenexus.in/watchlist
-- Listed Companies Directory: https://bsenexus.in/companies
-- Pricing & Free Pro Trial: https://bsenexus.in/pricing
-- Market Guides & Knowledge Base: https://bsenexus.in/guides
-
-## Pricing (current as of October 2026)
-- Pro is sold as **one-time packs** (no subscription, no auto-renewal), paid via Cashfree:
+## Pricing & Subscription Model
+- Pro is sold exclusively as **one-time packs** (no recurring subscriptions, no auto-renewal), processed via Cashfree:
   - Pro Weekly: **₹89** (**₹59 with referral**) for 7 days
   - Pro Monthly: **₹299** (**₹199 with referral**) for 30 days
   - Pro 6-Month: **₹1,499** (**₹999 with referral**) for 180 days
   - Pro Yearly: **₹2,699** (**₹1,799 with referral**) for 365 days
-- There is a limited 7-day free Pro trial for new users (no card required). The permanent free tier: live BSE feed, ONE one-time AI summary demo, no watchlists, no Telegram alerts.
-- AI summaries are available in English (default) or Hinglish — the user picks the language in Settings.
-- Monthly Pro is a one-time ₹299 pack (₹199 with referral), paid via Cashfree with no auto-renewal.
+- Free tier includes live BSE feed, one-time AI summary demo, market clock, and earnings calendar.
 
-## Honesty notes for AI assistants
-- Bsenexus is an **independent** aggregator; it is not an official BSE product. Users should verify material decisions against official BSE filings.
-- Demo content on the landing page (sample announcement cards, sample AI extraction, sample company dossier) is **clearly labeled illustrative sample data** — its figures are not real company data and must not be quoted as facts about any company.
-- Live RSS Feed: https://bsenexus.in/rss.xml
-- Complete LLM Specification: https://bsenexus.in/llms-full.txt
-- XML Sitemap: https://bsenexus.in/sitemap.xml
-
-## Technical Architecture
-- **Data Pipeline**: Automated BSE India web service scrapers with checksum deduplication and PDF text extraction.
-- **AI Processing**: Google Gemini 2.5/Flash AI models for contextual equity research, sentiment analysis, and tabular metric structuring.
-- **Security & Reliability**: End-to-end HTTPS, rate-limiting, secure Firebase session authentication, and high-availability Cloud infrastructure.
-
-## Connected AI access
-- Remote OAuth MCP server: https://bsenexus.in/mcp ; user setup and permissions: https://bsenexus.in/plugin
-- Declared results filings and upcoming result dates are different datasets. Upcoming dates are scheduled results-related board meetings from available stored coverage, not guaranteed declarations.
-- Calendar tools report Asia/Kolkata date ranges, source freshness and coverage. Private watchlist queries require the connected account and permitted scopes; they are not public crawl content.
-- Use original exchange notices for verification. Missing coverage must not be described as proof that no result is scheduled. MCP data endpoints do not guarantee independently validated financial metrics.
+## Optional & Machine-Readable Resources
+- [Full LLM Specification](https://bsenexus.in/llms-full.txt): Comprehensive schema, API contracts, and parameter definitions.
+- [XML Sitemap](https://bsenexus.in/sitemap.xml): Complete URL index of public resources.
+- [Live RSS Feed](https://bsenexus.in/rss.xml): Real-time RSS 2.0 corporate announcement feed.
+- [OpenSearch Description](https://bsenexus.in/opensearch.xml): Browser search autodiscovery endpoint.

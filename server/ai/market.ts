@@ -5,6 +5,7 @@ import {
 import {
   getRecentAnnouncements,
   getAnnouncementsForScrip,
+  getCachedCompanyFilings,
 } from "../database/announcementDao.js";
 import {
   getStockResultsHistory,
@@ -133,16 +134,19 @@ export async function filingsData(args: {
   beforeId?: string; after?: string; detail?: ReadDetail;
 }, sources: {
   recent?: typeof getRecentAnnouncements; company?: typeof getAnnouncementsForScrip;
+  scripCodes?: readonly string[];
 } = {}) {
   const entry = args.company ? exactCompany(args.company) : null;
   const raw = entry
-    ? await (sources.company || getAnnouncementsForScrip)(entry.scripCode, 400)
-    : await (sources.recent || getRecentAnnouncements)(500);
+    ? await (sources.company ? sources.company(entry.scripCode, 400) : getCachedCompanyFilings(entry.scripCode))
+    : sources.scripCodes?.length === 0 ? [] : await (sources.recent || getRecentAnnouncements)(500);
+  const allowedCodes = sources.scripCodes ? new Set(sources.scripCodes) : null;
   const before = args.before ? Date.parse(args.before) : Infinity;
   const after = args.after ? Date.parse(args.after) : -Infinity;
   const filtered = raw.filter(ann => {
     const timestamp = filingTimestamp(ann);
-    return (!entry || String(ann.scrip_cd || ann.scripCode || ann.SCRIP_CD || "") === entry.scripCode) &&
+    return (!allowedCodes || allowedCodes.has(String(ann.scrip_cd || ann.scripCode || ann.SCRIP_CD || ""))) &&
+      (!entry || String(ann.scrip_cd || ann.scripCode || ann.SCRIP_CD || "") === entry.scripCode) &&
       (!args.category || filingCategories(ann).includes(args.category.toUpperCase())) &&
       (after === -Infinity || timestamp >= after);
   }).sort((a, b) => filingTimestamp(b) - filingTimestamp(a) || filingId(a).localeCompare(filingId(b)));
@@ -154,7 +158,8 @@ export async function filingsData(args: {
     success: true, count: items.length, filings: items, validCategories: [...FILING_CATEGORIES], deduplicatedCount: filtered.length - unique.length,
     timezone: "Asia/Kolkata", generatedAt: new Date().toISOString(),
     newestPublishedAt: filtered.length && filingTimestamp(filtered[0]) ? new Date(filingTimestamp(filtered[0])).toISOString() : null,
-    coverage: { kind: entry ? "stored_company_filings" : "recent_market_window", scanned: raw.length, scanLimit: entry ? 400 : 500, completeArchive: false },
+    recommendedPollIntervalSeconds: 60,
+    coverage: { kind: entry ? "stored_company_filings" : allowedCodes ? "recent_watchlist_window" : "recent_market_window", scanned: raw.length, scanLimit: entry ? 400 : 500, completeArchive: false },
     hasMore,
     nextBefore: items.at(-1)?.publishedAt || null,
     nextBeforeId: hasMore ? items.at(-1)?.id || null : null,

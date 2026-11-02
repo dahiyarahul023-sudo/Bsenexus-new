@@ -1,5 +1,7 @@
 # Interrupted security work: recovery status, 1 November 2026 IST
 
+Current CSP contract (2 November 2026): the owner subsequently authorized completing the useful pending PRs. The reconciled candidate now keeps the report-only trial disabled by default and preserves ordinary caching/offline navigation. See `csp-safe-rollout.md`; the historical instruction below to retain a draft applied to the previous always-on candidate. Real provider journeys and report review remain required before activating the server flag. This update does not claim deployment, migration or enforcement.
+
 ## Verified starting state
 
 Remote main was a863ac03657edc153f449bf7f97b3431717134c4. All 867 upstream blobs were reconstructed and Git-blob-hash verified before edits. No other user's checkout was modified; the abandoned merge-work directory was copied to an isolated recovery checkout.

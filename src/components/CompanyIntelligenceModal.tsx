@@ -19,6 +19,7 @@ import { RollingNumber } from './ui/motion/RollingNumber';
 import { customFetch } from '../api';
 import { getLowestPlanPrice } from '../utils/cashfree';
 import { getSafePdfUrl } from '../utils/pdfHelper';
+import { cleanBseSubject } from '../utils/cleanBseSubject';
 import { formatFullDateTime, formatShortDateTime, formatTimeOnly, formatDateOnly } from '../utils/timeFormat';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -641,9 +642,29 @@ export function CompanyIntelligenceModal({
                           </div>
 
                           <div className="space-y-1">
-                            <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-snug">
-                              {latestFiling.subject || latestFiling.humanTitle || 'Corporate disclosure'}
-                            </h4>
+                            {(() => {
+                              const cleanLatest = cleanBseSubject(latestFiling.subject, effectiveName, effectiveScrip);
+                              return (
+                                <>
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    {cleanLatest.isInvestorCall && (
+                                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-800 dark:bg-sky-950/80 dark:text-sky-300 border border-sky-200 dark:border-sky-800 flex items-center gap-1">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-sky-500 inline-block" />
+                                        Investor Call / Concall
+                                      </span>
+                                    )}
+                                    {cleanLatest.humanTitle && !cleanLatest.isInvestorCall && cleanLatest.humanTitle !== 'Corporate announcement' && (
+                                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
+                                        {cleanLatest.humanTitle}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-snug">
+                                    {cleanLatest.headline || latestFiling.subject || 'Corporate disclosure'}
+                                  </h4>
+                                </>
+                              );
+                            })()}
                             {latestFiling.headline && (
                               <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-2">
                                 {latestFiling.headline}
@@ -971,33 +992,71 @@ export function CompanyIntelligenceModal({
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      {filingsPage.items.map((filing: any, fIdx: number) => (
-                        <div 
-                          key={filing.id || fIdx}
-                          className={cn(heliosCard, "p-3 text-xs flex items-center justify-between gap-3 transition-all hover:shadow-[0_16px_40px_rgba(15,23,42,0.10)] dark:hover:shadow-[0_16px_40px_rgba(0,0,0,0.55)]")}
-                        >
-                          <div className="min-w-0 flex-1 space-y-0.5">
-                            <p className="font-bold text-slate-900 dark:text-white line-clamp-1">
-                              {filing.subject}
-                            </p>
-                            <p className="text-[11px] text-slate-500 font-mono">
-                              📅 {formatShortDateTime(filing.timestamp || filing.bseTime)}
-                            </p>
-                          </div>
+                      {filingsPage.items.map((filing: any, fIdx: number) => {
+                        const cleanSub = cleanBseSubject(filing.subject, effectiveName, effectiveScrip);
+                        const pdfUrl = getSafePdfUrl(
+                          filing.pdfLink || filing.pdfUrl || filing.attachmentUrl,
+                          filing.attachmentName || filing.attachment,
+                          filing.id || filing.newsId,
+                          effectiveScrip
+                        );
 
-                          {filing.pdfLink && (
+                        return (
+                          <div 
+                            key={filing.id || fIdx}
+                            className={cn(heliosCard, "p-3 text-xs flex items-center justify-between gap-3 transition-all hover:shadow-[0_16px_40px_rgba(15,23,42,0.10)] dark:hover:shadow-[0_16px_40px_rgba(0,0,0,0.55)]")}
+                          >
+                            <div className="min-w-0 flex-1 space-y-1">
+                              {/* Substantive category & Investor Call prominent badge */}
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                {cleanSub.isInvestorCall && (
+                                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-800 dark:bg-sky-950/80 dark:text-sky-300 border border-sky-300 dark:border-sky-800 flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-sky-500 inline-block" />
+                                    Investor Call / Concall
+                                  </span>
+                                )}
+                                {cleanSub.humanTitle && !cleanSub.isInvestorCall && cleanSub.humanTitle !== 'Corporate announcement' && (
+                                  <span className={cn(
+                                    "px-1.5 py-0.5 rounded text-[10px] font-bold border",
+                                    cleanSub.badgeTone === 'emerald' ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800" :
+                                    cleanSub.badgeTone === 'violet' ? "bg-purple-100 text-purple-800 dark:bg-purple-950/80 dark:text-purple-300 border-purple-200 dark:border-purple-800" :
+                                    cleanSub.badgeTone === 'amber' ? "bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border-amber-200 dark:border-amber-800" :
+                                    "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700"
+                                  )}>
+                                    {cleanSub.humanTitle}
+                                  </span>
+                                )}
+                                {cleanSub.regulation && (
+                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-mono text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800">
+                                    {cleanSub.regulation}
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Clean Headline with multi-line readability */}
+                              <p className="font-bold text-slate-900 dark:text-white text-xs leading-snug line-clamp-2" title={filing.subject}>
+                                {cleanSub.headline || filing.subject}
+                              </p>
+
+                              <p className="text-[11px] text-slate-500 font-mono">
+                                📅 {formatShortDateTime(filing.timestamp || filing.bseTime)}
+                              </p>
+                            </div>
+
+                            {/* Guaranteed PDF / Document Button for all filings */}
                             <a
-                              href={getSafePdfUrl(filing.pdfLink, '', filing.id, effectiveScrip)}
+                              href={pdfUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="px-2.5 py-1 text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-md flex items-center gap-1 shrink-0 transition-colors cursor-pointer"
+                              className="px-2.5 py-1 text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-md flex items-center gap-1 shrink-0 transition-colors cursor-pointer shadow-2xs"
+                              title="View official filing document / PDF"
                             >
                               <ExternalLink size={12} />
                               <span>PDF</span>
                             </a>
-                          )}
-                        </div>
-                      ))}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>

@@ -123,10 +123,11 @@ export const TOOL_SPECS = {
     scope: "market:read",
     pro: false,
     write: false,
-    description: 'Returns newest-first stored filings with exchange links and bounded text. Supports category and publication-time filters, brief/full detail and timestamp-plus-ID pagination. Coverage is a limited stored window, not the complete market archive.',
+    description: 'Returns newest-first source-linked filings from a limited stored window, not a complete archive. For one stock, use company; for an owned watchlist, use watchlistId (Pro/trial plus watchlists:read). Start with limit:5 and detail:brief. For follow-up checks reuse after (inclusive newestPublishedAt), deduplicate IDs and wait at least recommendedPollIntervalSeconds; do not crawl all companies, dates or pages unless the user explicitly requests wider research. Before/beforeId are for requested history. Only use full detail or filing_summary for a filing relevant to the user request. Broad market reads remain available when requested.',
     schema: z
       .object({
         company: company.optional(),
+        watchlistId: id.optional().describe("One watchlist owned by the connected account; requires market:read, watchlists:read and active Pro/trial. Never supply company as well."),
         category: z.string().max(50).transform(v=>v.trim().toUpperCase()).pipe(z.enum(FILING_CATEGORIES)).optional(),
         limit: z.number().int().min(1).max(25).default(10),
         before: z.string().datetime().optional().describe("Exclusive publication timestamp. Pagination pairs nextBefore with nextBeforeId."),
@@ -165,7 +166,7 @@ export const TOOL_SPECS = {
     scope: "watchlists:read",
     pro: true,
     write: false,
-    description: 'Returns paginated watchlist metadata with boolean active state and up to five preview stocks per owned list. Upcoming result dates are available separately.',
+    description: 'Call once to select the relevant watchlist; then use filings_search with watchlistId for its filings instead of enumerating stocks and reading the market. Returns paginated watchlist metadata with boolean active state and up to five preview stocks per owned list. Upcoming result dates are available separately.',
     schema: z
       .object({ offset: z.number().int().min(0).max(10000).default(0) })
       .strict(),
@@ -367,10 +368,13 @@ export function parseTool(name: string, args: unknown) {
         .join("; ")
         .slice(0, 400),
     );
+  if (name === "filings_search" && (parsed.data as any).company && (parsed.data as any).watchlistId)
+    throw new AiError("invalid_arguments", 400, "Choose company or watchlistId, not both.");
   if (name === "filings_search" && ((parsed.data as any).beforeId && !(parsed.data as any).before))
     throw new AiError("invalid_arguments", 400, "beforeId requires before.");
   if (name === "filings_search" && (parsed.data as any).after && (parsed.data as any).before &&
-      Date.parse((parsed.data as any).after) >= Date.parse((parsed.data as any).before))
+      (Date.parse((parsed.data as any).after) > Date.parse((parsed.data as any).before) ||
+       Date.parse((parsed.data as any).after) === Date.parse((parsed.data as any).before) && !(parsed.data as any).beforeId))
     throw new AiError("invalid_arguments", 400, "after must precede before.");
   if (
     name === "preferences_update" &&

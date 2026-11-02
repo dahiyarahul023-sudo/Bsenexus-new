@@ -5,14 +5,14 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import express from 'express';
 import { responseHeaders } from '../security/responseHeaders.js';
-import { prepareTrustedHtml, CSP_NONCE_PLACEHOLDER } from '../security/cspNonce.js';
+import { prepareTrustedHtml, CSP_NONCE_PLACEHOLDER, isCspReportOnlyEnabled, renderCspServiceWorker } from '../security/cspNonce.js';
 import { cspReportRouter } from '../security/cspReports.js';
 import { RenderCache } from '../utils/renderCache.js';
 
-async function fixture(run: (request: (path?: string, host?: string, body?: string, extra?: Record<string, string>) => Promise<any>, cache: RenderCache, logs: any[]) => Promise<void>) {
+async function fixture(run: (request: (path?: string, host?: string, body?: string, extra?: Record<string, string>) => Promise<any>, cache: RenderCache, logs: any[]) => Promise<void>, reportOnly = true) {
   const app = express(), cache = new RenderCache(), logs: any[] = [];
-  app.use(responseHeaders(true));
-  app.use(cspReportRouter(event => logs.push(event)));
+  app.use(responseHeaders(true, reportOnly));
+  if (reportOnly) app.use(cspReportRouter(event => logs.push(event)));
   app.get('/cached', cache.middleware({ ttlMs: 60_000 }), (_req, res) => res.type('html').send(prepareTrustedHtml('<html><script nonce="__CSP_NONCE__">window.boot=true</script></html>') + '<script nonce="__CSP_NONCE__">evil()</script>'));
   app.get('*', (_req, res) => res.type('html').send(prepareTrustedHtml(fs.readFileSync('index.html', 'utf8'))));
   const server = app.listen(0, '127.0.0.1');
@@ -25,6 +25,31 @@ async function fixture(run: (request: (path?: string, host?: string, body?: stri
   try { await run(request, cache, logs); } finally { server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); }
 }
 const nonce = (r: any) => r.headers['content-security-policy-report-only']?.match(/'nonce-([^']+)'/)?.[1];
+
+test('trial activation requires the explicit server true setting', () => {
+  assert.equal(isCspReportOnlyEnabled({}), false);
+  for (const value of ['', 'false', '1', 'TRUE']) assert.equal(isCspReportOnlyEnabled({ CSP_REPORT_ONLY_ENABLED: value }), false);
+  assert.equal(isCspReportOnlyEnabled({ CSP_REPORT_ONLY_ENABLED: 'true' }), true);
+});
+
+test('disabled trial retains canonical protection, public caching and conditional responses', () => fixture(async (request, _cache, logs) => {
+  const first = await request('/cached');
+  assert.equal(first.headers['content-security-policy-report-only'], undefined);
+  assert.match(first.headers['content-security-policy'], /frame-ancestors 'self'/);
+  assert.equal(first.headers['x-frame-options'], 'SAMEORIGIN');
+  assert.match(first.headers['cache-control'], /public/);
+  const second = await request('/cached', 'bsenexus.in', undefined, { 'If-None-Match': first.headers.etag });
+  assert.equal(second.status, 304);
+  assert.equal((await request('/api/security/csp-report', 'bsenexus.in', '{}')).status, 404);
+  assert.deepEqual(logs, []);
+}, false));
+
+test('disabled trial keeps uncached HTML stable for ordinary conditional requests', () => fixture(async request => {
+  const first = await request('/');
+  const second = await request('/', 'bsenexus.in', undefined, { 'If-None-Match': first.headers.etag });
+  assert.equal(second.status, 304);
+  assert.doesNotMatch(first.text, /nonce="__BN_CSP_|nonce="[A-Za-z0-9+/]{32}"/);
+}, false));
 
 test('report-only script policy is canonical only and never enforces script-src', () => fixture(async request => {
   for (const host of ['bsenexus.in', 'www.bsenexus.in']) {
@@ -65,7 +90,7 @@ test('report endpoint strips URL secrets, caps bodies and rate limits without au
 }));
 test('service worker never caches/replays nonce HTML and cold offline navigation is explicit', async () => {
   const handlers: Record<string, Function> = {}; let cacheCalls = 0; let offline = false;
-  vm.runInNewContext(fs.readFileSync('public/sw.js', 'utf8'), {
+  vm.runInNewContext(renderCspServiceWorker(fs.readFileSync('public/sw.js', 'utf8'), true), {
     self: { addEventListener: (name: string, fn: Function) => handlers[name] = fn }, URL, Response,
     fetch: async () => { if (offline) throw new Error('offline'); return new Response('fresh HTML'); },
     caches: { open: () => { cacheCalls++; throw new Error('must not cache HTML'); }, match: () => { cacheCalls++; throw new Error('must not replay HTML'); } },
@@ -74,4 +99,29 @@ test('service worker never caches/replays nonce HTML and cold offline navigation
   const event = { request: { url: 'https://bsenexus.in/announcements', mode: 'navigate' }, respondWith: (r: Promise<Response>) => result = r };
   handlers.fetch(event); assert.equal(await (await result!).text(), 'fresh HTML');
   offline = true; handlers.fetch(event); assert.equal((await result!).status, 503); assert.equal(cacheCalls, 0);
+});
+
+test('disabled worker retains online HTML for cold offline navigation and tolerates cache-write failure', async () => {
+  const handlers: Record<string, Function> = {};
+  const saved = new Map<string, Response>();
+  let offline = false, writeFails = false;
+  vm.runInNewContext(renderCspServiceWorker(fs.readFileSync('public/sw.js', 'utf8'), false), {
+    self: { addEventListener: (name: string, fn: Function) => handlers[name] = fn }, URL, Response,
+    fetch: async () => { if (offline) throw new Error('offline'); return new Response('<html>saved shell</html>'); },
+    caches: {
+      open: async () => ({ put: async (request: any, response: Response) => { if (writeFails) throw new Error('quota'); saved.set(request.url, response); } }),
+      match: async (request: any) => saved.get(typeof request === 'string' ? request : request.url)?.clone(),
+    },
+  });
+  let result!: Promise<Response>; const pending: Promise<any>[] = [];
+  const event = { request: { url: 'https://bsenexus.in/announcements', mode: 'navigate' }, respondWith: (p: Promise<Response>) => result = p, waitUntil: (p: Promise<any>) => pending.push(p) };
+  handlers.fetch(event);
+  assert.equal(await (await result).text(), '<html>saved shell</html>');
+  await Promise.all(pending.splice(0));
+  offline = true; handlers.fetch(event);
+  assert.equal(await (await result).text(), '<html>saved shell</html>');
+  await Promise.all(pending.splice(0));
+  offline = false; writeFails = true; handlers.fetch(event);
+  assert.equal((await result).status, 200);
+  await Promise.all(pending);
 });

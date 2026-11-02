@@ -106,8 +106,9 @@ export function MarketTickerTape({
 
   const sessionStyle = getSessionBadgeStyle();
 
-  // Create duplicate array for seamless infinite looping
-  const tickerItems = [...indices, ...indices];
+  // Ensure active list is resilient: never blank, seamless infinite loop across all viewport widths
+  const activeList = indices;
+  const tickerItems = [...activeList, ...activeList, ...activeList, ...activeList];
 
   return (
     <div 
@@ -117,8 +118,7 @@ export function MarketTickerTape({
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      onTouchStart={() => setIsHovered(true)}
-      onTouchEnd={() => setIsHovered(false)}
+      onTouchCancel={() => setIsHovered(false)}
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
         
@@ -144,7 +144,12 @@ export function MarketTickerTape({
         )}
 
         {/* Center: Seamless Infinite Smooth Auto-Scrolling Ticker (All Viewports) */}
-        <div className="flex-1 overflow-hidden relative flex items-center">
+        <div className="flex-1 min-w-0 overflow-hidden relative flex items-center">
+          {indices.length === 0 && (
+            <span role="status" className="px-4 text-slate-500 dark:text-slate-400">
+              {loading ? 'Loading market data…' : 'Market data unavailable'}
+            </span>
+          )}
           {/* Subtle fade edges */}
           <div className="absolute left-0 top-0 bottom-0 w-3 sm:w-4 bg-gradient-to-r from-slate-100 dark:from-[#111019] to-transparent z-1 pointer-events-none" />
           <div className="absolute right-0 top-0 bottom-0 w-3 sm:w-4 bg-gradient-to-l from-slate-100 dark:from-[#111019] to-transparent z-1 pointer-events-none" />
@@ -153,7 +158,6 @@ export function MarketTickerTape({
             className="animate-ticker-smooth flex items-center gap-4 sm:gap-7 py-0.5 tabular-nums"
             style={{ animationPlayState: isHovered ? 'paused' : 'running' }}
           >
-            {!indices.length && <span className="text-slate-500 whitespace-nowrap">{loading ? 'Loading quotes…' : 'No verified quotes available'}</span>}
             {tickerItems.map((idx, i) => {
               const { change } = getChangeValues(idx);
               const isPositive = change >= 0;

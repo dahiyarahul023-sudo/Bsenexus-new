@@ -255,7 +255,9 @@ export async function getCompanyIntelligence(scripCode: string, symbol: string):
     const det = ann.details || ann.HEADLINE || '';
     const rawTime = ann.bseTime || ann.News_submission_dt || ann.DT_TM || ann.NEWS_DT || '';
     const ts = parseBseDate(rawTime) || ann.bseTimestamp || ann.timestamp || (ann.fetched_at ? new Date(ann.fetched_at).getTime() : Date.now());
-    const pdfLink = ann.pdfLink || (ann.ATTACHMENTNAME ? `https://www.bseindia.com/xml-data/corpfiling/AttachLive/${ann.ATTACHMENTNAME}` : '');
+    const attachmentFile = ann.ATTACHMENTNAME || ann.attachmentName || ann.attachment || ann.ATTACHMENT || '';
+    const pdfLink = ann.pdfLink || ann.pdfUrl || ann.attachmentUrl ||
+      (attachmentFile ? (attachmentFile.startsWith('http') ? attachmentFile : `https://www.bseindia.com/xml-data/corpfiling/AttachLive/${attachmentFile}`) : '');
 
     filingMap.set(id, {
       id,
@@ -263,6 +265,7 @@ export async function getCompanyIntelligence(scripCode: string, symbol: string):
       details: det,
       bseTime: rawTime || new Date(ts).toISOString(),
       pdfLink,
+      attachmentName: attachmentFile,
       timestamp: ts,
       scripCode: targetScrip,
       symbol: targetSym,
