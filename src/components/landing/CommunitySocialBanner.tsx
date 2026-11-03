@@ -103,7 +103,7 @@ export function CommunitySocialBanner() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 border-b border-slate-200/80 dark:border-slate-800/80">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs font-semibold">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+              <span className="w-1.5 h-1.5 shrink-0 rounded-full bg-emerald-500" />
               <span>Official Channels &amp; Discussion Hub</span>
             </div>
             
@@ -144,7 +144,7 @@ export function CommunitySocialBanner() {
         </div>
 
         {/* Official Channels Grid (Authentic Brand Badges) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 pt-8">
+        <div className="flex flex-wrap justify-center sm:grid sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 pt-5 sm:pt-8">
           {platforms.map((item) => (
             <a
               key={item.id}
@@ -152,7 +152,8 @@ export function CommunitySocialBanner() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label={item.ariaLabel}
-              className="group p-5 rounded-2xl bg-slate-50/90 dark:bg-slate-800/60 hover:bg-white dark:hover:bg-slate-800 border border-slate-200/90 dark:border-slate-700/70 hover:border-sky-500/50 dark:hover:border-sky-500/50 shadow-xs hover:shadow-lg transition-all duration-200 flex flex-col justify-between gap-4 cursor-pointer hover:-translate-y-1"
+              title={item.name}
+              className="group p-2 sm:p-5 rounded-2xl bg-slate-50/90 dark:bg-slate-800/60 hover:bg-white dark:hover:bg-slate-800 border border-slate-200/90 dark:border-slate-700/70 hover:border-sky-500/50 dark:hover:border-sky-500/50 shadow-xs hover:shadow-lg transition-all duration-200 flex flex-col justify-between gap-0 sm:gap-4 cursor-pointer hover:-translate-y-1"
             >
               <div className="flex items-center justify-between">
                 {/* Official Brand Logo Circle */}
@@ -160,12 +161,12 @@ export function CommunitySocialBanner() {
                   {item.icon}
                 </div>
 
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-md bg-white dark:bg-slate-900 border border-slate-200/70 dark:border-slate-700/60">
+                <span className="hidden sm:inline text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-md bg-white dark:bg-slate-900 border border-slate-200/70 dark:border-slate-700/60">
                   {item.badge}
                 </span>
               </div>
 
-              <div>
+              <div className="hidden sm:block">
                 <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white text-sm group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
                   <span>{item.name}</span>
                   <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-sky-600 dark:group-hover:text-sky-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />

@@ -1,3 +1,4 @@
+import { CalendarDateBadge3D } from '../ui/CalendarDateBadge3D';
 import './feature-icons.css';
 
 interface IconProps { className?: string; }
@@ -23,14 +24,7 @@ export function FilingsIcon({ className }: IconProps) {
 }
 
 export function ResultsCalendarIcon({ className }: IconProps) {
-  return (
-    <svg viewBox="0 0 96 96" className={className} aria-hidden="true" focusable="false">
-      <rect x="10" y="10" width="76" height="76" rx="20" fill="#fff" stroke="#E2E8F0" strokeWidth="1.5"/>
-      <path d="M10 32 a20 20 0 0 1 20 -20 h36 a20 20 0 0 1 20 20 v4 h-76 z" fill="#FF3B30"/>
-      <text x="48" y="28" textAnchor="middle" fontSize="12.5" fontWeight="700" fill="#fff" letterSpacing="1.5" fontFamily="-apple-system,Segoe UI,sans-serif">WED</text>
-      <text x="48" y="68" textAnchor="middle" fontSize="36" fontWeight="300" fill="#111" fontFamily="-apple-system,Segoe UI,sans-serif">28</text>
-    </svg>
-  );
+  return <span aria-hidden="true" className={`inline-grid place-items-center ${className || ''}`}><CalendarDateBadge3D month="WED" date="28" size="sm" /></span>;
 }
 
 export function AiSummariesIcon({ className }: IconProps) {

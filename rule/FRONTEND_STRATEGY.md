@@ -1,3 +1,5 @@
+2026-11-02 bounded mobile implementation: shared red/frosted calendars, optimistic unread row/badge consistency, evidence drill-down, global sign-out progress and compact mobile social links are implemented. Background phase no longer depends on scroll velocity. Redundant initial CAPTCHA status and sign-in opening copy are removed while visible branding and server verification remain. Automated, hosted browser, merge and deployment states are tracked separately in changes/mobile-ui-sync.md.
+
 # Frontend strategy and evidence-based priorities
 
 28 October source alignment: changes/studio-source-alignment.md migrates Studio feature/runtime source into Bsenexus-new-orig, retaining canonical audit fixes. HTML API 200 responses are typed failures; disabled Gift access is a configuration conflict. Private preview verification is left to the user; migrations, sender checks and publication remain separate gates.
