@@ -15,7 +15,9 @@ test('actual card renders an accessible neutral event with independent detail an
   const exports: any = {};
   vm.runInNewContext(code, { exports, console, require(path: string) {
     if (path.endsWith('/impactRadar')) return contract;
+    if (path.endsWith('/radarReaction')) return actualRequire(path);
     if (path === './ui/ActionButton') return actualRequire(path);
+    if (path === './RadarReactionBrief') return actualRequire(path);
     if (path.startsWith('.')) return {};
     return actualRequire(path);
   } });
@@ -45,11 +47,13 @@ test('Home Radar renders only two previews and keeps the full dashboard out of t
   const exports: any = {};
   vm.runInNewContext(code, { exports, console, require(path: string) {
     if (path.endsWith('/impactRadar')) return contract;
+    if (path.endsWith('/radarReaction')) return actualRequire(path);
     if (path.endsWith('/impactRadarFeed')) return { ImpactRadarFeed: Feed };
     if (path.endsWith('/radarCompanyGroups')) return {groupRadarCompanies};
     if (path.endsWith('/AuthContext')) return { useAuth: () => ({ setIsAuthModalOpen() {} }) };
     if (path.endsWith('/useVisibilityInterval')) return { useVisibilityInterval() {} };
     if (path === './ui/ActionButton') return actualRequire(path);
+    if (path === './RadarReactionBrief') return actualRequire(path);
     if (path.startsWith('.')) return {};
     return actualRequire(path);
   } });

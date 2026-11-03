@@ -14,8 +14,10 @@ function load(file:string,extra='') {
  vm.runInNewContext(code,{exports,console,require(p:string){
   if(p.endsWith('/radarMovement'))return movement;
   if(p.endsWith('/impactRadar'))return contract;
+  if(p.endsWith('/radarReaction'))return req(p);
   if(p==='./RadarMovementPanel')return {RadarMovementPanel:()=>null};
   if(p==='./ui/ActionButton')return req(p);
+  if(p==='./RadarReactionBrief')return req(p);
   if(p.startsWith('.'))return {};
   return req(p);
  }});return exports;

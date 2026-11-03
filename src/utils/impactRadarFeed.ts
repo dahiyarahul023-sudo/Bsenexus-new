@@ -1,7 +1,9 @@
 import { isRadarEvent, publicRadarEvent, type RadarEvent } from '../shared/impactRadar';
+import { isRadarResearch, type RadarResearch } from '../shared/radarReaction';
 
 type Request = (url: string, options?: RequestInit) => Promise<Response>;
 export interface RadarFeedState {
+  research?: RadarResearch | null;
   items: RadarEvent[]; pending: RadarEvent[] | null; following: string[];
   followingReady: boolean; followingError: boolean; saving: string[];
   loading: boolean; checkedAt: number | null; error: string | null; sourceUnavailable: boolean;
@@ -50,6 +52,8 @@ export class ImpactRadarFeed {
       const items = merge(result.value.items.map(publicRadarEvent), extra);
       const changed = JSON.stringify(items) !== JSON.stringify(this.state.items);
       this.set({ ...(this.state.checkedAt !== null && this.state.items.length && changed ? { pending: items } : { items, pending: null }),
+        research: isRadarResearch(result.value.research) && result.value.research.status==='ready' ? result.value.research :
+          this.state.research ? {...this.state.research,status:'unavailable'} : null,
         checkedAt: Date.now(), error: null, sourceUnavailable: result.value.intake?.unavailable === true, sourceStale: result.value.intake?.stale === true,
         sourceCheckedAt: typeof result.value.intake?.checkedAt === 'number' ? result.value.intake.checkedAt : null,
         sourcePending: result.value.intake?.pending === true, newsUnavailable:result.value.intake?.newsUnavailable === true });

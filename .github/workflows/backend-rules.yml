@@ -23,6 +23,7 @@ jobs:
       - run: npm run test:dev-runtime
       - run: node scripts/verify-gift-access.mjs
       - run: node scripts/verify-mobile-ui.mjs
+      - run: node scripts/verify-radar-research.mjs
       - run: node scripts/check-preview-restart.mjs
   bun-application:
     runs-on: ubuntu-latest
