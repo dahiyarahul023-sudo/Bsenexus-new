@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "9ea47d2e56621fae28841795d54e5e0c1fae21d8036074bd5aa931d45b968984",
+  "sourceDigest": "75ac877f55ffe8dcb10aace3322ed452b121085fe64d2865ea1c810ab469a221",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -183,6 +183,11 @@
       "importedBy": [
         "server/tests/mcpDirectoryQuality.test.ts"
       ]
+    },
+    {
+      "path": "scripts/serve-ux-status-fixtures.mjs",
+      "sha256": "7dc419e5172b6547b22bdd5a0f481c03015af94ebbd65aa1e6405507ab8bab77",
+      "importedBy": []
     },
     {
       "path": "scripts/spider-map.mjs",
@@ -2408,6 +2413,11 @@
       "importedBy": []
     },
     {
+      "path": "server/tests/subscriptionPresentation.test.ts",
+      "sha256": "a89f0624da0b193428b0d9bd4e61943294fba47a640b1a06ead6a676c314d466",
+      "importedBy": []
+    },
+    {
       "path": "server/tests/subscriptionProgress.test.ts",
       "sha256": "2963a6107eeeaea545bef3e01bb5532eba74e855f547c62eff380882696160a2",
       "importedBy": []
@@ -2430,6 +2440,11 @@
     {
       "path": "server/tests/userSkeletonPrivileges.test.ts",
       "sha256": "015a81b2ec16e20a79b43ea40409b3619204968268fba0edd69b05d98048586d",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/uxStatusRender.test.ts",
+      "sha256": "2342294f1e9db1f1870381bb51270eef1e2fd1a4e116b0c3fba20f209a76acd3",
       "importedBy": []
     },
     {
@@ -2892,7 +2907,7 @@
     },
     {
       "path": "src/components/CompanyIntelligenceModal.tsx",
-      "sha256": "32109ed57f0cbdda8d340808f19f2d3ed3ae723d90e3febfcf96723f19c5549a",
+      "sha256": "7dbad44292ebdfb764ef2f8d499f9d999f93c77f583d3a0ffd8548898d8a6a5a",
       "importedBy": [
         "src/components/Layout.tsx"
       ]
@@ -3006,7 +3021,7 @@
     },
     {
       "path": "src/components/NotificationInbox.tsx",
-      "sha256": "772c07d0a8dc5a06bcc2a9ade9a1375b03cc5e340c1271af4dea7b3112f17172",
+      "sha256": "c64c7dde8e43b9219f43bd8ee06a428806c2e4868da31e690dbb208772d62f42",
       "importedBy": [
         "src/components/Layout.tsx"
       ]
@@ -3117,7 +3132,7 @@
     },
     {
       "path": "src/components/SettingsTab.tsx",
-      "sha256": "a0e455fc961e19dfd7228599caa92c65fc6b2af981aa3024cca89dc2b80ee1bb",
+      "sha256": "0647b913c33555a824119ccee4aceef6581a6818a5da81481deb5c27e5788fd1",
       "importedBy": [
         "src/App.tsx",
         "src/components/Layout.tsx"
@@ -3132,7 +3147,7 @@
     },
     {
       "path": "src/components/SubscriptionCard.tsx",
-      "sha256": "37ab95db08fd9c73554d771aedc5372789676bdae89101882867152f79a25217",
+      "sha256": "03a3571e5c87fdd2bb6ad4ed6048a02d08c371993ae4d9d7bf621f26af19a815",
       "importedBy": [
         "src/components/SettingsTab.tsx"
       ]
@@ -4019,7 +4034,7 @@
     },
     {
       "path": "src/context/AuthContext.tsx",
-      "sha256": "0eded438cff0511629728a433009d9be436519acb5d9eb758107b43f58351c18",
+      "sha256": "640e9b432bdb9c4dad4dfa7a6636432545baf7a9e35600de24f6c122ca664ba3",
       "importedBy": [
         "src/App.tsx",
         "src/components/AdminDiagnostics.tsx",
@@ -4416,7 +4431,8 @@
         "server/database/giftAccessDao.ts",
         "server/services/subscriptionAccess.ts",
         "src/components/AdminGiftAccess.tsx",
-        "src/components/GiftActivationPage.tsx"
+        "src/components/GiftActivationPage.tsx",
+        "src/utils/subscriptionPresentation.ts"
       ]
     },
     {
@@ -5094,6 +5110,14 @@
         "src/components/filing/FilingPage.tsx",
         "src/components/notes/SavedNotesScreen.tsx",
         "src/components/results/ResultsPage.tsx"
+      ]
+    },
+    {
+      "path": "src/utils/subscriptionPresentation.ts",
+      "sha256": "ac2b6885867e1ab09545ca2615fa46a4da7af12e826c095716d28eea48635e70",
+      "importedBy": [
+        "server/tests/subscriptionPresentation.test.ts",
+        "src/components/SubscriptionCard.tsx"
       ]
     },
     {
@@ -10893,6 +10917,12 @@
       "line": 4
     },
     {
+      "source": "server/tests/subscriptionPresentation.test.ts",
+      "target": "src/utils/subscriptionPresentation.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
       "source": "server/tests/subscriptionProgress.test.ts",
       "target": "src/utils/subscriptionProgress.ts",
       "kind": "import",
@@ -13689,6 +13719,12 @@
       "line": 14
     },
     {
+      "source": "src/components/SubscriptionCard.tsx",
+      "target": "src/utils/subscriptionPresentation.ts",
+      "kind": "import",
+      "line": 15
+    },
+    {
       "source": "src/components/SubscriptionProgress.tsx",
       "target": "src/utils/subscriptionProgress.ts",
       "kind": "import",
@@ -15399,6 +15435,12 @@
       "line": 1
     },
     {
+      "source": "src/utils/subscriptionPresentation.ts",
+      "target": "src/shared/giftAccess.ts",
+      "kind": "import",
+      "line": 1
+    },
+    {
       "source": "src/utils/telemetry.ts",
       "target": "src/utils/navigationMetrics.ts",
       "kind": "import",
@@ -16276,7 +16318,8 @@
         "server/tests/notificationOptimism.test.ts",
         "scripts/verify-mobile-ui.mjs",
         "server/tests/foregroundRefresh.test.ts",
-        "server/tests/resultFreshness.test.ts"
+        "server/tests/resultFreshness.test.ts",
+        "server/tests/uxStatusRender.test.ts"
       ],
       "reason": "List/detail identity, filters, watchlist membership, badge counts and timestamps must agree. Background refresh preserves content, density, selection and scroll. Rapid filter changes must not render older responses. Home membership uses active-list exact identities. The responsive watchlist editor preserves company metadata, page scrolling and four visible priority filters. Inbox presents unread items first, while device push delivery has an independent persistent control. Calendar labels use company names when symbols are numeric; sticky date headings share measured toolbar offsets. Home previews select the newest filing per exact watchlist security before limiting, without changing the full filing feed. Static Watchlist identity fallback uses the shared verified IndusInd code; existing list state, revisions and editor behavior are preserved. Inbox now has All/Watchlist/Results only, with unread-first ordering, read action below/right of filters and ephemeral per-owner/filter snapshots retained across close. Confirmed read/clear reconciles all cached filters; loading/error never erases saved content. Watchlist first-read readiness separates unknown from confirmed empty. Calendar/News/Watchlist pull indicators occupy flow below stable controls. Watchlist and Story symbol-to-code fallback maps also use the shared blank BSE code, preventing the old Advanced Enzyme mapping from returning through a client fallback. Stored 30-day filing counts share one exact-company projection with company detail, independently of the seven-day updates feed. Durable per-company history uses keyset pages; company Filings and Material Actions expose numbered pages. Explicit paid archive imports all categories over selected years with bounded workers, source failure and storage confirmation, and does not persist PDFs. Process restart or another instance may make worker status unavailable; saved evidence remains and no success is invented. Financial result titles include Results For Quarter/Q1 and board Outcome - Results. Generic outcomes need identity-bound proof from bounded official BSE PDF text; no PDF is persisted. Archive receipts distinguish saved filings from documents awaiting verification. Calendar retains one lower history control; Stock 360 and automatic readers share completion copy. Completed archive receipts with pending documents remain successful reads and have one ledger status owner. Shared pre-result priority updates require existing admin authorization; explicit server PIN denial opens the existing PIN dialog. HTML/preview denial remains an unconfirmed blocker. No automatic mutation retry or client role expansion is permitted. Calendar window reads cancel superseded company/window requests and expose retry on failure. English summary fields survive server projections and share AI counts/filter/render. Pagination clamps after refresh. Details/filter keyboard ownership is element-local; shared Telegram controls mirror server admin-only policy and wait for confirmed message IDs. Company Hub peer cards replace redundant result teasers and navigate through IntelModalContext with exact identities; shared calendar Share actions retain the existing email/clipboard handlers. Calendar uses the same company/purpose hierarchy for numeric F&O and symbolic rows, one normalized full-date heading, and wrapping action-only footers. Semantic segmented/control radius tokens cover Classic and Soft Glass; Watchlist compact labels retain inline counts and readable mobile search. Calendar reminder popovers portal outside blurred/transformed cards and own viewport placement, keyboard dismissal and focus return. For You uses exact active-watchlist projections for results, news, Radar, ADR and company Stories, with explicit target/new-list stock additions through existing guarded routes. Canonical result history supplies first-declaration IST timing dots, a supported one/two-hour concentration and labelled exceptions; no scheduled or ingestion clocks imply release times. Today preserves declared results with distinct wording and accent. Home reads isolate section errors; same-owner verified lists survive transient failure, denial/owner switch clears them. Calendar detail reconciles only exact-code verified result evidence; visible reads refresh without forced sync."
     },
@@ -16324,13 +16367,16 @@
         "src/styles/payment.css",
         "src/styles/referral.css",
         "src/utils/referralInput.ts",
-        "src/components/ui/ReferralCodeField.tsx"
+        "src/components/ui/ReferralCodeField.tsx",
+        "src/utils/subscriptionPresentation.ts"
       ],
       "tests": [
         "server/tests/pricingSync.test.ts",
         "server/tests/subscriptionProgress.test.ts",
         "server/tests/referralContract.test.ts",
-        "server/tests/referralInput.test.ts"
+        "server/tests/referralInput.test.ts",
+        "server/tests/subscriptionPresentation.test.ts",
+        "server/tests/uxStatusRender.test.ts"
       ],
       "reason": "Displayed amount, checkout attribution, return verification, receipt/history and subscription display share one contract. Pending referral, confirmed reward and stale stream are different UI states. Never turn a redirect or unconfirmed write into success."
     },
@@ -21336,31 +21382,31 @@
     },
     {
       "file": "src/components/NotificationInbox.tsx",
-      "line": 139,
+      "line": 141,
       "function": "customFetch",
       "target": "'/api/notifications/toggle-mute'"
     },
     {
       "file": "src/components/NotificationInbox.tsx",
-      "line": 186,
+      "line": 188,
       "function": "customFetch",
       "target": "url"
     },
     {
       "file": "src/components/NotificationInbox.tsx",
-      "line": 221,
+      "line": 224,
       "function": "customFetch",
       "target": "`/api/notifications/${encodeURIComponent(id)}/read`"
     },
     {
       "file": "src/components/NotificationInbox.tsx",
-      "line": 246,
+      "line": 249,
       "function": "customFetch",
       "target": "'/api/notifications/read-all'"
     },
     {
       "file": "src/components/NotificationInbox.tsx",
-      "line": 267,
+      "line": 270,
       "function": "customFetch",
       "target": "'/api/notifications'"
     },
@@ -21594,13 +21640,13 @@
     },
     {
       "file": "src/components/SubscriptionCard.tsx",
-      "line": 67,
+      "line": 69,
       "function": "customFetch",
       "target": "'/api/payments/status'"
     },
     {
       "file": "src/components/SubscriptionCard.tsx",
-      "line": 169,
+      "line": 172,
       "function": "customFetch",
       "target": "'/api/payments/status'"
     },
@@ -21864,73 +21910,73 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 583,
+      "line": 584,
       "function": "customFetch",
       "target": "'/auth/status'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 845,
+      "line": 846,
       "function": "customFetch",
       "target": "'/auth/login'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 870,
+      "line": 871,
       "function": "customFetch",
       "target": "'/auth/verify-pin'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 904,
+      "line": 905,
       "function": "customFetch",
       "target": "'/auth/session'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 926,
+      "line": 927,
       "function": "customFetch",
       "target": "'/auth/logout'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 987,
+      "line": 988,
       "function": "customFetch",
       "target": "`/api/users/check-username?username=${encodeURIComponent(clean)}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1085,
+      "line": 1086,
       "function": "customFetch",
       "target": "'/api/users/profile'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1153,
+      "line": 1154,
       "function": "customFetch",
       "target": "'/api/users/profile'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1229,
+      "line": 1230,
       "function": "customFetch",
       "target": "'/api/users/telegram/settings'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1251,
+      "line": 1252,
       "function": "customFetch",
       "target": "'/api/users/profile'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1308,
+      "line": 1309,
       "function": "customFetch",
       "target": "'/api/users/profile'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1336,
+      "line": 1337,
       "function": "customFetch",
       "target": "'/api/users/profile'"
     },
@@ -24032,139 +24078,139 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 496,
+      "line": 497,
       "function": "sessionStorage.getItem",
       "key": "'bse_guest_active_session'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 504,
+      "line": 505,
       "function": "localStorage.removeItem",
       "key": "STORAGE_SESSION_KEY"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 505,
+      "line": 506,
       "function": "localStorage.removeItem",
       "key": "'bse_nexus_fb_id_token'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 522,
+      "line": 523,
       "function": "localStorage.getItem",
       "key": "STORAGE_SESSION_KEY"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 536,
+      "line": 537,
       "function": "localStorage.removeItem",
       "key": "STORAGE_SESSION_KEY"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 558,
+      "line": 559,
       "function": "localStorage.getItem",
       "key": "STORAGE_SESSION_KEY"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 572,
+      "line": 573,
       "function": "localStorage.removeItem",
       "key": "STORAGE_SESSION_KEY"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 673,
+      "line": 674,
       "function": "sessionStorage.setItem",
       "key": "'bse_guest_active_session'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 900,
+      "line": 901,
       "function": "localStorage.getItem",
       "key": "'bse_nexus_fb_id_token'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 930,
+      "line": 931,
       "function": "localStorage.removeItem",
       "key": "STORAGE_SESSION_KEY"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 931,
+      "line": 932,
       "function": "localStorage.removeItem",
       "key": "'bse_nexus_auth_token'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 932,
+      "line": 933,
       "function": "localStorage.removeItem",
       "key": "'bse_nexus_fb_id_token'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 933,
+      "line": 934,
       "function": "localStorage.removeItem",
       "key": "'bse_user_tg_chat_id_global'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 934,
+      "line": 935,
       "function": "localStorage.removeItem",
       "key": "'bse_user_tg_username_global'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 935,
+      "line": 936,
       "function": "localStorage.removeItem",
       "key": "'bse_telegram_chat_id'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 936,
+      "line": 937,
       "function": "localStorage.removeItem",
       "key": "'bse_chat_id'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 941,
+      "line": 942,
       "function": "localStorage.removeItem",
       "key": "k"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1078,
+      "line": 1079,
       "function": "localStorage.setItem",
       "key": "`bse_user_handle_${user.uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1216,
+      "line": 1217,
       "function": "localStorage.setItem",
       "key": "`bse_user_tg_chat_id_${profile.uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1218,
+      "line": 1219,
       "function": "localStorage.removeItem",
       "key": "`bse_user_tg_chat_id_${profile.uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1221,
+      "line": 1222,
       "function": "localStorage.setItem",
       "key": "`bse_user_tg_username_${profile.uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1223,
+      "line": 1224,
       "function": "localStorage.removeItem",
       "key": "`bse_user_tg_username_${profile.uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1304,
+      "line": 1305,
       "function": "localStorage.setItem",
       "key": "`bse_trial_used_${trialUid}`"
     },
@@ -27301,7 +27347,7 @@
     },
     {
       "file": "src/components/NotificationInbox.tsx",
-      "line": 102,
+      "line": 103,
       "target": "document",
       "kind": "listen",
       "name": "keydown",
@@ -27309,7 +27355,7 @@
     },
     {
       "file": "src/components/NotificationInbox.tsx",
-      "line": 103,
+      "line": 104,
       "target": "document",
       "kind": "remove",
       "name": "keydown",
@@ -28173,7 +28219,7 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1341,
+      "line": 1342,
       "target": "window",
       "kind": "dispatch",
       "name": "notes-changed",
@@ -28181,7 +28227,7 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1344,
+      "line": 1345,
       "target": "window",
       "kind": "listen",
       "name": "focus",
@@ -28189,7 +28235,7 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1344,
+      "line": 1345,
       "target": "document",
       "kind": "listen",
       "name": "visibilitychange",
@@ -28197,7 +28243,7 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1345,
+      "line": 1346,
       "target": "window",
       "kind": "remove",
       "name": "focus",
@@ -28205,7 +28251,7 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1345,
+      "line": 1346,
       "target": "document",
       "kind": "remove",
       "name": "visibilitychange",

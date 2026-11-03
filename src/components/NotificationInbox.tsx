@@ -66,6 +66,7 @@ export function NotificationInbox({
   const { user, profile } = useAuth();
 
   const [loading, setLoading] = useState<boolean>(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<NotificationFilter>('ALL');
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [isTogglingMute, setIsTogglingMute] = useState<boolean>(false);
@@ -107,6 +108,7 @@ export function NotificationInbox({
     setConfirmClear(false);
     setActionFeedback(null);
     setSnapshots(emptyNotificationSnapshots(owner));
+    setLoadError(null);
     setIsMuted(false);
     setIsTogglingMute(false);
     setActiveFilter('ALL');
@@ -171,7 +173,7 @@ export function NotificationInbox({
     const loadSeq = muteSeqRef.current, account = owner, filter = activeFilter;
     const requestSeq = ++loadSeqRef.current;
     if (!background) setLoading(true);
-    setActionFeedback(null);
+    setLoadError(null);
     try {
       let url = '/api/notifications?limit=100';
       if (activeFilter === 'WATCHLIST') {
@@ -187,17 +189,18 @@ export function NotificationInbox({
       if (res.ok) {
         const data = await res.json();
         if (requestSeq !== loadSeqRef.current || ownerRef.current !== account) return;
-        if (!Array.isArray(data.notifications)) throw new Error('Invalid notifications response');
+        if (data?.success === false || !Array.isArray(data?.notifications)) throw new Error('Invalid notifications response');
         setSnapshots(previous => storeNotificationSnapshot(previous, account, filter, [...data.notifications].sort((a,b) => Number(a.isRead) - Number(b.isRead) || b.timestamp - a.timestamp)));
         if (typeof data.muteInAppNotifications === 'boolean' && muteSeqRef.current === loadSeq) {
           setIsMuted(data.muteInAppNotifications);
         }
         onRefreshCount();
       } else if (requestSeq === loadSeqRef.current && ownerRef.current === account) {
-        setActionFeedback({error:true,message:'Notifications could not be loaded. Please reopen the inbox to retry.'});
+        if (res.status === 401 || res.status === 403) setSnapshots(emptyNotificationSnapshots(account));
+        setLoadError(res.status === 401 || res.status === 403 ? 'Your session could not be confirmed. Sign in again, then retry.' : res.status === 429 ? 'Notifications are temporarily rate limited. Please retry shortly.' : 'Notifications could not be loaded. Please retry.');
       }
     } catch (e) {
-      if (requestSeq === loadSeqRef.current && ownerRef.current === account) setActionFeedback({error:true,message:'Notifications could not be loaded. Please reopen the inbox to retry.'});
+      if (requestSeq === loadSeqRef.current && ownerRef.current === account) setLoadError('Notifications could not be loaded. Please retry.');
     } finally {
       if (requestSeq === loadSeqRef.current && ownerRef.current === account) setLoading(false);
     }
@@ -460,12 +463,19 @@ export function NotificationInbox({
             </div>
           </div>
         )}
+        {loadError && (
+          <div role="alert" className="mx-3 my-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+            <p>{loadError}</p>
+            {snapshot !== undefined && notifications.length > 0 && <p className="mt-1">Showing your last checked notifications.</p>}
+            <button type="button" onClick={() => loadNotifications()} disabled={loading || isClearing} className="mt-1 min-h-[44px] px-3 font-semibold underline underline-offset-2 disabled:opacity-50">Retry notifications</button>
+          </div>
+        )}
         {loading && snapshot !== undefined && <p role="status" className="px-4 py-1 text-xs text-slate-500">Checking for updates…</p>}
         {/* Notification Stream List */}
         <div className="p-2.5 sm:p-3 overflow-y-auto flex-1 space-y-2 pb-16 sm:pb-3">
-          {snapshot === undefined && (loading || !actionFeedback) ? (
+          {snapshot === undefined && !loadError ? (
             <div role="status" aria-label="Loading notifications"><ComponentSkeleton type="section" /></div>
-          ) : snapshot === undefined ? <p role="status" className="py-8 text-center text-xs text-slate-500">No saved notifications available. Reopen the inbox to retry.</p> : notifications.length === 0 ? (
+          ) : snapshot === undefined || (loadError && notifications.length === 0) ? null : notifications.length === 0 ? (
             <div className="py-16 text-center space-y-2">
               <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto text-slate-400">
                 <Bell size={18} />
