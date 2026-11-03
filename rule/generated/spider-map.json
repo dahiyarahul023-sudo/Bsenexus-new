@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "ef27c7e916449488abebddc80c1ed5a7c1ff8b447ae2edfd77d57b61d381c148",
+  "sourceDigest": "1ccfb82a6b89d2f58650b0d35bb70d506eee46b1599b965689b2507bc6d594c6",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -243,7 +243,7 @@
     },
     {
       "path": "scripts/verify-radar-research.mjs",
-      "sha256": "a2199baaa2284605f379219a7221f94ca05024cea9ee546997d7ffa8dcfc25e9",
+      "sha256": "d0ce42f9089ff089565093f94e3d86e695f9ccd8c8f5361cd11badb33d98a51e",
       "importedBy": []
     },
     {
