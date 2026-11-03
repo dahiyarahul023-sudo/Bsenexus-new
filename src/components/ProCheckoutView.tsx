@@ -1,3 +1,4 @@
+import { PRO_AI_SUMMARIES_PER_DAY } from '../shared/productFacts';
 import React, { useState, useEffect, useRef } from 'react';
 import { X, ShieldCheck, Check, Tag, Sparkles, Crown } from 'lucide-react';
 import { RichIcon } from './ui/RichVisual';
@@ -332,7 +333,7 @@ export function ProCheckoutView() {
                   <tbody>
                     {[
                       ['Watchlists', '—', 'Unlimited'],
-                      ['AI summaries', '1 demo', '100/day'],
+                      ['AI summaries', '1 demo', `${PRO_AI_SUMMARIES_PER_DAY}/day`],
                       ['Telegram alerts', '—', 'Personal alerts'],
                       ['CSV / JSON export', '—', 'Included'],
                     ].map((row) => (

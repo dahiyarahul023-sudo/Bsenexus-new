@@ -1,3 +1,4 @@
+import { matchStockInText } from '../shared/newsRelevance';
 export interface HomeNewsItem {
   id: string; title: string; link: string; source: string;
   snippet: string; publishedAt: string; category: string; symbol?: string;
@@ -32,23 +33,15 @@ export function readHomeNews(payload: unknown): HomeNewsItem[] {
 // Prefer fresh market/regulatory/results news; give material policy headlines
 // and exact watchlist terms a bounded boost. Unknown dates get no freshness.
 export function selectHomeNews(items: HomeNewsItem[], watched: string[] = [], now = Date.now(), watchlistOnly = false): HomeNewsItem[] {
-  const relevant = (item: HomeNewsItem) => watched.some(term => {
-    if (item.symbol?.toUpperCase()===term.toUpperCase()) return true;
-    if (term.trim().length < 3) return false;
-    const escaped = term.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    return item.symbol?.toUpperCase() === term.toUpperCase() || new RegExp(`\\b${escaped}\\b`, 'i').test(item.title);
-  });
+  const relevant = (item: HomeNewsItem) => watched.some(term =>
+    item.symbol?.toUpperCase() === term.toUpperCase() || matchStockInText(`${item.title} ${item.snippet}`,term,term));
   const scored = (watchlistOnly ? items.filter(relevant) : items).map(item => {
     const ts = Date.parse(item.publishedAt);
     const validDate = Number.isFinite(ts) && ts <= now + 5 * 60_000;
     const ageHours = validDate ? Math.max(0, (now - ts) / 3_600_000) : Infinity;
     const fresh = ageHours <= 48;
     const title = item.title.toLowerCase();
-    const personal = watched.some(term => {
-      if (term.trim().length < 3) return false;
-      const escaped = term.trim().toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      return item.symbol?.toLowerCase() === term.toLowerCase() || new RegExp(`\\b${escaped}\\b`, 'i').test(title);
-    });
+    const personal = relevant(item);
     const impact = /\b(rbi|repo rate|monetary policy|union budget|sebi|rate cut|rate hike|inflation|gdp|market crash)\b/i.test(title) ? 24 : 0;
     const category = ({ regulatory: 18, earnings: 16, market: 14, corporate: 8 } as Record<string, number>)[item.category] || 4;
     return { item, fresh, ts: validDate ? ts : 0,

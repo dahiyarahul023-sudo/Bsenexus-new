@@ -1,3 +1,5 @@
+import { PRO_AI_SUMMARIES_PER_DAY } from '../../src/shared/productFacts.js';
+import { PRO_PLANS } from '../config/plans.js';
 import { requireVerifiedTelegramTarget } from '../database/telegramLinksDao.js';
 import { fetchExchangeDocument, readBoundedDocument } from '../utils/bseDocument.js';
 import { isValidTelegramResultSummary, telegramResultIdentity } from '../utils/telegramResultPolicy.js';
@@ -543,10 +545,10 @@ ${watchlistContext}
 - Bsenexus = live BSE disclosures, board meetings & filings terminal for Indian equity investors.
 - Watchlists (Pro): unlimited lists/stocks; per-stock priority HIGH/MED/LOW (a stock in multiple lists resolves to the highest priority); Free plan: no watchlists.
 - Results Calendar: board meetings for results/dividends/bonus/demerger; status Upcoming / Today-Awaiting Outcome / Outcome Declared; per-stock past results history with BSE PDFs.
-- AI summaries: 50+ page BSE PDFs distilled to YoY revenue, PAT, EBITDA margin, dividend. Pro: 100/day. Free: ONE one-time demo summary ever.
-- Telegram alerts (Pro): get Chat ID from @userinfobot → Settings → Telegram Configuration → paste → Save & Test. Categories: Results, Concalls, Dividends, Order Wins, Insider Trading. Master toggle in Settings stops everything.
-- Free: live BSE feed + one AI demo; no watchlists, no Telegram. Pro one-time packs (no auto-renewal): Weekly ₹59 (7 days), Monthly ₹199 (30 days), 6-Month ₹999 (180 days), Yearly ₹1,799 (365 days). Pro adds unlimited watchlists, 100 AI summaries/day, Telegram alerts, CSV export. 7-day free Pro trial, no card.
-- Storage: Firestore primary; auto-falls-back to local JSON near quota; admin can force modes in Storage Manager.
+- AI summaries: 50+ page BSE PDFs distilled to YoY revenue, PAT, EBITDA margin, dividend. Pro: ${PRO_AI_SUMMARIES_PER_DAY}/day. Free: ONE one-time demo summary ever.
+- Telegram alerts (Pro): Settings → Telegram alerts → follow the bot verification steps. Typed IDs alone do not authorise delivery. Categories: Results, Concalls, Dividends, Order Wins, Insider Trading. Master toggle in Settings stops everything.
+- Free: live BSE feed + one AI demo; no watchlists, no Telegram. Pro one-time packs (no auto-renewal): ${Object.values(PRO_PLANS).map(p => `${p.label} ₹${p.amountPaise/100} (${p.validityDays} days; ₹${p.referralAmountPaise/100} with referral)`).join(', ')}. Pro adds unlimited watchlists, ${PRO_AI_SUMMARIES_PER_DAY} AI summaries/day, Telegram alerts, CSV export. 7-day free Pro trial, no card.
+- Storage: private account data is read through authenticated server APIs. If storage is unavailable, payment and other protected writes can fail; never promise that a local fallback confirms a payment.
 - Security: Master PIN locks admin/Telegram settings; Noise Filter mutes spam filings.
 
 When the user asks how to do something in the app, give direct, actionable steps. Otherwise keep it short and conversational. Be polite, precise, and supportive.`;

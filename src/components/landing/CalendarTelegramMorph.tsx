@@ -1,3 +1,4 @@
+import { DELIVERY_TIMING_COPY } from '../../shared/productFacts';
 import { CalendarDateBadge3D } from '../ui/CalendarDateBadge3D';
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform, useReducedMotion } from 'framer-motion';
@@ -246,14 +247,14 @@ export function CalendarTelegramMorph({ onEnterTerminal }: CalendarTelegramMorph
                   </div>
                   <div>
                     <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Simulated Telegram Alert</h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Instant notification ping delivered in ~0.8 seconds from BSE release</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{DELIVERY_TIMING_COPY}</p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
                     <Zap className="w-3 h-3" />
-                    <span>0.8s Sub-Second Dispatch</span>
+                    <span>Illustrative delivery preview</span>
                   </span>
                 </div>
               </div>

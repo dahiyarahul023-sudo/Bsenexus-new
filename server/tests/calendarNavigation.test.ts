@@ -31,6 +31,7 @@ function componentHarness(path: string, extra: Record<string, any> = {}) {
   } }).outputText;
   vm.runInNewContext(code, { exports, console, Date, ...extra, require(name: string) {
     if (name === 'react') return fakeReact;
+    if (name.endsWith('/sourceHealth')) return requireActual(name + '.ts');
     if (name.endsWith('/AuthContext')) return { useAuth: () => ({ user: null, profile: null }) };
     if (name.endsWith('/IntelModalContext')) return { useIntelModal: () => ({}) };
     if (name.endsWith('/aiQuota')) return { useAiQuota: () => ({}) };

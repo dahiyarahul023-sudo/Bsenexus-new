@@ -1,3 +1,4 @@
+import { matchStockInText } from '../../src/shared/newsRelevance.js';
 import { getAccessProfile } from './subscriptionAccess.js';
 import { giftsEnabled } from './giftAccessPolicy.js';
 import { requireVerifiedTelegramTarget } from '../database/telegramLinksDao.js';
@@ -404,35 +405,8 @@ export async function fetchGeneralMarketNews(
   return all;
 }
 
-// Match news items with watchlist symbols & company names
-export function matchStockInText(
-  text: string,
-  symbol: string,
-  companyName?: string
-): boolean {
-  const lowerText = text.toLowerCase();
-  const lowerSym = symbol.toLowerCase();
-
-  // Word boundary regex for exact ticker symbol (e.g. \bTCS\b, \bINFY\b, \bRELIANCE\b)
-  const symRegex = new RegExp(`\\b${lowerSym}\\b`, 'i');
-  if (symRegex.test(text)) {
-    return true;
-  }
-
-  if (companyName && companyName.trim().length > 3) {
-    const cleanComp = companyName
-      .toLowerCase()
-      .replace(/\b(ltd|limited|industries|india|corp|corporation|bank|enterprise|enterprises|technologies)\b/gi, '')
-      .trim();
-
-    if (cleanComp.length >= 3 && lowerText.includes(cleanComp)) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
+// Shared issuer matching also used by the Home projection.
+export { matchStockInText } from '../../src/shared/newsRelevance.js';
 // Get combined Watchlist News from all sources for all tracked active stocks
 export async function getWatchlistNews(
   userId?: string,

@@ -1,3 +1,4 @@
+import { PRO_AI_SUMMARIES_PER_DAY } from '../../src/shared/productFacts.js';
 import { getSupabase, isSupabaseConfigured } from './supabase.js';
 import { PaymentStoreUnavailableError, runPaymentStore } from './paymentStore.js';
 
@@ -13,7 +14,7 @@ export async function operateDurableAiQuota(uid: string, action: 'status' | 'res
       p_uid: uid, p_action: action, p_reservation_id: reservationId || null,
     });
     if (error) throw error;
-    if (!data || typeof data.allowed !== 'boolean' || !Number.isInteger(data.used) || data.used < 0 || data.dailyLimit !== 100 || data.remaining !== Math.max(0, 100 - data.used)) {
+    if (!data || typeof data.allowed !== 'boolean' || !Number.isInteger(data.used) || data.used < 0 || data.dailyLimit !== PRO_AI_SUMMARIES_PER_DAY || data.remaining !== Math.max(0, PRO_AI_SUMMARIES_PER_DAY - data.used)) {
       throw new Error('Invalid durable AI quota response');
     }
     if (action === 'reserve' && data.allowed && data.reservationId !== reservationId) throw new Error('Invalid quota reservation identity');

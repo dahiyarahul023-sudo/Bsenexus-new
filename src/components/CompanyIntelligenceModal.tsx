@@ -1,3 +1,4 @@
+import { AI_ALLOWANCE_COPY } from '../shared/productFacts';
 import { useForegroundRefresh } from '../hooks/useForegroundRefresh';
 import { readCompanyIntelSnapshot, storeCompanyIntelSnapshot, clearCompanyIntelSnapshots } from '../utils/companyIntelSnapshots';
 import { archiveCompletionMessage } from '../shared/resultFiling';
@@ -189,7 +190,7 @@ export function CompanyIntelligenceModal({
 
     if (!isProOrAdmin) {
       setIsProModalOpen(true);
-      showToast(`🔒 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) for unlimited Gemini AI 360° Analysis!`, 'info');
+      showToast(`🔒 1-Week Free Pro trial has ended. Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) for ${AI_ALLOWANCE_COPY.toLowerCase()}.`, 'info');
       return;
     }
 

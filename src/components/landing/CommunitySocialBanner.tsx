@@ -20,7 +20,7 @@ export function CommunitySocialBanner() {
       name: 'Telegram Channel',
       handle: '@BseNexusOfficial',
       href: 'https://t.me/BseNexusOfficial',
-      ariaLabel: 'Join official BSE Nexus Telegram Channel for instant sub-second filing alerts',
+      ariaLabel: 'Join official BSE Nexus Telegram Channel for filing alerts and platform updates',
       badge: 'Sub-Second Alerts',
       brandColor: '#229ED9',
       brandBg: 'from-[#2AABEE] to-[#229ED9]',

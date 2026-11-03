@@ -1,3 +1,4 @@
+import { PRO_AI_SUMMARIES_PER_DAY } from '../../src/shared/productFacts.js';
 import { randomUUID } from 'node:crypto';
 import { operateDurableAiQuota, requiresDurableAiQuota } from '../database/aiQuotaDao.js';
 import { readLocalJson, writeLocalJson } from '../database/localStore.js';
@@ -63,7 +64,7 @@ export async function checkServerAiQuota(
     ? (await operateDurableAiQuota(uid, 'status')).used
     : usageMap[usageKey] || 0;
 
-  const dailyLimit = 100; // Fair-use daily limit for 1-week Pro trial
+  const dailyLimit = PRO_AI_SUMMARIES_PER_DAY; // Fair-use daily limit for 1-week Pro trial
   const remaining = Math.max(0, dailyLimit - used);
 
   if (used >= dailyLimit) {
@@ -223,7 +224,7 @@ export async function getServerAiQuotaStatus(
     ? (await operateDurableAiQuota(uid, 'status')).used
     : usageMap[usageKey] || 0;
 
-  const dailyLimit = 100;
+  const dailyLimit = PRO_AI_SUMMARIES_PER_DAY;
   const remaining = Math.max(0, dailyLimit - used);
 
   return {

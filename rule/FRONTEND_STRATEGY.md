@@ -8,6 +8,8 @@
 
 # Frontend strategy and evidence-based priorities
 
+2026-11-04 batch 2 implements the notification oversized-filter repair and relevant-information/claims section. Actual DAO transport regression, issuer/Radar semantic cases and SSR copy/demo cases pass; full offline suite passes 1002 tests. Source examples and missing health are explicit, while delivery/analysis timing is not invented. No production data, pricing, quota policy or delivery changes. Navigation/task-flow and shared visual batches remain next; production publication and physical-device verification are distinct gates.
+
 2026-11-03 approved live audit implementation starts with the bounded status section: administrator billing without fabricated expiry/trial, distinct retryable inbox failures, and declared Company Hub results. Changes are read/display-only; payment grants, pricing, result evidence and delivery policy remain unchanged. Source/tests/build and publication are recorded separately in changes/ux-status-consistency.md. UX_IMPLEMENTATION_PLAN.md owns the remaining cohesive batches; F02's production request failure is not declared repaired by UI recovery alone.
 
 28 October source alignment: changes/studio-source-alignment.md migrates Studio feature/runtime source into Bsenexus-new-orig, retaining canonical audit fixes. HTML API 200 responses are typed failures; disabled Gift access is a configuration conflict. Private preview verification is left to the user; migrations, sender checks and publication remain separate gates.

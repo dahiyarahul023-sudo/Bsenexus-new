@@ -1,3 +1,4 @@
+import { AI_ALLOWANCE_COPY, AI_TIMING_COPY, DELIVERY_TIMING_COPY } from '../shared/productFacts';
 import React, { useState } from 'react';
 import { 
   X, HelpCircle, Bot, Send, Zap, ShieldCheck, 
@@ -328,7 +329,7 @@ export function HelpModal({ isOpen, onClose, onOpenSettings }: HelpModalProps) {
                   What is Bsenexus?
                 </h4>
                 <p className="text-xs text-indigo-900/80 dark:text-indigo-300/80 leading-relaxed">
-                  Bsenexus is an enterprise-grade live regulatory terminal tracking every public corporate filing from the Bombay Stock Exchange in sub-second intervals.
+                  Bsenexus helps you monitor public corporate filings from the Bombay Stock Exchange, follow your companies and read source disclosures.
                 </p>
               </div>
 
@@ -359,7 +360,7 @@ export function HelpModal({ isOpen, onClose, onOpenSettings }: HelpModalProps) {
                     <span>AI Earnings Extractor</span>
                   </div>
                   <p className="text-[11px] text-slate-500 leading-relaxed">
-                    Gemini AI automatically reads corporate PDF announcements and extracts Revenue YoY, Net Profit YoY, EPS, and quarter highlights within seconds.
+                    AI analysis extracts Revenue YoY, Net Profit YoY, EPS and quarter highlights from supported corporate PDF announcements. {AI_TIMING_COPY}
                   </p>
                 </div>
 
@@ -382,7 +383,7 @@ export function HelpModal({ isOpen, onClose, onOpenSettings }: HelpModalProps) {
               <div className="p-4 rounded-2xl bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-800 space-y-2">
                 <div className="flex items-center gap-2 font-bold text-blue-950 dark:text-blue-200">
                   <Bot size={16} className="text-blue-600 dark:text-blue-400" />
-                  <span>How to Connect Your Personal Telegram Bot (2 Steps)</span>
+                  <span>Connect Your Telegram Account</span>
                 </div>
                 <p className="text-[11px] text-blue-800/80 dark:text-blue-300/80">
                   Get high-conviction market disclosures sent straight to your phone before brokers or social channels report them.
@@ -393,12 +394,12 @@ export function HelpModal({ isOpen, onClose, onOpenSettings }: HelpModalProps) {
                 <div className="flex items-start gap-3 p-3.5 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200/80 dark:border-slate-800">
                   <span className="w-6 h-6 rounded-full bg-blue-500 text-white font-bold flex items-center justify-center text-xs shrink-0">1</span>
                   <div className="space-y-1">
-                    <h5 className="font-bold text-slate-900 dark:text-white">Get your Chat ID from Telegram</h5>
+                    <h5 className="font-bold text-slate-900 dark:text-white">Create a verification link in Settings</h5>
                     <p className="text-[11px] text-slate-500">
-                      Open Telegram on your mobile or desktop, search for the userbot <strong className="text-blue-600 dark:text-blue-400">@userinfobot</strong> and press <strong>/start</strong> to get your Chat ID. Also search for our alert bot <strong className="text-emerald-600 dark:text-emerald-400">@Dahiyastockbot</strong> and tap <strong>Start</strong> so Telegram permits direct delivery.
+                      Open Settings → Telegram alerts and choose <strong>Create verification link</strong>. Follow the generated link using <strong>Open Telegram and press Start</strong>.
                     </p>
                     <p className="text-[11px] text-slate-500">
-                      It will immediately respond with your numerical ID (e.g. <span className="font-mono bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded text-slate-800 dark:text-slate-200">987654321</span>).
+                      The account-bound link expires in 10 minutes. Create a new link if it has expired.
                     </p>
                   </div>
                 </div>
@@ -406,9 +407,9 @@ export function HelpModal({ isOpen, onClose, onOpenSettings }: HelpModalProps) {
                 <div className="flex items-start gap-3 p-3.5 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200/80 dark:border-slate-800">
                   <span className="w-6 h-6 rounded-full bg-blue-500 text-white font-bold flex items-center justify-center text-xs shrink-0">2</span>
                   <div className="space-y-1">
-                    <h5 className="font-bold text-slate-900 dark:text-white">Paste Chat ID in Settings & Save</h5>
+                    <h5 className="font-bold text-slate-900 dark:text-white">Confirm verification and save your preferences</h5>
                     <p className="text-[11px] text-slate-500">
-                      Go to the <strong>Settings</strong> section, paste your ID into the <strong>Telegram Chat ID</strong> box, and click <strong>Save & Test Alert</strong>.
+                      Return to Settings and choose <strong>Check verification</strong>. After the connection is confirmed, save your alert preferences. A typed Chat ID alone does not verify the destination.
                     </p>
                   </div>
                 </div>
@@ -438,7 +439,7 @@ export function HelpModal({ isOpen, onClose, onOpenSettings }: HelpModalProps) {
                   <span>Gemini 2.5 Flash Financial Extraction</span>
                 </div>
                 <p className="text-[11px] text-purple-800/80 dark:text-purple-300/80">
-                  Our server parses incoming exchange PDFs with AI to provide instant financial metrics in under 3 seconds.
+                  AI analysis extracts supported financial metrics from exchange PDFs. {AI_TIMING_COPY} Pro includes {AI_ALLOWANCE_COPY.toLowerCase()}.
                 </p>
               </div>
 
@@ -467,7 +468,7 @@ export function HelpModal({ isOpen, onClose, onOpenSettings }: HelpModalProps) {
               <div className="p-3.5 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-1">
                 <h5 className="font-bold text-slate-900 dark:text-white">Q: How fast are announcements delivered?</h5>
                 <p className="text-[11px] text-slate-500">
-                  Announcements are polled from the official BSE exchange dissemination portal every 800ms. They typically appear within 1–2 seconds of public submission.
+                  Filings are checked against public exchange sources. {DELIVERY_TIMING_COPY} A source-check duration is not the time from publication to delivery.
                 </p>
               </div>
 

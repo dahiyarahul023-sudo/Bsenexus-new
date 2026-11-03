@@ -1,3 +1,4 @@
+import { AI_ALLOWANCE_COPY } from '../shared/productFacts';
 import { CalendarDateBadge3D } from './ui/CalendarDateBadge3D';
 import React, { useState } from 'react';
 import { 
@@ -81,7 +82,7 @@ export function LandingPage({
           <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             <div className="hidden md:flex items-center gap-2 text-xs font-mono text-slate-500 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>BSE FEED 0.8s</span>
+              <span>BSE FILINGS</span>
             </div>
 
             <a
@@ -132,22 +133,22 @@ export function LandingPage({
           {/* Subtle live indicator badge */}
           <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 rounded-full text-left bg-white/80 dark:bg-slate-800/80 border border-slate-200/90 dark:border-slate-700/60 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-xs">
             <span className="w-1.5 h-1.5 shrink-0 rounded-full bg-emerald-500" />
-            <span>Sub-Second Exchange Disclosures &amp; Earnings Intelligence</span>
+            <span>Exchange Disclosures &amp; Earnings Intelligence</span>
           </div>
 
           {/* Master Headline (Apple typography: negative tracking, tight leading) */}
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 dark:text-white tracking-[-0.03em] leading-[1.12]">
             Real-time BSE filings.<br />
             <span className="bg-gradient-to-r from-sky-500 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              Sub-second Telegram alerts.
+              Personal Telegram alerts.
             </span><br />
-            Instant AI analysis.
+            AI filing analysis.
           </h1>
 
           {/* Lead paragraph */}
           <p className="max-w-2xl mx-auto text-sm sm:text-lg text-slate-600 dark:text-slate-400 font-normal leading-relaxed">
-            The ultra-low-latency market intelligence terminal for Indian equities. 
-            Catch Regulation 30 announcements, quarterly results, and catalysts before they hit broker feeds.
+            A filing and research workspace for Indian equities.
+            Track Regulation 30 announcements, quarterly results, and upcoming events from one place.
           </p>
 
           {/* Primary & Secondary Call to Actions */}
@@ -230,7 +231,7 @@ export function LandingPage({
             </span>
           </h2>
           <p className="mt-4 text-sm sm:text-base text-slate-600 dark:text-slate-400 font-normal leading-relaxed">
-            Every plan unlocks sub-second Telegram alerts, unlimited AI earnings breakdowns, and deep historical disclosure archives.
+            Every Pro plan includes personal Telegram alerts, {AI_ALLOWANCE_COPY.toLowerCase()}, and historical disclosure research.
           </p>
         </div>
 
@@ -243,9 +244,9 @@ export function LandingPage({
             price={String(proWeekly.price)}
             priceSuffix={`/${proWeekly.days} days`}
             features={[
-              'Sub-second Telegram push alerts',
-              'AI Earnings & Concall PDF summaries',
-              'Fast 7-day trial access'
+              'Personal Telegram filing alerts',
+              AI_ALLOWANCE_COPY,
+              '7 days of Pro access'
             ]}
             ctaLabel="Get Weekly Pass"
             onCta={() => onEnterTerminal('plans')}
@@ -261,8 +262,8 @@ export function LandingPage({
             wasPrice={proMonthly.wasPrice ? String(proMonthly.wasPrice) : undefined}
             tag={proMonthly.tag || 'Most Popular'}
             features={[
-              'Sub-second Telegram push alerts',
-              'AI Earnings & Concall PDF summaries',
+              'Personal Telegram filing alerts',
+              AI_ALLOWANCE_COPY,
               'Unlimited custom watchlist tracking',
               'LODR Regulation 30 & Board Meeting alerts'
             ]}
@@ -281,11 +282,11 @@ export function LandingPage({
             tag={proAnnual.tag || 'Best Value'}
             features={[
               'All Pro Monthly capabilities included',
-              'Priority sub-second Telegram pipeline',
+              AI_ALLOWANCE_COPY,
               'Deep 5-year historical filings archive',
               'Direct API & custom bot access'
             ]}
-            ctaLabel="Get Annual Pro (Save 40%)"
+            ctaLabel="Get Annual Pro"
             onCta={() => onEnterTerminal('plans')}
             className="bg-white/95 dark:bg-slate-900/90 backdrop-blur-xl border border-emerald-500/50 dark:border-emerald-500/50 ring-2 ring-emerald-500/30 shadow-lg hover:shadow-xl transition-all"
           />
