@@ -104,6 +104,8 @@ test('the actual company modal uses the same hook order when closed, opened and 
     if (path.endsWith('/IntelModalContext')) return { useIntelModal: () => ({ openIntelModal() {} }) };
     if (path.endsWith('/AuthContext')) return { useAuth: () => ({ user: null, profile: null }) };
     if (path.endsWith('/aiQuota')) return { useAiQuota: () => ({}) };
+    if (path.endsWith('/companyIntelSnapshots')) return { readCompanyIntelSnapshot: () => null };
+    if (path.endsWith('/useForegroundRefresh')) return { useForegroundRefresh() {} };
     if (path.endsWith('/useBodyScrollLock')) return { useBodyScrollLock() {} };
     if (path.endsWith('/companyFilings')) return { pageItems };
     if (path.endsWith('/cashfree')) return { getLowestPlanPrice: () => 89 };

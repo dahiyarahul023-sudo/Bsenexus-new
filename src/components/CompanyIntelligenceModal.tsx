@@ -1,3 +1,5 @@
+import { useForegroundRefresh } from '../hooks/useForegroundRefresh';
+import { readCompanyIntelSnapshot, storeCompanyIntelSnapshot, clearCompanyIntelSnapshots } from '../utils/companyIntelSnapshots';
 import { archiveCompletionMessage } from '../shared/resultFiling';
 import { pageItems, filingTimestamp } from '../shared/companyFilings';
 import { ListPagination } from './ui/ListPagination';
@@ -60,8 +62,9 @@ export function CompanyIntelligenceModal({
   const { user, profile, isAdmin, isPro, adminUnlocked, setIsAuthModalOpen, setIsProModalOpen } = useAuth();
   const [activeTab, setActiveTab] = useState<'hub' | 'timeline' | 'results' | 'filings' | 'research'>('hub');
   const [timelineFilter, setTimelineFilter] = useState<string>('ALL');
-  const [intelData, setIntelData] = useState<any | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const initialKey = `${user?.uid || 'guest'}:${scripCode}:${symbol}`;
+  const [intelData, setIntelData] = useState<any | null>(() => readCompanyIntelSnapshot(initialKey)?.data || null);
+  const [loading, setLoading] = useState<boolean>(() => !readCompanyIntelSnapshot(initialKey));
   const [isGeneratingAi, setIsGeneratingAi] = useState<boolean>(false);
   const [aiOverview, setAiOverview] = useState<string>('');
   const [copiedAi, setCopiedAi] = useState<boolean>(false);
@@ -109,15 +112,20 @@ export function CompanyIntelligenceModal({
     const controller = new AbortController();
     readController.current = controller;
     const timer = setTimeout(() => controller.abort(), 15_000);
-    setLoading(true); setLoadError(null);
+    setLoading(!readCompanyIntelSnapshot(`${user?.uid || 'guest'}:${scripCode}:${symbol}`)); setLoadError(null);
     try {
       const query = new URLSearchParams({ scripCode, symbol });
-      const res = await customFetch(`/api/company-intel/${encodeURIComponent(scripCode || symbol)}?${query}`, { signal: controller.signal });
+      const res = await customFetch(`/api/company-intel/${encodeURIComponent(scripCode || symbol)}?${query}`, { signal: controller.signal, cache: 'no-store' });
       const data = await res.json();
       if (revision !== readRevision.current) return;
       if (controller.signal.aborted) throw new Error('Company read timed out. Please retry.');
+      if (res.status === 401 || res.status === 403) { clearCompanyIntelSnapshots(); setIntelData(null); }
       if (!res.ok || !Array.isArray(data.recentFilings)) throw new Error(data.error || 'Company data unavailable. Please retry.');
-      setIntelData({ ...data, _selectionKey: `${user?.uid || 'guest'}:${scripCode}:${symbol}` });
+      const key = `${user?.uid || 'guest'}:${scripCode}:${symbol}`;
+      const snapshot = { ...data, _selectionKey: key };
+      storeCompanyIntelSnapshot(key, snapshot);
+      setIntelData(snapshot);
+      window.dispatchEvent(new CustomEvent('company-intel-updated', { detail: { owner: user?.uid || 'guest', scripCode, symbol, history: data.quarterlyResults } }));
       if (data.aiSnapshot) setAiOverview(data.aiSnapshot);
     } catch (error: any) {
       if (revision === readRevision.current) setLoadError(controller.signal.aborted ? 'Company read timed out. Please retry.' : error.message);
@@ -128,12 +136,23 @@ export function CompanyIntelligenceModal({
   }, [scripCode, symbol, user?.uid]);
   useEffect(() => {
     setActiveTab('hub'); setTimelineFilter('ALL'); setFactSelection(null); contentRef.current?.scrollTo({ top: 0 });
-    setIntelData(null); setAiOverview(''); setHistoryJob(null); setHistorySuccessMsg(null); setHistoryError(false);
+    const cached = readCompanyIntelSnapshot(selectionKey);
+    setIntelData(cached?.data || null); setLoading(!cached); setLoadError(null);
+    setAiOverview(cached?.data?.aiSnapshot || ''); setHistoryJob(null); setHistorySuccessMsg(null); setHistoryError(false);
     setIsFetchingHistory(false); setListPages({ filings: 1, timeline: 1 });
     ++syncRevision.current; syncController.current?.abort();
-    if (isOpen && (scripCode || symbol)) void loadIntelligence();
+
     return () => { ++readRevision.current; readController.current?.abort(); ++syncRevision.current; syncController.current?.abort(); };
   }, [isOpen, scripCode, symbol, user?.uid, loadIntelligence]);
+  useForegroundRefresh(() => {
+    const cached = readCompanyIntelSnapshot(selectionKey);
+    if (!cached || Date.now() - cached.at >= 15_000) return loadIntelligence();
+  }, 60_000, isOpen && Boolean(scripCode || symbol), selectionKey);
+  useEffect(() => {
+    const clear = () => clearCompanyIntelSnapshots();
+    window.addEventListener('auth-state-changed', clear);
+    return () => window.removeEventListener('auth-state-changed', clear);
+  }, []);
   useEffect(() => {
     if (!isOpen || historyJob?.state !== 'running') return;
     let alive = true;
@@ -547,7 +566,8 @@ export function CompanyIntelligenceModal({
         {/* Modal Body Container - Scrollable area (flex-1 min-h-0 overflow-y-auto) */}
         <div ref={contentRef} className="p-4 sm:p-6 flex-1 min-h-0 overflow-y-auto space-y-4 overscroll-contain">
           <CompanyAdr symbol={effectiveSymbol} scripCode={effectiveScrip} />
-          {loadError ? (
+          {loadError && visibleIntel && <p role="status" className="text-xs text-amber-700 dark:text-amber-300">Showing saved company data. {loadError} <button type="button" onClick={loadIntelligence} className="underline min-h-10 px-2">Retry</button></p>}
+          {loadError && !visibleIntel ? (
             <div className="py-8">
               <TimeoutRetryState
                 title="Couldn't load company intelligence"
@@ -556,14 +576,13 @@ export function CompanyIntelligenceModal({
                 onBack={onClose}
               />
             </div>
-          ) : loading ? (
+          ) : loading && !visibleIntel ? (
             <div className="space-y-4 min-h-[360px]">
               <div className="flex items-center justify-between px-1 text-xs text-slate-500 font-mono">
                 <span className="flex items-center gap-1.5">
                   <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-                  <span>Loading financial metrics for {effectiveName}...</span>
+                  <span>Loading company data for {effectiveName}…</span>
                 </span>
-                <span className="text-[11px] text-slate-400">Rendering layout...</span>
               </div>
               <CompanyHubSkeleton />
             </div>

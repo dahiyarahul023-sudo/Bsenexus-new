@@ -17,6 +17,7 @@ function loadService(rows: any[]) {
   const context = vm.createContext({
     exports: {},
     require: (path: string) => {
+      if (path.endsWith('/currentResultEvidence.js')) return { verifyCurrentResultFilings: async (rows: any[]) => rows };
       if (path.endsWith('/resultFiling.js')) return resultFiling;
       if (path === 'fs') return { existsSync: () => true, readFileSync: () => JSON.stringify({ items: [], lastUpdated: clock, lastAttempt: clock, universeVersion: 'fixture' }) };
       if (path === 'path') return { join: (...parts: string[]) => parts.join('/'), dirname: () => '/tmp' };

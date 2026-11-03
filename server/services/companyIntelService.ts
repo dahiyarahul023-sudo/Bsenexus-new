@@ -2,7 +2,7 @@ import { selectCompanyPeers } from '../utils/companyPeers.js';
 import { companyFilingStats } from '../../src/shared/companyFilings.js';
 import { hasExactScripCode, matchesCompanyFiling } from '../../src/shared/scripMatching.js';
 import YahooFinance from 'yahoo-finance2';
-import { getStockResultsHistory, getResultsCalendarData, autoFetchDeepHistoricalResults } from './resultsCalendarService.js';
+import { getStockResultsHistory, getResultsCalendarSnapshot } from './resultsCalendarService.js';
 import { classifyMaterialEvent, MaterialEvent } from './timelineClassifier.js';
 import { getRecentAnnouncements, getAnnouncementsForScrip, getBseOperatorAnnouncements } from '../database/announcementDao.js';
 import { generateDirectSummary } from './gemini.js';
@@ -155,20 +155,15 @@ export async function getCompanyIntelligence(scripCode: string, symbol: string):
   const targetScrip = targetSym === 'BSE' ? '' : String(scripCode || getAllStockEntries().find(e => e.symbol.toUpperCase() === targetSym)?.scripCode || '').trim();
   const nseOnly = targetSym === 'BSE';
 
-  // 1. Fetch Quote & Valuation Context
-  let quote: CompanyQuoteContext | null = null;
-  if (targetSym) {
-    try {
-      quote = await fetchStockQuote(targetSym);
-    } catch (err: any) {
-      console.warn(`[CompanyIntel] Quote fetch failed for ${targetSym}:`, err?.message);
-    }
-  }
+  // Independent providers run together; the company read has no user-watchlist dependency.
+  const filingsRead = nseOnly ? getBseOperatorAnnouncements(true) : getAnnouncementsForScrip(targetScrip, Number.MAX_SAFE_INTEGER, true);
+  const [quote, rawHistory, calendarData, storedFilings] = await Promise.all([
+    targetSym ? fetchStockQuote(targetSym).catch(() => null) : Promise.resolve(null),
+    nseOnly ? Promise.resolve([]) : filingsRead.then(rows => getStockResultsHistory(targetScrip, targetSym, undefined, rows)).then(rows => rows.filter(h => hasExactScripCode(h, targetScrip))),
+    nseOnly ? Promise.resolve({items: []}) : getResultsCalendarSnapshot(),
+    filingsRead
+  ]);
 
-  // 2. Fetch Historical Results & Calendar Data
-  const rawHistory = nseOnly ? [] : (await getStockResultsHistory(targetScrip, targetSym)).filter(h => hasExactScripCode(h, targetScrip));
-  const calendarData = nseOnly ? { items: [] } : await getResultsCalendarData();
-  
   // Find strictly upcoming or today event from calendarData
   const upcomingItem = (calendarData.items || []).find((c: any) => 
     hasExactScripCode(c, targetScrip) &&
@@ -236,10 +231,11 @@ export async function getCompanyIntelligence(scripCode: string, symbol: string):
   let filingCoverage: 'stored' | 'partial' = 'stored';
   if (targetScrip) {
     try {
-      const durable = await getAnnouncementsForScrip(targetScrip, Number.MAX_SAFE_INTEGER, true);
+      const durable = storedFilings;
       if (durable.length > 0) {
-        const seen = new Set(announcementPool.map((a: any) => a.id || a.newsId));
-        announcementPool = [...announcementPool, ...durable.filter((a: any) => !seen.has(a.id || a.newsId))];
+        const byId = new Map(announcementPool.map((a: any) => [a.id || a.newsId, a]));
+        for (const row of durable) byId.set(row.id || row.newsId, row);
+        announcementPool = [...byId.values()];
       }
     } catch (e) { filingCoverage = 'partial'; }
   }
@@ -271,7 +267,8 @@ export async function getCompanyIntelligence(scripCode: string, symbol: string):
       symbol: targetSym,
       companyName: ann.companyName,
       category: ann.category,
-      priority: ann.priority
+      priority: ann.priority,
+      resultDocumentCheck: ann.resultDocumentCheck
     });
   }
 

@@ -113,7 +113,6 @@ export async function importHistoricalFilings(scripCode: string, years: number, 
       cumulativeRows += rows.length;
       const total = Number(body?.Table1?.[0]?.ROWCNT ?? body?.Table1?.[0]?.TOTALRECORDS);
       if (Number.isFinite(total) && total > 0 && cumulativeRows >= total) break;
-      if (rows.length < 50) break;
       // An explicit empty next page is required when no reliable total is supplied.
     }
     if (to === now) break;

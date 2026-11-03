@@ -1,3 +1,4 @@
+import { verifyCurrentResultFilings } from './currentResultEvidence.js';
 import { getSupabase, isSupabaseConfigured } from '../database/supabase.js';
 import { hasExactScripCode, projectFilingIdentity } from '../../src/shared/scripMatching.js';
 import { isBseFiling } from '../../src/shared/filingSource.js';
@@ -24,7 +25,7 @@ export async function readCalendarOutcomes(codes: string[], since: number): Prom
         if (error || !Array.isArray(data)) throw new Error('Calendar outcome storage unavailable');
         for (const row of data) {
           const item = projectFilingIdentity({ ...row.data, id: row.id, scrip_cd: row.scrip_cd });
-          if (batch.includes(String(row.scrip_cd)) && hasExactScripCode(item, row.scrip_cd) && isBseFiling(item) && isVerifiedResultFiling(item)) results.push(item);
+          if (batch.includes(String(row.scrip_cd)) && hasExactScripCode(item, row.scrip_cd) && isBseFiling(item)) results.push(item);
         }
         if (data.length < 500) { complete = true; break; }
         const next = String(data[data.length - 1].id);
@@ -33,7 +34,8 @@ export async function readCalendarOutcomes(codes: string[], since: number): Prom
       }
       if (!complete) throw new Error('Calendar outcome coverage incomplete');
     }
-    return results;
+    const verified = await verifyCurrentResultFilings(results);
+    return verified.filter(isVerifiedResultFiling);
   })();
   pending.set(key, work);
   try { return await work; } finally { if (pending.get(key) === work) pending.delete(key); }

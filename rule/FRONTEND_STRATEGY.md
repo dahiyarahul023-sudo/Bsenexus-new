@@ -1,3 +1,5 @@
+2026-11-03 result freshness: active Calendar/Watchlist and open Company Hub use coalesced foreground refresh; keyed ephemeral company snapshots survive close. Watchlist declaration labels use exact verified Calendar Today records and IST publication time; meeting intimations remain notices. Current ambiguous official outcomes use bounded shared PDF verification and metadata-only persistence, while company providers run together and durable duplicate rows win. See changes/result-freshness.md for actual validation and separate deployment/iPhone limits.
+
 2026-11-02 bounded mobile implementation: shared red/frosted calendars, optimistic unread row/badge consistency, evidence drill-down, global sign-out progress and compact mobile social links are implemented. Background phase no longer depends on scroll velocity. Redundant initial CAPTCHA status and sign-in opening copy are removed while visible branding and server verification remain. Automated, hosted browser, merge and deployment states are tracked separately in changes/mobile-ui-sync.md.
 
 # Frontend strategy and evidence-based priorities

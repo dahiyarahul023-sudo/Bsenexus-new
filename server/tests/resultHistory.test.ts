@@ -20,6 +20,7 @@ function load(file: string, require: (path: string) => any, extra: any = {}) {
 function service(rows: any[], events: any[] = [], meetings: any[] = [], fail = false) {
   const clock = Date.now();
   return load('server/services/resultsCalendarService.ts', path => {
+    if (path.endsWith('/currentResultEvidence.js')) return { verifyCurrentResultFilings: async (rows: any[]) => rows };
     if (path.endsWith('/resultFiling.js')) return resultFiling;
     if (path === 'fs') return { existsSync: () => true, readFileSync: () => JSON.stringify({ items: meetings, lastUpdated: clock, lastAttempt: clock, universeVersion: 'fixture' }) };
     if (path === 'path') return { join: (...parts: string[]) => parts.join('/'), dirname: () => '/tmp' };

@@ -1,3 +1,4 @@
+import { isIntimationOrNoticeFiling } from '../shared/resultFiling';
 /**
  * Utility to clean repetitive BSE announcement subject noise.
  * Strips duplicate company name, scrip code, boilerplate "Announcement under Regulation 30 (LODR)-" prefixes,
@@ -44,6 +45,8 @@ export function detectHumanTitle(text: string, category?: string): string {
 
   // 2. Press / Media Releases
   if (t.includes('press release') || t.includes('media release') || t.includes('media statement')) return 'Press release';
+
+  if (isIntimationOrNoticeFiling(text) && /board|meeting|consider|regulation\s*29/i.test(text)) return 'Board meeting intimation';
 
   // 3. Financial Results
   if (

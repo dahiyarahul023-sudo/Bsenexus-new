@@ -1,3 +1,7 @@
+import { hasCalendarResultToday } from '../shared/watchlistResultStatus';
+import { calendarDayStart } from '../shared/calendarTiming';
+import { isVerifiedResultFiling } from '../shared/resultFiling';
+import { useForegroundRefresh } from '../hooks/useForegroundRefresh';
 import { PageHeading } from './ui/PageHeading';
 import { useCompanyFilingCounts } from '../hooks/useCompanyFilingCounts';
 import { matchesCompanyFiling } from '../shared/scripMatching';
@@ -20,7 +24,7 @@ import {
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { formatFullDateTime, formatShortDateTime, formatTimeOnly, formatDateOnly, formatCleanDateTime, formatCleanTime, formatFilingRelativeTime } from '../utils/timeFormat';
+import { formatFullDateTime, formatShortDateTime, formatTimeOnly, formatDateOnly, formatCleanDateTime, formatCleanTime, formatFilingRelativeTime, parseFilingTimestamp } from '../utils/timeFormat';
 import { cleanBseSubject } from '../utils/cleanBseSubject';
 import { getSafePdfUrl } from '../utils/pdfHelper';
 import { safeGetItem } from '../utils/safeStorage';
@@ -31,7 +35,6 @@ import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { RichIllustration } from './ui/RichVisual';
 import { useFeedDensity } from '../hooks/useFeedDensity';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
-import { useVisibilityInterval } from '../hooks/useVisibilityInterval';
 import { PullToRefreshIndicator } from './ui/PullToRefreshIndicator';
 import { ActionButton } from './ui/ActionButton';
 import { ThinkingPill } from './ui/ThinkingPill';
@@ -896,7 +899,15 @@ export function WatchlistManager({ isActive = true }: { isActive?: boolean } = {
     return Array.from(new Set(watchlists.flatMap(l => (l.items || []).map((it: any) => parseSymbolItem(it).symbol).filter(Boolean))));
   }, [watchlists, activeListId]);
 
+  const [resultCalendar, setResultCalendar] = useState<{owner:string;items:any[]}>({owner:'',items:[]});
+  const feedRequest = useRef<AbortController | null>(null);
+  const resultRead = useRef<AbortController | null>(null);
+
   const fetchAnnouncements = useCallback(async () => {
+    feedRequest.current?.abort();
+    const controller = new AbortController(); feedRequest.current = controller;
+    const requestedOwner = accountId;
+    const current = () => !controller.signal.aborted && accountRef.current === requestedOwner;
     // Show a subtle "updating" indicator when cached data is already on screen
     setIsFeedRefreshing(true);
     try {
@@ -909,9 +920,10 @@ export function WatchlistManager({ isActive = true }: { isActive?: boolean } = {
         ? `/api/announcements?limit=2500&symbols=${encodeURIComponent(symbolsToFetch.join(','))}`
         : '/api/announcements?limit=50';
 
-      const res = await customFetch(url);
+      const res = await customFetch(url, { signal: AbortSignal.any([controller.signal, AbortSignal.timeout(12_000)]), cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
+        if (!current() || !Array.isArray(data)) return;
         // Merge, never replace: right after a server restart/republish the API
         // returns only a handful of freshly-polled filings — replacing would
         // shrink the feed AND poison the 12h on-device cache with thin data.
@@ -928,12 +940,26 @@ export function WatchlistManager({ isActive = true }: { isActive?: boolean } = {
     } catch (e) {
       console.warn("Error fetching announcements in WatchlistManager:", e);
     } finally {
-      setIsFeedRefreshing(false);
+      if (current()) setIsFeedRefreshing(false);
     }
-  }, [activeSymbols, watchlists]);
+  }, [activeSymbols, watchlists, accountId]);
 
-  // Shared 90s visibility-gated interval for watchlist feed:
-  useVisibilityInterval(fetchAnnouncements, 90000);
+  // Refresh active Watchlist evidence together on entry, resume and each minute.
+  useForegroundRefresh(async () => {
+    await Promise.allSettled([fetchAnnouncements(), (async () => {
+      resultRead.current?.abort();
+      const controller = new AbortController(); resultRead.current = controller;
+      const account = accountId;
+      try {
+        const response = await customFetch('/api/results-calendar?filter=today&scope=watchlist', { signal: AbortSignal.any([controller.signal, AbortSignal.timeout(12_000)]), cache: 'no-store' });
+        const data = await response.json();
+        if (controller.signal.aborted || accountRef.current !== account) return;
+        if (!response.ok || data.success === false || !Array.isArray(data.items) || data.outcomesUnavailable) throw Error('Calendar evidence unavailable');
+        setResultCalendar({owner: account, items: data.items});
+      } catch { if (!controller.signal.aborted && accountRef.current === account) setResultCalendar({owner: account, items: []}); }
+    })()]);
+  }, 60_000, isActive, `${accountId}:${activeSymbols.join(',')}`);
+  useEffect(() => () => { feedRequest.current?.abort(); resultRead.current?.abort(); }, [accountId]);
 
   useEffect(() => {
     const refresh = () => { if (document.visibilityState === 'visible') void fetchWatchlists(); };
@@ -959,7 +985,6 @@ export function WatchlistManager({ isActive = true }: { isActive?: boolean } = {
   }, [user?.uid, profile?.uid]);
 
   useEffect(() => {
-    fetchAnnouncements();
     // Load full stock master registry dynamically from server
     customFetch('/api/stock-master')
       .then(r => r.json())
@@ -978,7 +1003,7 @@ export function WatchlistManager({ isActive = true }: { isActive?: boolean } = {
         }
       })
       .catch(() => {});
-  }, [fetchAnnouncements]);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -1605,12 +1630,12 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
       let uCount = 0;
       let filingsToday = 0;
       let filingsYesterday = 0;
-      let hasResultsDeclaredToday = false;
+      const hasResultsDeclaredToday = resultCalendar.owner === accountId && hasCalendarResultToday(resultCalendar.items, scripCode || '');
       let hasHighImpactUpdate = false;
       let latestFilingTs = 0;
 
       const now = new Date();
-      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+      const todayStart = calendarDayStart(now.getTime());
       const yesterdayStart = todayStart - 24 * 60 * 60 * 1000;
 
       for (let i = 0; i < announcements.length; i++) {
@@ -1621,22 +1646,20 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
             cleanName = a.companyName;
           }
 
-          const filingTs = a.bseTime ? new Date(a.bseTime).getTime() : (a.fetched_at ? new Date(a.fetched_at).getTime() : 0);
+          const filingTs = parseFilingTimestamp(a.bseTime || a.bseTimestamp);
+          if (!filingTs || filingTs > now.getTime()) continue;
           if (filingTs > latestFilingTs) {
             latestFilingTs = filingTs;
           }
 
-          const isResult = (a.subject || '').toLowerCase().includes('financial result') || 
-                           (a.subject || '').toLowerCase().includes('outcome of board meeting') ||
-                           (a.subject || '').toLowerCase().includes('audited') ||
-                           (a.subject || '').toLowerCase().includes('un-audited');
+          const isResult = isVerifiedResultFiling(a);
 
           const isHigh = (a.priority === 'HIGH' || a.priorityScore >= 70 || isResult);
           if (isHigh) hasHighImpactUpdate = true;
 
           if (filingTs >= todayStart) {
             filingsToday++;
-            if (isResult) hasResultsDeclaredToday = true;
+
           } else if (filingTs >= yesterdayStart && filingTs < todayStart) {
             filingsYesterday++;
           }
@@ -1702,7 +1725,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
       if (pDiff !== 0) return pDiff;
       return a.name.localeCompare(b.name);
     });
-  }, [activeListId, currentListParsedItems, currentWatchlist, allCombinedTrackedItems, announcements, storedFilingCounts]);
+  }, [activeListId, currentListParsedItems, currentWatchlist, allCombinedTrackedItems, announcements, storedFilingCounts, resultCalendar, accountId]);
 
   const filteredMyCompanies = useMemo(() => {
     if (!companySearch.trim()) return myCompaniesList;
