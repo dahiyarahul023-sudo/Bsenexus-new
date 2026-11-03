@@ -1,3 +1,4 @@
+import { PRO_AI_SUMMARIES_PER_DAY } from '../shared/productFacts';
 import { useState, useEffect } from 'react';
 import { UserProfile } from '../types';
 import { customFetch } from '../api';
@@ -36,7 +37,7 @@ export function parseServerAiQuota(data: any): AiQuotaStatus | null {
     if ((data.dailyLimit !== null && data.dailyLimit !== Infinity) || (data.remaining !== null && data.remaining !== Infinity) || !data.canGenerate) return null;
     return {tier:'admin',dailyLimit:Infinity,usedToday:data.usedToday,remaining:Infinity,canGenerate:true,allowed:true,source:'server',message:'No daily cap (admin)'};
   }
-  const expectedLimit = data.tier === 'pro' ? 100 : data.tier === 'free' ? 1 : 0;
+  const expectedLimit = data.tier === 'pro' ? PRO_AI_SUMMARIES_PER_DAY : data.tier === 'free' ? 1 : 0;
   if (data.dailyLimit !== expectedLimit || data.usedToday > expectedLimit || !Number.isInteger(data.remaining) || data.remaining !== expectedLimit-data.usedToday || data.canGenerate !== (data.remaining > 0)) return null;
   return {tier:data.tier,dailyLimit:data.dailyLimit,usedToday:data.usedToday,remaining:data.remaining,canGenerate:data.canGenerate,allowed:data.canGenerate,source:'server',message:data.tier === 'pro' ? `${data.remaining}/${data.dailyLimit} AI summaries remaining today. Resets at 00:00 IST.` : data.tier === 'free' ? `${data.remaining} of 1 one-time AI summary demo remaining.` : 'Sign in to use AI summaries.'};
 }
@@ -59,7 +60,7 @@ export async function fetchServerAiQuota(signal?: AbortSignal): Promise<AiQuotaS
 export function getAiQuotaStatus(user?: any | null, profile?: UserProfile | null, isPro?: boolean, isAdmin?: boolean): AiQuotaStatus {
   const guest = !user || user.isAnonymous || profile?.tier === 'guest';
   const tier = guest ? 'guest' : isAdmin || profile?.tier === 'admin' ? 'admin' : isPro ? 'pro' : 'free';
-  return {tier,dailyLimit:tier === 'admin' ? Infinity : tier === 'pro' ? 100 : tier === 'free' ? 1 : 0,usedToday:0,remaining:0,canGenerate:false,allowed:false,source:guest ? 'guest' : 'checking',message:guest ? 'Sign in to see your AI usage.' : 'Checking AI usage...'};
+  return {tier,dailyLimit:tier === 'admin' ? Infinity : tier === 'pro' ? PRO_AI_SUMMARIES_PER_DAY : tier === 'free' ? 1 : 0,usedToday:0,remaining:0,canGenerate:false,allowed:false,source:guest ? 'guest' : 'checking',message:guest ? 'Sign in to see your AI usage.' : 'Checking AI usage...'};
 }
 /** Legacy preflight wrapper: the server reserves/refunds; the browser never debits quota. */
 export function consumeAiQuota(user?: any | null, profile?: UserProfile | null, isPro?: boolean, isAdmin?: boolean): QuotaConsumeResult {

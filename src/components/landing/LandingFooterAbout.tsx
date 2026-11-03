@@ -102,14 +102,11 @@ export function LandingFooterAbout({ onEnterTerminal }: LandingFooterAboutProps)
           </div>
 
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-normal">
-            BSE Nexus was built to solve a critical asymmetry in Indian capital markets: while institutional hedge funds 
-            and algorithmic desks receive corporate disclosures in sub-second pipes, retail investors and independent research analysts 
-            often discover major catalysts minutes or hours late through delayed social feeds and broker terminals.
+            BSE Nexus brings public exchange disclosures, company watchlists and source documents into one research workspace for Indian market participants.
           </p>
 
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-normal">
-            By combining high-frequency exchange monitoring, instant Telegram push architecture, and automated Generative AI 
-            financial document extraction, BSE Nexus provides institutional-grade filing speed and transparency to every market participant.
+            Exchange monitoring, personal Telegram alerts and supported AI document extraction help you follow disclosures. Delivery and analysis times vary with upstream availability.
           </p>
 
           <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-500">

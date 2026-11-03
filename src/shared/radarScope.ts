@@ -9,7 +9,10 @@ export function radarScopeText(value: string): string {
     .replace(/SEBI\s*\(\s*(?:LODR|Listing Obligations and Disclosure Requirements)\s*\)\s*Regulations?\s*,?\s*\d{4}/gi, '');
 }
 export function isRoutineRadarTransaction(value: string): boolean {
-  return transaction.test(value) && !risk.test(radarScopeText(value));
+  const scoped=radarScopeText(value);
+  const prevention=/\b(?:fraud|cyber ?attack|data breach)\s+(?:prevention|detection|protection|awareness|simulation)|\banti[- ]fraud\b|\b(?:mock|simulation)\s+drill\b/i.test(scoped);
+  const incident=/\b(?:allegations?|alleges|alleged|arrest\w*|indict\w*|bribery|whistleblower|penalt\w*|convict\w*|charged\s+with|investigation\s+(?:into|against)|probe\s+(?:into|against)|(?:suffers?|suffered|reports?|reported|discloses?|disclosed|hit\s+by)\s+(?:an?\s+)?(?:cyber ?attack|data breach|fraud|accounting irregularities|financial irregularities))\b/i.test(scoped);
+  return (prevention && !incident) || (transaction.test(scoped) && !risk.test(scoped));
 }
 export function hasRadarDevelopment(value: string): boolean {
   return development.test(radarScopeText(value));

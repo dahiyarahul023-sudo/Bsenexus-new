@@ -1,3 +1,5 @@
+import { ReadCache } from '../utils/readCache.js';
+import { readNotificationReceiptIds } from '../utils/notificationReceiptReads.js';
 import { runPaymentStore, PaymentStoreUnavailableError } from './paymentStore.js';
 import { getSupabase, isSupabaseConfigured } from './supabase.js';
 import { readLocalJson, writeLocalJson } from './localStore.js';
@@ -43,6 +45,12 @@ function scheduleSave() {
 
 const NOTIFICATIONS_TABLE = 'notifications';
 const MAX_CACHED = 500;
+// Short, same-owner coalescing for inbox + badge; hits never renew freshness.
+const inboxReads = new ReadCache<AppNotification[]>({ maxEntries: 50, ttlMs: () => 2000 });
+function invalidateInbox(owner: string) {
+  if (owner === 'system' || owner === 'all') inboxReads.clear();
+  else inboxReads.invalidate(owner);
+}
 
 // --- Row mapping: camelCase app shape <-> snake_case Postgres columns ---
 function toRow(n: AppNotification): Record<string, any> {
@@ -93,6 +101,7 @@ async function persistNotificationToCloud(n: AppNotification): Promise<void> {
     const { error } = await getSupabase().from(NOTIFICATIONS_TABLE).upsert(toRow(n), { onConflict: 'id' });
     if (error) throw error;
   });
+  invalidateInbox(n.userId || 'system');
 }
 
 let notificationsCloudInitDone = false;
@@ -135,6 +144,11 @@ export interface NotificationFilterOptions {
 }
 
 async function readInbox(userId: string): Promise<AppNotification[]> {
+  if (!needsCloud()) return loadInbox(userId);
+  const items = await inboxReads.get(userId, () => loadInbox(userId));
+  return items.map(item => ({ ...item }));
+}
+async function loadInbox(userId: string): Promise<AppNotification[]> {
   let visible: AppNotification[];
   let readIds: Set<string>;
   if (needsCloud()) {
@@ -146,9 +160,12 @@ async function readInbox(userId: string): Promise<AppNotification[]> {
       const {data,error}=await getSupabase().from(NOTIFICATIONS_TABLE).select('*').in('user_id',[userId,'system','all']).gt('timestamp',cutoff).order('timestamp',{ascending:false}).limit(MAX_CACHED);
       if(error)throw error;
       if(!data?.length)return {items:[],readIds:[]};
-      const receipts=await getSupabase().from('user_notification_receipts').select('notification_id').eq('user_id',userId).in('notification_id',data.map(row=>row.id));
-      if(receipts.error)throw receipts.error;
-      return { items: (data || []).map(fromRow), readIds: (receipts.data || []).map(r=>r.notification_id) };
+      const readIds = await readNotificationReceiptIds(data.map(row=>row.id), async ids => {
+        const receipts = await getSupabase().from('user_notification_receipts').select('notification_id').eq('user_id',userId).in('notification_id',ids);
+        if(receipts.error)throw receipts.error;
+        return (receipts.data || []).map(r=>r.notification_id);
+      });
+      return { items: data.map(fromRow), readIds };
     });
     visible = snapshot.items;
     readIds = new Set(snapshot.readIds);
@@ -235,6 +252,7 @@ async function persistReadNotifications(inbox: AppNotification[], ids: string[],
     localReceipts[userId]=[...new Set([...(localReceipts[userId] || []),...changed.map(n=>n.id)])];
     writeLocalJson(RECEIPTS_FILE,localReceipts);
   }
+  invalidateInbox(userId);
   return changed.length;
 }
 export async function markNotificationsReadBatch(ids: string[], userId = 'guest'): Promise<number> {
@@ -260,6 +278,7 @@ export async function clearAllNotifications(userId: string = 'guest'): Promise<v
       if(error)throw error;
       if(data === null || data === '' || !Number.isSafeInteger(Number(data)) || Number(data)<0) throw new Error('Invalid inbox clear response');
     });
+    invalidateInbox(userId);
     return;
   }
   localClearedBefore[userId] = Math.max(localClearedBefore[userId] || 0,Date.now());
@@ -282,6 +301,7 @@ export async function addNotificationOnce(notif: AppNotification): Promise<boole
     inserted = !notificationsCache.some(item => item.id === notif.id);
   }
   if (!inserted) return false;
+  invalidateInbox(notif.userId);
   if (!notificationsCache.some(item => item.id === notif.id)) {
     notificationsCache.unshift({ ...notif });
     notificationsCache = notificationsCache.slice(0, MAX_CACHED);

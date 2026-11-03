@@ -1,3 +1,4 @@
+import { sourceHealthLabel } from '../utils/sourceHealth';
 import { PageHeading } from './ui/PageHeading';
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -482,7 +483,7 @@ export function Announcements({
 
   // Engine state fallback
   const [internalIsRunning, setInternalIsRunning] = useState<boolean>(true);
-  const [internalBseHealth, setInternalBseHealth] = useState<any>({ status: 'HEALTHY', latency: 58 });
+  const [internalBseHealth, setInternalBseHealth] = useState<any>({ status: 'unknown', latency: 0 });
   const [internalTelegramHealth, setInternalTelegramHealth] = useState<any>({ status: 'CONNECTED' });
 
   // Native Pull to Refresh Hook
@@ -1654,8 +1655,9 @@ export function Announcements({
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
                   <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#14131E] border border-slate-200/60 dark:border-[#2D283E]">
-                    <div className="text-slate-400 font-bold uppercase tracking-wider text-[9px]">BSE Stream</div>
-                    <div className="font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">Live ({effectiveBseHealth?.latency || 58}ms)</div>
+                    <div className="text-slate-400 font-bold uppercase tracking-wider text-[9px]">Source check</div>
+                    <div className="font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">{sourceHealthLabel(effectiveBseHealth).status}</div>
+                    <div className="text-slate-500 mt-1">{sourceHealthLabel(effectiveBseHealth).request}</div>
                   </div>
                   <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#14131E] border border-slate-200/60 dark:border-[#2D283E]">
                     <div className="text-slate-400 font-bold uppercase tracking-wider text-[9px]">Watchlist Scope</div>

@@ -1,3 +1,4 @@
+import { sourceHealthLabel } from '../utils/sourceHealth';
 import { CalendarDateBadge3D } from './ui/CalendarDateBadge3D';
 import { triggerNavigationHaptic } from '../utils/haptics';
 import { UserAvatar } from './ui/UserAvatar';
@@ -889,8 +890,8 @@ export function Layout({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-[11px]">
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            <span className="font-semibold text-slate-700 dark:text-slate-300">{bseHealth.status === 'stable' ? 'BSE source responding' : bseHealth.status === 'down' ? 'BSE source unavailable' : 'BSE source unverified'}</span>
-            <span className="text-slate-400 dark:text-slate-500 hidden sm:inline">{bseHealth.latency > 0 ? `• Source request (${bseHealth.latency}ms)` : '• Source latency unverified'}</span>
+            <span className="font-semibold text-slate-700 dark:text-slate-300">{sourceHealthLabel(bseHealth).status}</span>
+            <span className="text-slate-400 dark:text-slate-500 hidden sm:inline">{`• ${sourceHealthLabel(bseHealth).request}`}</span>
           </div>
 
           {/* Social Icons row */}

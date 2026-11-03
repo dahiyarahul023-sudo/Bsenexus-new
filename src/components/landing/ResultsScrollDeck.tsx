@@ -1,3 +1,4 @@
+import { EXAMPLE_DATA_COPY } from '../../shared/productFacts';
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { 
@@ -46,7 +47,7 @@ const QUARTER_RESULTS: QuarterResultCard[] = [
     eps: '₹33.20',
     aiExecutiveSummary: 'Operating margin expanded 110 bps to 24.1% on cloud transformation and AI-led deal migrations. Order book total contract value stood robust at $8.3 Billion.',
     pdfPages: '42 Pages',
-    filingTime: 'Today, 11:24 AM'
+    filingTime: 'Sample filing · 11:24 AM IST'
   },
   {
     symbol: 'RELIANCE',
@@ -63,7 +64,7 @@ const QUARTER_RESULTS: QuarterResultCard[] = [
     eps: '₹29.08',
     aiExecutiveSummary: 'Jio 5G subscriber base crossed 500M milestone with ARPU scaling to ₹198/mo. Retail footfall expanded 18% with steady O2C downstream margins.',
     pdfPages: '86 Pages',
-    filingTime: 'Yesterday, 04:30 PM'
+    filingTime: 'Sample filing · 4:30 PM IST'
   },
   {
     symbol: 'INFY',
@@ -80,7 +81,7 @@ const QUARTER_RESULTS: QuarterResultCard[] = [
     eps: '₹16.40',
     aiExecutiveSummary: 'Generative AI Topaz enterprise deals contributed $380M in large contract wins. Attrition stabilized at 12.1% with operating margin expansion.',
     pdfPages: '54 Pages',
-    filingTime: '2 days ago'
+    filingTime: 'Illustrative filing'
   },
   {
     symbol: 'HDFCBANK',
@@ -97,7 +98,7 @@ const QUARTER_RESULTS: QuarterResultCard[] = [
     eps: '₹22.10',
     aiExecutiveSummary: 'Post-merger loan-to-deposit ratio calibrated downward to 98%. Net Interest Margin expanded to 3.62% with gross NPA stable at 1.24%.',
     pdfPages: '68 Pages',
-    filingTime: '3 days ago'
+    filingTime: 'Illustrative filing'
   }
 ];
 
@@ -136,12 +137,12 @@ export function ResultsScrollDeck({ onEnterTerminal }: ResultsScrollDeckProps) {
       <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 text-xs font-semibold text-slate-700 dark:text-slate-300 mb-4">
           <BarChart3 className="w-3.5 h-3.5 text-emerald-500" />
-          <span>Interactive Quarterly Earnings Deck</span>
+          <span>Demo · Quarterly Earnings Deck</span>
         </div>
         <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tight leading-[1.15]">
           80-page financial disclosure.<br />
           <span className="bg-gradient-to-r from-emerald-500 via-teal-500 to-sky-500 bg-clip-text text-transparent">
-            Condensed into 4 key YoY numbers in seconds.
+            Explore four sample YoY metrics with their source context.
           </span>
         </h2>
         <p className="mt-4 text-base sm:text-lg text-slate-600 dark:text-slate-400 font-normal leading-relaxed">
@@ -282,7 +283,7 @@ export function ResultsScrollDeck({ onEnterTerminal }: ResultsScrollDeckProps) {
             {/* Bottom CTA */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t border-slate-200 dark:border-slate-800 text-xs">
               <span className="text-slate-500">
-                Sample interactive extraction • Live terminal covers all BSE-listed entities
+                {EXAMPLE_DATA_COPY}
               </span>
               <button
                 onClick={() => onEnterTerminal('dashboard')}

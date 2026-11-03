@@ -1,3 +1,4 @@
+import { EXAMPLE_DATA_COPY } from '../../shared/productFacts';
 import React, { useState } from 'react';
 import { 
   Clock, ArrowUpRight, ArrowRight, CheckCircle2 
@@ -120,10 +121,10 @@ export function UpcomingCatalystsGrid({ onEnterTerminal }: UpcomingCatalystsGrid
             <span>Exchange Regulatory Calendar</span>
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tight leading-[1.12]">
-            Upcoming Board Meetings &amp; Catalysts
+            Explore Board Meetings &amp; Catalysts
           </h2>
           <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 font-normal leading-relaxed">
-            Scheduled board meetings, quarterly earnings dates, and dividend agendas across BSE-listed companies with instant filing alert delivery.
+            {EXAMPLE_DATA_COPY}. Open the calendar for current board meetings, results dates and dividend agendas.
           </p>
         </div>
 

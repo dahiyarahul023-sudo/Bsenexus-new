@@ -33,7 +33,7 @@ export function CoreCapabilitiesBento({ onEnterTerminal }: CoreCapabilitiesBento
       {/* Asymmetric 4-card Apple-Style Frosted Glass Bento Grid */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         
-        {/* Card 1: 0.8s BSE Direct Scraper (Spans 7 cols) */}
+        {/* Card 1: Exchange filing monitoring (Spans 7 cols) */}
         <div 
           onClick={() => onEnterTerminal('dashboard')}
           className="group md:col-span-7 rounded-3xl bg-white/95 dark:bg-slate-900/85 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800/80 shadow-lg hover:shadow-2xl p-7 sm:p-10 transition-all duration-300 flex flex-col justify-between cursor-pointer relative overflow-hidden hover:-translate-y-0.5"
@@ -54,15 +54,15 @@ export function CoreCapabilitiesBento({ onEnterTerminal }: CoreCapabilitiesBento
             </div>
 
             <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed max-w-lg font-normal">
-              Low-latency continuous connection to BSE India servers. Captures Regulation 30 announcements, 
-              board meetings, and financial filings within milliseconds of publication.
+              Monitor public exchange disclosures, including Regulation 30 announcements,
+              board meetings and financial filings. Source availability can affect timing.
             </p>
           </div>
 
           <div className="mt-8 pt-6 border-t border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
             <span className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Real-Time Ingestion Active (0.8s)</span>
+              <span>Exchange filing monitoring</span>
             </span>
             <span className="group-hover:translate-x-1 transition-transform flex items-center gap-1 text-sky-500 font-bold">
               <span>Explore live stream</span>
