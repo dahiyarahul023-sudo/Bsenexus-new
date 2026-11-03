@@ -1,4 +1,5 @@
 import express from 'express';
+import { readRadarResearch } from '../database/radarReactionDao.js';
 import { requireAuth, requireAdmin, apiRateLimiter } from '../security/auth.js';
 import { listRadarEvents, listRadarCompanyReports, getRadarEvent, listRadarUpdates, firstRadarUpdate, getRadarFollowing, setRadarFollowing, publishRadarRecords, getRadarCategories } from '../database/impactRadarDao.js';
 import { getRadarMovement } from '../services/radarMovementService.js';
@@ -11,7 +12,9 @@ const unavailable = (res: express.Response) => res.status(503).json({ success: f
 impactRadarRouter.get('/', apiRateLimiter, async (_req, res) => {
   try {
     const [items,intake] = await Promise.all([listRadarEvents(),durableRadarIntakeStatus()]);
-    res.json({ success: true, items, checkedAt: new Date().toISOString(), intake, limit: 200 });
+    let research;
+    try { research = await readRadarResearch(items.map(item => item.id)); } catch { /* Research never hides sourced news. */ }
+    res.json({ success: true, items, checkedAt: new Date().toISOString(), intake, limit: 200, research });
   } catch { unavailable(res); }
 });
 impactRadarRouter.get('/categories', apiRateLimiter, async (_req, res) => {
@@ -60,7 +63,7 @@ impactRadarRouter.get('/:id', apiRateLimiter, async (req, res) => {
   try {
     const event = await getRadarEvent(String(req.params.id));
     if (!event) return res.status(404).json({ success: false, error: 'Event not found.' });
-    const [updates, firstUpdate, related] = await Promise.all([listRadarUpdates(event.id), firstRadarUpdate(event.id), listRadarCompanyReports(event)]);
-    res.json({ success: true, event, updates, firstUpdate, related, timelineLimit: 50 });
+    const [updates, firstUpdate, related, research] = await Promise.all([listRadarUpdates(event.id), firstRadarUpdate(event.id), listRadarCompanyReports(event), readRadarResearch([event.id])]);
+    res.json({ success: true, event, updates, firstUpdate, related, research, timelineLimit: 50 });
   } catch { unavailable(res); }
 });

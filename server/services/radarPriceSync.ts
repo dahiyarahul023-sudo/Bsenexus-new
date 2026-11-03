@@ -1,4 +1,5 @@
 import { listRadarEvents } from '../database/impactRadarDao.js';
+import { refreshRadarReactionLearning } from './radarReactionLearning.js';
 import { radarDay, type RadarEvent } from '../../src/shared/impactRadar.js';
 import type { RadarSessionMove } from '../../src/shared/radarMovement.js';
 import { loadRadarPriceDay, radarPriceAliases, radarPriceDates, radarPriceStore, radarSnapshotAliases, type RadarPriceStore } from './radarMovementService.js';
@@ -64,4 +65,8 @@ export function createRadarPriceSync(overrides: Partial<SyncDependencies> = {}) 
     return running;
   };
 }
-export const refreshRadarPriceSnapshots=createRadarPriceSync();
+const captureRadarPrices=createRadarPriceSync();
+export async function refreshRadarPriceSnapshots() {
+  await captureRadarPrices();
+  await refreshRadarReactionLearning();
+}
