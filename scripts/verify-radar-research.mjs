@@ -38,7 +38,7 @@ try {
  const dialog=page.getByRole('dialog');await dialog.getByRole('button',{name:'Morning watch',exact:true}).click();
  assert.equal(await dialog.locator('article').count(),1);assert.match(await dialog.locator('article').innerText(),/Yes Bank/);
  await dialog.getByRole('button',{name:'Volatility observed',exact:true}).click();assert.equal(await dialog.locator('article').count(),1);assert.match(await dialog.locator('article').innerText(),/PNC/);
- await dialog.getByRole('button',{name:/Operating licence revoked/}).click();await dialog.getByRole('heading',{name:'What changed & market reaction'}).waitFor();
+ await dialog.getByRole('button',{name:/^PNC Infratech Ltd: Operating licence revoked/}).click();await dialog.getByRole('heading',{name:'What changed & market reaction'}).waitFor();
  await dialog.getByText(/Close change -6.00%/).waitFor();
  for(const width of [360,390,768,1440])for(const dark of [false,true]){await page.setViewportSize({width,height:844});await page.locator('html').evaluate((e,d)=>e.classList.toggle('dark',d),dark);assert.equal(await dialog.evaluate(e=>e.scrollWidth<=e.clientWidth+1),true,'dialog has no horizontal overflow');}
  assert.equal(await dialog.getByText(/Daily data cannot/).isVisible(),false,'method starts collapsed');
