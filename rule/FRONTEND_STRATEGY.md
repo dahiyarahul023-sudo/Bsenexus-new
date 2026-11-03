@@ -1,3 +1,5 @@
+2026-11-03 Radar volatility: company-relative size/exposure groups, explicit unavailable context, range-first metrics and historical volatility-watch filtering. Signed direction stays secondary; saved source/price/method ownership remains in the existing modal.
+
 2026-11-03 Radar research: source-detail and observed-reaction journal, 30/60/365-day descriptive patterns, morning prioritization and pending-session filters share the existing Radar modal, scope and refresh ownership. Missing prices/calendar remain explicit; saved research survives outages.
 
 2026-11-03 result freshness: active Calendar/Watchlist and open Company Hub use coalesced foreground refresh; keyed ephemeral company snapshots survive close. Watchlist declaration labels use exact verified Calendar Today records and IST publication time; meeting intimations remain notices. Current ambiguous official outcomes use bounded shared PDF verification and metadata-only persistence, while company providers run together and durable duplicate rows win. See changes/result-freshness.md for actual validation and separate deployment/iPhone limits.

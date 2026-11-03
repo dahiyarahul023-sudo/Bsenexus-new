@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "1ccfb82a6b89d2f58650b0d35bb70d506eee46b1599b965689b2507bc6d594c6",
+  "sourceDigest": "9caddd3240ec70285cae7d7a50ca590ceebbd3a65917d8feac4de7e1eae6bb37",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -243,7 +243,7 @@
     },
     {
       "path": "scripts/verify-radar-research.mjs",
-      "sha256": "d0ce42f9089ff089565093f94e3d86e695f9ccd8c8f5361cd11badb33d98a51e",
+      "sha256": "6be34ec930062cc11c4443c0a692249052905cfaad777d477dc68c1433ec29c2",
       "importedBy": []
     },
     {
@@ -770,6 +770,14 @@
       ]
     },
     {
+      "path": "server/database/radarCompanyContextDao.ts",
+      "sha256": "d9f1fa6c75222ffc84fae698d052a9ad49559dddbaa0ed6d5f268294263efe57",
+      "importedBy": [
+        "server/database/radarReactionDao.ts",
+        "server/services/radarCompanyContextService.ts"
+      ]
+    },
+    {
       "path": "server/database/radarPriceDao.ts",
       "sha256": "562640723e773aff886335e25a63ed2016619326084542f6ac436c7f8cf4cca7",
       "importedBy": [
@@ -779,7 +787,7 @@
     },
     {
       "path": "server/database/radarReactionDao.ts",
-      "sha256": "15150a30a72e2cdc9843a5df7b356be4a0645d0d1f2033ad9111d25b3504f2aa",
+      "sha256": "0e643e9ed29aee91e71ac44b76bee38a4b9328db16cc7e364af08a8232dc136c",
       "importedBy": [
         "server/api/impactRadar.ts",
         "server/services/radarReactionLearning.ts"
@@ -845,6 +853,7 @@
         "server/database/paymentEntitlementsDao.ts",
         "server/database/paymentOrdersDao.ts",
         "server/database/paymentStore.ts",
+        "server/database/radarCompanyContextDao.ts",
         "server/database/radarPriceDao.ts",
         "server/database/radarReactionDao.ts",
         "server/database/radarSourceDao.ts",
@@ -1393,6 +1402,14 @@
       ]
     },
     {
+      "path": "server/services/radarCompanyContextService.ts",
+      "sha256": "93e46024caafa4e597de1192d6a15e05363f45f3a8278542e5fa848406c0604b",
+      "importedBy": [
+        "server/services/radarReactionLearning.ts",
+        "server/tests/radarMateriality.test.ts"
+      ]
+    },
+    {
       "path": "server/services/radarCompanyIdentity.ts",
       "sha256": "4e6c3294011399ce81f74b14b18a647843b881ae84e4010ffa9dcd19a2695fdc",
       "importedBy": [
@@ -1444,9 +1461,10 @@
     },
     {
       "path": "server/services/radarReactionLearning.ts",
-      "sha256": "0a4aba7e3ce8aab39ea155050ce00e8d0f88a6a8c490c46c86cc419f9a6397ab",
+      "sha256": "f24ef746088f6898a99c8fce82efcd980c7a30ba4a1b9c3e46b55748e3bdd8d6",
       "importedBy": [
         "server/services/radarPriceSync.ts",
+        "server/tests/radarMateriality.test.ts",
         "server/tests/radarReaction.test.ts"
       ]
     },
@@ -2001,7 +2019,7 @@
     },
     {
       "path": "server/tests/impactRadarApi.test.ts",
-      "sha256": "37c2a18b264bc17ba4e36471389d6863c870509bf8a6e8615ab4def1e95204cb",
+      "sha256": "f184b01e0da0fd2de51d771f4e060a5d9702fdecd2b5b0c00b26dec27489bd64",
       "importedBy": []
     },
     {
@@ -2205,6 +2223,11 @@
       "importedBy": []
     },
     {
+      "path": "server/tests/radarMateriality.test.ts",
+      "sha256": "4626c046d9dd3ede1e121f8bc07bc2f13267b313b3f027c52df64c1fc45192bb",
+      "importedBy": []
+    },
+    {
       "path": "server/tests/radarNewsState.test.ts",
       "sha256": "11e13b11c9e6af2fcdc4a503a86260a4d5da9f3eb3155e388e63b796326beaff",
       "importedBy": []
@@ -2226,7 +2249,7 @@
     },
     {
       "path": "server/tests/radarReactionSql.test.ts",
-      "sha256": "c4d30bb665525a451449b2218bf28570d3459aa24ca68311bf64d1ea3e7e627f",
+      "sha256": "7cdb73b584b3e222625e32c123be86c1657e85cd5f26aeff213af4c69d50d9ec",
       "importedBy": []
     },
     {
@@ -3049,7 +3072,7 @@
     },
     {
       "path": "src/components/RadarReactionBrief.tsx",
-      "sha256": "50c416d4e77dfc92b9afa7d053ef27ef5caca00fbb44c2723f041f13d231deb8",
+      "sha256": "488f97bdf122bf240d8e0595c91220f0542ef43fb1cabe1d5aaadd0e99a1d0dd",
       "importedBy": [
         "server/tests/radarReaction.test.ts",
         "src/components/ImpactRadar.tsx"
@@ -4426,6 +4449,7 @@
         "server/utils/newsPublicationTime.ts",
         "src/components/ImpactRadar.tsx",
         "src/components/RadarReactionBrief.tsx",
+        "src/shared/radarMateriality.ts",
         "src/shared/radarMovement.ts",
         "src/shared/radarReaction.ts",
         "src/utils/impactRadarFeed.ts",
@@ -4439,6 +4463,19 @@
         "server/database/diagnosticsDao.ts",
         "server/tests/diagnosticsPopulation.test.ts",
         "server/tests/performanceSummary.test.ts"
+      ]
+    },
+    {
+      "path": "src/shared/radarMateriality.ts",
+      "sha256": "391dfebd24ad87384ce9fa40bd41150ca7a2adba392f1791600f7b16b33b929c",
+      "importedBy": [
+        "server/database/radarCompanyContextDao.ts",
+        "server/database/radarReactionDao.ts",
+        "server/services/radarCompanyContextService.ts",
+        "server/tests/radarMateriality.test.ts",
+        "server/tests/radarReactionSql.test.ts",
+        "src/components/RadarReactionBrief.tsx",
+        "src/shared/radarReaction.ts"
       ]
     },
     {
@@ -4459,11 +4496,13 @@
     },
     {
       "path": "src/shared/radarReaction.ts",
-      "sha256": "1312bb8c5d0cc54efd731563c48c44e5479f44489789afbf61456e0d80c106e8",
+      "sha256": "350257c9576bfc600ad133c93be3f8461f21f91876775755bea3be1b1de627ee",
       "importedBy": [
         "server/database/radarReactionDao.ts",
+        "server/services/radarCompanyContextService.ts",
         "server/services/radarReactionCalendar.ts",
         "server/services/radarReactionLearning.ts",
+        "server/tests/radarMateriality.test.ts",
         "server/tests/radarReaction.test.ts",
         "server/tests/radarReactionSql.test.ts",
         "src/components/ImpactRadar.tsx",
@@ -5224,6 +5263,11 @@
     {
       "path": "supabase/migrations/20261103152432_radar_reaction_learning.sql",
       "sha256": "1d9d580a28acbefa615fb8a2a7d4ff90785a6a59b002022087a62b34dfaa8115",
+      "importedBy": []
+    },
+    {
+      "path": "supabase/migrations/20261103161436_radar_company_relative_volatility.sql",
+      "sha256": "6a4031e6754f47e4488402f978fb26368ab556a3e01bc1ca0be8fba307dffe53",
       "importedBy": []
     },
     {
@@ -6919,6 +6963,18 @@
       "line": 56
     },
     {
+      "source": "server/database/radarCompanyContextDao.ts",
+      "target": "server/database/supabase.ts",
+      "kind": "import",
+      "line": 1
+    },
+    {
+      "source": "server/database/radarCompanyContextDao.ts",
+      "target": "src/shared/radarMateriality.ts",
+      "kind": "import",
+      "line": 2
+    },
+    {
       "source": "server/database/radarPriceDao.ts",
       "target": "server/database/supabase.ts",
       "kind": "import",
@@ -6959,6 +7015,18 @@
       "target": "src/shared/radarMovement.ts",
       "kind": "import",
       "line": 4
+    },
+    {
+      "source": "server/database/radarReactionDao.ts",
+      "target": "server/database/radarCompanyContextDao.ts",
+      "kind": "import",
+      "line": 5
+    },
+    {
+      "source": "server/database/radarReactionDao.ts",
+      "target": "src/shared/radarMateriality.ts",
+      "kind": "import",
+      "line": 6
     },
     {
       "source": "server/database/radarSourceDao.ts",
@@ -8083,6 +8151,24 @@
       "line": 3
     },
     {
+      "source": "server/services/radarCompanyContextService.ts",
+      "target": "src/shared/radarMateriality.ts",
+      "kind": "import",
+      "line": 2
+    },
+    {
+      "source": "server/services/radarCompanyContextService.ts",
+      "target": "src/shared/radarReaction.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "server/services/radarCompanyContextService.ts",
+      "target": "server/database/radarCompanyContextDao.ts",
+      "kind": "import",
+      "line": 4
+    },
+    {
       "source": "server/services/radarCompanyIdentity.ts",
       "target": "server/utils/stockResolver.ts",
       "kind": "import",
@@ -8183,6 +8269,12 @@
       "target": "server/services/radarReactionCalendar.ts",
       "kind": "import",
       "line": 3
+    },
+    {
+      "source": "server/services/radarReactionLearning.ts",
+      "target": "server/services/radarCompanyContextService.ts",
+      "kind": "import",
+      "line": 4
     },
     {
       "source": "server/services/resultDocumentEvidence.ts",
@@ -10291,6 +10383,30 @@
       "line": 8
     },
     {
+      "source": "server/tests/radarMateriality.test.ts",
+      "target": "src/shared/radarMateriality.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "server/tests/radarMateriality.test.ts",
+      "target": "server/services/radarCompanyContextService.ts",
+      "kind": "import",
+      "line": 4
+    },
+    {
+      "source": "server/tests/radarMateriality.test.ts",
+      "target": "src/shared/radarReaction.ts",
+      "kind": "import",
+      "line": 5
+    },
+    {
+      "source": "server/tests/radarMateriality.test.ts",
+      "target": "server/services/radarReactionLearning.ts",
+      "kind": "import",
+      "line": 6
+    },
+    {
       "source": "server/tests/radarNewsState.test.ts",
       "target": "server/services/stockNewsService.ts",
       "kind": "import",
@@ -10352,9 +10468,15 @@
     },
     {
       "source": "server/tests/radarReactionSql.test.ts",
-      "target": "src/shared/radarReaction.ts",
+      "target": "src/shared/radarMateriality.ts",
       "kind": "import",
       "line": 5
+    },
+    {
+      "source": "server/tests/radarReactionSql.test.ts",
+      "target": "src/shared/radarReaction.ts",
+      "kind": "import",
+      "line": 6
     },
     {
       "source": "server/tests/radarReportQueue.test.ts",
@@ -13022,9 +13144,15 @@
     },
     {
       "source": "src/components/RadarReactionBrief.tsx",
-      "target": "src/shared/impactRadar.ts",
+      "target": "src/shared/radarMateriality.ts",
       "kind": "import",
       "line": 3
+    },
+    {
+      "source": "src/components/RadarReactionBrief.tsx",
+      "target": "src/shared/impactRadar.ts",
+      "kind": "import",
+      "line": 4
     },
     {
       "source": "src/components/RadarWindow.tsx",
@@ -15109,6 +15237,12 @@
       "line": 1
     },
     {
+      "source": "src/shared/radarMateriality.ts",
+      "target": "src/shared/impactRadar.ts",
+      "kind": "import",
+      "line": 1
+    },
+    {
       "source": "src/shared/radarMovement.ts",
       "target": "src/shared/impactRadar.ts",
       "kind": "import",
@@ -15125,6 +15259,12 @@
       "target": "src/shared/radarMovement.ts",
       "kind": "import",
       "line": 2
+    },
+    {
+      "source": "src/shared/radarReaction.ts",
+      "target": "src/shared/radarMateriality.ts",
+      "kind": "import",
+      "line": 3
     },
     {
       "source": "src/shared/resultDeclaration.ts",
@@ -16400,7 +16540,11 @@
         "server/services/radarReactionCalendar.ts",
         "server/services/radarReactionLearning.ts",
         "supabase/migrations/20261103152432_radar_reaction_learning.sql",
-        "scripts/verify-radar-research.mjs"
+        "scripts/verify-radar-research.mjs",
+        "src/shared/radarMateriality.ts",
+        "server/database/radarCompanyContextDao.ts",
+        "server/services/radarCompanyContextService.ts",
+        "supabase/migrations/20261103161436_radar_company_relative_volatility.sql"
       ],
       "tests": [
         "server/tests/impactRadar.test.ts",
@@ -16426,9 +16570,10 @@
         "server/tests/brandRefreshInbox.test.ts",
         "server/tests/studioMigrationReview.test.ts",
         "server/tests/radarReaction.test.ts",
-        "server/tests/radarReactionSql.test.ts"
+        "server/tests/radarReactionSql.test.ts",
+        "server/tests/radarMateriality.test.ts"
       ],
-      "reason": "Two Home previews open a native modal Radar dashboard and immediate detail. Watchlist scope stays separate from durable event follows. Both exchange disclosures and shared RSS intake carry source/date provenance; explicit jurisdiction/case references alone may join evidence. Future events have no predictions. Observed NSE final daily closes are a separate bounded, cached read with per-session source, missing-data states and no causal attribution. Account cancellation, modal focus/scroll, themes and reduced motion remain explicit contracts. The list is read-only; existing watchdog drives bounded intake. Server-only DB categories, strict real company identity, typed proceedings, source-domain rules and offset timestamps gate publishing. Reviewed PNC source backfill retains explicit news timestamps and separately sourced NSE daily ranges. Following outages preserve closed records. Additional material event terms come from private DB rules and match bounded literal phrases independently of source type or authority. Explicit RSS timestamps normalize to UTC. Publisher/report attribution and related-topic links preserve uncertainty. Selected company final NSE session values persist as small, private, duplicate-safe snapshots and can survive upstream outages. Routine corporate transactions and statutory takeover boilerplate are excluded independently of configured discovery terms. Insolvency/disputes retain the stable deals category ID with a focused label. Read projections hide legacy routine/vague cards while retaining immutable evidence and follows; all headings use source wording and original timeline titles remain intact. Official filing names and exact-code title prefixes repair numeric identities without assigning a guessed NSE symbol. Exchange daily rows may match one exact full company name; NSE SME and BSE scrip-keyed reports retain explicit source identity. Future hearing dates do not suppress prior publication-day history. Sparse details render known facts and collapsed source/method sections. Report requests use a private proxy-aware dispatcher and a bounded concurrency queue with an overall response budget. Security-code/ticker aliases share immutable prices across reports. Previous-session, event-window and latest-company context remain separately labelled. A bounded rotating worker captures the last eight dates on boot/watchdog and authenticated cron, with explicit read/write/source diagnostics and retry; request-based hosting still requires its external Scheduler. Related reports query the company directly, independently of feed caps or selected report age. Compact selectable daily bars retain exact source/price details and reduced-motion support. Latest persisted company context remains visible even beyond the eight-day event lookback, with its original date and source. Presentation groups exact company sets without merging durable proceedings. A private seven-day scan ledger supplies latest check health across hosting instances; missing history is pending, and optional RSS outage is distinct from filing-scan success. October 22 inspection found recent durable checks healthy. Client refresh resumes explicitly on visible/online/pageshow; timed-out abort-resolving reads expose retry and release the read lock. Source policy and scheduling are unchanged. Source scan freshness ages from the actual persisted scan timestamp, separately from the browser read time. Heading actions retain a single-line label and wrap as a group on narrow screens. Home Radar is the explicit personal-feed exception: All events and Watchlist Radar share scope in preview and dashboard; private list failure does not hide public All events. Source-linked reaction journal accumulates independent company/session statistics over 30/60/365 days. Sourced wording, explicit scope/amount and timed observations remain separate from causation. Session/calendar gaps remain pending; duplicate reports and overlapping proceedings cannot inflate patterns. The existing background worker owns bounded learning and durable cursor progress. Research outages retain saved UI data and never hide sourced news."
+      "reason": "Two Home previews open a native modal Radar dashboard and immediate detail. Watchlist scope stays separate from durable event follows. Both exchange disclosures and shared RSS intake carry source/date provenance; explicit jurisdiction/case references alone may join evidence. Future events have no predictions. Observed NSE final daily closes are a separate bounded, cached read with per-session source, missing-data states and no causal attribution. Account cancellation, modal focus/scroll, themes and reduced motion remain explicit contracts. The list is read-only; existing watchdog drives bounded intake. Server-only DB categories, strict real company identity, typed proceedings, source-domain rules and offset timestamps gate publishing. Reviewed PNC source backfill retains explicit news timestamps and separately sourced NSE daily ranges. Following outages preserve closed records. Additional material event terms come from private DB rules and match bounded literal phrases independently of source type or authority. Explicit RSS timestamps normalize to UTC. Publisher/report attribution and related-topic links preserve uncertainty. Selected company final NSE session values persist as small, private, duplicate-safe snapshots and can survive upstream outages. Routine corporate transactions and statutory takeover boilerplate are excluded independently of configured discovery terms. Insolvency/disputes retain the stable deals category ID with a focused label. Read projections hide legacy routine/vague cards while retaining immutable evidence and follows; all headings use source wording and original timeline titles remain intact. Official filing names and exact-code title prefixes repair numeric identities without assigning a guessed NSE symbol. Exchange daily rows may match one exact full company name; NSE SME and BSE scrip-keyed reports retain explicit source identity. Future hearing dates do not suppress prior publication-day history. Sparse details render known facts and collapsed source/method sections. Report requests use a private proxy-aware dispatcher and a bounded concurrency queue with an overall response budget. Security-code/ticker aliases share immutable prices across reports. Previous-session, event-window and latest-company context remain separately labelled. A bounded rotating worker captures the last eight dates on boot/watchdog and authenticated cron, with explicit read/write/source diagnostics and retry; request-based hosting still requires its external Scheduler. Related reports query the company directly, independently of feed caps or selected report age. Compact selectable daily bars retain exact source/price details and reduced-motion support. Latest persisted company context remains visible even beyond the eight-day event lookback, with its original date and source. Presentation groups exact company sets without merging durable proceedings. A private seven-day scan ledger supplies latest check health across hosting instances; missing history is pending, and optional RSS outage is distinct from filing-scan success. October 22 inspection found recent durable checks healthy. Client refresh resumes explicitly on visible/online/pageshow; timed-out abort-resolving reads expose retry and release the read lock. Source policy and scheduling are unchanged. Source scan freshness ages from the actual persisted scan timestamp, separately from the browser read time. Heading actions retain a single-line label and wrap as a group on narrow screens. Home Radar is the explicit personal-feed exception: All events and Watchlist Radar share scope in preview and dashboard; private list failure does not hide public All events. Source-linked reaction journal accumulates independent company/session statistics over 30/60/365 days. Sourced wording, explicit scope/amount and timed observations remain separate from causation. Session/calendar gaps remain pending; duplicate reports and overlapping proceedings cannot inflate patterns. The existing background worker owns bounded learning and durable cursor progress. Research outages retain saved UI data and never hide sourced news. Company-relative study groups use exact-code INR market-cap snapshots captured before the selected full session, explicit monetary ratios and unknown bins. Daily range and own-stock range baselines remain primary even for flat closes. Historical volatility watch requires matched size/exposure, sufficient samples and observed frequency, without a direction prediction. Context outages do not block original journal progress."
     },
     {
       "id": "frontend-stories",
@@ -22596,6 +22741,18 @@
       "key": "ORDERS_TABLE"
     },
     {
+      "file": "server/database/radarCompanyContextDao.ts",
+      "line": 5,
+      "function": "getSupabase().from",
+      "key": "'impact_radar_company_context'"
+    },
+    {
+      "file": "server/database/radarCompanyContextDao.ts",
+      "line": 11,
+      "function": "getSupabase().rpc",
+      "key": "'save_radar_company_context'"
+    },
+    {
       "file": "server/database/radarPriceDao.ts",
       "line": 9,
       "function": "getSupabase().from",
@@ -22615,51 +22772,51 @@
     },
     {
       "file": "server/database/radarReactionDao.ts",
-      "line": 9,
+      "line": 11,
       "function": "db.from",
       "key": "'impact_radar_reaction_progress'"
     },
     {
       "file": "server/database/radarReactionDao.ts",
-      "line": 10,
+      "line": 12,
       "function": "db.from",
       "key": "'impact_radar_updates'"
     },
     {
       "file": "server/database/radarReactionDao.ts",
-      "line": 14,
+      "line": 16,
       "function": "db.from",
       "key": "'impact_radar_reactions'"
     },
     {
       "file": "server/database/radarReactionDao.ts",
-      "line": 26,
+      "line": 28,
       "function": "getSupabase().from",
       "key": "'impact_price_sessions'"
     },
     {
       "file": "server/database/radarReactionDao.ts",
-      "line": 31,
+      "line": 33,
       "function": "getSupabase().rpc",
       "key": "'save_radar_reactions'"
     },
     {
       "file": "server/database/radarReactionDao.ts",
-      "line": 34,
+      "line": 36,
       "function": "getSupabase().from",
       "key": "'impact_radar_reaction_progress'"
     },
     {
       "file": "server/database/radarReactionDao.ts",
-      "line": 39,
+      "line": 40,
       "function": "getSupabase().from",
       "key": "'impact_radar_reactions'"
     },
     {
       "file": "server/database/radarReactionDao.ts",
-      "line": 40,
+      "line": 45,
       "function": "getSupabase().rpc",
-      "key": "'radar_reaction_patterns'"
+      "key": "'radar_volatility_patterns'"
     },
     {
       "file": "server/database/radarSourceDao.ts",
@@ -23224,6 +23381,12 @@
       "line": 30,
       "function": "Buffer.from",
       "key": "[0x50, 0x4b, 0x01, 0x02]"
+    },
+    {
+      "file": "server/tests/radarMateriality.test.ts",
+      "line": 33,
+      "function": "Array.from",
+      "key": "{length:12}"
     },
     {
       "file": "server/tests/radarReaction.test.ts",

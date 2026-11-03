@@ -87,7 +87,7 @@ test('F5/F13: category registry returns seven seeded options and the list is a d
  assert.equal(externalCalls, 0);
  assert.ok(calls.some(c => new URL(c.url).pathname.endsWith('/impact_radar_events')));
  assert.ok(calls.some(c => new URL(c.url).pathname.endsWith('/impact_radar_source_checks')));
- assert.ok(calls.every(c => (c.method === 'GET' && ['/impact_radar_events','/impact_radar_source_checks','/impact_radar_reactions'].some(path => new URL(c.url).pathname.endsWith(path))) || (c.method === 'POST' && new URL(c.url).pathname.endsWith('/rpc/radar_reaction_patterns') && Object.keys(c.body).join() === 'p_as_of')), 'list only reads stored events, scan health, journal and the exact read-only pattern RPC');
+ assert.ok(calls.every(c => (c.method === 'GET' && ['/impact_radar_events','/impact_radar_source_checks','/impact_radar_reactions','/impact_radar_company_context'].some(path => new URL(c.url).pathname.endsWith(path))) || (c.method === 'POST' && new URL(c.url).pathname.endsWith('/rpc/radar_volatility_patterns') && Object.keys(c.body).sort().join() === 'p_as_of,p_keys')), 'list only reads stored events, scan health, journal and the exact read-only pattern RPC');
  const categories = await originalFetch(url + '/categories');
  assert.equal(categories.status, 200); const rows = (await categories.json()).categories;
  assert.equal(rows.length, 7); assert.equal(rows[0].id, 'restriction');
