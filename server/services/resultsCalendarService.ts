@@ -1,5 +1,5 @@
 import { readCalendarOutcomes } from './calendarOutcomeRead.js';
-import { isPureResultOutcomeFiling, isIntimationOrNoticeFiling, isVerifiedResultFiling, resultFilingText } from '../../src/shared/resultFiling.js';
+import { isPureResultOutcomeFiling, isIntimationOrNoticeFiling, isVerifiedResultFiling, resultFilingText, isAmbiguousBoardOutcome } from '../../src/shared/resultFiling.js';
 export { isPureResultOutcomeFiling, isIntimationOrNoticeFiling } from '../../src/shared/resultFiling.js';
 import { startHistorySync, waitHistorySync, historySyncStatus } from './historicalFilings.js';
 import { hasExactScripCode } from '../../src/shared/scripMatching.js';
@@ -1198,6 +1198,23 @@ export async function getStockResultsHistory(
     if (outcomeFiling) {
       const { quarterKey, periodLabel } = parseQuarterPeriod(resultFilingText(outcomeFiling), outcomeFiling.ts);
 
+      // Rule R20: Pure Earliest Filing Time & Same-Day Disclosures Contract
+      // When results are declared on this date, the true 1st Filing Time is established by the
+      // earliest outcome or result disclosure on that date (e.g. Board Meeting Outcome at 11:56:21
+      // for Bajaj Finserv, 13:54:56 for SBIN). A later filing (e.g. 12:02 or 15:39) must never
+      // overwrite or replace the true first broadcast time.
+      const isOutcomeOrResultFiling = (f: any) => {
+        if (isIntimationOrNoticeFiling(f.subject, f.details)) return false;
+        return isVerifiedResultFiling(f) ||
+          isAmbiguousBoardOutcome(f) ||
+          /\b(?:outcome of (?:the )?board|board meeting outcome|financial results?|regulation 33|reg\s*33|results)\b/i.test(`${f.subject || ''} ${f.details || ''}`);
+      };
+
+      const earliestOutcome = filings.find(isOutcomeOrResultFiling) || outcomeFiling;
+      const declarationTime = earliestOutcome.timeStr || outcomeFiling.timeStr;
+      const declaredAtFormatted = earliestOutcome.formattedExact || outcomeFiling.formattedExact;
+      const submissionTimestamp = Math.min(earliestOutcome.ts || outcomeFiling.ts, outcomeFiling.ts);
+
       const followUps: StockHistoricalFollowUpFiling[] = filings
         .filter(f => f !== outcomeFiling)
         .map(f => ({
@@ -1207,12 +1224,12 @@ export async function getStockResultsHistory(
           exactDateTimeStr: f.formattedExact,
           timestamp: f.ts,
           pdfLink: f.pdfLink,
-          category: f.category || 'Results'
+          category: f.category || (isOutcomeOrResultFiling(f) ? 'Results' : 'Other')
         }));
 
       // Later corrections cannot replace the first verified result release.
       const earlier = quarterOutcomesMap.get(quarterKey);
-      if (earlier && (earlier.submissionTimestamp || 0) <= outcomeFiling.ts) continue;
+      if (earlier && (earlier.submissionTimestamp || 0) <= submissionTimestamp) continue;
       quarterOutcomesMap.set(quarterKey, {
         id: outcomeFiling.id || outcomeFiling.NEWSID || `decl_${quarterKey}`,
         symbol: sym,
@@ -1224,10 +1241,10 @@ export async function getStockResultsHistory(
         meetingDate: dateStr,
         boardMeetingDate: dateStr,
         declarationDate: dateStr,
-        declarationTime: outcomeFiling.timeStr,
-        declaredAtFormatted: outcomeFiling.formattedExact,
-        exactDateTimeStr: outcomeFiling.formattedExact,
-        submissionTimestamp: outcomeFiling.ts,
+        declarationTime,
+        declaredAtFormatted,
+        exactDateTimeStr: declaredAtFormatted,
+        submissionTimestamp,
         subject: outcomeFiling.subject,
         details: outcomeFiling.details,
         pdfLink: outcomeFiling.pdfLink,
@@ -1393,7 +1410,7 @@ export async function autoFetchDeepHistoricalResults(scripCode: string, symbol?:
     startHistorySync(scripCode, years);
     let timer: ReturnType<typeof setTimeout> | undefined;
     try {
-      await Promise.race([waitHistorySync(scripCode, years), new Promise(resolve => { timer = setTimeout(resolve, 6000); })]);
+      await Promise.race([waitHistorySync(scripCode, years), new Promise(resolve => { timer = setTimeout(resolve, 15000); })]);
       return historySyncStatus(scripCode, years)?.state === 'complete';
     } finally { clearTimeout(timer); }
   } catch { return false; }

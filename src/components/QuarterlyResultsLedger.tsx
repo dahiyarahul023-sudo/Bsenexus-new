@@ -304,7 +304,20 @@ export const QuarterlyResultsLedger: React.FC<QuarterlyResultsLedgerProps> = ({
 
             const boardMeetingDate = item.boardMeetingDate || item.meetingDate || item.declarationDate || 'N/A';
             const rawTime = (item.declarationTime || '').match(/(?:^|[T\s,])(\d{1,2}:\d{2}(?::\d{2})?)(?:\s*IST)?(?:$|\s|[.+Z-])/i)?.[1] || '';
-            const timeOnly = rawTime ? (rawTime.includes('IST') ? rawTime : `${rawTime} IST`) : '';
+            let timeOnly = rawTime ? (rawTime.includes('IST') ? rawTime : `${rawTime} IST`) : '';
+
+            // Rule R20: Guarantee displayed 1st Filing Time reflects the true earliest same-day outcome disclosure
+            if (item.followUpFilings && item.followUpFilings.length > 0) {
+              for (const f of item.followUpFilings) {
+                if (f.timeStr && f.timestamp && item.submissionTimestamp && f.timestamp < item.submissionTimestamp) {
+                  const fTime = (f.timeStr || '').match(/(?:^|[T\s,])(\d{1,2}:\d{2}(?::\d{2})?)(?:\s*IST)?(?:$|\s|[.+Z-])/i)?.[1];
+                  if (fTime) {
+                    timeOnly = `${fTime} IST`;
+                    break;
+                  }
+                }
+              }
+            }
 
             const safePdf = item.pdfLink ? getSafePdfUrl(item.pdfLink, undefined, item.id, item.scripCode || scripCode) : null;
 

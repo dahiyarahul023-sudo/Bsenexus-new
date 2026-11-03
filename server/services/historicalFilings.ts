@@ -29,7 +29,7 @@ export async function importHistoricalFilings(scripCode: string, years: number, 
   const deadline = now + 10 * 60_000;
   const request = dependencies.request || fetch;
   const save = dependencies.save || saveAnnouncementsBatch;
-  const pause = dependencies.pause || (() => new Promise<void>(resolve => setTimeout(resolve, 2500)));
+  const pause = dependencies.pause || (() => new Promise<void>(resolve => setTimeout(resolve, 800)));
   const proofsToConfirm = new Map<string, any>();
   const confirm = dependencies.confirm || (async (ids: string[]) => {
     if (!isSupabaseConfigured()) {
@@ -54,6 +54,7 @@ export async function importHistoricalFilings(scripCode: string, years: number, 
   for (let from = cutoff; from <= now;) {
     const to = Math.min(now, from + 179 * 86_400_000);
     let previousPage = '';
+    let cumulativeRows = 0;
     for (let page = 1;; page++) {
       if ((dependencies.now || Date.now)() > deadline) throw new Error('Archive time budget reached; saved pages remain available. Retry the requested period.');
       if (!firstRequest) await pause();
@@ -109,8 +110,10 @@ export async function importHistoricalFilings(scripCode: string, years: number, 
         await confirm(items.map((item: any) => item.newsId));
         progress(items.length);
       }
+      cumulativeRows += rows.length;
       const total = Number(body?.Table1?.[0]?.ROWCNT ?? body?.Table1?.[0]?.TOTALRECORDS);
-      if (Number.isFinite(total) && total > 0 && page * rows.length >= total) break;
+      if (Number.isFinite(total) && total > 0 && cumulativeRows >= total) break;
+      if (rows.length < 50) break;
       // An explicit empty next page is required when no reliable total is supplied.
     }
     if (to === now) break;
@@ -133,7 +136,9 @@ export function startHistorySync(scripCode: string, years: number): HistorySyncS
     status.updatedAt = Date.now();
   }, { unverified: () => { status.unverifiedDocuments = (status.unverifiedDocuments || 0) + 1; } }).then(async () => {
     const { invalidateEnrichedCalendarCache } = await import('./resultsCalendarService.js');
-    invalidateEnrichedCalendarCache(); status.state = 'complete';
+    invalidateEnrichedCalendarCache();
+    flushLocalDiskSave();
+    status.state = 'complete';
   }).catch((error: Error) => {
     status.state = 'failed'; status.error = error.message;
   }).finally(() => { status.updatedAt = Date.now(); });
