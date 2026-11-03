@@ -18,8 +18,8 @@ test('same ₹50 crore is compared with each company market cap; amounts, curren
  assert.equal(statedAmountInr(['Rs. 5,000 lakh']),50e7);assert.equal(statedAmountInr(['INR 500 million']),50e7);
  for(const a of [[],['USD 50 million'],['₹50 crore','₹100 crore'],['₹0 crore']])assert.equal(statedAmountInr(a),null);
  assert.equal(statedAmountInr(['₹50'],'₹50–100 crore'),null);
- const rangeRow=evaluateRadarReaction(event,{...update,title:'Penalty of Rs. 50–100 crore',information:'A disputed range is stated.'},company,[],now);
- assert.deepEqual(rangeRow.amounts,['Rs. 50–100 crore']);assert.equal(statedAmountInr(rangeRow.amounts),null);
+ for(const range of ['Rs. 50–100 crore','₹50 crore–100 crore','₹50 crore to ₹100 crore']){const rangeRow=evaluateRadarReaction(event,{...update,title:'Penalty of '+range,information:'A disputed range is stated.'},company,[],now);assert.deepEqual(rangeRow.amounts,[range]);assert.equal(statedAmountInr(rangeRow.amounts),null);}
+ const unsupported=evaluateRadarReaction(event,{...update,title:'Penalty of INR 5e8',information:'Scientific notation.'},company,[],now);assert.deepEqual(unsupported.amounts,[]);
  assert.equal(isRadarMateriality({...small,amountToCapPercent:50}),false);
 });
 test('current valuations cannot be assigned to old incidents, wrong codes or foreign-currency quotes',()=>{

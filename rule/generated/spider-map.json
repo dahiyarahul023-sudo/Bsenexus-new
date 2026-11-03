@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "34440a7bdb7a5d7c7c481680817bf41fcda2fb59fb2406905d65c56001a34e7b",
+  "sourceDigest": "9ea47d2e56621fae28841795d54e5e0c1fae21d8036074bd5aa931d45b968984",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -2224,7 +2224,7 @@
     },
     {
       "path": "server/tests/radarMateriality.test.ts",
-      "sha256": "83bcd823395ae4e1342233d83c260e943b18b7f7b2f430fe16bc768d1e511053",
+      "sha256": "2f38519d2f96a9b71470294790b12ae8e2175ed376828a6e4c91281a22e87d28",
       "importedBy": []
     },
     {
@@ -4496,7 +4496,7 @@
     },
     {
       "path": "src/shared/radarReaction.ts",
-      "sha256": "e4b22b813f27b728eef74201b0720235204d7614024f8adb69ab04637c7471b1",
+      "sha256": "d7d21c50dd6bca3b69fea1565443cef9f8514a6c8a4e1f8461feb46ae9c1d260",
       "importedBy": [
         "server/database/radarReactionDao.ts",
         "server/services/radarCompanyContextService.ts",
