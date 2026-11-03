@@ -61,7 +61,7 @@ export function evaluateRadarReaction(event:RadarEvent,update:RadarUpdate,compan
   const id=`${update.id}:${company.scripCode}`;
   const text=`${update.title} ${update.information}`;
   const scope=/\binterim\b/i.test(text)?'interim':/\b(?:final (?:order|ruling|judgment)|permanent (?:ban|restriction))\b/i.test(text)?'final':'unspecified';
-  const amounts=[...text.matchAll(/(?:₹|\bRs\.?|\bINR)\s*[\d,]+(?:\.\d+)?\s*(?:crores?|cr\.?|lakhs?|lacs?|million|billion)?/gi)].slice(0,4).map(m=>m[0].trim());
+  const amounts=[...text.matchAll(/(?:₹|\bRs\.?|\bINR)\s*[\d,]+(?:\.\d+)?(?:\s*(?:-|–|to)\s*[\d,]+(?:\.\d+)?)?\s*(?:crores?|cr\.?|lakhs?|lacs?|million|billion)?/gi)].slice(0,4).map(m=>m[0].trim());
   const result:RadarReaction={version:1,id,eventId:event.id,updateId:update.id,scripCode:company.scripCode,symbol:company.symbol,companyName:company.name,category:event.category,fact:fact.key,excerpt:fact.excerpt,scope,amounts,authority:event.authority,source:update.source,publishedAt:update.publishedAt,checkedAt:new Date(now).toISOString(),sessionDate,state:sessionDate?'awaiting-session':'calendar-pending'};
   const eligible=prices.filter(p=>isRadarSessionMove(p)&&[company.symbol,company.scripCode].includes(p.symbol)&&Date.parse(`${p.date}T11:00:00Z`)<=now);
   // If the holiday calendar is unavailable, retain actual observations without pretending to know the first expected trading date.
