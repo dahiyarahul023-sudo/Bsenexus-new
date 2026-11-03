@@ -1,3 +1,5 @@
+import { reconcileDeclaredCalendar } from '../shared/resultDeclaration';
+import { useForegroundRefresh } from '../hooks/useForegroundRefresh';
 import { AnchoredPopover } from './ui/AnchoredPopover';
 import { useCalendarDialog } from '../hooks/useCalendarDialog';
 import { changeRunupPriority, RunupPriorityError } from '../utils/runupPriorityClient';
@@ -558,7 +560,7 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
       const wlParam = (selectedWatchlistId && calendarScope === 'watchlist') ? `&watchlistId=${selectedWatchlistId}` : '';
       const url = `${endpoint}?filter=all&scope=${calendarScope}${wlParam}${force && mode === 'full' ? '&mode=full' : ''}`;
 
-      const res = await customFetch(url, { method, signal: controller.signal });
+      const res = await customFetch(url, { method, signal: controller.signal, cache: 'no-store' });
       if (!isCurrent()) return;
       if (!res.ok) throw new Error(`Calendar request failed (${res.status})`);
       if (res.ok) {
@@ -573,7 +575,7 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
         }));
         setItems(fetchedItems);
         setCacheItem(key, fetchedItems);
-        setLastUpdated(data.lastUpdated || 0);
+        setLastUpdated(data.resultsCheckedAt || data.lastUpdated || 0);
         if (data.calendarIncomplete) setCalendarError('Some BSE dates could not be refreshed. Previously available dates are retained.');
         if (data.calendarHistoryUnavailable) setCalendarError('Stored calendar history could not be fully recovered. Retry to check missing archive dates.');
         
@@ -613,7 +615,6 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
       dayClock.current = nextDay;
       setCalendarDay(nextDay);
       setCurrentPage(1);
-      void fetchCalendar(false);
     }
   }, 30_000);
 
@@ -669,12 +670,23 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
     setLastUpdated(0);
     setLoading(cached.length === 0);
     setSelectedIds(new Set());
-    fetchCalendar(false);
     return () => {
       requestSequence.current++;
       calendarRequest.current?.abort();
     };
   }, [calendarKey]);
+
+  useForegroundRefresh(() => fetchCalendar(false), 60_000, isActive !== false, calendarKey);
+  useEffect(() => {
+    const reconcile = (event: Event) => {
+      const detail = (event as CustomEvent).detail;
+      if (detail?.owner !== owner || !/^\d{6}$/.test(detail?.scripCode || '') || !Array.isArray(detail?.history)) return;
+      setItems(previous => reconcileDeclaredCalendar(previous, detail.history, detail.scripCode));
+    };
+    window.addEventListener('company-intel-updated', reconcile);
+    return () => window.removeEventListener('company-intel-updated', reconcile);
+  }, [owner]);
+
 
   // Native Pull to Refresh Hook for Earnings Calendar
   const { 
@@ -1212,7 +1224,7 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
               ({filteredAndSortedItems.length})
             </span>
           </div>
-          {lastUpdated > 0 && <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">Updated {formatTimeOnly(lastUpdated)}</span>}
+          {lastUpdated > 0 && <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">Checked {formatTimeOnly(lastUpdated)}</span>}
         </div>
 
         {/* Row 1: Search Box (Full width) */}

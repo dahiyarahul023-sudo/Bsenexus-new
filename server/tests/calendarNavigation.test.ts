@@ -34,6 +34,8 @@ function componentHarness(path: string, extra: Record<string, any> = {}) {
     if (name.endsWith('/AuthContext')) return { useAuth: () => ({ user: null, profile: null }) };
     if (name.endsWith('/IntelModalContext')) return { useIntelModal: () => ({}) };
     if (name.endsWith('/aiQuota')) return { useAiQuota: () => ({}) };
+    if (name.endsWith('/companyIntelSnapshots')) return { readCompanyIntelSnapshot: () => null };
+    if (name.endsWith('/useForegroundRefresh')) return { useForegroundRefresh() {} };
     if (name.endsWith('/useBodyScrollLock')) return { useBodyScrollLock() {} };
     if (name.endsWith('/useVisibilityInterval')) return { useVisibilityInterval() {} };
     if (name.endsWith('/useUnreadNotificationCount')) return { useUnreadNotificationCount: () => ({ count: 0 }) };

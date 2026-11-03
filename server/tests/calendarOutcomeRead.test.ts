@@ -12,7 +12,7 @@ function harness(respond:(url:URL)=>Response|Promise<Response>) {
  const exports:any={};const dependencies:any={
  '../database/supabase.js':{getSupabase:()=>client,isSupabaseConfigured:()=>true},
  '../../src/shared/scripMatching.js':{hasExactScripCode,projectFilingIdentity},
- '../../src/shared/filingSource.js':{isBseFiling},'../../src/shared/resultFiling.js':{isVerifiedResultFiling}};
+ '../../src/shared/filingSource.js':{isBseFiling},'../../src/shared/resultFiling.js':{isVerifiedResultFiling},'./currentResultEvidence.js':{verifyCurrentResultFilings:async(rows:any[])=>rows}};
  vm.runInNewContext(ts.transpileModule(fs.readFileSync('server/services/calendarOutcomeRead.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,AbortSignal,console,require:(name:string)=>dependencies[name]});
  return {read:exports.readCalendarOutcomes as (codes:string[],since:number)=>Promise<any[]>,urls};
 }

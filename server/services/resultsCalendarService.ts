@@ -1,3 +1,4 @@
+import { verifyCurrentResultFilings } from './currentResultEvidence.js';
 import { readCalendarOutcomes } from './calendarOutcomeRead.js';
 import { isPureResultOutcomeFiling, isIntimationOrNoticeFiling, isVerifiedResultFiling, resultFilingText, isAmbiguousBoardOutcome } from '../../src/shared/resultFiling.js';
 export { isPureResultOutcomeFiling, isIntimationOrNoticeFiling } from '../../src/shared/resultFiling.js';
@@ -721,7 +722,7 @@ export function readCachedResultsCalendar() {
 
 // Public calendar facts only. Account visibility remains in the caller;
 // website callers keep their original scope/filter semantics below.
-export async function getResultsCalendarSnapshot(): Promise<{items:ResultCalendarItem[];lastUpdated:number;outcomesUnavailable?:boolean}> {
+export async function getResultsCalendarSnapshot(): Promise<{items:ResultCalendarItem[];lastUpdated:number;resultsCheckedAt?:number;outcomesUnavailable?:boolean}> {
   await hydrateStoredCalendar();
   const now = Date.now();
   if (calendarUniverseVersion !== FNO_CALENDAR_VERSION || cachedCalendar.length === 0 ||
@@ -743,8 +744,9 @@ export async function getResultsCalendarSnapshot(): Promise<{items:ResultCalenda
       try {
         const since = Math.min(...recentMeetings.map(item=>item.meetingTimestamp))-6*3600000;
         const stored = await readCalendarOutcomes(recentMeetings.map(item=>String(item.scripCode)),since);
-        const ids = new Set(recentAnnouncements.map(item=>item.id));
-        for (const row of stored) if (!ids.has(row.id)) {recentAnnouncements.push(row);ids.add(row.id);}
+        const byId = new Map(recentAnnouncements.map(item => [item.id, item]));
+        for (const row of stored) byId.set(row.id, row);
+        recentAnnouncements.splice(0, recentAnnouncements.length, ...byId.values());
       } catch { outcomesUnavailable=true; console.warn('[ResultsCalendar] Stored result evidence unavailable; recent-cache evidence retained'); }
     }
 
@@ -854,7 +856,7 @@ export async function getResultsCalendarSnapshot(): Promise<{items:ResultCalenda
     };
   }
 
-  return { items: allEnrichedItems, lastUpdated: lastCalendarFetchTime, outcomesUnavailable };
+  return { items: allEnrichedItems, lastUpdated: lastCalendarFetchTime, resultsCheckedAt: outcomesUnavailable ? undefined : enrichedCache?.ts, outcomesUnavailable };
 }
 
 export async function getResultsCalendarData(
@@ -932,6 +934,7 @@ export async function getResultsCalendarData(
 
   return {
     lastUpdated: lastCalendarFetchTime,
+    resultsCheckedAt: snapshot.resultsCheckedAt,
     calendarIncomplete: lastCalendarSyncIncomplete,
     calendarHistoryUnavailable: calendarHistoryUnavailable || snapshot.outcomesUnavailable,
     totalCount: items.length,
@@ -1124,7 +1127,8 @@ export function parseQuarterPeriod(text: string, timestamp: number): {
 export async function getStockResultsHistory(
   param1: string, 
   param2?: string, 
-  companyName?: string
+  companyName?: string,
+  preparedFilings?: any[]
 ): Promise<StockHistoricalResultItem[]> {
   const p1 = String(param1 || '').trim();
   const p2 = String(param2 || '').trim();
@@ -1160,7 +1164,7 @@ export async function getStockResultsHistory(
   const todayStartTs = getIstMidnightTs(new Date());
 
   // 1. Fetch announcements for this stock from Dao
-  const recentAnnouncements = await getAnnouncementsForScrip(targetScrip, Number.MAX_SAFE_INTEGER, true);
+  const recentAnnouncements = await verifyCurrentResultFilings(preparedFilings || await getAnnouncementsForScrip(targetScrip, Number.MAX_SAFE_INTEGER, true));
   const stockAnns = recentAnnouncements.filter((ann: any) => hasExactScripCode(ann, targetScrip));
 
   // Group announcements strictly by calendar date in IST

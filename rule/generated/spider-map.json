@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "a217bbcd3a2435c4f1b2c54c8991a85c2f28b68ff7c1f1140de9b97c6009a10c",
+  "sourceDigest": "462c96c4bd1998d449a1904bbc9abd9934b8c1783d7ab9987e6a467af1484bb3",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -228,7 +228,7 @@
     },
     {
       "path": "scripts/verify-mobile-ui.mjs",
-      "sha256": "2a6347a384a7be99e51f4e30fc2bbddf1c3498d577e22e9ca613a43549ccea2e",
+      "sha256": "a83d53a5b0fb0f38d19e6a9af9a4e88564b6b34ea1b36c4ed1ac611f780ae28f",
       "importedBy": []
     },
     {
@@ -554,6 +554,7 @@
         "server/database/diagnosticsDao.ts",
         "server/services/bse.ts",
         "server/services/companyIntelService.ts",
+        "server/services/currentResultEvidence.ts",
         "server/services/gemini.ts",
         "server/services/historicalFilings.ts",
         "server/services/impactRadarService.ts",
@@ -1144,7 +1145,7 @@
     },
     {
       "path": "server/services/calendarOutcomeRead.ts",
-      "sha256": "07873e5bf4d272a19b49cc2d999b79646c1449cdfe1558f10199a3b947ec30bf",
+      "sha256": "56fa1792a5326941729903e7fe958f7fcbb8887dd06e742201c041245de2f0ad",
       "importedBy": [
         "server/services/resultsCalendarService.ts"
       ]
@@ -1171,10 +1172,19 @@
     },
     {
       "path": "server/services/companyIntelService.ts",
-      "sha256": "f29168ea59a3d7d8e3c2e206867e07791d481b5cf6fcc010f14f1d5b8c2bbbe9",
+      "sha256": "e818b4f22ddb624bb6efb246a0f927895ecca3a962f46f4c90367c19e5511a90",
       "importedBy": [
         "server.ts",
         "server/api/routes.ts"
+      ]
+    },
+    {
+      "path": "server/services/currentResultEvidence.ts",
+      "sha256": "6d6958ed8b99643e422370082d71bc9464265eee669a3148daf42ae03c8c2870",
+      "importedBy": [
+        "server/services/calendarOutcomeRead.ts",
+        "server/services/resultsCalendarService.ts",
+        "server/tests/resultFreshness.test.ts"
       ]
     },
     {
@@ -1252,7 +1262,7 @@
     },
     {
       "path": "server/services/historicalFilings.ts",
-      "sha256": "7a5fc6ae7536ba1c51088248e8e849f40a6ed5ba711bbf9cd720cd7aa6cdc12c",
+      "sha256": "268176e2e4d903029492b725e668d15eac88d0ddc4dee423bdb4d934a0924ef1",
       "importedBy": [
         "server/api/routes.ts",
         "server/services/resultHistoryRead.ts",
@@ -1436,8 +1446,9 @@
     },
     {
       "path": "server/services/resultDocumentEvidence.ts",
-      "sha256": "a8e3ac9439c2e842d2536434da179ab7071e6209808a95e37e83301adfc76cb0",
+      "sha256": "269ab4844261d682608ca3809b0a9c25f41c77ad89a9c9bcb9e76f48a436a4f3",
       "importedBy": [
+        "server/services/currentResultEvidence.ts",
         "server/services/historicalFilings.ts",
         "server/tests/resultDocumentEvidence.test.ts"
       ]
@@ -1451,7 +1462,7 @@
     },
     {
       "path": "server/services/resultsCalendarService.ts",
-      "sha256": "472df4f35d5ca3e2ffd744dc0aa77b9470d36060b288674cfdec61a3c077f65f",
+      "sha256": "11b9016d6e2df3a6fe1ffbfecfd28805029edb7c5cb6bfa18e52a89e68d72947",
       "importedBy": [
         "server.ts",
         "server/ai/calendarRead.ts",
@@ -1771,12 +1782,12 @@
     },
     {
       "path": "server/tests/calendarNavigation.test.ts",
-      "sha256": "da5e97837c03b0b9efe37bc51fd46620c372c3ac23813583a9173194c1c39e70",
+      "sha256": "f3cec52cdf9df0bf461db1e170b133543773cdf416c0fbcc3cbb600199f7d0cf",
       "importedBy": []
     },
     {
       "path": "server/tests/calendarOutcomeRead.test.ts",
-      "sha256": "32b69f45e4a3c70f14e10786cd8e700cbc84204a8af38bf7f41e6bd8e54e7e00",
+      "sha256": "559998d14ff26e3edffedb6da6cf5a2fa0b81ca5b08bde941876380f66d5bc1d",
       "importedBy": []
     },
     {
@@ -1826,7 +1837,7 @@
     },
     {
       "path": "server/tests/companyFilingHistory.test.ts",
-      "sha256": "e2bdc0d5a4aa78376feddf27c5bc2ce5d98f1a711f520618d316b0306ae9b883",
+      "sha256": "5795c390a3875b4ff45ba8d01503904ba9b1b0bc4f4dbb81e693a73db33ecd29",
       "importedBy": []
     },
     {
@@ -1922,6 +1933,11 @@
     {
       "path": "server/tests/forYouPersonal.test.ts",
       "sha256": "9c1d12e61920b8c0926450feadc77bfa1daf651402d22510add0f2bf85b33cd7",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/foregroundRefresh.test.ts",
+      "sha256": "c087b66a909015c79da663ae2611b5a09efcb0c4a61593ee1cd96163a881b679",
       "importedBy": []
     },
     {
@@ -2245,8 +2261,18 @@
       "importedBy": []
     },
     {
+      "path": "server/tests/resultEarliestTime.test.ts",
+      "sha256": "59b3ede1a53d02688f3595f6abb2cc3fb69430ec5dc8d09cd96d7c9b7db1b3a8",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/resultFreshness.test.ts",
+      "sha256": "bef3c7d34ca29765e7f0dcc6c327cfe46a8b502b875282bd53f860226383f753",
+      "importedBy": []
+    },
+    {
       "path": "server/tests/resultHistory.test.ts",
-      "sha256": "1166f085944d3f29ac864991cf8b0503b937907f11b507c50720d30f006c3650",
+      "sha256": "17964ec0a38510bdbb4d27f76e3f94e7bb84224d64ce1bf73081ef388f815c3b",
       "importedBy": []
     },
     {
@@ -2281,7 +2307,7 @@
     },
     {
       "path": "server/tests/sevenFixes.test.ts",
-      "sha256": "5238fb65a65675049286f03ba1185c73e6db385f8ebf61dda2b6eb43150a978e",
+      "sha256": "dcace67e4387f5b9f70d05dbc835be8d3a5f4c15a406a9a95044dd81aa7b2e3d",
       "importedBy": []
     },
     {
@@ -2447,6 +2473,7 @@
         "server/database/announcementDao.ts",
         "server/services/bse.ts",
         "server/services/companyIntelService.ts",
+        "server/services/currentResultEvidence.ts",
         "server/services/historicalFilings.ts",
         "server/services/monitor.ts",
         "server/services/resultsCalendarService.ts",
@@ -2456,6 +2483,7 @@
         "server/tests/keywordGuides.test.ts",
         "server/tests/pollerStall.test.ts",
         "server/tests/resultDocumentEvidence.test.ts",
+        "server/tests/resultEarliestTime.test.ts",
         "server/tests/resultHistory.test.ts",
         "server/tests/resultTelegramClassification.test.ts",
         "server/tests/sevenFixes.test.ts"
@@ -2802,7 +2830,7 @@
     },
     {
       "path": "src/components/CompanyIntelligenceModal.tsx",
-      "sha256": "dcf4aede4e737b200ae83c275e4c72a552271984d4dfbc4fd95bc3eba9afd108",
+      "sha256": "32109ed57f0cbdda8d340808f19f2d3ed3ae723d90e3febfcf96723f19c5549a",
       "importedBy": [
         "src/components/Layout.tsx"
       ]
@@ -2966,7 +2994,7 @@
     },
     {
       "path": "src/components/QuarterlyResultsLedger.tsx",
-      "sha256": "e58933b1af9d5d6a7bddf3011cafa2544833719d46d16f95ca045f66ee27c623",
+      "sha256": "d1be96fae3c9d8d5984b2f7d5269020258b12900a87816e9b2c3f5c5fcd703eb",
       "importedBy": [
         "server/tests/resultHistory.test.ts",
         "src/components/CompanyIntelligenceModal.tsx",
@@ -3003,7 +3031,7 @@
     },
     {
       "path": "src/components/ResultsCalendar.tsx",
-      "sha256": "6e423b63f8031d653c6fde947d05a3b1b6eab8a2ad1529bf1cee0ab02f197a38",
+      "sha256": "3cb7270de9ce51d36160d752163706deec0373f087202d810d7d14d2c0d07f71",
       "importedBy": [
         "src/App.tsx",
         "src/components/Layout.tsx"
@@ -3092,7 +3120,7 @@
     },
     {
       "path": "src/components/WatchlistManager.tsx",
-      "sha256": "9cb779d907d7dcd73da0fbedee62cc3c0ac64b35cf9da35920652e99991092bf",
+      "sha256": "31e8132f9987748fddfb91659afe2cd3e73152ac6fcedeb5f07bcbba465ce09e",
       "importedBy": [
         "src/App.tsx",
         "src/components/Layout.tsx"
@@ -4072,6 +4100,15 @@
       ]
     },
     {
+      "path": "src/hooks/useForegroundRefresh.ts",
+      "sha256": "c6922bfaeadc1c760192cd5c0988686f254c5be72a930dbaa754cb5f70e307ec",
+      "importedBy": [
+        "src/components/CompanyIntelligenceModal.tsx",
+        "src/components/ResultsCalendar.tsx",
+        "src/components/WatchlistManager.tsx"
+      ]
+    },
+    {
       "path": "src/hooks/useMarketIndices.ts",
       "sha256": "533ed2f6622e63ffa0f5c19bb6f2d1adfe6a7af36eae80224458d956c571f8fc",
       "importedBy": [
@@ -4145,7 +4182,6 @@
         "src/components/NewsPortal.tsx",
         "src/components/NotificationInbox.tsx",
         "src/components/ResultsCalendar.tsx",
-        "src/components/WatchlistManager.tsx",
         "src/hooks/useMarketIndices.ts",
         "src/hooks/useUnreadNotificationCount.ts"
       ]
@@ -4266,8 +4302,11 @@
         "server/services/calendarUniverse.ts",
         "server/services/resultsCalendarService.ts",
         "server/tests/calendarRecovery.test.ts",
+        "server/tests/resultEarliestTime.test.ts",
         "server/tests/resultHistory.test.ts",
         "src/components/ResultsCalendar.tsx",
+        "src/components/WatchlistManager.tsx",
+        "src/shared/watchlistResultStatus.ts",
         "src/utils/forYou.ts"
       ]
     },
@@ -4289,6 +4328,7 @@
         "server/api/routes.ts",
         "server/database/announcementDao.ts",
         "server/services/calendarOutcomeRead.ts",
+        "server/services/currentResultEvidence.ts",
         "server/services/gemini.ts",
         "server/services/monitor.ts",
         "server/tests/calendarOutcomeRead.test.ts",
@@ -4375,22 +4415,28 @@
       "path": "src/shared/resultDeclaration.ts",
       "sha256": "f37afb8d59e5af3c864fc9ea275904ac52d82a897fb758096a38830148658ba3",
       "importedBy": [
-        "server/tests/declarationParity.test.ts"
+        "server/tests/declarationParity.test.ts",
+        "src/components/ResultsCalendar.tsx"
       ]
     },
     {
       "path": "src/shared/resultFiling.ts",
-      "sha256": "76e2fae78b675361db2e6b5dd6c6a64df52a6778f02a363ac411c8f7068a595a",
+      "sha256": "00fd03d82396a43f6ae6bfd66d49aaa74fd671c3ffb66e5c86685694bc909479",
       "importedBy": [
         "server/services/calendarOutcomeRead.ts",
+        "server/services/currentResultEvidence.ts",
         "server/services/historicalFilings.ts",
         "server/services/resultDocumentEvidence.ts",
         "server/services/resultsCalendarService.ts",
         "server/tests/calendarOutcomeRead.test.ts",
         "server/tests/resultDocumentEvidence.test.ts",
+        "server/tests/resultEarliestTime.test.ts",
+        "server/tests/resultFreshness.test.ts",
         "server/tests/resultHistory.test.ts",
         "src/components/CompanyIntelligenceModal.tsx",
-        "src/components/ResultsCalendar.tsx"
+        "src/components/ResultsCalendar.tsx",
+        "src/components/WatchlistManager.tsx",
+        "src/utils/cleanBseSubject.ts"
       ]
     },
     {
@@ -4402,6 +4448,7 @@
         "server/database/announcementDao.ts",
         "server/services/calendarOutcomeRead.ts",
         "server/services/companyIntelService.ts",
+        "server/services/currentResultEvidence.ts",
         "server/services/filingIndexNow.ts",
         "server/services/historicalFilings.ts",
         "server/services/resultsCalendarService.ts",
@@ -4409,12 +4456,14 @@
         "server/tests/calendarOutcomeRead.test.ts",
         "server/tests/companyFilingHistory.test.ts",
         "server/tests/resultDocumentEvidence.test.ts",
+        "server/tests/resultEarliestTime.test.ts",
         "server/tests/resultHistory.test.ts",
         "server/tests/sevenFixes.test.ts",
         "server/utils/helpers.ts",
         "src/components/WatchlistManager.tsx",
         "src/shared/resultDeclaration.ts",
-        "src/shared/watchlistIdentity.ts"
+        "src/shared/watchlistIdentity.ts",
+        "src/shared/watchlistResultStatus.ts"
       ]
     },
     {
@@ -4438,6 +4487,14 @@
         "src/components/WatchlistEditor.tsx",
         "src/utils/forYou.ts",
         "src/utils/watchlistPreview.ts"
+      ]
+    },
+    {
+      "path": "src/shared/watchlistResultStatus.ts",
+      "sha256": "535b4ebb43d9a0e667e2975b223caca0abbe2e184eca9aa51982d955a35b149c",
+      "importedBy": [
+        "server/tests/resultFreshness.test.ts",
+        "src/components/WatchlistManager.tsx"
       ]
     },
     {
@@ -4637,8 +4694,9 @@
     },
     {
       "path": "src/utils/cleanBseSubject.ts",
-      "sha256": "238442afbf1ea54a2b2d6f3912a0a5f4d7c58bf9fc5ecf1175fddb4aa7cf4ae2",
+      "sha256": "bbaf1334fd10e57a3ccbac30636f1545bc1f652d86f3581f98cbeafdf537e13e",
       "importedBy": [
+        "server/tests/resultFreshness.test.ts",
         "server/tests/subjectCleaner.test.ts",
         "src/components/Announcements.tsx",
         "src/components/CompanyIntelligenceModal.tsx",
@@ -4652,6 +4710,14 @@
       "importedBy": [
         "src/components/Announcements.tsx",
         "src/components/WatchlistManager.tsx"
+      ]
+    },
+    {
+      "path": "src/utils/companyIntelSnapshots.ts",
+      "sha256": "d84e7a4a092ff31da0f14476de9817774c0ddb1e122d262be7eeb0f51836668b",
+      "importedBy": [
+        "server/tests/resultFreshness.test.ts",
+        "src/components/CompanyIntelligenceModal.tsx"
       ]
     },
     {
@@ -4951,6 +5017,7 @@
         "src/components/ResultsCalendar.tsx",
         "src/components/WatchlistManager.tsx",
         "src/components/results/ResultsPage.tsx",
+        "src/shared/watchlistResultStatus.ts",
         "src/utils/announcementFeed.ts",
         "src/utils/resultTiming.ts"
       ]
@@ -7278,27 +7345,33 @@
     },
     {
       "source": "server/services/calendarOutcomeRead.ts",
-      "target": "server/database/supabase.ts",
+      "target": "server/services/currentResultEvidence.ts",
       "kind": "import",
       "line": 1
     },
     {
       "source": "server/services/calendarOutcomeRead.ts",
-      "target": "src/shared/scripMatching.ts",
+      "target": "server/database/supabase.ts",
       "kind": "import",
       "line": 2
     },
     {
       "source": "server/services/calendarOutcomeRead.ts",
-      "target": "src/shared/filingSource.ts",
+      "target": "src/shared/scripMatching.ts",
       "kind": "import",
       "line": 3
     },
     {
       "source": "server/services/calendarOutcomeRead.ts",
-      "target": "src/shared/resultFiling.ts",
+      "target": "src/shared/filingSource.ts",
       "kind": "import",
       "line": 4
+    },
+    {
+      "source": "server/services/calendarOutcomeRead.ts",
+      "target": "src/shared/resultFiling.ts",
+      "kind": "import",
+      "line": 5
     },
     {
       "source": "server/services/calendarTelegramDelivery.ts",
@@ -7401,6 +7474,42 @@
       "target": "server/utils/stockResolver.ts",
       "kind": "import",
       "line": 10
+    },
+    {
+      "source": "server/services/currentResultEvidence.ts",
+      "target": "src/shared/scripMatching.ts",
+      "kind": "import",
+      "line": 1
+    },
+    {
+      "source": "server/services/currentResultEvidence.ts",
+      "target": "src/shared/resultFiling.ts",
+      "kind": "import",
+      "line": 2
+    },
+    {
+      "source": "server/services/currentResultEvidence.ts",
+      "target": "src/shared/filingSource.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "server/services/currentResultEvidence.ts",
+      "target": "server/utils/helpers.ts",
+      "kind": "import",
+      "line": 4
+    },
+    {
+      "source": "server/services/currentResultEvidence.ts",
+      "target": "server/services/resultDocumentEvidence.ts",
+      "kind": "import",
+      "line": 5
+    },
+    {
+      "source": "server/services/currentResultEvidence.ts",
+      "target": "server/database/announcementDao.ts",
+      "kind": "import",
+      "line": 6
     },
     {
       "source": "server/services/exchangeProfiles.ts",
@@ -7598,7 +7707,7 @@
       "source": "server/services/historicalFilings.ts",
       "target": "server/services/resultsCalendarService.ts",
       "kind": "dynamic",
-      "line": 135
+      "line": 137
     },
     {
       "source": "server/services/impactRadarService.ts",
@@ -7962,123 +8071,129 @@
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "server/services/calendarOutcomeRead.ts",
+      "target": "server/services/currentResultEvidence.ts",
       "kind": "import",
       "line": 1
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "src/shared/resultFiling.ts",
+      "target": "server/services/calendarOutcomeRead.ts",
       "kind": "import",
       "line": 2
     },
     {
       "source": "server/services/resultsCalendarService.ts",
       "target": "src/shared/resultFiling.ts",
-      "kind": "reexport",
+      "kind": "import",
       "line": 3
+    },
+    {
+      "source": "server/services/resultsCalendarService.ts",
+      "target": "src/shared/resultFiling.ts",
+      "kind": "reexport",
+      "line": 4
     },
     {
       "source": "server/services/resultsCalendarService.ts",
       "target": "server/services/historicalFilings.ts",
       "kind": "import",
-      "line": 4
+      "line": 5
     },
     {
       "source": "server/services/resultsCalendarService.ts",
       "target": "src/shared/scripMatching.ts",
       "kind": "import",
-      "line": 5
+      "line": 6
     },
     {
       "source": "server/services/resultsCalendarService.ts",
       "target": "server/database/watchlistDao.ts",
       "kind": "import",
-      "line": 8
+      "line": 9
     },
     {
       "source": "server/services/resultsCalendarService.ts",
       "target": "server/services/calendarUniverse.ts",
       "kind": "import",
-      "line": 9
+      "line": 10
     },
     {
       "source": "server/services/resultsCalendarService.ts",
       "target": "src/shared/calendarScope.ts",
       "kind": "import",
-      "line": 10
-    },
-    {
-      "source": "server/services/resultsCalendarService.ts",
-      "target": "server/utils/helpers.ts",
-      "kind": "import",
       "line": 11
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "server/database/logDao.ts",
+      "target": "server/utils/helpers.ts",
       "kind": "import",
       "line": 12
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "server/database/announcementDao.ts",
+      "target": "server/database/logDao.ts",
       "kind": "import",
       "line": 13
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "server/services/calendarTelegramDelivery.ts",
+      "target": "server/database/announcementDao.ts",
       "kind": "import",
-      "line": 22
+      "line": 14
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "server/database/calendarTelegramDao.ts",
+      "target": "server/services/calendarTelegramDelivery.ts",
       "kind": "import",
       "line": 23
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "server/database/settingsDao.ts",
+      "target": "server/database/calendarTelegramDao.ts",
       "kind": "import",
       "line": 24
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "server/utils/helpers.ts",
+      "target": "server/database/settingsDao.ts",
       "kind": "import",
       "line": 25
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "server/database/supabase.ts",
+      "target": "server/utils/helpers.ts",
       "kind": "import",
       "line": 26
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "server/services/bse.ts",
+      "target": "server/database/supabase.ts",
       "kind": "import",
       "line": 27
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "server/utils/circuitBreaker.ts",
+      "target": "server/services/bse.ts",
       "kind": "import",
       "line": 28
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "server/database/calendarHistoryDao.ts",
+      "target": "server/utils/circuitBreaker.ts",
       "kind": "import",
       "line": 29
     },
     {
       "source": "server/services/resultsCalendarService.ts",
-      "target": "src/shared/calendarTiming.ts",
+      "target": "server/database/calendarHistoryDao.ts",
       "kind": "import",
       "line": 30
+    },
+    {
+      "source": "server/services/resultsCalendarService.ts",
+      "target": "src/shared/calendarTiming.ts",
+      "kind": "import",
+      "line": 31
     },
     {
       "source": "server/services/seoPrerender.ts",
@@ -10223,6 +10338,60 @@
       "line": 81
     },
     {
+      "source": "server/tests/resultEarliestTime.test.ts",
+      "target": "src/shared/resultFiling.ts",
+      "kind": "import",
+      "line": 1
+    },
+    {
+      "source": "server/tests/resultEarliestTime.test.ts",
+      "target": "src/shared/scripMatching.ts",
+      "kind": "import",
+      "line": 7
+    },
+    {
+      "source": "server/tests/resultEarliestTime.test.ts",
+      "target": "server/utils/helpers.ts",
+      "kind": "import",
+      "line": 8
+    },
+    {
+      "source": "server/tests/resultEarliestTime.test.ts",
+      "target": "src/shared/calendarTiming.ts",
+      "kind": "import",
+      "line": 9
+    },
+    {
+      "source": "server/tests/resultFreshness.test.ts",
+      "target": "src/shared/watchlistResultStatus.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "server/tests/resultFreshness.test.ts",
+      "target": "src/shared/resultFiling.ts",
+      "kind": "import",
+      "line": 4
+    },
+    {
+      "source": "server/tests/resultFreshness.test.ts",
+      "target": "src/utils/cleanBseSubject.ts",
+      "kind": "import",
+      "line": 5
+    },
+    {
+      "source": "server/tests/resultFreshness.test.ts",
+      "target": "src/utils/companyIntelSnapshots.ts",
+      "kind": "import",
+      "line": 6
+    },
+    {
+      "source": "server/tests/resultFreshness.test.ts",
+      "target": "server/services/currentResultEvidence.ts",
+      "kind": "import",
+      "line": 7
+    },
+    {
       "source": "server/tests/resultHistory.test.ts",
       "target": "src/shared/resultFiling.ts",
       "kind": "import",
@@ -10250,13 +10419,13 @@
       "source": "server/tests/resultHistory.test.ts",
       "target": "src/components/QuarterlyResultsLedger.tsx",
       "kind": "dynamic",
-      "line": 125
+      "line": 126
     },
     {
       "source": "server/tests/resultHistory.test.ts",
       "target": "src/components/QuarterlyResultsLedger.tsx",
       "kind": "dynamic",
-      "line": 199
+      "line": 200
     },
     {
       "source": "server/tests/resultTelegramClassification.test.ts",
@@ -11316,159 +11485,171 @@
     },
     {
       "source": "src/components/CompanyIntelligenceModal.tsx",
-      "target": "src/shared/resultFiling.ts",
+      "target": "src/hooks/useForegroundRefresh.ts",
       "kind": "import",
       "line": 1
     },
     {
       "source": "src/components/CompanyIntelligenceModal.tsx",
-      "target": "src/shared/companyFilings.ts",
+      "target": "src/utils/companyIntelSnapshots.ts",
       "kind": "import",
       "line": 2
     },
     {
       "source": "src/components/CompanyIntelligenceModal.tsx",
-      "target": "src/components/ui/ListPagination.tsx",
+      "target": "src/shared/resultFiling.ts",
       "kind": "import",
       "line": 3
     },
     {
       "source": "src/components/CompanyIntelligenceModal.tsx",
-      "target": "src/styles/overnight-adr.css",
+      "target": "src/shared/companyFilings.ts",
       "kind": "import",
       "line": 4
     },
     {
       "source": "src/components/CompanyIntelligenceModal.tsx",
-      "target": "src/components/adr/OvernightAdr.tsx",
+      "target": "src/components/ui/ListPagination.tsx",
       "kind": "import",
       "line": 5
     },
     {
       "source": "src/components/CompanyIntelligenceModal.tsx",
+      "target": "src/styles/overnight-adr.css",
+      "kind": "import",
+      "line": 6
+    },
+    {
+      "source": "src/components/CompanyIntelligenceModal.tsx",
+      "target": "src/components/adr/OvernightAdr.tsx",
+      "kind": "import",
+      "line": 7
+    },
+    {
+      "source": "src/components/CompanyIntelligenceModal.tsx",
       "target": "src/utils/motionTokens.ts",
-      "kind": "import",
-      "line": 15
-    },
-    {
-      "source": "src/components/CompanyIntelligenceModal.tsx",
-      "target": "src/components/ui/motion/ShareActionMenu.tsx",
-      "kind": "import",
-      "line": 16
-    },
-    {
-      "source": "src/components/CompanyIntelligenceModal.tsx",
-      "target": "src/components/notes/SaveNoteButton.tsx",
       "kind": "import",
       "line": 17
     },
     {
       "source": "src/components/CompanyIntelligenceModal.tsx",
-      "target": "src/components/ui/motion/RollingNumber.tsx",
+      "target": "src/components/ui/motion/ShareActionMenu.tsx",
       "kind": "import",
       "line": 18
     },
     {
       "source": "src/components/CompanyIntelligenceModal.tsx",
-      "target": "src/api.ts",
+      "target": "src/components/notes/SaveNoteButton.tsx",
       "kind": "import",
       "line": 19
     },
     {
       "source": "src/components/CompanyIntelligenceModal.tsx",
-      "target": "src/utils/cashfree.ts",
+      "target": "src/components/ui/motion/RollingNumber.tsx",
       "kind": "import",
       "line": 20
     },
     {
       "source": "src/components/CompanyIntelligenceModal.tsx",
-      "target": "src/utils/pdfHelper.ts",
+      "target": "src/api.ts",
       "kind": "import",
       "line": 21
     },
     {
       "source": "src/components/CompanyIntelligenceModal.tsx",
-      "target": "src/utils/cleanBseSubject.ts",
+      "target": "src/utils/cashfree.ts",
       "kind": "import",
       "line": 22
     },
     {
       "source": "src/components/CompanyIntelligenceModal.tsx",
-      "target": "src/utils/timeFormat.ts",
+      "target": "src/utils/pdfHelper.ts",
       "kind": "import",
       "line": 23
     },
     {
       "source": "src/components/CompanyIntelligenceModal.tsx",
+      "target": "src/utils/cleanBseSubject.ts",
+      "kind": "import",
+      "line": 24
+    },
+    {
+      "source": "src/components/CompanyIntelligenceModal.tsx",
+      "target": "src/utils/timeFormat.ts",
+      "kind": "import",
+      "line": 25
+    },
+    {
+      "source": "src/components/CompanyIntelligenceModal.tsx",
       "target": "src/context/IntelModalContext.tsx",
-      "kind": "import",
-      "line": 26
-    },
-    {
-      "source": "src/components/CompanyIntelligenceModal.tsx",
-      "target": "src/context/AuthContext.tsx",
-      "kind": "import",
-      "line": 27
-    },
-    {
-      "source": "src/components/CompanyIntelligenceModal.tsx",
-      "target": "src/utils/aiQuota.ts",
       "kind": "import",
       "line": 28
     },
     {
       "source": "src/components/CompanyIntelligenceModal.tsx",
-      "target": "src/hooks/useBodyScrollLock.ts",
+      "target": "src/context/AuthContext.tsx",
       "kind": "import",
       "line": 29
     },
     {
       "source": "src/components/CompanyIntelligenceModal.tsx",
-      "target": "src/components/ui/ComponentSkeleton.tsx",
+      "target": "src/utils/aiQuota.ts",
       "kind": "import",
       "line": 30
     },
     {
       "source": "src/components/CompanyIntelligenceModal.tsx",
-      "target": "src/components/ui/DesignedSkeletons.tsx",
+      "target": "src/hooks/useBodyScrollLock.ts",
       "kind": "import",
       "line": 31
     },
     {
       "source": "src/components/CompanyIntelligenceModal.tsx",
-      "target": "src/components/ui/HonestProgressBar.tsx",
+      "target": "src/components/ui/ComponentSkeleton.tsx",
       "kind": "import",
       "line": 32
     },
     {
       "source": "src/components/CompanyIntelligenceModal.tsx",
-      "target": "src/components/ui/TimeoutRetryState.tsx",
+      "target": "src/components/ui/DesignedSkeletons.tsx",
       "kind": "import",
       "line": 33
     },
     {
       "source": "src/components/CompanyIntelligenceModal.tsx",
-      "target": "src/components/ui/ActionButton.tsx",
+      "target": "src/components/ui/HonestProgressBar.tsx",
       "kind": "import",
       "line": 34
     },
     {
       "source": "src/components/CompanyIntelligenceModal.tsx",
-      "target": "src/components/ui/helios.tsx",
+      "target": "src/components/ui/TimeoutRetryState.tsx",
       "kind": "import",
       "line": 35
     },
     {
       "source": "src/components/CompanyIntelligenceModal.tsx",
-      "target": "src/components/QuarterlyResultsLedger.tsx",
+      "target": "src/components/ui/ActionButton.tsx",
+      "kind": "import",
+      "line": 36
+    },
+    {
+      "source": "src/components/CompanyIntelligenceModal.tsx",
+      "target": "src/components/ui/helios.tsx",
       "kind": "import",
       "line": 37
     },
     {
       "source": "src/components/CompanyIntelligenceModal.tsx",
+      "target": "src/components/QuarterlyResultsLedger.tsx",
+      "kind": "import",
+      "line": 39
+    },
+    {
+      "source": "src/components/CompanyIntelligenceModal.tsx",
       "target": "src/components/AiSummaryViewer.tsx",
       "kind": "import",
-      "line": 38
+      "line": 40
     },
     {
       "source": "src/components/CookieConsentBanner.tsx",
@@ -12714,219 +12895,231 @@
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
-      "target": "src/components/ui/AnchoredPopover.tsx",
+      "target": "src/shared/resultDeclaration.ts",
       "kind": "import",
       "line": 1
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
-      "target": "src/hooks/useCalendarDialog.ts",
+      "target": "src/hooks/useForegroundRefresh.ts",
       "kind": "import",
       "line": 2
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
-      "target": "src/utils/runupPriorityClient.ts",
+      "target": "src/components/ui/AnchoredPopover.tsx",
       "kind": "import",
       "line": 3
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
-      "target": "src/shared/resultFiling.ts",
+      "target": "src/hooks/useCalendarDialog.ts",
       "kind": "import",
       "line": 4
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
-      "target": "src/shared/calendarScope.ts",
+      "target": "src/utils/runupPriorityClient.ts",
+      "kind": "import",
+      "line": 5
+    },
+    {
+      "source": "src/components/ResultsCalendar.tsx",
+      "target": "src/shared/resultFiling.ts",
       "kind": "import",
       "line": 6
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
+      "target": "src/shared/calendarScope.ts",
+      "kind": "import",
+      "line": 8
+    },
+    {
+      "source": "src/components/ResultsCalendar.tsx",
       "target": "src/shared/calendarTiming.ts",
       "kind": "import",
-      "line": 7
+      "line": 9
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
       "target": "src/api.ts",
       "kind": "import",
-      "line": 18
+      "line": 20
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
       "target": "src/utils/resultHistoryClient.ts",
       "kind": "import",
-      "line": 19
+      "line": 21
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
       "target": "src/utils/cashfree.ts",
       "kind": "import",
-      "line": 20
+      "line": 22
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
       "target": "src/context/AuthContext.tsx",
       "kind": "import",
-      "line": 21
+      "line": 23
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
       "target": "src/context/IntelModalContext.tsx",
       "kind": "import",
-      "line": 22
+      "line": 24
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
       "target": "src/utils/aiQuota.ts",
       "kind": "import",
-      "line": 23
+      "line": 25
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
       "target": "src/utils/developerMode.ts",
       "kind": "import",
-      "line": 24
+      "line": 26
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
       "target": "src/utils/timeFormat.ts",
       "kind": "import",
-      "line": 25
+      "line": 27
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
       "target": "src/utils/pdfHelper.ts",
       "kind": "import",
-      "line": 26
+      "line": 28
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
       "target": "src/utils/shareUrls.ts",
       "kind": "import",
-      "line": 27
+      "line": 29
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
       "target": "src/utils/marketHolidays.ts",
       "kind": "import",
-      "line": 28
+      "line": 30
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
       "target": "src/components/ui/MarketHolidaysModal.tsx",
       "kind": "import",
-      "line": 29
+      "line": 31
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
       "target": "src/components/ui/CustomDropdown.tsx",
       "kind": "import",
-      "line": 30
+      "line": 32
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
       "target": "src/components/ui/ActionButton.tsx",
       "kind": "import",
-      "line": 31
+      "line": 33
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
       "target": "src/components/ui/HonestProgressBar.tsx",
       "kind": "import",
-      "line": 32
+      "line": 34
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
       "target": "src/components/QuarterlyResultsLedger.tsx",
       "kind": "import",
-      "line": 33
+      "line": 35
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
       "target": "src/components/ui/CommonQuestionsFAQ.tsx",
       "kind": "import",
-      "line": 34
+      "line": 36
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
       "target": "src/components/ui/motion/ShareActionMenu.tsx",
       "kind": "import",
-      "line": 35
+      "line": 37
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
       "target": "src/hooks/useBodyScrollLock.ts",
       "kind": "import",
-      "line": 36
+      "line": 38
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
       "target": "src/hooks/useFeedDensity.ts",
       "kind": "import",
-      "line": 37
+      "line": 39
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
       "target": "src/hooks/usePullToRefresh.ts",
       "kind": "import",
-      "line": 38
+      "line": 40
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
       "target": "src/hooks/useVisibilityInterval.ts",
       "kind": "import",
-      "line": 39
+      "line": 41
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
       "target": "src/hooks/useSwipeGesture.ts",
       "kind": "import",
-      "line": 40
+      "line": 42
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
       "target": "src/components/ui/PullToRefreshIndicator.tsx",
       "kind": "import",
-      "line": 41
+      "line": 43
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
       "target": "src/components/ui/helios.tsx",
       "kind": "import",
-      "line": 42
+      "line": 44
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
       "target": "src/components/notes/SaveNoteButton.tsx",
       "kind": "import",
-      "line": 43
+      "line": 45
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
       "target": "src/utils/motionTokens.ts",
       "kind": "import",
-      "line": 47
+      "line": 49
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
       "target": "src/utils/cache.ts",
       "kind": "import",
-      "line": 48
+      "line": 50
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
       "target": "src/utils/calendarDateTile.ts",
       "kind": "import",
-      "line": 54
+      "line": 56
     },
     {
       "source": "src/components/ResultsCalendar.tsx",
       "target": "src/components/ui/RichVisual.tsx",
       "kind": "import",
-      "line": 55
+      "line": 57
     },
     {
       "source": "src/components/SecurityAuditModal.tsx",
@@ -13356,195 +13549,213 @@
     },
     {
       "source": "src/components/WatchlistManager.tsx",
-      "target": "src/components/ui/PageHeading.tsx",
+      "target": "src/shared/watchlistResultStatus.ts",
       "kind": "import",
       "line": 1
     },
     {
       "source": "src/components/WatchlistManager.tsx",
-      "target": "src/hooks/useCompanyFilingCounts.ts",
+      "target": "src/shared/calendarTiming.ts",
       "kind": "import",
       "line": 2
     },
     {
       "source": "src/components/WatchlistManager.tsx",
-      "target": "src/shared/scripMatching.ts",
+      "target": "src/shared/resultFiling.ts",
       "kind": "import",
       "line": 3
     },
     {
       "source": "src/components/WatchlistManager.tsx",
-      "target": "src/components/ui/ComponentSkeleton.tsx",
+      "target": "src/hooks/useForegroundRefresh.ts",
       "kind": "import",
       "line": 4
     },
     {
       "source": "src/components/WatchlistManager.tsx",
-      "target": "src/shared/stockIdentity.ts",
+      "target": "src/components/ui/PageHeading.tsx",
       "kind": "import",
       "line": 5
     },
     {
       "source": "src/components/WatchlistManager.tsx",
-      "target": "src/api.ts",
+      "target": "src/hooks/useCompanyFilingCounts.ts",
+      "kind": "import",
+      "line": 6
+    },
+    {
+      "source": "src/components/WatchlistManager.tsx",
+      "target": "src/shared/scripMatching.ts",
       "kind": "import",
       "line": 7
     },
     {
       "source": "src/components/WatchlistManager.tsx",
-      "target": "src/components/WatchlistEditor.tsx",
+      "target": "src/components/ui/ComponentSkeleton.tsx",
       "kind": "import",
       "line": 8
     },
     {
       "source": "src/components/WatchlistManager.tsx",
-      "target": "src/styles/watchlist-editor.css",
+      "target": "src/shared/stockIdentity.ts",
       "kind": "import",
       "line": 9
     },
     {
       "source": "src/components/WatchlistManager.tsx",
-      "target": "src/utils/cashfree.ts",
-      "kind": "import",
-      "line": 10
-    },
-    {
-      "source": "src/components/WatchlistManager.tsx",
-      "target": "src/context/AuthContext.tsx",
+      "target": "src/api.ts",
       "kind": "import",
       "line": 11
     },
     {
       "source": "src/components/WatchlistManager.tsx",
-      "target": "src/context/IntelModalContext.tsx",
+      "target": "src/components/WatchlistEditor.tsx",
       "kind": "import",
       "line": 12
     },
     {
       "source": "src/components/WatchlistManager.tsx",
+      "target": "src/styles/watchlist-editor.css",
+      "kind": "import",
+      "line": 13
+    },
+    {
+      "source": "src/components/WatchlistManager.tsx",
+      "target": "src/utils/cashfree.ts",
+      "kind": "import",
+      "line": 14
+    },
+    {
+      "source": "src/components/WatchlistManager.tsx",
+      "target": "src/context/AuthContext.tsx",
+      "kind": "import",
+      "line": 15
+    },
+    {
+      "source": "src/components/WatchlistManager.tsx",
+      "target": "src/context/IntelModalContext.tsx",
+      "kind": "import",
+      "line": 16
+    },
+    {
+      "source": "src/components/WatchlistManager.tsx",
       "target": "src/utils/timeFormat.ts",
-      "kind": "import",
-      "line": 23
-    },
-    {
-      "source": "src/components/WatchlistManager.tsx",
-      "target": "src/utils/cleanBseSubject.ts",
-      "kind": "import",
-      "line": 24
-    },
-    {
-      "source": "src/components/WatchlistManager.tsx",
-      "target": "src/utils/pdfHelper.ts",
-      "kind": "import",
-      "line": 25
-    },
-    {
-      "source": "src/components/WatchlistManager.tsx",
-      "target": "src/utils/safeStorage.ts",
-      "kind": "import",
-      "line": 26
-    },
-    {
-      "source": "src/components/WatchlistManager.tsx",
-      "target": "src/types.ts",
       "kind": "import",
       "line": 27
     },
     {
       "source": "src/components/WatchlistManager.tsx",
-      "target": "src/utils/aiQuota.ts",
+      "target": "src/utils/cleanBseSubject.ts",
       "kind": "import",
       "line": 28
     },
     {
       "source": "src/components/WatchlistManager.tsx",
-      "target": "src/utils/announcementFeed.ts",
+      "target": "src/utils/pdfHelper.ts",
       "kind": "import",
       "line": 29
     },
     {
       "source": "src/components/WatchlistManager.tsx",
-      "target": "src/hooks/useBodyScrollLock.ts",
+      "target": "src/utils/safeStorage.ts",
       "kind": "import",
       "line": 30
     },
     {
       "source": "src/components/WatchlistManager.tsx",
-      "target": "src/components/ui/RichVisual.tsx",
+      "target": "src/types.ts",
       "kind": "import",
       "line": 31
     },
     {
       "source": "src/components/WatchlistManager.tsx",
-      "target": "src/hooks/useFeedDensity.ts",
+      "target": "src/utils/aiQuota.ts",
       "kind": "import",
       "line": 32
     },
     {
       "source": "src/components/WatchlistManager.tsx",
-      "target": "src/hooks/usePullToRefresh.ts",
+      "target": "src/utils/announcementFeed.ts",
       "kind": "import",
       "line": 33
     },
     {
       "source": "src/components/WatchlistManager.tsx",
-      "target": "src/hooks/useVisibilityInterval.ts",
+      "target": "src/hooks/useBodyScrollLock.ts",
       "kind": "import",
       "line": 34
     },
     {
       "source": "src/components/WatchlistManager.tsx",
-      "target": "src/components/ui/PullToRefreshIndicator.tsx",
+      "target": "src/components/ui/RichVisual.tsx",
       "kind": "import",
       "line": 35
     },
     {
       "source": "src/components/WatchlistManager.tsx",
-      "target": "src/components/ui/ActionButton.tsx",
+      "target": "src/hooks/useFeedDensity.ts",
       "kind": "import",
       "line": 36
     },
     {
       "source": "src/components/WatchlistManager.tsx",
-      "target": "src/components/ui/ThinkingPill.tsx",
+      "target": "src/hooks/usePullToRefresh.ts",
       "kind": "import",
       "line": 37
     },
     {
       "source": "src/components/WatchlistManager.tsx",
-      "target": "src/utils/clusterAnnouncements.ts",
+      "target": "src/components/ui/PullToRefreshIndicator.tsx",
       "kind": "import",
       "line": 38
     },
     {
       "source": "src/components/WatchlistManager.tsx",
-      "target": "src/utils/motionTokens.ts",
+      "target": "src/components/ui/ActionButton.tsx",
+      "kind": "import",
+      "line": 39
+    },
+    {
+      "source": "src/components/WatchlistManager.tsx",
+      "target": "src/components/ui/ThinkingPill.tsx",
       "kind": "import",
       "line": 40
     },
     {
       "source": "src/components/WatchlistManager.tsx",
-      "target": "src/components/ui/motion/ShareActionMenu.tsx",
+      "target": "src/utils/clusterAnnouncements.ts",
       "kind": "import",
       "line": 41
     },
     {
       "source": "src/components/WatchlistManager.tsx",
-      "target": "src/components/ui/helios.tsx",
-      "kind": "import",
-      "line": 42
-    },
-    {
-      "source": "src/components/WatchlistManager.tsx",
-      "target": "src/components/notes/SaveNoteButton.tsx",
+      "target": "src/utils/motionTokens.ts",
       "kind": "import",
       "line": 43
     },
     {
       "source": "src/components/WatchlistManager.tsx",
-      "target": "src/components/AiSummaryViewer.tsx",
+      "target": "src/components/ui/motion/ShareActionMenu.tsx",
       "kind": "import",
       "line": 44
+    },
+    {
+      "source": "src/components/WatchlistManager.tsx",
+      "target": "src/components/ui/helios.tsx",
+      "kind": "import",
+      "line": 45
+    },
+    {
+      "source": "src/components/WatchlistManager.tsx",
+      "target": "src/components/notes/SaveNoteButton.tsx",
+      "kind": "import",
+      "line": 46
+    },
+    {
+      "source": "src/components/WatchlistManager.tsx",
+      "target": "src/components/AiSummaryViewer.tsx",
+      "kind": "import",
+      "line": 47
     },
     {
       "source": "src/components/adr/AdrAlertPreference.tsx",
@@ -14723,6 +14934,24 @@
       "line": 1
     },
     {
+      "source": "src/shared/watchlistResultStatus.ts",
+      "target": "src/shared/scripMatching.ts",
+      "kind": "import",
+      "line": 1
+    },
+    {
+      "source": "src/shared/watchlistResultStatus.ts",
+      "target": "src/shared/calendarTiming.ts",
+      "kind": "import",
+      "line": 2
+    },
+    {
+      "source": "src/shared/watchlistResultStatus.ts",
+      "target": "src/utils/timeFormat.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
       "source": "src/utils/aiQuota.ts",
       "target": "src/types.ts",
       "kind": "import",
@@ -14763,6 +14992,12 @@
       "target": "src/config/plans.ts",
       "kind": "reexport",
       "line": 39
+    },
+    {
+      "source": "src/utils/cleanBseSubject.ts",
+      "target": "src/shared/resultFiling.ts",
+      "kind": "import",
+      "line": 1
     },
     {
       "source": "src/utils/forYou.ts",
@@ -15043,7 +15278,8 @@
         "src/shared/resultFiling.ts",
         "server/services/resultDocumentEvidence.ts",
         "server/utils/versionedSnapshot.ts",
-        "server/utils/readCache.ts"
+        "server/utils/readCache.ts",
+        "server/services/currentResultEvidence.ts"
       ],
       "tests": [
         "server/tests/bseBackfill.test.ts",
@@ -15079,7 +15315,8 @@
         "server/tests/studioMigrationReview.test.ts",
         "server/tests/watchlistEgress.test.ts",
         "server/tests/egressCache.test.ts",
-        "server/tests/announcementEgress.test.ts"
+        "server/tests/announcementEgress.test.ts",
+        "server/tests/resultFreshness.test.ts"
       ],
       "reason": "Poll → normalize/dedupe → persistence → feed and alert decisions → recipient-specific delivery/inbox. Global and personal recipients must remain distinct. Preset saves replace stable per-owner IDs atomically; confirmed cloud settings feed every poll. Personal channels supersede inherited defaults once presets are saved. Live polling has a CRON_SECRET bearer-protected HTTP trigger, a 60-second in-container watchdog timer, a continuous 15-second active poller, and a 15-second-stale traffic trigger. The shared process-local monitor lock skips running cycles without queueing. Request lifetime covers bounded ingestion, raw delivery/write drain and then result AI after releasing the ingestion lock; cron source failure eligibility is capped at 60 seconds. External Scheduler remains necessary for idle request-based Cloud Run; legacy cron returns 410. Numbered IST worker summaries and cron request summaries have distinct event fields. Automatic Telegram AI applies only to actual financial results with a stable security-code/period identity. Private durable claims share one valid analysis per period/language and reserve one reply per chat across exchange copies, languages and restart. Failed evidence uses a bounded newer-source retry; uncertain send acceptance never replays. Private admin delivery timings retain exchange, observed, processed and Telegram acceptance dates without recipient identity. Migration must precede runtime release. Confirmed public filing changes queue company/announcements IndexNow URLs after successful upsert; the poll collection hold is idempotently released in finally. Indexing I/O runs outside ingestion and does not change alert recipients or intake. Overnight ADR adds one existing Market pulse screen and an opt-in private morning inbox digest; source dates and fetch times remain distinct, and durable insertion prevents per-session repeats. Stored 30-day filing counts share one exact-company projection with company detail, independently of the seven-day updates feed. Durable per-company history uses keyset pages; company Filings and Material Actions expose numbered pages. Explicit paid archive imports all categories over selected years with bounded workers, source failure and storage confirmation, and does not persist PDFs. Process restart or another instance may make worker status unavailable; saved evidence remains and no success is invented. Financial result titles include Results For Quarter/Q1 and board Outcome - Results. Generic outcomes need identity-bound proof from bounded official BSE PDF text; no PDF is persisted. Archive receipts distinguish saved filings from documents awaiting verification. Calendar retains one lower history control; Stock 360 and automatic readers share completion copy. Background watchlist readers share a paged uid/revision/update-time inventory, fetching only changed list bodies and retaining the original 60-second check time in owner read caches. Writes keep fresh CAS; local changes invalidate snapshots. Public cloud-only filing lookups are bounded/coalesced and invalidated before and after writes; failures never become cached successful empties."
     },
@@ -15280,7 +15517,8 @@
         "src/utils/resultTiming.ts",
         "src/components/ResultTimingPanel.tsx",
         "server/services/calendarOutcomeRead.ts",
-        "src/shared/resultDeclaration.ts"
+        "src/shared/resultDeclaration.ts",
+        "server/services/currentResultEvidence.ts"
       ],
       "tests": [
         "server/tests/core.test.ts",
@@ -15308,7 +15546,8 @@
         "server/tests/forYouPersonal.test.ts",
         "server/tests/studioMigrationReview.test.ts",
         "server/tests/calendarOutcomeRead.test.ts",
-        "server/tests/declarationParity.test.ts"
+        "server/tests/declarationParity.test.ts",
+        "server/tests/resultFreshness.test.ts"
       ],
       "reason": "Upstream timestamps, stock identity and market sessions affect cached API results, screen freshness and alert timing. Public market data availability does not establish trading-data accuracy. Verified security identities repair IndusInd/J&K and current Eternal naming; conflicting legacy cache entries cannot overwrite them. Watchlist, Story and F&O fallback maps use the shared verified codes. Connector read projections follow security code and mark legacy conflicts rather than silently rewriting personal lists. Financial result titles include Results For Quarter/Q1 and board Outcome - Results. Generic outcomes need identity-bound proof from bounded official BSE PDF text; no PDF is persisted. Archive receipts distinguish saved filings from documents awaiting verification. Calendar retains one lower history control; Stock 360 and automatic readers share completion copy. Global watchlist archive counts completed and failed/unresolved imports separately; partial source failure cannot become an all-success receipt. English summary variants survive calendar/history reads. Company Hub peers reuse catalogue identities and explicit industry membership, with exact-sector fallback and a four-stock limit. Calendar email/reminder-copy actions live inside both shared Share menus; other share consumers keep their existing options. For You uses exact active-watchlist projections for results, news, Radar, ADR and company Stories, with explicit target/new-list stock additions through existing guarded routes. Canonical result history supplies first-declaration IST timing dots, a supported one/two-hour concentration and labelled exceptions; no scheduled or ingestion clocks imply release times. Today preserves declared results with distinct wording and accent. Calendar recent meetings supplement the bounded global cache with batched durable exact-code result reads, preserving source clocks and explicit incomplete coverage. Peer industries use the full stock catalogue independently of watchlists/F&O/quotes."
     },
@@ -15502,7 +15741,10 @@
         "src/components/ui/UserAvatar.tsx",
         "supabase/migrations/20261024193046_deep_audit_security.sql",
         "src/components/TelegramLinkControl.tsx",
-        "src/utils/runupPriorityClient.ts"
+        "src/utils/runupPriorityClient.ts",
+        "src/hooks/useForegroundRefresh.ts",
+        "src/shared/watchlistResultStatus.ts",
+        "src/utils/companyIntelSnapshots.ts"
       ],
       "tests": [
         "server/tests/preferenceSaveQueue.test.ts",
@@ -15514,7 +15756,9 @@
         "server/tests/deepAuditSql.test.ts",
         "server/tests/deepAuditAuth.test.ts",
         "server/tests/calendarFeedback.test.ts",
-        "server/tests/signOutFeedback.test.ts"
+        "server/tests/signOutFeedback.test.ts",
+        "server/tests/foregroundRefresh.test.ts",
+        "server/tests/resultFreshness.test.ts"
       ],
       "reason": "Guest, restoring, signed-in and expired states must stay distinct. Late requests and saved preferences must not overwrite newer edits or leak between accounts. A success message requires the appropriate confirmed result. Completed archive receipts with pending documents remain successful reads and have one ledger status owner. Shared pre-result priority updates require existing admin authorization; explicit server PIN denial opens the existing PIN dialog. HTML/preview denial remains an unconfirmed blocker. No automatic mutation retry or client role expansion is permitted."
     },
@@ -15642,7 +15886,11 @@
         "src/utils/resultTiming.ts",
         "src/components/ResultTimingPanel.tsx",
         "src/utils/homeResources.ts",
-        "src/shared/resultDeclaration.ts"
+        "src/shared/resultDeclaration.ts",
+        "src/hooks/useForegroundRefresh.ts",
+        "src/shared/watchlistResultStatus.ts",
+        "src/utils/companyIntelSnapshots.ts",
+        "server/services/currentResultEvidence.ts"
       ],
       "tests": [
         "server/tests/core.test.ts",
@@ -15675,7 +15923,9 @@
         "server/tests/homeIsolation.test.ts",
         "server/tests/declarationParity.test.ts",
         "server/tests/notificationOptimism.test.ts",
-        "scripts/verify-mobile-ui.mjs"
+        "scripts/verify-mobile-ui.mjs",
+        "server/tests/foregroundRefresh.test.ts",
+        "server/tests/resultFreshness.test.ts"
       ],
       "reason": "List/detail identity, filters, watchlist membership, badge counts and timestamps must agree. Background refresh preserves content, density, selection and scroll. Rapid filter changes must not render older responses. Home membership uses active-list exact identities. The responsive watchlist editor preserves company metadata, page scrolling and four visible priority filters. Inbox presents unread items first, while device push delivery has an independent persistent control. Calendar labels use company names when symbols are numeric; sticky date headings share measured toolbar offsets. Home previews select the newest filing per exact watchlist security before limiting, without changing the full filing feed. Static Watchlist identity fallback uses the shared verified IndusInd code; existing list state, revisions and editor behavior are preserved. Inbox now has All/Watchlist/Results only, with unread-first ordering, read action below/right of filters and ephemeral per-owner/filter snapshots retained across close. Confirmed read/clear reconciles all cached filters; loading/error never erases saved content. Watchlist first-read readiness separates unknown from confirmed empty. Calendar/News/Watchlist pull indicators occupy flow below stable controls. Watchlist and Story symbol-to-code fallback maps also use the shared blank BSE code, preventing the old Advanced Enzyme mapping from returning through a client fallback. Stored 30-day filing counts share one exact-company projection with company detail, independently of the seven-day updates feed. Durable per-company history uses keyset pages; company Filings and Material Actions expose numbered pages. Explicit paid archive imports all categories over selected years with bounded workers, source failure and storage confirmation, and does not persist PDFs. Process restart or another instance may make worker status unavailable; saved evidence remains and no success is invented. Financial result titles include Results For Quarter/Q1 and board Outcome - Results. Generic outcomes need identity-bound proof from bounded official BSE PDF text; no PDF is persisted. Archive receipts distinguish saved filings from documents awaiting verification. Calendar retains one lower history control; Stock 360 and automatic readers share completion copy. Completed archive receipts with pending documents remain successful reads and have one ledger status owner. Shared pre-result priority updates require existing admin authorization; explicit server PIN denial opens the existing PIN dialog. HTML/preview denial remains an unconfirmed blocker. No automatic mutation retry or client role expansion is permitted. Calendar window reads cancel superseded company/window requests and expose retry on failure. English summary fields survive server projections and share AI counts/filter/render. Pagination clamps after refresh. Details/filter keyboard ownership is element-local; shared Telegram controls mirror server admin-only policy and wait for confirmed message IDs. Company Hub peer cards replace redundant result teasers and navigate through IntelModalContext with exact identities; shared calendar Share actions retain the existing email/clipboard handlers. Calendar uses the same company/purpose hierarchy for numeric F&O and symbolic rows, one normalized full-date heading, and wrapping action-only footers. Semantic segmented/control radius tokens cover Classic and Soft Glass; Watchlist compact labels retain inline counts and readable mobile search. Calendar reminder popovers portal outside blurred/transformed cards and own viewport placement, keyboard dismissal and focus return. For You uses exact active-watchlist projections for results, news, Radar, ADR and company Stories, with explicit target/new-list stock additions through existing guarded routes. Canonical result history supplies first-declaration IST timing dots, a supported one/two-hour concentration and labelled exceptions; no scheduled or ingestion clocks imply release times. Today preserves declared results with distinct wording and accent. Home reads isolate section errors; same-owner verified lists survive transient failure, denial/owner switch clears them. Calendar detail reconciles only exact-code verified result evidence; visible reads refresh without forced sync."
     },
@@ -19863,25 +20113,25 @@
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 243,
+      "line": 244,
       "function": "fetch",
       "target": "url"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 260,
+      "line": 261,
       "function": "fetch",
       "target": "url"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 356,
+      "line": 357,
       "function": "fetch",
       "target": "url"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 498,
+      "line": 499,
       "function": "fetch",
       "target": "url"
     },
@@ -20589,25 +20839,25 @@
     },
     {
       "file": "src/components/CompanyIntelligenceModal.tsx",
-      "line": 115,
+      "line": 118,
       "function": "customFetch",
       "target": "`/api/company-intel/${encodeURIComponent(scripCode || symbol)}?${query}`"
     },
     {
       "file": "src/components/CompanyIntelligenceModal.tsx",
-      "line": 145,
+      "line": 164,
       "function": "customFetch",
       "target": "`/api/stocks/${encodeURIComponent(historyJob.scripCode)}/fetch-deep-history?${query}`"
     },
     {
       "file": "src/components/CompanyIntelligenceModal.tsx",
-      "line": 185,
+      "line": 204,
       "function": "customFetch",
       "target": "`/api/company-intel/${identifier}/ai-overview?scripCode=${effectiveScrip}&symbol=${effectiveSymbol}`"
     },
     {
       "file": "src/components/CompanyIntelligenceModal.tsx",
-      "line": 241,
+      "line": 260,
       "function": "customFetch",
       "target": "`/api/stocks/${encodeURIComponent(effectiveScrip)}/fetch-deep-history`"
     },
@@ -20817,55 +21067,55 @@
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 365,
+      "line": 367,
       "function": "customFetch",
       "target": "`/api/stocks/${encodeURIComponent(scripCode)}/fetch-deep-history`"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 438,
+      "line": 440,
       "function": "customFetch",
       "target": "`/api/stocks/${encodeURIComponent(scripCode)}/runup-announcements?symbol=${encodeURIComponent(symbol)}&resultDate=${encodeURIComponent(resultDateStr)}&windowDays=${daysToUse}`"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 456,
+      "line": 458,
       "function": "customFetch",
       "target": "'/api/watchlist/fetch-deep-history'"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 561,
+      "line": 563,
       "function": "customFetch",
       "target": "url"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 630,
+      "line": 631,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 721,
+      "line": 733,
       "function": "customFetch",
       "target": "`/api/announcements/${announcementId}/generate-summary`"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 787,
+      "line": 799,
       "function": "customFetch",
       "target": "'/api/send-to-telegram-manual'"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 922,
+      "line": 934,
       "function": "customFetch",
       "target": "'/api/send-to-telegram-manual'"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 975,
+      "line": 987,
       "function": "customFetch",
       "target": "'/api/results-calendar/telegram-broadcast'"
     },
@@ -21003,127 +21253,133 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 715,
+      "line": 718,
       "function": "customFetch",
       "target": "'/api/watchlists/sync?mode=background'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 773,
+      "line": 776,
       "function": "customFetch",
       "target": "'/api/send-to-telegram-manual'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 824,
+      "line": 827,
       "function": "customFetch",
       "target": "`/api/announcements/${id}/generate-summary`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 877,
+      "line": 880,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 912,
+      "line": 923,
       "function": "customFetch",
       "target": "url"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 964,
+      "line": 954,
+      "function": "customFetch",
+      "target": "'/api/results-calendar?filter=today&scope=watchlist'"
+    },
+    {
+      "file": "src/components/WatchlistManager.tsx",
+      "line": 989,
       "function": "customFetch",
       "target": "'/api/stock-master'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 994,
+      "line": 1019,
       "function": "customFetch",
       "target": "`/api/search-company?q=${encodeURIComponent(query)}`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1033,
+      "line": 1058,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1056,
+      "line": 1081,
       "function": "customFetch",
       "target": "`/api/watchlists/${id}/name`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1076,
+      "line": 1101,
       "function": "customFetch",
       "target": "`/api/watchlists/${id}`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1088,
+      "line": 1113,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1101,
+      "line": 1126,
       "function": "customFetch",
       "target": "`/api/watchlists/${created.id}/symbols`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1141,
+      "line": 1166,
       "function": "customFetch",
       "target": "`/api/watchlists/${id}/toggle`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1239,
+      "line": 1264,
       "function": "customFetch",
       "target": "`/api/watchlists/${targetList.id}/symbols`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1269,
+      "line": 1294,
       "function": "customFetch",
       "target": "'/api/watchlists/sync-stock'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1329,
+      "line": 1354,
       "function": "customFetch",
       "target": "`/api/watchlists/${targetId}/symbols/bulk`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1356,
+      "line": 1381,
       "function": "customFetch",
       "target": "'/api/watchlists/sync-stock'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1397,
+      "line": 1422,
       "function": "customFetch",
       "target": "`/api/watchlists/symbols/${encodeURIComponent(currentItem.symbol)}/priority-sync`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1443,
+      "line": 1468,
       "function": "customFetch",
       "target": "`/api/watchlists/${listId}/symbols`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1463,
+      "line": 1488,
       "function": "customFetch",
       "target": "`/api/watchlists/${listId}/symbols/${encodeURIComponent(symbol)}`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 3442,
+      "line": 3465,
       "function": "customFetch",
       "target": "url"
     },
@@ -21503,7 +21759,7 @@
     },
     {
       "file": "scripts/verify-mobile-ui.mjs",
-      "line": 10,
+      "line": 13,
       "function": "Array.from",
       "key": "{length:3}"
     },
@@ -22361,25 +22617,25 @@
     },
     {
       "file": "server/services/calendarOutcomeRead.ts",
-      "line": 18,
+      "line": 19,
       "function": "getSupabase().from",
       "key": "'announcements'"
     },
     {
       "file": "server/services/companyIntelService.ts",
-      "line": 231,
+      "line": 226,
       "function": "Array.from",
       "key": "resultMap.values()"
     },
     {
       "file": "server/services/companyIntelService.ts",
-      "line": 282,
+      "line": 279,
       "function": "Array.from",
       "key": "filingMap.values()"
     },
     {
       "file": "server/services/companyIntelService.ts",
-      "line": 286,
+      "line": 283,
       "function": "Array.from",
       "key": "filingMap.values()"
     },
@@ -22409,37 +22665,37 @@
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 136,
+      "line": 137,
       "function": "Array.from",
       "key": "notifiedMeetingIds"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 424,
+      "line": 425,
       "function": "Array.from",
       "key": "uniqueStockItems.values()"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 489,
+      "line": 490,
       "function": "Array.from",
       "key": "targets.entries()"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 584,
+      "line": 585,
       "function": "Array.from",
       "key": "uniqueMap.values()"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 622,
+      "line": 623,
       "function": "getSupabase()\n              .from",
       "key": "'results_calendar'"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 1378,
+      "line": 1399,
       "function": "Array.from",
       "key": "quarterOutcomesMap.values()"
     },
@@ -22523,7 +22779,7 @@
     },
     {
       "file": "server/tests/calendarNavigation.test.ts",
-      "line": 71,
+      "line": 73,
       "function": "Array.from",
       "key": "{ length: 60 }"
     },
@@ -23039,19 +23295,19 @@
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 229,
+      "line": 231,
       "function": "localStorage.getItem",
       "key": "'nexus_calendar_view_mode'"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 240,
+      "line": 242,
       "function": "localStorage.setItem",
       "key": "'nexus_calendar_view_mode'"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 1182,
+      "line": 1194,
       "function": "Array.from",
       "key": "map.values()"
     },
@@ -23093,49 +23349,49 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 49,
+      "line": 52,
       "function": "localStorage.getItem",
       "key": "`bsenexus_watchlists_cache:${accountId}`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 625,
+      "line": 628,
       "function": "localStorage.getItem",
       "key": "`bsenexus_watchlist_feed:${accountId}`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 663,
+      "line": 666,
       "function": "localStorage.setItem",
       "key": "'nexus_watchlist_view_mode'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 883,
+      "line": 886,
       "function": "localStorage.setItem",
       "key": "`bsenexus_watchlists_cache:${owner}`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 896,
+      "line": 899,
       "function": "Array.from",
       "key": "new Set(watchlists.flatMap(l => (l.items || []).map((it: any) => parseSymbolItem(it).symbol).filter(Boolean)))"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 905,
+      "line": 916,
       "function": "Array.from",
       "key": "new Set(watchlists.flatMap(l => (l.items || []).map((it: any) => parseSymbolItem(it).symbol).filter(Boolean)))"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 922,
+      "line": 934,
       "function": "localStorage.setItem",
       "key": "`bsenexus_watchlist_feed:${accountId}`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1185,
+      "line": 1210,
       "function": "Array.from",
       "key": "new Set(watchlists.flatMap(l => (l.items || []).map((it: any) => parseSymbolItem(it).symbol)))"
     },
@@ -23871,12 +24127,12 @@
     },
     {
       "file": "scripts/verify-mobile-ui.mjs",
-      "line": 15,
+      "line": 18,
       "name": "PLAYWRIGHT_CHROMIUM_EXECUTABLE"
     },
     {
       "file": "scripts/verify-mobile-ui.mjs",
-      "line": 15,
+      "line": 18,
       "name": "PLAYWRIGHT_CHROMIUM_EXECUTABLE"
     },
     {
@@ -26037,6 +26293,14 @@
   ],
   "browserEvents": [
     {
+      "file": "scripts/verify-mobile-ui.mjs",
+      "line": 79,
+      "target": "window",
+      "kind": "dispatch",
+      "name": "pageshow",
+      "expression": "window.dispatchEvent(new Event('pageshow'))"
+    },
+    {
       "file": "src/App.tsx",
       "line": 635,
       "target": "window",
@@ -26222,7 +26486,31 @@
     },
     {
       "file": "src/components/CompanyIntelligenceModal.tsx",
+      "line": 128,
+      "target": "window",
+      "kind": "dispatch",
+      "name": "company-intel-updated",
+      "expression": "window.dispatchEvent(new CustomEvent('company-intel-updated', { detail: { owner: user?.uid || 'guest', scripCode, symbol, history: data.quarterlyResults } }))"
+    },
+    {
+      "file": "src/components/CompanyIntelligenceModal.tsx",
+      "line": 153,
+      "target": "window",
+      "kind": "listen",
+      "name": "auth-state-changed",
+      "expression": "window.addEventListener('auth-state-changed', clear)"
+    },
+    {
+      "file": "src/components/CompanyIntelligenceModal.tsx",
       "line": 154,
+      "target": "window",
+      "kind": "remove",
+      "name": "auth-state-changed",
+      "expression": "window.removeEventListener('auth-state-changed', clear)"
+    },
+    {
+      "file": "src/components/CompanyIntelligenceModal.tsx",
+      "line": 173,
       "target": "window",
       "kind": "dispatch",
       "name": "company-filings-changed",
@@ -26230,7 +26518,7 @@
     },
     {
       "file": "src/components/CompanyIntelligenceModal.tsx",
-      "line": 254,
+      "line": 273,
       "target": "window",
       "kind": "dispatch",
       "name": "company-filings-changed",
@@ -26646,7 +26934,7 @@
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 381,
+      "line": 383,
       "target": "window",
       "kind": "dispatch",
       "name": "company-filings-changed",
@@ -26654,7 +26942,7 @@
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 647,
+      "line": 648,
       "target": "window",
       "kind": "listen",
       "name": "watchlists-changed",
@@ -26662,11 +26950,27 @@
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 648,
+      "line": 649,
       "target": "window",
       "kind": "remove",
       "name": "watchlists-changed",
       "expression": "window.removeEventListener('watchlists-changed', changed)"
+    },
+    {
+      "file": "src/components/ResultsCalendar.tsx",
+      "line": 686,
+      "target": "window",
+      "kind": "listen",
+      "name": "company-intel-updated",
+      "expression": "window.addEventListener('company-intel-updated', reconcile)"
+    },
+    {
+      "file": "src/components/ResultsCalendar.tsx",
+      "line": 687,
+      "target": "window",
+      "kind": "remove",
+      "name": "company-intel-updated",
+      "expression": "window.removeEventListener('company-intel-updated', reconcile)"
     },
     {
       "file": "src/components/SettingsTab.tsx",
@@ -26798,7 +27102,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 591,
+      "line": 594,
       "target": "document",
       "kind": "listen",
       "name": "pointerdown",
@@ -26806,7 +27110,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 592,
+      "line": 595,
       "target": "document",
       "kind": "listen",
       "name": "keydown",
@@ -26814,7 +27118,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 594,
+      "line": 597,
       "target": "document",
       "kind": "remove",
       "name": "pointerdown",
@@ -26822,7 +27126,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 595,
+      "line": 598,
       "target": "document",
       "kind": "remove",
       "name": "keydown",
@@ -26830,7 +27134,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 617,
+      "line": 620,
       "target": "document",
       "kind": "listen",
       "name": "keydown",
@@ -26838,7 +27142,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 618,
+      "line": 621,
       "target": "document",
       "kind": "remove",
       "name": "keydown",
@@ -26846,7 +27150,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 884,
+      "line": 887,
       "target": "window",
       "kind": "dispatch",
       "name": "watchlists-changed",
@@ -26854,7 +27158,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 943,
+      "line": 969,
       "target": "window",
       "kind": "listen",
       "name": "focus",
@@ -26862,7 +27166,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 944,
+      "line": 970,
       "target": "window",
       "kind": "listen",
       "name": "watchlists-changed",
@@ -26870,7 +27174,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 945,
+      "line": 971,
       "target": "document",
       "kind": "listen",
       "name": "visibilitychange",
@@ -26878,7 +27182,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 946,
+      "line": 972,
       "target": "window",
       "kind": "remove",
       "name": "focus",
@@ -26886,7 +27190,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 946,
+      "line": 972,
       "target": "window",
       "kind": "remove",
       "name": "watchlists-changed",
@@ -26894,7 +27198,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 946,
+      "line": 972,
       "target": "document",
       "kind": "remove",
       "name": "visibilitychange",
@@ -26902,7 +27206,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 957,
+      "line": 983,
       "target": "window",
       "kind": "listen",
       "name": "auth-state-changed",
@@ -26910,7 +27214,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 958,
+      "line": 984,
       "target": "window",
       "kind": "remove",
       "name": "auth-state-changed",
@@ -27683,6 +27987,38 @@
       "kind": "dispatch",
       "name": null,
       "expression": "window.dispatchEvent(new CustomEvent<FeedDensity>(DENSITY_EVENT, { detail: d }))"
+    },
+    {
+      "file": "src/hooks/useForegroundRefresh.ts",
+      "line": 18,
+      "target": "document",
+      "kind": "listen",
+      "name": "visibilitychange",
+      "expression": "document.addEventListener('visibilitychange', resume)"
+    },
+    {
+      "file": "src/hooks/useForegroundRefresh.ts",
+      "line": 19,
+      "target": "window",
+      "kind": "listen",
+      "name": null,
+      "expression": "window.addEventListener(event, resume)"
+    },
+    {
+      "file": "src/hooks/useForegroundRefresh.ts",
+      "line": 22,
+      "target": "document",
+      "kind": "remove",
+      "name": "visibilitychange",
+      "expression": "document.removeEventListener('visibilitychange', resume)"
+    },
+    {
+      "file": "src/hooks/useForegroundRefresh.ts",
+      "line": 23,
+      "target": "window",
+      "kind": "remove",
+      "name": null,
+      "expression": "window.removeEventListener(event, resume)"
     },
     {
       "file": "src/hooks/usePaymentDialog.ts",

@@ -83,7 +83,7 @@ for (const [symbol, scrip] of targets) {
         if (path === 'yahoo-finance2') return { default: class { async quote() { return { regularMarketPrice: 100, shortName: symbol }; } } };
         if (path.endsWith('/resultsCalendarService.js')) return {
           getStockResultsHistory: async () => history,
-          getResultsCalendarData: async () => ({ items: [{ scripCode: '500001', symbol, status: 'UPCOMING', daysLeft: 2, meetingDate: '2099-01-01' }] }),
+          getResultsCalendarSnapshot: async () => ({ items: [{ scripCode: '500001', symbol, status: 'UPCOMING', daysLeft: 2, meetingDate: '2099-01-01' }] }),
           autoFetchDeepHistoricalResults: async () => false,
         };
         if (path.endsWith('/announcementDao.js')) return { getRecentAnnouncements: async () => [wrong, missing, good], getAnnouncementsForScrip: async () => [wrong] };

@@ -60,11 +60,13 @@ export function isPureResultOutcomeFiling(subject: string = '', details: string 
 export function isIntimationOrNoticeFiling(subject: string = '', details: string = ''): boolean {
   const fullText = `${subject || ''} ${details || ''}`.toLowerCase();
   if (!fullText.trim()) return false;
+  // A titled meeting intimation remains a notice even when it names the results on its agenda.
+  if (/\bboard\s*meeting\s*intimation\b|\bintimation\s*(?:of|for)\s*(?:the\s*)?board\s*meeting\b/i.test(subject)) return true;
 
   // 1. Explicit OUTCOME / RESULTS indicators override any notice keywords
   // (Regulation 33 is specifically Financial Results submission under SEBI LODR)
   // A notice remains a notice even when it names the financial results to be considered.
-  if (/to\s*consider\s*(?:and\s*approve)?|meeting\s*(?:is\s*)?scheduled|intimation.*board\s*meeting|notice\s*of\s*board|trading\s*window|regulation\s*29/i.test(fullText) &&
+  if (/to\s*(?:inter[\s-]*alia\s*)?consider\s*(?:and\s*approve)?|meeting\s*(?:is\s*)?scheduled|intimation.*board\s*meeting|notice\s*of\s*board|trading\s*window|regulation\s*29/i.test(fullText) &&
       !/considered\s*and\s*approved|approved\s*(?:the\s*)?(?:un-?audited|audited|financial)\s*results/i.test(fullText)) return true;
 
   const isDefinitiveOutcome = 
