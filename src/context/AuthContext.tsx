@@ -1,7 +1,8 @@
 import { createAvatarSaveController } from '../utils/avatarSave';
 import type { AvatarId } from '../config/avatars';
 import { useExpiryClock } from '../hooks/useExpiryClock';
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { usePaymentDialog } from '../hooks/usePaymentDialog';
 import { 
   signInWithPopup,
   signInWithEmailAndPassword, 
@@ -207,6 +208,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profileUnavailable, setProfileUnavailable] = useState(false);
   const [loading, setLoading] = useState(!cached.user);
   const [authLoading, setAuthLoading] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+  const logoutPending = useRef<Promise<void> | null>(null);
   const [adminUnlocked, setAdminUnlocked] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isProModalOpen, setIsProModalOpen] = useState(false);
@@ -914,7 +917,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (e) {}
   };
 
-  const logout = async () => {
+  const performLogout = async () => {
     try {
       await signOut(auth);
     } catch (e) {}
@@ -959,6 +962,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (typeof window !== 'undefined') {
       window.location.replace('/');
     }
+  };
+
+  const logout = () => {
+    if (logoutPending.current) return logoutPending.current;
+    setSigningOut(true);
+    logoutPending.current = performLogout().finally(() => {
+      logoutPending.current = null;
+      setSigningOut(false);
+    });
+    return logoutPending.current;
   };
 
   const checkUsernameAvailability = async (
@@ -1418,8 +1431,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }}
     >
       {children}
+      {signingOut && <SignOutProgress />}
     </AuthContext.Provider>
   );
+}
+
+function SignOutProgress() {
+  const dialog = usePaymentDialog(true, () => {});
+  return <div ref={dialog} role="dialog" aria-modal="true" aria-label="Signing out" className="fixed inset-0 z-[300] grid place-items-center bg-slate-950/60 backdrop-blur-sm">
+    <div role="status" tabIndex={0} className="flex items-center gap-3 rounded-2xl bg-white dark:bg-slate-900 px-6 py-5 text-sm font-semibold text-slate-800 dark:text-slate-100 shadow-xl">
+      <span aria-hidden="true" className="h-5 w-5 rounded-full border-2 border-current border-t-transparent animate-spin motion-reduce:animate-none" />
+      Signing out…
+    </div>
+  </div>;
 }
 
 export function useAuth() {

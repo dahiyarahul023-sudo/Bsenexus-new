@@ -1,3 +1,4 @@
+import { CalendarDateBadge3D } from '../ui/CalendarDateBadge3D';
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform, useReducedMotion } from 'framer-motion';
 import { 
@@ -193,10 +194,7 @@ export function CalendarTelegramMorph({ onEnterTerminal }: CalendarTelegramMorph
                     >
                       <div className="flex items-start gap-4">
                         {/* Date badge */}
-                        <div className="flex-shrink-0 w-14 text-center rounded-xl bg-white dark:bg-slate-900 p-2 border border-slate-200 dark:border-slate-800">
-                          <span className="block text-[10px] font-bold text-sky-600 dark:text-sky-400 uppercase tracking-wider">{evt.date.split(' ')[0]}</span>
-                          <span className="block text-lg font-black text-slate-900 dark:text-white leading-tight">{evt.date.split(' ')[1]}</span>
-                        </div>
+                        <CalendarDateBadge3D month={evt.date.split(' ')[0]} date={evt.date.split(' ')[1]} size="sm" />
 
                         <div>
                           <div className="flex items-center gap-2 mb-1">

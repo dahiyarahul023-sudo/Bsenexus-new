@@ -10,7 +10,7 @@ import { useReducedMotion } from 'framer-motion';
  * - Section-Aware Chromatic Shifts: Colors morph organically from Cyan -> Emerald -> Royal Blue -> Violet -> Teal
  * - Mobile Touch Support: Touch gestures smoothly attract the spotlight to user interaction points
  * - Interactive Button/Card Magnetism: When hovering or tapping buttons, the ambient light eases in and expands
- * - Fluid Kinetic Ribbons: S-curve ribbons with velocity-boosted flow on scroll
+ * - Continuous S-curve phase independent of scroll velocity and browser chrome
  * - Adaptive Light & Dark mode: Luminous bloom in dark mode; soft crystalline opalescent watercolor glazes in light mode
  */
 export default function ParticleRibbons() {
@@ -34,9 +34,8 @@ export default function ParticleRibbons() {
     const mouse = { x: -9999, y: -9999, sx: -9999, sy: -9999 };
     let scrollY = 0;
     let smoothScrollY = 0;
-    let scrollProgress = 0;
-    let scrollVelocity = 0;
-    let lastScrollY = 0;
+    let animationTime = 0;
+    let previousDrawTime: number | null = null;
 
     type Ribbon = {
       arc: boolean; angle: number; reach: number; yBase: number;
@@ -106,14 +105,27 @@ export default function ParticleRibbons() {
     };
 
     const resize = () => {
+      const previousWidth = w, previousHeight = h;
       w = Math.max(1, window.innerWidth);
-      h = Math.max(1, window.innerHeight);
+      // Mobile browser chrome resizes innerHeight during a scroll. Keep a
+      // stable layout viewport so that revealing the address bar cannot rebuild
+      // or stretch every ribbon mid-gesture.
+      h = w < 640 && previousWidth === w ? previousHeight : Math.max(1, document.documentElement.clientHeight, w < 640 ? window.screen.height : 0);
       const isMobile = w < 640;
       dpr = isMobile ? 1 : Math.min(window.devicePixelRatio || 1, 1.25);
+      canvas.style.width = `${w}px`;
+      canvas.style.height = `${h}px`;
       canvas.width = Math.floor(w * dpr);
       canvas.height = Math.floor(h * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      build();
+      if (!previousWidth) build();
+      else {
+        for (const point of [...nodes, ...sparks]) {
+          point.x *= w / previousWidth;
+          point.y *= h / previousHeight;
+        }
+      }
+      if (reducedMotion && previousWidth) draw(1000);
     };
     resize();
     window.addEventListener('resize', resize, { passive: true });
@@ -123,24 +135,13 @@ export default function ParticleRibbons() {
       mouse.x = e.clientX; 
       mouse.y = e.clientY; 
     };
-    const onTouch = (e: TouchEvent) => {
-      if (e.touches && e.touches.length > 0) {
-        mouse.x = e.touches[0].clientX;
-        mouse.y = e.touches[0].clientY;
-      }
-    };
-
     window.addEventListener('mousemove', onMouse, { passive: true });
-    window.addEventListener('touchstart', onTouch, { passive: true });
-    window.addEventListener('touchmove', onTouch, { passive: true });
+    // Touch scrolling does not attract the light toward a moving finger.
 
     // Scroll Tracking
     const onScroll = () => {
       scrollY = window.scrollY || window.pageYOffset;
-      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      scrollProgress = docHeight > 0 ? Math.min(1, Math.max(0, scrollY / docHeight)) : 0;
-      scrollVelocity = Math.abs(scrollY - lastScrollY);
-      lastScrollY = scrollY;
+
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
@@ -149,6 +150,7 @@ export default function ParticleRibbons() {
     const onVis = () => {
       cancelAnimationFrame(raf);
       raf = 0;
+      previousDrawTime = null;
       if (!document.hidden && !reducedMotion) raf = requestAnimationFrame(loop);
     };
     document.addEventListener('visibilitychange', onVis);
@@ -180,11 +182,16 @@ export default function ParticleRibbons() {
     };
 
     const draw = (time: number) => {
-      const t = time / 1000;
+      const delta = previousDrawTime === null ? 0 : Math.min(50, Math.max(0, time - previousDrawTime));
+      previousDrawTime = time;
+      animationTime += delta / 1000;
+      const t = animationTime;
+      const step = reducedMotion ? 0 : delta / 1000;
+      const ease = reducedMotion ? 1 : 1 - Math.exp(-step * 6);
       const dark = isDark();
 
       // Smooth scroll smoothing
-      smoothScrollY += (scrollY - smoothScrollY) * 0.1;
+      smoothScrollY += (scrollY - smoothScrollY) * ease;
       const currentScrollRatio = Math.min(1, Math.max(0, smoothScrollY / (document.documentElement.scrollHeight - window.innerHeight || 1)));
 
       // Dynamic scroll beam position:
@@ -196,8 +203,9 @@ export default function ParticleRibbons() {
       const targetSpotX = mouse.x > -100 ? mouse.x : scrollBeamX;
       const targetSpotY = mouse.y > -100 ? mouse.y : scrollBeamY;
 
-      mouse.sx += (targetSpotX - mouse.sx) * 0.08;
-      mouse.sy += (targetSpotY - mouse.sy) * 0.08;
+      if (mouse.sx < -100) { mouse.sx = targetSpotX; mouse.sy = targetSpotY; }
+      mouse.sx += (targetSpotX - mouse.sx) * ease;
+      mouse.sy += (targetSpotY - mouse.sy) * ease;
 
       ctx.clearRect(0, 0, w, h);
       ctx.globalCompositeOperation = dark ? 'lighter' : 'source-over';
@@ -254,12 +262,12 @@ export default function ParticleRibbons() {
 
       // 3. Ribbons (Velocity-boosted on scroll)
       const heads: Array<[number, number, number]> = [];
-      const velocityBoost = Math.min(scrollVelocity * 0.02, 1.5);
+      // Integrate elapsed frame time once; scrolling never changes ribbon phase.
 
       for (const r of ribbons) {
         const passes = dark ? [{ m: 3.8, a: 0.14 }, { m: 1, a: 0.9 }] : [{ m: 2.2, a: 0.12 }];
         const points = Array.from({ length: SEG + 1 }, (_, s) => 
-          ribbonPoint(r, t * (1 + velocityBoost * 0.3), s / SEG, burstX, burstY)
+          ribbonPoint(r, t, s / SEG, burstX, burstY)
         );
 
         for (const p of passes) {
@@ -289,8 +297,8 @@ export default function ParticleRibbons() {
       // 4. Plexus Network
       const LINK = w < 640 ? 110 : 140;
       for (const n of nodes) {
-        n.x += n.vx * 0.016; 
-        n.y += n.vy * 0.016;
+        n.x += n.vx * step;
+        n.y += n.vy * step;
         if (n.x < -20) n.x = w + 20; if (n.x > w + 20) n.x = -20;
         if (n.y < -20) n.y = h + 20; if (n.y > h + 20) n.y = -20;
       }
@@ -333,8 +341,8 @@ export default function ParticleRibbons() {
 
       // 5. Sparkle Dust
       for (const s of sparks) {
-        s.x += s.vx * 0.016; 
-        s.y += s.vy * 0.016;
+        s.x += s.vx * step;
+        s.y += s.vy * step;
         if (s.x < -10) s.x = w + 10; if (s.x > w + 10) s.x = -10;
         if (s.y < -10) s.y = h + 10; if (s.y > h + 10) s.y = -10;
         const tw = 0.25 + 0.75 * Math.abs(Math.sin(t * s.sp + s.ph));
@@ -349,13 +357,12 @@ export default function ParticleRibbons() {
 
     if (reducedMotion) {
       draw(1000);
-      window.removeEventListener('resize', resize);
       window.removeEventListener('mousemove', onMouse);
-      window.removeEventListener('touchstart', onTouch);
-      window.removeEventListener('touchmove', onTouch);
       window.removeEventListener('scroll', onScroll);
       document.removeEventListener('visibilitychange', onVis);
-      return;
+      const themeObserver = new MutationObserver(() => draw(1000));
+      themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+      return () => { window.removeEventListener('resize', resize); themeObserver.disconnect(); };
     }
 
     const loop = (time: number) => {
@@ -372,8 +379,6 @@ export default function ParticleRibbons() {
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', resize);
       window.removeEventListener('mousemove', onMouse);
-      window.removeEventListener('touchstart', onTouch);
-      window.removeEventListener('touchmove', onTouch);
       window.removeEventListener('scroll', onScroll);
       document.removeEventListener('visibilitychange', onVis);
     };

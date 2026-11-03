@@ -1,3 +1,4 @@
+import { CalendarDateBadge3D } from './ui/CalendarDateBadge3D';
 import React, { useState } from 'react';
 import { 
   Zap, Send, Shield, Terminal, ArrowRight, ArrowUpRight, 
@@ -129,8 +130,8 @@ export function LandingPage({
 
         <div className="max-w-4xl mx-auto space-y-6">
           {/* Subtle live indicator badge */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/80 dark:bg-slate-800/80 border border-slate-200/90 dark:border-slate-700/60 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-xs">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+          <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 rounded-full text-left bg-white/80 dark:bg-slate-800/80 border border-slate-200/90 dark:border-slate-700/60 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-xs">
+            <span className="w-1.5 h-1.5 shrink-0 rounded-full bg-emerald-500" />
             <span>Sub-Second Exchange Disclosures &amp; Earnings Intelligence</span>
           </div>
 
@@ -163,16 +164,7 @@ export function LandingPage({
               onClick={() => onEnterTerminal('results-calendar')}
               className="w-full sm:w-auto px-7 py-3.5 rounded-2xl bg-white/90 dark:bg-slate-900/90 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-98 text-slate-900 dark:text-white border border-slate-200/90 dark:border-slate-800 font-bold text-sm sm:text-base shadow-xs transition-all flex items-center justify-center gap-2.5 cursor-pointer"
             >
-              {/* Mini 3D Red Calendar Icon */}
-              <div className="w-5 h-5 rounded-md overflow-hidden bg-gradient-to-b from-red-600 to-rose-600 flex flex-col items-center justify-between shadow-xs shrink-0 border border-red-700/50">
-                <div className="w-full h-1.5 bg-red-700 flex items-center justify-around px-0.5">
-                  <span className="w-0.5 h-0.5 rounded-full bg-white/80" />
-                  <span className="w-0.5 h-0.5 rounded-full bg-white/80" />
-                </div>
-                <div className="flex-1 w-full bg-white dark:bg-slate-900 flex items-center justify-center">
-                  <span className="text-[8px] font-black text-slate-900 dark:text-white leading-none">24</span>
-                </div>
-              </div>
+              <span aria-hidden="true"><CalendarDateBadge3D month="CAL" date="24" size="icon" /></span>
               <span>Explore Earnings Calendar</span>
             </button>
           </div>

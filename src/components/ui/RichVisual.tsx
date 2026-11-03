@@ -1,3 +1,4 @@
+import { CalendarDateBadge3D } from './CalendarDateBadge3D';
 import { useId, type ReactNode } from 'react';
 import '../../styles/rich-ui.css';
 
@@ -16,10 +17,7 @@ export function RichIcon({ children, tone = 'emerald', className = '' }: {
 export function RichDateTile({ day, month, selected = false, today = false }: {
   day: string; month: string; selected?: boolean; today?: boolean;
 }) {
-  return <span className={`rich-date-tile ${selected ? 'is-selected' : ''} ${today ? 'is-today' : ''}`}>
-    <span className="rich-date-month">{month}</span>
-    <span className="rich-date-day">{day}</span>
-  </span>;
+  return <CalendarDateBadge3D date={day} month={month} size="sm" className={`rich-date-tile ${selected ? 'is-selected' : ''} ${today ? 'is-today' : ''}`} />;
 }
 
 type IllustrationKind = 'companies' | 'pro' | 'creator' | 'bell' | 'success';

@@ -770,29 +770,7 @@ export function ModernAuthCard({
 }
 
 function RecaptchaNotice() {
-  return (
-    <p className="pt-1 text-center text-[10px] sm:text-[11px] text-slate-500 leading-normal select-none">
-      This site is protected by reCAPTCHA and the Google{' '}
-      <a
-        href="https://policies.google.com/privacy"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="underline text-slate-600 hover:text-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-400 rounded"
-      >
-        Privacy Policy
-      </a>{' '}
-      and{' '}
-      <a
-        href="https://policies.google.com/terms"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="underline text-slate-600 hover:text-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-400 rounded"
-      >
-        Terms of Service
-      </a>{' '}
-      apply.
-    </p>
-  );
+  return <p className="pt-1 text-center text-[10px] sm:text-[11px] text-slate-500 leading-normal">This site is protected by reCAPTCHA.</p>;
 }
 
 interface RecaptchaVerificationBoxProps {
@@ -801,29 +779,7 @@ interface RecaptchaVerificationBoxProps {
 }
 
 function RecaptchaVerificationBox({ status, onRetry }: RecaptchaVerificationBoxProps) {
-  if (status === 'idle') {
-    return (
-      <div
-        className="py-2 px-3 rounded-[14px] border border-slate-200 bg-slate-50/70 flex items-center justify-between text-xs my-1 select-none"
-        aria-live="polite"
-      >
-        <div className="flex items-center gap-2">
-          <Shield className="w-4 h-4 text-slate-400 shrink-0" aria-hidden="true" />
-          <div>
-            <p className="font-semibold text-slate-700 text-[11px] leading-tight">
-              reCAPTCHA Enterprise Protection
-            </p>
-            <p className="text-[9.5px] text-slate-500 leading-tight">
-              Assessment verifies on submission
-            </p>
-          </div>
-        </div>
-        <span className="text-[10px] font-medium text-slate-600 bg-slate-200/70 px-2 py-0.5 rounded-md">
-          Ready
-        </span>
-      </div>
-    );
-  }
+  if (status === 'idle') return null;
 
   if (status === 'checking') {
     return (
@@ -839,7 +795,7 @@ function RecaptchaVerificationBox({ status, onRetry }: RecaptchaVerificationBoxP
               Verifying Security...
             </p>
             <p className="text-[9.5px] text-amber-700 leading-tight">
-              Assessing reCAPTCHA Enterprise risk score
+              Checking your request securely
             </p>
           </div>
         </div>
@@ -863,7 +819,7 @@ function RecaptchaVerificationBox({ status, onRetry }: RecaptchaVerificationBoxP
           </div>
           <div>
             <p className="font-semibold text-emerald-950 text-[11px] leading-tight">
-              reCAPTCHA Verified
+              Security check complete
             </p>
             <p className="text-[9.5px] text-emerald-700 leading-tight">
               Security assessment confirmed by server

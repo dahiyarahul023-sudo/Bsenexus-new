@@ -127,7 +127,10 @@ function PendingOverlay({ label }: { label: string }) {
   return (
     <div ref={dialog} className="fixed inset-0 z-[150] grid place-items-center bg-slate-950/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={`Opening ${label}`}>
       <div className="rounded-2xl bg-white dark:bg-slate-900 px-8 py-5 text-sm text-slate-700 dark:text-slate-200">
-        <p role="status">Opening {label}…</p>
+        <div role="status" aria-label={label === 'sign in' ? 'Loading sign in' : `Opening ${label}`} className="flex items-center gap-3">
+          <span aria-hidden="true" className="h-5 w-5 rounded-full border-2 border-current border-t-transparent animate-spin motion-reduce:animate-none" />
+          {label !== 'sign in' && <span>Opening {label}…</span>}
+        </div>
         <button type="button" onClick={cancel} className="mt-4 min-h-11 rounded-full px-4 border border-slate-300 dark:border-slate-600">Cancel</button>
       </div>
     </div>

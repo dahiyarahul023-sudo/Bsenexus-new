@@ -31,5 +31,5 @@ export function useUnreadNotificationCount(owner: string | null) {
     else void badge.clearAppBadge?.()?.catch(() => {});
   }, [count]);
   // Mask an old owner's value during render, before effect cleanup can run.
-  return { count, refresh };
+  return { count, refresh, beginRead: (amount: number | 'all') => owner ? counter.current!.beginRead(owner, amount) : () => {} };
 }

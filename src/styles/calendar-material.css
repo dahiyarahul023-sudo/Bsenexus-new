@@ -1,0 +1,42 @@
+.calendar-material {
+  --calendar-size: 54px;
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  flex: none;
+  width: var(--calendar-size);
+  height: calc(var(--calendar-size) * 1.08);
+  border: 1px solid #e11d4866;
+  border-radius: 25%;
+  background: radial-gradient(ellipse at 14% 12%, #ffb5ba99, transparent 65%), linear-gradient(135deg, #fb5263, #ed002c 72%);
+  box-shadow: inset 0 1px 1px #ffffff8c, 0 3px 9px #e11d481c;
+  font-variant-numeric: tabular-nums;
+  vertical-align: middle;
+  user-select: none;
+}
+.calendar-material-icon { --calendar-size: 24px; }
+.calendar-material-sm { --calendar-size: 38px; }
+.calendar-material-lg { --calendar-size: 64px; }
+.calendar-material-face {
+  position: absolute;
+  inset: 23% -1px -1px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: 1px solid #ffffff99;
+  border-radius: 22% 22% 25% 25%;
+  background: linear-gradient(150deg, #ffffffc4, #ffffffa8 48%, #ffe7eac9);
+  box-shadow: inset 0 1px 0 #fff9;
+  color: #68152b;
+}
+.calendar-material-month { font-size: calc(var(--calendar-size) * .16); line-height: 1; font-weight: 700; text-transform: uppercase; }
+.calendar-material-date { font-size: calc(var(--calendar-size) * .43); line-height: 1; font-weight: 800; letter-spacing: -.035em; }
+.calendar-material-day { font-size: calc(var(--calendar-size) * .13); line-height: 1; font-weight: 600; text-transform: uppercase; }
+.calendar-material-pins { position: absolute; inset: -5% 23% auto; display: flex; justify-content: space-between; z-index: 1; }
+.calendar-material-pins i { width: calc(var(--calendar-size) * .09); height: calc(var(--calendar-size) * .20); border-radius: 5px; background: linear-gradient(#fff, #f5e5e9); box-shadow: 0 1px 1px #7f1d1d33; }
+.calendar-material-icon .calendar-material-month { display: none; }
+.calendar-material-icon .calendar-material-date { font-size: 12px; }
+.dark .calendar-material-face { background: linear-gradient(145deg, #923d4ee6, #382a40ed 78%); color: #fff3f5; border-color: #ffccd54d; }
+.dark .calendar-material { box-shadow: inset 0 1px 1px #ffffff55, 0 3px 9px #0003; }

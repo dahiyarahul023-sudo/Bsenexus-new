@@ -1,3 +1,4 @@
+import { CalendarDateBadge3D } from './ui/CalendarDateBadge3D';
 import { triggerNavigationHaptic } from '../utils/haptics';
 import { UserAvatar } from './ui/UserAvatar';
 import '../styles/mobile-repairs.css';
@@ -175,7 +176,7 @@ export function Layout({
   // Cached profile paint is not a verified session. Wait for the Firebase user
   // before reading a private count; anonymous visitors have no private inbox.
   const notificationOwner = notificationCountOwner(user, sessionLoading || authLoading);
-  const { count: unreadNotifCount, refresh: fetchUnreadCount } = useUnreadNotificationCount(notificationOwner);
+  const { count: unreadNotifCount, refresh: fetchUnreadCount, beginRead: beginNotificationRead } = useUnreadNotificationCount(notificationOwner);
 
   // Listen to network disruptions
   useEffect(() => {
@@ -264,27 +265,7 @@ export function Layout({
         />
       );
     } else if (itemId === 'results-calendar') {
-      iconElement = (
-        <div className="relative flex items-center justify-center">
-          <div className={cn(
-            "w-4 h-4 sm:w-4.5 sm:h-4.5 rounded-[4px] border flex flex-col overflow-hidden transition-all shadow-2xs",
-            isActive 
-              ? "bg-white dark:bg-[#222030] border-slate-400 dark:border-[#4A4364] ring-1 ring-slate-300 dark:ring-[#4A4364]" 
-              : "bg-white dark:bg-[#1C1A27] border-slate-300 dark:border-[#2D283E]"
-          )}>
-            <div className={cn("h-1.5 w-full flex items-center justify-center gap-0.5", isActive ? "bg-slate-700 dark:bg-[#3D3754]" : "bg-slate-400 dark:bg-slate-600")}>
-              <span className="w-0.5 h-0.5 rounded-full bg-white opacity-80" />
-              <span className="w-0.5 h-0.5 rounded-full bg-white opacity-80" />
-            </div>
-            <div className={cn(
-              "flex-1 flex items-center justify-center text-[8px] font-black leading-none",
-              isActive ? "text-slate-900 dark:text-slate-100" : "text-slate-600 dark:text-slate-400"
-            )}>
-              {new Date().getDate()}
-            </div>
-          </div>
-        </div>
-      );
+      iconElement = <span aria-hidden="true"><CalendarDateBadge3D month="CAL" date={String(new Date().getDate())} size="icon" /></span>;
     } else if (itemId === 'news') {
       iconElement = (
         <Newspaper 
@@ -867,6 +848,7 @@ export function Layout({
           }}
           unreadCount={unreadNotifCount}
           onRefreshCount={fetchUnreadCount}
+          onBeginRead={beginNotificationRead}
         />
       {alertRulesModalOpen && (
         <AlertRulesModal

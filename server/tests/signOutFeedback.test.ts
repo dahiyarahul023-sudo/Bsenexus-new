@@ -1,0 +1,51 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import vm from 'node:vm';
+import { createRequire } from 'node:module';
+import ts from 'typescript';
+
+test('every sign-out caller shares pending feedback and one operation until cleanup/navigation completes', async () => {
+  const actual = createRequire(import.meta.url);
+  const React = actual('react');
+  const states: any[] = [], refs: any[] = [];
+  let stateIndex = 0, refIndex = 0, firebaseCalls = 0, serverCalls = 0;
+  let releaseFirebase!: () => void, releaseServer!: () => void;
+  const firebase = new Promise<void>(resolve => { releaseFirebase = resolve; });
+  const server = new Promise<void>(resolve => { releaseServer = resolve; });
+  const navigations: string[] = [];
+  const react = { ...React, useState(value: any) {
+    const index = stateIndex++;
+    if (!(index in states)) states[index] = typeof value === 'function' ? value() : value;
+    return [states[index], (next: any) => { states[index] = typeof next === 'function' ? next(states[index]) : next; }];
+  }, useRef(value: any) { return refs[refIndex++] ??= { current: value }; }, useEffect() {} };
+  const exports: any = {};
+  const code = ts.transpileModule(readFileSync('src/context/AuthContext.tsx','utf8'), {compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText;
+  vm.runInNewContext(code, {exports, console, Date, Set, localStorage:{getItem:()=>null,removeItem(){}},sessionStorage:{clear(){}},window:{location:{replace:(url:string)=>navigations.push(url)}}, require(name: string) {
+    if (name === 'react') return react;
+    if (name === 'react/jsx-runtime') return actual(name);
+    if (name === 'firebase/auth') return {signOut:()=>{firebaseCalls++;return firebase;}};
+    if (name.endsWith('/firebase')) return {auth:{}};
+    if (name.endsWith('/api')) return {customFetch:()=>{serverCalls++;return server;}};
+    if (name.endsWith('/useExpiryClock')) return {useExpiryClock:()=>Date.now()};
+    if (name.endsWith('/avatarSave')) return {createAvatarSaveController:()=>({})};
+    if (name.endsWith('/preferenceSaveQueue')) return {createPreferenceSaveQueue:()=>({})};
+    return {};
+  }});
+  const render = () => {stateIndex=0;refIndex=0;return exports.AuthProvider({children:null});};
+  let tree = render();
+  const pending = tree.props.value.logout();
+  assert.equal(tree.props.value.logout(), pending);
+  assert.equal(firebaseCalls,1);
+  tree = render();
+  assert.ok(tree.props.children[1], 'pending status mounts immediately for all entry points');
+  releaseFirebase();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(serverCalls,1);
+  assert.equal(tree.props.value.logout(),pending);
+  releaseServer();
+  await pending;
+  assert.deepEqual(navigations,['/']);
+  tree = render();
+  assert.equal(tree.props.children[1],false);
+});

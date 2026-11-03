@@ -50,6 +50,7 @@ interface NotificationInboxProps {
   onOpenAlertRules: () => void;
   unreadCount: number | null;
   onRefreshCount: () => void;
+  onBeginRead: (amount: number | 'all') => (success: boolean) => void;
 }
 
 export function NotificationInbox({
@@ -58,7 +59,8 @@ export function NotificationInbox({
   onOpenCompanyIntel,
   onOpenAlertRules,
   unreadCount,
-  onRefreshCount
+  onRefreshCount,
+  onBeginRead
 }: NotificationInboxProps) {
   useBodyScrollLock(isOpen);
   const { user, profile } = useAuth();
@@ -160,7 +162,7 @@ export function NotificationInbox({
   };
 
   const loadNotifications = async (background = false) => {
-    if (isClearing || (background && readBusy.current.size > 0)) return;
+    if (isClearing || readBusy.current.size > 0) return;
     if (!user && !profile) {
       setNotifications([]);
       setLoading(false);
@@ -205,10 +207,11 @@ export function NotificationInbox({
 
   const handleMarkAsRead = async (id: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    if (readBusy.current.has(id)) return;
+    if (readBusy.current.size > 0 || isClearing || !notifications.some(n => n.id === id && !n.isRead)) return;
     const account = owner;
     const prevSnapshots = snapshots;
     readBusy.current.add(id);
+    const finishCount = onBeginRead(1);
     ++loadSeqRef.current;
     setLoading(false);
     setActionFeedback(null);
@@ -218,9 +221,10 @@ export function NotificationInbox({
       const res = await customFetch(`/api/notifications/${encodeURIComponent(id)}/read`, { method: 'POST' });
       if (!res.ok) throw new Error('Read status could not be saved. Please retry.');
       if (ownerRef.current !== account) return;
-      onRefreshCount();
+      finishCount(true);
     } catch {
       if (ownerRef.current === account) {
+        finishCount(false);
         setSnapshots(prevSnapshots);
         setActionFeedback({error:true,message:'Read status could not be saved. Please retry.'});
       }
@@ -228,10 +232,11 @@ export function NotificationInbox({
   };
 
   const handleMarkAllRead = async () => {
-    if (readBusy.current.has('all')) return;
+    if (readBusy.current.size > 0 || isClearing) return;
     const account = owner;
     const prevSnapshots = snapshots;
     readBusy.current.add('all');
+    const finishCount = onBeginRead('all');
     ++loadSeqRef.current;
     setLoading(false);
     setActionFeedback(null);
@@ -241,9 +246,10 @@ export function NotificationInbox({
       const res = await customFetch('/api/notifications/read-all', { method: 'POST' });
       if (!res.ok) throw new Error('Read status could not be saved.');
       if (ownerRef.current !== account) return;
-      onRefreshCount();
+      finishCount(true);
     } catch {
       if (ownerRef.current === account) {
+        finishCount(false);
         setSnapshots(prevSnapshots);
         setActionFeedback({error:true,message:'Read status could not be saved. Please retry.'});
       }
@@ -251,7 +257,7 @@ export function NotificationInbox({
   };
 
   const handleClearAll = async () => {
-    if (isClearing) return;
+    if (isClearing || readBusy.current.size > 0) return;
     setIsClearing(true);
     setActionFeedback(null);
     // Ignore older loads that could otherwise resurrect the pre-clear snapshot.
@@ -263,9 +269,9 @@ export function NotificationInbox({
       if (!res.ok || data?.success !== true) throw new Error(data?.error || 'Could not clear your inbox. Please retry.');
       if (clearSeq !== loadSeqRef.current) return;
       setNotifications([]);
+      onBeginRead('all')(true);
       setConfirmClear(false);
       setActionFeedback({error:false,message:'Your inbox is cleared. New notifications will still appear.'});
-      onRefreshCount();
     } catch (err) {
       if (clearSeq === loadSeqRef.current) setActionFeedback({error:true,message:err instanceof Error ? err.message : 'Could not clear your inbox. Please retry.'});
     } finally {

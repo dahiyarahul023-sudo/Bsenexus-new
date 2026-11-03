@@ -42,13 +42,8 @@
 .rich-illustration-compact { width:64px; }
 .rich-illustration-success { width:112px; }
 
-.rich-date-tile { display:flex; flex-direction:column; position:relative; isolation:isolate; width:40px; height:46px; flex:none; border:1px solid #78d9bd; border-radius:10px; background:linear-gradient(145deg,#b9f7e2,#ecfdf8); color:#064e3b; box-shadow:0 3px 7px #04785712,inset 0 1px 0 #fff; overflow:hidden; font-variant-numeric:tabular-nums; }
-.rich-date-month { background:linear-gradient(145deg,#a7f3d0,#5eead4); border-bottom:1px solid #04785714; text-align:center; padding:3px 2px; font-size:9px; line-height:12px; font-weight:800; letter-spacing:.04em; }
-.rich-date-day { flex:1; display:grid; place-items:center; font-size:19px; font-weight:800; line-height:1; }
-.dark .rich-date-tile { border-color:#288d7f; background:linear-gradient(145deg,#234c48,#173236); color:#ecfdf5; box-shadow:0 3px 8px #0003,inset 0 1px 0 #fff2; }
-.dark .rich-date-month { color:#ccfbf1; background:linear-gradient(145deg,#216b60,#164e4a); }
-.rich-date-tile.is-selected { outline:2px solid var(--rich-focus); outline-offset:2px; }
-.rich-date-tile.is-today .rich-date-month { color:#fff; background:#047857; }
+.rich-date-tile.is-selected { outline:2px solid var(--rich-focus); outline-offset:3px; }
+.rich-date-tile.is-today { box-shadow:0 0 0 2px var(--rich-focus),0 3px 8px #e11d4820; }
 
 /* Fixed icon footprint: selected state never changes tab geometry. */
 .rich-nav-icon { position:relative; width:22px; height:22px; border-radius:7px; }

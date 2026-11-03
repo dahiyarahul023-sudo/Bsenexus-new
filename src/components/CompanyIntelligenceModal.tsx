@@ -1,5 +1,5 @@
 import { archiveCompletionMessage } from '../shared/resultFiling';
-import { pageItems } from '../shared/companyFilings';
+import { pageItems, filingTimestamp } from '../shared/companyFilings';
 import { ListPagination } from './ui/ListPagination';
 import '../styles/overnight-adr.css';
 import { CompanyAdr } from './adr/OvernightAdr';
@@ -82,6 +82,7 @@ export function CompanyIntelligenceModal({
   const syncRevision = useRef(0);
   // Non-intrusive Toast Notifications
   const [toastMsg, setToastMsg] = useState<{ text: string; type: 'info' | 'error' | 'success' } | null>(null);
+  const [factSelection, setFactSelection] = useState<{ kind: string; label: string; eventType?: string; since?: number } | null>(null);
 
   const showToast = (text: string, type: 'info' | 'error' | 'success' = 'info') => {
     setToastMsg({ text, type });
@@ -126,7 +127,7 @@ export function CompanyIntelligenceModal({
     }
   }, [scripCode, symbol, user?.uid]);
   useEffect(() => {
-    setActiveTab('hub'); contentRef.current?.scrollTo({ top: 0 });
+    setActiveTab('hub'); setTimelineFilter('ALL'); setFactSelection(null); contentRef.current?.scrollTo({ top: 0 });
     setIntelData(null); setAiOverview(''); setHistoryJob(null); setHistorySuccessMsg(null); setHistoryError(false);
     setIsFetchingHistory(false); setListPages({ filings: 1, timeline: 1 });
     ++syncRevision.current; syncController.current?.abort();
@@ -280,6 +281,8 @@ export function CompanyIntelligenceModal({
 
   const timelineEvents = visibleIntel?.materialTimeline || [];
   const filteredTimeline = timelineEvents.filter((ev: any) => {
+    if (factSelection?.kind === 'type') return ev.eventType === factSelection.eventType;
+    if (factSelection?.kind === 'impact') return Boolean(ev.isHighImpact);
     if (timelineFilter === 'ALL') return true;
     if (timelineFilter === 'DIVIDEND') return ev.eventType === 'DIVIDEND' || ev.eventType === 'BONUS' || ev.eventType === 'SPLIT' || ev.eventType === 'BUYBACK';
     if (timelineFilter === 'RESULTS') return ev.eventType === 'FINANCIAL_RESULT' || ev.eventType === 'BOARD_MEETING';
@@ -304,12 +307,12 @@ export function CompanyIntelligenceModal({
   // Filing Facts — bite-sized, data-derived stats from official BSE filings only.
   // Every fact is computed from the company's loaded data; nothing is hardcoded.
   const filingFacts = useMemo(() => {
-    const facts: { value: string; label: string; icon: any }[] = [];
-    const now = Date.now();
+    const facts: { value: string; label: string; icon: any; selection: NonNullable<typeof factSelection>; tab: 'filings' | 'timeline' | 'results' }[] = [];
+    const now = visibleIntel?.filingStats?.asOf || Date.now();
     const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
 
     if (visibleIntel?.filingCoverage === 'stored' && visibleIntel?.filingStats) {
-      facts.push({ value: String(visibleIntel.filingStats.last30Days), label: 'stored filings in the last 30 days', icon: FileText });
+      facts.push({ value: String(visibleIntel.filingStats.last30Days), label: 'stored filings in the last 30 days', icon: FileText, tab: 'filings', selection: { kind: 'recent', label: 'Stored filings in the last 30 days', since: thirtyDaysAgo } });
     }
 
     // 2. Most frequent disclosure type (full timeline history, not capped).
@@ -322,24 +325,24 @@ export function CompanyIntelligenceModal({
     timelineEvents.forEach((ev: any) => { if (ev.eventType) typeCounts[ev.eventType] = (typeCounts[ev.eventType] || 0) + 1; });
     const topType = Object.entries(typeCounts).sort((a, b) => b[1] - a[1])[0];
     if (topType && topType[1] >= 2) {
-      facts.push({ value: typeLabels[topType[0]] || topType[0], label: `most frequent disclosure · ${topType[1]} tracked`, icon: Layers });
+      facts.push({ value: typeLabels[topType[0]] || topType[0], label: `most frequent disclosure · ${topType[1]} tracked`, icon: Layers, tab: 'timeline', selection: { kind: 'type', eventType: topType[0], label: typeLabels[topType[0]] || topType[0] } });
     }
 
     // 3. Shareholder rewards (dividends, bonuses, splits, buybacks).
     const rewards = timelineEvents.filter((ev: any) => ['DIVIDEND', 'BONUS', 'SPLIT', 'BUYBACK'].includes(ev.eventType)).length;
     if (rewards > 0) {
-      facts.push({ value: String(rewards), label: 'dividends, bonuses & buybacks tracked', icon: Coins });
+      facts.push({ value: String(rewards), label: 'dividends, bonuses, splits & buybacks tracked', icon: Coins, tab: 'timeline', selection: { kind: 'rewards', label: 'Dividends, bonuses, splits & buybacks' } });
     }
 
     // 4. High-impact disclosures.
     const highImpact = timelineEvents.filter((ev: any) => ev.isHighImpact).length;
     if (highImpact > 0) {
-      facts.push({ value: String(highImpact), label: 'high-impact disclosures', icon: Zap });
+      facts.push({ value: String(highImpact), label: 'high-impact disclosures', icon: Zap, tab: 'timeline', selection: { kind: 'impact', label: 'High-impact disclosures' } });
     }
 
     // 5. Results history depth.
     if (quarterlyResults.length >= 2) {
-      facts.push({ value: String(quarterlyResults.length), label: 'quarters of results history', icon: BarChart3 });
+      facts.push({ value: String(quarterlyResults.length), label: 'quarters of results history', icon: BarChart3, tab: 'results', selection: { kind: 'results', label: 'Quarterly results history' } });
     }
 
     return facts.slice(0, 5);
@@ -373,7 +376,19 @@ export function CompanyIntelligenceModal({
     return { buckets, max, callout };
   }, [recentFilings]);
 
-  const filingsPage = pageItems<any>(recentFilings, listPages.filings);
+  const selectedFilings = factSelection?.kind === 'recent' ? recentFilings.filter((filing: any) => {
+    const timestamp = filingTimestamp(filing);
+    const id = String(filing.newsId || filing.id || '');
+    return Boolean(id) && !id.startsWith('bm_') && !id.startsWith('hist_') && timestamp > 0 && timestamp >= factSelection.since! && timestamp <= factSelection.since! + 30 * 86_400_000;
+  }) : recentFilings;
+  const filingsPage = pageItems<any>(selectedFilings, listPages.filings);
+  const openFact = (fact: typeof filingFacts[number]) => {
+    pageChangePending.current = true;
+    setFactSelection(fact.selection);
+    setTimelineFilter(fact.selection.kind === 'rewards' ? 'DIVIDEND' : 'ALL');
+    setListPages({ filings: 1, timeline: 1 });
+    setActiveTab(fact.tab);
+  };
   const timelinePage = pageItems<any>(filteredTimeline, listPages.timeline);
   useLayoutEffect(() => {
     if (!pageChangePending.current) return;
@@ -381,7 +396,7 @@ export function CompanyIntelligenceModal({
     // Reset after the new rows commit. The modal body is the only scroll owner.
     if (contentRef.current) contentRef.current.scrollTop = 0;
     pageHeadingRef.current?.focus({ preventScroll: true });
-  }, [listPages.filings, listPages.timeline]);
+  }, [activeTab, factSelection, listPages.filings, listPages.timeline]);
   const changePage = (list: 'filings' | 'timeline', page: number) => {
     pageChangePending.current = true;
     setListPages(previous => ({ ...previous, [list]: page }));
@@ -496,7 +511,7 @@ export function CompanyIntelligenceModal({
                 type="button"
                 whileTap={{ scale: 0.95 }}
                 transition={springBouncy}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => { setFactSelection(null); setTimelineFilter('ALL'); setActiveTab(tab.id); }}
                 className={cn(
                   "relative shrink-0 inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2.5 sm:py-3 text-xs font-bold transition-colors whitespace-nowrap cursor-pointer z-10",
                   isTabActive
@@ -705,9 +720,12 @@ export function CompanyIntelligenceModal({
                             {filingFacts.map((fact, fIdx) => {
                               const FactIcon = fact.icon;
                               return (
-                                <div
+                                <button
+                                  type="button"
                                   key={fIdx}
-                                  className="shrink-0 w-[148px] p-3 bg-gradient-to-br from-amber-50 to-orange-50/60 dark:from-amber-950/30 dark:to-orange-950/20 border border-amber-200/70 dark:border-amber-800/40 rounded-xl space-y-1.5"
+                                  onClick={() => openFact(fact)}
+                                  aria-label={`View ${fact.value} ${fact.label}`}
+                                  className="text-left cursor-pointer focus-visible:outline-2 focus-visible:outline-amber-500 focus-visible:outline-offset-2 hover:border-amber-400 shrink-0 w-[148px] p-3 bg-gradient-to-br from-amber-50 to-orange-50/60 dark:from-amber-950/30 dark:to-orange-950/20 border border-amber-200/70 dark:border-amber-800/40 rounded-xl space-y-1.5"
                                 >
                                   <FactIcon size={15} className="text-amber-600 dark:text-amber-400" />
                                   <div className="text-[17px] font-black text-slate-900 dark:text-white leading-tight">
@@ -716,7 +734,8 @@ export function CompanyIntelligenceModal({
                                   <div className="text-[10px] leading-snug text-slate-600 dark:text-slate-400 font-medium">
                                     {fact.label}
                                   </div>
-                                </div>
+                                  <span className="block text-[10px] font-bold text-amber-700 dark:text-amber-300">View records →</span>
+                                </button>
                               );
                             })}
                           </div>
@@ -846,6 +865,10 @@ export function CompanyIntelligenceModal({
                 </div>
               )}
 
+              {factSelection && activeTab !== 'hub' && <div className="mb-3 flex items-center justify-between gap-2 text-xs text-slate-600 dark:text-slate-300" role="status">
+                <span>{factSelection.label}</span>
+                <button type="button" className="min-h-10 px-2 font-semibold underline" onClick={() => { setFactSelection(null); setTimelineFilter('ALL'); setListPages({filings: 1, timeline: 1}); }}>Show all</button>
+              </div>}
               {/* TAB 2: MATERIAL CORPORATE ACTIONS TIMELINE */}
               {activeTab === 'timeline' && (
                 <div className="space-y-4 animate-in fade-in duration-150">
@@ -861,7 +884,7 @@ export function CompanyIntelligenceModal({
                       return (
                         <button
                           key={f.id}
-                          onClick={() => { setTimelineFilter(f.id); setListPages(previous => ({ ...previous, timeline: 1 })); }}
+                          onClick={() => { setFactSelection(null); setTimelineFilter(f.id); setListPages(previous => ({ ...previous, timeline: 1 })); }}
                           className={cn(
                             "px-3 py-1 text-xs font-bold rounded-lg border flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs",
                             timelineFilter === f.id
@@ -983,10 +1006,10 @@ export function CompanyIntelligenceModal({
               {activeTab === 'filings' && (
                 <div className="space-y-3 animate-in fade-in duration-150">
                   <h3 ref={pageHeadingRef} tabIndex={-1} className="text-xs font-bold text-slate-900 dark:text-white">
-                    Chronological BSE Filings Archive ({recentFilings.length} items)
+                    {factSelection?.kind === 'recent' ? 'BSE filings · last 30 days' : 'Chronological BSE Filings Archive'} ({selectedFilings.length} items)
                   </h3>
 
-                  {recentFilings.length === 0 ? (
+                  {selectedFilings.length === 0 ? (
                     <div className="py-12 text-center text-xs text-slate-400">
                       No stored filings found for this company.
                     </div>
