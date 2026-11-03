@@ -2,6 +2,8 @@ import { getSupabase } from './supabase.js';
 import { isRadarEvent,isRadarUpdate,isRadarEventInScope,type RadarEvent,type RadarUpdate } from '../../src/shared/impactRadar.js';
 import { isRadarReaction,type RadarReaction,type RadarResearch } from '../../src/shared/radarReaction.js';
 import { isRadarSessionMove,type RadarSessionMove } from '../../src/shared/radarMovement.js';
+import { readRadarCompanyContexts } from './radarCompanyContextDao.js';
+import { usableSizeSnapshot } from '../../src/shared/radarMateriality.js';
 const checked=<T>(r:{data:T;error:unknown}):T=>{if(r.error)throw Error('Radar research storage unavailable');return r.data;};
 export interface ReactionCandidate {event:RadarEvent;update:RadarUpdate}
 export async function reactionCandidates(now:number):Promise<{items:ReactionCandidate[];cursor:string;historyCount?:number}> {
@@ -35,10 +37,12 @@ export async function saveReactionCursor(cursor:string,now:number) {
 }
 export async function readRadarResearch(ids:string[],now=Date.now()):Promise<RadarResearch> {
  try {
-  const [raw,patterns]=await Promise.all([
-   ids.length?getSupabase().from('impact_radar_reactions').select('data').in('event_id',ids.slice(0,200)).order('published_at',{ascending:false}).limit(600).abortSignal(AbortSignal.timeout(3000)).then(checked):[],
-   getSupabase().rpc('radar_reaction_patterns',{p_as_of:new Date(now).toISOString()}).abortSignal(AbortSignal.timeout(4000)).then(checked),
-  ]);
-  return {status:'ready',rows:(raw||[]).map((r:any)=>r.data).filter(isRadarReaction),patterns:patterns as any,checkedAt:new Date(now).toISOString()};
+  const raw=ids.length?await getSupabase().from('impact_radar_reactions').select('data').in('event_id',ids.slice(0,200)).order('published_at',{ascending:false}).limit(600).abortSignal(AbortSignal.timeout(3000)).then(checked):[];
+  const base=(raw||[]).map((r:any)=>r.data).filter(isRadarReaction);
+  const contexts=await readRadarCompanyContexts(base.map(r=>r.id));
+  const rows=base.map(r=>{const m=contexts.get(r.id);return m&&m.snapshot.scripCode===r.scripCode&&usableSizeSnapshot(m.snapshot,r.publishedAt,r.sessionDate)?{...r,materiality:m}:r;});
+  const keys=[...new Map(rows.map(r=>{const k={fact:r.fact,scope:r.scope,sourceKind:r.source.kind,sizeBand:r.materiality?.sizeBand||'unknown',exposureBand:r.materiality?.exposureBand||'unknown'};return [JSON.stringify(k),k];})).values()];
+  const patterns=checked(await getSupabase().rpc('radar_volatility_patterns',{p_as_of:new Date(now).toISOString(),p_keys:keys}).abortSignal(AbortSignal.timeout(4000)));
+  return {status:'ready',rows,patterns:patterns as any,checkedAt:new Date(now).toISOString()};
  } catch{return {status:'unavailable',rows:[],patterns:[],checkedAt:new Date(now).toISOString()};}
 }
