@@ -642,11 +642,11 @@ export function CompanyIntelligenceModal({
                           <Clock size={15} className="text-slate-500 shrink-0" />
                           <div className="min-w-0">
                             <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-                              Next Catalyst
+                              {upcoming?.isDeclared ? 'Latest result' : 'Next Catalyst'}
                             </span>
                             {upcoming ? (
                               <p className="font-bold text-slate-900 dark:text-white truncate">
-                                {upcoming.purpose} &bull; <span className="text-emerald-600 dark:text-emerald-400 font-mono">{formatDateOnly(upcoming.meetingDate)}</span> {upcoming.countdownDays !== undefined && upcoming.countdownDays >= 0 ? `(${upcoming.countdownDays === 0 ? 'Today' : `in ${upcoming.countdownDays} days`})` : ''}
+                                {upcoming.purpose} &bull; <span className="text-emerald-600 dark:text-emerald-400 font-mono">{formatDateOnly(upcoming.meetingDate)}</span> {!upcoming.isDeclared && upcoming.countdownDays !== undefined && upcoming.countdownDays >= 0 ? `(${upcoming.countdownDays === 0 ? 'Today' : `in ${upcoming.countdownDays} days`})` : ''}
                               </p>
                             ) : (
                               <p className="text-slate-500 dark:text-slate-400 font-medium">
@@ -658,7 +658,7 @@ export function CompanyIntelligenceModal({
 
                         {upcoming && (
                           <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shrink-0">
-                            Scheduled
+                            {upcoming.isDeclared ? 'Declared' : 'Scheduled'}
                           </span>
                         )}
                       </div>

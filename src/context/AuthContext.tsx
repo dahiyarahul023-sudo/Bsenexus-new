@@ -342,7 +342,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             if (isOwnerAccount) {
               resolvedTier = 'admin';
-              proExpiresAt = now + 365 * 24 * 60 * 60 * 1000;
+              proExpiresAt = Number(data.profile.proExpiresAt || 0);
             } else if (!isGuestUser) {
               // Real authenticated user (Google / Email): the SERVER owns
               // trial state (it mints the 7-day trial durably at session
@@ -364,6 +364,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               photoURL: firebaseUser.photoURL ?? null,
               tier: resolvedTier,
               proExpiresAt: proExpiresAt,
+              subscriptionAccess: data.profile.subscriptionAccess,
               // HARD RULE: payment markers must survive into the client profile —
               // a paid user is NEVER labelled "Trial". (Server is source of truth.)
               lastPaymentAt: (data.profile as any)?.lastPaymentAt || null,
@@ -402,7 +403,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             username: resolvedUsername,
             photoURL: firebaseUser.photoURL || null,
             tier: 'admin',
-            proExpiresAt: now + 365 * 24 * 60 * 60 * 1000,
+            proExpiresAt: 0,
             telegramChatId: savedLocalTgChatId || null,
             telegramUsername: savedLocalTgUsername || null,
             notificationPreferences: defaultNotificationPreferences,
@@ -1352,7 +1353,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isAdmin = Boolean((adminUnlocked || isOwner) && (isOwner || profile?.tier === 'admin' || user?.isAdmin));
 
   const now = useExpiryClock(profile?.proExpiresAt, user?.uid);
-  const proDaysLeft = profile?.proExpiresAt 
+  const proDaysLeft = !isOwner && !isAdmin && profile?.proExpiresAt
     ? Math.max(0, Math.ceil((profile.proExpiresAt - now) / (24 * 60 * 60 * 1000)))
     : 0;
 

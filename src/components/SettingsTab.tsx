@@ -995,7 +995,7 @@ export function SettingsTab({
     },
     {
       id: 'subscription', title: 'Subscription & Billing',
-      subtitle: isPro && profile?.subscriptionAccess?.source === 'gift' ? `Gift Pro · ${proDaysLeft}d left` : isPaidProActive
+      subtitle: isOwner || isAdmin ? 'Administrator access · no expiry' : isPro && profile?.subscriptionAccess?.source === 'gift' ? `Gift Pro · ${proDaysLeft}d left` : isPaidProActive
         ? (proDaysLeft > 0 ? `Pro active · ${proDaysLeft}d left` : 'Pro active · plans & payments')
         : isPro
           ? (proDaysLeft > 0 ? `Pro Trial · ${proDaysLeft}d left` : 'Pro Trial')

@@ -8,6 +8,8 @@
 
 # Frontend strategy and evidence-based priorities
 
+2026-11-03 approved live audit implementation starts with the bounded status section: administrator billing without fabricated expiry/trial, distinct retryable inbox failures, and declared Company Hub results. Changes are read/display-only; payment grants, pricing, result evidence and delivery policy remain unchanged. Source/tests/build and publication are recorded separately in changes/ux-status-consistency.md. UX_IMPLEMENTATION_PLAN.md owns the remaining cohesive batches; F02's production request failure is not declared repaired by UI recovery alone.
+
 28 October source alignment: changes/studio-source-alignment.md migrates Studio feature/runtime source into Bsenexus-new-orig, retaining canonical audit fixes. HTML API 200 responses are typed failures; disabled Gift access is a configuration conflict. Private preview verification is left to the user; migrations, sender checks and publication remain separate gates.
 
 2026-10-25 follow-up: eager animation components use m with main-owned LazyMotion/domAnimation; full-motion dynamic screens remain separate. Canvas curve points are reused with identical drawing-command evidence. Calendar Telegram uses current Indian-day eligibility and a separate service-only code/day ledger across restarts; legacy cutover and uncertain outcomes do not replay automatically. See changes/performance-calendar-followup.md for validation and publication boundaries.

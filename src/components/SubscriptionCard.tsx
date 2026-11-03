@@ -12,6 +12,7 @@ import { SubscriptionProgress } from './SubscriptionProgress';
 import { usePaymentDialog } from '../hooks/usePaymentDialog';
 import '../styles/payment.css';
 import { PaymentHistory } from './PaymentHistory';
+import { subscriptionPresentation } from '../utils/subscriptionPresentation';
 
 interface SubStatus {
   configured: boolean;
@@ -38,12 +39,13 @@ function fmtDate(ts: number | null): string {
   }
 }
 
-function fmtINR(paise: number): string {
-  return '₹' + (paise / 100).toLocaleString('en-IN');
+export function SubscriptionCard() {
+  const { user } = useAuth();
+  return <SubscriptionCardContent key={user?.uid || 'guest'} />;
 }
 
-export function SubscriptionCard() {
-  const { user, refreshProfile, openCheckout, setReceipt, profileUnavailable: authProfileUnavailable } = useAuth();
+function SubscriptionCardContent() {
+  const { user, refreshProfile, openCheckout, setReceipt, profileUnavailable: authProfileUnavailable, isAdmin, isOwner } = useAuth();
   const [status, setStatus] = useState<SubStatus | null>(null);
   const [loading, setLoading] = useState(true);
   // Distinct from loading: the server positively could not confirm
@@ -114,7 +116,8 @@ export function SubscriptionCard() {
 
   // Effective unavailable signal: this card's own status fetch OR the
   // app-wide auth profile state. Either way: retry UI, never Free.
-  const showUnavailable = unavailable || authProfileUnavailable;
+  const showUnavailable = unavailable || authProfileUnavailable || (!loading && !status);
+  const view = status ? subscriptionPresentation(status, isAdmin || isOwner) : null;
 
   const handleRetry = () => {
     if (loading) return;
@@ -188,9 +191,9 @@ export function SubscriptionCard() {
           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500">Loading…</span>
         ) : showUnavailable ? (
           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 flex items-center gap-1">
-            Unavailable — retrying
+            Status unavailable
           </span>
-        ) : status?.isPro ? (
+        ) : view?.active ? (
           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
             <BadgeCheck className="w-3 h-3" /> Pro Active
           </span>
@@ -202,7 +205,7 @@ export function SubscriptionCard() {
       {!loading && showUnavailable && (
         <div className="mb-4 py-3 px-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl">
           <p className="text-[11px] font-semibold text-amber-700 dark:text-amber-300">
-            Subscription status is temporarily unavailable. Your Pro access is safe — please retry in a moment.
+            Subscription status could not be confirmed. Please retry; your payment records have not been changed.
           </p>
           <button
             onClick={handleRetry}
@@ -214,8 +217,8 @@ export function SubscriptionCard() {
         </div>
       )}
 
-      {!loading && !showUnavailable && status?.isPro && (
-        <SubscriptionProgress expiry={status.proExpiresAt} days={status.subscriptionAccess?.source === 'gift' ? status.subscriptionAccess.gift!.validityDays : status.lastPaymentAt ? status.plan.validityDays : 7} paidAt={status.subscriptionAccess?.source === 'gift' ? status.subscriptionAccess.gift!.activatedAt : status.lastPaymentAt} />
+      {!loading && !showUnavailable && view?.showProgress && (
+        <SubscriptionProgress expiry={view.expiry} days={view.days} paidAt={view.startedAt} />
       )}
 
       {!loading && !showUnavailable && status && (
@@ -223,15 +226,13 @@ export function SubscriptionCard() {
           <div className="payment-billing-row">
             <span className="text-slate-500 dark:text-slate-400">Plan</span>
             <span className="font-semibold text-slate-900 dark:text-white">
-              {status.subscriptionAccess?.source === 'gift' ? `Gift Pro — ${status.subscriptionAccess.gift!.validityDays} days · Complimentary` : status.lastPaymentAt
-                ? `${status.plan.label} — ${fmtINR(status.plan.amountPaise)} · ${status.plan.validityDays} days (one-time)`
-                : status.isPro ? 'Pro Trial — 7-day free trial' : 'Free plan'}
+              {view?.planLabel}
             </span>
           </div>
           <div className="payment-billing-row">
             <span className="text-slate-500 dark:text-slate-400">Valid until</span>
             <span className="font-semibold text-slate-900 dark:text-white">
-              {status.isPro ? fmtDate(status.proExpiresAt) : '—'}
+              {view?.source === 'admin' ? 'No expiry' : view?.active ? fmtDate(view.expiry) : '—'}
             </span>
           </div>
           <div className="payment-billing-row">
@@ -263,7 +264,7 @@ export function SubscriptionCard() {
       )}
 
       {status?.subscriptionAccess?.gift && status.subscriptionAccess.source !== 'gift' && <p className="text-xs mb-4">Gift access: {status.subscriptionAccess.gift.validityDays} days, valid until {fmtDate(status.subscriptionAccess.gift.expiresAt)}. Runs alongside your existing access.</p>}
-      {error && (
+      {error && !showUnavailable && (
         <div className="mb-3 py-2.5 px-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-[11px] font-semibold rounded-xl">
           {error}
         </div>
@@ -279,8 +280,8 @@ export function SubscriptionCard() {
           <span>
             {!status?.configured
               ? 'Payments coming online…'
-              : status?.isPro && status?.lastPaymentAt
-                ? 'Extend Pro'
+              : view?.action
+                ? view.action
                 : `Upgrade to Pro — from ₹${getLowestPlanPrice()}`}
           </span>
         </button>
