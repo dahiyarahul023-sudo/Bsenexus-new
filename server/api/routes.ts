@@ -74,10 +74,11 @@ import {
   isUsernameAvailable, 
   generateUniqueUsername,
   claimFreeSummaryDemo,
-  releaseFreeSummaryDemo
+  releaseFreeSummaryDemo,
+  isAdminEmail
 } from "../database/usersDao.js";
 import { getAllAlertRules, saveAlertRule, saveAlertPresets, toggleAlertRule, deleteAlertRule, AlertRuleError } from "../database/alertRulesDao.js";
-import { checkServerAiQuota, consumeServerAiQuota, checkAndConsumeServerAiQuota, refundServerAiQuota, completeServerAiQuotaReservation, getServerAiQuotaStatus, resetServerAiQuota } from "../services/aiQuotaService.js";
+import { checkServerAiQuota, consumeServerAiQuota, checkAndConsumeServerAiQuota, refundServerAiQuota, completeServerAiQuotaReservation, getServerAiQuotaStatus, resetServerAiQuota, resetAllServerAiQuotas, resetUserAiQuota } from "../services/aiQuotaService.js";
 import { getTodayUsage, quotaConsumedPct } from "../services/ai/providerQuotaLedger.js";
 import { MODEL_REGISTRY, TASK_CHAINS, providerKeyPresent } from "../services/ai/modelRegistry.js";
 import { verifyAllModels } from "../services/ai/verifyModels.js";
@@ -609,7 +610,8 @@ apiRouter.post("/announcements/refresh", requireAuth, aiRateLimiter, async (_req
 
 apiRouter.get("/billing/quota", async (req, res) => {
   const uid = getReqUserId(req);
-  const isAdminUser = (req as any).user?.isAdmin === true;
+  const user = (req as any).user;
+  const isAdminUser = user?.isAdmin === true || user?.isOwner === true || isAdminEmail(user?.email);
   try {
     const status = await getServerAiQuotaStatus(uid, isAdminUser);
     res.json(status);
@@ -618,12 +620,35 @@ apiRouter.get("/billing/quota", async (req, res) => {
 
 apiRouter.post("/billing/reset-quota", requireAdmin, async (req, res) => {
   try {
-    const uid = getReqUserId(req);
-    await resetServerAiQuota(uid);
-    const status = await getServerAiQuotaStatus(uid, true);
-    await addLog('INFO', 'AI_QUOTA', `AI summary quota reset for user ${uid}`);
-    res.json({ success: true, message: "AI Quota reset successfully", status });
-  } catch { res.status(503).json({ success: false, error: "AI usage storage is unavailable. Please retry shortly." }); }
+    const callerUid = getReqUserId(req);
+    const { target, uid, email } = req.body || {};
+
+    if (target === 'all') {
+      const result = await resetAllServerAiQuotas();
+      await addLog('INFO', 'AI_QUOTA', `Admin ${callerUid} reset AI quota for ALL users (${result.resetCount} entries cleared)`);
+      return res.json({
+        success: true,
+        message: `Successfully reset AI quota for ALL users (${result.resetCount} records cleared).`,
+        resetCount: result.resetCount
+      });
+    }
+
+    const targetIdentifier = (uid || email || (target === 'self' || !target ? callerUid : target)).trim();
+    const result = await resetUserAiQuota(targetIdentifier);
+    await addLog('INFO', 'AI_QUOTA', `AI summary quota reset for user ${result.uid}${result.email ? ` (${result.email})` : ''} by admin ${callerUid}`);
+
+    const status = await getServerAiQuotaStatus(callerUid, true);
+    res.json({
+      success: true,
+      message: `AI Quota reset successfully for ${result.email || result.uid}${result.clearedDemo ? ' (including free demo status)' : ''}.`,
+      targetUid: result.uid,
+      targetEmail: result.email,
+      clearedDemo: result.clearedDemo,
+      status
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err?.message || "Failed to reset AI quota." });
+  }
 });
 
 apiRouter.post("/announcements/:id/generate-summary", requireAuth, aiRateLimiter, async (req, res) => {
@@ -636,7 +661,8 @@ apiRouter.post("/announcements/:id/generate-summary", requireAuth, aiRateLimiter
   let consumed: { remaining: number; dailyLimit: number; isPro: boolean } = { remaining: 0, dailyLimit: 0, isPro: false };
   try {
     uid = getReqUserId(req);
-    isAdminUser = (req as any).user?.isAdmin === true;
+    const user = (req as any).user;
+    isAdminUser = user?.isAdmin === true || user?.isOwner === true || isAdminEmail(user?.email);
 
     // Reject unauthenticated guests immediately to safeguard Gemini API
     if (!uid || uid === 'guest' || uid.startsWith('guest_') || uid.startsWith('trader_')) {
@@ -2237,7 +2263,8 @@ apiRouter.all("/company-intel/:identifier/ai-overview", requireProOrAdmin, aiRat
   let quotaReservationId: string | undefined;
   try {
     uid = getReqUserId(req);
-    isAdminUser = (req as any).user?.isAdmin === true;
+    const user = (req as any).user;
+    isAdminUser = user?.isAdmin === true || user?.isOwner === true || isAdminEmail(user?.email);
 
     // LOGIC-002 fix (1 Oct 2026 audit): Atomically check+consume BEFORE generation.
     // Previously used check-then-generate-then-consume which had a race where

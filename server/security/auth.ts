@@ -5,7 +5,7 @@ import { getSettings, saveAdminPinHash } from '../database/settingsDao.js';
 import { verifyAndMigrateAdminPin } from './adminPin.js';
 import { addLog } from '../database/logDao.js';
 import { getFirebaseAuth, getFirebaseAppCheck } from './firebaseAdmin.js';
-import { getUserProfile, claimTrialAtomically } from '../database/usersDao.js';
+import { getUserProfile, claimTrialAtomically, isAdminEmail, ADMIN_EMAILS } from '../database/usersDao.js';
 import { getAccessProfile } from '../services/subscriptionAccess.js';
 import { reconcilePaymentEntitlement } from '../database/paymentEntitlementsDao.js';
 import { isPaymentStoreUnavailable } from '../database/paymentStore.js';
@@ -127,7 +127,7 @@ export const authMiddleware = async (req: express.Request, _res: express.Respons
         if (!hasTrustedSessionRoles(decoded, ADMIN_EMAIL)) {
           throw new Error('Privileged session requires a verified owner email. Sign in again.');
         }
-        (req as any).user = { ...decoded, isAdmin: decoded.emailVerified === true && decoded.email?.toLowerCase() === ADMIN_EMAIL && Number(decoded.adminElevatedUntil || 0) > Date.now() };
+        (req as any).user = { ...decoded, isAdmin: decoded.emailVerified === true && isAdminEmail(decoded.email) && Number(decoded.adminElevatedUntil || 0) > Date.now() };
         return next();
       } catch (jwtErr) {
         // If not signed by local JWT_SECRET, verify as Firebase ID Token
@@ -236,7 +236,7 @@ export const requireAuth = (req: express.Request, res: express.Response, next: e
 // Resilient Admin Authorization Guard (Checks verified JWT or verified Owner session)
 export const requireAdmin = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
   const user = (req as any).user;
-  if (user && !user.isAnonymous && user.emailVerified === true && user.email?.toLowerCase() === ADMIN_EMAIL && Number(user.adminElevatedUntil || 0) > Date.now()) {
+  if (user && !user.isAnonymous && user.emailVerified === true && isAdminEmail(user.email) && Number(user.adminElevatedUntil || 0) > Date.now()) {
     return next();
   }
 
@@ -258,7 +258,7 @@ export const requireProOrAdmin = async (req: express.Request, res: express.Respo
     });
   }
 
-  if (user.isAdmin || (user.isOwner && !user.isAnonymous && user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase())) {
+  if (user.isAdmin || (user.isOwner && !user.isAnonymous && isAdminEmail(user.email))) {
     return next();
   }
 
@@ -515,7 +515,7 @@ authRouter.post('/login', authRateLimiter, requireAppCheck, authAttempt(async (r
   // Strict Security Rule: Standalone PIN login without prior Administrator authentication is blocked.
   // Attackers cannot guess or brute-force PINs without authenticating with the Admin Google/Email account first.
   const currentUser = (req as any).user;
-  const isAuthorizedAdmin = currentUser && !currentUser.isAnonymous && currentUser.emailVerified === true && currentUser.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+  const isAuthorizedAdmin = currentUser && !currentUser.isAnonymous && currentUser.emailVerified === true && isAdminEmail(currentUser.email);
 
   if (!isAuthorizedAdmin) {
     await simulateCredentialVerificationDelay();
@@ -596,7 +596,7 @@ authRouter.post('/login', authRateLimiter, requireAppCheck, authAttempt(async (r
       return res.status(401).json({ success: false, error: "PIN entry requires prior Firebase authentication." });
     }
     const token = jwt.sign(
-      { auth: true, isAdmin: true, uid: elevatedUid, rawUid: elevatedUid, email: ADMIN_EMAIL, emailVerified: true, isOwner: true, adminElevatedUntil: Date.now() + 15 * 60 * 1000 },
+      { auth: true, isAdmin: true, uid: elevatedUid, rawUid: elevatedUid, email: currentUser.email || ADMIN_EMAIL, emailVerified: true, isOwner: true, adminElevatedUntil: Date.now() + 15 * 60 * 1000 },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -635,7 +635,7 @@ authRouter.post('/verify-pin', authRateLimiter, requireAppCheck, authAttempt(asy
 
   // Strict Security Rule: User must be signed in with the authorized Administrator account
   const currentUser = (req as any).user;
-  const isAuthorizedAdmin = currentUser && !currentUser.isAnonymous && currentUser.emailVerified === true && currentUser.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+  const isAuthorizedAdmin = currentUser && !currentUser.isAnonymous && currentUser.emailVerified === true && isAdminEmail(currentUser.email);
 
   if (!isAuthorizedAdmin) {
     await simulateCredentialVerificationDelay();
@@ -711,7 +711,7 @@ authRouter.post('/verify-pin', authRateLimiter, requireAppCheck, authAttempt(asy
       return res.status(401).json({ success: false, error: "PIN entry requires prior Firebase authentication." });
     }
     const token = jwt.sign(
-      { auth: true, isAdmin: true, uid: elevatedUid, rawUid: elevatedUid, email: ADMIN_EMAIL, emailVerified: true, isOwner: true, adminElevatedUntil: Date.now() + 15 * 60 * 1000 },
+      { auth: true, isAdmin: true, uid: elevatedUid, rawUid: elevatedUid, email: currentUser.email || ADMIN_EMAIL, emailVerified: true, isOwner: true, adminElevatedUntil: Date.now() + 15 * 60 * 1000 },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -769,7 +769,7 @@ authRouter.get('/status', async (req, res) => {
       isAuthenticated: true, 
       hasPin, 
       user: decoded, 
-      isAdmin: decoded.emailVerified === true && decoded.email?.toLowerCase() === ADMIN_EMAIL && Number(decoded.adminElevatedUntil || 0) > Date.now()
+      isAdmin: decoded.emailVerified === true && isAdminEmail(decoded.email) && Number(decoded.adminElevatedUntil || 0) > Date.now()
     });
   } catch (e) {
     res.json({ 

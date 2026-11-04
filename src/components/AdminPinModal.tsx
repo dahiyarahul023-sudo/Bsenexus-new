@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, KeyRound, ShieldCheck, AlertCircle, Lock } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, isAdminEmail } from '../context/AuthContext';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { ActionButton } from './ui/ActionButton';
 
@@ -19,10 +19,9 @@ export function AdminPinModal() {
   const [error, setError] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
 
-  const ADMIN_EMAIL = 'dahiyarahul023@gmail.com';
   const isAdminUser = !user?.isAnonymous && (
-    user?.email?.toLowerCase() === ADMIN_EMAIL ||
-    profile?.email?.toLowerCase() === ADMIN_EMAIL
+    isAdminEmail(user?.email) ||
+    isAdminEmail(profile?.email)
   );
 
   if (!isAdminPinModalOpen || !isAdminUser) return null;

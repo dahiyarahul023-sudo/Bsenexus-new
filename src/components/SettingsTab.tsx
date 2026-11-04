@@ -227,6 +227,33 @@ export function SettingsTab({
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [supportModalOpen, setSupportModalOpen] = useState(false);
 
+  // Admin AI Quota Reset State
+  const [isResettingAllQuotas, setIsResettingAllQuotas] = useState(false);
+  const [resetAllQuotaFeedback, setResetAllQuotaFeedback] = useState<string | null>(null);
+
+  const handleResetAllQuotas = async () => {
+    setIsResettingAllQuotas(true);
+    setResetAllQuotaFeedback(null);
+    try {
+      const res = await customFetch('/api/billing/reset-quota', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target: 'all' })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setResetAllQuotaFeedback(data.message || 'All daily AI quotas reset successfully.');
+        window.dispatchEvent(new Event('bse_ai_quota_refresh'));
+      } else {
+        setResetAllQuotaFeedback(data.error || 'Failed to reset quota.');
+      }
+    } catch (e: any) {
+      setResetAllQuotaFeedback(e?.message || 'Error communicating with server.');
+    } finally {
+      setIsResettingAllQuotas(false);
+    }
+  };
+
   // Lock body scroll whenever settings modal/drawer is open
   useBodyScrollLock(Boolean(activeSheet || showClearConfirm || showDeleteAccountConfirm));
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
@@ -3228,6 +3255,39 @@ export function SettingsTab({
                     {geminiTestFeedback && (
                       <div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-950/60 text-purple-800 dark:text-purple-200 text-[11px] border border-purple-200 dark:border-purple-800">
                         {geminiTestFeedback}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* AI Summary Daily Quota Reset (Admin Only) */}
+                  <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-[#252236]">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <label className="font-bold text-slate-800 dark:text-slate-200 text-xs flex items-center gap-1.5">
+                          <RotateCcw size={13} className="text-purple-500" />
+                          AI Daily Quotas (Fair-Use Reset)
+                        </label>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                          Admin accounts are unlimited. Clear daily fair-use limits for all regular users.
+                        </p>
+                      </div>
+                      <ActionButton
+                        type="button"
+                        onClick={handleResetAllQuotas}
+                        isLoading={isResettingAllQuotas}
+                        loadingText="Resetting..."
+                        variant="secondary"
+                        size="xs"
+                        icon={<RotateCcw size={11} className="text-purple-500" />}
+                      >
+                        Reset All Quotas
+                      </ActionButton>
+                    </div>
+
+                    {resetAllQuotaFeedback && (
+                      <div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-950/60 text-purple-800 dark:text-purple-200 text-[11px] border border-purple-200 dark:border-purple-800 flex items-center gap-1.5">
+                        <CheckCircle2 size={13} className="text-purple-600 shrink-0" />
+                        <span>{resetAllQuotaFeedback}</span>
                       </div>
                     )}
                   </div>

@@ -66,6 +66,12 @@ const USER_CACHE_TTL_MS = 2500; // Fast cache invalidation for fresh Firestore r
 // through instantly. Per-UID profile reads keep the short TTL above.
 const ALL_USERS_LIST_CACHE_TTL_MS = 5 * 60 * 1000;
 export const ADMIN_EMAIL = 'dahiyarahul023@gmail.com';
+export const ADMIN_EMAILS = new Set(['dahiyarahul023@gmail.com', 'rahrohdah@gmail.com']);
+
+export function isAdminEmail(email?: string | null): boolean {
+  if (!email || typeof email !== 'string') return false;
+  return ADMIN_EMAILS.has(email.trim().toLowerCase());
+}
 
 // Strictly reserved system and staff handles that regular users cannot claim
 export const RESERVED_USERNAMES = new Set([
@@ -224,7 +230,7 @@ export async function isUsernameAvailable(
     return { available: false, cleanUsername: clean, reason: 'Username cannot exceed 25 characters.' };
   }
 
-  const isOwner = userEmail?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+  const isOwner = isAdminEmail(userEmail);
 
   // Check reserved names
   if (RESERVED_USERNAMES.has(clean) && !isOwner) {
@@ -304,7 +310,7 @@ export async function cleanAndDeduplicateAllUsernames(): Promise<{ cleanedCount:
 
     // 1. First Pass: Register Admin/Owner handles so they are given absolute priority
     for (const u of allUsers) {
-      const isOwner = u.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+      const isOwner = isAdminEmail(u.email);
       if (isOwner && u.username) {
         const clean = sanitizeUsername(u.username);
         seenUsernames.set(clean, u.uid);
@@ -313,7 +319,7 @@ export async function cleanAndDeduplicateAllUsernames(): Promise<{ cleanedCount:
 
     // 2. Second Pass: Verify all other users and fix collisions
     for (const u of allUsers) {
-      const isOwner = u.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+      const isOwner = isAdminEmail(u.email);
       if (isOwner) continue; // Admin is untouched
 
       let currentUsername = sanitizeUsername(u.username || (u.email ? u.email.split('@')[0] : 'trader'));

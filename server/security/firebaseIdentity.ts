@@ -6,6 +6,14 @@ export interface FirebaseIdentity {
   isOwner: boolean;
 }
 
+const KNOWN_ADMIN_EMAILS = new Set(['dahiyarahul023@gmail.com', 'rahrohdah@gmail.com']);
+
+function isRecognizedOwner(email: string, ownerEmail?: string): boolean {
+  const normalized = email.trim().toLowerCase();
+  if (ownerEmail && normalized === ownerEmail.trim().toLowerCase()) return true;
+  return KNOWN_ADMIN_EMAILS.has(normalized);
+}
+
 // Accept only claims from an ID token already verified by the Admin SDK.
 // Request-body identity and a previous user's cookie must never grant roles.
 export function getFirebaseIdentity(claims: any, ownerEmail: string): FirebaseIdentity | null {
@@ -21,7 +29,7 @@ export function getFirebaseIdentity(claims: any, ownerEmail: string): FirebaseId
     email,
     displayName: typeof claims.name === 'string' ? claims.name : '',
     emailVerified,
-    isOwner: emailVerified && email === ownerEmail.toLowerCase(),
+    isOwner: emailVerified && isRecognizedOwner(email, ownerEmail),
   };
 }
 
@@ -32,5 +40,5 @@ export function hasTrustedSessionRoles(claims: any, ownerEmail: string): boolean
   if (!claims?.isOwner && !claims?.isAdmin) return true;
   return claims.emailVerified === true &&
     typeof claims.email === 'string' &&
-    claims.email.toLowerCase() === ownerEmail.toLowerCase();
+    isRecognizedOwner(claims.email, ownerEmail);
 }

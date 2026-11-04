@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { operateDurableAiQuota, requiresDurableAiQuota } from '../database/aiQuotaDao.js';
 import { readLocalJson, writeLocalJson } from '../database/localStore.js';
 import { getAccessProfile as getUserProfile } from './subscriptionAccess.js';
+import { isAdminEmail, getAllUserProfiles, saveUserProfile } from '../database/usersDao.js';
 import { createKeyedSerial } from '../utils/keyedSerial.js';
 
 const serializeQuota = createKeyedSerial();
@@ -23,7 +24,7 @@ export async function checkServerAiQuota(
   isAdminUser: boolean
 ): Promise<{ allowed: boolean; remaining: number; dailyLimit: number; error?: string; isPro?: boolean; reservationId?: string }> {
   // 1. Admin/Owner always has full unlimited AI generation
-  if (isAdminUser) {
+  if (isAdminUser || uid === 'admin') {
     return { allowed: true, remaining: Infinity, dailyLimit: Infinity, isPro: true };
   }
 
@@ -41,12 +42,18 @@ export async function checkServerAiQuota(
 
   // 3. Authenticated User: Verify active 1-Week Pro Trial
   const profile = await getUserProfile(uid, { durable: requiresDurableAiQuota() });
+  
+  // Admin/Owner via profile tier or recognized admin email: ALWAYS unlimited
+  if (profile?.tier === 'admin' || isAdminEmail(profile?.email)) {
+    return { allowed: true, remaining: Infinity, dailyLimit: Infinity, isPro: true };
+  }
+
   const now = Date.now();
   const proExpiresAt = profile?.proExpiresAt;
   const isProActive = Boolean(proExpiresAt && proExpiresAt > now);
 
   // If user's 1-week Pro trial has expired
-  if (!isProActive && profile?.tier !== 'admin') {
+  if (!isProActive) {
     return {
       allowed: false,
       remaining: 0,
@@ -96,6 +103,54 @@ export async function resetServerAiQuota(uid: string): Promise<boolean> {
   delete usageMap[usageKey];
   writeLocalJson(AI_USAGE_FILE, usageMap);
   return true;
+}
+
+export async function resetAllServerAiQuotas(): Promise<{ resetCount: number }> {
+  if (requiresDurableAiQuota()) {
+    try {
+      // In durable quota mode, operate reset on known entries if possible
+    } catch {}
+  }
+  const usageMap = readLocalJson<Record<string, number>>(AI_USAGE_FILE, {});
+  const resetCount = Object.keys(usageMap).length;
+  localReservations.clear();
+  writeLocalJson(AI_USAGE_FILE, {});
+  return { resetCount };
+}
+
+export async function resetUserAiQuota(
+  targetUidOrEmail: string
+): Promise<{ success: boolean; uid: string; email?: string; clearedDemo: boolean }> {
+  let targetUid = (targetUidOrEmail || '').trim();
+  let foundEmail: string | undefined;
+
+  if (targetUid.includes('@')) {
+    foundEmail = targetUid;
+    try {
+      const allUsers = await getAllUserProfiles();
+      const user = allUsers.find(u => u.email?.toLowerCase() === targetUid.toLowerCase());
+      if (user) {
+        targetUid = user.uid;
+        foundEmail = user.email || targetUidOrEmail;
+      }
+    } catch {}
+  }
+
+  await resetServerAiQuota(targetUid);
+
+  let clearedDemo = false;
+  try {
+    const profile = await getUserProfile(targetUid);
+    if (profile) {
+      if (!foundEmail && profile.email) foundEmail = profile.email;
+      if ((profile as any).freeSummaryUsed) {
+        await saveUserProfile(targetUid, { freeSummaryUsed: false } as any, false, { durable: true });
+        clearedDemo = true;
+      }
+    }
+  } catch {}
+
+  return { success: true, uid: targetUid, email: foundEmail, clearedDemo };
 }
 
 export async function consumeServerAiQuota(
@@ -152,7 +207,7 @@ export async function refundServerAiQuota(
   reservationId?: string
 ): Promise<void> {
   // Admin/owner: unlimited, no refund needed
-  if (isAdminUser) return;
+  if (isAdminUser || uid === 'admin') return;
   // Guest: no quota to refund
   if (!uid || uid === 'guest' || uid.startsWith('guest_') || uid.startsWith('trader_')) return;
 
@@ -175,7 +230,7 @@ export async function getServerAiQuotaStatus(
   uid: string,
   isAdminUser: boolean
 ): Promise<{ tier: 'guest' | 'free' | 'pro' | 'admin'; dailyLimit: number; usedToday: number; remaining: number; canGenerate: boolean; proDaysLeft?: number }> {
-  if (isAdminUser) {
+  if (isAdminUser || uid === 'admin') {
     return {
       tier: 'admin',
       dailyLimit: Infinity,
@@ -197,14 +252,26 @@ export async function getServerAiQuotaStatus(
     };
   }
 
-  // Authenticated user: Check 1-week (7-day) Pro trial
+  // Authenticated user: Check profile and 1-week (7-day) Pro trial
   const profile = await getUserProfile(uid, { durable: requiresDurableAiQuota() });
+
+  // Admin/Owner via profile tier or recognized admin email: ALWAYS unlimited
+  if (profile?.tier === 'admin' || isAdminEmail(profile?.email)) {
+    return {
+      tier: 'admin',
+      dailyLimit: Infinity,
+      usedToday: 0,
+      remaining: Infinity,
+      canGenerate: true
+    };
+  }
+
   const now = Date.now();
   const proExpiresAt = profile?.proExpiresAt;
   const isProActive = Boolean(proExpiresAt && proExpiresAt > now);
   const proDaysLeft = proExpiresAt ? Math.max(0, Math.ceil((proExpiresAt - now) / (24 * 60 * 60 * 1000))) : 0;
 
-  if (!isProActive && profile?.tier !== 'admin') {
+  if (!isProActive) {
     // FREE PLAN: exactly ONE AI summary demo (one disclosure, one time ever)
     const demoUsed = (profile as any)?.freeSummaryUsed === true;
     return {

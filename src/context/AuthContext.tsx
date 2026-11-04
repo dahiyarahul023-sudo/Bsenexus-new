@@ -28,7 +28,13 @@ import { recoverPendingPayments } from '../utils/cashfree';
 // the ones that are PAID (safety net for a missed webhook / return-verify).
 const paymentRecoverAttempted = new Set<string>();
 
-const ADMIN_EMAIL = 'dahiyarahul023@gmail.com';
+export const ADMIN_EMAIL = 'dahiyarahul023@gmail.com';
+export const ADMIN_EMAILS = new Set(['dahiyarahul023@gmail.com', 'rahrohdah@gmail.com']);
+
+export function isAdminEmail(email?: string | null): boolean {
+  if (!email || typeof email !== 'string') return false;
+  return ADMIN_EMAILS.has(email.trim().toLowerCase());
+}
 const STORAGE_SESSION_KEY = 'bse_nexus_auth_session';
 
 const defaultNotificationPreferences: UserNotificationPreferences = {
@@ -262,7 +268,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const uid = firebaseUser.uid;
-      const isEmailAdmin = firebaseUser.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+      const isEmailAdmin = isAdminEmail(firebaseUser.email);
       const savedLocalUsername = typeof window !== 'undefined' ? localStorage.getItem(`bse_user_handle_${uid}`) : null;
       const savedLocalTgChatId = typeof window !== 'undefined' ? localStorage.getItem(`bse_user_tg_chat_id_${uid}`) : null;
       const savedLocalTgUsername = typeof window !== 'undefined' ? localStorage.getItem(`bse_user_tg_username_${uid}`) : null;
@@ -277,7 +283,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       );
 
       const isOwnerAccount = Boolean(
-        firebaseUser.email && firebaseUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()
+        firebaseUser.email && isAdminEmail(firebaseUser.email)
       );
 
       // Extract fresh Firebase ID token (no force) and sync session with backend for authenticated users
@@ -607,7 +613,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (result && result.user) {
         await syncUserProfile(result.user);
         setIsAuthModalOpen(false);
-        if (result.user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+        if (isAdminEmail(result.user.email)) {
           setAdminUnlocked(true);
         }
         return { success: true };
@@ -751,7 +757,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (res.user) {
         await syncUserProfile(res.user);
         setIsAuthModalOpen(false);
-        if (trimmedEmail === ADMIN_EMAIL.toLowerCase()) {
+        if (isAdminEmail(trimmedEmail)) {
           setIsAdminPinModalOpen(true);
         }
         return { success: true };
@@ -1347,7 +1353,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   },[user?.uid,user?.isAnonymous]);
 
   const isOwner = Boolean(
-    user && user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()
+    user && isAdminEmail(user.email)
   );
 
   const isAdmin = Boolean((adminUnlocked || isOwner) && (isOwner || profile?.tier === 'admin' || user?.isAdmin));

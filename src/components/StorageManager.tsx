@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Database, HardDrive, ShieldCheck, Trash2, Send, 
   RefreshCw, CheckCircle2, AlertTriangle, AlertOctagon, 
-  Sparkles, Layers, ListFilter, FileText, Info
+  Sparkles, Layers, ListFilter, FileText, Info, RotateCcw, User, UserCheck
 } from 'lucide-react';
 import { customFetch } from '../api';
 import { ConfirmModal } from './ui/ConfirmModal';
@@ -59,6 +59,44 @@ export function StorageManager({ onRefresh }: { onRefresh?: () => void } = {}) {
   const [isPruning, setIsPruning] = useState<boolean>(false);
   const [showPruneConfirm, setShowPruneConfirm] = useState<boolean>(false);
   const [pruneResult, setPruneResult] = useState<{ success: boolean; msg: string } | null>(null);
+
+  // AI Quota Management State
+  const [targetUserInput, setTargetUserInput] = useState('');
+  const [isResettingQuota, setIsResettingQuota] = useState(false);
+  const [quotaResetFeedback, setQuotaResetFeedback] = useState<{ success: boolean; msg: string } | null>(null);
+
+  const handleResetAiQuota = async (target: 'all' | 'user') => {
+    setIsResettingQuota(true);
+    setQuotaResetFeedback(null);
+    try {
+      const payload: any = { target };
+      if (target === 'user') {
+        if (!targetUserInput.trim()) {
+          setQuotaResetFeedback({ success: false, msg: 'Please enter a valid User ID or Email.' });
+          setIsResettingQuota(false);
+          return;
+        }
+        payload.uid = targetUserInput.trim();
+      }
+      const res = await customFetch('/api/billing/reset-quota', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.success) {
+        setQuotaResetFeedback({ success: true, msg: data.message || 'AI quota reset successfully.' });
+        if (target === 'user') setTargetUserInput('');
+        window.dispatchEvent(new Event('bse_ai_quota_refresh'));
+      } else {
+        setQuotaResetFeedback({ success: false, msg: data.error || 'Failed to reset quota.' });
+      }
+    } catch (err: any) {
+      setQuotaResetFeedback({ success: false, msg: err?.message || 'Error communicating with server.' });
+    } finally {
+      setIsResettingQuota(false);
+    }
+  };
 
   const checkPinStatus = async () => {
     try {
@@ -617,6 +655,68 @@ export function StorageManager({ onRefresh }: { onRefresh?: () => void } = {}) {
             <span>{pruneResult.msg}</span>
           </div>
         )}
+      </div>
+
+      {/* AI Summary Quota Reset & Fair-Use Management */}
+      <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 space-y-3">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div>
+            <h4 className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-purple-500" />
+              <span>AI Summary Quota Reset &amp; Fair-Use Management</span>
+            </h4>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+              Reset daily fair-use limits for all users or re-enable quota for a specific user ID / Email. Admin accounts enjoy unlimited synthesis with no daily cap.
+            </p>
+          </div>
+          <ActionButton
+            onClick={() => handleResetAiQuota('all')}
+            isLoading={isResettingQuota}
+            loadingText="Resetting..."
+            variant="primary"
+            size="sm"
+            icon={<RotateCcw className="w-3 h-3 text-white" />}
+            className="bg-purple-600 hover:bg-purple-700 text-white"
+          >
+            Reset All Users Daily Quotas
+          </ActionButton>
+        </div>
+
+        {quotaResetFeedback && (
+          <div className={cn(
+            "p-3 rounded-lg text-xs font-medium flex items-center gap-2",
+            quotaResetFeedback.success 
+              ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+              : "bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800"
+          )}>
+            {quotaResetFeedback.success ? <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" /> : <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0" />}
+            <span>{quotaResetFeedback.msg}</span>
+          </div>
+        )}
+
+        <div className="pt-2 border-t border-slate-200/60 dark:border-slate-800/80 flex flex-wrap items-center gap-2">
+          <div className="relative flex-1 min-w-[220px]">
+            <input
+              type="text"
+              value={targetUserInput}
+              onChange={(e) => setTargetUserInput(e.target.value)}
+              placeholder="Enter User Email or UID to reset..."
+              className="w-full px-3 py-1.5 text-xs bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-purple-500 font-mono"
+            />
+          </div>
+          <ActionButton
+            onClick={() => handleResetAiQuota('user')}
+            disabled={!targetUserInput.trim() || isResettingQuota}
+            isLoading={isResettingQuota}
+            loadingText="Resetting..."
+            variant="secondary"
+            size="sm"
+            icon={<UserCheck className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />}
+            className="border-purple-300 dark:border-purple-800 text-purple-700 dark:text-purple-300"
+          >
+            Reset User Quota
+          </ActionButton>
+        </div>
       </div>
 
       {/* Manual Telegram Alert Test Suite (50%, 90%, 100%) */}
