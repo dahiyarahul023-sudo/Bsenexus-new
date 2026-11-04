@@ -41,6 +41,15 @@
   animation-play-state: paused;
 }
 
+.market-ticker-viewport:is([data-paused], :focus-visible) { overflow-x: auto; }
+.market-ticker-viewport:is([data-paused], :focus-visible) .animate-ticker-smooth { animation: none; }
+.market-ticker-viewport:is([data-paused], :focus-visible) .market-ticker-copy { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .market-ticker-viewport { overflow-x: auto; }
+  .market-ticker-viewport .animate-ticker-smooth { animation: none; }
+  .market-ticker-viewport .market-ticker-copy { display: none; }
+}
+
 /* Landing feature-tab progress bar (6s auto-advance indicator) */
 @keyframes tabfill {
   from { transform: scaleX(0); }

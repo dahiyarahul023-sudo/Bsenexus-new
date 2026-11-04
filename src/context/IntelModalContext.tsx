@@ -4,6 +4,7 @@ interface StockIntelData {
   scripCode?: string;
   symbol?: string;
   companyName?: string;
+  initialView?: 'recent-filings';
 }
 
 interface IntelModalContextType {

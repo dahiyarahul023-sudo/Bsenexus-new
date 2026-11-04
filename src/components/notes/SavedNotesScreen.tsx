@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   Search, Plus, Pencil, Trash2, ChevronRight, RefreshCw,
@@ -136,31 +136,39 @@ export function SavedNotesScreen({ onNavigate }: { onNavigate?: (tab: string) =>
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
 
-  const isGuest = !user || (user as any).isAnonymous === true;
+  const isGuest = !user || user.isAnonymous === true;
+  const readRevision = useRef(0);
+  const mounted = useRef(false);
 
   const load = useCallback(async () => {
     if (isGuest) { setLoading(false); return; }
+    const current = ++readRevision.current;
     setLoading(true);
     setError(null);
     try {
       const res = await fetchNotes();
+      if (current !== readRevision.current) return;
       if (res.success && res.notes) {
         setNotes(res.notes);
       } else {
         setError(res.error || 'Could not load notes.');
       }
     } catch {
-      setError('Could not load notes. Please try again.');
+      if (current === readRevision.current) setError('Could not load notes. Please try again.');
     } finally {
-      setLoading(false);
+      if (current === readRevision.current) setLoading(false);
     }
   }, [isGuest]);
 
-  useEffect(() => { load(); }, [load]);
   useEffect(() => {
-    const h = () => load();
-    window.addEventListener('notes-changed', h);
-    return () => window.removeEventListener('notes-changed', h);
+    mounted.current = true;
+    void load();
+    window.addEventListener('notes-changed', load);
+    return () => {
+      mounted.current = false;
+      readRevision.current++;
+      window.removeEventListener('notes-changed', load);
+    };
   }, [load]);
 
   const jumpTo = (note: UserNote) => {
@@ -192,16 +200,18 @@ export function SavedNotesScreen({ onNavigate }: { onNavigate?: (tab: string) =>
     setDeletingId(id);
     try {
       const res = await deleteNoteApi(id);
+      if (!mounted.current) return;
       if (res.success) {
         setNotes(ns => ns.filter(n => n.id !== id));
         setConfirmId(null);
+        window.dispatchEvent(new Event('notes-changed'));
       } else {
         setError(res.error || 'Could not delete the note.');
       }
     } catch {
-      setError('Could not delete the note. Please try again.');
+      if (mounted.current) setError('Could not delete the note. Please try again.');
     } finally {
-      setDeletingId(null);
+      if (mounted.current) setDeletingId(null);
     }
   };
 

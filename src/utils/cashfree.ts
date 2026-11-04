@@ -8,20 +8,39 @@
 import { customFetch } from '../api';
 
 const SDK_URL = 'https://sdk.cashfree.com/js/v3/cashfree.js';
-let sdkPromise: Promise<any> | null = null;
+type CashfreeFactory = (options: { mode: 'production' | 'sandbox' }) => {
+  checkout(options: { paymentSessionId: string; redirectTarget: '_self' }): Promise<void | { error?: unknown }>;
+};
+let sdkPromise: Promise<CashfreeFactory> | null = null;
 
-function loadSdk(): Promise<any> {
+function loadSdk(): Promise<CashfreeFactory> {
   if (typeof window === 'undefined') return Promise.reject(new Error('No window'));
-  const w = window as any;
-  if (w.Cashfree) return Promise.resolve(w.Cashfree);
+  const browser = window as Window & { Cashfree?: CashfreeFactory };
+  if (typeof browser.Cashfree === 'function') return Promise.resolve(browser.Cashfree);
   if (!sdkPromise) {
-    sdkPromise = new Promise((resolve, reject) => {
+    sdkPromise = new Promise<CashfreeFactory>((resolve, reject) => {
       const script = document.createElement('script');
       script.src = SDK_URL;
       script.async = true;
-      script.onload = () => (w.Cashfree ? resolve(w.Cashfree) : reject(new Error('Cashfree SDK failed to initialise')));
-      script.onerror = () => reject(new Error('Could not load the payment gateway. Check your connection and retry.'));
+      const timeout = setTimeout(() => fail('The payment gateway took too long to load. Please retry.'), 12_000);
+      function fail(message: string) {
+        clearTimeout(timeout);
+        script.remove();
+        reject(new Error(message));
+      }
+      script.onload = () => {
+        if (typeof browser.Cashfree !== 'function') {
+          fail('Could not initialise the payment gateway. Please retry.');
+          return;
+        }
+        clearTimeout(timeout);
+        resolve(browser.Cashfree);
+      };
+      script.onerror = () => fail('Could not load the payment gateway. Check your connection and retry.');
       document.head.appendChild(script);
+    }).catch(error => {
+      sdkPromise = null;
+      throw error;
     });
   }
   return sdkPromise;
@@ -53,16 +72,21 @@ export {
  */
 export async function startProPayment(
   planId: string = 'pro_monthly',
-  referralCode?: string
+  referralCode?: string,
+  signal?: AbortSignal,
 ): Promise<StartPaymentResult> {
   try {
+    const Cashfree = await loadSdk();
+    signal?.throwIfAborted();
     const code = referralCode || (typeof window !== 'undefined' ? localStorage.getItem('bse_referral_code') || undefined : undefined);
     const res = await customFetch('/api/payments/create-order', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ planId, referralCode: code }),
+      signal,
     });
     const data = await res.json().catch(() => null);
+    signal?.throwIfAborted();
     if (!res.ok || !data?.success || !data?.paymentSessionId) {
       return { ok: false, error: data?.error || 'Could not start the payment. Please try again.' };
     }
@@ -71,12 +95,14 @@ export async function startProPayment(
       sessionStorage.setItem('cf_pending_order', String(data.orderId));
     } catch { /* non-fatal */ }
 
-    const Cashfree = await loadSdk();
     const cf = Cashfree({ mode: data.mode === 'production' ? 'production' : 'sandbox' });
-    await cf.checkout({
+    const result = await cf.checkout({
       paymentSessionId: data.paymentSessionId,
       redirectTarget: '_self', // Cashfree returns to /?cf_order_id=...
     });
+    if (result && result.error) {
+      return { ok: false, error: 'Cashfree reported a checkout error. If you attempted a payment, check its status in Billing.' };
+    }
     return { ok: true };
   } catch (err: any) {
     return { ok: false, error: err?.message || 'Payment could not be started. Please try again.' };

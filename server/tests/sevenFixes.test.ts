@@ -1,3 +1,5 @@
+import { publicFilingPresentation } from '../../src/shared/filingPresentation.js';
+import { formatFullDateTime, parseFilingTimestamp } from '../../src/utils/timeFormat.js';
 import { selectCompanyPeers } from '../utils/companyPeers.js';
 import { injectRouteHeading } from '../utils/routeHeading.js';
 import { companyFilingStats } from '../../src/shared/companyFilings.js';
@@ -17,7 +19,7 @@ import { isSymbolMatch, scriptSafeJson } from '../utils/helpers.js';
 const targets = [['RELIANCE', '500325'], ['CLEAN', '543318'], ['CONCOR', '531344'], ['HAL', '541154'], ['IDEA', '532822'], ['OIL', '533106']];
 function load(source: string, globals: any = {}) {
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-  const context = vm.createContext({ exports: {}, console, injectRouteHeading, DIRECTORY_COMPANIES, directoryDescription, directoryBadge, exchangeCompany, matchesCompanyFiling, scriptSafeJson, ...globals });
+  const context = vm.createContext({ exports: {}, console, injectRouteHeading, DIRECTORY_COMPANIES, directoryDescription, directoryBadge, exchangeCompany, matchesCompanyFiling, scriptSafeJson, formatFullDateTime, parseFilingTimestamp, publicFilingPresentation, ...globals });
   vm.runInContext(code, context);
   return context;
 }
@@ -147,8 +149,8 @@ test('server directory renders exchange names, correct listings and all current 
   }
   assert.doesNotMatch(html, /BSE: 540025|26 PREMIER/);
   assert.match(html, /"numberOfItems":\s*29/);
-  assert.ok(html.includes('29 COMPANIES, REITs &amp; EXCHANGES'));
-  assert.ok(html.includes('Explore 29 company, REIT and exchange operator profiles'));
+  assert.ok(html.includes('29 CURATED PROFILES'));
+  assert.ok(html.includes('Explore 29 curated company, REIT and exchange operator profiles'));
 });
 
 test('live alias metadata uses the announcements canonical', () => {
@@ -219,4 +221,22 @@ test('actual public operator route uses ordinary intelligence/cache and accepts 
     assert.equal(output.statusCode,200);assert.equal(output.body,`regular profile ${symbol}:${code}`);
   }
   assert.deepEqual(calls,[['','BSE'],['544937','NSE']]);
+});
+
+test('public filing and company quote distinguish source publication time from fetch time', async () => {
+  const ctx = load(declarations(['renderAnnouncementPage', 'renderCompanyPage', 'escapeHtmlText', 'escapeHtmlAttr']), {
+    AI_STUDIO_REDIRECT_SCRIPT: '', getRecentAnnouncements: async () => [], getAllStockEntries: () => [],
+  });
+  const filing = { companyName: 'Example Ltd', subject: 'Investor conference call', category: 'CONFERENCE_CALL', scripCode: '500325' };
+  const visible = await ctx.renderAnnouncementPage({ ...filing, bseTime: '2026-11-01T23:05:17' }, 'fixture');
+  assert.match(visible, /class="badge">Conference call<\/span>/);
+  assert.match(visible, /datetime="2026-11-01T17:35:17.000Z">01 Nov 2026, 11:05:17 PM IST<\/time>/);
+  assert.match(visible, /href="\/announcements" class="app-btn">\s*Open Filings terminal/);
+  const unknown = await ctx.renderAnnouncementPage({ ...filing, fetched_at: Date.now() }, 'fixture');
+  assert.match(unknown, /Publication time unavailable/);
+  assert.doesNotMatch(unknown, /"datePublished"/);
+  const priceAsOf = Date.parse('2026-11-01T10:00:17Z');
+  const company = ctx.renderCompanyPage({ companyName: 'Example Ltd', quote: { price: 152, priceAsOf, exchange: 'BSE' } }, 'RELIANCE', '500325');
+  assert.match(company, /Quote as of 01 Nov 2026, 03:30:17 PM IST · BSE/);
+  assert.match(ctx.renderCompanyPage({ companyName: 'Example Ltd', quote: { price: 152 } }, 'RELIANCE', '500325'), /Quote time unavailable/);
 });

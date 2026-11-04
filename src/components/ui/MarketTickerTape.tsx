@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { RefreshCw, TrendingUp, TrendingDown, Clock, Activity, ShieldAlert, Sparkles } from 'lucide-react';
+import { RefreshCw, TrendingUp, TrendingDown, Pause, Play } from 'lucide-react';
 import { useMarketIndices, MarketIndexItem } from '../../hooks/useMarketIndices';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -22,7 +22,7 @@ export function MarketTickerTape({
   bseLatency = 85
 }: MarketTickerTapeProps) {
   const { indices, isMarketOpen, marketSession, marketStatusText, sessionBadge, stale, loading, refresh } = useMarketIndices();
-  const [isHovered, setIsHovered] = useState(false);
+  const [paused, setPaused] = useState(false);
 
   const formatPrice = (idx: MarketIndexItem) => {
     if (idx.price === undefined || idx.price === null) return '--';
@@ -116,9 +116,6 @@ export function MarketTickerTape({
         "bg-slate-100/95 dark:bg-[#111019] text-slate-800 dark:text-slate-300 border-b border-slate-200/90 dark:border-[#252236] text-[11px] font-mono py-1.5 px-2 sm:px-4 overflow-hidden relative select-none transition-colors group backdrop-blur-md",
         className
       )}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      onTouchCancel={() => setIsHovered(false)}
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
         
@@ -144,7 +141,8 @@ export function MarketTickerTape({
         )}
 
         {/* Center: Seamless Infinite Smooth Auto-Scrolling Ticker (All Viewports) */}
-        <div className="flex-1 min-w-0 overflow-hidden relative flex items-center">
+        <div className="market-ticker-viewport flex-1 min-w-0 overflow-hidden relative flex items-center"
+          data-paused={paused || undefined} tabIndex={indices.length ? 0 : undefined} role="region" aria-label="Market indices">
           {indices.length === 0 && (
             <span role="status" className="px-4 text-slate-500 dark:text-slate-400">
               {loading ? 'Loading market data…' : 'Market data unavailable'}
@@ -156,7 +154,6 @@ export function MarketTickerTape({
 
           <div 
             className="animate-ticker-smooth flex items-center gap-4 sm:gap-7 py-0.5 tabular-nums"
-            style={{ animationPlayState: isHovered ? 'paused' : 'running' }}
           >
             {tickerItems.map((idx, i) => {
               const { change } = getChangeValues(idx);
@@ -165,9 +162,11 @@ export function MarketTickerTape({
 
               return (
                 <div 
-                  key={`${idx.id}-${i}`} 
+                  key={`${idx.id}-${i}`}
+                  aria-hidden={i >= activeList.length || undefined}
                   className={cn(
                     "flex items-center gap-1.5 whitespace-nowrap px-2 py-1 rounded-md transition-all cursor-pointer hover:bg-slate-200/70 dark:hover:bg-[#1E1B2C]",
+                    i >= activeList.length && "market-ticker-copy",
                     idx.tick === 'UP' && "tick-flash-up",
                     idx.tick === 'DOWN' && "tick-flash-down"
                   )}
@@ -196,8 +195,16 @@ export function MarketTickerTape({
 
         {/* Right: Manual Refresh & Coverage Pill */}
         <div className="flex items-center gap-2 shrink-0 z-10 bg-slate-100/95 dark:bg-[#111019] pl-2 sm:pl-3 border-l border-slate-200 dark:border-[#2A263D]">
-          <button
+          {indices.length > 0 && (
+            <button type="button" onClick={() => setPaused(value => !value)}
+              aria-label={paused ? 'Resume market ticker' : 'Pause market ticker'}
+              className="motion-reduce:hidden grid size-9 place-items-center rounded-md border border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800 cursor-pointer">
+              {paused ? <Play size={13} aria-hidden="true" /> : <Pause size={13} aria-hidden="true" />}
+            </button>
+          )}
+          <button type="button"
             onClick={refresh}
+            aria-label="Refresh market data"
             disabled={loading}
             title="Refresh Live Market Data"
             className="p-1.5 rounded-md bg-white dark:bg-[#1D1B2B] hover:bg-slate-200/80 dark:hover:bg-[#2A263D] text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-200 transition-colors cursor-pointer border border-slate-200 dark:border-[#2D283E] active:scale-[0.96] disabled:opacity-50 min-w-[36px] min-h-[36px] sm:min-w-[30px] sm:min-h-[30px] flex items-center justify-center shadow-2xs"

@@ -79,6 +79,7 @@ interface LayoutProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
   theme: string;
+  themeLocked?: boolean;
   setTheme: (theme: string) => void;
   onLogout: () => void;
   bseHealth?: { status: string; latency?: number };
@@ -91,7 +92,8 @@ export function Layout({
   children, 
   activeTab, 
   onTabChange, 
-  theme, 
+  theme,
+  themeLocked = false,
   setTheme, 
   bseHealth = { status: 'unknown', latency: 0 },
   telegramHealth = { status: 'unknown', latency: 0 },
@@ -475,7 +477,7 @@ export function Layout({
 
 
               {/* Item 9: Quick Sun/Moon Dark Mode Toggle - Hidden on Settings tab to prevent duplicate appearance controls */}
-              {activeTab !== 'settings' && (
+              {activeTab !== 'settings' && !themeLocked && (
                 <motion.button
                   whileHover={{ scale: 1.03 }}
                   whileTap={buttonTap}
@@ -783,6 +785,7 @@ export function Layout({
           isOpen={profileModalOpen} 
           onClose={() => setProfileModalOpen(false)}
           onOpenSettings={() => onTabChange('settings')}
+          onOpenSavedNotes={() => onTabChange('saved-notes')}
           onOpenWatchlist={() => onTabChange('watchlists')}
           onOpenAlertRules={() => setAlertRulesModalOpen(true)}
           onOpenHelp={() => setHelpModalOpen(true)}
@@ -864,6 +867,7 @@ export function Layout({
           scripCode={selectedStock.scripCode}
           symbol={selectedStock.symbol}
           companyName={selectedStock.companyName}
+          initialView={selectedStock.initialView}
         />
       )}
       {/* Global Saved-Notes editor (reel-style 2-step flow) */}
@@ -982,6 +986,7 @@ export function Layout({
         activeTab={activeTab}
         onTabChange={onTabChange}
         theme={theme}
+        themeLocked={themeLocked}
         setTheme={setTheme}
         isRunning={isRunning}
         onToggleEngine={onToggleEngine}

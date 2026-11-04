@@ -1,3 +1,13 @@
+2026-11-04 checkout verification: ProCheckoutView → owner-cancellable startProPayment → bounded Cashfree SDK readiness → existing authenticated create-order → same-tab provider checkout. Failed SDK downloads are retryable and create no order. Provider errors restore the pay button; actual success still belongs to server verification. See changes/checkout-gateway-recovery.md.
+
+2026-11-04 public presentation: LandingPage uses a compact promise, optional demos, three benefits and the existing pricing/help. MarketTickerTape exposes one accessible list, manual pause and reduced-motion scrolling. App suppresses contradictory theme shortcuts in Soft Glass. The public filing SSR/React views share filingPresentation for categories and IST source times. The public quote shows the existing provider time when available. Directory membership and search remain distinct. See changes/ux-public-presentation.md.
+
+2026-11-04 calendar operations: ResultsCalendar separates admin Operations from Earnings Filters. Page selection and matching Upcoming selection feed only matching meeting IDs to the existing ICS/Telegram handlers; the selection clears when its date or filters change. Market-wide Telegram has a scope confirmation. Signed-in help and Filing source status are collapsed in their respective workspaces. See changes/ux-calendar-operations.md.
+
+2026-11-04 account research: Profile and Settings Saved Notes share App-owned /settings?section=notes, with direct entry, refresh and history. Help keeps its own modal. A new note starts at its text field, optional icon and link stay in the same editor, and confirmed create/edit/delete refresh account-scoped list and badge. Billing presents access and verified AI usage before the partner dashboard. See changes/ux-account-research.md.
+
+2026-11-04 stock monitoring: HomeForYou renders watched disclosures/results before discovery. Watchlist count → IntelModalContext.initialView → Layout → CompanyIntelligenceModal Filings uses the same last-30-days projection as the existing Hub fact. The company heading still opens Hub. Counts wait for the correct company snapshot; the full archive remains available. See changes/ux-stock-monitoring.md.
+
 2026-11-03 Radar volatility: company-relative size/exposure groups, explicit unavailable context, range-first metrics and historical volatility-watch filtering. Signed direction stays secondary; saved source/price/method ownership remains in the existing modal.
 
 2026-11-03 Radar research: source-detail and observed-reaction journal, 30/60/365-day descriptive patterns, morning prioritization and pending-session filters share the existing Radar modal, scope and refresh ownership. Missing prices/calendar remain explicit; saved research survives outages.

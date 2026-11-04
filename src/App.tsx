@@ -378,6 +378,10 @@ function AppContent() {
     return p && (p.kind === 'filing' || p.kind === 'results') ? p : null;
   };
   const [shareRoute, setShareRoute] = useState(() => sharePathFor(window.location.pathname));
+  const [settingsNotes, setSettingsNotes] = useState(() => {
+    const path = window.location.pathname.toLowerCase().replace(/\/+$/, '');
+    return path === '/settings' && new URLSearchParams(window.location.search).get('section') === 'notes';
+  });
   const [activeTab, setActiveTab] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -518,7 +522,8 @@ function AppContent() {
   });
 
   const handleTabChange = (requestedTab: string) => {
-    const newTab = requestedTab === 'announcements' ? 'dashboard' : requestedTab;
+    const openNotes = requestedTab === 'saved-notes';
+    const newTab = openNotes ? 'settings' : requestedTab === 'announcements' ? 'dashboard' : requestedTab;
     // Watchlist is Pro-only: free users get the upgrade sheet instead (covers
     // deep links, profile-modal shortcut and in-app buttons).
     const canUseWatchlist = Boolean(isPro || isAdmin || adminUnlocked || profile?.tier === 'admin');
@@ -526,7 +531,7 @@ function AppContent() {
       setIsProModalOpen(true);
       return;
     }
-    if (newTab === activeTab && getAppPathRoute() === 'home') {
+    if (newTab === activeTab && getAppPathRoute() === 'home' && (newTab !== 'settings' || settingsNotes === openNotes)) {
       // Tap active tab to scroll to top (like iOS / Twitter)
       scrollToTop();
       return;
@@ -541,6 +546,7 @@ function AppContent() {
     // Save previous tab scroll position immediately before switching
     saveScrollPosition(tabMotion.displayedKey);
     setActiveTab(newTab);
+    if (newTab === 'settings') setSettingsNotes(openNotes);
 
     if (typeof window !== 'undefined') {
       let targetPath = '/';
@@ -561,7 +567,7 @@ function AppContent() {
           targetPath = '/?tab=seo-suite';
           break;
         case 'settings':
-          targetPath = '/settings';
+          targetPath = openNotes ? '/settings?section=notes' : '/settings';
           break;
         case 'home':
         default:
@@ -682,7 +688,7 @@ function AppContent() {
         targetPath = '/?tab=seo-suite';
         break;
       case 'settings':
-        targetPath = '/settings';
+        targetPath = settingsNotes ? '/settings?section=notes' : '/settings';
         break;
       case 'home':
       default:
@@ -694,7 +700,7 @@ function AppContent() {
     if (currentUrl !== targetPath) {
       window.history.pushState(null, '', targetPath);
     }
-  }, [activeTab]);
+  }, [activeTab, settingsNotes]);
 
   // Synchronize activeTab when navigating via browser Back / Forward buttons
   useEffect(() => {
@@ -712,6 +718,7 @@ function AppContent() {
           return;
         }
         if (pathname === '/settings') {
+          setSettingsNotes(new URLSearchParams(window.location.search).get('section') === 'notes');
           setActiveTab('settings');
           return;
         }
@@ -1217,7 +1224,8 @@ function AppContent() {
       <Layout 
         activeTab={activeTab} 
         onTabChange={handleTabChange} 
-        theme={theme} 
+        theme={theme}
+        themeLocked={designTheme === 'softglass'}
         setTheme={setTheme} 
         onLogout={handleLogout}
         bseHealth={health.bse}
@@ -1323,6 +1331,7 @@ function AppContent() {
                 designTheme={designTheme}
                 setDesignTheme={setDesignTheme}
                 canUseSoftGlass={canUseSoftGlass}
+                openSavedNotes={settingsNotes}
                 onNavigate={(tab: string) => handleTabChange(tab)}
               />
             </Suspense>
@@ -1336,18 +1345,21 @@ function AppContent() {
   );
 }
 
-export default function App() {
+function AppWithAccount() {
+  const { user } = useAuth();
   return (
-    <AuthProvider>
-      <IntelModalProvider>
-        <NoteEditorProvider>
+    <IntelModalProvider>
+      <NoteEditorProvider owner={user && !user.isAnonymous ? user.uid : null}>
         <ToastProvider>
           <AppContent />
           <CashfreeReturnHandler />
           <PaymentOverlays />
         </ToastProvider>
-        </NoteEditorProvider>
-      </IntelModalProvider>
-    </AuthProvider>
+      </NoteEditorProvider>
+    </IntelModalProvider>
   );
+}
+
+export default function App() {
+  return <AuthProvider><AppWithAccount /></AuthProvider>;
 }

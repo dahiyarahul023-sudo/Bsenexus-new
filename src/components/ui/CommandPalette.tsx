@@ -16,6 +16,7 @@ interface CommandPaletteProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
   theme: string;
+  themeLocked?: boolean;
   setTheme: (theme: string) => void;
   isRunning?: boolean;
   onToggleEngine?: () => void;
@@ -70,6 +71,7 @@ export function CommandPalette({
   activeTab,
   onTabChange,
   theme,
+  themeLocked = false,
   setTheme,
   isRunning = true,
   onToggleEngine,
@@ -221,15 +223,15 @@ export function CommandPalette({
       },
 
       // Actions
-      {
+      ...(!themeLocked ? [{
         id: 'act_theme',
         title: theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode',
         subtitle: `Currently in ${theme} mode`,
-        category: 'Actions',
+        category: 'Actions' as const,
         icon: theme === 'dark' ? Sun : Moon,
         action: () => { setTheme(theme === 'dark' ? 'light' : 'dark'); onClose(); },
         keywords: ['theme', 'dark', 'light', 'mode', 'color', 'night']
-      },
+      }] : []),
       {
         id: 'act_engine',
         title: isRunning ? 'Pause BSE Indexing Poller' : 'Resume BSE Indexing Poller',
@@ -271,7 +273,7 @@ export function CommandPalette({
     ];
 
     return list;
-  }, [theme, isRunning, onTabChange, setTheme, onToggleEngine, isAdmin, onClose]);
+  }, [theme, themeLocked, isRunning, onTabChange, setTheme, onToggleEngine, isAdmin, onClose]);
 
   // Merge dynamic API results + local master stocks + base items
   const filteredItems: PaletteItem[] = useMemo(() => {

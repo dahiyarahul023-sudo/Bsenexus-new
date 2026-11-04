@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, FileText, ExternalLink, Loader2, AlertTriangle } from 'lucide-react';
 import { customFetch } from '../../api';
+import { publicFilingPresentation } from '../../shared/filingPresentation';
 import { getSafePdfUrl } from '../../utils/pdfHelper';
 import { filingUrl, parseShareablePath } from '../../utils/shareUrls';
 import { ShareActionMenu } from '../ui/motion/ShareActionMenu';
@@ -60,8 +61,7 @@ export function FilingPage({ onBack }: { onBack: () => void }) {
 
   const companyName = item?.companyName || item?.SLONGNAME || symbol || 'BSE Listed Company';
   const subject = item?.subject || item?.NEWSSUB || 'Corporate Announcement';
-  const category = item?.category || 'CORPORATE_ACTION';
-  const bseTime = item?.bseTime || '';
+  const publication = publicFilingPresentation(item || {});
   const aiSummary = item?.aiSummary || item?.aiSummaryEn || '';
   const details = item?.details || '';
   const pdfLink = item?.pdfLink || item?.ATTACHMENTNAME || item?.attachmentName || '';
@@ -117,8 +117,8 @@ export function FilingPage({ onBack }: { onBack: () => void }) {
             className="bg-white dark:bg-[#171522] border border-slate-200/80 dark:border-[#2D283E] rounded-2xl p-5 sm:p-8 shadow-xs"
           >
             <div className="flex flex-wrap items-center gap-2 mb-4">
-              <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                {String(category).replace(/_/g, ' ')}
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                {publication.category}
               </span>
               {scripCode && (
                 <span className="text-[11px] font-bold px-2.5 py-1 rounded-md bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-300">
@@ -130,7 +130,11 @@ export function FilingPage({ onBack }: { onBack: () => void }) {
                   {symbol}
                 </span>
               )}
-              {bseTime && <time className="ml-auto text-xs text-slate-400">{bseTime}</time>}
+              {publication.iso ? (
+                <time dateTime={publication.iso} className="ml-auto text-xs text-slate-600 dark:text-slate-300">{publication.date}</time>
+              ) : (
+                <span className="ml-auto text-xs text-slate-600 dark:text-slate-300">Publication time unavailable</span>
+              )}
             </div>
 
             <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-snug mb-2">
@@ -194,7 +198,7 @@ export function FilingPage({ onBack }: { onBack: () => void }) {
                 companyName={companyName}
                 symbol={symbol}
                 newsId={item.id || item.newsId || newsId}
-                category={category}
+                category={item.category || 'CORPORATE_ACTION'}
                 pdfUrl={pdfLink}
                 size="sm"
                 buttonLabel="Share"
@@ -209,6 +213,7 @@ export function FilingPage({ onBack }: { onBack: () => void }) {
                 <div className="divide-y divide-slate-200/70 dark:divide-[#2D283E] border-t border-b border-slate-200/70 dark:border-[#2D283E]">
                   {related.map((r: any) => {
                     const rid = r.id || r.newsId;
+                    const relatedPublication = publicFilingPresentation(r);
                     return (
                       <button
                         key={rid}
@@ -221,12 +226,14 @@ export function FilingPage({ onBack }: { onBack: () => void }) {
                             window.scrollTo(0, 0);
                           }
                         }}
-                        className="w-full flex items-center justify-between gap-3 py-3 text-left cursor-pointer group"
+                        className="w-full flex flex-wrap items-center justify-between gap-2 py-3 text-left cursor-pointer group"
                       >
                         <span className="text-[13px] font-medium text-slate-700 dark:text-slate-200 leading-snug line-clamp-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                           {r.subject || r.NEWSSUB || 'Corporate Announcement'}
                         </span>
-                        <span className="text-xs text-slate-400 shrink-0">{r.bseTime || ''}</span>
+                        {relatedPublication.iso && (
+                          <time dateTime={relatedPublication.iso} className="text-xs text-slate-600 dark:text-slate-300">{relatedPublication.date}</time>
+                        )}
                       </button>
                     );
                   })}

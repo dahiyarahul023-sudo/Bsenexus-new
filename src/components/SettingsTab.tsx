@@ -56,6 +56,7 @@ interface SettingsTabProps {
   setDesignTheme?: (theme: DesignTheme) => Promise<boolean> | boolean | void;
   canUseSoftGlass?: boolean;
   onNavigate?: (tab: string) => void;
+  openSavedNotes?: boolean;
 }
 
 // Registry of all searchable settings for instant filtering & breadcrumb navigation
@@ -106,6 +107,7 @@ export function SettingsTab({
   designTheme = 'classic',
   setDesignTheme,
   canUseSoftGlass = false,
+  openSavedNotes = false,
   onNavigate
 }: SettingsTabProps) {
   const { 
@@ -139,24 +141,27 @@ export function SettingsTab({
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Saved Notes count for the index row badge (logged-in users only)
-  const [notesCount, setNotesCount] = useState(0);
+  // The index badge only shows a count confirmed for the current account.
+  const notesOwner = user && !user.isAnonymous ? user.uid : null;
+  const [notesSummary, setNotesSummary] = useState<{ owner: string; count: number } | null>(null);
+  const notesCount = notesSummary?.owner === notesOwner ? notesSummary.count : 0;
   useEffect(() => {
-    const isGuestUser = !user || (user as any).isAnonymous === true;
-    if (isGuestUser) { setNotesCount(0); return; }
-    let cancelled = false;
+    if (!notesOwner) { setNotesSummary(null); return; }
+    let revision = 0;
     const refresh = async () => {
+      const current = ++revision;
       try {
         const { fetchNotes } = await import('../api/notesApi');
         const res = await fetchNotes();
-        if (!cancelled && res.success && res.notes) setNotesCount(res.notes.length);
-      } catch { /* badge stays empty on failure */ }
+        if (current === revision && res.success && res.notes) {
+          setNotesSummary({ owner: notesOwner, count: res.notes.length });
+        }
+      } catch { /* Keep the last confirmed count for this account. */ }
     };
-    refresh();
-    const h = () => refresh();
-    window.addEventListener('notes-changed', h);
-    return () => { cancelled = true; window.removeEventListener('notes-changed', h); };
-  }, [user]);
+    void refresh();
+    window.addEventListener('notes-changed', refresh);
+    return () => { revision++; window.removeEventListener('notes-changed', refresh); };
+  }, [notesOwner]);
 
   // Instant saved indicator pill tracking ('theme' | 'density' | 'sound' | 'filter')
   const [savedPillKey, setSavedPillKey] = useState<string | null>(null);
@@ -171,7 +176,13 @@ export function SettingsTab({
   const [activeSheet, setActiveSheet] = useState<string | null>(null);
   // Drill-down navigation: null = section index, otherwise the open section id
   const [activeSection, setActiveSection] = useState<string | null>(null);
-  const sectionMotion = useScreenTransition(activeSection, 'section');
+  useEffect(() => {
+    if (openSavedNotes) {
+      setActiveSection(null);
+      setSearchQuery('');
+    }
+  }, [openSavedNotes]);
+  const sectionMotion = useScreenTransition(openSavedNotes ? 'notes' : activeSection, 'section');
   const visibleSection = sectionMotion.displayedKey;
   const [alertRulesOpen, setAlertRulesOpen] = useState(false);
   const [helpGuideOpen, setHelpGuideOpen] = useState(false);
@@ -1014,6 +1025,7 @@ export function SettingsTab({
     },
     {
       id: 'notes', title: 'Saved Notes',
+      action: onNavigate ? () => onNavigate('saved-notes') : undefined,
       subtitle: notesCount > 0 ? `${notesCount} saved · stocks, news & results` : 'Personal notes · stocks, news & results',
       icon: StickyNote, iconClass: 'bg-orange-500/10 text-orange-600 dark:text-orange-400',
       registryIds: ['saved-notes'],
@@ -1150,7 +1162,7 @@ export function SettingsTab({
             {visibleSection && (
               <button
                 type="button"
-                onClick={() => setActiveSection(null)}
+                onClick={() => openSavedNotes && onNavigate ? onNavigate('settings') : setActiveSection(null)}
                 aria-label="Back to settings"
                 className="min-w-[44px] min-h-[44px] grid place-items-center p-2 -ml-2 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#201E2E] transition-colors cursor-pointer shrink-0"
               >
@@ -1295,7 +1307,7 @@ export function SettingsTab({
             </h3>
             <span className="text-[10px] text-slate-400">Synced to your account</span>
           </div>
-          <SavedNotesScreen onNavigate={onNavigate} />
+          <SavedNotesScreen key={notesOwner || 'guest'} onNavigate={onNavigate} />
         </div>
       )}
 
@@ -1829,12 +1841,17 @@ export function SettingsTab({
         <div className="space-y-3 select-none">
           <div className="px-1">
             <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              Subscription &amp; Partner Program
+              Subscription &amp; Billing
             </h3>
           </div>
 
+          {isMatch('subscription') && <>
+            <SubscriptionCard />
+            <AiUsageCard />
+          </>}
+
           {/* Refer & Earn / Creator Affiliate Card */}
-          {(() => {
+          {isMatch('referrals') && (() => {
             const monthlyPlan = getPlanDisplay('pro_monthly');
             return (
               <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-transparent border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs">
@@ -1867,8 +1884,6 @@ export function SettingsTab({
             );
           })()}
 
-          <AiUsageCard />
-          <SubscriptionCard />
         </div>
       )}
 
