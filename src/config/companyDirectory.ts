@@ -257,8 +257,8 @@ export const DIRECTORY_COMPANIES: ListedCompany[] = [
 
 
 export function directoryDescription(companies: readonly ListedCompany[] = DIRECTORY_COMPANIES): string {
-  return `Explore ${companies.length} company, REIT and exchange operator profiles on BSE Nexus, including BSE Limited, NSE Limited and Nexus Select Trust. Find filings, earnings information and official investor sources.`;
+  return `Explore ${companies.length} curated company, REIT and exchange operator profiles on BSE Nexus, including BSE Limited, NSE Limited and Nexus Select Trust. Find filings, earnings information and official investor sources.`;
 }
 export function directoryBadge(companies: readonly ListedCompany[] = DIRECTORY_COMPANIES): string {
-  return `${companies.length} COMPANIES, REITs & EXCHANGES`;
+  return `${companies.length} CURATED PROFILES`;
 }

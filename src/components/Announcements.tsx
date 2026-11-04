@@ -178,7 +178,6 @@ export function Announcements({
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
   const [isStatusExpanded, setIsStatusExpanded] = useState<boolean>(false);
-  const [isSyncingNow, setIsSyncingNow] = useState<boolean>(false);
 
   // Responsive View Mode (Grid on PC / Large screen, List on Mobile by default, user-customizable)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
@@ -508,7 +507,7 @@ export function Announcements({
   }, []);
 
   const effectiveIsRunning = propIsRunning !== undefined ? propIsRunning : internalIsRunning;
-  const effectiveBseHealth = propBseHealth || internalBseHealth;
+  const filingSourceHealth = sourceHealthLabel(propBseHealth || internalBseHealth);
   const effectiveTelegramHealth = propTelegramHealth || internalTelegramHealth;
 
   const handleToggleEngine = async () => {
@@ -1628,46 +1627,6 @@ export function Announcements({
                 </button>
               </div>
 
-              {/* Section 4: Live Telemetry & Pro Sync Status */}
-              <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-[#2D283E]">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                    <RefreshCw size={13} className={effectiveIsRunning ? "text-emerald-500 animate-spin" : "text-slate-400"} />
-                    <span>BSE Live Engine & Pro Sync</span>
-                  </span>
-                  <ActionButton
-                    onClick={async () => {
-                      setIsSyncingNow(true);
-                      try {
-                        await fetchData(true);
-                      } finally {
-                        setIsSyncingNow(false);
-                      }
-                    }}
-                    isLoading={isSyncingNow}
-                    loadingText="Syncing..."
-                    variant="secondary"
-                    size="sm"
-                    className="text-xs font-bold"
-                  >
-                    Sync Now
-                  </ActionButton>
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
-                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#14131E] border border-slate-200/60 dark:border-[#2D283E]">
-                    <div className="text-slate-400 font-bold uppercase tracking-wider text-[9px]">Source check</div>
-                    <div className="font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">{sourceHealthLabel(effectiveBseHealth).status}</div>
-                    <div className="text-slate-500 mt-1">{sourceHealthLabel(effectiveBseHealth).request}</div>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#14131E] border border-slate-200/60 dark:border-[#2D283E]">
-                    <div className="text-slate-400 font-bold uppercase tracking-wider text-[9px]">Watchlist Scope</div>
-                    <div className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">
-                      {userWatchlistSymbols.size} tracked
-                    </div>
-                  </div>
-                </div>
-              </div>
-
               {/* Section 5: Muted Noise Filters */}
               {(mutedTypes.length > 0 || mutedCompanies.length > 0) && (
                 <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#15141F] border border-slate-200 dark:border-[#2D283E] flex items-center justify-between">
@@ -1749,6 +1708,11 @@ export function Announcements({
                 <span>{feedStatusMessage}</span>
               </div>
             )}
+
+            <details className="mb-2 text-xs text-slate-600 dark:text-slate-300">
+              <summary className="cursor-pointer py-2 font-medium">Filing source status</summary>
+              <p>{filingSourceHealth.status} · {filingSourceHealth.request}</p>
+            </details>
 
             {isLoading && announcements.length === 0 ? (
               /* Semantic Zero-Layout-Shift Skeleton with Real Text & Structure */

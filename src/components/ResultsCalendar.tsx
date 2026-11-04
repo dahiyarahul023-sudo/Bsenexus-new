@@ -247,7 +247,8 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isBulkBroadcasting, setIsBulkBroadcasting] = useState<boolean>(false);
   const [bulkBroadcastMsg, setBulkBroadcastMsg] = useState<string | null>(null);
-  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState<boolean>(false);
+  const [calendarSheet, setCalendarSheet] = useState<'filters' | 'operations' | null>(null);
+  const activeSheet = calendarSheet === 'operations' && !isSuperAdmin ? null : calendarSheet;
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -301,10 +302,10 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
   const [showMarketHolidaysModal, setShowMarketHolidaysModal] = useState<boolean>(false);
 
   const detailsDialog = useCalendarDialog(Boolean(selectedModalItem), () => setSelectedModalItem(null));
-  const filtersDialog = useCalendarDialog(isFilterSheetOpen, () => setIsFilterSheetOpen(false));
+  const filtersDialog = useCalendarDialog(Boolean(activeSheet), () => setCalendarSheet(null));
 
   // Lock body scroll whenever modal or filter sheet is opened to prevent background movement / scroll chaining
-  useBodyScrollLock(Boolean(selectedModalItem || showMarketHolidaysModal || isFilterSheetOpen));
+  useBodyScrollLock(Boolean(selectedModalItem || showMarketHolidaysModal || activeSheet));
 
   // Deep History (1-5 Years) & Pre-Result Window (10-20 Days) Priority Boost State
   const [isFetchingDeepHistory, setIsFetchingDeepHistory] = useState<boolean>(false);
@@ -881,9 +882,8 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
     });
   };
 
-  const handleSelectAllUpcoming = () => {
-    const upcoming = items.filter(i => i.daysLeft >= 0 || i.status === 'TODAY' || i.status === 'UPCOMING');
-    setSelectedIds(new Set(upcoming.map(i => i.id)));
+  const handleSelectMatchingUpcoming = () => {
+    setSelectedIds(new Set(filteredAndSortedItems.map(item => item.id)));
   };
 
   const handleClearSelection = () => {
@@ -892,7 +892,6 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
 
   // Bulk Export .ICS (Compatible with Apple Calendar, iOS, macOS, Windows Outlook & Google Calendar)
   const handleBulkExportIcs = () => {
-    const selectedItems = items.filter(i => selectedIds.has(i.id));
     if (selectedItems.length === 0) return;
 
     const events = selectedItems.map(item => ({
@@ -907,7 +906,6 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
 
   // Bulk Broadcast Selected items to Telegram
   const handleBulkSendSelectedTelegram = async () => {
-    const selectedItems = items.filter(i => selectedIds.has(i.id));
     if (selectedItems.length === 0) return;
 
     const isGuestUser = !user || user.isAnonymous;
@@ -1081,6 +1079,12 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
     setCurrentPage(1);
   }, [statusFilter, declarationFilter, searchQuery, selectedWatchlistId, sortBy, calendarScope, summaryLang]);
 
+  useEffect(() => {
+    setSelectedIds(previous => previous.size ? new Set() : previous);
+  }, [calendarKey, calendarDay, statusFilter, declarationFilter, searchQuery, summaryLang]);
+
+  const selectedItems = useMemo(() => filteredAndSortedItems.filter(item => selectedIds.has(item.id)), [filteredAndSortedItems, selectedIds]);
+
   // Dynamic live horizon counts for upcoming tab
   const upcomingItems = useMemo(() => items.filter(i => i.status === 'UPCOMING' || i.daysLeft > 0), [items]);
   const next3dCount = useMemo(() => upcomingItems.filter(i => i.daysLeft >= 1 && i.daysLeft <= 3).length, [upcomingItems]);
@@ -1104,6 +1108,9 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
     const startIndex = (visiblePage - 1) * itemsPerPage;
     return filteredAndSortedItems.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredAndSortedItems, visiblePage, itemsPerPage]);
+  const selectedOnPage = paginatedItems.filter(item => selectedIds.has(item.id)).length;
+  const otherPageCount = selectedItems.length - selectedOnPage;
+  const pageSelected = paginatedItems.length > 0 && selectedOnPage === paginatedItems.length;
 
   const formatLastUpdated = (ts: number) => {
     if (!ts) return 'Never';
@@ -1224,7 +1231,15 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
               ({filteredAndSortedItems.length})
             </span>
           </div>
-          {lastUpdated > 0 && <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">Checked {formatTimeOnly(lastUpdated)}</span>}
+          <div className="flex flex-wrap items-center gap-2">
+            {lastUpdated > 0 && <span className="text-xs text-slate-500 dark:text-slate-400">Checked {formatTimeOnly(lastUpdated)}</span>}
+            {isSuperAdmin && (
+              <button type="button" onClick={() => setCalendarSheet('operations')}
+                className="min-h-9 px-2 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#252233] cursor-pointer">
+                Operations
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Row 1: Search Box (Full width) */}
@@ -1308,7 +1323,7 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
               type="button"
               whileTap={buttonTap}
               transition={springSnappy}
-              onClick={() => setIsFilterSheetOpen(true)}
+              onClick={() => setCalendarSheet('filters')}
               className={cn(
                 "min-h-[32px] sm:min-h-9 px-3 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer select-none border shrink-0",
                 (selectedWatchlistId || sortBy !== 'date_asc' || declarationFilter !== 'all')
@@ -1387,23 +1402,23 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
         label="Results Calendar"
       />
 
-      {/* Filter & Operations Bottom Sheet */}
+      {/* Filters and administrator operations share dialog behavior, with separate entry points. */}
       <AnimatePresence>
-        {isFilterSheetOpen && (
+        {activeSheet && (
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center overscroll-contain">
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setIsFilterSheetOpen(false)}
+              onClick={() => setCalendarSheet(null)}
               className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs overscroll-contain"
             />
 
             {/* Sheet Content */}
             <motion.div
               {...filtersDialog}
-              aria-label="Calendar filters and operations"
+              aria-label={activeSheet === 'operations' ? 'Calendar operations' : 'Earnings filters'}
               initial={{ y: "100%", opacity: 0.5 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: "100%", opacity: 0 }}
@@ -1418,25 +1433,24 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
                 <div className="flex items-center gap-2">
                   <SlidersHorizontal className="w-4 h-4 text-slate-700 dark:text-slate-300" />
                   <h3 className="text-sm font-bold text-slate-900 dark:text-white font-display">
-                    Earnings Filters
+                    {activeSheet === 'operations' ? 'Calendar Operations' : 'Earnings Filters'}
                   </h3>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setIsFilterSheetOpen(false)}
+                  onClick={() => setCalendarSheet(null)}
+                  aria-label={activeSheet === 'operations' ? 'Close calendar operations' : 'Close earnings filters'}
                   className="min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
                 >
                   <X size={18} />
                 </button>
               </div>
 
-              {/* Section 1: Developer/Operator Only Operations (Admin Only) */}
-              {isSuperAdmin && (
+              {activeSheet === 'operations' ? (
                 <div className="space-y-2 p-3 rounded-xl bg-slate-50 dark:bg-[#15141F] border border-slate-200 dark:border-[#2D283E]">
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                    <span>Operator Controls</span>
-                    <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300">TERMINAL</span>
-                  </label>
+                  <p className="text-xs text-slate-600 dark:text-slate-300">
+                    Sync and audit update calendar data. The Telegram broadcast sends the market-wide upcoming schedule to the shared channel and does not use your filters.
+                  </p>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     <ActionButton
                       onClick={() => fetchCalendar(true, 'quick')}
@@ -1460,7 +1474,11 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
                     </button>
 
                     <ActionButton
-                      onClick={() => handleBroadcastAllUpcoming(false)}
+                      onClick={() => {
+                        if (window.confirm('Broadcast upcoming meetings across the market to the shared Telegram channel? Your calendar filters do not apply.')) {
+                          void handleBroadcastAllUpcoming(false);
+                        }
+                      }}
                       isLoading={isBulkBroadcasting}
                       loadingText="Broadcasting..."
                       disabled={summaryStats.upcomingCount === 0}
@@ -1469,7 +1487,7 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
                       className="min-h-[44px] justify-center col-span-2 sm:col-span-1 bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800"
                       icon={<SendHorizonal size={13} />}
                     >
-                      Broadcast
+                      Broadcast schedule
                     </ActionButton>
                   </div>
 
@@ -1518,7 +1536,7 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
                     )}
                   </div>
                 </div>
-              )}
+              ) : <>
 
               {/* Section 2: Watchlist Filter (watchlist scope only) */}
               {calendarScope === 'watchlist' && watchlists.length > 0 && (
@@ -1650,7 +1668,7 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
                 <button
                   type="button"
                   onClick={() => {
-                    setIsFilterSheetOpen(false);
+                    setCalendarSheet(null);
                     setShowMarketHolidaysModal(true);
                   }}
                   className="w-full min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-[#201E2E] dark:hover:bg-[#2D283E] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#2D283E] transition-all flex items-center justify-between cursor-pointer"
@@ -1666,11 +1684,12 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
               {/* Apply Button */}
               <button
                 type="button"
-                onClick={() => setIsFilterSheetOpen(false)}
+                onClick={() => setCalendarSheet(null)}
                 className="w-full min-h-[44px] py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 rounded-xl text-xs font-black transition-all cursor-pointer"
               >
-                Apply & View Calendar
+                Done
               </button>
+              </>}
             </motion.div>
           </div>
         )}
@@ -1743,26 +1762,19 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
       </AnimatePresence>
 
       {/* Selection Toolbar Banner */}
-      <AnimatePresence>
-        {selectedIds.size > 0 && (
+        {selectedItems.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: -12, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -12, scale: 0.98 }}
             transition={springSnappy}
             className="p-3.5 bg-slate-900 dark:bg-[#252233] border border-slate-700/80 dark:border-[#3E3854] text-white rounded-xl flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md"
           >
             <div className="flex items-center gap-2 text-xs font-bold">
               <CheckSquare size={16} className="text-slate-300 dark:text-slate-200 shrink-0" />
-              <span>{selectedIds.size} Stock(s) Selected</span>
-              <span className="text-slate-500 font-normal">|</span>
-              <button
-                type="button"
-                onClick={handleSelectAllUpcoming}
-                className="text-slate-300 hover:text-white underline font-semibold cursor-pointer"
-              >
-                Select All Upcoming ({upcomingItems.length})
-              </button>
+              <span role="status">
+                {selectedItems.length} {selectedItems.length === 1 ? 'meeting' : 'meetings'} selected
+                {otherPageCount > 0 && ` · ${otherPageCount} on other pages`}
+              </span>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
@@ -1773,7 +1785,7 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
                 title="Download consolidated .ICS calendar file for all selected stocks"
               >
                 <CalendarPlus size={13} />
-                <span>Add Selected ({selectedIds.size}) to Calendar</span>
+                <span>Export .ics ({selectedItems.length})</span>
               </button>
 
               {isAdmin && <ActionButton
@@ -1787,7 +1799,7 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
                 className="bg-slate-800 hover:bg-slate-700 text-white border-slate-700"
                 title="Broadcast selected board meetings to Telegram channel"
               >
-                Broadcast to Telegram ({selectedIds.size})
+                Broadcast selected ({selectedItems.length})
               </ActionButton>}
 
               <button
@@ -1800,7 +1812,6 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
             </div>
           </motion.div>
         )}
-      </AnimatePresence>
 
       {/* Main Results Table / List — independent Helios cards, no shared bordered box */}
       <div 
@@ -1811,30 +1822,28 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
       >
         {/* Table Control Header Row */}
         {!loading && filteredAndSortedItems.length > 0 && (
-          <div className={cn(heliosCard, "px-4 py-2.5 flex items-center justify-between gap-2 text-[11px] text-slate-500")}>
-            <div className="flex items-center gap-1.5">
+          <div className={cn(heliosCard, "px-3 py-1 flex flex-wrap items-center justify-between gap-x-3 text-xs text-slate-500")}>
+            <div className="flex flex-wrap items-center gap-x-3">
               <button
                 type="button"
                 onClick={handleSelectAllVisible}
-                className="flex items-center gap-1 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
+                aria-pressed={pageSelected}
+                className="flex min-h-9 items-center gap-1 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
               >
-                {paginatedItems.every(i => selectedIds.has(i.id)) ? (
+                {pageSelected ? (
                   <CheckSquare size={13} className="text-slate-800 dark:text-slate-200" />
                 ) : (
                   <Square size={13} className="text-slate-400" />
                 )}
-                <span>Select Page ({paginatedItems.length})</span>
+                <span>{pageSelected ? 'Deselect this page' : 'Select this page'} ({paginatedItems.length})</span>
               </button>
 
-              <span className="text-slate-300 dark:text-slate-700">|</span>
-
-              <button
-                type="button"
-                onClick={handleSelectAllUpcoming}
-                className="text-[11px] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer font-medium"
-              >
-                Select Upcoming ({upcomingItems.length})
-              </button>
+              {statusFilter === 'upcoming' && filteredAndSortedItems.length > paginatedItems.length && (
+                <button type="button" onClick={handleSelectMatchingUpcoming}
+                  className="min-h-9 text-xs font-medium text-slate-600 dark:text-slate-300 hover:underline cursor-pointer">
+                  Select all matching upcoming ({filteredAndSortedItems.length})
+                </button>
+              )}
             </div>
 
             <div className="text-[10px] font-mono text-slate-400">
@@ -2381,10 +2390,14 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
         )}
       </div>
 
-      {/* Common questions FAQ Section */}
-      <div className="pt-4 pb-4">
-        <CommonQuestionsFAQ id="results-calendar-faq" compact />
-      </div>
+      {user && !user.isAnonymous ? (
+        <details className="my-4 text-sm text-slate-600 dark:text-slate-300">
+          <summary className="min-h-10 cursor-pointer py-2 font-semibold">Calendar help</summary>
+          <CommonQuestionsFAQ id="results-calendar-faq" compact />
+        </details>
+      ) : (
+        <div className="py-4"><CommonQuestionsFAQ id="results-calendar-faq" compact /></div>
+      )}
 
       {/* DETAIL MODAL FOR CALENDAR & EARNINGS ITEM */}
       <AnimatePresence>

@@ -10,6 +10,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { customFetch } from '../api';
+import { watchlistIdentity } from '../shared/watchlistIdentity';
 import { springSnappy, buttonTap } from '../utils/motionTokens';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -23,6 +24,7 @@ interface UserProfileModalProps {
   onClose: () => void;
   onOpenSettings?: () => void;
   onOpenWatchlist?: () => void;
+  onOpenSavedNotes?: () => void;
   onOpenAlertRules?: () => void;
   onOpenHelp?: () => void;
   onOpenTerms?: () => void;
@@ -34,6 +36,7 @@ export function UserProfileModal({
   onClose, 
   onOpenSettings,
   onOpenWatchlist,
+  onOpenSavedNotes,
   onOpenAlertRules,
   onOpenHelp,
   onOpenTerms,
@@ -56,42 +59,34 @@ export function UserProfileModal({
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   useEffect(() => { setShowAvatarPicker(false); }, [isOpen, user?.uid]);
 
-  // Real-time research stats
-  const [watchlistCount, setWatchlistCount] = useState<number>(0);
-  const [nextEarningsInfo, setNextEarningsInfo] = useState<string>('Upcoming');
+  const owner = user?.isAnonymous ? undefined : user?.uid;
+  const [watchlistSummary, setWatchlistSummary] = useState<{ owner: string; count: number | null } | null>(null);
+  const watchlistCount = owner && watchlistSummary?.owner === owner ? watchlistSummary.count : null;
 
   useEffect(() => {
-    if (!isOpen) return;
+    setWatchlistSummary(null);
+    if (!isOpen || !owner) return;
     const controller = new AbortController();
 
-    // Fetch live research summary
     const loadSummary = async () => {
+      let count: number | null = null;
       try {
-        const wRes = await customFetch('/api/watchlists', { signal: controller.signal }).catch(() => null);
-        if (controller.signal.aborted) return;
-
-        if (wRes && wRes.ok) {
-          const wData = await wRes.json();
-          if (controller.signal.aborted) return;
-          if (Array.isArray(wData)) {
-            const totalSymbols = new Set<string>();
-            wData.forEach((list: any) => {
-              (list.items || []).forEach((item: any) => {
-                if (item.symbol) totalSymbols.add(item.symbol);
-              });
-            });
-            setWatchlistCount(totalSymbols.size);
+        const response = await customFetch('/api/watchlists', { signal: controller.signal });
+        if (response.ok) {
+          const lists = await response.json();
+          if (Array.isArray(lists)) {
+            const symbols = lists.flatMap(list => Array.isArray(list?.items) ? list.items : [])
+              .map(item => watchlistIdentity(item)?.symbol).filter(Boolean);
+            count = new Set(symbols).size;
           }
         }
-
-      } catch (e) {
-        // Soft fallback
-      }
+      } catch { /* An unknown count remains unavailable. */ }
+      if (!controller.signal.aborted) setWatchlistSummary({ owner, count });
     };
 
-    loadSummary();
+    void loadSummary();
     return () => controller.abort();
-  }, [isOpen, user?.uid]);
+  }, [isOpen, owner]);
 
   if (!isOpen) return null;
 
@@ -133,7 +128,7 @@ export function UserProfileModal({
   const email = profile?.email || user?.email || '';
   const username = profile?.username || profile?.telegramUsername || (email ? email.split('@')[0] : 'investor');
 
-  // Format real or sensible "Watching since" date
+  // Show the account date only when it is available.
   const memberSince = (() => {
     try {
       const dateVal = (user as any)?.metadata?.creationTime || profile?.createdAt;
@@ -144,7 +139,7 @@ export function UserProfileModal({
         }
       }
     } catch {}
-    return 'Jan 2025';
+    return null;
   })();
 
   return (
@@ -198,7 +193,7 @@ export function UserProfileModal({
 
               <div className="flex items-center gap-2 mt-1">
                 <span className="text-[11px] text-slate-400 dark:text-slate-500">
-                  Watching since {memberSince}
+                  {memberSince ? `Watching since ${memberSince}` : 'BSE Nexus account'}
                 </span>
                 <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
                 <span className={cn(
@@ -228,7 +223,7 @@ export function UserProfileModal({
             <div className="grid grid-cols-3 gap-2 text-center">
               <div className="p-2 rounded-xl bg-white dark:bg-[#151421] border border-slate-200/60 dark:border-[#272439]">
                 <div className="text-base font-black text-slate-900 dark:text-white">
-                  {watchlistCount}
+                  {watchlistCount ?? '—'}
                 </div>
                 <div className="text-[10px] font-medium text-slate-500 dark:text-slate-400 truncate">
                   Watched
@@ -295,7 +290,7 @@ export function UserProfileModal({
                 <span className="font-semibold">My Watchlist</span>
               </div>
               <div className="flex items-center gap-1.5 text-slate-400">
-                <span className="text-[11px] font-medium">{watchlistCount} stocks</span>
+                <span className="text-[11px] font-medium">{watchlistCount === null ? '—' : `${watchlistCount} ${watchlistCount === 1 ? 'stock' : 'stocks'}`}</span>
                 <ChevronRight size={14} />
               </div>
             </motion.button>
@@ -320,18 +315,27 @@ export function UserProfileModal({
               </div>
             </motion.button>
 
-            {/* Saved Research & Guides */}
+            {onOpenSavedNotes && (
+              <motion.button
+                type="button"
+                whileTap={buttonTap}
+                transition={springSnappy}
+                onClick={() => { onClose(); onOpenSavedNotes(); }}
+                className="w-full min-h-11 p-3 flex items-center justify-between text-left hover:bg-slate-50 dark:hover:bg-[#201E2E] transition-colors cursor-pointer text-slate-800 dark:text-slate-200"
+              >
+                <span className="flex items-center gap-2.5 font-semibold"><Bookmark size={15} className="text-blue-500" />Saved Notes</span>
+                <ChevronRight size={14} className="text-slate-400" />
+              </motion.button>
+            )}
+
             <motion.button
               type="button"
               whileTap={buttonTap}
               transition={springSnappy}
               onClick={handleOpenHelpModal}
-              className="w-full min-h-[44px] p-3 flex items-center justify-between text-left hover:bg-slate-50 dark:hover:bg-[#201E2E] transition-colors cursor-pointer text-slate-800 dark:text-slate-200 select-none"
+              className="w-full min-h-11 p-3 flex items-center justify-between text-left hover:bg-slate-50 dark:hover:bg-[#201E2E] transition-colors cursor-pointer text-slate-800 dark:text-slate-200"
             >
-              <div className="flex items-center gap-2.5">
-                <Bookmark size={15} className="text-blue-500" />
-                <span className="font-semibold">Saved Research & Guides</span>
-              </div>
+              <span className="flex items-center gap-2.5 font-semibold"><HelpCircle size={15} className="text-blue-500" />Help &amp; Guides</span>
               <ChevronRight size={14} className="text-slate-400" />
             </motion.button>
 

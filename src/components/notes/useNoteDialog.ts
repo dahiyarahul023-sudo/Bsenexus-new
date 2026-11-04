@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
-export function useNoteDialog(onClose: () => void) {
+export function useNoteDialog(onClose: () => void, initialFocus?: string) {
   const ref = useRef<HTMLDivElement>(null);
   const close = useRef(onClose);
   close.current = onClose;
@@ -16,7 +16,8 @@ export function useNoteDialog(onClose: () => void) {
     };
     const items = () => Array.from(element?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), textarea:not(:disabled), [tabindex="0"]') ?? []).filter(el => el.getClientRects().length);
     resize();
-    items()[0]?.focus({ preventScroll: true });
+    const target = (initialFocus && element?.querySelector<HTMLElement>(initialFocus)) || items()[0];
+    target?.focus({ preventScroll: true });
     const key = (event: KeyboardEvent) => {
       if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); close.current(); }
       if (event.key !== 'Tab') return;
@@ -38,6 +39,6 @@ export function useNoteDialog(onClose: () => void) {
       window.removeEventListener('resize', resize);
       if (previous?.isConnected) previous.focus({ preventScroll: true });
     };
-  }, []);
+  }, [initialFocus]);
   return ref;
 }

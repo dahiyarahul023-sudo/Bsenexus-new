@@ -1,5 +1,5 @@
 import { PRO_AI_SUMMARIES_PER_DAY } from '../shared/productFacts';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { X, ShieldCheck, Check, Tag, Sparkles, Crown } from 'lucide-react';
 import { RichIcon } from './ui/RichVisual';
 import { BseNexusLogo } from './ui/BseNexusLogo';
@@ -20,6 +20,8 @@ export function ProCheckoutView() {
   const [step, setStep] = useState<'plan' | 'pay'>('plan');
   const [paying, setPaying] = useState(false);
   const payingRef = useRef(false);
+  const paymentAttempt = useRef<AbortController | null>(null);
+  const checkoutOwner = user && !user.isAnonymous ? user.uid : null;
   const [error, setError] = useState<string | null>(null);
 
   // Referral state
@@ -48,7 +50,7 @@ export function ProCheckoutView() {
     return()=>controller.abort();
   },[isCheckoutOpen,user?.uid,user?.isAnonymous]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (isCheckoutOpen) {
       setPlanId(checkoutPlanId);
       setReviewBaseId(checkoutPlanId);
@@ -57,7 +59,8 @@ export function ProCheckoutView() {
       payingRef.current = false;
       setError(null);
     }
-  }, [isCheckoutOpen, checkoutPlanId]);
+    return () => paymentAttempt.current?.abort();
+  }, [isCheckoutOpen, checkoutPlanId, checkoutOwner]);
 
   const move = (next: 'plan' | 'pay') => {
     if (payingRef.current) return;
@@ -145,18 +148,22 @@ export function ProCheckoutView() {
       setError('Please sign in to your account before paying.');
       return;
     }
+    const controller = new AbortController();
+    paymentAttempt.current = controller;
     payingRef.current = true;
     setPaying(true);
     setError(null);
     paymentFeedback();
     try {
-      const result = await startProPayment(plan.id, isReferralApplied ? referralCode : undefined);
+      const result = await startProPayment(plan.id, isReferralApplied ? referralCode : undefined, controller.signal);
+      if (controller.signal.aborted) return;
       if (!result.ok) {
         setError(result.error || 'Could not start payment. Please try again.');
         payingRef.current = false;
         setPaying(false);
       }
     } catch {
+      if (controller.signal.aborted) return;
       setError('Could not open checkout. Please try again.');
       payingRef.current = false;
       setPaying(false);

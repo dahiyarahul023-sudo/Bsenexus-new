@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "602fcc8204618efdfb176e54b127cc552fc4f92ebd35554f41ace9e52e6f4746",
+  "sourceDigest": "70f541e383977ca6be12720a2056628babfbe85500d83fa95aa117711e70fa30",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -140,7 +140,7 @@
     },
     {
       "path": "scripts/check-dev-runtime.mjs",
-      "sha256": "85d3704258d12fe5785bdeb12fa5ab6f5b00f9859274bcdc5b85982244809f64",
+      "sha256": "37ab879daefd12c15aa95ac48864474219b032c4414939c62b7da528723e8712",
       "importedBy": []
     },
     {
@@ -217,6 +217,11 @@
       "importedBy": []
     },
     {
+      "path": "scripts/verify-checkout-recovery.mjs",
+      "sha256": "736d119339875d920d4d8b310424567bc2b8dcc79837344096734d7d28818c8f",
+      "importedBy": []
+    },
+    {
       "path": "scripts/verify-deep-audit-staging.sql",
       "sha256": "ed86b12aa9dfee640987274fa9e1eaeb68cd69171870956b347386ff05508360",
       "importedBy": []
@@ -233,7 +238,7 @@
     },
     {
       "path": "scripts/verify-mobile-ui.mjs",
-      "sha256": "a83d53a5b0fb0f38d19e6a9af9a4e88564b6b34ea1b36c4ed1ac611f780ae28f",
+      "sha256": "f19386020e4115612491cd746b955596b380a16062a6a2c8d20c6ab886d29324",
       "importedBy": []
     },
     {
@@ -266,7 +271,7 @@
     },
     {
       "path": "server.ts",
-      "sha256": "f33a49402110c2baef2464ae79b7e0c1863ef5ce262dce2b8a4f5e286064b10b",
+      "sha256": "0e6434b06af3d6c1ca2b2dff2aae3efba95c38224b5e08d8f34a807e04029670",
       "importedBy": [
         "server/tests/routeResolution.test.ts"
       ]
@@ -1203,7 +1208,7 @@
     },
     {
       "path": "server/services/companyIntelService.ts",
-      "sha256": "e818b4f22ddb624bb6efb246a0f927895ecca3a962f46f4c90367c19e5511a90",
+      "sha256": "151931d2e12e5ceb67c6500640a185952c16d1b46752c5cc24fd13e12c7e2e6a",
       "importedBy": [
         "server.ts",
         "server/api/routes.ts"
@@ -2079,7 +2084,7 @@
     },
     {
       "path": "server/tests/marketTickerTruth.test.ts",
-      "sha256": "7e5cd72760a855f84e13d8e5e270691bb11e5fe9097c726ffa69fe221fe04545",
+      "sha256": "47309af5b36c63775e2523c8bf07df1b7c7782c21cfb87c02dd734916a69a941",
       "importedBy": []
     },
     {
@@ -2399,7 +2404,7 @@
     },
     {
       "path": "server/tests/sevenFixes.test.ts",
-      "sha256": "dcace67e4387f5b9f70d05dbc835be8d3a5f4c15a406a9a95044dd81aa7b2e3d",
+      "sha256": "d4444a0ddfd1a6115f5a696d78889712375d3172610b2c455f03cd30dd7a2645",
       "importedBy": []
     },
     {
@@ -2781,7 +2786,7 @@
     },
     {
       "path": "src/App.tsx",
-      "sha256": "b210215fdc20a57579463d90b371c208aa9cabcb3aefa0dc8c1e7f24d1f0efef",
+      "sha256": "528ffa9b758496b3433454e89671c49604e611f2b0876bd7fc64500a60e7e938",
       "importedBy": [
         "src/main.tsx"
       ]
@@ -2902,7 +2907,7 @@
     },
     {
       "path": "src/components/Announcements.tsx",
-      "sha256": "8fbef96bee09da2dd9b50c3a1eaf5af80760c6097454597e9d6dacf094126f26",
+      "sha256": "9667f779638bbbd9ba8fc8323d536ffa0605234c4a45bef400e3eb58997c60bb",
       "importedBy": [
         "src/App.tsx",
         "src/components/Layout.tsx"
@@ -2933,14 +2938,14 @@
     },
     {
       "path": "src/components/CompaniesPage.tsx",
-      "sha256": "e5f31dc63acb3fdd2000ed7c22dc014a002c53162d77aad0bd90b634fa9f2731",
+      "sha256": "6c299dadf1250050f9344f5a08d53339bc11aac26ad3b9ebafdd73544c023c3e",
       "importedBy": [
         "src/App.tsx"
       ]
     },
     {
       "path": "src/components/CompanyIntelligenceModal.tsx",
-      "sha256": "aeb2c018b87247d9358607f39e88278705f84975ab548e4995f6df15a3e2c79c",
+      "sha256": "e6c318730a531a4b5a1822f6ed083895e797a86bc619de8fb4afbe5873c56f6a",
       "importedBy": [
         "src/components/Layout.tsx"
       ]
@@ -2984,7 +2989,7 @@
     },
     {
       "path": "src/components/HomeForYou.tsx",
-      "sha256": "4d597afb9afdd27c68baebba27e852bf555aab8b3a47316989d5dab6c5cb66bd",
+      "sha256": "d92dd3c2ef67b00571aa7ada2b4a72217c24423b7456ae1d15d6b6ea7012993a",
       "importedBy": [
         "src/App.tsx",
         "src/components/Layout.tsx"
@@ -3006,14 +3011,14 @@
     },
     {
       "path": "src/components/LandingPage.tsx",
-      "sha256": "bc2b5bd97f545527206284e9d3eda447c16bed1b56598ca04762a0c26809e5d3",
+      "sha256": "345380e51e5bdf476cf781500c1d724a76cefc36bfb1aac4f6c9d9c3a4a138e4",
       "importedBy": [
         "src/App.tsx"
       ]
     },
     {
       "path": "src/components/Layout.tsx",
-      "sha256": "564afbbd1cd88db1fdc66cf895ddf644e028971905fa9b0d9f1a86fb80808204",
+      "sha256": "a02cdf209bfebc462ad35072857db6e7ab3b20a183ebde6e7db7b0c8bc1510c9",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -3075,7 +3080,7 @@
     },
     {
       "path": "src/components/ProCheckoutView.tsx",
-      "sha256": "c81fe64627054abfe4a67161dc67727bf766173365a24bb1fa36a471b16de425",
+      "sha256": "30a446c0cbf103498719b9f67d760fcfd80d5b33179e42e0ba7ecef0873a9c79",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -3149,7 +3154,7 @@
     },
     {
       "path": "src/components/ResultsCalendar.tsx",
-      "sha256": "3cb7270de9ce51d36160d752163706deec0373f087202d810d7d14d2c0d07f71",
+      "sha256": "784f3f51587be3121b754b21897ccbde684cc55ff2da21ce4eb1f64268b7ea33",
       "importedBy": [
         "src/App.tsx",
         "src/components/Layout.tsx"
@@ -3165,7 +3170,7 @@
     },
     {
       "path": "src/components/SettingsTab.tsx",
-      "sha256": "0647b913c33555a824119ccee4aceef6581a6818a5da81481deb5c27e5788fd1",
+      "sha256": "e6b021f0816a343ebd044cf2c2a4c2d8b5a1e93e7470e5c2ac4043fd82e97794",
       "importedBy": [
         "src/App.tsx",
         "src/components/Layout.tsx"
@@ -3224,7 +3229,7 @@
     },
     {
       "path": "src/components/UserProfileModal.tsx",
-      "sha256": "20f3f6d44d1e5b5b69a3fda8f4e71d47c07b79682595894ee0874e283c2486e8",
+      "sha256": "b42c03d09eb1a75850d38593943862e5da9f0008506ad4eb7b7e25a45e7ccb2c",
       "importedBy": [
         "src/components/Layout.tsx"
       ]
@@ -3238,7 +3243,7 @@
     },
     {
       "path": "src/components/WatchlistManager.tsx",
-      "sha256": "31e8132f9987748fddfb91659afe2cd3e73152ac6fcedeb5f07bcbba465ce09e",
+      "sha256": "954ddd74506bd2bae679b4c6ccfe6df5593a79482872a650a5a96300bf927f5d",
       "importedBy": [
         "src/App.tsx",
         "src/components/Layout.tsx"
@@ -3262,7 +3267,7 @@
     },
     {
       "path": "src/components/filing/FilingPage.tsx",
-      "sha256": "6c2c49eb585644054f282153de1daa35017aa1fd7d2640b9e7185e9a9e242be7",
+      "sha256": "a2f54224f0c4b2e3a5daafee074d16cd27c732b0c530686d53794fcd5c48c585",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -3309,7 +3314,7 @@
     },
     {
       "path": "src/components/landing/CoreCapabilitiesBento.tsx",
-      "sha256": "e90f659b600011e3cd93d661dcf91478e2510dd7097fc4f87eca84b1eca0e2a1",
+      "sha256": "4874c426c27b00f7baa42bfae87a452671e6261a8d915c2408d98c753d4f2e20",
       "importedBy": [
         "src/components/LandingPage.tsx"
       ]
@@ -3375,7 +3380,7 @@
     },
     {
       "path": "src/components/notes/NoteEditor.tsx",
-      "sha256": "4da4c22d27c86f458e29b8ccbbd7613fc82923e9d39dc679d54c9c228678e512",
+      "sha256": "ba66680b8c3d23cf08a096d5004e2c12d6a82b07abd754eb67eddca4a3555639",
       "importedBy": [
         "src/App.tsx",
         "src/components/Layout.tsx"
@@ -3398,7 +3403,7 @@
     },
     {
       "path": "src/components/notes/SavedNotesScreen.tsx",
-      "sha256": "c7c062ebe829848d34389a92bff42f2fc9f93afa8fc3cccac81ab7ea20a1317d",
+      "sha256": "e01182aa6b9989844c71a082ee830aa98713a2622447781b061af3386ada3fd0",
       "importedBy": [
         "src/components/SettingsTab.tsx"
       ]
@@ -3420,7 +3425,7 @@
     },
     {
       "path": "src/components/notes/notes.css",
-      "sha256": "95a05c7b18003a7f2c64046d72589ede43b381027f24d2e0ef188ac460efdeef",
+      "sha256": "46eaa5aaaa51fcd9341d1a5b49207dc37f2afac077160bc654ed8c161fa12d51",
       "importedBy": [
         "src/components/notes/NoteCharacter.tsx",
         "src/components/notes/NoteEditor.tsx",
@@ -3429,7 +3434,7 @@
     },
     {
       "path": "src/components/notes/useNoteDialog.ts",
-      "sha256": "543a8a6d79f10cfb865b8567352a3af2ababf8d5f46e0545f2f10dffa1cc2251",
+      "sha256": "802e3d6d5ead48ca1ab3a00656309dc4a25d1cdde2aed99e1aceb355b1f8bf7e",
       "importedBy": [
         "src/components/notes/NoteEditor.tsx"
       ]
@@ -3623,7 +3628,6 @@
       "sha256": "aeca4819d02cb7e1c5ff630d74a6239b49f86a0f44ec222ce199aace8ce341c4",
       "importedBy": [
         "src/components/LandingPage.tsx",
-        "src/components/landing/CoreCapabilitiesBento.tsx",
         "src/components/landing/UpcomingCatalystsGrid.tsx"
       ]
     },
@@ -3670,7 +3674,6 @@
       "path": "src/components/ui/CalendarDateBadge3D.tsx",
       "sha256": "032c67bd1afd38b5d377c4f7db4463ca5e2ad407b00a64fa7c0822b1a023a2b5",
       "importedBy": [
-        "src/components/LandingPage.tsx",
         "src/components/Layout.tsx",
         "src/components/landing/CalendarTelegramMorph.tsx",
         "src/components/landing/FeatureIcons.tsx",
@@ -3680,7 +3683,7 @@
     },
     {
       "path": "src/components/ui/CommandPalette.tsx",
-      "sha256": "5ee1b6cbfbe9298310d38ad6e5409e8365991db1c74dbd397360fb0a4565eb2a",
+      "sha256": "5bad4b4318ecc509b14495dcae95705efb0727bc9abed3b524deb9531840c17c",
       "importedBy": [
         "src/components/Layout.tsx"
       ]
@@ -3762,7 +3765,6 @@
       "path": "src/components/ui/MarketClock.tsx",
       "sha256": "9e0d4062fc60c53273c6943a11da7f8e1b4c98e4ffd6a0a7b154dcc5f8d8c52b",
       "importedBy": [
-        "src/components/LandingPage.tsx",
         "src/components/Layout.tsx"
       ]
     },
@@ -3776,7 +3778,7 @@
     },
     {
       "path": "src/components/ui/MarketTickerTape.tsx",
-      "sha256": "396e432e7c9ba43186e3023a43edd0ab9a0e094001ff7b4508c54f1cf5f1ccba",
+      "sha256": "0b5adbfab26909104caa2bd9db443b41b80ad376a363cc3a1999dc03172b7bfd",
       "importedBy": [
         "src/components/LandingPage.tsx",
         "src/components/Layout.tsx"
@@ -3812,9 +3814,7 @@
     {
       "path": "src/components/ui/ParticleRibbons.tsx",
       "sha256": "0a2507ab4201a6827181769144a4bb46447880c69caa342e97cadf3321d81e36",
-      "importedBy": [
-        "src/components/LandingPage.tsx"
-      ]
+      "importedBy": []
     },
     {
       "path": "src/components/ui/PlanCard.tsx",
@@ -4010,7 +4010,7 @@
     },
     {
       "path": "src/config/companyDirectory.ts",
-      "sha256": "64170364ae5577fa3f2c7ba439deb5b4ef0a0e6e5a98cfa04c48418be4d41da5",
+      "sha256": "1cea06130240e75d379faa6bb1ab0da65f19fd67d86bb93e9884962af08044a2",
       "importedBy": [
         "scripts/verify-ui-followup.mjs",
         "server.ts",
@@ -4111,7 +4111,7 @@
     },
     {
       "path": "src/context/IntelModalContext.tsx",
-      "sha256": "5167571212b36776265263f08f3253e36db11e6cf20c4887c8d9ec181056da00",
+      "sha256": "4286d1a020421046edaacccb6f15f2779faa5f1a73c5bf7cb864251b9bb8f449",
       "importedBy": [
         "src/App.tsx",
         "src/components/Announcements.tsx",
@@ -4126,7 +4126,7 @@
     },
     {
       "path": "src/context/NoteEditorContext.tsx",
-      "sha256": "39cbba3b1ea80852057409e2e07e1913143a4be660415a398c5c8014101c9e89",
+      "sha256": "b9f047ebb5f3129ef190c6b830aca3ddc04561b53e1991753da44fb199e2df8c",
       "importedBy": [
         "src/App.tsx",
         "src/components/notes/NoteEditor.tsx",
@@ -4306,7 +4306,7 @@
     },
     {
       "path": "src/index.css",
-      "sha256": "0dab72ac2beec68daa6b68371f06c9d2209a07274dbc2dc44f74eab7e223ac98",
+      "sha256": "06270e0904769047efdefbfbba24d0fdf445ac9c62e61a62d23aeed1463b2320",
       "importedBy": [
         "src/main.tsx"
       ]
@@ -4437,6 +4437,15 @@
         "server/tests/companyFilingHistory.test.ts",
         "server/tests/sevenFixes.test.ts",
         "src/components/CompanyIntelligenceModal.tsx"
+      ]
+    },
+    {
+      "path": "src/shared/filingPresentation.ts",
+      "sha256": "fd9639102a9ac36fd80e183b2d02ed6bcbcfc5403e17b12fb11e587f80352095",
+      "importedBy": [
+        "server.ts",
+        "server/tests/sevenFixes.test.ts",
+        "src/components/filing/FilingPage.tsx"
       ]
     },
     {
@@ -4667,6 +4676,7 @@
         "server/tests/watchlistIdentity.test.ts",
         "server/tests/watchlistMetadata.test.ts",
         "src/components/HomeForYou.tsx",
+        "src/components/UserProfileModal.tsx",
         "src/components/WatchlistEditor.tsx",
         "src/utils/forYou.ts",
         "src/utils/watchlistPreview.ts"
@@ -4856,7 +4866,7 @@
     },
     {
       "path": "src/utils/cashfree.ts",
-      "sha256": "81c18a2aeb9db37ae937278843b99f5c0b64c70fde10ec86ed2883ecb7d7197b",
+      "sha256": "e1824b9e09e3764ced83fd2c8b059e63b50f6400ef5180ec6b6c26c218e69eee",
       "importedBy": [
         "src/App.tsx",
         "src/components/Announcements.tsx",
@@ -5210,7 +5220,9 @@
       "path": "src/utils/timeFormat.ts",
       "sha256": "793a3954228cf34b4f1c811a1e583feac6149da914401031831bba5845bdbb1d",
       "importedBy": [
+        "server.ts",
         "server/tests/announcementFeed.test.ts",
+        "server/tests/sevenFixes.test.ts",
         "src/components/Announcements.tsx",
         "src/components/CompanyIntelligenceModal.tsx",
         "src/components/HomeForYou.tsx",
@@ -5218,6 +5230,7 @@
         "src/components/ResultsCalendar.tsx",
         "src/components/WatchlistManager.tsx",
         "src/components/results/ResultsPage.tsx",
+        "src/shared/filingPresentation.ts",
         "src/shared/watchlistResultStatus.ts",
         "src/utils/announcementFeed.ts",
         "src/utils/resultTiming.ts"
@@ -5594,141 +5607,153 @@
     },
     {
       "source": "server.ts",
-      "target": "server/database/announcementDao.ts",
+      "target": "src/utils/timeFormat.ts",
       "kind": "import",
       "line": 36
     },
     {
       "source": "server.ts",
-      "target": "server/utils/stockResolver.ts",
+      "target": "src/shared/filingPresentation.ts",
       "kind": "import",
       "line": 37
     },
     {
       "source": "server.ts",
-      "target": "server/services/companyIntelService.ts",
+      "target": "server/database/announcementDao.ts",
       "kind": "import",
       "line": 38
     },
     {
       "source": "server.ts",
-      "target": "server/services/marketGuidesService.ts",
+      "target": "server/utils/stockResolver.ts",
       "kind": "import",
       "line": 39
     },
     {
       "source": "server.ts",
-      "target": "server/services/marketGuidesService.ts",
+      "target": "server/services/companyIntelService.ts",
       "kind": "import",
       "line": 40
     },
     {
       "source": "server.ts",
-      "target": "server/database/firebase.ts",
+      "target": "server/services/marketGuidesService.ts",
       "kind": "import",
       "line": 41
     },
     {
       "source": "server.ts",
-      "target": "server/database/localStore.ts",
+      "target": "server/services/marketGuidesService.ts",
       "kind": "import",
       "line": 42
     },
     {
       "source": "server.ts",
-      "target": "server/utils/renderCache.ts",
+      "target": "server/database/firebase.ts",
       "kind": "import",
       "line": 43
     },
     {
       "source": "server.ts",
-      "target": "server/services/indexNow.ts",
+      "target": "server/database/localStore.ts",
       "kind": "import",
       "line": 44
     },
     {
       "source": "server.ts",
-      "target": "server/services/guideIndexNow.ts",
+      "target": "server/utils/renderCache.ts",
       "kind": "import",
       "line": 45
     },
     {
       "source": "server.ts",
-      "target": "server/security/recaptchaService.ts",
+      "target": "server/services/indexNow.ts",
       "kind": "import",
       "line": 46
     },
     {
       "source": "server.ts",
-      "target": "server/services/bse.ts",
+      "target": "server/services/guideIndexNow.ts",
       "kind": "import",
       "line": 47
     },
     {
       "source": "server.ts",
-      "target": "server/database/feedbackDao.ts",
+      "target": "server/security/recaptchaService.ts",
       "kind": "import",
       "line": 48
     },
     {
       "source": "server.ts",
-      "target": "server/services/seoPrerender.ts",
+      "target": "server/services/bse.ts",
       "kind": "import",
       "line": 49
     },
     {
       "source": "server.ts",
-      "target": "server/ai/docs.ts",
+      "target": "server/database/feedbackDao.ts",
       "kind": "import",
       "line": 50
     },
     {
       "source": "server.ts",
-      "target": "src/shared/aiDataDisclosure.ts",
+      "target": "server/services/seoPrerender.ts",
       "kind": "import",
       "line": 51
     },
     {
       "source": "server.ts",
-      "target": "src/config/companyDirectory.ts",
+      "target": "server/ai/docs.ts",
       "kind": "import",
       "line": 52
     },
     {
       "source": "server.ts",
-      "target": "src/config/exchangeCompanies.ts",
+      "target": "src/shared/aiDataDisclosure.ts",
       "kind": "import",
       "line": 53
     },
     {
       "source": "server.ts",
-      "target": "server/ai/http.ts",
+      "target": "src/config/companyDirectory.ts",
       "kind": "import",
       "line": 54
     },
     {
       "source": "server.ts",
-      "target": "server/services/resultsCalendarService.ts",
+      "target": "src/config/exchangeCompanies.ts",
       "kind": "import",
       "line": 55
     },
     {
       "source": "server.ts",
-      "target": "server/services/publicCalendar.ts",
+      "target": "server/ai/http.ts",
       "kind": "import",
       "line": 56
     },
     {
       "source": "server.ts",
-      "target": "server/utils/spaRoutes.ts",
+      "target": "server/services/resultsCalendarService.ts",
       "kind": "import",
       "line": 57
     },
     {
       "source": "server.ts",
-      "target": "server/api/aiPlugin.ts",
+      "target": "server/services/publicCalendar.ts",
       "kind": "import",
       "line": 58
+    },
+    {
+      "source": "server.ts",
+      "target": "server/utils/spaRoutes.ts",
+      "kind": "import",
+      "line": 59
+    },
+    {
+      "source": "server.ts",
+      "target": "server/api/aiPlugin.ts",
+      "kind": "import",
+      "line": 60
     },
     {
       "source": "server/ai/calendarRead.ts",
@@ -10970,57 +10995,69 @@
     },
     {
       "source": "server/tests/sevenFixes.test.ts",
-      "target": "server/utils/companyPeers.ts",
+      "target": "src/shared/filingPresentation.ts",
       "kind": "import",
       "line": 1
     },
     {
       "source": "server/tests/sevenFixes.test.ts",
-      "target": "server/utils/routeHeading.ts",
+      "target": "src/utils/timeFormat.ts",
       "kind": "import",
       "line": 2
     },
     {
       "source": "server/tests/sevenFixes.test.ts",
-      "target": "src/shared/companyFilings.ts",
+      "target": "server/utils/companyPeers.ts",
       "kind": "import",
       "line": 3
     },
     {
       "source": "server/tests/sevenFixes.test.ts",
+      "target": "server/utils/routeHeading.ts",
+      "kind": "import",
+      "line": 4
+    },
+    {
+      "source": "server/tests/sevenFixes.test.ts",
+      "target": "src/shared/companyFilings.ts",
+      "kind": "import",
+      "line": 5
+    },
+    {
+      "source": "server/tests/sevenFixes.test.ts",
       "target": "src/shared/scripMatching.ts",
-      "kind": "import",
-      "line": 10
-    },
-    {
-      "source": "server/tests/sevenFixes.test.ts",
-      "target": "src/config/topCompanies.ts",
-      "kind": "import",
-      "line": 11
-    },
-    {
-      "source": "server/tests/sevenFixes.test.ts",
-      "target": "src/config/exchangeCompanies.ts",
       "kind": "import",
       "line": 12
     },
     {
       "source": "server/tests/sevenFixes.test.ts",
-      "target": "src/config/companyDirectory.ts",
+      "target": "src/config/topCompanies.ts",
       "kind": "import",
       "line": 13
     },
     {
       "source": "server/tests/sevenFixes.test.ts",
-      "target": "server/utils/stockResolver.ts",
+      "target": "src/config/exchangeCompanies.ts",
       "kind": "import",
       "line": 14
     },
     {
       "source": "server/tests/sevenFixes.test.ts",
-      "target": "server/utils/helpers.ts",
+      "target": "src/config/companyDirectory.ts",
       "kind": "import",
       "line": 15
+    },
+    {
+      "source": "server/tests/sevenFixes.test.ts",
+      "target": "server/utils/stockResolver.ts",
+      "kind": "import",
+      "line": 16
+    },
+    {
+      "source": "server/tests/sevenFixes.test.ts",
+      "target": "server/utils/helpers.ts",
+      "kind": "import",
+      "line": 17
     },
     {
       "source": "server/tests/spaRouteParity.test.ts",
@@ -11482,13 +11519,13 @@
       "source": "src/App.tsx",
       "target": "src/components/AuthModal.tsx",
       "kind": "dynamic",
-      "line": 931
+      "line": 938
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/Layout.tsx",
       "kind": "dynamic",
-      "line": 932
+      "line": 939
     },
     {
       "source": "src/api.ts",
@@ -12554,81 +12591,63 @@
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/components/ui/CalendarDateBadge3D.tsx",
-      "kind": "import",
-      "line": 2
-    },
-    {
-      "source": "src/components/LandingPage.tsx",
       "target": "src/components/ui/BseNexusLogo.tsx",
       "kind": "import",
-      "line": 11
-    },
-    {
-      "source": "src/components/LandingPage.tsx",
-      "target": "src/components/ui/MarketClock.tsx",
-      "kind": "import",
-      "line": 12
+      "line": 4
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/ui/MarketTickerTape.tsx",
       "kind": "import",
-      "line": 13
+      "line": 5
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/landing/UpcomingCatalystsGrid.tsx",
       "kind": "import",
-      "line": 14
+      "line": 6
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/landing/ResultsScrollDeck.tsx",
       "kind": "import",
-      "line": 15
+      "line": 7
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/landing/CoreCapabilitiesBento.tsx",
       "kind": "import",
-      "line": 16
+      "line": 8
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/landing/CommunitySocialBanner.tsx",
       "kind": "import",
-      "line": 17
+      "line": 9
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/landing/LandingFooterAbout.tsx",
       "kind": "import",
-      "line": 18
+      "line": 10
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/config/plans.ts",
       "kind": "import",
-      "line": 19
+      "line": 11
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/ui/PlanCard.tsx",
       "kind": "import",
-      "line": 20
-    },
-    {
-      "source": "src/components/LandingPage.tsx",
-      "target": "src/components/ui/ParticleRibbons.tsx",
-      "kind": "import",
-      "line": 21
+      "line": 12
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/ui/AiIntelligenceLogo.tsx",
       "kind": "import",
-      "line": 22
+      "line": 13
     },
     {
       "source": "src/components/Layout.tsx",
@@ -13858,7 +13877,7 @@
       "source": "src/components/SettingsTab.tsx",
       "target": "src/api/notesApi.ts",
       "kind": "dynamic",
-      "line": 150
+      "line": 154
     },
     {
       "source": "src/components/StorageManager.tsx",
@@ -14084,9 +14103,15 @@
     },
     {
       "source": "src/components/UserProfileModal.tsx",
-      "target": "src/utils/motionTokens.ts",
+      "target": "src/shared/watchlistIdentity.ts",
       "kind": "import",
       "line": 13
+    },
+    {
+      "source": "src/components/UserProfileModal.tsx",
+      "target": "src/utils/motionTokens.ts",
+      "kind": "import",
+      "line": 14
     },
     {
       "source": "src/components/WatchlistEditor.tsx",
@@ -14372,33 +14397,39 @@
     },
     {
       "source": "src/components/filing/FilingPage.tsx",
-      "target": "src/utils/pdfHelper.ts",
+      "target": "src/shared/filingPresentation.ts",
       "kind": "import",
       "line": 5
     },
     {
       "source": "src/components/filing/FilingPage.tsx",
-      "target": "src/utils/shareUrls.ts",
+      "target": "src/utils/pdfHelper.ts",
       "kind": "import",
       "line": 6
     },
     {
       "source": "src/components/filing/FilingPage.tsx",
-      "target": "src/components/ui/motion/ShareActionMenu.tsx",
+      "target": "src/utils/shareUrls.ts",
       "kind": "import",
       "line": 7
     },
     {
       "source": "src/components/filing/FilingPage.tsx",
-      "target": "src/components/notes/SaveNoteButton.tsx",
+      "target": "src/components/ui/motion/ShareActionMenu.tsx",
       "kind": "import",
       "line": 8
     },
     {
       "source": "src/components/filing/FilingPage.tsx",
-      "target": "src/lib/utils.ts",
+      "target": "src/components/notes/SaveNoteButton.tsx",
       "kind": "import",
       "line": 9
+    },
+    {
+      "source": "src/components/filing/FilingPage.tsx",
+      "target": "src/lib/utils.ts",
+      "kind": "import",
+      "line": 10
     },
     {
       "source": "src/components/landing/CalendarTelegramMorph.tsx",
@@ -14423,12 +14454,6 @@
       "target": "src/utils/motionTokens.ts",
       "kind": "import",
       "line": 11
-    },
-    {
-      "source": "src/components/landing/CoreCapabilitiesBento.tsx",
-      "target": "src/components/ui/AiIntelligenceLogo.tsx",
-      "kind": "import",
-      "line": 5
     },
     {
       "source": "src/components/landing/CreativeHero.tsx",
@@ -15487,6 +15512,12 @@
       "line": 36
     },
     {
+      "source": "src/shared/filingPresentation.ts",
+      "target": "src/utils/timeFormat.ts",
+      "kind": "import",
+      "line": 1
+    },
+    {
       "source": "src/shared/impactRadar.ts",
       "target": "src/shared/radarScope.ts",
       "kind": "import",
@@ -15598,7 +15629,7 @@
       "source": "src/utils/cashfree.ts",
       "target": "src/config/plans.ts",
       "kind": "reexport",
-      "line": 39
+      "line": 58
     },
     {
       "source": "src/utils/cleanBseSubject.ts",
@@ -16563,7 +16594,7 @@
         "server/tests/newsIssuerRelevance.test.ts",
         "server/tests/productClaims.test.ts"
       ],
-      "reason": "List/detail identity, filters, watchlist membership, badge counts and timestamps must agree. Background refresh preserves content, density, selection and scroll. Rapid filter changes must not render older responses. Home membership uses active-list exact identities. The responsive watchlist editor preserves company metadata, page scrolling and four visible priority filters. Inbox presents unread items first, while device push delivery has an independent persistent control. Calendar labels use company names when symbols are numeric; sticky date headings share measured toolbar offsets. Home previews select the newest filing per exact watchlist security before limiting, without changing the full filing feed. Static Watchlist identity fallback uses the shared verified IndusInd code; existing list state, revisions and editor behavior are preserved. Inbox now has All/Watchlist/Results only, with unread-first ordering, read action below/right of filters and ephemeral per-owner/filter snapshots retained across close. Confirmed read/clear reconciles all cached filters; loading/error never erases saved content. Watchlist first-read readiness separates unknown from confirmed empty. Calendar/News/Watchlist pull indicators occupy flow below stable controls. Watchlist and Story symbol-to-code fallback maps also use the shared blank BSE code, preventing the old Advanced Enzyme mapping from returning through a client fallback. Stored 30-day filing counts share one exact-company projection with company detail, independently of the seven-day updates feed. Durable per-company history uses keyset pages; company Filings and Material Actions expose numbered pages. Explicit paid archive imports all categories over selected years with bounded workers, source failure and storage confirmation, and does not persist PDFs. Process restart or another instance may make worker status unavailable; saved evidence remains and no success is invented. Financial result titles include Results For Quarter/Q1 and board Outcome - Results. Generic outcomes need identity-bound proof from bounded official BSE PDF text; no PDF is persisted. Archive receipts distinguish saved filings from documents awaiting verification. Calendar retains one lower history control; Stock 360 and automatic readers share completion copy. Completed archive receipts with pending documents remain successful reads and have one ledger status owner. Shared pre-result priority updates require existing admin authorization; explicit server PIN denial opens the existing PIN dialog. HTML/preview denial remains an unconfirmed blocker. No automatic mutation retry or client role expansion is permitted. Calendar window reads cancel superseded company/window requests and expose retry on failure. English summary fields survive server projections and share AI counts/filter/render. Pagination clamps after refresh. Details/filter keyboard ownership is element-local; shared Telegram controls mirror server admin-only policy and wait for confirmed message IDs. Company Hub peer cards replace redundant result teasers and navigate through IntelModalContext with exact identities; shared calendar Share actions retain the existing email/clipboard handlers. Calendar uses the same company/purpose hierarchy for numeric F&O and symbolic rows, one normalized full-date heading, and wrapping action-only footers. Semantic segmented/control radius tokens cover Classic and Soft Glass; Watchlist compact labels retain inline counts and readable mobile search. Calendar reminder popovers portal outside blurred/transformed cards and own viewport placement, keyboard dismissal and focus return. For You uses exact active-watchlist projections for results, news, Radar, ADR and company Stories, with explicit target/new-list stock additions through existing guarded routes. Canonical result history supplies first-declaration IST timing dots, a supported one/two-hour concentration and labelled exceptions; no scheduled or ingestion clocks imply release times. Today preserves declared results with distinct wording and accent. Home reads isolate section errors; same-owner verified lists survive transient failure, denial/owner switch clears them. Calendar detail reconciles only exact-code verified result evidence; visible reads refresh without forced sync."
+      "reason": "List/detail identity, filters, watchlist membership, badge counts and timestamps must agree. Background refresh preserves content, density, selection and scroll. Rapid filter changes must not render older responses. Home membership uses active-list exact identities. The responsive watchlist editor preserves company metadata, page scrolling and four visible priority filters. Inbox presents unread items first, while device push delivery has an independent persistent control. Calendar labels use company names when symbols are numeric; sticky date headings share measured toolbar offsets. Home previews select the newest filing per exact watchlist security before limiting, without changing the full filing feed. Static Watchlist identity fallback uses the shared verified IndusInd code; existing list state, revisions and editor behavior are preserved. Inbox now has All/Watchlist/Results only, with unread-first ordering, read action below/right of filters and ephemeral per-owner/filter snapshots retained across close. Confirmed read/clear reconciles all cached filters; loading/error never erases saved content. Watchlist first-read readiness separates unknown from confirmed empty. Calendar/News/Watchlist pull indicators occupy flow below stable controls. Watchlist and Story symbol-to-code fallback maps also use the shared blank BSE code, preventing the old Advanced Enzyme mapping from returning through a client fallback. Stored 30-day filing counts share one exact-company projection with company detail, independently of the seven-day updates feed. Durable per-company history uses keyset pages; company Filings and Material Actions expose numbered pages. Explicit paid archive imports all categories over selected years with bounded workers, source failure and storage confirmation, and does not persist PDFs. Process restart or another instance may make worker status unavailable; saved evidence remains and no success is invented. Financial result titles include Results For Quarter/Q1 and board Outcome - Results. Generic outcomes need identity-bound proof from bounded official BSE PDF text; no PDF is persisted. Archive receipts distinguish saved filings from documents awaiting verification. Calendar retains one lower history control; Stock 360 and automatic readers share completion copy. Completed archive receipts with pending documents remain successful reads and have one ledger status owner. Shared pre-result priority updates require existing admin authorization; explicit server PIN denial opens the existing PIN dialog. HTML/preview denial remains an unconfirmed blocker. No automatic mutation retry or client role expansion is permitted. Calendar window reads cancel superseded company/window requests and expose retry on failure. English summary fields survive server projections and share AI counts/filter/render. Pagination clamps after refresh. Details/filter keyboard ownership is element-local; shared Telegram controls mirror server admin-only policy and wait for confirmed message IDs. Company Hub peer cards replace redundant result teasers and navigate through IntelModalContext with exact identities; shared calendar Share actions retain the existing email/clipboard handlers. Calendar uses the same company/purpose hierarchy for numeric F&O and symbolic rows, one normalized full-date heading, and wrapping action-only footers. Semantic segmented/control radius tokens cover Classic and Soft Glass; Watchlist compact labels retain inline counts and readable mobile search. Calendar reminder popovers portal outside blurred/transformed cards and own viewport placement, keyboard dismissal and focus return. For You uses exact active-watchlist projections for results, news, Radar, ADR and company Stories, with explicit target/new-list stock additions through existing guarded routes. Canonical result history supplies first-declaration IST timing dots, a supported one/two-hour concentration and labelled exceptions; no scheduled or ingestion clocks imply release times. Today preserves declared results with distinct wording and accent. Home reads isolate section errors; same-owner verified lists survive transient failure, denial/owner switch clears them. Calendar detail reconciles only exact-code verified result evidence; visible reads refresh without forced sync. Calendar operations are separate from ordinary filters. Selection uses the active filter set and clears when its scope changes; the explicitly market-wide broadcast is separate. Watchlist count navigation enters the company Filings tab with the same 30-day window as the Hub fact. Personal watchlist priority and event impact are separate facts. Home personal updates precede discovery and retain verified same-owner filing previews during transient failure."
     },
     {
       "id": "frontend-notes",
@@ -16586,7 +16617,7 @@
         "server/tests/notes.test.ts",
         "server/tests/homeNews.test.ts"
       ],
-      "reason": "Editor writes dispatch notes-changed; saved-list and Settings listeners refresh independently. Preserve draft, list and count consistency across save, edit, delete, retry, account change and overlay close. API tests do not establish DOM focus or draft behavior."
+      "reason": "Confirmed editor and delete writes dispatch notes-changed; saved-list and Settings listeners refresh independently with stale-read guards. Profile and Settings share App-owned Saved Notes navigation. The editor is text-first, with optional icon and existing link/persistence contracts. Preserve draft, list and count consistency across save, edit, delete, retry, account change and overlay close. API tests do not establish DOM focus or draft behavior."
     },
     {
       "id": "frontend-commerce",
@@ -16620,9 +16651,10 @@
         "server/tests/referralInput.test.ts",
         "server/tests/subscriptionPresentation.test.ts",
         "server/tests/uxStatusRender.test.ts",
-        "server/tests/productClaims.test.ts"
+        "server/tests/productClaims.test.ts",
+        "scripts/verify-checkout-recovery.mjs"
       ],
-      "reason": "Displayed amount, checkout attribution, return verification, receipt/history and subscription display share one contract. Pending referral, confirmed reward and stale stream are different UI states. Never turn a redirect or unconfirmed write into success."
+      "reason": "Displayed amount, checkout attribution, return verification, receipt/history and subscription display share one contract. Pending referral, confirmed reward and stale stream are different UI states. Never turn a redirect or unconfirmed write into success. Checkout loads the gateway SDK before creating an order, releases failed script attempts for explicit retry and abandons an obsolete account attempt."
     },
     {
       "id": "frontend-ai",
@@ -16717,6 +16749,8 @@
         "src/config/companyDirectory.ts",
         "src/shared/aiDataDisclosure.ts",
         "server/ai/docs.ts",
+        "src/components/ui/MarketTickerTape.tsx",
+        "src/shared/filingPresentation.ts",
         "server/utils/routeHeading.ts"
       ],
       "tests": [
@@ -17109,7 +17143,7 @@
     },
     {
       "file": "server.ts",
-      "line": 81,
+      "line": 83,
       "receiver": "app",
       "method": "USE",
       "path": "compression({ threshold: 1024, // Don't compress payloads under 1KB level: 6, // Optimal balance between CPU usage and compression ratio filter: (req, res) => { // 1. Honor client bypass header if requested if (req.headers['x-no-compression",
@@ -17117,7 +17151,7 @@
     },
     {
       "file": "server.ts",
-      "line": 113,
+      "line": 115,
       "receiver": "app",
       "method": "USE",
       "path": "responseHeaders(undefined, cspTrialEnabled)",
@@ -17125,7 +17159,7 @@
     },
     {
       "file": "server.ts",
-      "line": 114,
+      "line": 116,
       "receiver": "app",
       "method": "USE",
       "path": "cspReportRouter()",
@@ -17133,7 +17167,7 @@
     },
     {
       "file": "server.ts",
-      "line": 115,
+      "line": 117,
       "receiver": "app",
       "method": "USE",
       "path": "/api/payments/webhook",
@@ -17143,7 +17177,7 @@
     },
     {
       "file": "server.ts",
-      "line": 116,
+      "line": 118,
       "receiver": "app",
       "method": "USE",
       "path": "['/mcp','/register']",
@@ -17153,7 +17187,7 @@
     },
     {
       "file": "server.ts",
-      "line": 117,
+      "line": 119,
       "receiver": "app",
       "method": "USE",
       "path": "['/token','/revoke']",
@@ -17163,7 +17197,7 @@
     },
     {
       "file": "server.ts",
-      "line": 118,
+      "line": 120,
       "receiver": "app",
       "method": "USE",
       "path": "express.json({ limit: '1mb' })",
@@ -17171,7 +17205,7 @@
     },
     {
       "file": "server.ts",
-      "line": 119,
+      "line": 121,
       "receiver": "app",
       "method": "USE",
       "path": "cookieParser()",
@@ -17179,7 +17213,7 @@
     },
     {
       "file": "server.ts",
-      "line": 121,
+      "line": 123,
       "receiver": "app",
       "method": "GET",
       "path": "/api/cron/poll-announcements",
@@ -17189,7 +17223,7 @@
     },
     {
       "file": "server.ts",
-      "line": 139,
+      "line": 141,
       "receiver": "app",
       "method": "USE",
       "path": "/activate-gift",
@@ -17199,7 +17233,7 @@
     },
     {
       "file": "server.ts",
-      "line": 142,
+      "line": 144,
       "receiver": "app",
       "method": "USE",
       "path": "authMiddleware",
@@ -17207,7 +17241,7 @@
     },
     {
       "file": "server.ts",
-      "line": 146,
+      "line": 148,
       "receiver": "app",
       "method": "GET",
       "path": "/sw.js",
@@ -17217,7 +17251,7 @@
     },
     {
       "file": "server.ts",
-      "line": 167,
+      "line": 169,
       "receiver": "app",
       "method": "GET",
       "path": "/OneSignalSDKWorker.js",
@@ -17227,7 +17261,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5379,
+      "line": 5361,
       "receiver": "app",
       "method": "GET",
       "path": "['/health', '/healthz']",
@@ -17237,7 +17271,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5385,
+      "line": 5367,
       "receiver": "app",
       "method": "GET",
       "path": "/robots.txt",
@@ -17247,7 +17281,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5391,
+      "line": 5373,
       "receiver": "app",
       "method": "GET",
       "path": "['/sitemap.xml', '/sitemap', '/sitemap_index.xml', '/sitemap.txt']",
@@ -17257,7 +17291,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5400,
+      "line": 5382,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-core.xml",
@@ -17267,7 +17301,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5438,
+      "line": 5420,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-filings-hot.xml",
@@ -17277,7 +17311,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5475,
+      "line": 5457,
       "receiver": "app",
       "method": "GET",
       "path": "['/rss.xml', '/rss', '/feed.xml', '/feed']",
@@ -17287,7 +17321,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5541,
+      "line": 5523,
       "receiver": "app",
       "method": "GET",
       "path": "[/^\\/https?:\\/?\\/?(?:www\\.)?bsenexus\\.in\\/sitemap(?:\\.xml)?$/i]",
@@ -17297,7 +17331,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5546,
+      "line": 5528,
       "receiver": "app",
       "method": "GET",
       "path": "[`/${INDEXNOW_KEY}.txt`, '/indexnow-key.txt']",
@@ -17307,7 +17341,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5554,
+      "line": 5536,
       "receiver": "app",
       "method": "GET",
       "path": "/opensearch.xml",
@@ -17317,7 +17351,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5561,
+      "line": 5543,
       "receiver": "app",
       "method": "GET",
       "path": "['/.well-known/ai-plugin.json', '/ai-plugin.json']",
@@ -17327,7 +17361,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5581,
+      "line": 5563,
       "receiver": "app",
       "method": "GET",
       "path": "[sourcePath, sourcePath + '/']",
@@ -17337,7 +17371,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5588,
+      "line": 5570,
       "receiver": "app",
       "method": "GET",
       "path": "/filing/:symbol/:newsId",
@@ -17347,7 +17381,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5648,
+      "line": 5630,
       "receiver": "app",
       "method": "GET",
       "path": "/filing/:symbol",
@@ -17357,7 +17391,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5659,
+      "line": 5641,
       "receiver": "app",
       "method": "GET",
       "path": "['/filing', '/filing/']",
@@ -17367,7 +17401,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5665,
+      "line": 5647,
       "receiver": "app",
       "method": "GET",
       "path": "/announcement/:newsId",
@@ -17377,7 +17411,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5995,
+      "line": 5977,
       "receiver": "app",
       "method": "GET",
       "path": "/results/:symbol/:quarterKey",
@@ -17387,7 +17421,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6050,
+      "line": 6032,
       "receiver": "app",
       "method": "GET",
       "path": "/ai-docs",
@@ -17397,7 +17431,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6053,
+      "line": 6035,
       "receiver": "app",
       "method": "GET",
       "path": "['/company/:symbol', '/stock/:symbol']",
@@ -17407,7 +17441,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6128,
+      "line": 6110,
       "receiver": "app",
       "method": "GET",
       "path": "/guides/:slug",
@@ -17417,7 +17451,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6174,
+      "line": 6156,
       "receiver": "app",
       "method": "GET",
       "path": "['/faq', '/faqs']",
@@ -17427,7 +17461,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6181,
+      "line": 6163,
       "receiver": "app",
       "method": "GET",
       "path": "['/pricing', '/pricing/']",
@@ -17437,7 +17471,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6188,
+      "line": 6170,
       "receiver": "app",
       "method": "GET",
       "path": "['/plans', '/plans/']",
@@ -17447,7 +17481,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6193,
+      "line": 6175,
       "receiver": "app",
       "method": "GET",
       "path": "['/guides', '/guides/']",
@@ -17457,7 +17491,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6200,
+      "line": 6182,
       "receiver": "app",
       "method": "GET",
       "path": "['/market-guides', '/market-guides/']",
@@ -17467,7 +17501,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6205,
+      "line": 6187,
       "receiver": "app",
       "method": "GET",
       "path": "['/companies', '/companies/']",
@@ -17477,7 +17511,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6212,
+      "line": 6194,
       "receiver": "app",
       "method": "GET",
       "path": "['/company-directory', '/company-directory/']",
@@ -17487,7 +17521,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6217,
+      "line": 6199,
       "receiver": "app",
       "method": "GET",
       "path": "['/about', '/about/']",
@@ -17497,7 +17531,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6224,
+      "line": 6206,
       "receiver": "app",
       "method": "GET",
       "path": "['/contact', '/contact/']",
@@ -17507,7 +17541,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6231,
+      "line": 6213,
       "receiver": "app",
       "method": "GET",
       "path": "['/disclaimer', '/disclaimer/']",
@@ -17517,7 +17551,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6238,
+      "line": 6220,
       "receiver": "app",
       "method": "GET",
       "path": "['/privacy-policy', '/privacy-policy/']",
@@ -17527,7 +17561,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6245,
+      "line": 6227,
       "receiver": "app",
       "method": "GET",
       "path": "['/privacy', '/privacy/']",
@@ -17537,7 +17571,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6251,
+      "line": 6233,
       "receiver": "app",
       "method": "GET",
       "path": "['/terms', '/terms/']",
@@ -17547,7 +17581,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6258,
+      "line": 6240,
       "receiver": "app",
       "method": "GET",
       "path": "['/terms-of-service', '/terms-of-service/']",
@@ -17557,7 +17591,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6263,
+      "line": 6245,
       "receiver": "app",
       "method": "GET",
       "path": "/embed/widget",
@@ -17567,7 +17601,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6317,
+      "line": 6299,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-companies.xml",
@@ -17577,7 +17611,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6337,
+      "line": 6319,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-guides.xml",
@@ -17587,7 +17621,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6355,
+      "line": 6337,
       "receiver": "app",
       "method": "GET",
       "path": "/llms.txt",
@@ -17597,7 +17631,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6360,
+      "line": 6342,
       "receiver": "app",
       "method": "GET",
       "path": "/llms-full.txt",
@@ -17607,7 +17641,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6370,
+      "line": 6352,
       "receiver": "app",
       "method": "GET",
       "path": "/^\\/google([a-zA-Z0-9_-]+)\\.html$/",
@@ -17617,7 +17651,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6380,
+      "line": 6362,
       "receiver": "app",
       "method": "GET",
       "path": "/",
@@ -17627,7 +17661,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6383,
+      "line": 6365,
       "receiver": "app",
       "method": "USE",
       "path": "express.static(path.join(process.cwd(), 'public'), { maxAge: '1d', immutable: false, setHeaders: (res, filePath) => { if (filePath.includes(`${path.sep}fonts${path.sep}`)) res.setHeader('Cache-Control', 'public, max-age=2592000'); if (fileP",
@@ -17635,7 +17669,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6393,
+      "line": 6375,
       "receiver": "app",
       "method": "USE",
       "path": "['/api', '/auth']",
@@ -17645,7 +17679,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6399,
+      "line": 6381,
       "receiver": "app",
       "method": "USE",
       "path": "/auth",
@@ -17655,7 +17689,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6402,
+      "line": 6384,
       "receiver": "app",
       "method": "POST",
       "path": "/api/security/verify-recaptcha",
@@ -17666,7 +17700,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6443,
+      "line": 6425,
       "receiver": "app",
       "method": "USE",
       "path": "/api",
@@ -17677,7 +17711,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6447,
+      "line": 6429,
       "receiver": "app",
       "method": "USE",
       "path": "['/api/*', '/auth/*']",
@@ -17687,7 +17721,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6452,
+      "line": 6434,
       "receiver": "app",
       "method": "USE",
       "path": "(err: any, req: express.Request, res: express.Response, next: express.NextFunction) => { if (req.path.startsWith('/api') || req.path.startsWith('/auth')) { console.error(\"API Error handler caught:\", err?.message || err); const isProd = proc",
@@ -17695,7 +17729,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6867,
+      "line": 6849,
       "receiver": "app",
       "method": "GET",
       "path": "SPA_PATHS",
@@ -17705,7 +17739,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6901,
+      "line": 6883,
       "receiver": "app",
       "method": "USE",
       "path": "(req, res, next) => { if (req.method !== 'GET' && req.method !== 'HEAD') return next(); const p = normalizeSpaPath(req.path); if ( p === '/' || p === '/announcements' || p === '/results-calendar' || p === '/watchlist' || p === '/watchlists'",
@@ -17713,7 +17747,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6939,
+      "line": 6921,
       "receiver": "app",
       "method": "USE",
       "path": "vite.middlewares",
@@ -17721,7 +17755,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6950,
+      "line": 6932,
       "receiver": "app",
       "method": "GET",
       "path": "/index.html",
@@ -17731,7 +17765,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6953,
+      "line": 6935,
       "receiver": "app",
       "method": "USE",
       "path": "express.static(distPath, { maxAge: '1y', immutable: true, index: false, setHeaders: (res, filePath) => { if (filePath.endsWith('.html')) { res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600'); } } }",
@@ -17739,7 +17773,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6973,
+      "line": 6955,
       "receiver": "app",
       "method": "GET",
       "path": "['/announcements', '/announcements/']",
@@ -17749,7 +17783,7 @@
     },
     {
       "file": "server.ts",
-      "line": 7020,
+      "line": 7002,
       "receiver": "app",
       "method": "GET",
       "path": "*",
@@ -20652,7 +20686,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6570,
+      "line": 6552,
       "function": "fetch",
       "target": "`http://127.0.0.1:${port}/api/health`"
     },
@@ -21276,37 +21310,37 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 466,
+      "line": 470,
       "function": "fetch",
       "target": "'/api/referrals/track-visit'"
     },
     {
       "file": "src/App.tsx",
-      "line": 862,
+      "line": 869,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/App.tsx",
-      "line": 879,
+      "line": 886,
       "function": "customFetch",
       "target": "'/auth/status'"
     },
     {
       "file": "src/App.tsx",
-      "line": 899,
+      "line": 906,
       "function": "customFetch",
       "target": "'/api/settings'"
     },
     {
       "file": "src/App.tsx",
-      "line": 909,
+      "line": 916,
       "function": "customFetch",
       "target": "'/api/logs?limit=400'"
     },
     {
       "file": "src/App.tsx",
-      "line": 953,
+      "line": 960,
       "function": "customFetch",
       "target": "'/api/toggle'"
     },
@@ -21438,85 +21472,85 @@
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 373,
+      "line": 372,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 416,
+      "line": 415,
       "function": "customFetch",
       "target": "`/api/watchlists/${targetList.id}/symbols/${encodeURIComponent(symbolOrScrip)}`"
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 444,
+      "line": 443,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 455,
+      "line": 454,
       "function": "customFetch",
       "target": "`/api/watchlists/${targetList.id}/symbols`"
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 498,
+      "line": 497,
       "function": "customFetch",
       "target": "'/api/settings'"
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 522,
+      "line": 521,
       "function": "customFetch",
       "target": "'/api/toggle'"
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 579,
+      "line": 578,
       "function": "customFetch",
       "target": "'/api/send-to-telegram-manual'"
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 639,
+      "line": 638,
       "function": "customFetch",
       "target": "`/api/announcements/${id}/generate-summary`"
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 784,
+      "line": 783,
       "function": "customFetch",
       "target": "`/api/announcements/${encodeURIComponent(String(id))}`"
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 799,
+      "line": 798,
       "function": "customFetch",
       "target": "'/api/announcements?limit=300'"
     },
     {
       "file": "src/components/CompanyIntelligenceModal.tsx",
-      "line": 119,
+      "line": 123,
       "function": "customFetch",
       "target": "`/api/company-intel/${encodeURIComponent(scripCode || symbol)}?${query}`"
     },
     {
       "file": "src/components/CompanyIntelligenceModal.tsx",
-      "line": 165,
+      "line": 171,
       "function": "customFetch",
       "target": "`/api/stocks/${encodeURIComponent(historyJob.scripCode)}/fetch-deep-history?${query}`"
     },
     {
       "file": "src/components/CompanyIntelligenceModal.tsx",
-      "line": 205,
+      "line": 211,
       "function": "customFetch",
       "target": "`/api/company-intel/${identifier}/ai-overview?scripCode=${effectiveScrip}&symbol=${effectiveSymbol}`"
     },
     {
       "file": "src/components/CompanyIntelligenceModal.tsx",
-      "line": 261,
+      "line": 267,
       "function": "customFetch",
       "target": "`/api/stocks/${encodeURIComponent(effectiveScrip)}/fetch-deep-history`"
     },
@@ -21534,19 +21568,19 @@
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 184,
+      "line": 191,
       "function": "customFetch",
       "target": "`/api/search-company?q=${encodeURIComponent(modalSearch.trim())}`"
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 208,
+      "line": 215,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 217,
+      "line": 224,
       "function": "customFetch",
       "target": "`/api/watchlists/${encodeURIComponent(target.id)}/symbols`"
     },
@@ -21570,13 +21604,13 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 203,
+      "line": 205,
       "function": "customFetch",
       "target": "'/api/storage/quota-mode'"
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 674,
+      "line": 676,
       "function": "customFetch",
       "target": "'/api/health'"
     },
@@ -21678,13 +21712,13 @@
     },
     {
       "file": "src/components/ProCheckoutView.tsx",
-      "line": 104,
+      "line": 107,
       "function": "customFetch",
       "target": "'/api/referrals/apply'"
     },
     {
       "file": "src/components/ProCheckoutView.tsx",
-      "line": 128,
+      "line": 131,
       "function": "customFetch",
       "target": "'/api/referrals/apply'"
     },
@@ -21726,55 +21760,55 @@
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 367,
+      "line": 368,
       "function": "customFetch",
       "target": "`/api/stocks/${encodeURIComponent(scripCode)}/fetch-deep-history`"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 440,
+      "line": 441,
       "function": "customFetch",
       "target": "`/api/stocks/${encodeURIComponent(scripCode)}/runup-announcements?symbol=${encodeURIComponent(symbol)}&resultDate=${encodeURIComponent(resultDateStr)}&windowDays=${daysToUse}`"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 458,
+      "line": 459,
       "function": "customFetch",
       "target": "'/api/watchlist/fetch-deep-history'"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 563,
+      "line": 564,
       "function": "customFetch",
       "target": "url"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 631,
+      "line": 632,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 733,
+      "line": 734,
       "function": "customFetch",
       "target": "`/api/announcements/${announcementId}/generate-summary`"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 799,
+      "line": 800,
       "function": "customFetch",
       "target": "'/api/send-to-telegram-manual'"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 934,
+      "line": 932,
       "function": "customFetch",
       "target": "'/api/send-to-telegram-manual'"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 987,
+      "line": 985,
       "function": "customFetch",
       "target": "'/api/results-calendar/telegram-broadcast'"
     },
@@ -21792,49 +21826,49 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 349,
+      "line": 360,
       "function": "customFetch",
       "target": "'/api/settings'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 394,
+      "line": 405,
       "function": "customFetch",
       "target": "'/api/settings'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 628,
+      "line": 639,
       "function": "customFetch",
       "target": "'/api/users/test-telegram'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 657,
+      "line": 668,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 796,
+      "line": 807,
       "function": "customFetch",
       "target": "'/api/toggle'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 833,
+      "line": 844,
       "function": "customFetch",
       "target": "'/api/settings'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 858,
+      "line": 869,
       "function": "customFetch",
       "target": "'/api/test-telegram'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 877,
+      "line": 888,
       "function": "customFetch",
       "target": "'/api/test-gemini'"
     },
@@ -21906,7 +21940,7 @@
     },
     {
       "file": "src/components/UserProfileModal.tsx",
-      "line": 70,
+      "line": 74,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
@@ -22038,19 +22072,19 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 3465,
+      "line": 3428,
       "function": "customFetch",
       "target": "url"
     },
     {
       "file": "src/components/filing/FilingPage.tsx",
-      "line": 36,
+      "line": 37,
       "function": "customFetch",
       "target": "`/api/announcements/${encodeURIComponent(newsId)}`"
     },
     {
       "file": "src/components/filing/FilingPage.tsx",
-      "line": 44,
+      "line": 45,
       "function": "customFetch",
       "target": "`/api/announcements?symbols=${encodeURIComponent(symbol)}&limit=6`"
     },
@@ -22104,13 +22138,13 @@
     },
     {
       "file": "src/components/ui/CommandPalette.tsx",
-      "line": 107,
+      "line": 109,
       "function": "customFetch",
       "target": "'/api/stock-master'"
     },
     {
       "file": "src/components/ui/CommandPalette.tsx",
-      "line": 129,
+      "line": 131,
       "function": "customFetch",
       "target": "`/api/search-company?q=${encodeURIComponent(q)}`"
     },
@@ -22266,37 +22300,37 @@
     },
     {
       "file": "src/utils/cashfree.ts",
-      "line": 60,
+      "line": 82,
       "function": "customFetch",
       "target": "'/api/payments/create-order'"
     },
     {
       "file": "src/utils/cashfree.ts",
-      "line": 143,
+      "line": 169,
       "function": "customFetch",
       "target": "`/api/payments/verify?order_id=${encodeURIComponent(orderId)}`"
     },
     {
       "file": "src/utils/cashfree.ts",
-      "line": 161,
+      "line": 187,
       "function": "customFetch",
       "target": "'/api/payments/recover'"
     },
     {
       "file": "src/utils/cashfree.ts",
-      "line": 180,
+      "line": 206,
       "function": "customFetch",
       "target": "'/api/payments/claim'"
     },
     {
       "file": "src/utils/cashfree.ts",
-      "line": 223,
+      "line": 249,
       "function": "customFetch",
       "target": "'/api/payments/history'"
     },
     {
       "file": "src/utils/cashfree.ts",
-      "line": 267,
+      "line": 293,
       "function": "customFetch",
       "target": "'/api/payments/send-receipt'"
     },
@@ -22406,19 +22440,25 @@
     },
     {
       "file": "scripts/verify-mobile-ui.mjs",
-      "line": 9,
+      "line": 10,
+      "function": "Array.from",
+      "key": "{length:27}"
+    },
+    {
+      "file": "scripts/verify-mobile-ui.mjs",
+      "line": 15,
       "function": "Array.from",
       "key": "{length:8}"
     },
     {
       "file": "scripts/verify-mobile-ui.mjs",
-      "line": 9,
+      "line": 15,
       "function": "Array.from",
       "key": "{length:5}"
     },
     {
       "file": "scripts/verify-mobile-ui.mjs",
-      "line": 13,
+      "line": 20,
       "function": "Array.from",
       "key": "{length:3}"
     },
@@ -23342,19 +23382,19 @@
     },
     {
       "file": "server/services/companyIntelService.ts",
-      "line": 226,
+      "line": 229,
       "function": "Array.from",
       "key": "resultMap.values()"
     },
     {
       "file": "server/services/companyIntelService.ts",
-      "line": 279,
+      "line": 284,
       "function": "Array.from",
       "key": "filingMap.values()"
     },
     {
       "file": "server/services/companyIntelService.ts",
-      "line": 283,
+      "line": 288,
       "function": "Array.from",
       "key": "filingMap.values()"
     },
@@ -23708,19 +23748,19 @@
     },
     {
       "file": "server/tests/sevenFixes.test.ts",
-      "line": 97,
+      "line": 99,
       "function": "Array.from",
       "key": "result.recentFilings"
     },
     {
       "file": "server/tests/sevenFixes.test.ts",
-      "line": 98,
+      "line": 100,
       "function": "Array.from",
       "key": "result.quarterlyResults"
     },
     {
       "file": "server/tests/sevenFixes.test.ts",
-      "line": 192,
+      "line": 194,
       "function": "Array.from",
       "key": "intel.recentFilings"
     },
@@ -23828,55 +23868,55 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 437,
+      "line": 441,
       "function": "localStorage.getItem",
       "key": "'theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 465,
+      "line": 469,
       "function": "localStorage.setItem",
       "key": "'bse_referral_code'"
     },
     {
       "file": "src/App.tsx",
-      "line": 634,
+      "line": 640,
       "function": "sessionStorage.setItem",
       "key": "'bse_shared_query'"
     },
     {
       "file": "src/App.tsx",
-      "line": 776,
+      "line": 783,
       "function": "localStorage.setItem",
       "key": "'theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 791,
+      "line": 798,
       "function": "localStorage.getItem",
       "key": "'bse_design_theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 808,
+      "line": 815,
       "function": "localStorage.setItem",
       "key": "'bse_design_theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 809,
+      "line": 816,
       "function": "localStorage.setItem",
       "key": "`bse_design_theme_${user.uid}`"
     },
     {
       "file": "src/App.tsx",
-      "line": 841,
+      "line": 848,
       "function": "localStorage.getItem",
       "key": "user?.uid ? `bse_design_theme_${user.uid}` : 'bse_design_theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 850,
+      "line": 857,
       "function": "localStorage.setItem",
       "key": "user?.uid ? `bse_design_theme_${user.uid}` : 'bse_design_theme'"
     },
@@ -23918,43 +23958,43 @@
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 186,
+      "line": 185,
       "function": "localStorage.getItem",
       "key": "'nexus_announcements_view_mode'"
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 197,
+      "line": 196,
       "function": "localStorage.setItem",
       "key": "'nexus_announcements_view_mode'"
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 204,
+      "line": 203,
       "function": "localStorage.getItem",
       "key": "'nexus_last_checked_ts'"
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 328,
+      "line": 327,
       "function": "localStorage.setItem",
       "key": "'nexus_last_checked_ts'"
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 335,
+      "line": 334,
       "function": "localStorage.getItem",
       "key": "'nexus_read_filings'"
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 348,
+      "line": 347,
       "function": "localStorage.setItem",
       "key": "'nexus_read_filings'"
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 348,
+      "line": 347,
       "function": "Array.from",
       "key": "next"
     },
@@ -23972,7 +24012,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 144,
+      "line": 146,
       "function": "localStorage.setItem",
       "key": "sessionKey"
     },
@@ -24008,13 +24048,13 @@
     },
     {
       "file": "src/components/ProCheckoutView.tsx",
-      "line": 112,
+      "line": 115,
       "function": "localStorage.setItem",
       "key": "'bse_referral_code'"
     },
     {
       "file": "src/components/ProCheckoutView.tsx",
-      "line": 136,
+      "line": 139,
       "function": "localStorage.removeItem",
       "key": "'bse_referral_code'"
     },
@@ -24044,7 +24084,7 @@
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 1194,
+      "line": 1201,
       "function": "Array.from",
       "key": "map.values()"
     },
@@ -24056,25 +24096,25 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 227,
+      "line": 238,
       "function": "localStorage.getItem",
       "key": "'bse_sound_enabled'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 337,
+      "line": 348,
       "function": "localStorage.setItem",
       "key": "'bse_sound_enabled'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 384,
+      "line": 395,
       "function": "localStorage.setItem",
       "key": "'bse_sound_enabled'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 726,
+      "line": 737,
       "function": "localStorage.removeItem",
       "key": "k"
     },
@@ -24194,7 +24234,7 @@
     },
     {
       "file": "src/components/ui/CommandPalette.tsx",
-      "line": 420,
+      "line": 422,
       "function": "Array.from",
       "key": "companyItemsMap.values()"
     },
@@ -24626,31 +24666,31 @@
     },
     {
       "file": "src/utils/cashfree.ts",
-      "line": 59,
+      "line": 81,
       "function": "localStorage.getItem",
       "key": "'bse_referral_code'"
     },
     {
       "file": "src/utils/cashfree.ts",
-      "line": 71,
+      "line": 95,
       "function": "sessionStorage.setItem",
       "key": "'cf_pending_order'"
     },
     {
       "file": "src/utils/cashfree.ts",
-      "line": 197,
+      "line": 223,
       "function": "sessionStorage.getItem",
       "key": "'cf_pending_order'"
     },
     {
       "file": "src/utils/cashfree.ts",
-      "line": 241,
+      "line": 267,
       "function": "sessionStorage.removeItem",
       "key": "'cf_pending_order'"
     },
     {
       "file": "src/utils/cashfree.ts",
-      "line": 249,
+      "line": 275,
       "function": "localStorage.getItem",
       "key": "`bse_trial_used_${uid}`"
     },
@@ -24769,22 +24809,22 @@
     },
     {
       "file": "scripts/check-dev-runtime.mjs",
-      "line": 34,
+      "line": 37,
       "name": "PLAYWRIGHT_CHROMIUM_EXECUTABLE"
     },
     {
       "file": "scripts/check-dev-runtime.mjs",
-      "line": 34,
+      "line": 37,
       "name": "PLAYWRIGHT_CHROMIUM_EXECUTABLE"
     },
     {
       "file": "scripts/check-dev-runtime.mjs",
-      "line": 35,
+      "line": 38,
       "name": "PLAYWRIGHT_CHROMIUM_ARGS"
     },
     {
       "file": "scripts/check-dev-runtime.mjs",
-      "line": 35,
+      "line": 38,
       "name": "PLAYWRIGHT_CHROMIUM_ARGS"
     },
     {
@@ -24843,6 +24883,16 @@
       "name": "AI_REVIEWER_UID"
     },
     {
+      "file": "scripts/verify-checkout-recovery.mjs",
+      "line": 74,
+      "name": "PLAYWRIGHT_CHROMIUM_EXECUTABLE"
+    },
+    {
+      "file": "scripts/verify-checkout-recovery.mjs",
+      "line": 74,
+      "name": "PLAYWRIGHT_CHROMIUM_EXECUTABLE"
+    },
+    {
       "file": "scripts/verify-gift-access.mjs",
       "line": 53,
       "name": "PLAYWRIGHT_CHROMIUM_EXECUTABLE"
@@ -24864,12 +24914,12 @@
     },
     {
       "file": "scripts/verify-mobile-ui.mjs",
-      "line": 18,
+      "line": 25,
       "name": "PLAYWRIGHT_CHROMIUM_EXECUTABLE"
     },
     {
       "file": "scripts/verify-mobile-ui.mjs",
-      "line": 18,
+      "line": 25,
       "name": "PLAYWRIGHT_CHROMIUM_EXECUTABLE"
     },
     {
@@ -24919,62 +24969,62 @@
     },
     {
       "file": "server.ts",
-      "line": 77,
+      "line": 79,
       "name": "TRUST_PROXY_HOPS"
     },
     {
       "file": "server.ts",
-      "line": 149,
+      "line": 151,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6368,
+      "line": 6350,
       "name": "GOOGLE_SITE_VERIFICATION_HASH"
     },
     {
       "file": "server.ts",
-      "line": 6368,
+      "line": 6350,
       "name": "GOOGLE_SITE_VERIFICATION_HASH"
     },
     {
       "file": "server.ts",
-      "line": 6455,
+      "line": 6437,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6856,
+      "line": 6838,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6861,
+      "line": 6843,
       "name": "DISABLE_HMR"
     },
     {
       "file": "server.ts",
-      "line": 7081,
+      "line": 7063,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 7133,
+      "line": 7115,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 7148,
+      "line": 7130,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 7162,
+      "line": 7144,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 7162,
+      "line": 7144,
       "name": "TEST_RUNNER"
     },
     {
@@ -27044,12 +27094,12 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 783,
+      "line": 790,
       "name": "DEV"
     },
     {
       "file": "src/App.tsx",
-      "line": 790,
+      "line": 797,
       "name": "DEV"
     },
     {
@@ -27081,7 +27131,7 @@
   "browserEvents": [
     {
       "file": "scripts/verify-mobile-ui.mjs",
-      "line": 79,
+      "line": 86,
       "target": "window",
       "kind": "dispatch",
       "name": "pageshow",
@@ -27089,7 +27139,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 635,
+      "line": 641,
       "target": "window",
       "kind": "dispatch",
       "name": "bse-share-target",
@@ -27097,7 +27147,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 644,
+      "line": 650,
       "target": "window",
       "kind": "listen",
       "name": "popstate",
@@ -27105,7 +27155,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 645,
+      "line": 651,
       "target": "window",
       "kind": "remove",
       "name": "popstate",
@@ -27113,7 +27163,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 758,
+      "line": 765,
       "target": "window",
       "kind": "listen",
       "name": "popstate",
@@ -27121,7 +27171,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 760,
+      "line": 767,
       "target": "window",
       "kind": "remove",
       "name": "popstate",
@@ -27129,7 +27179,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 873,
+      "line": 880,
       "target": "window",
       "kind": "listen",
       "name": "watchlists-changed",
@@ -27137,7 +27187,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 874,
+      "line": 881,
       "target": "window",
       "kind": "remove",
       "name": "watchlists-changed",
@@ -27145,7 +27195,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 893,
+      "line": 900,
       "target": "window",
       "kind": "listen",
       "name": "auth-expired",
@@ -27153,7 +27203,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 894,
+      "line": 901,
       "target": "window",
       "kind": "remove",
       "name": "auth-expired",
@@ -27241,7 +27291,7 @@
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 394,
+      "line": 393,
       "target": "window",
       "kind": "listen",
       "name": "auth-state-changed",
@@ -27249,7 +27299,7 @@
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 395,
+      "line": 394,
       "target": "window",
       "kind": "remove",
       "name": "auth-state-changed",
@@ -27273,7 +27323,7 @@
     },
     {
       "file": "src/components/CompanyIntelligenceModal.tsx",
-      "line": 129,
+      "line": 133,
       "target": "window",
       "kind": "dispatch",
       "name": "company-intel-updated",
@@ -27281,7 +27331,7 @@
     },
     {
       "file": "src/components/CompanyIntelligenceModal.tsx",
-      "line": 154,
+      "line": 160,
       "target": "window",
       "kind": "listen",
       "name": "auth-state-changed",
@@ -27289,7 +27339,7 @@
     },
     {
       "file": "src/components/CompanyIntelligenceModal.tsx",
-      "line": 155,
+      "line": 161,
       "target": "window",
       "kind": "remove",
       "name": "auth-state-changed",
@@ -27297,7 +27347,7 @@
     },
     {
       "file": "src/components/CompanyIntelligenceModal.tsx",
-      "line": 174,
+      "line": 180,
       "target": "window",
       "kind": "dispatch",
       "name": "company-filings-changed",
@@ -27305,7 +27355,7 @@
     },
     {
       "file": "src/components/CompanyIntelligenceModal.tsx",
-      "line": 274,
+      "line": 280,
       "target": "window",
       "kind": "dispatch",
       "name": "company-filings-changed",
@@ -27393,7 +27443,7 @@
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 124,
+      "line": 127,
       "target": "window",
       "kind": "listen",
       "name": "bse_nav_tab_refresh",
@@ -27401,7 +27451,7 @@
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 125,
+      "line": 128,
       "target": "window",
       "kind": "listen",
       "name": "watchlists-changed",
@@ -27409,7 +27459,7 @@
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 126,
+      "line": 129,
       "target": "window",
       "kind": "remove",
       "name": "bse_nav_tab_refresh",
@@ -27417,7 +27467,7 @@
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 126,
+      "line": 129,
       "target": "window",
       "kind": "remove",
       "name": "watchlists-changed",
@@ -27425,7 +27475,7 @@
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 174,
+      "line": 181,
       "target": "window",
       "kind": "listen",
       "name": "online",
@@ -27433,7 +27483,7 @@
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 174,
+      "line": 181,
       "target": "document",
       "kind": "listen",
       "name": "visibilitychange",
@@ -27441,7 +27491,7 @@
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 175,
+      "line": 182,
       "target": "window",
       "kind": "remove",
       "name": "online",
@@ -27449,7 +27499,7 @@
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 175,
+      "line": 182,
       "target": "document",
       "kind": "remove",
       "name": "visibilitychange",
@@ -27457,7 +27507,7 @@
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 214,
+      "line": 221,
       "target": "window",
       "kind": "dispatch",
       "name": "watchlists-changed",
@@ -27465,7 +27515,7 @@
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 223,
+      "line": 230,
       "target": "window",
       "kind": "dispatch",
       "name": "watchlists-changed",
@@ -27569,7 +27619,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 111,
+      "line": 113,
       "target": "window",
       "kind": "listen",
       "name": "open-referral-modal",
@@ -27577,7 +27627,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 112,
+      "line": 114,
       "target": "window",
       "kind": "remove",
       "name": "open-referral-modal",
@@ -27585,7 +27635,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 189,
+      "line": 191,
       "target": "window",
       "kind": "listen",
       "name": "network-status",
@@ -27593,7 +27643,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 192,
+      "line": 194,
       "target": "window",
       "kind": "listen",
       "name": "online",
@@ -27601,7 +27651,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 193,
+      "line": 195,
       "target": "window",
       "kind": "listen",
       "name": "offline",
@@ -27609,7 +27659,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 195,
+      "line": 197,
       "target": "window",
       "kind": "remove",
       "name": "network-status",
@@ -27617,7 +27667,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 196,
+      "line": 198,
       "target": "window",
       "kind": "remove",
       "name": "online",
@@ -27625,7 +27675,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 197,
+      "line": 199,
       "target": "window",
       "kind": "remove",
       "name": "offline",
@@ -27633,7 +27683,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 230,
+      "line": 232,
       "target": "window",
       "kind": "dispatch",
       "name": "bse_nav_tab_refresh",
@@ -27721,7 +27771,7 @@
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 383,
+      "line": 384,
       "target": "window",
       "kind": "dispatch",
       "name": "company-filings-changed",
@@ -27729,7 +27779,7 @@
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 648,
+      "line": 649,
       "target": "window",
       "kind": "listen",
       "name": "watchlists-changed",
@@ -27737,7 +27787,7 @@
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 649,
+      "line": 650,
       "target": "window",
       "kind": "remove",
       "name": "watchlists-changed",
@@ -27745,7 +27795,7 @@
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 686,
+      "line": 687,
       "target": "window",
       "kind": "listen",
       "name": "company-intel-updated",
@@ -27753,7 +27803,7 @@
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 687,
+      "line": 688,
       "target": "window",
       "kind": "remove",
       "name": "company-intel-updated",
@@ -27761,23 +27811,23 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 157,
+      "line": 162,
       "target": "window",
       "kind": "listen",
       "name": "notes-changed",
-      "expression": "window.addEventListener('notes-changed', h)"
+      "expression": "window.addEventListener('notes-changed', refresh)"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 158,
+      "line": 163,
       "target": "window",
       "kind": "remove",
       "name": "notes-changed",
-      "expression": "window.removeEventListener('notes-changed', h)"
+      "expression": "window.removeEventListener('notes-changed', refresh)"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 320,
+      "line": 331,
       "target": "window",
       "kind": "listen",
       "name": "keydown",
@@ -27785,7 +27835,7 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 321,
+      "line": 332,
       "target": "window",
       "kind": "remove",
       "name": "keydown",
@@ -27793,7 +27843,7 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 1859,
+      "line": 1876,
       "target": "window",
       "kind": "dispatch",
       "name": "open-referral-modal",
@@ -28041,7 +28091,7 @@
     },
     {
       "file": "src/components/filing/FilingPage.tsx",
-      "line": 220,
+      "line": 225,
       "target": "window",
       "kind": "dispatch",
       "name": "popstate",
@@ -28049,7 +28099,7 @@
     },
     {
       "file": "src/components/notes/NoteEditor.tsx",
-      "line": 127,
+      "line": 99,
       "target": "window",
       "kind": "dispatch",
       "name": "notes-changed",
@@ -28057,23 +28107,31 @@
     },
     {
       "file": "src/components/notes/SavedNotesScreen.tsx",
-      "line": 162,
+      "line": 166,
       "target": "window",
       "kind": "listen",
       "name": "notes-changed",
-      "expression": "window.addEventListener('notes-changed', h)"
+      "expression": "window.addEventListener('notes-changed', load)"
     },
     {
       "file": "src/components/notes/SavedNotesScreen.tsx",
-      "line": 163,
+      "line": 170,
       "target": "window",
       "kind": "remove",
       "name": "notes-changed",
-      "expression": "window.removeEventListener('notes-changed', h)"
+      "expression": "window.removeEventListener('notes-changed', load)"
+    },
+    {
+      "file": "src/components/notes/SavedNotesScreen.tsx",
+      "line": 207,
+      "target": "window",
+      "kind": "dispatch",
+      "name": "notes-changed",
+      "expression": "window.dispatchEvent(new Event('notes-changed'))"
     },
     {
       "file": "src/components/notes/useNoteDialog.ts",
-      "line": 33,
+      "line": 34,
       "target": "window",
       "kind": "listen",
       "name": "resize",
@@ -28081,7 +28139,7 @@
     },
     {
       "file": "src/components/notes/useNoteDialog.ts",
-      "line": 38,
+      "line": 39,
       "target": "window",
       "kind": "remove",
       "name": "resize",
@@ -28185,7 +28243,7 @@
     },
     {
       "file": "src/components/ui/CommandPalette.tsx",
-      "line": 158,
+      "line": 160,
       "target": "window",
       "kind": "listen",
       "name": "keydown",
@@ -28193,7 +28251,7 @@
     },
     {
       "file": "src/components/ui/CommandPalette.tsx",
-      "line": 159,
+      "line": 161,
       "target": "window",
       "kind": "remove",
       "name": "keydown",
@@ -28201,7 +28259,7 @@
     },
     {
       "file": "src/components/ui/CommandPalette.tsx",
-      "line": 253,
+      "line": 255,
       "target": "window",
       "kind": "dispatch",
       "name": "bse-filter-topic",
@@ -28209,7 +28267,7 @@
     },
     {
       "file": "src/components/ui/CommandPalette.tsx",
-      "line": 266,
+      "line": 268,
       "target": "window",
       "kind": "dispatch",
       "name": "bse-filter-topic",
@@ -28553,7 +28611,7 @@
     },
     {
       "file": "src/context/IntelModalContext.tsx",
-      "line": 42,
+      "line": 43,
       "target": "window",
       "kind": "listen",
       "name": "open-company-intel",
@@ -28561,7 +28619,7 @@
     },
     {
       "file": "src/context/IntelModalContext.tsx",
-      "line": 43,
+      "line": 44,
       "target": "window",
       "kind": "remove",
       "name": "open-company-intel",
@@ -29140,7 +29198,7 @@
   "dynamic": [
     {
       "file": "scripts/verify-mobile-ui.mjs",
-      "line": 10,
+      "line": 16,
       "expression": "import(root+'/node_modules/esbuild/lib/main.js')"
     },
     {

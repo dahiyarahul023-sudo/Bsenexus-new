@@ -82,6 +82,7 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
   const [resultError, setResultError] = useState(false);
   const [upcomingResults, setUpcomingResults] = useState<any[]>([]);
   const [allAnnouncements, setAllAnnouncements] = useState<any[]>([]);
+  const [filingError, setFilingError] = useState(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
@@ -106,6 +107,8 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
   // Detail sheets
   const [selectedFiling, setSelectedFiling] = useState<any | null>(null);
   const [selectedResult, setSelectedResult] = useState<any | null>(null);
+  const filingDialog = useCalendarDialog(Boolean(selectedFiling), () => setSelectedFiling(null));
+  const resultDialog = useCalendarDialog(Boolean(selectedResult), () => setSelectedResult(null));
 
   // Story modal state
   const [storyModalOpen, setStoryModalOpen] = useState<boolean>(false);
@@ -116,7 +119,7 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
 
   const identity = user?.isAnonymous ? 'guest' : user?.uid || profile?.uid || 'guest';
   const loadedIdentity = useRef(identity); ownerRef.current = identity;
-  useEffect(() => { ++mutationVersion.current; addingRef.current=null; setAddingStock(null);setModalSearch('');setSearchResults([]);setIsAddModalOpen(false); setTargetListId(''); setNewWatchlistName(''); setAddError(''); setAddSuccess(''); }, [identity]);
+  useEffect(() => { ++mutationVersion.current; addingRef.current=null; setAddingStock(null);setModalSearch('');setSearchResults([]);setIsAddModalOpen(false); setTargetListId(''); setNewWatchlistName(''); setAddError(''); setAddSuccess(''); setSelectedFiling(null); setSelectedResult(null); }, [identity]);
   useEffect(() => { if (!targetListId && watchlists.length) setTargetListId(String((watchlists.find(w=>w.is_active===1||w.is_active===true)||watchlists[0]).id)); }, [watchlists,targetListId]);
   useEffect(() => {
     const refresh = (event: Event) => { if (isActive && (event as CustomEvent).detail?.tab === 'home') setHomeRefresh(v => v + 1); };
@@ -130,7 +133,7 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
     const controller = new AbortController(), signal = controller.signal;
     if (loadedIdentity.current !== identity) {
       loadedIdentity.current = identity; verifiedLists.current = null; setHomeWarning('');
-      setWatchlistStatus('loading'); setWatchlists([]); setWatchlistSymbols(new Set()); setUpcomingResults([]); setAllAnnouncements([]); setHasLoaded(false);
+      setWatchlistStatus('loading'); setFilingError(false); setWatchlists([]); setWatchlistSymbols(new Set()); setUpcomingResults([]); setAllAnnouncements([]); setHasLoaded(false);
     }
     const fetchHomeData = async () => {
       setLoading(true); setWatchlistStatus(previous=>previous==='ready'?'ready':'loading');
@@ -156,9 +159,13 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
         setResultError(!cal.ok && signedIn);
         if (cal.ok) setUpcomingResults(selectPersonalResults(cal.value.items,currentLists));
         else setUpcomingResults(previous=>selectPersonalResults(previous,currentLists));
-        if (!syms.size) { setAllAnnouncements([]); return; }
+        if (!syms.size) { setFilingError(false); setAllAnnouncements([]); return; }
         const filings=await readHomeResource<any[]>(customFetch, `/api/announcements?limit=100&symbols=${encodeURIComponent([...syms].join(','))}`,signal,Array.isArray);
-        if (!signal.aborted && filings.ok) setAllAnnouncements(filings.value);
+        if (!signal.aborted) {
+          setFilingError(!filings.ok);
+          if (filings.ok === true) setAllAnnouncements(filings.value);
+          else if (filings.status === 401 || filings.status === 403) setAllAnnouncements([]);
+        }
       } finally { if (!signal.aborted) {setLoading(false);setHasLoaded(true);} }
     };
     void fetchHomeData().catch(()=>{}); // Parent cancellation; resource errors are handled independently.
@@ -271,25 +278,11 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
         </motion.button>
       </div>
 
-      {/* Groww-Style Live Market Story Top Carousel Bar */}
-      <StoryCarouselBar active={isActive} watchlistStatus={sameIdentity ? watchlistStatus : 'loading'} watched={personalTerms}
-        onOpenStory={(chapterId) => {
-          setSelectedStoryChapter(chapterId);
-          setStoryModalOpen(true);
-        }}
-        className="pt-0 pb-1"
-      />
-
-      {ADR_COMPANIES.some(company=>watchlistSymbols.has(company.symbol)||watchlistSymbols.has(company.scripCode)) && <OvernightAdr key={`adr-${identity}`} active={isActive && watchlistStatus==='ready'} watchlistOnly density={density} watched={sameIdentity && watchlistStatus==='ready' ? [...watchlistSymbols] : []}
-        onOpenCompany={company => openIntelModal({ scripCode: company.scripCode, symbol: company.symbol, companyName: company.name })}
-        onOpenStory={() => { setSelectedStoryChapter(undefined); setStoryModalOpen(true); }} />}
-      <ImpactRadar key={identity} active={isActive} identity={identity} onNavigate={onNavigate} density={density} watched={sameIdentity && watchlistStatus==='ready' ? [...watchlistSymbols] : []} watchlistStatus={sameIdentity ? watchlistStatus : 'loading'} onRefreshWatchlist={() => setHomeRefresh(v => v + 1)} />
-      <HomeMarketNews key={`news-${identity}`} watchlistOnly watchlistStatus={sameIdentity ? watchlistStatus : 'loading'} active={isActive} identity={identity} watched={personalTerms} onNavigate={onNavigate} density={density} />
-
       {homeWarning && <p role="status" className="text-xs text-slate-500">{homeWarning} <button type="button" className="underline" onClick={()=>setHomeRefresh(value=>value+1)}>Retry refresh</button></p>}
       {/* 2. Focused Sections or Calm Summary */}
       {!sameIdentity || (loading && !hasLoaded) ? <HomeSkeleton /> : (
       <div className="space-y-6">
+        {filingError && hasWatchlist && <p role="status" className="text-sm text-slate-600 dark:text-slate-300">{watchlistFilings.length ? 'Showing saved watchlist filings. Refresh unavailable.' : 'Watchlist filings could not be checked.'} <button type="button" className="underline" onClick={() => setHomeRefresh(value => value + 1)}>Retry filings</button></p>}
 
         {/* Watchlist Section */}
         {watchlistStatus === 'error' ? <section className="space-y-2"><h2 className="text-sm font-bold">Your Watchlist Updates</h2><p role="status" className="text-xs text-slate-500">Your watchlist could not be checked. <button type="button" className="underline" onClick={() => setHomeRefresh(value => value + 1)}>Retry</button></p></section> : !hasWatchlist ? (
@@ -342,36 +335,37 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
                 const relTime = formatFilingRelativeTime(filing.bseTimestamp || filing.fetched_at || Date.now());
 
                 return (
-                  <div
+                  <button
+                    type="button"
                     key={filing.id || idx}
                     onClick={() => setSelectedFiling(filing)}
-                    className={cn(heliosCard, homeCardPad, "transition-all cursor-pointer flex flex-col justify-between gap-2 hover:shadow-[0_12px_28px_rgba(15,23,42,0.09)] dark:hover:shadow-[0_12px_28px_rgba(0,0,0,0.5)]")}
+                    className={cn(heliosCard, homeCardPad, "text-left transition-all cursor-pointer flex flex-col items-stretch justify-between gap-2 hover:shadow-[0_12px_28px_rgba(15,23,42,0.09)] dark:hover:shadow-[0_12px_28px_rgba(0,0,0,0.5)]")}
                   >
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between gap-2 text-xs">
+                    <span className="block space-y-1">
+                      <span className="flex items-center justify-between gap-2 text-xs">
                         <span className="font-bold text-slate-900 dark:text-white truncate">
                           {filing.companyName}
                         </span>
                         <HeliosPill tone="slate">{relTime}</HeliosPill>
-                      </div>
-                      <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed">
+                      </span>
+                      <span className="block text-xs text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed">
                         {cleanSubj.headline}
-                      </p>
-                    </div>
+                      </span>
+                    </span>
 
-                    <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-100 dark:border-[#262335]">
+                    <span className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-100 dark:border-[#262335]">
                       <HeliosPill tone="slate" dot={false} className="font-mono">BSE: {filing.scrip_cd}</HeliosPill>
                       <span className="text-slate-500 dark:text-slate-400 flex items-center gap-0.5">
                         <span>Details</span>
                         <ChevronRight size={12} />
                       </span>
-                    </div>
-                  </div>
+                    </span>
+                  </button>
                 );
               })}
             </div>
           </section>
-        ) : (
+        ) : filingError ? null : (
           /* Populated but Quiet Watchlist: Single calm summary */
           <div className={cn(heliosCard, density === 'comfortable' ? "p-5 sm:p-6" : density === 'dense' ? "p-4" : "p-5", "space-y-2")}>
             <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
@@ -414,15 +408,16 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
                 const companyName = (item.scripCode === '500034' || item.symbol === 'BAJFINANCE' || item.companyName === 'BAJAJ AUTO F') ? 'Bajaj Finance Ltd' : item.companyName;
 
                 return (
-                  <div
+                  <button
+                    type="button"
                     key={item.id || idx}
                     data-result-status={declaredToday ? 'declared-today' : isToday ? 'pending' : 'upcoming'}
                     onClick={() => setSelectedResult({ ...item, companyName, meetingDate: meetingDateStr || item.meetingDate })}
-                    className={cn(heliosCard, homeCardPad, "transition-all cursor-pointer flex items-center justify-between gap-3 hover:shadow-[0_12px_28px_rgba(15,23,42,0.09)] dark:hover:shadow-[0_12px_28px_rgba(0,0,0,0.5)]")}
+                    className={cn(heliosCard, homeCardPad, "text-left transition-all cursor-pointer flex flex-wrap items-center justify-between gap-2 hover:shadow-[0_12px_28px_rgba(15,23,42,0.09)] dark:hover:shadow-[0_12px_28px_rgba(0,0,0,0.5)]")}
                   >
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <span className="flex items-center gap-3 min-w-0 flex-1 basis-40">
                       {/* Date block */}
-                      <div className={cn(
+                      <span className={cn(
                         "w-11 h-11 rounded-lg flex flex-col items-center justify-center shrink-0 border",
                         isToday
                           ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-slate-900 dark:border-white"
@@ -430,10 +425,10 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
                       )}>
                         <span className="text-xs font-black leading-none">{tile.day}</span>
                         <span className="text-[9px] font-bold uppercase opacity-80 mt-0.5">{tile.month}</span>
-                      </div>
+                      </span>
 
-                      <div className="space-y-0.5 min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="block space-y-0.5 min-w-0 flex-1">
+                        <span className="flex items-center gap-1.5 flex-wrap">
                           <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">
                             {companyName}
                           </span>
@@ -442,15 +437,15 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
                               {item.symbol}
                             </span>
                           )}
-                        </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                        </span>
+                        <span className="block text-xs text-slate-500 dark:text-slate-400 truncate">
                           {declaredToday ? `Result filed${item.resultDeclarationTime ? ' · '+formatCleanTime(item.resultDeclarationTime) : ''}` : item.purpose || 'Financial Results'}
-                        </p>
-                      </div>
-                    </div>
+                        </span>
+                      </span>
+                    </span>
 
                     <HeliosPill tone={declaredToday ? "emerald" : isToday ? "amber" : "slate"} pulseDot={isToday && !declaredToday} className="shrink-0">{daysLabel}</HeliosPill>
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -459,6 +454,22 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
 
       </div>
       )}
+
+      {/* Market discovery follows the personal watchlist and result summaries. */}
+      {/* Groww-Style Live Market Story Top Carousel Bar */}
+      <StoryCarouselBar active={isActive} watchlistStatus={sameIdentity ? watchlistStatus : 'loading'} watched={personalTerms}
+        onOpenStory={(chapterId) => {
+          setSelectedStoryChapter(chapterId);
+          setStoryModalOpen(true);
+        }}
+        className="pt-0 pb-1"
+      />
+
+      {sameIdentity && ADR_COMPANIES.some(company=>watchlistSymbols.has(company.symbol)||watchlistSymbols.has(company.scripCode)) && <OvernightAdr key={`adr-${identity}`} active={isActive && watchlistStatus==='ready'} watchlistOnly density={density} watched={sameIdentity && watchlistStatus==='ready' ? [...watchlistSymbols] : []}
+        onOpenCompany={company => openIntelModal({ scripCode: company.scripCode, symbol: company.symbol, companyName: company.name })}
+        onOpenStory={() => { setSelectedStoryChapter(undefined); setStoryModalOpen(true); }} />}
+      <ImpactRadar key={identity} active={isActive} identity={identity} onNavigate={onNavigate} density={density} watched={sameIdentity && watchlistStatus==='ready' ? [...watchlistSymbols] : []} watchlistStatus={sameIdentity ? watchlistStatus : 'loading'} onRefreshWatchlist={() => setHomeRefresh(v => v + 1)} />
+      <HomeMarketNews key={`news-${identity}`} watchlistOnly watchlistStatus={sameIdentity ? watchlistStatus : 'loading'} active={isActive} identity={identity} watched={personalTerms} onNavigate={onNavigate} density={density} />
 
       {/* Add Companies Modal */}
       <AnimatePresence>
@@ -596,7 +607,7 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
 
       {/* Filing Detail Bottom Sheet */}
       <AnimatePresence>
-        {selectedFiling && (
+        {sameIdentity && selectedFiling && (
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overscroll-contain">
             <motion.div
               initial={{ opacity: 0 }}
@@ -610,6 +621,8 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: "100%", opacity: 0 }}
               transition={springSnappy}
+              {...filingDialog}
+              aria-label="Filing details"
               className="relative w-full sm:max-w-lg bg-white dark:bg-[#181624] rounded-t-2xl sm:rounded-2xl border border-slate-200 dark:border-[#262335] shadow-2xl p-5 max-h-[85vh] overflow-y-auto overscroll-contain space-y-4 z-10 safe-area-bottom"
             >
               <div className="flex items-start justify-between gap-3 border-b border-slate-100 dark:border-[#262335] pb-3">
@@ -624,6 +637,7 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
                 <button
                   type="button"
                   onClick={() => setSelectedFiling(null)}
+                  aria-label="Close filing details"
                   className="min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
                 >
                   <X size={18} />
@@ -668,7 +682,7 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
 
       {/* Result Detail Bottom Sheet */}
       <AnimatePresence>
-        {selectedResult && (
+        {sameIdentity && selectedResult && (
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overscroll-contain">
             <motion.div
               initial={{ opacity: 0 }}
@@ -682,6 +696,8 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: "100%", opacity: 0 }}
               transition={springSnappy}
+              {...resultDialog}
+              aria-label="Result details"
               className="relative w-full sm:max-w-lg bg-white dark:bg-[#181624] rounded-t-2xl sm:rounded-2xl border border-slate-200 dark:border-[#262335] shadow-2xl p-5 max-h-[85vh] overflow-y-auto overscroll-contain space-y-4 z-10 safe-area-bottom"
             >
               <div className="flex items-start justify-between gap-3 border-b border-slate-100 dark:border-[#262335] pb-3">
@@ -690,12 +706,13 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
                     {selectedResult.companyName}
                   </h3>
                   <p className="text-xs text-slate-400 font-mono">
-                    Scheduled Board Meeting: {selectedResult.meetingDate}
+                    {selectedResult.isDeclared === true ? 'Result declared' : 'Board meeting'} · {selectedResult.meetingDate}
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setSelectedResult(null)}
+                  aria-label="Close result details"
                   className="min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
                 >
                   <X size={18} />
@@ -721,7 +738,7 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
                   className="flex-1 min-h-[44px] bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 rounded-xl text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <CalendarDays size={14} />
-                  <span>View in Earnings Calendar</span>
+                  <span>Open Earnings calendar</span>
                 </button>
               </div>
             </motion.div>

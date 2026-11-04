@@ -33,6 +33,8 @@ import { refreshRadarPriceSnapshots } from "./server/services/radarPriceSync.js"
 import { processAutomatedNewsAlerts } from "./server/services/stockNewsService.js";
 import { addLog } from "./server/database/logDao.js";
 import { getPollingIntervalMs, parseBseDate, scriptSafeJson } from "./server/utils/helpers.js";
+import { formatFullDateTime, parseFilingTimestamp } from "./src/utils/timeFormat.js";
+import { publicFilingPresentation } from "./src/shared/filingPresentation.js";
 import { getAnnouncementById, getRecentAnnouncements } from "./server/database/announcementDao.js";
 import { getScripCode, getAllStockEntries } from "./server/utils/stockResolver.js";
 import { getCompanyIntelligence } from "./server/services/companyIntelService.js";
@@ -343,37 +345,17 @@ async function renderAnnouncementPage(announcement: any, newsId: string, canonic
   const subject = announcement.subject || announcement.NEWSSUB || 'Corporate Announcement';
   const details = announcement.details || announcement.ATTACHMENTNAME || '';
   const category = announcement.category || 'CORPORATE_ACTION';
-  const bseTime = announcement.bseTime || '';
   const pdfLink = announcement.pdfLink || '';
   const scripCode = announcement.scripCode || announcement.scrip_cd || announcement.SCRIP_CD || '';
   const symbol = announcement.symbol || announcement.scrip_id || '';
   const aiSummary = announcement.aiSummary || '';
 
-  // Publication timestamps
-  let pubTs = announcement.bseTimestamp || announcement.fetched_at;
-  if (!pubTs && bseTime) {
-    pubTs = parseBseDate(bseTime);
-  }
-  if (!pubTs || isNaN(pubTs) || pubTs <= 0) {
-    pubTs = Date.now();
-  }
-  const publishedIso = new Date(pubTs).toISOString();
+  const { iso: publishedIso, date: displayDate, category: categoryLabel } = publicFilingPresentation(announcement);
 
-  let displayDate = bseTime || new Date(pubTs).toLocaleString('en-IN', {
-    timeZone: 'Asia/Kolkata',
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true
-  }) + ' IST';
-
-  // FIX 6 (c): Unique <title> and meta description formatted as: company name + announcement subject + date
-  const dateSuffix = displayDate ? ` (${displayDate.replace(' IST', '')})` : '';
+  const dateSuffix = displayDate ? ` (${displayDate})` : '';
   const pageTitle = `${companyName} — ${subject}${dateSuffix} | Bsenexus`;
 
-  let description = `${companyName} — ${subject} (${displayDate}). `;
+  let description = `${companyName} — ${subject}${dateSuffix}. `;
   if (aiSummary && aiSummary.trim()) {
     description += aiSummary.trim().replace(/\s+/g, ' ');
   } else if (details && details.trim() && details.trim() !== subject.trim()) {
@@ -420,8 +402,7 @@ async function renderAnnouncementPage(announcement: any, newsId: string, canonic
     "@context": "https://schema.org",
     "@type": "NewsArticle",
     "headline": `${companyName}: ${subject}`.slice(0, 110),
-    "datePublished": publishedIso,
-    "dateModified": publishedIso,
+    ...(publishedIso ? { datePublished: publishedIso, dateModified: publishedIso } : {}),
     "description": description,
     "mainEntityOfPage": canonicalUrl,
     "url": canonicalUrl,
@@ -757,18 +738,18 @@ ${scriptSafeJson(JSON.stringify(jsonLd, null, 2))}
     <a href="https://bsenexus.in/" class="top-brand">
       Bsenexus <span>Terminal</span>
     </a>
-    <a href="https://bsenexus.in/?tab=announcements" class="app-btn">
-      Open in Bsenexus App &rarr;
+    <a href="/announcements" class="app-btn">
+      Open Filings terminal &rarr;
     </a>
   </header>
 
   <main class="container">
     <article class="card">
       <div class="meta-bar">
-        <span class="badge">${escapeHtmlText(category)}</span>
+        <span class="badge">${escapeHtmlText(categoryLabel)}</span>
         ${scripCode ? `<span class="badge scrip">BSE: ${escapeHtmlText(String(scripCode))}</span>` : ''}
         ${symbol ? `<span class="badge scrip">${escapeHtmlText(String(symbol))}</span>` : ''}
-        <time class="timestamp" datetime="${escapeHtmlAttr(publishedIso)}">${escapeHtmlText(displayDate)}</time>
+        ${publishedIso ? `<time class="timestamp" datetime="${escapeHtmlAttr(publishedIso)}">${escapeHtmlText(displayDate)}</time>` : '<span class="timestamp">Publication time unavailable</span>'}
       </div>
 
       <h1>${escapeHtmlText(companyName)}</h1>
@@ -799,13 +780,12 @@ ${scriptSafeJson(JSON.stringify(jsonLd, null, 2))}
             const relId = rel.id || rel.newsId || '';
             const relComp = rel.companyName || rel.SLONGNAME || 'BSE Company';
             const relSub = rel.subject || rel.NEWSSUB || 'Corporate Disclosure';
-            const relTime = rel.bseTime || (rel.timestamp ? new Date(rel.timestamp).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' }) : 'Recent');
-            const relCat = rel.category || 'ANNOUNCEMENT';
+            const { date: relTime, category: relCat } = publicFilingPresentation(rel);
             return `<a href="/announcement/${escapeHtmlAttr(encodeURIComponent(relId))}" class="related-card">
               <div class="related-meta">
                 <span class="related-company">${escapeHtmlText(relComp)}</span>
                 <span class="related-badge">${escapeHtmlText(relCat)}</span>
-                <time class="related-time">${escapeHtmlText(relTime)}</time>
+                <time class="related-time">${escapeHtmlText(relTime || 'Publication time unavailable')}</time>
               </div>
               <div class="related-title">${escapeHtmlText(relSub)}</div>
             </a>`;
@@ -1449,8 +1429,8 @@ ${scriptSafeJson(jsonLd)}
     <a href="https://bsenexus.in/" class="top-brand">
       <img src="/icon.svg" alt="" width="28" height="28"> Bsenexus <span>Terminal</span>
     </a>
-    <a href="https://bsenexus.in/?tab=watchlists" class="app-btn">
-      Open in Bsenexus App &rarr;
+    <a href="/announcements" class="app-btn">
+      Open Filings terminal &rarr;
     </a>
   </header>
 
@@ -1474,6 +1454,7 @@ ${scriptSafeJson(jsonLd)}
           <span class="price-val">₹${typeof quote.price === 'number' ? quote.price.toLocaleString('en-IN') : '—'}</span>
           ${changeStr ? `<span class="change-pill ${isPositive ? 'pos' : 'neg'}">${escapeHtmlText(changeStr)}</span>` : ''}
         </div>
+        <p class="operator-coverage">${quote.priceAsOf ? `Quote as of ${escapeHtmlText(formatFullDateTime(quote.priceAsOf))}` : 'Quote time unavailable'}${quote.exchange ? ` · ${escapeHtmlText(quote.exchange)}` : ''}</p>
         <div class="stats-row">
           <div class="stat-item">
             <span class="stat-k">Market Cap</span>
@@ -1529,7 +1510,8 @@ ${scriptSafeJson(jsonLd)}
           ${recentFilings.slice(0, 20).map((f: any) => {
             const fId = f.id || f.newsId || '';
             const fSub = f.subject || `${venue} Corporate Announcement`;
-            const fDate = f.bseTime || (f.timestamp ? new Date(f.timestamp).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' }) : 'Recent');
+            const fPublishedAt = f.publicationTimestamp ?? parseFilingTimestamp(f.bseTime);
+            const fDate = fPublishedAt ? formatFullDateTime(fPublishedAt) : 'Publication time unavailable';
             return `<a href="/announcement/${escapeHtmlAttr(encodeURIComponent(fId))}" class="filing-item">
               <span class="filing-sub">${escapeHtmlText(fSub)}</span>
               <time class="filing-date">📅 ${escapeHtmlText(fDate)}</time>
@@ -1701,7 +1683,7 @@ ${AI_STUDIO_REDIRECT_SCRIPT}
   <div class="card">
     <h1>Company Not Found</h1>
     <p>We could not find listed company details for ${symbol ? `"${escapeHtmlText(symbol)}"` : 'the requested stock'}. Check the stock symbol or browse live market watchlists in the app.</p>
-    <a href="https://bsenexus.in/?tab=watchlists" class="btn">Open in Bsenexus App &rarr;</a>
+    <a href="/announcements" class="btn">Open Filings terminal &rarr;</a>
   </div>
 </body>
 </html>`;
@@ -1758,7 +1740,7 @@ ${AI_STUDIO_REDIRECT_SCRIPT}
   <div class="card">
     <h1>Announcement Not Found</h1>
     <p>The requested BSE corporate announcement or disclosure could not be located or may have expired.</p>
-    <a href="https://bsenexus.in/?tab=announcements" class="btn">Open in Bsenexus App &rarr;</a>
+    <a href="/announcements" class="btn">Open Filings terminal &rarr;</a>
   </div>
 </body>
 </html>`;
@@ -3458,7 +3440,7 @@ ${scriptSafeJson(jsonLd)}
     <div class="hero">
       <span class="badge">${escapeHtmlText(directoryBadge())}</span>
       <h1>Companies &amp; Exchanges — Profiles, Earnings &amp; Filings</h1>
-      <p class="subtitle">${escapeHtmlText(directoryDescription())}</p>
+      <p class="subtitle">${escapeHtmlText(directoryDescription())} For other stocks, use company search in the <a href="/announcements">Filings terminal</a>.</p>
     </div>
 
     <div class="companies-list">

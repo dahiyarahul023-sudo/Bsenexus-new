@@ -43,6 +43,7 @@ export interface CompanyQuoteContext {
   scripCode?: string;
   name: string;
   price: number;
+  priceAsOf?: number;
   change: number;
   changePercent: number;
   currency: string;
@@ -120,10 +121,12 @@ export async function fetchStockQuote(symbol: string): Promise<CompanyQuoteConte
         const master = allEntries.find(e => e.symbol.toUpperCase() === cleanSym);
         const preferredName = master?.name || q.longName || q.shortName || cleanSym;
 
+        const priceAsOf = q.regularMarketTime instanceof Date ? q.regularMarketTime.getTime() : NaN;
         const quote: CompanyQuoteContext = {
           symbol: cleanSym,
           name: preferredName,
           price: q.regularMarketPrice,
+          priceAsOf: Number.isFinite(priceAsOf) && priceAsOf > 0 ? priceAsOf : undefined,
           change: q.regularMarketChange || 0,
           changePercent: q.regularMarketChangePercent || 0,
           currency: 'INR',
@@ -250,7 +253,8 @@ export async function getCompanyIntelligence(scripCode: string, symbol: string):
     const sub = ann.subject || ann.NEWSSUB || '';
     const det = ann.details || ann.HEADLINE || '';
     const rawTime = ann.bseTime || ann.News_submission_dt || ann.DT_TM || ann.NEWS_DT || '';
-    const ts = parseBseDate(rawTime) || ann.bseTimestamp || ann.timestamp || (ann.fetched_at ? new Date(ann.fetched_at).getTime() : Date.now());
+    const publicationTimestamp = parseBseDate(rawTime) || ann.bseTimestamp || 0;
+    const ts = publicationTimestamp || ann.timestamp || (ann.fetched_at ? new Date(ann.fetched_at).getTime() : Date.now());
     const attachmentFile = ann.ATTACHMENTNAME || ann.attachmentName || ann.attachment || ann.ATTACHMENT || '';
     const pdfLink = ann.pdfLink || ann.pdfUrl || ann.attachmentUrl ||
       (attachmentFile ? (attachmentFile.startsWith('http') ? attachmentFile : `https://www.bseindia.com/xml-data/corpfiling/AttachLive/${attachmentFile}`) : '');
@@ -263,6 +267,7 @@ export async function getCompanyIntelligence(scripCode: string, symbol: string):
       pdfLink,
       attachmentName: attachmentFile,
       timestamp: ts,
+      publicationTimestamp,
       scripCode: targetScrip,
       symbol: targetSym,
       companyName: ann.companyName,

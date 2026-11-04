@@ -50,6 +50,7 @@ interface CompanyIntelligenceModalProps {
   scripCode?: string;
   symbol?: string;
   companyName?: string;
+  initialView?: 'recent-filings';
 }
 
 export function CompanyIntelligenceModal({
@@ -57,11 +58,12 @@ export function CompanyIntelligenceModal({
   onClose,
   scripCode = '',
   symbol = '',
-  companyName = ''
+  companyName = '',
+  initialView
 }: CompanyIntelligenceModalProps) {
   const { openIntelModal } = useIntelModal();
   const { user, profile, isAdmin, isPro, adminUnlocked, setIsAuthModalOpen, setIsProModalOpen } = useAuth();
-  const [activeTab, setActiveTab] = useState<'hub' | 'timeline' | 'results' | 'filings' | 'research'>('hub');
+  const [activeTab, setActiveTab] = useState<'hub' | 'timeline' | 'results' | 'filings' | 'research'>(() => initialView === 'recent-filings' ? 'filings' : 'hub');
   const [timelineFilter, setTimelineFilter] = useState<string>('ALL');
   const initialKey = `${user?.uid || 'guest'}:${scripCode}:${symbol}`;
   const [intelData, setIntelData] = useState<any | null>(() => readCompanyIntelSnapshot(initialKey)?.data || null);
@@ -86,7 +88,9 @@ export function CompanyIntelligenceModal({
   const syncRevision = useRef(0);
   // Non-intrusive Toast Notifications
   const [toastMsg, setToastMsg] = useState<{ text: string; type: 'info' | 'error' | 'success' } | null>(null);
-  const [factSelection, setFactSelection] = useState<{ kind: string; label: string; eventType?: string; since?: number } | null>(null);
+  const [factSelection, setFactSelection] = useState<{ kind: string; label: string; eventType?: string } | null>(() =>
+    initialView === 'recent-filings' ? { kind: 'recent', label: 'Stored filings in the last 30 days' } : null
+  );
 
   const showToast = (text: string, type: 'info' | 'error' | 'success' = 'info') => {
     setToastMsg({ text, type });
@@ -136,7 +140,9 @@ export function CompanyIntelligenceModal({
     }
   }, [scripCode, symbol, user?.uid]);
   useEffect(() => {
-    setActiveTab('hub'); setTimelineFilter('ALL'); setFactSelection(null); contentRef.current?.scrollTo({ top: 0 });
+    setActiveTab(initialView === 'recent-filings' ? 'filings' : 'hub');
+    setFactSelection(initialView === 'recent-filings' ? { kind: 'recent', label: 'Stored filings in the last 30 days' } : null);
+    setTimelineFilter('ALL'); contentRef.current?.scrollTo({ top: 0 });
     const cached = readCompanyIntelSnapshot(selectionKey);
     setIntelData(cached?.data || null); setLoading(!cached); setLoadError(null);
     setAiOverview(cached?.data?.aiSnapshot || ''); setHistoryJob(null); setHistorySuccessMsg(null); setHistoryError(false);
@@ -144,7 +150,7 @@ export function CompanyIntelligenceModal({
     ++syncRevision.current; syncController.current?.abort();
 
     return () => { ++readRevision.current; readController.current?.abort(); ++syncRevision.current; syncController.current?.abort(); };
-  }, [isOpen, scripCode, symbol, user?.uid, loadIntelligence]);
+  }, [isOpen, scripCode, symbol, user?.uid, loadIntelligence, initialView]);
   useForegroundRefresh(() => {
     const cached = readCompanyIntelSnapshot(selectionKey);
     if (!cached || Date.now() - cached.at >= 15_000) return loadIntelligence();
@@ -328,11 +334,9 @@ export function CompanyIntelligenceModal({
   // Every fact is computed from the company's loaded data; nothing is hardcoded.
   const filingFacts = useMemo(() => {
     const facts: { value: string; label: string; icon: any; selection: NonNullable<typeof factSelection>; tab: 'filings' | 'timeline' | 'results' }[] = [];
-    const now = visibleIntel?.filingStats?.asOf || Date.now();
-    const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
 
     if (visibleIntel?.filingCoverage === 'stored' && visibleIntel?.filingStats) {
-      facts.push({ value: String(visibleIntel.filingStats.last30Days), label: 'stored filings in the last 30 days', icon: FileText, tab: 'filings', selection: { kind: 'recent', label: 'Stored filings in the last 30 days', since: thirtyDaysAgo } });
+      facts.push({ value: String(visibleIntel.filingStats.last30Days), label: 'stored filings in the last 30 days', icon: FileText, tab: 'filings', selection: { kind: 'recent', label: 'Stored filings in the last 30 days' } });
     }
 
     // 2. Most frequent disclosure type (full timeline history, not capped).
@@ -396,10 +400,12 @@ export function CompanyIntelligenceModal({
     return { buckets, max, callout };
   }, [recentFilings]);
 
-  const selectedFilings = factSelection?.kind === 'recent' ? recentFilings.filter((filing: any) => {
+  const recentScope = factSelection?.kind === 'recent';
+  const filingsAsOf = visibleIntel?.filingStats?.asOf ?? Date.now();
+  const selectedFilings = recentScope ? recentFilings.filter((filing: any) => {
     const timestamp = filingTimestamp(filing);
     const id = String(filing.newsId || filing.id || '');
-    return Boolean(id) && !id.startsWith('bm_') && !id.startsWith('hist_') && timestamp > 0 && timestamp >= factSelection.since! && timestamp <= factSelection.since! + 30 * 86_400_000;
+    return Boolean(id) && !id.startsWith('bm_') && !id.startsWith('hist_') && timestamp > 0 && timestamp >= filingsAsOf - 30 * 86_400_000 && timestamp <= filingsAsOf;
   }) : recentFilings;
   const filingsPage = pageItems<any>(selectedFilings, listPages.filings);
   const openFact = (fact: typeof filingFacts[number]) => {
@@ -541,7 +547,7 @@ export function CompanyIntelligenceModal({
               >
                 {tab.icon}
                 <span>{tab.label}</span>
-                {tab.count !== undefined && (
+                {visibleIntel && tab.count !== undefined && (
                   <span className={cn(
                     "text-[10px] font-mono px-1.5 py-0.2 rounded-full transition-colors",
                     isTabActive 
@@ -1026,12 +1032,14 @@ export function CompanyIntelligenceModal({
               {activeTab === 'filings' && (
                 <div className="space-y-3 animate-in fade-in duration-150">
                   <h3 ref={pageHeadingRef} tabIndex={-1} className="text-xs font-bold text-slate-900 dark:text-white">
-                    {factSelection?.kind === 'recent' ? 'BSE filings · last 30 days' : 'Chronological BSE Filings Archive'} ({selectedFilings.length} items)
+                    {recentScope ? 'BSE filings · last 30 days' : 'Chronological BSE Filings Archive'}
+                    {visibleIntel?.filingCoverage !== 'partial' && ` (${selectedFilings.length} items)`}
                   </h3>
 
                   {selectedFilings.length === 0 ? (
                     <div className="py-12 text-center text-xs text-slate-400">
-                      No stored filings found for this company.
+                      {visibleIntel?.filingCoverage === 'partial' ? 'No filings available in the partial history.' :
+                        recentScope ? 'No stored filings in the last 30 days.' : 'No stored filings found for this company.'}
                     </div>
                   ) : (
                     <div className="space-y-2">

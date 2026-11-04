@@ -42,7 +42,7 @@ import { clusterAnnouncements, AnnouncementCluster } from '../utils/clusterAnnou
 import { motion, AnimatePresence } from 'framer-motion';
 import { springSnappy, springMorph, containerStaggerVariants, itemFadeUpVariants, buttonTap, cardHover } from '../utils/motionTokens';
 import { ShareActionMenu } from './ui/motion/ShareActionMenu';
-import { HeliosPill, heliosCard, heliosDivider, heliosTitle, heliosMeta } from './ui/helios';
+import { HeliosPill, heliosCard } from './ui/helios';
 import { SaveNoteButton } from './notes/SaveNoteButton';
 import { AiSummaryViewer } from './AiSummaryViewer';
 
@@ -523,7 +523,7 @@ export function WatchlistManager({ isActive = true }: { isActive?: boolean } = {
   const [density] = useFeedDensity();
   const wlCardPad = density === 'comfortable' ? 'p-6' : density === 'dense' ? 'p-4' : 'p-5';
   const wlCardGap = density === 'comfortable' ? 'gap-4' : density === 'dense' ? 'gap-2.5' : 'gap-3.5';
-  const wlGridGap = density === 'comfortable' ? 'gap-5' : density === 'dense' ? 'gap-2.5' : 'gap-4';
+  const wlGridGap = density === 'comfortable' ? 'sm:gap-4' : density === 'dense' ? 'sm:gap-2' : 'sm:gap-3';
   const { user, profile, isPro, isAdmin, adminUnlocked, refreshProfile, setIsAuthModalOpen, setIsProModalOpen } = useAuth();
   // AI summary language (Settings → Telegram Alerts & AI Summaries); English variant lives in aiSummaryEn
   const summaryLang: 'hinglish' | 'english' = profile?.notificationPreferences?.aiSummaryLang === 'hinglish' ? 'hinglish' : 'english';
@@ -1670,7 +1670,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
       const filingCountStatus = !storedCount ? 'loading' : storedCount.available ? 'ready' : 'error';
       uCount = storedCount?.available ? storedCount.last30Days! : 0;
       // Format concrete human-readable status
-      let concreteStatus = filingCountStatus === 'ready' ? (uCount ? `${uCount} stored filings in 30 days` : "No stored filings in 30 days") : "Filing count pending";
+      let concreteStatus: string | undefined;
       if (hasResultsDeclaredToday) {
         concreteStatus = "Results declared today";
       } else if (filingsToday > 0) {
@@ -1712,7 +1712,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
         filingCountStatus,
         concreteStatus,
         hasResultsDeclaredToday,
-        hasHighImpactUpdate: hasHighImpactUpdate || hasResultsDeclaredToday || item.priority === 'HIGH',
+        hasHighImpactUpdate: hasHighImpactUpdate || hasResultsDeclaredToday,
         latestFilingTs
       });
     }
@@ -2690,109 +2690,72 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
               )}
             </div>
           ) : (
-            <div className={cn("grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3", wlGridGap)}>
-              {filteredMyCompanies.map((c) => {
-                const priorityTone: 'rose' | 'amber' | 'slate' =
-                  c.priority === 'HIGH' ? 'rose' :
-                  c.priority === 'MEDIUM' ? 'amber' :
-                  'slate';
-                const priorityLabel =
-                  c.priority === 'HIGH' ? 'High priority' :
-                  c.priority === 'MEDIUM' ? 'Medium priority' :
-                  'Low priority';
-
+            <div className={cn("grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2", wlGridGap)}>
+              {filteredMyCompanies.map((company) => {
+                const listId = company.listId || currentWatchlist?.id || watchlists[0]?.id || '';
+                const priorityLabel = company.priority === 'HIGH' ? 'High' : company.priority === 'MEDIUM' ? 'Medium' : 'Low';
                 return (
-                  <div
-                    id={`stock-card-${c.symbol}`}
-                    key={c.symbol}
-                    onClick={() => handleOpenIntel(c.scripCode, c.symbol, c.name)}
-                    className={cn(
-                      heliosCard,
-                      cn("group transition-all cursor-pointer flex flex-col relative", wlCardPad, wlCardGap),
-                      "hover:shadow-[0_16px_40px_rgba(15,23,42,0.10)] dark:hover:shadow-[0_16px_40px_rgba(0,0,0,0.55)]"
-                    )}
+                  <article
+                    id={`stock-card-${company.symbol}`}
+                    key={company.symbol}
+                    className={cn(heliosCard, "min-w-0 rounded-xl border-slate-200 px-3 py-2 shadow-none dark:shadow-none", density === 'comfortable' && "sm:px-4 sm:py-3")}
                   >
-                    {/* Helios pill row: priority · symbol */}
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCyclePriority(c.listId || currentWatchlist?.id || watchlists[0]?.id || '', {
-                            symbol: c.symbol,
-                            priority: c.priority
-                          } as any);
-                        }}
-                        className="inline-flex items-center cursor-pointer active:scale-95 transition-transform"
-                        title="Tap to change priority (High / Medium / Low)"
-                      >
-                        <HeliosPill tone={priorityTone} title={`Priority: ${c.priority} (tap to change)`}>
-                          {priorityLabel}
-                        </HeliosPill>
+                    <h4 className="min-w-0 text-sm font-semibold text-slate-900 dark:text-white">
+                      <button type="button" className="min-h-8 max-w-full text-left hover:underline cursor-pointer break-words"
+                        aria-label={`Open company overview for ${company.name}`}
+                        onClick={() => handleOpenIntel(company.scripCode, company.symbol, company.name)}>
+                        {company.name}
                       </button>
-                      {c.hasHighImpactUpdate && (
-                        <HeliosPill tone="rose">High impact</HeliosPill>
-                      )}
-                      <span className="flex-1" />
-                      <HeliosPill tone="slate" dot={false} className="font-mono">{c.symbol}</HeliosPill>
-                    </div>
+                    </h4>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 break-words">
+                      {[company.symbol, company.scripCode ? `BSE ${company.scripCode}` : null, company.category].filter(Boolean).join(' · ')}
+                    </p>
 
-                    {/* Company name */}
-                    <div className="min-w-0">
-                      <h4 className={cn(heliosTitle, "text-[17px] truncate")}>
-                        {c.name}
-                      </h4>
-                      {(c.scripCode || c.category) && (
-                        <p className={cn(heliosMeta, "mt-1")}>
-                          {[c.scripCode ? `BSE: ${c.scripCode}` : null, c.category].filter(Boolean).join(' · ')}
-                        </p>
-                      )}
-                    </div>
+                    {(company.concreteStatus || company.hasHighImpactUpdate) && (
+                      <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+                        {company.concreteStatus && <span className={company.hasResultsDeclaredToday ? "font-semibold text-emerald-700 dark:text-emerald-300" : "text-slate-700 dark:text-slate-200"}>{company.concreteStatus}</span>}
+                        {company.hasHighImpactUpdate && !company.hasResultsDeclaredToday && <HeliosPill tone="rose">High impact</HeliosPill>}
+                      </div>
+                    )}
 
-                    {/* Status */}
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <HeliosPill tone={c.hasResultsDeclaredToday ? 'emerald' : 'slate'} pulseDot={c.hasResultsDeclaredToday}>
-                        {c.concreteStatus}
-                      </HeliosPill>
-                    </div>
-
-                    <div className={heliosDivider} />
-
-                    {/* Footer: filings · actions */}
-                    <div className="flex items-center justify-between gap-2">
+                    <div className="mt-1 flex flex-wrap items-center justify-between gap-x-2">
+                      {company.filingCountStatus === 'loading' ? (
+                        <span role="status" className="text-xs text-slate-600 dark:text-slate-300">Checking filings…</span>
+                      ) : (
                         <button type="button"
-                          onClick={e => { e.stopPropagation(); if (c.filingCountStatus === 'error') retryFilingCounts(); else handleOpenIntel(c.scripCode, c.symbol, c.name); }}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold bg-slate-100 dark:bg-[#252233] min-h-[32px] cursor-pointer"
-                          title="Stored exchange filings in the last 30 days; open company history for all pages">
-                          <span>{c.filingCountStatus === 'ready' ? `${c.updateCount} filings · 30d` : c.filingCountStatus === 'error' ? 'Count unavailable · Retry' : 'Checking filings…'}</span>
-                          <ChevronRight size={12} />
+                          className="inline-flex min-h-9 items-center gap-1 text-xs font-semibold text-emerald-700 hover:underline dark:text-emerald-300 cursor-pointer"
+                          onClick={() => company.filingCountStatus === 'error' ? retryFilingCounts() : openIntelModal({
+                            scripCode: company.scripCode,
+                            symbol: company.symbol,
+                            companyName: company.name,
+                            initialView: 'recent-filings',
+                          })}>
+                          {company.filingCountStatus === 'error' ? 'Retry filing count' : `${company.updateCount} filings · 30d`}
+                          <ChevronRight size={13} aria-hidden="true" />
                         </button>
+                      )}
 
                       <div className="flex items-center gap-1">
-                        <motion.button
-                          type="button"
-                          whileTap={buttonTap}
-                          transition={springSnappy}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRemoveSymbol(c.listId || currentWatchlist?.id || watchlists[0]?.id || '', c.symbol);
-                          }}
-                          className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-transparent hover:border-rose-200 dark:hover:border-rose-900/60 cursor-pointer select-none min-h-[32px] min-w-[32px] flex items-center justify-center active:scale-[0.96]"
-                          title="Remove from watchlist"
-                        >
-                          <Trash2 size={13} />
-                        </motion.button>
-
-                        {/* Saved Notes: one-tap note linked to this stock */}
-                        <div onClick={(e) => e.stopPropagation()} className="flex items-center">
-                          <SaveNoteButton
-                            link={{ type: 'stock', label: c.name || c.symbol, symbol: c.symbol }}
-                            label={`Save note on ${c.name || c.symbol}`}
-                          />
-                        </div>
+                        <button type="button"
+                          className="min-h-9 px-1 text-xs text-slate-600 hover:underline dark:text-slate-300 cursor-pointer"
+                          aria-label={`Change priority for ${company.name}. Current priority: ${priorityLabel}`}
+                          onClick={() => handleCyclePriority(listId, { symbol: company.symbol, priority: company.priority })}>
+                          {priorityLabel} priority
+                        </button>
+                        <SaveNoteButton
+                          link={{ type: 'stock', label: company.name || company.symbol, symbol: company.symbol }}
+                          label={`Save note on ${company.name || company.symbol}`}
+                          className="min-h-9 min-w-9"
+                        />
+                        <button type="button"
+                          onClick={() => handleRemoveSymbol(listId, company.symbol)}
+                          aria-label={`Remove ${company.name} from watchlist`}
+                          className="grid min-h-9 min-w-9 place-items-center rounded-lg text-slate-600 hover:bg-rose-50 hover:text-rose-600 dark:text-slate-300 dark:hover:bg-rose-950/40 dark:hover:text-rose-300 cursor-pointer">
+                          <Trash2 size={14} aria-hidden="true" />
+                        </button>
                       </div>
                     </div>
-                  </div>
+                  </article>
                 );
               })}
             </div>

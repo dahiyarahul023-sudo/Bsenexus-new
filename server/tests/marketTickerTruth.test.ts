@@ -34,4 +34,7 @@ test('received quotes retain their values and stale label', () => {
   assert.match(html, /Verified index/);
   assert.match(html, /123\.45/);
   assert.match(html, /CACHED \/ STALE/);
+  assert.match(html, /aria-label="Pause market ticker"/);
+  assert.equal((html.match(/aria-hidden="true" class="[^"]*market-ticker-copy/g) || []).length, 3);
+  assert.match(html, /aria-label="Market indices"/);
 });

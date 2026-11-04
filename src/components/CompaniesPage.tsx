@@ -117,7 +117,7 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({ onEnterTerminal })
             Home
           </a>
           <ChevronRight className="w-3 h-3 text-slate-400" />
-          <span className="font-semibold text-slate-800 dark:text-slate-200">Companies Directory</span>
+          <span className="font-semibold text-slate-800 dark:text-slate-200">Curated company directory</span>
         </div>
 
         {/* Page Hero Header */}
@@ -127,10 +127,13 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({ onEnterTerminal })
             <span>{directoryBadge()}</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
-            Companies &amp; Exchanges — Profiles, Earnings &amp; Filings
+            Company and exchange profiles
           </h1>
           <p className="mt-2 text-sm sm:text-base text-slate-600 dark:text-slate-400 max-w-3xl leading-relaxed">
             {directoryDescription()}
+          </p>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+            For other stocks, use company search in the <a href="/announcements" className="font-semibold text-teal-700 underline dark:text-teal-300">Filings terminal</a>.
           </p>
         </div>
 
@@ -143,7 +146,8 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({ onEnterTerminal })
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search by company name, ticker (e.g. RELIANCE, TCS), scrip code, or sector..."
+                aria-label="Search curated profiles"
+                placeholder="Search curated profiles by company, ticker, code or sector"
                 className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-[#161D31] border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium"
               />
             </div>
