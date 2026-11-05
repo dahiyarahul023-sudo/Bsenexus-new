@@ -1,3 +1,5 @@
+2026-11-05 admin quota repair: server-confirmed admin identity is distinct from expiring PIN elevation; all quota-reset entry points share cancellable PIN recovery. Cached sessions cannot restore admin UI without Firebase and server verification. Tests, local browser fixtures and post-deployment owner/PIN acceptance remain distinct; see changes/admin-quota-elevation.md.
+
 2026-11-03 Radar volatility: company-relative size/exposure groups, explicit unavailable context, range-first metrics and historical volatility-watch filtering. Signed direction stays secondary; saved source/price/method ownership remains in the existing modal.
 
 2026-11-03 Radar research: source-detail and observed-reaction journal, 30/60/365-day descriptive patterns, morning prioritization and pending-session filters share the existing Radar modal, scope and refresh ownership. Missing prices/calendar remain explicit; saved research survives outages.

@@ -5,6 +5,8 @@ import os from 'node:os';
 import path from 'node:path';
 import express from 'express';
 import bcrypt from 'bcryptjs';
+import cookieParser from 'cookie-parser';
+import jwt from 'jsonwebtoken';
 import { timingSafePinEqual, verifyAndMigrateAdminPin } from '../security/adminPin.js';
 
 process.chdir(fs.mkdtempSync(path.join(os.tmpdir(), 'bn-pin-tests-')));
@@ -13,14 +15,15 @@ delete process.env.RECAPTCHA_ENFORCE; delete process.env.FIREBASE_APPCHECK_ENFOR
 process.env.NODE_ENV = 'test'; process.env.JWT_SECRET ||= 'disposable-pin-tests-secret';
 const { getSettings, saveSettings, saveAdminPinHash } = await import('../database/settingsDao.js');
 const { getSupabase, resetSupabaseClient } = await import('../database/supabase.js');
-const { authRouter } = await import('../security/auth.js');
+const { authRouter, authMiddleware } = await import('../security/auth.js');
 
 async function serve(run: (post: (route: string, pin: string) => Promise<Response>) => Promise<void>) {
   const app = express(); app.use(express.json());
-  app.use((req, _res, next) => { (req as any).user = { uid: 'verified-owner', email: 'dahiyarahul023@gmail.com', emailVerified: true, isAnonymous: false }; next(); });
+  app.use(cookieParser(), authMiddleware);
+  const cookie = jwt.sign({ uid: 'verified-owner', email: 'dahiyarahul023@gmail.com', emailVerified: true, isOwner: true, isAnonymous: false }, process.env.JWT_SECRET!, { expiresIn: '1h' });
   app.use('/auth', authRouter);
   const server = app.listen(0, '127.0.0.1'); await new Promise<void>(r => server.once('listening', r));
-  try { await run((route, pin) => fetch(`http://127.0.0.1:${(server.address() as any).port}/auth/${route}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin }) })); }
+  try { await run((route, pin) => fetch(`http://127.0.0.1:${(server.address() as any).port}/auth/${route}`, { method: 'POST', headers: { 'Content-Type': 'application/json', Cookie: `authToken=${cookie}` }, body: JSON.stringify({ pin }) })); }
   finally { server.closeAllConnections(); await new Promise<void>(r => server.close(() => r())); }
 }
 test('digest comparison handles different input lengths without throwing', () => {

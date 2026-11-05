@@ -119,6 +119,8 @@ export function SettingsTab({
     isPaidProActive,
     proDaysLeft,
     adminUnlocked,
+    isElevated,
+    runElevatedAdminAction,
     logout,
     updateProfileInfo,
     checkUsernameAvailability,
@@ -132,7 +134,7 @@ export function SettingsTab({
     refreshProfile,
   } = useAuth();
 
-  const isSuperAdmin = Boolean(isAdmin || isOwner || adminUnlocked || profile?.tier === 'admin' || user?.isAdmin);
+  const isSuperAdmin = isAdmin || isOwner;
   const storyButtonsEnabled = profile?.notificationPreferences?.storyNavigationButtons !== false;
   // Telegram is Pro-only; the AI Summary Language picker stays visible for everyone.
   const isTelegramPro = Boolean(isPro || isAdmin || isOwner || profile?.tier === 'admin');
@@ -235,13 +237,14 @@ export function SettingsTab({
     setIsResettingAllQuotas(true);
     setResetAllQuotaFeedback(null);
     try {
-      const res = await customFetch('/api/billing/reset-quota', {
+      const res = await runElevatedAdminAction(() => customFetch('/api/billing/reset-quota', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ target: 'all' })
-      });
+      }));
+      if (!res) return;
       const data = await res.json();
-      if (data.success) {
+      if (res.ok && data.success) {
         setResetAllQuotaFeedback(data.message || 'All daily AI quotas reset successfully.');
         window.dispatchEvent(new Event('bse_ai_quota_refresh'));
       } else {
@@ -3044,7 +3047,7 @@ export function SettingsTab({
                 </button>
               </div>
 
-              {!isAdmin ? (
+              {!isElevated ? (
                 <form onSubmit={async (e) => {
                   e.preventDefault();
                   if (!pinUnlockInput) return;
@@ -3052,6 +3055,7 @@ export function SettingsTab({
                   setPinUnlockError(null);
                   const res = await verifyAdminPin(pinUnlockInput);
                   setIsVerifyingPin(false);
+                  if (res.success) setPinUnlockInput('');
                   if (!res.success) {
                     setPinUnlockError(res.error || 'Invalid Master PIN');
                   }

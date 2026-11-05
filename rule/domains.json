@@ -23,7 +23,8 @@
         "server/database/telegramLinksDao.ts",
         "scripts/verify-deep-audit-staging.sql",
         "supabase/migrations/20261030120109_auth_account_limits_schema.sql",
-        "server/security/adminPin.ts"
+        "server/security/adminPin.ts",
+        "src/utils/adminElevation.ts"
       ],
       "tests": [
         "server/tests/authIdentity.test.ts",
@@ -36,7 +37,11 @@
         "server/tests/deepAuditAuth.test.ts",
         "server/tests/clientIpSpoofing.test.ts",
         "server/tests/authLimitsSql.test.ts",
-        "server/tests/adminPin.test.ts"
+        "server/tests/adminPin.test.ts",
+        "server/tests/adminQuotaFlow.test.ts",
+        "server/tests/apiCancellation.test.ts",
+        "server/tests/aiQuotaAdmin.test.ts",
+        "scripts/verify-admin-quota.mjs"
       ],
       "reason": "Verified token \u2192 server session \u2192 current durable profile \u2192 route authorization. Browser roles are display state; never authority. The server-only ensure_user_skeleton RPC denies browser EXECUTE, uses SECURITY INVOKER and a fixed empty search path with a qualified users relation. Its narrow production permission repair preserves existing paid rows on retry."
     },
@@ -104,7 +109,8 @@
         "server/database/faqQuotaDao.ts",
         "server/services/faqQuestionLog.ts",
         "supabase/migrations/20261030114813_durable_faq_quota.sql",
-        "src/shared/productFacts.ts"
+        "src/shared/productFacts.ts",
+        "src/utils/adminElevation.ts"
       ],
       "tests": [
         "server/tests/aiQuotaFrontend.test.ts",
@@ -113,7 +119,11 @@
         "server/tests/deepAuditAuth.test.ts",
         "server/tests/faqQuota.test.ts",
         "server/tests/faqQuotaSql.test.ts",
-        "server/tests/productClaims.test.ts"
+        "server/tests/productClaims.test.ts",
+        "server/tests/adminQuotaFlow.test.ts",
+        "server/tests/apiCancellation.test.ts",
+        "server/tests/aiQuotaAdmin.test.ts",
+        "server/tests/adminPin.test.ts"
       ],
       "reason": "Trial duration and paid-vs-trial labels cross backend, client and copy. Quota consumption and rollback must survive races and restart; reset boundaries use IST."
     },
@@ -679,7 +689,8 @@
         "src/utils/runupPriorityClient.ts",
         "src/hooks/useForegroundRefresh.ts",
         "src/shared/watchlistResultStatus.ts",
-        "src/utils/companyIntelSnapshots.ts"
+        "src/utils/companyIntelSnapshots.ts",
+        "src/utils/adminElevation.ts"
       ],
       "tests": [
         "server/tests/preferenceSaveQueue.test.ts",
@@ -693,9 +704,13 @@
         "server/tests/calendarFeedback.test.ts",
         "server/tests/signOutFeedback.test.ts",
         "server/tests/foregroundRefresh.test.ts",
-        "server/tests/resultFreshness.test.ts"
+        "server/tests/resultFreshness.test.ts",
+        "server/tests/adminQuotaFlow.test.ts",
+        "server/tests/aiQuotaAdmin.test.ts",
+        "server/tests/adminPin.test.ts",
+        "scripts/verify-admin-quota.mjs"
       ],
-      "reason": "Guest, restoring, signed-in and expired states must stay distinct. Late requests and saved preferences must not overwrite newer edits or leak between accounts. A success message requires the appropriate confirmed result. Completed archive receipts with pending documents remain successful reads and have one ledger status owner. Shared pre-result priority updates require existing admin authorization; explicit server PIN denial opens the existing PIN dialog. HTML/preview denial remains an unconfirmed blocker. No automatic mutation retry or client role expansion is permitted."
+      "reason": "Guest, restoring, signed-in and expired states must stay distinct. Late requests and saved preferences must not overwrite newer edits or leak between accounts. A success message requires the appropriate confirmed result. Completed archive receipts with pending documents remain successful reads and have one ledger status owner. Shared pre-result priority updates require existing admin authorization; explicit server PIN denial opens the existing PIN dialog. HTML/preview denial remains an unconfirmed blocker. Shared priority updates never automatically retry, and client role expansion is not permitted. Admin identity comes from verified /auth/status for the current Firebase UID; saved snapshots confer no role. Same-UID PIN elevation expires after 15 minutes. Quota reset alone may replay an explicit pre-action elevation denial once after PIN; cancellation/account changes discard it and uncertain outcomes never replay."
     },
     {
       "id": "frontend-design",
@@ -947,14 +962,19 @@
         "server/api/aiPlugin.ts",
         "src/shared/aiDataDisclosure.ts",
         "server/ai/docs.ts",
-        "src/shared/productFacts.ts"
+        "src/shared/productFacts.ts",
+        "src/utils/adminElevation.ts"
       ],
       "tests": [
         "server/tests/aiQuotaFrontend.test.ts",
         "server/tests/apiCancellation.test.ts",
         "server/tests/mcpToolMatrix.test.ts",
         "server/tests/mcpPdfSummary.test.ts",
-        "server/tests/productClaims.test.ts"
+        "server/tests/productClaims.test.ts",
+        "server/tests/adminQuotaFlow.test.ts",
+        "server/tests/aiQuotaAdmin.test.ts",
+        "server/tests/adminPin.test.ts",
+        "scripts/verify-admin-quota.mjs"
       ],
       "reason": "AI request lifecycle connects quota meters, upgrade entry points, cancellation and saving generated content. Failed/aborted requests, late responses, quota events and account changes must keep all consumers consistent. Advanced help links to the public AI guide. Connector generation shares existing website AI allowance and validated cache reads do not reserve another generation; denial/failure is explicit."
     },

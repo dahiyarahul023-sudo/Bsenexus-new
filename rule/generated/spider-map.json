@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "621bc601d8a074b18ab71180f4dcc4b810057a457bb3c4c1a5c876654ad83716",
+  "sourceDigest": "b93e7e86843651f39d30c2bcf5be2550ea38df69d22602b1122b63f67a0f74e7",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -36,6 +36,11 @@
     {
       "path": "metadata.json",
       "sha256": "ac2598b6aaa999a40b1a001a27752a4f684c896ccf7494ed934af6742c1e6303",
+      "importedBy": []
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "00d8e2fa9446d65cf7a43c9b979872f5d79e9707f30b297263988a6632c183e0",
       "importedBy": []
     },
     {
@@ -199,6 +204,11 @@
     {
       "path": "scripts/spider-view.html",
       "sha256": "0ce2b4b657614081fd090e22c64507dfb3d318ac334f16c6a16dd41169e64a11",
+      "importedBy": []
+    },
+    {
+      "path": "scripts/verify-admin-quota.mjs",
+      "sha256": "5dceb95c7e1e0028d4d843dfc367fd013e3f9298ee543b9eea4b0331a9f5cf1b",
       "importedBy": []
     },
     {
@@ -473,6 +483,7 @@
       "sha256": "eda3becda235272198d703d3173c6afc30daed88f7102654225c29c023f92bdb",
       "importedBy": [
         "server.ts",
+        "server/tests/aiQuotaAdmin.test.ts",
         "server/tests/alertRulesApi.test.ts",
         "server/tests/auditSecurity.test.ts",
         "server/tests/giftAccessMount.test.ts",
@@ -833,7 +844,8 @@
         "server/services/resultsCalendarService.ts",
         "server/services/stockNewsService.ts",
         "server/services/telegram.ts",
-        "server/tests/adminPin.test.ts"
+        "server/tests/adminPin.test.ts",
+        "server/tests/aiQuotaAdmin.test.ts"
       ]
     },
     {
@@ -977,7 +989,7 @@
     },
     {
       "path": "server/security/auth.ts",
-      "sha256": "8755fba83adbb930ff41714216166bc4cdab7e0a3e5b6018a813b99da8a9328b",
+      "sha256": "6a12c2b32a09eddb417fffc990bc50dd9043a877a86693ff9abb66f1f9c9b542",
       "importedBy": [
         "server.ts",
         "server/ai/http.ts",
@@ -989,6 +1001,7 @@
         "server/api/routes.ts",
         "server/api/telegramLinks.ts",
         "server/tests/adminPin.test.ts",
+        "server/tests/aiQuotaAdmin.test.ts",
         "server/tests/auditSecurity.test.ts",
         "server/tests/authIdentity.test.ts",
         "server/tests/deepAuditAuth.test.ts",
@@ -1022,6 +1035,7 @@
         "server/api/giftAccess.ts",
         "server/database/firebase.ts",
         "server/security/auth.ts",
+        "server/tests/aiQuotaAdmin.test.ts",
         "server/tests/authIdentity.test.ts",
         "server/tests/deepAuditAuth.test.ts"
       ]
@@ -1159,7 +1173,7 @@
     },
     {
       "path": "server/services/aiQuotaService.ts",
-      "sha256": "3423ae854ce4dbdd1802529257728f4ac34566439a87bb03835b05fd5ef502ab",
+      "sha256": "1501cd36692beab1a9435c016a1ee11a7d25b8796d5b86873191371ff523d618",
       "importedBy": [
         "server/ai/tools.ts",
         "server/api/routes.ts",
@@ -1643,7 +1657,12 @@
     },
     {
       "path": "server/tests/adminPin.test.ts",
-      "sha256": "a97c53a00039689808c63995d1500089dfc16bd8319ac2ab86b3c984b59f7cf7",
+      "sha256": "a5851d8219682889ff96158f55f1af47d07958e7738a83a59675834a57949ca8",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/adminQuotaFlow.test.ts",
+      "sha256": "6676a4f2975c82ff787551c82119b6f4e2728dc02a7752a944a419d6d255e240",
       "importedBy": []
     },
     {
@@ -1708,7 +1727,7 @@
     },
     {
       "path": "server/tests/aiQuotaAdmin.test.ts",
-      "sha256": "34667dae07d6f8cc6c87d9813e3058879faa1e372b8269c5b532df8338324054",
+      "sha256": "2bf755482ab7520c1a756487da3f82fa48fe51e0329639f221e3e273e1e29f82",
       "importedBy": []
     },
     {
@@ -1763,7 +1782,7 @@
     },
     {
       "path": "server/tests/apiCancellation.test.ts",
-      "sha256": "c9db59713b7039cb87dcbbb9c93024a799caed7b33de2712999f05088f0dec4b",
+      "sha256": "018669afed7b9bc1d616106081169d4f6f33c2f60fd0bd2b8ea9fe714c86d61c",
       "importedBy": []
     },
     {
@@ -2797,7 +2816,7 @@
     },
     {
       "path": "src/api.ts",
-      "sha256": "dcce296e4f3cb99359f16cb8a80d9890483bf499d02971efe1d9deddf1818752",
+      "sha256": "6521a38e0f3ef9fbd9f23dceb548ac23e9316525cb0c8158e78b36c26d23769d",
       "importedBy": [
         "src/App.tsx",
         "src/api/notesApi.ts",
@@ -2873,7 +2892,7 @@
     },
     {
       "path": "src/components/AdminPinModal.tsx",
-      "sha256": "cfa9e9279bb84f3e5ee37396af2b689cda991d5e1533bcc9aa2bede20115ce80",
+      "sha256": "714d24cbd181eb5e8825b6a5ef4f56c32389b59a610358238da6d3ef69fc1880",
       "importedBy": [
         "src/App.tsx",
         "src/components/Layout.tsx"
@@ -2897,7 +2916,7 @@
     },
     {
       "path": "src/components/AiUsageCard.tsx",
-      "sha256": "6b7c489dd73f041e02aa7d0f850c8e2cbbe9aa98eaae906af46f40a49dfff723",
+      "sha256": "b78f392c7c2963917ec7f9274a5c1a9e4f3e372c58e8055b6469095b91698713",
       "importedBy": [
         "src/components/SettingsTab.tsx"
       ]
@@ -3175,7 +3194,7 @@
     },
     {
       "path": "src/components/SettingsTab.tsx",
-      "sha256": "48cf8c1b30a1a555502888efedba7ca468f34c578484c987737336e6e51ea8e3",
+      "sha256": "8cb3ae4fb741d0cb7c9dfdf38b76d8b510e21110beb647fb402e67f526f32be3",
       "importedBy": [
         "src/App.tsx",
         "src/components/Layout.tsx"
@@ -3183,7 +3202,7 @@
     },
     {
       "path": "src/components/StorageManager.tsx",
-      "sha256": "456c2470d170c4d19e4560b251ca1a24a071bcde5a1c13db1bd4802d2e62519a",
+      "sha256": "16c81a557a75f73e626d37edd828b095c986e556ce661a065e24bd6a3d2150c4",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -4072,7 +4091,7 @@
     },
     {
       "path": "src/context/AuthContext.tsx",
-      "sha256": "1e7cf7eb9fb0bf95c96155aef96720a3f4b84f31d30871aa3be559bdf6b5cb38",
+      "sha256": "ac44155b172a4afd81967cf91e5b48510f866cef1ca653ca8d7b0fc0f3eb4706",
       "importedBy": [
         "src/App.tsx",
         "src/components/AdminDiagnostics.tsx",
@@ -4101,6 +4120,7 @@
         "src/components/ResultsCalendar.tsx",
         "src/components/SecurityAuditModal.tsx",
         "src/components/SettingsTab.tsx",
+        "src/components/StorageManager.tsx",
         "src/components/SubscriptionCard.tsx",
         "src/components/TodayMarketStoryModal.tsx",
         "src/components/UserProfileModal.tsx",
@@ -4161,7 +4181,6 @@
       "sha256": "d9735c0200a7fa4b3fd25bc7c2c6dedb6e6f19f12349babbfd1c4ce7f8da4911",
       "importedBy": [
         "src/components/AdminDiagnostics.tsx",
-        "src/components/AdminPinModal.tsx",
         "src/components/AlertRulesModal.tsx",
         "src/components/Announcements.tsx",
         "src/components/AuthModal.tsx",
@@ -4243,6 +4262,7 @@
       "sha256": "98e21c3fc04dba37a2bc085433cfc13169429a17542b9064c46284557a583068",
       "importedBy": [
         "src/App.tsx",
+        "src/components/AdminPinModal.tsx",
         "src/components/ProCheckoutView.tsx",
         "src/components/ProReceiptView.tsx",
         "src/components/ProUpgradeModal.tsx",
@@ -4817,6 +4837,14 @@
       ]
     },
     {
+      "path": "src/utils/adminElevation.ts",
+      "sha256": "d3ab023b3233ee6a9a65579fd4e8cce16965bcb5ef54854e8df448dd253c0ce1",
+      "importedBy": [
+        "server/tests/adminQuotaFlow.test.ts",
+        "src/context/AuthContext.tsx"
+      ]
+    },
+    {
       "path": "src/utils/aiQuota.ts",
       "sha256": "9decc2c431bbf19d4956eda0e79631081228801960b50e7018f6f0d1c635d84c",
       "importedBy": [
@@ -5261,7 +5289,7 @@
     },
     {
       "path": "src/version.ts",
-      "sha256": "f3ecebca4fc1aafe1e52e03880e34404ad29624569bc3296304193d7f17223d6",
+      "sha256": "4a919ed1cde4f330fd8bdccdac4db5316a1f49222fc0e7aad325d44cdadcf1e6",
       "importedBy": [
         "src/components/SettingsTab.tsx",
         "src/lib/sentry.ts"
@@ -8872,25 +8900,31 @@
       "source": "server/tests/adminPin.test.ts",
       "target": "server/security/adminPin.ts",
       "kind": "import",
-      "line": 8
+      "line": 10
     },
     {
       "source": "server/tests/adminPin.test.ts",
       "target": "server/database/settingsDao.ts",
       "kind": "dynamic",
-      "line": 14
+      "line": 16
     },
     {
       "source": "server/tests/adminPin.test.ts",
       "target": "server/database/supabase.ts",
       "kind": "dynamic",
-      "line": 15
+      "line": 17
     },
     {
       "source": "server/tests/adminPin.test.ts",
       "target": "server/security/auth.ts",
       "kind": "dynamic",
-      "line": 16
+      "line": 18
+    },
+    {
+      "source": "server/tests/adminQuotaFlow.test.ts",
+      "target": "src/utils/adminElevation.ts",
+      "kind": "import",
+      "line": 6
     },
     {
       "source": "server/tests/adr.test.ts",
@@ -9159,20 +9193,50 @@
     {
       "source": "server/tests/aiQuotaAdmin.test.ts",
       "target": "server/database/usersDao.ts",
-      "kind": "import",
-      "line": 3
+      "kind": "dynamic",
+      "line": 15
     },
     {
       "source": "server/tests/aiQuotaAdmin.test.ts",
       "target": "server/services/aiQuotaService.ts",
-      "kind": "import",
-      "line": 4
+      "kind": "dynamic",
+      "line": 16
     },
     {
       "source": "server/tests/aiQuotaAdmin.test.ts",
       "target": "server/database/localStore.ts",
-      "kind": "import",
-      "line": 11
+      "kind": "dynamic",
+      "line": 17
+    },
+    {
+      "source": "server/tests/aiQuotaAdmin.test.ts",
+      "target": "server/security/auth.ts",
+      "kind": "dynamic",
+      "line": 105
+    },
+    {
+      "source": "server/tests/aiQuotaAdmin.test.ts",
+      "target": "server/api/routes.ts",
+      "kind": "dynamic",
+      "line": 106
+    },
+    {
+      "source": "server/tests/aiQuotaAdmin.test.ts",
+      "target": "server/security/firebaseAdmin.ts",
+      "kind": "dynamic",
+      "line": 107
+    },
+    {
+      "source": "server/tests/aiQuotaAdmin.test.ts",
+      "target": "server/database/settingsDao.ts",
+      "kind": "dynamic",
+      "line": 108
+    },
+    {
+      "source": "server/tests/aiQuotaAdmin.test.ts",
+      "target": "server/database/settingsDao.ts",
+      "kind": "dynamic",
+      "line": 182
     },
     {
       "source": "server/tests/aiQuotaFrontend.test.ts",
@@ -11636,7 +11700,7 @@
     },
     {
       "source": "src/components/AdminPinModal.tsx",
-      "target": "src/hooks/useBodyScrollLock.ts",
+      "target": "src/hooks/usePaymentDialog.ts",
       "kind": "import",
       "line": 4
     },
@@ -13912,7 +13976,7 @@
       "source": "src/components/SettingsTab.tsx",
       "target": "src/api/notesApi.ts",
       "kind": "dynamic",
-      "line": 154
+      "line": 156
     },
     {
       "source": "src/components/StorageManager.tsx",
@@ -13922,15 +13986,21 @@
     },
     {
       "source": "src/components/StorageManager.tsx",
-      "target": "src/components/ui/ConfirmModal.tsx",
+      "target": "src/context/AuthContext.tsx",
       "kind": "import",
       "line": 8
     },
     {
       "source": "src/components/StorageManager.tsx",
-      "target": "src/components/ui/ActionButton.tsx",
+      "target": "src/components/ui/ConfirmModal.tsx",
       "kind": "import",
       "line": 9
+    },
+    {
+      "source": "src/components/StorageManager.tsx",
+      "target": "src/components/ui/ActionButton.tsx",
+      "kind": "import",
+      "line": 10
     },
     {
       "source": "src/components/SubscriptionCard.tsx",
@@ -15374,25 +15444,25 @@
     },
     {
       "source": "src/context/AuthContext.tsx",
-      "target": "src/utils/retry.ts",
+      "target": "src/utils/adminElevation.ts",
       "kind": "import",
       "line": 20
     },
     {
       "source": "src/context/AuthContext.tsx",
-      "target": "src/utils/preferenceSaveQueue.ts",
+      "target": "src/utils/retry.ts",
       "kind": "import",
       "line": 21
     },
     {
       "source": "src/context/AuthContext.tsx",
-      "target": "src/utils/recaptcha.ts",
+      "target": "src/utils/preferenceSaveQueue.ts",
       "kind": "import",
       "line": 22
     },
     {
       "source": "src/context/AuthContext.tsx",
-      "target": "src/utils/cashfree.ts",
+      "target": "src/utils/recaptcha.ts",
       "kind": "import",
       "line": 23
     },
@@ -15401,6 +15471,12 @@
       "target": "src/utils/cashfree.ts",
       "kind": "import",
       "line": 24
+    },
+    {
+      "source": "src/context/AuthContext.tsx",
+      "target": "src/utils/cashfree.ts",
+      "kind": "import",
+      "line": 25
     },
     {
       "source": "src/context/NoteEditorContext.tsx",
@@ -15785,7 +15861,8 @@
         "server/database/telegramLinksDao.ts",
         "scripts/verify-deep-audit-staging.sql",
         "supabase/migrations/20261030120109_auth_account_limits_schema.sql",
-        "server/security/adminPin.ts"
+        "server/security/adminPin.ts",
+        "src/utils/adminElevation.ts"
       ],
       "tests": [
         "server/tests/authIdentity.test.ts",
@@ -15798,7 +15875,11 @@
         "server/tests/deepAuditAuth.test.ts",
         "server/tests/clientIpSpoofing.test.ts",
         "server/tests/authLimitsSql.test.ts",
-        "server/tests/adminPin.test.ts"
+        "server/tests/adminPin.test.ts",
+        "server/tests/adminQuotaFlow.test.ts",
+        "server/tests/apiCancellation.test.ts",
+        "server/tests/aiQuotaAdmin.test.ts",
+        "scripts/verify-admin-quota.mjs"
       ],
       "reason": "Verified token → server session → current durable profile → route authorization. Browser roles are display state; never authority. The server-only ensure_user_skeleton RPC denies browser EXECUTE, uses SECURITY INVOKER and a fixed empty search path with a qualified users relation. Its narrow production permission repair preserves existing paid rows on retry."
     },
@@ -15866,7 +15947,8 @@
         "server/database/faqQuotaDao.ts",
         "server/services/faqQuestionLog.ts",
         "supabase/migrations/20261030114813_durable_faq_quota.sql",
-        "src/shared/productFacts.ts"
+        "src/shared/productFacts.ts",
+        "src/utils/adminElevation.ts"
       ],
       "tests": [
         "server/tests/aiQuotaFrontend.test.ts",
@@ -15875,7 +15957,11 @@
         "server/tests/deepAuditAuth.test.ts",
         "server/tests/faqQuota.test.ts",
         "server/tests/faqQuotaSql.test.ts",
-        "server/tests/productClaims.test.ts"
+        "server/tests/productClaims.test.ts",
+        "server/tests/adminQuotaFlow.test.ts",
+        "server/tests/apiCancellation.test.ts",
+        "server/tests/aiQuotaAdmin.test.ts",
+        "server/tests/adminPin.test.ts"
       ],
       "reason": "Trial duration and paid-vs-trial labels cross backend, client and copy. Quota consumption and rollback must survive races and restart; reset boundaries use IST."
     },
@@ -16441,7 +16527,8 @@
         "src/utils/runupPriorityClient.ts",
         "src/hooks/useForegroundRefresh.ts",
         "src/shared/watchlistResultStatus.ts",
-        "src/utils/companyIntelSnapshots.ts"
+        "src/utils/companyIntelSnapshots.ts",
+        "src/utils/adminElevation.ts"
       ],
       "tests": [
         "server/tests/preferenceSaveQueue.test.ts",
@@ -16455,9 +16542,13 @@
         "server/tests/calendarFeedback.test.ts",
         "server/tests/signOutFeedback.test.ts",
         "server/tests/foregroundRefresh.test.ts",
-        "server/tests/resultFreshness.test.ts"
+        "server/tests/resultFreshness.test.ts",
+        "server/tests/adminQuotaFlow.test.ts",
+        "server/tests/aiQuotaAdmin.test.ts",
+        "server/tests/adminPin.test.ts",
+        "scripts/verify-admin-quota.mjs"
       ],
-      "reason": "Guest, restoring, signed-in and expired states must stay distinct. Late requests and saved preferences must not overwrite newer edits or leak between accounts. A success message requires the appropriate confirmed result. Completed archive receipts with pending documents remain successful reads and have one ledger status owner. Shared pre-result priority updates require existing admin authorization; explicit server PIN denial opens the existing PIN dialog. HTML/preview denial remains an unconfirmed blocker. No automatic mutation retry or client role expansion is permitted."
+      "reason": "Guest, restoring, signed-in and expired states must stay distinct. Late requests and saved preferences must not overwrite newer edits or leak between accounts. A success message requires the appropriate confirmed result. Completed archive receipts with pending documents remain successful reads and have one ledger status owner. Shared pre-result priority updates require existing admin authorization; explicit server PIN denial opens the existing PIN dialog. HTML/preview denial remains an unconfirmed blocker. Shared priority updates never automatically retry, and client role expansion is not permitted. Admin identity comes from verified /auth/status for the current Firebase UID; saved snapshots confer no role. Same-UID PIN elevation expires after 15 minutes. Quota reset alone may replay an explicit pre-action elevation denial once after PIN; cancellation/account changes discard it and uncertain outcomes never replay."
     },
     {
       "id": "frontend-design",
@@ -16709,14 +16800,19 @@
         "server/api/aiPlugin.ts",
         "src/shared/aiDataDisclosure.ts",
         "server/ai/docs.ts",
-        "src/shared/productFacts.ts"
+        "src/shared/productFacts.ts",
+        "src/utils/adminElevation.ts"
       ],
       "tests": [
         "server/tests/aiQuotaFrontend.test.ts",
         "server/tests/apiCancellation.test.ts",
         "server/tests/mcpToolMatrix.test.ts",
         "server/tests/mcpPdfSummary.test.ts",
-        "server/tests/productClaims.test.ts"
+        "server/tests/productClaims.test.ts",
+        "server/tests/adminQuotaFlow.test.ts",
+        "server/tests/aiQuotaAdmin.test.ts",
+        "server/tests/adminPin.test.ts",
+        "scripts/verify-admin-quota.mjs"
       ],
       "reason": "AI request lifecycle connects quota meters, upgrade entry points, cancellation and saving generated content. Failed/aborted requests, late responses, quota events and account changes must keep all consumers consistent. Advanced help links to the public AI guide. Connector generation shares existing website AI allowance and validated cache reads do not reserve another generation; denial/failure is explicit."
     },
@@ -20045,7 +20141,7 @@
     },
     {
       "file": "server/security/auth.ts",
-      "line": 311,
+      "line": 291,
       "receiver": "authRouter",
       "method": "POST",
       "path": "/session",
@@ -20057,7 +20153,7 @@
     },
     {
       "file": "server/security/auth.ts",
-      "line": 511,
+      "line": 491,
       "receiver": "authRouter",
       "method": "POST",
       "path": "/login",
@@ -20069,19 +20165,19 @@
     },
     {
       "file": "server/security/auth.ts",
-      "line": 632,
+      "line": 612,
       "receiver": "authRouter",
       "method": "POST",
       "path": "/verify-pin",
       "middleware": [
         "authRateLimiter",
         "requireAppCheck",
-        "authAttempt(async (req, res) => { const { pin, recaptchaToken, recaptchaAction, email, identifier } = req.body || {}; const settings = await getSettings(); // Strict Security Rule: User must be signed in with the authorized Administrator ac"
+        "authAttempt(async (req, res) => { const { pin, recaptchaToken, recaptchaAction, email, identifier } = req.body || {}; // Strict Security Rule: User must be signed in with the authorized Administrator account const currentUser = (req as any)"
       ]
     },
     {
       "file": "server/security/auth.ts",
-      "line": 743,
+      "line": 725,
       "receiver": "authRouter",
       "method": "POST",
       "path": "/logout",
@@ -20091,7 +20187,7 @@
     },
     {
       "file": "server/security/auth.ts",
-      "line": 748,
+      "line": 730,
       "receiver": "authRouter",
       "method": "GET",
       "path": "/status",
@@ -20121,7 +20217,7 @@
     },
     {
       "file": "server/tests/adminPin.test.ts",
-      "line": 19,
+      "line": 21,
       "receiver": "app",
       "method": "USE",
       "path": "express.json()",
@@ -20129,15 +20225,17 @@
     },
     {
       "file": "server/tests/adminPin.test.ts",
-      "line": 20,
+      "line": 22,
       "receiver": "app",
       "method": "USE",
-      "path": "(req, _res, next) => { (req as any).user = { uid: 'verified-owner', email: 'dahiyarahul023@gmail.com', emailVerified: true, isAnonymous: false }; next(); }",
-      "middleware": []
+      "path": "cookieParser()",
+      "middleware": [
+        "authMiddleware"
+      ]
     },
     {
       "file": "server/tests/adminPin.test.ts",
-      "line": 21,
+      "line": 24,
       "receiver": "app",
       "method": "USE",
       "path": "/auth",
@@ -20233,6 +20331,37 @@
       "path": "/api/ai",
       "middleware": [
         "aiPluginRouter"
+      ]
+    },
+    {
+      "file": "server/tests/aiQuotaAdmin.test.ts",
+      "line": 113,
+      "receiver": "app",
+      "method": "USE",
+      "path": "express.json()",
+      "middleware": [
+        "cookieParser()",
+        "authMiddleware"
+      ]
+    },
+    {
+      "file": "server/tests/aiQuotaAdmin.test.ts",
+      "line": 114,
+      "receiver": "app",
+      "method": "USE",
+      "path": "/auth",
+      "middleware": [
+        "authRouter"
+      ]
+    },
+    {
+      "file": "server/tests/aiQuotaAdmin.test.ts",
+      "line": 114,
+      "receiver": "app",
+      "method": "USE",
+      "path": "/api",
+      "middleware": [
+        "apiRouter"
       ]
     },
     {
@@ -20889,7 +21018,7 @@
     },
     {
       "file": "server/tests/adminPin.test.ts",
-      "line": 23,
+      "line": 26,
       "function": "fetch",
       "target": "`http://127.0.0.1:${(server.address() as any).port}/auth/${route}`"
     },
@@ -21050,6 +21179,48 @@
       "target": "base + \"/api/ai/v1/company?query=TCS\""
     },
     {
+      "file": "server/tests/aiQuotaAdmin.test.ts",
+      "line": 125,
+      "function": "fetch",
+      "target": "base + '/api/billing/reset-quota'"
+    },
+    {
+      "file": "server/tests/aiQuotaAdmin.test.ts",
+      "line": 134,
+      "function": "fetch",
+      "target": "base + '/auth/status'"
+    },
+    {
+      "file": "server/tests/aiQuotaAdmin.test.ts",
+      "line": 146,
+      "function": "fetch",
+      "target": "base + '/auth/status'"
+    },
+    {
+      "file": "server/tests/aiQuotaAdmin.test.ts",
+      "line": 159,
+      "function": "fetch",
+      "target": "base + '/auth/verify-pin'"
+    },
+    {
+      "file": "server/tests/aiQuotaAdmin.test.ts",
+      "line": 172,
+      "function": "fetch",
+      "target": "base + '/auth/status'"
+    },
+    {
+      "file": "server/tests/aiQuotaAdmin.test.ts",
+      "line": 179,
+      "function": "fetch",
+      "target": "base + '/auth/verify-pin'"
+    },
+    {
+      "file": "server/tests/aiQuotaAdmin.test.ts",
+      "line": 191,
+      "function": "fetch",
+      "target": "base + '/auth/status'"
+    },
+    {
       "file": "server/tests/alertRulesApi.test.ts",
       "line": 20,
       "function": "fetch",
@@ -21063,31 +21234,31 @@
     },
     {
       "file": "server/tests/apiCancellation.test.ts",
-      "line": 25,
+      "line": 26,
       "function": "customFetch",
       "target": "'/api/users/profile'"
     },
     {
       "file": "server/tests/apiCancellation.test.ts",
-      "line": 36,
+      "line": 37,
       "function": "customFetch",
       "target": "'/api/users/profile'"
     },
     {
       "file": "server/tests/apiCancellation.test.ts",
-      "line": 43,
+      "line": 44,
       "function": "customFetch",
       "target": "'/api/users/profile'"
     },
     {
       "file": "server/tests/apiCancellation.test.ts",
-      "line": 54,
+      "line": 55,
       "function": "customFetch",
       "target": "'/api/gifts/admin'"
     },
     {
       "file": "server/tests/apiCancellation.test.ts",
-      "line": 73,
+      "line": 74,
       "function": "customFetch",
       "target": "'/api/gifts/admin'"
     },
@@ -21381,13 +21552,7 @@
     },
     {
       "file": "src/api.ts",
-      "line": 41,
-      "function": "fetch",
-      "target": "resolvedUrl"
-    },
-    {
-      "file": "src/api.ts",
-      "line": 55,
+      "line": 52,
       "function": "fetch",
       "target": "resolvedUrl"
     },
@@ -21867,109 +22032,109 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 238,
+      "line": 240,
       "function": "customFetch",
       "target": "'/api/billing/reset-quota'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 387,
+      "line": 390,
       "function": "customFetch",
       "target": "'/api/settings'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 432,
+      "line": 435,
       "function": "customFetch",
       "target": "'/api/settings'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 666,
+      "line": 669,
       "function": "customFetch",
       "target": "'/api/users/test-telegram'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 695,
+      "line": 698,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 834,
+      "line": 837,
       "function": "customFetch",
       "target": "'/api/toggle'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 871,
+      "line": 874,
       "function": "customFetch",
       "target": "'/api/settings'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 896,
+      "line": 899,
       "function": "customFetch",
       "target": "'/api/test-telegram'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 915,
+      "line": 918,
       "function": "customFetch",
       "target": "'/api/test-gemini'"
     },
     {
       "file": "src/components/StorageManager.tsx",
-      "line": 81,
+      "line": 83,
       "function": "customFetch",
       "target": "'/api/billing/reset-quota'"
     },
     {
       "file": "src/components/StorageManager.tsx",
-      "line": 103,
+      "line": 106,
       "function": "customFetch",
       "target": "'/api/settings'"
     },
     {
       "file": "src/components/StorageManager.tsx",
-      "line": 115,
+      "line": 118,
       "function": "customFetch",
       "target": "'/api/admin/announcements/prune-percentage'"
     },
     {
       "file": "src/components/StorageManager.tsx",
-      "line": 149,
+      "line": 152,
       "function": "customFetch",
       "target": "'/api/storage/status'"
     },
     {
       "file": "src/components/StorageManager.tsx",
-      "line": 163,
+      "line": 166,
       "function": "customFetch",
       "target": "'/api/storage/quota-mode'"
     },
     {
       "file": "src/components/StorageManager.tsx",
-      "line": 184,
+      "line": 187,
       "function": "customFetch",
       "target": "'/api/storage/quota-mode'"
     },
     {
       "file": "src/components/StorageManager.tsx",
-      "line": 205,
+      "line": 208,
       "function": "customFetch",
       "target": "'/api/storage/reset-quota'"
     },
     {
       "file": "src/components/StorageManager.tsx",
-      "line": 221,
+      "line": 224,
       "function": "customFetch",
       "target": "'/api/storage/cleanup'"
     },
     {
       "file": "src/components/StorageManager.tsx",
-      "line": 240,
+      "line": 243,
       "function": "customFetch",
       "target": "'/api/storage/test-alert'"
     },
@@ -22233,85 +22398,79 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 308,
-      "function": "customFetch",
-      "target": "'/auth/session'"
-    },
-    {
-      "file": "src/context/AuthContext.tsx",
-      "line": 334,
-      "function": "customFetch",
-      "target": "'/api/users/profile'"
-    },
-    {
-      "file": "src/context/AuthContext.tsx",
-      "line": 590,
+      "line": 239,
       "function": "customFetch",
       "target": "'/auth/status'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 852,
-      "function": "customFetch",
-      "target": "'/auth/login'"
-    },
-    {
-      "file": "src/context/AuthContext.tsx",
-      "line": 877,
-      "function": "customFetch",
-      "target": "'/auth/verify-pin'"
-    },
-    {
-      "file": "src/context/AuthContext.tsx",
-      "line": 911,
+      "line": 367,
       "function": "customFetch",
       "target": "'/auth/session'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 933,
+      "line": 397,
+      "function": "customFetch",
+      "target": "'/api/users/profile'"
+    },
+    {
+      "file": "src/context/AuthContext.tsx",
+      "line": 870,
+      "function": "customFetch",
+      "target": "'/auth/verify-pin'"
+    },
+    {
+      "file": "src/context/AuthContext.tsx",
+      "line": 913,
+      "function": "customFetch",
+      "target": "'/auth/session'"
+    },
+    {
+      "file": "src/context/AuthContext.tsx",
+      "line": 938,
       "function": "customFetch",
       "target": "'/auth/logout'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 994,
+      "line": 999,
       "function": "customFetch",
       "target": "`/api/users/check-username?username=${encodeURIComponent(clean)}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1092,
+      "line": 1097,
       "function": "customFetch",
       "target": "'/api/users/profile'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1160,
+      "line": 1165,
       "function": "customFetch",
       "target": "'/api/users/profile'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1236,
+      "line": 1241,
       "function": "customFetch",
       "target": "'/api/users/telegram/settings'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1258,
+      "line": 1263,
       "function": "customFetch",
       "target": "'/api/users/profile'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1315,
+      "line": 1320,
       "function": "customFetch",
       "target": "'/api/users/profile'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1343,
+      "line": 1348,
       "function": "customFetch",
       "target": "'/api/users/profile'"
     },
@@ -22490,6 +22649,30 @@
       "line": 41,
       "function": "db.from",
       "key": "'users'"
+    },
+    {
+      "file": "scripts/verify-admin-quota.mjs",
+      "line": 29,
+      "function": "Buffer.from",
+      "key": "bearer.split('.')[1]"
+    },
+    {
+      "file": "scripts/verify-admin-quota.mjs",
+      "line": 43,
+      "function": "localStorage.setItem",
+      "key": "'bse_nexus_auth_session'"
+    },
+    {
+      "file": "scripts/verify-admin-quota.mjs",
+      "line": 43,
+      "function": "localStorage.setItem",
+      "key": "'bse_nexus_fb_id_token'"
+    },
+    {
+      "file": "scripts/verify-admin-quota.mjs",
+      "line": 45,
+      "function": "localStorage.getItem",
+      "key": "'bse_nexus_fb_id_token'"
     },
     {
       "file": "scripts/verify-mobile-ui.mjs",
@@ -23554,6 +23737,18 @@
       "key": "{length:26}"
     },
     {
+      "file": "server/tests/apiCancellation.test.ts",
+      "line": 81,
+      "function": "Buffer.from",
+      "key": "JSON.stringify({ exp })"
+    },
+    {
+      "file": "server/tests/apiCancellation.test.ts",
+      "line": 90,
+      "function": "f.storage.getItem",
+      "key": "'bse_nexus_fb_id_token'"
+    },
+    {
       "file": "server/tests/auditSecurity.test.ts",
       "line": 93,
       "function": "Array.from",
@@ -23975,26 +24170,20 @@
     },
     {
       "file": "src/api.ts",
-      "line": 17,
-      "function": "localStorage.setItem",
-      "key": "'bse_nexus_fb_id_token'"
-    },
-    {
-      "file": "src/api.ts",
-      "line": 21,
-      "function": "localStorage.getItem",
-      "key": "'bse_nexus_fb_id_token'"
-    },
-    {
-      "file": "src/api.ts",
-      "line": 25,
+      "line": 19,
       "function": "localStorage.removeItem",
       "key": "'bse_nexus_fb_id_token'"
     },
     {
       "file": "src/api.ts",
-      "line": 53,
+      "line": 20,
       "function": "localStorage.setItem",
+      "key": "'bse_nexus_fb_id_token'"
+    },
+    {
+      "file": "src/api.ts",
+      "line": 33,
+      "function": "localStorage.getItem",
       "key": "'bse_nexus_fb_id_token'"
     },
     {
@@ -24149,25 +24338,25 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 265,
+      "line": 268,
       "function": "localStorage.getItem",
       "key": "'bse_sound_enabled'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 375,
+      "line": 378,
       "function": "localStorage.setItem",
       "key": "'bse_sound_enabled'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 422,
+      "line": 425,
       "function": "localStorage.setItem",
       "key": "'bse_sound_enabled'"
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 764,
+      "line": 767,
       "function": "localStorage.removeItem",
       "key": "k"
     },
@@ -24353,211 +24542,187 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 180,
-      "function": "localStorage.getItem",
-      "key": "STORAGE_SESSION_KEY"
-    },
-    {
-      "file": "src/context/AuthContext.tsx",
-      "line": 193,
+      "line": 229,
       "function": "localStorage.removeItem",
       "key": "STORAGE_SESSION_KEY"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 194,
+      "line": 230,
       "function": "localStorage.removeItem",
       "key": "'bse_nexus_fb_id_token'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 236,
+      "line": 297,
       "function": "localStorage.removeItem",
       "key": "STORAGE_SESSION_KEY"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 247,
+      "line": 308,
       "function": "localStorage.removeItem",
       "key": "STORAGE_SESSION_KEY"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 257,
+      "line": 318,
       "function": "localStorage.setItem",
       "key": "STORAGE_SESSION_KEY"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 272,
+      "line": 332,
       "function": "localStorage.getItem",
       "key": "`bse_user_handle_${uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 273,
+      "line": 333,
       "function": "localStorage.getItem",
       "key": "`bse_user_tg_chat_id_${uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 274,
+      "line": 334,
       "function": "localStorage.getItem",
       "key": "`bse_user_tg_username_${uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 296,
+      "line": 355,
       "function": "localStorage.setItem",
       "key": "'bse_nexus_fb_id_token'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 298,
+      "line": 357,
       "function": "localStorage.removeItem",
       "key": "'bse_nexus_fb_id_token'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 342,
+      "line": 405,
       "function": "localStorage.setItem",
       "key": "`bse_user_handle_${uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 503,
+      "line": 467,
+      "function": "localStorage.getItem",
+      "key": "STORAGE_SESSION_KEY"
+    },
+    {
+      "file": "src/context/AuthContext.tsx",
+      "line": 573,
       "function": "sessionStorage.getItem",
       "key": "'bse_guest_active_session'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 511,
-      "function": "localStorage.removeItem",
+      "line": 583,
+      "function": "localStorage.getItem",
       "key": "STORAGE_SESSION_KEY"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 512,
-      "function": "localStorage.removeItem",
+      "line": 583,
+      "function": "localStorage.getItem",
       "key": "'bse_nexus_fb_id_token'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 529,
-      "function": "localStorage.getItem",
-      "key": "STORAGE_SESSION_KEY"
-    },
-    {
-      "file": "src/context/AuthContext.tsx",
-      "line": 543,
-      "function": "localStorage.removeItem",
-      "key": "STORAGE_SESSION_KEY"
-    },
-    {
-      "file": "src/context/AuthContext.tsx",
-      "line": 565,
-      "function": "localStorage.getItem",
-      "key": "STORAGE_SESSION_KEY"
-    },
-    {
-      "file": "src/context/AuthContext.tsx",
-      "line": 579,
-      "function": "localStorage.removeItem",
-      "key": "STORAGE_SESSION_KEY"
-    },
-    {
-      "file": "src/context/AuthContext.tsx",
-      "line": 680,
+      "line": 679,
       "function": "sessionStorage.setItem",
       "key": "'bse_guest_active_session'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 907,
+      "line": 909,
       "function": "localStorage.getItem",
       "key": "'bse_nexus_fb_id_token'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 937,
+      "line": 942,
       "function": "localStorage.removeItem",
       "key": "STORAGE_SESSION_KEY"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 938,
+      "line": 943,
       "function": "localStorage.removeItem",
       "key": "'bse_nexus_auth_token'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 939,
+      "line": 944,
       "function": "localStorage.removeItem",
       "key": "'bse_nexus_fb_id_token'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 940,
+      "line": 945,
       "function": "localStorage.removeItem",
       "key": "'bse_user_tg_chat_id_global'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 941,
+      "line": 946,
       "function": "localStorage.removeItem",
       "key": "'bse_user_tg_username_global'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 942,
+      "line": 947,
       "function": "localStorage.removeItem",
       "key": "'bse_telegram_chat_id'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 943,
+      "line": 948,
       "function": "localStorage.removeItem",
       "key": "'bse_chat_id'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 948,
+      "line": 953,
       "function": "localStorage.removeItem",
       "key": "k"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1085,
+      "line": 1090,
       "function": "localStorage.setItem",
       "key": "`bse_user_handle_${user.uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1223,
-      "function": "localStorage.setItem",
-      "key": "`bse_user_tg_chat_id_${profile.uid}`"
-    },
-    {
-      "file": "src/context/AuthContext.tsx",
-      "line": 1225,
-      "function": "localStorage.removeItem",
-      "key": "`bse_user_tg_chat_id_${profile.uid}`"
-    },
-    {
-      "file": "src/context/AuthContext.tsx",
       "line": 1228,
       "function": "localStorage.setItem",
-      "key": "`bse_user_tg_username_${profile.uid}`"
+      "key": "`bse_user_tg_chat_id_${profile.uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
       "line": 1230,
       "function": "localStorage.removeItem",
+      "key": "`bse_user_tg_chat_id_${profile.uid}`"
+    },
+    {
+      "file": "src/context/AuthContext.tsx",
+      "line": 1233,
+      "function": "localStorage.setItem",
       "key": "`bse_user_tg_username_${profile.uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1311,
+      "line": 1235,
+      "function": "localStorage.removeItem",
+      "key": "`bse_user_tg_username_${profile.uid}`"
+    },
+    {
+      "file": "src/context/AuthContext.tsx",
+      "line": 1316,
       "function": "localStorage.setItem",
       "key": "`bse_trial_used_${trialUid}`"
     },
@@ -24934,6 +25099,26 @@
       "file": "scripts/provision-ai-reviewer.ts",
       "line": 25,
       "name": "AI_REVIEWER_UID"
+    },
+    {
+      "file": "scripts/verify-admin-quota.mjs",
+      "line": 41,
+      "name": "PLAYWRIGHT_CHROMIUM_EXECUTABLE"
+    },
+    {
+      "file": "scripts/verify-admin-quota.mjs",
+      "line": 41,
+      "name": "PLAYWRIGHT_CHROMIUM_EXECUTABLE"
+    },
+    {
+      "file": "scripts/verify-admin-quota.mjs",
+      "line": 41,
+      "name": "PLAYWRIGHT_CHROMIUM_ARGS"
+    },
+    {
+      "file": "scripts/verify-admin-quota.mjs",
+      "line": 41,
+      "name": "PLAYWRIGHT_CHROMIUM_ARGS"
     },
     {
       "file": "scripts/verify-checkout-recovery.mjs",
@@ -25647,72 +25832,72 @@
     },
     {
       "file": "server/security/auth.ts",
-      "line": 206,
+      "line": 182,
       "name": "FIREBASE_APPCHECK_ENFORCE"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 336,
+      "line": 316,
       "name": "NODE_ENV"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 336,
+      "line": 316,
       "name": "RECAPTCHA_ENFORCE"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 472,
+      "line": 452,
       "name": "NODE_ENV"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 553,
+      "line": 533,
       "name": "NODE_ENV"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 553,
+      "line": 533,
       "name": "RECAPTCHA_ENFORCE"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 579,
+      "line": 559,
       "name": "APP_PIN"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 583,
+      "line": 563,
       "name": "APP_PIN"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 605,
+      "line": 585,
       "name": "NODE_ENV"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 669,
+      "line": 651,
       "name": "NODE_ENV"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 669,
+      "line": 651,
       "name": "RECAPTCHA_ENFORCE"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 695,
+      "line": 677,
       "name": "APP_PIN"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 699,
+      "line": 681,
       "name": "APP_PIN"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 720,
+      "line": 702,
       "name": "NODE_ENV"
     },
     {
@@ -26047,82 +26232,77 @@
     },
     {
       "file": "server/tests/adminPin.test.ts",
-      "line": 11,
+      "line": 13,
       "name": "SUPABASE_URL"
     },
     {
       "file": "server/tests/adminPin.test.ts",
-      "line": 11,
+      "line": 13,
       "name": "SUPABASE_SERVICE_ROLE_KEY"
     },
     {
       "file": "server/tests/adminPin.test.ts",
-      "line": 12,
+      "line": 14,
       "name": "RECAPTCHA_ENFORCE"
     },
     {
       "file": "server/tests/adminPin.test.ts",
-      "line": 12,
+      "line": 14,
       "name": "FIREBASE_APPCHECK_ENFORCE"
     },
     {
       "file": "server/tests/adminPin.test.ts",
-      "line": 13,
+      "line": 15,
       "name": "NODE_ENV"
     },
     {
       "file": "server/tests/adminPin.test.ts",
-      "line": 13,
+      "line": 15,
       "name": "JWT_SECRET"
     },
     {
       "file": "server/tests/adminPin.test.ts",
-      "line": 31,
+      "line": 23,
+      "name": "JWT_SECRET"
+    },
+    {
+      "file": "server/tests/adminPin.test.ts",
+      "line": 34,
       "name": "APP_PIN"
     },
     {
       "file": "server/tests/adminPin.test.ts",
-      "line": 41,
+      "line": 44,
       "name": "APP_PIN"
     },
     {
       "file": "server/tests/adminPin.test.ts",
-      "line": 45,
+      "line": 48,
       "name": "APP_PIN"
     },
     {
       "file": "server/tests/adminPin.test.ts",
-      "line": 46,
+      "line": 49,
       "name": "APP_PIN"
     },
     {
       "file": "server/tests/adminPin.test.ts",
-      "line": 56,
+      "line": 59,
       "name": "NODE_ENV"
     },
     {
       "file": "server/tests/adminPin.test.ts",
-      "line": 58,
+      "line": 61,
       "name": "NODE_ENV"
     },
     {
       "file": "server/tests/adminPin.test.ts",
-      "line": 62,
+      "line": 65,
       "name": "SUPABASE_URL"
     },
     {
       "file": "server/tests/adminPin.test.ts",
-      "line": 62,
-      "name": "SUPABASE_SERVICE_ROLE_KEY"
-    },
-    {
-      "file": "server/tests/adminPin.test.ts",
-      "line": 68,
-      "name": "SUPABASE_URL"
-    },
-    {
-      "file": "server/tests/adminPin.test.ts",
-      "line": 68,
+      "line": 65,
       "name": "SUPABASE_SERVICE_ROLE_KEY"
     },
     {
@@ -26137,12 +26317,22 @@
     },
     {
       "file": "server/tests/adminPin.test.ts",
-      "line": 95,
+      "line": 74,
       "name": "SUPABASE_URL"
     },
     {
       "file": "server/tests/adminPin.test.ts",
-      "line": 95,
+      "line": 74,
+      "name": "SUPABASE_SERVICE_ROLE_KEY"
+    },
+    {
+      "file": "server/tests/adminPin.test.ts",
+      "line": 98,
+      "name": "SUPABASE_URL"
+    },
+    {
+      "file": "server/tests/adminPin.test.ts",
+      "line": 98,
       "name": "SUPABASE_SERVICE_ROLE_KEY"
     },
     {
@@ -26319,6 +26509,56 @@
       "file": "server/tests/aiPlugin.test.ts",
       "line": 100,
       "name": "AI_CONNECTIONS_ENABLED"
+    },
+    {
+      "file": "server/tests/aiQuotaAdmin.test.ts",
+      "line": 12,
+      "name": "NODE_ENV"
+    },
+    {
+      "file": "server/tests/aiQuotaAdmin.test.ts",
+      "line": 13,
+      "name": "JWT_SECRET"
+    },
+    {
+      "file": "server/tests/aiQuotaAdmin.test.ts",
+      "line": 14,
+      "name": "SUPABASE_URL"
+    },
+    {
+      "file": "server/tests/aiQuotaAdmin.test.ts",
+      "line": 14,
+      "name": "SUPABASE_SERVICE_ROLE_KEY"
+    },
+    {
+      "file": "server/tests/aiQuotaAdmin.test.ts",
+      "line": 101,
+      "name": "NODE_ENV"
+    },
+    {
+      "file": "server/tests/aiQuotaAdmin.test.ts",
+      "line": 102,
+      "name": "JWT_SECRET"
+    },
+    {
+      "file": "server/tests/aiQuotaAdmin.test.ts",
+      "line": 103,
+      "name": "RECAPTCHA_ENFORCE"
+    },
+    {
+      "file": "server/tests/aiQuotaAdmin.test.ts",
+      "line": 104,
+      "name": "FIREBASE_APPCHECK_ENFORCE"
+    },
+    {
+      "file": "server/tests/aiQuotaAdmin.test.ts",
+      "line": 111,
+      "name": "JWT_SECRET"
+    },
+    {
+      "file": "server/tests/aiQuotaAdmin.test.ts",
+      "line": 162,
+      "name": "JWT_SECRET"
     },
     {
       "file": "server/tests/aiWatchlistConcurrency.test.ts",
@@ -27183,6 +27423,22 @@
   ],
   "browserEvents": [
     {
+      "file": "scripts/verify-admin-quota.mjs",
+      "line": 54,
+      "target": "window",
+      "kind": "dispatch",
+      "name": "focus",
+      "expression": "window.dispatchEvent(new Event('focus'))"
+    },
+    {
+      "file": "scripts/verify-admin-quota.mjs",
+      "line": 54,
+      "target": "window",
+      "kind": "dispatch",
+      "name": "focus",
+      "expression": "window.dispatchEvent(new Event('focus'))"
+    },
+    {
       "file": "scripts/verify-mobile-ui.mjs",
       "line": 86,
       "target": "window",
@@ -27264,7 +27520,7 @@
     },
     {
       "file": "src/api.ts",
-      "line": 68,
+      "line": 76,
       "target": "window",
       "kind": "dispatch",
       "name": "auth-expired",
@@ -27272,7 +27528,7 @@
     },
     {
       "file": "src/api.ts",
-      "line": 84,
+      "line": 89,
       "target": "window",
       "kind": "dispatch",
       "name": "network-status",
@@ -27320,7 +27576,7 @@
     },
     {
       "file": "src/components/AiUsageCard.tsx",
-      "line": 27,
+      "line": 28,
       "target": "window",
       "kind": "dispatch",
       "name": "bse_ai_quota_refresh",
@@ -27328,7 +27584,7 @@
     },
     {
       "file": "src/components/AiUsageCard.tsx",
-      "line": 52,
+      "line": 53,
       "target": "window",
       "kind": "dispatch",
       "name": "bse_ai_quota_refresh",
@@ -27872,7 +28128,7 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 162,
+      "line": 164,
       "target": "window",
       "kind": "listen",
       "name": "notes-changed",
@@ -27880,7 +28136,7 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 163,
+      "line": 165,
       "target": "window",
       "kind": "remove",
       "name": "notes-changed",
@@ -27888,7 +28144,7 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 246,
+      "line": 249,
       "target": "window",
       "kind": "dispatch",
       "name": "bse_ai_quota_refresh",
@@ -27896,7 +28152,7 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 358,
+      "line": 361,
       "target": "window",
       "kind": "listen",
       "name": "keydown",
@@ -27904,7 +28160,7 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 359,
+      "line": 362,
       "target": "window",
       "kind": "remove",
       "name": "keydown",
@@ -27912,7 +28168,7 @@
     },
     {
       "file": "src/components/SettingsTab.tsx",
-      "line": 1903,
+      "line": 1906,
       "target": "window",
       "kind": "dispatch",
       "name": "open-referral-modal",
@@ -27920,7 +28176,7 @@
     },
     {
       "file": "src/components/StorageManager.tsx",
-      "line": 90,
+      "line": 93,
       "target": "window",
       "kind": "dispatch",
       "name": "bse_ai_quota_refresh",
@@ -28640,7 +28896,7 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 166,
+      "line": 170,
       "target": "window",
       "kind": "dispatch",
       "name": "auth-state-changed",
@@ -28648,7 +28904,55 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1348,
+      "line": 596,
+      "target": "window",
+      "kind": "listen",
+      "name": "auth-expired",
+      "expression": "window.addEventListener('auth-expired', expired)"
+    },
+    {
+      "file": "src/context/AuthContext.tsx",
+      "line": 597,
+      "target": "window",
+      "kind": "listen",
+      "name": "focus",
+      "expression": "window.addEventListener('focus', refresh)"
+    },
+    {
+      "file": "src/context/AuthContext.tsx",
+      "line": 598,
+      "target": "document",
+      "kind": "listen",
+      "name": "visibilitychange",
+      "expression": "document.addEventListener('visibilitychange', refresh)"
+    },
+    {
+      "file": "src/context/AuthContext.tsx",
+      "line": 602,
+      "target": "window",
+      "kind": "remove",
+      "name": "auth-expired",
+      "expression": "window.removeEventListener('auth-expired', expired)"
+    },
+    {
+      "file": "src/context/AuthContext.tsx",
+      "line": 603,
+      "target": "window",
+      "kind": "remove",
+      "name": "focus",
+      "expression": "window.removeEventListener('focus', refresh)"
+    },
+    {
+      "file": "src/context/AuthContext.tsx",
+      "line": 604,
+      "target": "document",
+      "kind": "remove",
+      "name": "visibilitychange",
+      "expression": "document.removeEventListener('visibilitychange', refresh)"
+    },
+    {
+      "file": "src/context/AuthContext.tsx",
+      "line": 1353,
       "target": "window",
       "kind": "dispatch",
       "name": "notes-changed",
@@ -28656,7 +28960,7 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1351,
+      "line": 1356,
       "target": "window",
       "kind": "listen",
       "name": "focus",
@@ -28664,7 +28968,7 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1351,
+      "line": 1356,
       "target": "document",
       "kind": "listen",
       "name": "visibilitychange",
@@ -28672,7 +28976,7 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1352,
+      "line": 1357,
       "target": "window",
       "kind": "remove",
       "name": "focus",
@@ -28680,7 +28984,7 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1352,
+      "line": 1357,
       "target": "document",
       "kind": "remove",
       "name": "visibilitychange",

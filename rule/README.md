@@ -67,3 +67,7 @@ See changes/supabase-egress.md for the November baseline and measurement limits.
 ## Staged CSP trial
 
 See changes/csp-safe-rollout.md. CSP_REPORT_ONLY_ENABLED is off by default and is owned by the server deployment, never request parameters. Off mode preserves canonical protection, public HTML/304 and the offline shell. Explicit-on enables report-only nonce HTML and disables its replay in the root worker; activation still requires real-provider journeys and redacted report-log review. Merging inactive source does not activate or deploy the trial.
+
+## Administrator quota resets
+
+See changes/admin-quota-elevation.md. Expired Bearer credentials cannot mask a valid server cookie. Admin/owner UI requires the current Firebase UID and verified server status; sensitive reset operations additionally require a same-UID, 15-minute PIN elevation. All quota-reset surfaces use the existing Admin PIN dialog; Settings → Administration → Admin Master Key also exposes the PIN form whenever elevation is absent. No Root Ops section is implied.

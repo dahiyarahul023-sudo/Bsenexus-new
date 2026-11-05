@@ -5,7 +5,7 @@ import { useAiQuota } from '../utils/aiQuota';
 import { customFetch } from '../api';
 
 export function AiUsageCard() {
-  const {user,profile,isPro,isAdmin}=useAuth();
+  const {user,profile,isPro,isAdmin,runElevatedAdminAction}=useAuth();
   const quota=useAiQuota(user,profile,isPro,isAdmin);
   const verified=quota.source === 'server';
   const [isResetting, setIsResetting] = useState(false);
@@ -16,13 +16,14 @@ export function AiUsageCard() {
     setIsResetting(true);
     setResetFeedback(null);
     try {
-      const res = await customFetch('/api/billing/reset-quota', {
+      const res = await runElevatedAdminAction(() => customFetch('/api/billing/reset-quota', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ target: 'all' })
-      });
+      }));
+      if (!res) return;
       const data = await res.json();
-      if (data.success) {
+      if (res.ok && data.success) {
         setResetFeedback(data.message || 'All users daily AI quotas reset successfully.');
         window.dispatchEvent(new Event('bse_ai_quota_refresh'));
       } else {

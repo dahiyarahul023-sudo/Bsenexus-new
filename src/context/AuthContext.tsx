@@ -17,6 +17,7 @@ import {
 import { auth, googleProvider } from '../firebase';
 import { UserProfile, UserNotificationPreferences } from '../types';
 import { customFetch } from '../api';
+import { runWithAdminElevation } from '../utils/adminElevation';
 import { reportSyncStatus, withRetry } from '../utils/retry';
 import { createPreferenceSaveQueue } from '../utils/preferenceSaveQueue';
 import { executeRecaptcha } from '../utils/recaptcha';
@@ -108,6 +109,9 @@ interface AuthContextType {
    *  verification. */
   profileUnavailable: boolean;
   adminUnlocked: boolean;
+  isElevated: boolean;
+  elevationExpiresAt: number;
+  runElevatedAdminAction: (action: () => Promise<Response>) => Promise<Response | null>;
   loginWithGoogle: (forceRedirect?: boolean) => Promise<{ 
     success: boolean; 
     error?: string; 
@@ -172,51 +176,31 @@ function resetAuthEventDebounce() {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  // Read cached session synchronously to allow instant First Contentful Paint without blocking visitors
-  // STRICT: Guest/anonymous sessions are NEVER cached or auto-restored
-  const getCachedSession = () => {
-    try {
-      if (typeof window !== 'undefined') {
-        const saved = localStorage.getItem(STORAGE_SESSION_KEY);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          const isGuest = !parsed?.user || 
-            Boolean(
-              parsed.user.isAnonymous ||
-              !parsed.user.email ||
-              parsed.user.email.endsWith('@bse-trader.local') ||
-              parsed.user.uid?.startsWith('guest_') ||
-              parsed.user.uid?.startsWith('trader_')
-            );
-          
-          if (isGuest) {
-            localStorage.removeItem(STORAGE_SESSION_KEY);
-            localStorage.removeItem('bse_nexus_fb_id_token');
-            return { user: null, profile: null };
-          }
-
-          if (parsed?.user) {
-            return { user: parsed.user, profile: parsed.profile || null };
-          }
-        }
-      }
-    } catch {}
-    return { user: null, profile: null };
-  };
-
-  const cached = getCachedSession();
-  const [user, setUser] = useState<any | null>(cached.user);
-  const [profile, setProfile] = useState<UserProfile | null>(cached.profile);
+  // A saved UI snapshot is never an authenticated identity or a role grant.
+  const [user, setUser] = useState<any | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const avatarStateRef = React.useRef({ user, profile });
   avatarStateRef.current = { user, profile };
   const avatarSaveRef = React.useRef<ReturnType<typeof createAvatarSaveController> | null>(null);
   if (!avatarSaveRef.current) avatarSaveRef.current = createAvatarSaveController();
   const [profileUnavailable, setProfileUnavailable] = useState(false);
-  const [loading, setLoading] = useState(!cached.user);
+  const [loading, setLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const logoutPending = useRef<Promise<void> | null>(null);
-  const [adminUnlocked, setAdminUnlocked] = useState(false);
+  type AdminSession = { uid: string; isAdmin: boolean; isOwner: boolean; elevationExpiresAt: number };
+  const [adminSession, setAdminSession] = useState<AdminSession | null>(null);
+  const adminSessionRef = useRef<AdminSession | null>(null);
+  const sessionEpoch = useRef(0);
+  const statusRead = useRef(0);
+  const pinVerification = useRef(0);
+  const adminActionPending = useRef(false);
+  const pendingElevation = useRef<{ uid: string; promise: Promise<boolean>; resolve: (ok: boolean) => void } | null>(null);
+  const clearAdminStatus = () => {
+    statusRead.current++;
+    adminSessionRef.current = null;
+    setAdminSession(null);
+  };
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isProModalOpen, setIsProModalOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -226,7 +210,84 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsCheckoutOpen(true);
   };
   const [receipt, setReceipt] = useState<PaymentReceipt | null>(null);
-  const [isAdminPinModalOpen, setIsAdminPinModalOpen] = useState(false);
+  const [isAdminPinModalOpen, setPinModalOpen] = useState(false);
+  const finishElevation = (ok: boolean) => {
+    if (!ok) pinVerification.current++;
+    pendingElevation.current?.resolve(ok);
+    pendingElevation.current = null;
+    setPinModalOpen(false);
+  };
+  const setIsAdminPinModalOpen = (open: boolean) => {
+    if (!open) finishElevation(false);
+    else setPinModalOpen(true);
+  };
+  const clearUnverifiedSession = (prompt = false) => {
+    sessionEpoch.current++;
+    clearAdminStatus();
+    finishElevation(false);
+    try {
+      localStorage.removeItem(STORAGE_SESSION_KEY);
+      localStorage.removeItem('bse_nexus_fb_id_token');
+    } catch {}
+    setUser(null);
+    setProfile(null);
+    if (prompt) setIsAuthModalOpen(true);
+  };
+  const refreshAdminStatus = async (uid = auth.currentUser?.uid) => {
+    const revision = ++statusRead.current;
+    try {
+      const response = await customFetch('/auth/status', { cache: 'no-store' });
+      const data = await response.json();
+      if (revision !== statusRead.current || !uid || auth.currentUser?.uid !== uid) return null;
+      if (!response.ok || !data.isAuthenticated || data.user?.uid !== uid) {
+        clearAdminStatus();
+        finishElevation(false);
+        if (response.ok && (!data.isAuthenticated || data.user?.uid !== uid)) clearUnverifiedSession(true);
+        return null;
+      }
+      const session = { uid, isAdmin: data.isAdmin === true, isOwner: data.isOwner === true,
+        elevationExpiresAt: data.isElevated ? Number(data.adminElevatedUntil || 0) : 0 };
+      adminSessionRef.current = session;
+      setAdminSession(session);
+      return session;
+    } catch {
+      if (revision === statusRead.current) { clearAdminStatus(); finishElevation(false); }
+      return null;
+    }
+  };
+  const requestAdminElevation = () => {
+    const uid = auth.currentUser?.uid;
+    if (!uid || adminSessionRef.current?.uid !== uid || !adminSessionRef.current.isAdmin) {
+      setIsAuthModalOpen(true);
+      return Promise.resolve(false);
+    }
+    if (pendingElevation.current?.uid === uid) return pendingElevation.current.promise;
+    finishElevation(false);
+    let resolve!: (ok: boolean) => void;
+    const promise = new Promise<boolean>(r => { resolve = r; });
+    pendingElevation.current = { uid, promise, resolve };
+    setPinModalOpen(true);
+    return promise;
+  };
+  const runElevatedAdminAction = async (action: () => Promise<Response>) => {
+    if (adminActionPending.current) return null;
+    adminActionPending.current = true;
+    const trigger = document.activeElement as HTMLElement | null;
+    const uid = auth.currentUser?.uid;
+    const epoch = sessionEpoch.current;
+    try {
+      return await runWithAdminElevation(action,
+        () => adminSessionRef.current?.uid === uid && Number(adminSessionRef.current?.elevationExpiresAt || 0) > Date.now(),
+        requestAdminElevation,
+        () => Boolean(uid && auth.currentUser?.uid === uid && avatarStateRef.current.user?.uid === uid && sessionEpoch.current === epoch));
+    } finally {
+      adminActionPending.current = false;
+      // The caller re-enables its trigger after this promise settles.
+      requestAnimationFrame(() => {
+        if (auth.currentUser?.uid === uid && adminSessionRef.current?.isAdmin && !pendingElevation.current && trigger?.isConnected) trigger.focus({ preventScroll: true });
+      });
+    }
+  };
 
   // Helper to persist sanitized session locally for UI convenience (never stores credentials/tokens)
   // STRICT: Guest/anonymous sessions are NEVER saved in localStorage
@@ -268,7 +329,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const uid = firebaseUser.uid;
-      const isEmailAdmin = isAdminEmail(firebaseUser.email);
       const savedLocalUsername = typeof window !== 'undefined' ? localStorage.getItem(`bse_user_handle_${uid}`) : null;
       const savedLocalTgChatId = typeof window !== 'undefined' ? localStorage.getItem(`bse_user_tg_chat_id_${uid}`) : null;
       const savedLocalTgUsername = typeof window !== 'undefined' ? localStorage.getItem(`bse_user_tg_username_${uid}`) : null;
@@ -282,9 +342,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         uid.startsWith('trader_')
       );
 
-      const isOwnerAccount = Boolean(
-        firebaseUser.email && isAdminEmail(firebaseUser.email)
-      );
+      const syncEpoch = sessionEpoch.current;
+      const current = () => auth.currentUser?.uid === uid && sessionEpoch.current === syncEpoch;
 
       // Extract fresh Firebase ID token (no force) and sync session with backend for authenticated users
       let idToken = '';
@@ -326,6 +385,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
+      if (!current()) return null;
+      const verifiedSession = await refreshAdminStatus(uid);
+      const isOwnerAccount = verifiedSession?.isAdmin === true;
+      if (!current()) return null;
       const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
       const now = Date.now();
 
@@ -391,6 +454,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.warn('Backend profile fetch notice:', profileErr);
       }
 
+      if (!current()) return null;
       if (!userProfile) {
         // FAIL-CLOSED (30 Sep 2026): the server profile could not be read
         // (network failure, 503 storage outage, or empty response). NEVER
@@ -398,9 +462,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // over the real profile — a paid user must not be relabelled, and
         // unknown subscription state must read as "unavailable / retrying",
         // never "Free".
-        const lastKnown = (getCachedSession().profile as UserProfile | null) || null;
+        let lastKnown: UserProfile | null = null;
+        try {
+          const cachedProfile = JSON.parse(localStorage.getItem(STORAGE_SESSION_KEY) || 'null')?.profile;
+          if (cachedProfile?.uid === uid && cachedProfile.tier !== 'admin') lastKnown = cachedProfile;
+        } catch {}
         if (isOwnerAccount) {
-          // Owner is always admin; safe local fallback without the server.
+          // Server-confirmed admin identity survives a profile-store outage.
           const resolvedUsername = savedLocalUsername || emailPrefix;
           userProfile = {
             uid: uid,
@@ -493,113 +561,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    // Authoritative source of truth: Firebase onAuthStateChanged with saved local fallback
+    let active = true;
     let unsubscribe = () => {};
     try {
-      unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      unsubscribe = onAuthStateChanged(auth, async currentUser => {
+        if (!active) return;
+        sessionEpoch.current++;
+        clearAdminStatus();
+        finishElevation(false);
         if (currentUser) {
-          // If currentUser is anonymous or guest:
-          // Check if the user explicitly clicked guest login in this active browser session
-          const hasActiveGuestSession = typeof window !== 'undefined' && sessionStorage.getItem('bse_guest_active_session') === 'true';
+          const hasActiveGuestSession = sessionStorage.getItem('bse_guest_active_session') === 'true';
           if (currentUser.isAnonymous && !hasActiveGuestSession) {
-            // Stale anonymous user persisted in browser cache/IndexedDB from previous visit.
-            // Sign out immediately so returning users see the clean landing page!
-            try {
-              await signOut(auth);
-            } catch {}
-            try {
-              localStorage.removeItem(STORAGE_SESSION_KEY);
-              localStorage.removeItem('bse_nexus_fb_id_token');
-            } catch {}
-            setUser(null);
-            setProfile(null);
-            setAdminUnlocked(false);
-            setLoading(false);
-            setAuthLoading(false);
-            return;
-          }
-
-          try {
+            clearUnverifiedSession();
+            await signOut(auth).catch(() => {});
+          } else {
+            // Clear previous account display before any asynchronous reads.
+            setUser(null); setProfile(null);
             await syncUserProfile(currentUser);
-          } catch (err) {
-            console.warn('Could not sync user profile:', err);
           }
         } else {
-          try {
-            const saved = localStorage.getItem(STORAGE_SESSION_KEY);
-            if (saved) {
-              const parsed = JSON.parse(saved);
-              const isRealUser = parsed?.user && 
-                !parsed.user.isAnonymous && 
-                parsed.user.email && 
-                !parsed.user.email.endsWith('@bse-trader.local') &&
-                !parsed.user.uid?.startsWith('guest_') && 
-                !parsed.user.uid?.startsWith('trader_');
-
-              if (isRealUser && parsed?.profile) {
-                setUser(parsed.user);
-                setProfile(parsed.profile);
-              } else {
-                localStorage.removeItem(STORAGE_SESSION_KEY);
-                setUser(null);
-                setProfile(null);
-                setAdminUnlocked(false);
-              }
-            } else {
-              setUser(null);
-              setProfile(null);
-              setAdminUnlocked(false);
-            }
-          } catch {
-            setUser(null);
-            setProfile(null);
-            setAdminUnlocked(false);
-          }
+          const hadCachedIdentity = Boolean(localStorage.getItem(STORAGE_SESSION_KEY) || localStorage.getItem('bse_nexus_fb_id_token'));
+          clearUnverifiedSession(hadCachedIdentity);
         }
-        setLoading(false);
-        setAuthLoading(false);
+        if (active) { setLoading(false); setAuthLoading(false); }
       });
-    } catch (authErr) {
-      console.warn('Auth observer initialization warning:', authErr);
-      try {
-        const saved = localStorage.getItem(STORAGE_SESSION_KEY);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          const isRealUser = parsed?.user && 
-            !parsed.user.isAnonymous && 
-            parsed.user.email && 
-            !parsed.user.email.endsWith('@bse-trader.local') &&
-            !parsed.user.uid?.startsWith('guest_') && 
-            !parsed.user.uid?.startsWith('trader_');
-
-          if (isRealUser && parsed?.profile) {
-            setUser(parsed.user);
-            setProfile(parsed.profile);
-          } else {
-            localStorage.removeItem(STORAGE_SESSION_KEY);
-            setUser(null);
-            setProfile(null);
-          }
-        }
-      } catch {}
-      setLoading(false);
-      setAuthLoading(false);
+    } catch {
+      clearUnverifiedSession();
+      setLoading(false); setAuthLoading(false);
     }
-
-    // Check backend status for active admin session
-    customFetch('/auth/status')
-      .then(res => res.json())
-      .then(data => {
-        if (data.isAuthenticated && data.isAdmin) {
-          setAdminUnlocked(true);
-        }
-      })
-      .catch(() => {});
-
+    const expired = () => { clearUnverifiedSession(true); };
+    const refresh = () => {
+      if (document.visibilityState === 'visible' && auth.currentUser && !auth.currentUser.isAnonymous) void refreshAdminStatus();
+    };
+    window.addEventListener('auth-expired', expired);
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refresh);
     return () => {
-      try {
-        unsubscribe();
-      } catch {}
+      active = false; statusRead.current++; sessionEpoch.current++;
+      unsubscribe(); finishElevation(false);
+      window.removeEventListener('auth-expired', expired);
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', refresh);
     };
   }, []);
 
@@ -613,9 +615,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (result && result.user) {
         await syncUserProfile(result.user);
         setIsAuthModalOpen(false);
-        if (isAdminEmail(result.user.email)) {
-          setAdminUnlocked(true);
-        }
         return { success: true };
       }
       return { success: false, error: 'Google sign-in was cancelled.' };
@@ -846,49 +845,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const loginWithAdminPin = async (pin: string) => {
-    try {
-      const rc = await executeRecaptcha('ADMIN_PIN');
-      const res = await customFetch('/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          pin, 
-          recaptchaToken: rc.token, 
-          recaptchaAction: 'ADMIN_PIN' 
-        })
-      });
-      const data = await res.json();
-      if (res.ok && (data.success || data.verified)) {
-        setAdminUnlocked(true);
-        setIsAuthModalOpen(false);
-        setIsAdminPinModalOpen(false);
-        return { success: true };
-      }
-      return { success: false, error: data.error || 'Invalid PIN' };
-    } catch (e: any) {
-      return { success: false, error: e.message || 'Connection error' };
-    }
-  };
+  const loginWithAdminPin = (pin: string) => verifyAdminPin(pin);
 
   const verifyAdminPin = async (pin: string) => {
+    const firebaseUser = auth.currentUser;
+    const attempt = ++pinVerification.current;
+    const epoch = sessionEpoch.current;
+    const current = () => firebaseUser && auth.currentUser?.uid === firebaseUser.uid && sessionEpoch.current === epoch && pinVerification.current === attempt;
+    if (!firebaseUser || firebaseUser.isAnonymous) {
+      clearUnverifiedSession(true);
+      return { success: false, error: 'Please sign in with your Administrator Google account.' };
+    }
     try {
+      // Force refresh before the PIN gate; an old stored Bearer is never used.
+      let token: string;
+      try { token = await firebaseUser.getIdToken(true); }
+      catch {
+        if (current()) clearUnverifiedSession(true);
+        return { success: false, error: 'Your Google session expired. Please sign in again.' };
+      }
+      if (!current()) return { success: false, error: 'Account changed. Please retry.' };
       const rc = await executeRecaptcha('ADMIN_PIN');
+      if (!current()) return { success: false, error: 'Account changed. Please retry.' };
       const res = await customFetch('/auth/verify-pin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          pin, 
-          recaptchaToken: rc.token, 
-          recaptchaAction: 'ADMIN_PIN' 
-        })
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ pin, recaptchaToken: rc.token, recaptchaAction: 'ADMIN_PIN' })
       });
       const data = await res.json();
+      if (!current()) return { success: false, error: 'Session changed. Please sign in again.' };
       if (res.ok && (data.success || data.verified)) {
-        setAdminUnlocked(true);
-        setIsAdminPinModalOpen(false);
+        const session = await refreshAdminStatus(firebaseUser.uid);
+        if (!current() || !session?.isAdmin || session.elevationExpiresAt <= Date.now()) {
+          return { success: false, error: 'Could not confirm admin elevation. Please retry.' };
+        }
+        finishElevation(true);
+        setIsAuthModalOpen(false);
         return { success: true };
       }
+      if (res.status === 403 && data.code === 'ADMIN_AUTH_REQUIRED') clearUnverifiedSession(true);
       return { success: false, error: data.error || 'Invalid Admin PIN' };
     } catch (e: any) {
       return { success: false, error: e.message || 'PIN verification failed' };
@@ -896,7 +890,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const lockAdminSession = async () => {
-    setAdminUnlocked(false);
+    sessionEpoch.current++;
+    statusRead.current++;
+    const session = adminSessionRef.current;
+    if (session) {
+      const locked = { ...session, elevationExpiresAt: 0 };
+      adminSessionRef.current = locked;
+      setAdminSession(locked);
+    }
+    finishElevation(false);
     try {
       if (user && !user.isAnonymous) {
         let idToken = '';
@@ -908,7 +910,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         if (idToken && idToken.split('.').length === 3) {
           const sessionSecurity = await executeRecaptcha('SESSION');
-          await customFetch('/auth/session', {
+          const response = await customFetch('/auth/session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -919,12 +921,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               displayName: profile?.displayName
             })
           });
+          if (response.ok) await refreshAdminStatus(user.uid);
+          else clearAdminStatus();
         }
       }
     } catch (e) {}
   };
 
   const performLogout = async () => {
+    clearUnverifiedSession();
     try {
       await signOut(auth);
     } catch (e) {}
@@ -956,7 +961,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     setUser(null);
     setProfile(null);
-    setAdminUnlocked(false);
+    clearAdminStatus();
     setIsAuthModalOpen(false);
     setIsAdminPinModalOpen(false);
     setIsProModalOpen(false);
@@ -1352,11 +1357,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return()=>{pending?.abort();window.removeEventListener('focus',refresh);document.removeEventListener('visibilitychange',refresh);};
   },[user?.uid,user?.isAnonymous]);
 
-  const isOwner = Boolean(
-    user && isAdminEmail(user.email)
-  );
-
-  const isAdmin = Boolean((adminUnlocked || isOwner) && (isOwner || profile?.tier === 'admin' || user?.isAdmin));
+  const isOwner = Boolean(user && !user.isAnonymous && auth.currentUser?.uid === user.uid && adminSession?.uid === user.uid && adminSession.isOwner);
+  const isAdmin = Boolean(user && !user.isAnonymous && auth.currentUser?.uid === user.uid && adminSession?.uid === user.uid && adminSession.isAdmin);
+  const elevationExpiresAt = isAdmin ? adminSession?.elevationExpiresAt || 0 : 0;
+  const elevationClock = useExpiryClock(elevationExpiresAt, user?.uid);
+  const isElevated = isAdmin && elevationExpiresAt > elevationClock;
+  const adminUnlocked = isElevated;
 
   const now = useExpiryClock(profile?.proExpiresAt, user?.uid);
   const proDaysLeft = !isOwner && !isAdmin && profile?.proExpiresAt
@@ -1405,6 +1411,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         proDaysLeft,
         profileUnavailable,
         adminUnlocked,
+        isElevated,
+        elevationExpiresAt,
+        runElevatedAdminAction,
         loginWithGoogle,
         loginWithEmail,
         signupWithEmail,
