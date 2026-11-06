@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "b93e7e86843651f39d30c2bcf5be2550ea38df69d22602b1122b63f67a0f74e7",
+  "sourceDigest": "bab4ccdc65fe3de3a7430b114d117255cdebfc18b57b39b6476a56b737aa1843",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -208,7 +208,7 @@
     },
     {
       "path": "scripts/verify-admin-quota.mjs",
-      "sha256": "5dceb95c7e1e0028d4d843dfc367fd013e3f9298ee543b9eea4b0331a9f5cf1b",
+      "sha256": "5c75d286e7340c926f6fdeb519491db73c206a1f0020b4b476747b9858b8da92",
       "importedBy": []
     },
     {
@@ -27424,7 +27424,7 @@
   "browserEvents": [
     {
       "file": "scripts/verify-admin-quota.mjs",
-      "line": 54,
+      "line": 57,
       "target": "window",
       "kind": "dispatch",
       "name": "focus",
@@ -27432,7 +27432,7 @@
     },
     {
       "file": "scripts/verify-admin-quota.mjs",
-      "line": 54,
+      "line": 57,
       "target": "window",
       "kind": "dispatch",
       "name": "focus",
