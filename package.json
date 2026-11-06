@@ -40,7 +40,7 @@
     "express-rate-limit": "^8.6.2",
     "firebase": "^13.1.0",
     "firebase-admin": "^14.2.0",
-    "framer-motion": "^13.1.1",
+    "framer-motion": "^14.9.0",
     "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^1.64.0",
