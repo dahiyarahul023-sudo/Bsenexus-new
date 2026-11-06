@@ -76,6 +76,9 @@ test('boot walk caps at three pages and spaces requests by 2.5s; normal walk has
   const h = harness(Object.fromEntries(Array.from({ length: 10 }, (_, i) => [i + 1, rows(i + 1)])));
   const boot = await h.poll();
   assert.equal(boot.length, 150);
+  assert.equal(boot.find((row:any)=>row.NEWSID==='page-1-0')._sourceObservedAt,1000,'first page observation must precede deep-walk waits');
+  assert.equal(boot.find((row:any)=>row.NEWSID==='page-2-0')._sourceObservedAt,3500);
+  assert.equal(boot.find((row:any)=>row.NEWSID==='page-3-0')._sourceObservedAt,6000);
   assert.deepEqual(h.calls, [{ page: 1, at: 1000 }, { page: 2, at: 3500 }, { page: 3, at: 6000 }]);
   assert.deepEqual(h.delays, [2500, 2500]);
   assert.match(h.logs[0], /Boot backfill walked 3 BSE pages/);

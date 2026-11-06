@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { checkPerformanceBudget } from '../../scripts/check-performance-budget.mjs';
+import { checkPerformanceBudget, checkPublicPageBudget } from '../../scripts/check-performance-budget.mjs';
 
 function fixture(run: (directory: string) => void) {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'nexus-budget-'));
@@ -31,6 +31,21 @@ test('startup budget includes shared static dependencies once and excludes a clo
 
 test('the compressed-size gate cannot be bypassed by passing the raw-size gate', () => fixture(directory => {
   assert.throws(() => checkPerformanceBudget(directory, { raw: 1000, gzip: 1 }, ['dialog']), /exceeds/);
+}));
+
+test('public budget includes the landing static closure and rejects eager demos', () => fixture(directory => {
+  const file = path.join(directory, '.vite/manifest.json');
+  const manifest = JSON.parse(fs.readFileSync(file, 'utf8'));
+  manifest['src/components/LandingPage.tsx'] = {file:'home.js',isDynamicEntry:true,imports:['index.html']};
+  manifest['src/components/landing/LandingExamples.tsx'] = {file:'examples.js',isDynamicEntry:true};
+  fs.writeFileSync(path.join(directory,'home.js'),'h'.repeat(60));
+  fs.writeFileSync(path.join(directory,'examples.js'),'e'.repeat(100));
+  fs.writeFileSync(file,JSON.stringify(manifest));
+  assert.equal(checkPublicPageBudget(directory,{raw:210,gzip:1000}).raw,200);
+  assert.throws(()=>checkPublicPageBudget(directory,{raw:199,gzip:1000}),/exceeds/);
+  manifest['src/components/LandingPage.tsx'].imports.push('src/components/landing/LandingExamples.tsx');
+  fs.writeFileSync(file,JSON.stringify(manifest));
+  assert.throws(()=>checkPublicPageBudget(directory,{raw:1000,gzip:1000}),/outside the initial/);
 }));
 
 test('missing manifests, dependency files and an eagerly reintroduced dialog fail closed', () => fixture(directory => {

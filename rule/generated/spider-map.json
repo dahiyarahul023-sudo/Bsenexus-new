@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "bab4ccdc65fe3de3a7430b114d117255cdebfc18b57b39b6476a56b737aa1843",
+  "sourceDigest": "4b5d3fa12545d369bca3e6ef7bfd10415844559ef5f872864412c9a05fe904da",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -145,7 +145,7 @@
     },
     {
       "path": "scripts/check-performance-budget.mjs",
-      "sha256": "c6c0e3c80bcac72720021b0015d915cf14b5ec6077b3b1e0fd54ef2f7b5330fd",
+      "sha256": "b0a8532feb56ae22fcba19cc390ab7e0e5a84b84cdb063d3288f564ebefa1276",
       "importedBy": [
         "server/tests/performanceBudget.test.ts"
       ]
@@ -257,6 +257,11 @@
       "importedBy": []
     },
     {
+      "path": "scripts/verify-public-startup.mjs",
+      "sha256": "b0d75771445b3a1d73a51f07bb7a8f10c48cc14375b0ed5f65a241b63839ca9f",
+      "importedBy": []
+    },
+    {
       "path": "scripts/verify-radar-research.mjs",
       "sha256": "6be34ec930062cc11c4443c0a692249052905cfaad777d477dc68c1433ec29c2",
       "importedBy": []
@@ -271,6 +276,14 @@
       "sha256": "4c0f807374cb7d2d8f2d91fa8ead5e18517143b955f513f071bcd349b72229cb",
       "importedBy": [
         "server/tests/devRuntime.test.ts",
+        "vite.config.ts"
+      ]
+    },
+    {
+      "path": "scripts/vite-public-preload.mjs",
+      "sha256": "a94a2cc3a705b7a2904b83bf30b11c7b977bed0f0e06536f7d4ca181449ceb36",
+      "importedBy": [
+        "server/tests/publicPreload.test.ts",
         "vite.config.ts"
       ]
     },
@@ -1184,7 +1197,7 @@
     },
     {
       "path": "server/services/bse.ts",
-      "sha256": "eeccb55f000933bf035bade1a12227714225441a1256932aaf596726a23dc70e",
+      "sha256": "3b958bd8df8f479eab66b7721f534ef9421489a8141b151e221aaf410e0401c4",
       "importedBy": [
         "server.ts",
         "server/api/routes.ts",
@@ -1621,7 +1634,7 @@
     },
     {
       "path": "server/services/telegram.ts",
-      "sha256": "30e89406e4986320d88240ccc079766714b00556fa90078ac2ea22a14c21d85f",
+      "sha256": "f6f7c618479b5b4e6c3067720799e36278133cf09cf3d907d2223f214e5ffed9",
       "importedBy": [
         "server.ts",
         "server/api/routes.ts",
@@ -1827,7 +1840,7 @@
     },
     {
       "path": "server/tests/bseBackfill.test.ts",
-      "sha256": "56fadd8b6420d2f34c96feef4c61374d4014d616bda757b8da47ca23ef4557fd",
+      "sha256": "bd0e2ce89b525479bbe4cbc1e82da69615229786043cb8a4719bdaf3d47b9348",
       "importedBy": []
     },
     {
@@ -2187,7 +2200,7 @@
     },
     {
       "path": "server/tests/performanceBudget.test.ts",
-      "sha256": "754593deb8374b409acfab0fd769cbad1c3b25c73c3cd6151cd257bd1f925e47",
+      "sha256": "1278d0974392072391a91252998050037833cb11db52f7d9be9b20fe3c8ac407",
       "importedBy": []
     },
     {
@@ -2228,6 +2241,11 @@
     {
       "path": "server/tests/publicCalendarCoverage.test.ts",
       "sha256": "db2ae4e0389e57a3c0146dd1a29b3e6fbffeef10305c24951c4bef83906087ae",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/publicPreload.test.ts",
+      "sha256": "c20ba3f8e415f8de028d58b7dff70783fc34284bac82e727582891cd7d166f60",
       "importedBy": []
     },
     {
@@ -2473,6 +2491,11 @@
     {
       "path": "server/tests/subscriptionProgress.test.ts",
       "sha256": "2963a6107eeeaea545bef3e01bb5532eba74e855f547c62eff380882696160a2",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/telegramHealth.test.ts",
+      "sha256": "c05e7d5a70f9f37608a456a584f8cdbd44b6545a34409ab8dfbf89f2441b255e",
       "importedBy": []
     },
     {
@@ -3035,7 +3058,7 @@
     },
     {
       "path": "src/components/LandingPage.tsx",
-      "sha256": "345380e51e5bdf476cf781500c1d724a76cefc36bfb1aac4f6c9d9c3a4a138e4",
+      "sha256": "7fd54f59e17c0eb810c030d10755f3c693be4688445dcd6cee9541ef1323eace",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -3366,6 +3389,13 @@
       "importedBy": []
     },
     {
+      "path": "src/components/landing/LandingExamples.tsx",
+      "sha256": "766e6f9c43c6b67dc1973030cf74fe0fb7d002175a01112058c7c0fd8ef7261d",
+      "importedBy": [
+        "src/components/LandingPage.tsx"
+      ]
+    },
+    {
       "path": "src/components/landing/LandingFooterAbout.tsx",
       "sha256": "0cc0e083eb28f6ea2a51d226a142e52c399c5645980b1a896d65febad4aa9e42",
       "importedBy": [
@@ -3377,14 +3407,14 @@
       "path": "src/components/landing/ResultsScrollDeck.tsx",
       "sha256": "b35e233da0e8822acade9a9fc87c67223ee86bfc9627baa0560541d85fb27224",
       "importedBy": [
-        "src/components/LandingPage.tsx"
+        "src/components/landing/LandingExamples.tsx"
       ]
     },
     {
       "path": "src/components/landing/UpcomingCatalystsGrid.tsx",
       "sha256": "0a506c1225ef17283e8f41aac5c1e55eb9e03b970fddd1fd2b59f803b6025783",
       "importedBy": [
-        "src/components/LandingPage.tsx"
+        "src/components/landing/LandingExamples.tsx"
       ]
     },
     {
@@ -5417,7 +5447,7 @@
     },
     {
       "path": "vite.config.ts",
-      "sha256": "6d1a8f39a3183f51177421c55cbf68670386d99b672ec838bd9a32f8dff699cc",
+      "sha256": "1e4e2892157d6eb771bc5b7ab6ceed667125928da89e58900f74654c12befce8",
       "importedBy": []
     }
   ],
@@ -10487,6 +10517,12 @@
       "line": 5
     },
     {
+      "source": "server/tests/publicPreload.test.ts",
+      "target": "scripts/vite-public-preload.mjs",
+      "kind": "import",
+      "line": 4
+    },
+    {
       "source": "server/tests/pwaOfflineSync.test.ts",
       "target": "server/security/cspNonce.ts",
       "kind": "import",
@@ -12702,51 +12738,45 @@
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/components/landing/UpcomingCatalystsGrid.tsx",
+      "target": "src/components/landing/CoreCapabilitiesBento.tsx",
       "kind": "import",
       "line": 6
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/components/landing/ResultsScrollDeck.tsx",
+      "target": "src/components/landing/CommunitySocialBanner.tsx",
       "kind": "import",
       "line": 7
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/components/landing/CoreCapabilitiesBento.tsx",
+      "target": "src/components/landing/LandingFooterAbout.tsx",
       "kind": "import",
       "line": 8
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/components/landing/CommunitySocialBanner.tsx",
+      "target": "src/config/plans.ts",
       "kind": "import",
       "line": 9
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/components/landing/LandingFooterAbout.tsx",
+      "target": "src/components/ui/PlanCard.tsx",
       "kind": "import",
       "line": 10
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/config/plans.ts",
+      "target": "src/components/ui/AiIntelligenceLogo.tsx",
       "kind": "import",
       "line": 11
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/components/ui/PlanCard.tsx",
-      "kind": "import",
-      "line": 12
-    },
-    {
-      "source": "src/components/LandingPage.tsx",
-      "target": "src/components/ui/AiIntelligenceLogo.tsx",
-      "kind": "import",
-      "line": 13
+      "target": "src/components/landing/LandingExamples.tsx",
+      "kind": "dynamic",
+      "line": 36
     },
     {
       "source": "src/components/Layout.tsx",
@@ -14621,6 +14651,18 @@
       "line": 5
     },
     {
+      "source": "src/components/landing/LandingExamples.tsx",
+      "target": "src/components/landing/UpcomingCatalystsGrid.tsx",
+      "kind": "import",
+      "line": 1
+    },
+    {
+      "source": "src/components/landing/LandingExamples.tsx",
+      "target": "src/components/landing/ResultsScrollDeck.tsx",
+      "kind": "import",
+      "line": 2
+    },
+    {
       "source": "src/components/landing/LandingFooterAbout.tsx",
       "target": "src/components/ui/BseNexusLogo.tsx",
       "kind": "import",
@@ -15837,6 +15879,12 @@
       "target": "scripts/vite-preview-client.mjs",
       "kind": "import",
       "line": 5
+    },
+    {
+      "source": "vite.config.ts",
+      "target": "scripts/vite-public-preload.mjs",
+      "kind": "import",
+      "line": 6
     }
   ],
   "domains": [
@@ -16099,9 +16147,10 @@
         "server/tests/announcementEgress.test.ts",
         "server/tests/resultFreshness.test.ts",
         "server/tests/notificationReadTransport.test.ts",
-        "server/tests/newsIssuerRelevance.test.ts"
+        "server/tests/newsIssuerRelevance.test.ts",
+        "server/tests/telegramHealth.test.ts"
       ],
-      "reason": "Poll → normalize/dedupe → persistence → feed and alert decisions → recipient-specific delivery/inbox. Global and personal recipients must remain distinct. Preset saves replace stable per-owner IDs atomically; confirmed cloud settings feed every poll. Personal channels supersede inherited defaults once presets are saved. Live polling has a CRON_SECRET bearer-protected HTTP trigger, a 60-second in-container watchdog timer, a continuous 15-second active poller, and a 15-second-stale traffic trigger. The shared process-local monitor lock skips running cycles without queueing. Request lifetime covers bounded ingestion, raw delivery/write drain and then result AI after releasing the ingestion lock; cron source failure eligibility is capped at 60 seconds. External Scheduler remains necessary for idle request-based Cloud Run; legacy cron returns 410. Numbered IST worker summaries and cron request summaries have distinct event fields. Automatic Telegram AI applies only to actual financial results with a stable security-code/period identity. Private durable claims share one valid analysis per period/language and reserve one reply per chat across exchange copies, languages and restart. Failed evidence uses a bounded newer-source retry; uncertain send acceptance never replays. Private admin delivery timings retain exchange, observed, processed and Telegram acceptance dates without recipient identity. Migration must precede runtime release. Confirmed public filing changes queue company/announcements IndexNow URLs after successful upsert; the poll collection hold is idempotently released in finally. Indexing I/O runs outside ingestion and does not change alert recipients or intake. Overnight ADR adds one existing Market pulse screen and an opt-in private morning inbox digest; source dates and fetch times remain distinct, and durable insertion prevents per-session repeats. Stored 30-day filing counts share one exact-company projection with company detail, independently of the seven-day updates feed. Durable per-company history uses keyset pages; company Filings and Material Actions expose numbered pages. Explicit paid archive imports all categories over selected years with bounded workers, source failure and storage confirmation, and does not persist PDFs. Process restart or another instance may make worker status unavailable; saved evidence remains and no success is invented. Financial result titles include Results For Quarter/Q1 and board Outcome - Results. Generic outcomes need identity-bound proof from bounded official BSE PDF text; no PDF is persisted. Archive receipts distinguish saved filings from documents awaiting verification. Calendar retains one lower history control; Stock 360 and automatic readers share completion copy. Background watchlist readers share a paged uid/revision/update-time inventory, fetching only changed list bodies and retaining the original 60-second check time in owner read caches. Writes keep fresh CAS; local changes invalidate snapshots. Public cloud-only filing lookups are bounded/coalesced and invalidated before and after writes; failures never become cached successful empties."
+      "reason": "Poll → normalize/dedupe → persistence → feed and alert decisions → recipient-specific delivery/inbox. Global and personal recipients must remain distinct. Preset saves replace stable per-owner IDs atomically; confirmed cloud settings feed every poll. Personal channels supersede inherited defaults once presets are saved. Live polling has a CRON_SECRET bearer-protected HTTP trigger, a 60-second in-container watchdog timer, a continuous 15-second active poller, and a 15-second-stale traffic trigger. The shared process-local monitor lock skips running cycles without queueing. Request lifetime covers bounded ingestion, raw delivery/write drain and then result AI after releasing the ingestion lock; cron source failure eligibility is capped at 60 seconds. External Scheduler remains necessary for idle request-based Cloud Run; legacy cron returns 410. Numbered IST worker summaries and cron request summaries have distinct event fields. Automatic Telegram AI applies only to actual financial results with a stable security-code/period identity. Private durable claims share one valid analysis per period/language and reserve one reply per chat across exchange copies, languages and restart. Failed evidence uses a bounded newer-source retry; uncertain send acceptance never replays. Private admin delivery timings retain exchange, observed, processed and Telegram acceptance dates without recipient identity. Migration must precede runtime release. Confirmed public filing changes queue company/announcements IndexNow URLs after successful upsert; the poll collection hold is idempotently released in finally. Indexing I/O runs outside ingestion and does not change alert recipients or intake. Overnight ADR adds one existing Market pulse screen and an opt-in private morning inbox digest; source dates and fetch times remain distinct, and durable insertion prevents per-session repeats. Stored 30-day filing counts share one exact-company projection with company detail, independently of the seven-day updates feed. Durable per-company history uses keyset pages; company Filings and Material Actions expose numbered pages. Explicit paid archive imports all categories over selected years with bounded workers, source failure and storage confirmation, and does not persist PDFs. Process restart or another instance may make worker status unavailable; saved evidence remains and no success is invented. Financial result titles include Results For Quarter/Q1 and board Outcome - Results. Generic outcomes need identity-bound proof from bounded official BSE PDF text; no PDF is persisted. Archive receipts distinguish saved filings from documents awaiting verification. Calendar retains one lower history control; Stock 360 and automatic readers share completion copy. Background watchlist readers share a paged uid/revision/update-time inventory, fetching only changed list bodies and retaining the original 60-second check time in owner read caches. Writes keep fresh CAS; local changes invalidate snapshots. Public cloud-only filing lookups are bounded/coalesced and invalidated before and after writes; failures never become cached successful empties. Telegram health readers share one two-minute bounded probe per instance; a newer send result supersedes an older probe. BSE rows capture source-observation time immediately on receipt, before deep-history waits, for the existing delivery timing ledger."
     },
     {
       "id": "user-data",
@@ -16882,7 +16931,10 @@
         "server/ai/docs.ts",
         "src/components/ui/MarketTickerTape.tsx",
         "src/shared/filingPresentation.ts",
-        "server/utils/routeHeading.ts"
+        "server/utils/routeHeading.ts",
+        "src/components/landing/LandingExamples.tsx",
+        "scripts/vite-public-preload.mjs",
+        "scripts/verify-public-startup.mjs"
       ],
       "tests": [
         "server/tests/searchEngineDiscovery.test.ts",
@@ -16898,9 +16950,10 @@
         "server/tests/calendarDiscovery.test.ts",
         "server/tests/calendarEntry.test.ts",
         "server/tests/routeHeading.test.ts",
-        "scripts/verify-mobile-ui.mjs"
+        "scripts/verify-mobile-ui.mjs",
+        "server/tests/publicPreload.test.ts"
       ],
-      "reason": "Public links, pricing claims, server-rendered content and client views must agree. Lazy navigation, responsive composition, keyboard operation and motion require browser evidence beyond server discovery tests. BSE/NSE operator profiles, shared listing identity, directory/landing links and static/dynamic sitemaps agree; these records never expand intake or assign BSE Limited an invented BSE code. The ordered shared company/REIT/exchange directory drives live counts, landing links and SSR discovery; Nexus Select Trust is appended with verified code 543913 and does not expand filing intake. Public AI setup/tool/coverage documentation is linked from AI Connections. React and SSR privacy copy share actual provider/consent/retention disclosure, and current Eternal preset labels preserve the old name as a search alias."
+      "reason": "Public links, pricing claims, server-rendered content and client views must agree. Lazy navigation, responsive composition, keyboard operation and motion require browser evidence beyond server discovery tests. BSE/NSE operator profiles, shared listing identity, directory/landing links and static/dynamic sitemaps agree; these records never expand intake or assign BSE Limited an invented BSE code. The ordered shared company/REIT/exchange directory drives live counts, landing links and SSR discovery; Nexus Select Trust is appended with verified code 543913 and does not expand filing intake. Public AI setup/tool/coverage documentation is linked from AI Connections. React and SSR privacy copy share actual provider/consent/retention disclosure, and current Eternal preset labels preserve the old name as a search alias. Closed illustrative examples do not download until expanded; pending/error/reload remain local to the details surface. Existing hero/actions/auth/navigation remain unchanged."
     },
     {
       "id": "document-startup-security",
@@ -16930,7 +16983,11 @@
         "src/styles/payment.css",
         "scripts/offline-tests.mjs",
         "scripts/vite-preview-client.mjs",
-        "scripts/check-dev-runtime.mjs"
+        "scripts/check-dev-runtime.mjs",
+        "scripts/vite-public-preload.mjs",
+        "scripts/verify-public-startup.mjs",
+        "src/components/LandingPage.tsx",
+        "src/components/landing/LandingExamples.tsx"
       ],
       "tests": [
         "server/tests/responseHeaders.test.ts",
@@ -16943,9 +17000,10 @@
         "server/tests/sentryIsolation.test.ts",
         "server/tests/offlineTests.test.ts",
         "server/tests/devRuntime.test.ts",
-        "scripts/check-preview-restart.mjs"
+        "scripts/check-preview-restart.mjs",
+        "server/tests/publicPreload.test.ts"
       ],
-      "reason": "Canonical document headers preserve OAuth popups, AI Studio preview and public embeds. Deferred optional SDKs preserve authentication assessment, configured monitoring and explicit push requests without blocking public paint. Generic HTML has a neutral brand/loading root, never synthetic filings or an unrelated directory. Real announcements use an explicit route-only insertion marker and public calendar SSR retains its own source-backed document. Static development previews prepare an explicit complete browser dependency set before serving React; disabled HMR keeps CSS helpers without opening a socket. Sentry uses the static trace lifecycle so OAuth redaction is executed. A cold Chromium smoke checks real lazy screens separately from the production build."
+      "reason": "Canonical document headers preserve OAuth popups, AI Studio preview and public embeds. Deferred optional SDKs preserve authentication assessment, configured monitoring and explicit push requests without blocking public paint. Generic HTML has a neutral brand/loading root, never synthetic filings or an unrelated directory. Real announcements use an explicit route-only insertion marker and public calendar SSR retains its own source-backed document. Static development previews prepare an explicit complete browser dependency set before serving React; disabled HMR keeps CSS helpers without opening a socket. Sentry uses the static trace lifecycle so OAuth redaction is executed. A cold Chromium smoke checks real lazy screens separately from the production build. Production public-root preload discovers the full LandingPage static closure before main execution; private/payment/gift/cached-identity routes skip it. Closed examples remain dynamic, and the build budgets the whole public closure as well as the initial entry."
     },
     {
       "id": "impact-radar",
@@ -17271,6 +17329,34 @@
       "middleware": [
         "<handler>"
       ]
+    },
+    {
+      "file": "scripts/verify-public-startup.mjs",
+      "line": 12,
+      "receiver": "app",
+      "method": "USE",
+      "path": "/api",
+      "middleware": [
+        "<handler>"
+      ]
+    },
+    {
+      "file": "scripts/verify-public-startup.mjs",
+      "line": 13,
+      "receiver": "app",
+      "method": "GET",
+      "path": "/auth/status",
+      "middleware": [
+        "<handler>"
+      ]
+    },
+    {
+      "file": "scripts/verify-public-startup.mjs",
+      "line": 14,
+      "receiver": "app",
+      "method": "USE",
+      "path": "express.static(path.resolve('dist'))",
+      "middleware": []
     },
     {
       "file": "server.ts",
@@ -21000,19 +21086,19 @@
     },
     {
       "file": "server/services/telegram.ts",
-      "line": 21,
+      "line": 42,
       "function": "fetch",
       "target": "url"
     },
     {
       "file": "server/services/telegram.ts",
-      "line": 75,
+      "line": 95,
       "function": "fetch",
       "target": "url"
     },
     {
       "file": "server/services/telegram.ts",
-      "line": 127,
+      "line": 147,
       "function": "fetch",
       "target": "url"
     },
@@ -23606,7 +23692,7 @@
     },
     {
       "file": "server/services/bse.ts",
-      "line": 446,
+      "line": 449,
       "function": "Array.from",
       "key": "uniqueMap.values()"
     },
@@ -24011,6 +24097,18 @@
       "line": 194,
       "function": "Array.from",
       "key": "intel.recentFilings"
+    },
+    {
+      "file": "server/tests/telegramHealth.test.ts",
+      "line": 28,
+      "function": "Array.from",
+      "key": "{length:30}"
+    },
+    {
+      "file": "server/tests/telegramHealth.test.ts",
+      "line": 31,
+      "function": "Array.from",
+      "key": "{length:30}"
     },
     {
       "file": "server/tests/telegramResultDocument.test.ts",
@@ -25196,6 +25294,16 @@
       "name": "RUNNER_TEMP"
     },
     {
+      "file": "scripts/verify-public-startup.mjs",
+      "line": 18,
+      "name": "PLAYWRIGHT_CHROMIUM_EXECUTABLE"
+    },
+    {
+      "file": "scripts/verify-public-startup.mjs",
+      "line": 18,
+      "name": "PLAYWRIGHT_CHROMIUM_EXECUTABLE"
+    },
+    {
       "file": "scripts/verify-radar-research.mjs",
       "line": 27,
       "name": "PLAYWRIGHT_CHROMIUM_EXECUTABLE"
@@ -26202,22 +26310,22 @@
     },
     {
       "file": "server/services/telegram.ts",
-      "line": 60,
+      "line": 80,
       "name": "TELEGRAM_BOT_TOKEN"
     },
     {
       "file": "server/services/telegram.ts",
-      "line": 61,
+      "line": 81,
       "name": "TELEGRAM_CHAT_ID"
     },
     {
       "file": "server/services/telegram.ts",
-      "line": 115,
+      "line": 135,
       "name": "TELEGRAM_BOT_TOKEN"
     },
     {
       "file": "server/services/telegram.ts",
-      "line": 116,
+      "line": 136,
       "name": "TELEGRAM_CHAT_ID"
     },
     {
@@ -27412,12 +27520,12 @@
     },
     {
       "file": "vite.config.ts",
-      "line": 48,
+      "line": 49,
       "name": "DISABLE_HMR"
     },
     {
       "file": "vite.config.ts",
-      "line": 50,
+      "line": 51,
       "name": "DISABLE_HMR"
     }
   ],

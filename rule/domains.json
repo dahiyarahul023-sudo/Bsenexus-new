@@ -261,9 +261,10 @@
         "server/tests/announcementEgress.test.ts",
         "server/tests/resultFreshness.test.ts",
         "server/tests/notificationReadTransport.test.ts",
-        "server/tests/newsIssuerRelevance.test.ts"
+        "server/tests/newsIssuerRelevance.test.ts",
+        "server/tests/telegramHealth.test.ts"
       ],
-      "reason": "Poll \u2192 normalize/dedupe \u2192 persistence \u2192 feed and alert decisions \u2192 recipient-specific delivery/inbox. Global and personal recipients must remain distinct. Preset saves replace stable per-owner IDs atomically; confirmed cloud settings feed every poll. Personal channels supersede inherited defaults once presets are saved. Live polling has a CRON_SECRET bearer-protected HTTP trigger, a 60-second in-container watchdog timer, a continuous 15-second active poller, and a 15-second-stale traffic trigger. The shared process-local monitor lock skips running cycles without queueing. Request lifetime covers bounded ingestion, raw delivery/write drain and then result AI after releasing the ingestion lock; cron source failure eligibility is capped at 60 seconds. External Scheduler remains necessary for idle request-based Cloud Run; legacy cron returns 410. Numbered IST worker summaries and cron request summaries have distinct event fields. Automatic Telegram AI applies only to actual financial results with a stable security-code/period identity. Private durable claims share one valid analysis per period/language and reserve one reply per chat across exchange copies, languages and restart. Failed evidence uses a bounded newer-source retry; uncertain send acceptance never replays. Private admin delivery timings retain exchange, observed, processed and Telegram acceptance dates without recipient identity. Migration must precede runtime release. Confirmed public filing changes queue company/announcements IndexNow URLs after successful upsert; the poll collection hold is idempotently released in finally. Indexing I/O runs outside ingestion and does not change alert recipients or intake. Overnight ADR adds one existing Market pulse screen and an opt-in private morning inbox digest; source dates and fetch times remain distinct, and durable insertion prevents per-session repeats. Stored 30-day filing counts share one exact-company projection with company detail, independently of the seven-day updates feed. Durable per-company history uses keyset pages; company Filings and Material Actions expose numbered pages. Explicit paid archive imports all categories over selected years with bounded workers, source failure and storage confirmation, and does not persist PDFs. Process restart or another instance may make worker status unavailable; saved evidence remains and no success is invented. Financial result titles include Results For Quarter/Q1 and board Outcome - Results. Generic outcomes need identity-bound proof from bounded official BSE PDF text; no PDF is persisted. Archive receipts distinguish saved filings from documents awaiting verification. Calendar retains one lower history control; Stock 360 and automatic readers share completion copy. Background watchlist readers share a paged uid/revision/update-time inventory, fetching only changed list bodies and retaining the original 60-second check time in owner read caches. Writes keep fresh CAS; local changes invalidate snapshots. Public cloud-only filing lookups are bounded/coalesced and invalidated before and after writes; failures never become cached successful empties."
+      "reason": "Poll \u2192 normalize/dedupe \u2192 persistence \u2192 feed and alert decisions \u2192 recipient-specific delivery/inbox. Global and personal recipients must remain distinct. Preset saves replace stable per-owner IDs atomically; confirmed cloud settings feed every poll. Personal channels supersede inherited defaults once presets are saved. Live polling has a CRON_SECRET bearer-protected HTTP trigger, a 60-second in-container watchdog timer, a continuous 15-second active poller, and a 15-second-stale traffic trigger. The shared process-local monitor lock skips running cycles without queueing. Request lifetime covers bounded ingestion, raw delivery/write drain and then result AI after releasing the ingestion lock; cron source failure eligibility is capped at 60 seconds. External Scheduler remains necessary for idle request-based Cloud Run; legacy cron returns 410. Numbered IST worker summaries and cron request summaries have distinct event fields. Automatic Telegram AI applies only to actual financial results with a stable security-code/period identity. Private durable claims share one valid analysis per period/language and reserve one reply per chat across exchange copies, languages and restart. Failed evidence uses a bounded newer-source retry; uncertain send acceptance never replays. Private admin delivery timings retain exchange, observed, processed and Telegram acceptance dates without recipient identity. Migration must precede runtime release. Confirmed public filing changes queue company/announcements IndexNow URLs after successful upsert; the poll collection hold is idempotently released in finally. Indexing I/O runs outside ingestion and does not change alert recipients or intake. Overnight ADR adds one existing Market pulse screen and an opt-in private morning inbox digest; source dates and fetch times remain distinct, and durable insertion prevents per-session repeats. Stored 30-day filing counts share one exact-company projection with company detail, independently of the seven-day updates feed. Durable per-company history uses keyset pages; company Filings and Material Actions expose numbered pages. Explicit paid archive imports all categories over selected years with bounded workers, source failure and storage confirmation, and does not persist PDFs. Process restart or another instance may make worker status unavailable; saved evidence remains and no success is invented. Financial result titles include Results For Quarter/Q1 and board Outcome - Results. Generic outcomes need identity-bound proof from bounded official BSE PDF text; no PDF is persisted. Archive receipts distinguish saved filings from documents awaiting verification. Calendar retains one lower history control; Stock 360 and automatic readers share completion copy. Background watchlist readers share a paged uid/revision/update-time inventory, fetching only changed list bodies and retaining the original 60-second check time in owner read caches. Writes keep fresh CAS; local changes invalidate snapshots. Public cloud-only filing lookups are bounded/coalesced and invalidated before and after writes; failures never become cached successful empties. Telegram health readers share one two-minute bounded probe per instance; a newer send result supersedes an older probe. BSE rows capture source-observation time immediately on receipt, before deep-history waits, for the existing delivery timing ledger."
     },
     {
       "id": "user-data",
@@ -1044,7 +1045,10 @@
         "server/ai/docs.ts",
         "src/components/ui/MarketTickerTape.tsx",
         "src/shared/filingPresentation.ts",
-        "server/utils/routeHeading.ts"
+        "server/utils/routeHeading.ts",
+        "src/components/landing/LandingExamples.tsx",
+        "scripts/vite-public-preload.mjs",
+        "scripts/verify-public-startup.mjs"
       ],
       "tests": [
         "server/tests/searchEngineDiscovery.test.ts",
@@ -1060,9 +1064,10 @@
         "server/tests/calendarDiscovery.test.ts",
         "server/tests/calendarEntry.test.ts",
         "server/tests/routeHeading.test.ts",
-        "scripts/verify-mobile-ui.mjs"
+        "scripts/verify-mobile-ui.mjs",
+        "server/tests/publicPreload.test.ts"
       ],
-      "reason": "Public links, pricing claims, server-rendered content and client views must agree. Lazy navigation, responsive composition, keyboard operation and motion require browser evidence beyond server discovery tests. BSE/NSE operator profiles, shared listing identity, directory/landing links and static/dynamic sitemaps agree; these records never expand intake or assign BSE Limited an invented BSE code. The ordered shared company/REIT/exchange directory drives live counts, landing links and SSR discovery; Nexus Select Trust is appended with verified code 543913 and does not expand filing intake. Public AI setup/tool/coverage documentation is linked from AI Connections. React and SSR privacy copy share actual provider/consent/retention disclosure, and current Eternal preset labels preserve the old name as a search alias."
+      "reason": "Public links, pricing claims, server-rendered content and client views must agree. Lazy navigation, responsive composition, keyboard operation and motion require browser evidence beyond server discovery tests. BSE/NSE operator profiles, shared listing identity, directory/landing links and static/dynamic sitemaps agree; these records never expand intake or assign BSE Limited an invented BSE code. The ordered shared company/REIT/exchange directory drives live counts, landing links and SSR discovery; Nexus Select Trust is appended with verified code 543913 and does not expand filing intake. Public AI setup/tool/coverage documentation is linked from AI Connections. React and SSR privacy copy share actual provider/consent/retention disclosure, and current Eternal preset labels preserve the old name as a search alias. Closed illustrative examples do not download until expanded; pending/error/reload remain local to the details surface. Existing hero/actions/auth/navigation remain unchanged."
     },
     {
       "id": "document-startup-security",
@@ -1092,7 +1097,11 @@
         "src/styles/payment.css",
         "scripts/offline-tests.mjs",
         "scripts/vite-preview-client.mjs",
-        "scripts/check-dev-runtime.mjs"
+        "scripts/check-dev-runtime.mjs",
+        "scripts/vite-public-preload.mjs",
+        "scripts/verify-public-startup.mjs",
+        "src/components/LandingPage.tsx",
+        "src/components/landing/LandingExamples.tsx"
       ],
       "tests": [
         "server/tests/responseHeaders.test.ts",
@@ -1105,9 +1114,10 @@
         "server/tests/sentryIsolation.test.ts",
         "server/tests/offlineTests.test.ts",
         "server/tests/devRuntime.test.ts",
-        "scripts/check-preview-restart.mjs"
+        "scripts/check-preview-restart.mjs",
+        "server/tests/publicPreload.test.ts"
       ],
-      "reason": "Canonical document headers preserve OAuth popups, AI Studio preview and public embeds. Deferred optional SDKs preserve authentication assessment, configured monitoring and explicit push requests without blocking public paint. Generic HTML has a neutral brand/loading root, never synthetic filings or an unrelated directory. Real announcements use an explicit route-only insertion marker and public calendar SSR retains its own source-backed document. Static development previews prepare an explicit complete browser dependency set before serving React; disabled HMR keeps CSS helpers without opening a socket. Sentry uses the static trace lifecycle so OAuth redaction is executed. A cold Chromium smoke checks real lazy screens separately from the production build."
+      "reason": "Canonical document headers preserve OAuth popups, AI Studio preview and public embeds. Deferred optional SDKs preserve authentication assessment, configured monitoring and explicit push requests without blocking public paint. Generic HTML has a neutral brand/loading root, never synthetic filings or an unrelated directory. Real announcements use an explicit route-only insertion marker and public calendar SSR retains its own source-backed document. Static development previews prepare an explicit complete browser dependency set before serving React; disabled HMR keeps CSS helpers without opening a socket. Sentry uses the static trace lifecycle so OAuth redaction is executed. A cold Chromium smoke checks real lazy screens separately from the production build. Production public-root preload discovers the full LandingPage static closure before main execution; private/payment/gift/cached-identity routes skip it. Closed examples remain dynamic, and the build budgets the whole public closure as well as the initial entry."
     },
     {
       "id": "impact-radar",
