@@ -26,6 +26,8 @@ jobs:
       - run: node scripts/verify-mobile-ui.mjs
       - run: node scripts/verify-radar-research.mjs
       - run: node scripts/check-preview-restart.mjs
+      - run: npm run build --ignore-scripts
+      - run: node scripts/verify-public-startup.mjs
   bun-application:
     runs-on: ubuntu-latest
     timeout-minutes: 15

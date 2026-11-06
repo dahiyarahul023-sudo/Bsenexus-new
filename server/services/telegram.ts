@@ -4,17 +4,38 @@ import { telegramCircuitBreaker } from '../utils/circuitBreaker.js';
 
 let telegramHealth: { status: 'connected' | 'stable' | 'unconfigured' | 'degraded' | 'down'; latency: number } = { status: 'unconfigured', latency: 0 };
 let cachedBotUsername: string = 'Dahiyastockbot';
+const HEALTH_TTL_MS = 120_000;
+let lastHealthUpdate: number | null = null;
+let healthRevision = 0;
+let healthInFlight: Promise<typeof telegramHealth> | null = null;
+
+function recordHealth(value: typeof telegramHealth) {
+  telegramHealth = value;
+  lastHealthUpdate = Date.now();
+  healthRevision++;
+}
 
 export function getBotUsername(): string {
   return cachedBotUsername;
 }
 
-export async function updateTelegramHealth(): Promise<{ status: 'connected' | 'stable' | 'unconfigured' | 'degraded' | 'down'; latency: number }> {
+export function updateTelegramHealth(): Promise<typeof telegramHealth> {
+  if (healthInFlight) return healthInFlight;
+  if (lastHealthUpdate !== null && Date.now() - lastHealthUpdate < HEALTH_TTL_MS) return Promise.resolve(telegramHealth);
+  const revision = healthRevision;
+  healthInFlight = probeTelegramHealth().then(value => {
+    // A send completing after this probe started is stronger, newer evidence.
+    if (revision === healthRevision) recordHealth(value);
+    return telegramHealth;
+  }).finally(() => { healthInFlight = null; });
+  return healthInFlight;
+}
+
+async function probeTelegramHealth(): Promise<typeof telegramHealth> {
   try {
     const settings = await getSettings();
     if (!settings.botToken || !settings.chatId) {
-      telegramHealth = { status: 'unconfigured', latency: 0 };
-      return telegramHealth;
+      return { status: 'unconfigured', latency: 0 };
     }
     const start = Date.now();
     const url = `https://api.telegram.org/bot${settings.botToken}/getMe`;
@@ -25,21 +46,20 @@ export async function updateTelegramHealth(): Promise<{ status: 'connected' | 's
         cachedBotUsername = data.result.username;
       }
       const latency = Date.now() - start;
-      telegramHealth = { status: latency > 1500 ? 'degraded' : 'connected', latency };
+      return { status: latency > 1500 ? 'degraded' : 'connected', latency };
     } else {
-      telegramHealth = { status: 'down', latency: -1 };
+      return { status: 'down', latency: -1 };
     }
   } catch (error) {
-    telegramHealth = { status: 'down', latency: -1 };
+    return { status: 'down', latency: -1 };
   }
-  return telegramHealth;
 }
 
 // Immediately trigger background check to cache bot username on load
 updateTelegramHealth().catch(() => {});
 
 export function getTelegramHealth() {
-  // Fire background health ping if older than 2 minutes
+  // Coalesced background probe, at most once per two minutes per instance.
   pingTelegram().catch(() => {});
   return telegramHealth;
 }
@@ -93,17 +113,17 @@ export async function sendToTelegram(text: string, customChatId?: string | null)
           return { success: false, error: errorMsg };
         }
         await addLog('ERROR', 'TELEGRAM', `API Error: ${errorMsg}`);
-        telegramHealth = { status: 'down', latency: -1 };
+        recordHealth({ status: 'down', latency: -1 });
         throw new Error(errorMsg);
       }
       
       const latency = Date.now() - start;
-      telegramHealth = { status: latency > 1500 ? 'degraded' : 'stable', latency };
+      recordHealth({ status: latency > 1500 ? 'degraded' : 'stable', latency });
       return { success: true, messageId: responseData.result.message_id, acceptedAtMs: Number(responseData.result.date) * 1000 || Date.now() };
     },
     async (err) => {
       await addLog('ERROR', 'TELEGRAM', `Send failure: ${err.message}`);
-      telegramHealth = { status: 'down', latency: -1 };
+      recordHealth({ status: 'down', latency: -1 });
       return { success: false, error: err.message || "Network error" };
     },
     8000
@@ -147,16 +167,16 @@ export async function sendReplyToTelegram(text: string, replyToMessageId: number
         if (response.status === 400 || response.status === 403) {
           return { success: false, error: errorMsg };
         }
-        telegramHealth = { status: 'down', latency: -1 };
+        recordHealth({ status: 'down', latency: -1 });
         throw new Error(errorMsg);
       }
       const latency = Date.now() - start;
-      telegramHealth = { status: latency > 1500 ? 'degraded' : 'stable', latency };
+      recordHealth({ status: latency > 1500 ? 'degraded' : 'stable', latency });
       return { success: true, messageId: responseData?.result?.message_id };
     },
     async (err) => {
       await addLog('ERROR', 'TELEGRAM', `Reply send failure: ${err.message}`);
-      telegramHealth = { status: 'down', latency: -1 };
+      recordHealth({ status: 'down', latency: -1 });
       return { success: false, error: err.message || "Network error" };
     },
     8000

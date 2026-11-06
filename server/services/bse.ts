@@ -164,13 +164,16 @@ async function fetchWithHardenedRetries(url: string, timeoutMs: number = 5000, m
 
       if (!txt || txt.includes("No Record") || txt.trim() === "{}" || txt.trim() === "[]") return [];
       const data = JSON.parse(txt);
+      // Capture actual receipt before backup/history walks and monitor work.
+      // Exchange time, source observation and Telegram acceptance are distinct.
+      const observedAt = Date.now();
       if (data && data.Table && Array.isArray(data.Table)) {
         const rows = data.Table.filter((r: any) => r && (r.NEWSID || r.NEWSSUB || r.SCRIP_CD || r.SLONGNAME || r.scrip_cd));
-        return rows;
+        return rows.map((row: any) => ({ ...row, _sourceObservedAt: observedAt }));
       }
       if (Array.isArray(data)) {
         const rows = data.filter((r: any) => r && (r.NEWSID || r.NEWSSUB || r.SCRIP_CD || r.SLONGNAME || r.scrip_cd));
-        return rows;
+        return rows.map((row: any) => ({ ...row, _sourceObservedAt: observedAt }));
       }
       return [];
     } catch (err: any) {

@@ -1,10 +1,8 @@
 import { AI_ALLOWANCE_COPY } from '../shared/productFacts';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Terminal, ArrowRight, Sun, Moon, LogIn } from 'lucide-react';
 import { BseNexusLogo } from './ui/BseNexusLogo';
 import { MarketTickerTape } from './ui/MarketTickerTape';
-import { UpcomingCatalystsGrid } from './landing/UpcomingCatalystsGrid';
-import { ResultsScrollDeck } from './landing/ResultsScrollDeck';
 import { CoreCapabilitiesBento } from './landing/CoreCapabilitiesBento';
 import { CommunitySocialBanner } from './landing/CommunitySocialBanner';
 import { LandingFooterAbout } from './landing/LandingFooterAbout';
@@ -30,6 +28,16 @@ export function LandingPage({
   telegramHealth
 }: LandingPageProps) {
   const [showExamples, setShowExamples] = useState(false);
+  const [Examples, setExamples] = useState<React.ComponentType<{ onEnterTerminal: (tab?: string) => void }> | null>(null);
+  const [exampleError, setExampleError] = useState(false);
+  useEffect(() => {
+    if (!showExamples || Examples) return;
+    let active = true;
+    import('./landing/LandingExamples').then(module => {
+      if (active) setExamples(() => module.default);
+    }).catch(() => { if (active) setExampleError(true); });
+    return () => { active = false; };
+  }, [showExamples, Examples]);
   const lowestPrice = getLowestPlanPrice();
   const proWeekly = PRO_PLAN_LIST.find(p => p.id === 'pro_weekly') || PRO_PLAN_LIST[0];
   const proMonthly = PRO_PLAN_LIST.find(p => p.id === 'pro_monthly') || PRO_PLAN_LIST[1];
@@ -150,10 +158,9 @@ export function LandingPage({
 
       <details onToggle={event => setShowExamples(event.currentTarget.open)} className="mx-4 sm:mx-auto max-w-5xl rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
         <summary className="min-h-11 cursor-pointer px-4 py-3 text-sm font-semibold">Preview the calendar and filing analysis</summary>
-        {showExamples && <>
-          <UpcomingCatalystsGrid onEnterTerminal={onEnterTerminal} />
-          <ResultsScrollDeck onEnterTerminal={onEnterTerminal} />
-        </>}
+        {showExamples && (Examples ? <Examples onEnterTerminal={onEnterTerminal} /> : exampleError ?
+          <div role="alert" className="p-4 text-sm">Preview could not load. <button type="button" className="underline min-h-11" onClick={() => window.location.reload()}>Reload preview</button></div> :
+          <p role="status" className="p-4 text-sm">Loading preview…</p>)}
       </details>
 
       <CoreCapabilitiesBento />
