@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, KeyRound, ShieldCheck, AlertCircle, Lock } from 'lucide-react';
-import { useAuth, isAdminEmail } from '../context/AuthContext';
-import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
+import { useAuth } from '../context/AuthContext';
+import { usePaymentDialog } from '../hooks/usePaymentDialog';
 import { ActionButton } from './ui/ActionButton';
 
 export function AdminPinModal() {
@@ -10,31 +10,32 @@ export function AdminPinModal() {
     setIsAdminPinModalOpen, 
     verifyAdminPin,
     profile,
+    isAdmin,
     user
   } = useAuth();
 
-  useBodyScrollLock(isAdminPinModalOpen);
+  const dialog = usePaymentDialog(isAdminPinModalOpen && isAdmin, () => setIsAdminPinModalOpen(false));
 
+  const attemptRef = useRef(0);
   const [pin, setPin] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
 
-  const isAdminUser = !user?.isAnonymous && (
-    isAdminEmail(user?.email) ||
-    isAdminEmail(profile?.email)
-  );
-
-  if (!isAdminPinModalOpen || !isAdminUser) return null;
+  useEffect(() => { attemptRef.current++; setPin(''); setError(null); setIsVerifying(false); return () => { attemptRef.current++; }; }, [isAdminPinModalOpen, user?.uid]);
+  if (!isAdminPinModalOpen || !isAdmin) return null;
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isVerifying) return;
     if (!pin) {
       setError('Please enter the Master PIN.');
       return;
     }
     setError(null);
     setIsVerifying(true);
+    const attempt = ++attemptRef.current;
     const res = await verifyAdminPin(pin);
+    if (attempt !== attemptRef.current) return;
     setIsVerifying(false);
     if (!res.success) {
       setError(res.error || 'Incorrect Admin PIN');
@@ -43,7 +44,8 @@ export function AdminPinModal() {
 
   return (
     <div 
-      className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-150 overscroll-contain"
+      ref={dialog}
+      className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-[250] animate-in fade-in duration-150 overscroll-contain"
       onClick={() => setIsAdminPinModalOpen(false)}
       role="dialog"
       aria-modal="true"
@@ -82,7 +84,7 @@ export function AdminPinModal() {
               <span>Two-Factor Security Protection</span>
             </div>
             <p className="text-[11px] text-purple-700 dark:text-purple-400 leading-relaxed">
-              Google Account verified. Enter your Master PIN to unlock root configuration & scraper engine controls.
+              Google Account verified. Enter your Master PIN to unlock admin controls for 15 minutes and continue your requested action.
             </p>
           </div>
 

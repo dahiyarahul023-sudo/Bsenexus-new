@@ -5,6 +5,7 @@ import {
   Sparkles, Layers, ListFilter, FileText, Info, RotateCcw, User, UserCheck
 } from 'lucide-react';
 import { customFetch } from '../api';
+import { useAuth } from '../context/AuthContext';
 import { ConfirmModal } from './ui/ConfirmModal';
 import { ActionButton } from './ui/ActionButton';
 import { clsx, type ClassValue } from 'clsx';
@@ -41,6 +42,7 @@ interface StorageStatus {
 }
 
 export function StorageManager({ onRefresh }: { onRefresh?: () => void } = {}) {
+  const { runElevatedAdminAction } = useAuth();
   const [status, setStatus] = useState<StorageStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [cleaning, setCleaning] = useState(false);
@@ -78,13 +80,14 @@ export function StorageManager({ onRefresh }: { onRefresh?: () => void } = {}) {
         }
         payload.uid = targetUserInput.trim();
       }
-      const res = await customFetch('/api/billing/reset-quota', {
+      const res = await runElevatedAdminAction(() => customFetch('/api/billing/reset-quota', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
-      });
+      }));
+      if (!res) return;
       const data = await res.json();
-      if (data.success) {
+      if (res.ok && data.success) {
         setQuotaResetFeedback({ success: true, msg: data.message || 'AI quota reset successfully.' });
         if (target === 'user') setTargetUserInput('');
         window.dispatchEvent(new Event('bse_ai_quota_refresh'));

@@ -20,6 +20,7 @@ jobs:
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: node scripts/patch-firebase-auth.cjs
       - run: npx playwright install --with-deps chromium
+      - run: node scripts/verify-admin-quota.mjs
       - run: npm run test:dev-runtime
       - run: node scripts/verify-gift-access.mjs
       - run: node scripts/verify-mobile-ui.mjs

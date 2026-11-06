@@ -112,73 +112,49 @@ export const telegramRateLimiter = rateLimit({
 const firebaseTokenCache = createVerifiedTokenCache<any>({ ttlMs: resolveVerifyCacheMs() });
 
 export const authMiddleware = async (req: express.Request, _res: express.Response, next: express.NextFunction) => {
-  try {
-    const authHeader = req.headers.authorization;
-    let token = req.cookies?.authToken;
-
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      token = authHeader.substring(7);
-    }
-
-    if (token && token.trim()) {
-      token = token.trim();
-      try {
-        const decoded: any = jwt.verify(token, JWT_SECRET);
-        if (!hasTrustedSessionRoles(decoded, ADMIN_EMAIL)) {
-          throw new Error('Privileged session requires a verified owner email. Sign in again.');
-        }
-        (req as any).user = { ...decoded, isAdmin: decoded.emailVerified === true && isAdminEmail(decoded.email) && Number(decoded.adminElevatedUntil || 0) > Date.now() };
+  const cookie = req.cookies?.authToken;
+  const bearer = req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.slice(7).trim() : '';
+  let tokenExpired = false;
+  const localSession = (token: string) => {
+    const decoded: any = jwt.verify(token, JWT_SECRET);
+    if (!decoded.uid || !hasTrustedSessionRoles(decoded, ADMIN_EMAIL)) throw new Error('Untrusted session');
+    return { ...decoded, isAdmin: decoded.emailVerified === true && isAdminEmail(decoded.email) && Number(decoded.adminElevatedUntil || 0) > Date.now() };
+  };
+  if (bearer) {
+    try {
+      (req as any).user = localSession(bearer);
+      return next();
+    } catch (error: any) { tokenExpired = error?.name === 'TokenExpiredError'; }
+    try {
+      const adminAuth = getFirebaseAuth();
+      if (adminAuth && bearer.split('.').length === 3) {
+        const decoded = await firebaseTokenCache.verify(bearer, t => adminAuth.verifyIdToken(t, true));
+        const identity = getFirebaseIdentity(decoded, ADMIN_EMAIL);
+        const elevation = identity?.isOwner ? getCookieElevation(req, decoded.uid) : 0;
+        (req as any).user = {
+          uid: decoded.uid, rawUid: decoded.uid, email: identity?.email,
+          emailVerified: identity?.emailVerified === true,
+          name: decoded.name || decoded.displayName || (identity ? 'User' : 'Guest Trader'),
+          isOwner: identity?.isOwner === true,
+          isAdmin: identity?.isOwner === true && elevation > Date.now(),
+          adminElevatedUntil: elevation, isAnonymous: !identity
+        };
         return next();
-      } catch (jwtErr) {
-        // If not signed by local JWT_SECRET, verify as Firebase ID Token
-        const tokenParts = token.split('.');
-        if (tokenParts.length === 3) {
-          try {
-            const adminAuth = getFirebaseAuth();
-            if (adminAuth) {
-              try {
-                const fbDecoded = await firebaseTokenCache.verify(token, (t) => adminAuth.verifyIdToken(t, true));
-                const identity = getFirebaseIdentity(fbDecoded, ADMIN_EMAIL);
-                const isAnonymous = !identity;
-                const isOwner = identity?.isOwner === true;
-                (req as any).user = {
-                  uid: fbDecoded.uid,
-                  rawUid: fbDecoded.uid,
-                  email: fbDecoded.email,
-                  emailVerified: identity?.emailVerified === true,
-                  name: fbDecoded.name || (fbDecoded as any).displayName || (isAnonymous ? 'Guest Trader' : 'User'),
-                  isOwner,
-                  isAdmin: isOwner && getCookieElevation(req, fbDecoded.uid) > Date.now(),
-                  adminElevatedUntil: getCookieElevation(req, fbDecoded.uid),
-                  isAnonymous
-                };
-                return next();
-              } catch {
-                // Token verification failed
-              }
-            }
-          } catch {}
-
-          // SECURITY (1 Oct 2026 audit SEC-001): The previous unverified jwt.decode()
-          // fallback allowed attackers to forge Firebase-looking JWTs with any signing
-          // key and gain admin/owner access. Removed entirely — if both jwt.verify and
-          // adminAuth.verifyIdToken fail, the token is rejected and the request is
-          // treated as an anonymous guest. Production MUST require successful Admin SDK
-          // verification; never accept unverified claims.
-        }
-
-        // Token verification failed - strictly treat as unauthenticated guest
-        (req as any).user = { uid: 'guest', isOwner: false, isAdmin: false, isAnonymous: true };
       }
-    } else {
-      (req as any).user = { uid: 'guest', isOwner: false, isAdmin: false, isAnonymous: true };
-    }
-
-    return next();
-  } catch (error) {
-    (req as any).user = { uid: 'guest', isOwner: false, isAdmin: false, isAnonymous: true };
-    return next();
+    } catch (error: any) { tokenExpired ||= error?.code === 'auth/id-token-expired'; }
   }
+  // A rejected/expired Bearer must not mask the independent signed cookie.
+  // Never decode unverified claims, and never borrow another UID's elevation
+  // when a Bearer identity has verified successfully above.
+  if (typeof cookie === 'string' && cookie.trim()) {
+    try {
+      (req as any).user = localSession(cookie.trim());
+      return next();
+    } catch (error: any) { tokenExpired ||= error?.name === 'TokenExpiredError'; }
+  }
+  (req as any).authFailure = { tokenExpired };
+  (req as any).user = { uid: 'guest', isOwner: false, isAdmin: false, isAnonymous: true };
+  return next();
 };
 
 // Firebase App Check Verification Helper & Middleware Readiness
@@ -226,7 +202,8 @@ export const requireAuth = (req: express.Request, res: express.Response, next: e
   if (!user || !user.uid || user.uid === 'guest' || user.isAnonymous) {
     return res.status(401).json({ 
       success: false, 
-      authRequired: true, 
+      authRequired: true,
+      tokenExpired: (req as any).authFailure?.tokenExpired === true,
       error: "Google Sign-In Required: Guest access is strictly view-only. Please sign in with Google to get 1 week (7 days) of Free Pro access." 
     });
   }
@@ -236,15 +213,17 @@ export const requireAuth = (req: express.Request, res: express.Response, next: e
 // Resilient Admin Authorization Guard (Checks verified JWT or verified Owner session)
 export const requireAdmin = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
   const user = (req as any).user;
-  if (user && !user.isAnonymous && user.emailVerified === true && isAdminEmail(user.email) && Number(user.adminElevatedUntil || 0) > Date.now()) {
-    return next();
+  if (!user?.uid || user.uid === 'guest' || user.isAnonymous) {
+    return res.status(403).json({ success: false, code: 'ADMIN_AUTH_REQUIRED', authRequired: true,
+      tokenExpired: (req as any).authFailure?.tokenExpired === true,
+      error: 'Sign in with an authorized Administrator Google account before verifying the Master PIN.' });
   }
-
-  return res.status(403).json({ 
-    success: false, 
-    adminElevationRequired: true,
-    error: "Forbidden: Verify Master PIN in Settings -> Root Ops. Elevation lasts 15 minutes."
-  });
+  if (user.emailVerified !== true || !isAdminEmail(user.email)) {
+    return res.status(403).json({ success: false, code: 'ADMIN_FORBIDDEN', error: 'A verified Administrator account is required.' });
+  }
+  if (Number(user.adminElevatedUntil || 0) > Date.now()) return next();
+  return res.status(403).json({ success: false, adminElevationRequired: true,
+    error: 'Forbidden: Verify Master PIN in Settings → Administration → Admin Master Key (or Gift Pro Access → Verify admin PIN). Elevation lasts 15 minutes.' });
 };
 
 // Pro or Admin Authorization Guard (Allows verified Pro trial subscribers or Admin/Owner)
@@ -253,7 +232,8 @@ export const requireProOrAdmin = async (req: express.Request, res: express.Respo
   if (!user || !user.uid || user.uid === 'guest' || user.isAnonymous) {
     return res.status(401).json({ 
       success: false, 
-      authRequired: true, 
+      authRequired: true,
+      tokenExpired: (req as any).authFailure?.tokenExpired === true,
       error: "Google Sign-In Required: Sign in with Google to activate your 1-Week Free Pro trial." 
     });
   }
@@ -631,7 +611,6 @@ authRouter.post('/login', authRateLimiter, requireAppCheck, authAttempt(async (r
 // Verify Master PIN (for elevating authenticated admin sessions)
 authRouter.post('/verify-pin', authRateLimiter, requireAppCheck, authAttempt(async (req, res) => {
   const { pin, recaptchaToken, recaptchaAction, email, identifier } = req.body || {};
-  const settings = await getSettings();
 
   // Strict Security Rule: User must be signed in with the authorized Administrator account
   const currentUser = (req as any).user;
@@ -642,10 +621,13 @@ authRouter.post('/verify-pin', authRateLimiter, requireAppCheck, authAttempt(asy
     return res.status(403).json({
       success: false,
       error: "Access Denied: You must first sign in with an authorized Administrator account before verifying the Master PIN.",
+      authRequired: true,
+      tokenExpired: (req as any).authFailure?.tokenExpired === true,
       code: "ADMIN_AUTH_REQUIRED"
     });
   }
 
+  const settings = await getSettings();
   const rawIdentifier = currentUser.email || email || identifier || 'admin_master_account';
   const accountKey = getAccountKey(rawIdentifier);
 
@@ -746,37 +728,14 @@ authRouter.post('/logout', (_req, res) => {
 });
 
 authRouter.get('/status', async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
   const settings = await getSettings();
-  const hasPin = !!settings.appPinHash;
-  
-  const token = req.cookies?.authToken || (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.substring(7) : null);
-  
-  if (!token) {
-    return res.json({ 
-      isAuthenticated: false, 
-      hasPin, 
-      user: null, 
-      isAdmin: false
-    });
-  }
-
-  try {
-    const decoded: any = jwt.verify(token, JWT_SECRET);
-    if (!hasTrustedSessionRoles(decoded, ADMIN_EMAIL)) {
-      throw new Error('Privileged session requires a verified owner email.');
-    }
-    res.json({ 
-      isAuthenticated: true, 
-      hasPin, 
-      user: decoded, 
-      isAdmin: decoded.emailVerified === true && isAdminEmail(decoded.email) && Number(decoded.adminElevatedUntil || 0) > Date.now()
-    });
-  } catch (e) {
-    res.json({ 
-      isAuthenticated: false, 
-      hasPin, 
-      user: null, 
-      isAdmin: false
-    });
-  }
+  const user = (req as any).user;
+  const isAuthenticated = Boolean(user?.uid && user.uid !== 'guest' && !user.isAnonymous);
+  const isAdmin = isAuthenticated && user.emailVerified === true && isAdminEmail(user.email);
+  const adminElevatedUntil = isAdmin ? Number(user.adminElevatedUntil || 0) : 0;
+  res.json({ isAuthenticated, hasPin: !!settings.appPinHash, user: isAuthenticated ? user : null,
+    isAdmin, isOwner: isAdmin, adminElevatedUntil,
+    isElevated: isAdmin && adminElevatedUntil > Date.now(),
+    authRequired: !isAuthenticated, tokenExpired: (req as any).authFailure?.tokenExpired === true });
 });

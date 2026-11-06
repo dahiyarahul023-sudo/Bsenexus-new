@@ -5,7 +5,7 @@ import ts from 'typescript';
 
 // Execute the actual browser helper with Firebase/fetch/browser boundaries
 // stubbed; do not make live authentication or network requests.
-function makeFetch(fetcher: typeof fetch, auth: any = { currentUser: null }) {
+function makeFetch(fetcher: typeof fetch, auth: any = { currentUser: null }, stored: string | null = null) {
   const source = fs.readFileSync('src/api.ts', 'utf8')
     .replace("import { auth, initAppCheck } from './firebase';", '')
     .replace(/\(import\.meta as any\)/g, '({ env: {} })');
@@ -13,10 +13,11 @@ function makeFetch(fetcher: typeof fetch, auth: any = { currentUser: null }) {
     compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext },
   }).outputText.replace('export async function', 'async function');
   const events: any[] = [];
-  const storage = { getItem: () => null, setItem: () => {}, removeItem: () => {} };
+  const values = new Map<string, string>(stored ? [['bse_nexus_fb_id_token', stored]] : []);
+  const storage = { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => { values.set(key, value); }, removeItem: (key: string) => { values.delete(key); } };
   const window = { dispatchEvent: (event: any) => events.push(event) };
   const run = new Function('auth', 'fetch', 'localStorage', 'window', `${compiled}\nreturn customFetch;`);
-  return { customFetch: run(auth, fetcher, storage, window), events };
+  return { customFetch: run(auth, fetcher, storage, window), events, storage };
 }
 
 test('cancelled requests preserve AbortError and do not report a network outage', async () => {
@@ -75,4 +76,54 @@ test('HTML errors preserve denial status and never automatically replay a gift m
     assert.equal((await response.json()).code, 'API_NON_JSON_RESPONSE');
     assert.equal(calls, 1);
   }
+});
+
+const idToken = (exp: number) => `header.${Buffer.from(JSON.stringify({ exp })).toString('base64url')}.signature`;
+test('customFetch drops expired/malformed stored tokens and authenticates using cookie only', async () => {
+  for (const stored of [idToken(Date.now() / 1000 - 3600), 'not.a.token']) {
+    let headers: Headers | undefined;
+    const f = makeFetch(async (_url, options) => {
+      headers = new Headers(options?.headers); assert.equal(options?.credentials, 'include');
+      return Response.json({ success: true });
+    }, { currentUser: null }, stored);
+    assert.equal((await f.customFetch('/api/users/profile')).status, 200);
+    assert.equal(headers!.has('Authorization'), false); assert.equal(f.storage.getItem('bse_nexus_fb_id_token'), null);
+  }
+});
+test('customFetch force-refreshes an expired Firebase SDK result before sending', async () => {
+  const refreshed: boolean[] = []; const current = idToken(Date.now() / 1000 + 3600);
+  const f = makeFetch(async (_url, options) => {
+    assert.equal(new Headers(options?.headers).get('Authorization'), `Bearer ${current}`); return Response.json({});
+  }, { currentUser: { uid: 'owner', getIdToken: async (force: boolean) => { refreshed.push(force); return force ? current : idToken(1); } } });
+  await f.customFetch('/auth/verify-pin', { method: 'POST' });
+  assert.deepEqual(refreshed, [false, true]);
+});
+test('a rejected Bearer retries a 401 without Authorization so a valid cookie can recover', async () => {
+  const sent: (string | null)[] = [];
+  const f = makeFetch(async (_url, options) => {
+    sent.push(new Headers(options?.headers).get('Authorization'));
+    return sent.length === 1 ? Response.json({ authRequired: true }, { status: 401 }) : Response.json({ success: true });
+  }, { currentUser: null }, idToken(Date.now() / 1000 + 3600));
+  assert.equal((await f.customFetch('/api/users/profile')).status, 200);
+  assert.equal(sent.length, 2); assert.equal(sent[1], null); assert.ok(!f.events.some(e => e.type === 'auth-expired'));
+});
+test('structured elevation denial is preserved without replay; wrong PIN does not expire identity', async () => {
+  let calls = 0;
+  const f = makeFetch(async () => { calls++; return Response.json({ adminElevationRequired: true }, { status: 403 }); });
+  const response = await f.customFetch('/api/billing/reset-quota', { method: 'POST' });
+  assert.equal(response.status, 403); assert.equal((await response.json()).adminElevationRequired, true); assert.equal(calls, 1);
+  const pin = makeFetch(async () => Response.json({ error: 'Invalid credentials' }, { status: 401 }));
+  assert.equal((await pin.customFetch('/auth/verify-pin', { method: 'POST' })).status, 401);
+  assert.equal(pin.events.length, 0);
+});
+
+test('an account switch while obtaining a token cancels before any request is sent', async () => {
+  let calls = 0;
+  const auth: any = { currentUser: { uid: 'old-owner', getIdToken: async () => {
+    auth.currentUser = { uid: 'new-owner' };
+    return idToken(Date.now() / 1000 + 3600);
+  } } };
+  const f = makeFetch(async () => { calls++; return Response.json({}); }, auth);
+  await assert.rejects(f.customFetch('/api/billing/reset-quota', { method: 'POST' }), (error: any) => error.name === 'AbortError');
+  assert.equal(calls, 0); assert.equal(f.events.length, 0);
 });

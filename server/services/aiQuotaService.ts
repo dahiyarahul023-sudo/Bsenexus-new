@@ -24,7 +24,7 @@ export async function checkServerAiQuota(
   isAdminUser: boolean
 ): Promise<{ allowed: boolean; remaining: number; dailyLimit: number; error?: string; isPro?: boolean; reservationId?: string }> {
   // 1. Admin/Owner always has full unlimited AI generation
-  if (isAdminUser || uid === 'admin') {
+  if (isAdminUser) {
     return { allowed: true, remaining: Infinity, dailyLimit: Infinity, isPro: true };
   }
 
@@ -207,7 +207,7 @@ export async function refundServerAiQuota(
   reservationId?: string
 ): Promise<void> {
   // Admin/owner: unlimited, no refund needed
-  if (isAdminUser || uid === 'admin') return;
+  if (isAdminUser) return;
   // Guest: no quota to refund
   if (!uid || uid === 'guest' || uid.startsWith('guest_') || uid.startsWith('trader_')) return;
 
@@ -230,7 +230,7 @@ export async function getServerAiQuotaStatus(
   uid: string,
   isAdminUser: boolean
 ): Promise<{ tier: 'guest' | 'free' | 'pro' | 'admin'; dailyLimit: number; usedToday: number; remaining: number; canGenerate: boolean; proDaysLeft?: number }> {
-  if (isAdminUser || uid === 'admin') {
+  if (isAdminUser) {
     return {
       tier: 'admin',
       dailyLimit: Infinity,
