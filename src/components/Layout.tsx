@@ -60,6 +60,9 @@ import { TodayMarketStoryModal } from './TodayMarketStoryModal';
 import { PushNotificationBanner } from './PushNotificationPrompt';
 import { ReferralDashboardModal } from './ReferralDashboardModal';
 import { getStorySessionStorageKey, getISTMarketSession } from './story/storyData';
+import { SpecialDayBanner } from './special/SpecialDayBanner';
+import { SpecialDayStoryModal } from './special/SpecialDayStoryModal';
+import type { SpecialDayConfig } from '../config/specialDay';
 
 function preloadTabChunk(tabId: string) {
   if (tabId === 'settings') void import('./SettingsTab').catch(() => {});
@@ -156,6 +159,7 @@ export function Layout({
   const [networkDisrupted, setNetworkDisrupted] = useState<boolean>(false);
   const [quotaExceeded, setQuotaExceeded] = useState<boolean>(false);
   const [quotaBannerDismissed, setQuotaBannerDismissed] = useState<boolean>(false);
+  const [specialDayConfig, setSpecialDayConfig] = useState<SpecialDayConfig | null>(null);
 
   const { isIntelModalOpen, selectedStock, openIntelModal, closeIntelModal } = useIntelModal();
 
@@ -712,6 +716,9 @@ export function Layout({
         )}
       </AnimatePresence>
 
+      {/* Special Day Banner with Countdown, Slim-strip & Auto-hide */}
+      <SpecialDayBanner onOpenStory={(cfg) => setSpecialDayConfig(cfg)} />
+
       {/* Live Market Ticker Tape - Responsive for Mobile and Desktop */}
       <MarketTickerTape bseLatency={bseHealth?.latency || 0} />
 
@@ -815,6 +822,17 @@ export function Layout({
           onClose={() => setStoryModalOpen(false)}
           onStoryViewed={handleStoryViewed}
           onOpenCompanyIntel={handleOpenCompanyIntel}
+        />
+      )}
+      {specialDayConfig && (
+        <SpecialDayStoryModal
+          config={specialDayConfig}
+          isOpen={Boolean(specialDayConfig)}
+          onClose={() => setSpecialDayConfig(null)}
+          onNavigateTab={(tab) => {
+            setSpecialDayConfig(null);
+            handleTabClick(tab);
+          }}
         />
       )}
       {termsModalOpen && (

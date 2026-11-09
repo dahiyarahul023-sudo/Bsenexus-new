@@ -12,6 +12,39 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script nonce="__CSP_NONCE__">
+      /* Synchronous Theme Initialization before first paint:
+         Prevents dark/light and designTheme flashes on reload/cold start. */
+      (function() {
+        try {
+          var sessionRaw = localStorage.getItem('bse_nexus_auth_session');
+          var session = sessionRaw ? JSON.parse(sessionRaw) : null;
+          var prof = session && session.profile;
+          var prefs = prof && prof.notificationPreferences;
+          var storedTheme = localStorage.getItem('theme');
+
+          var designTheme = (session && session.designTheme) ||
+                            (prefs && prefs.designTheme) ||
+                            localStorage.getItem('bse_design_theme') || '';
+
+          var theme = (session && session.theme) ||
+                      (prof && prof.theme) ||
+                      storedTheme || '';
+
+          var root = document.documentElement;
+          if (designTheme === 'softglass') {
+            root.dataset.designTheme = 'softglass';
+            root.classList.remove('dark');
+          } else if (theme === 'light') {
+            delete root.dataset.designTheme;
+            root.classList.remove('dark');
+          } else if (theme === 'dark') {
+            delete root.dataset.designTheme;
+            root.classList.add('dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <script nonce="__CSP_NONCE__">
       /* Payment-return boot splash: when Cashfree redirects back to
          /?cf_order_id=..., the whole SPA cold-boots. Paint a "Confirming your
          payment…" splash instantly (before React/bundle loads) so the user
