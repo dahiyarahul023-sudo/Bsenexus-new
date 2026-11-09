@@ -56,6 +56,14 @@ function readCachedWatchlists(accountId: string): any[] | null {
         return parsed.items;
       }
     }
+    const fallback = localStorage.getItem('bse_nexus_watchlist_cache');
+    if (fallback) {
+      const parsed = JSON.parse(fallback);
+      if (Array.isArray(parsed?.items) && (!parsed.owner || parsed.owner === accountId || accountId === 'guest')) {
+        return parsed.items;
+      }
+      if (Array.isArray(parsed)) return parsed;
+    }
   } catch { /* ignore corrupt cache */ }
   return null;
 }
@@ -883,7 +891,10 @@ export function WatchlistManager({ isActive = true }: { isActive?: boolean } = {
       if (!Array.isArray(data)) throw new Error('Invalid watchlist response.');
       if (controller.signal.aborted || accountRef.current !== owner) return;
       setWatchlists(data); setWatchlistOwner(owner); setWatchlistsReady(true);
-      try { localStorage.setItem(`bsenexus_watchlists_cache:${owner}`, JSON.stringify({ ts: Date.now(), items: data })); } catch {}
+      try {
+        localStorage.setItem(`bsenexus_watchlists_cache:${owner}`, JSON.stringify({ ts: Date.now(), items: data }));
+        localStorage.setItem('bse_nexus_watchlist_cache', JSON.stringify({ ts: Date.now(), items: data, owner }));
+      } catch {}
       window.dispatchEvent(new CustomEvent('watchlists-changed', { detail: { source: 'watchlist-manager' } }));
     } catch (error) {
       if (!controller.signal.aborted && accountRef.current === owner) setWatchlistsError('Your watchlists could not be loaded. Please retry.');

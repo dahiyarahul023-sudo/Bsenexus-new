@@ -438,6 +438,12 @@ function AppContent() {
   const [theme, setTheme] = useState(() => {
     try {
       if (typeof window !== 'undefined') {
+        const raw = localStorage.getItem('bse_nexus_auth_session');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed?.designTheme === 'softglass' || parsed?.profile?.notificationPreferences?.designTheme === 'softglass') return 'light';
+          if (parsed?.theme === 'light' || parsed?.theme === 'dark') return parsed.theme;
+        }
         return localStorage.getItem('theme') || 'dark';
       }
     } catch {}
@@ -445,7 +451,19 @@ function AppContent() {
   });
   const [settings, setSettings] = useState<any>({});
   const [logs, setLogs] = useState([]);
-  const [watchlists, setWatchlists] = useState<any[]>([]);
+  const [watchlists, setWatchlists] = useState<any[]>(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const raw = localStorage.getItem('bse_nexus_watchlist_cache');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed?.items)) return parsed.items;
+          if (Array.isArray(parsed)) return parsed;
+        }
+      }
+    } catch {}
+    return [];
+  });
   const [watchlistDataOwner, setWatchlistDataOwner] = useState('');
   const [health, setHealth] = useState({ bse: { status: 'unknown', latency: 0 }, telegram: { status: 'unknown', latency: 0 } });
   
@@ -795,6 +813,12 @@ function AppContent() {
     try {
       if (typeof window !== 'undefined') {
         if (import.meta.env.DEV && new URLSearchParams(window.location.search).get('design') === 'softglass') return 'softglass';
+        const raw = localStorage.getItem('bse_nexus_auth_session');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          const dt = parsed?.designTheme || parsed?.profile?.notificationPreferences?.designTheme;
+          if (dt === 'softglass' || dt === 'classic') return dt;
+        }
         const saved = localStorage.getItem('bse_design_theme');
         if (saved === 'softglass' || saved === 'classic') return saved;
       }
@@ -869,12 +893,20 @@ function AppContent() {
       const res = await customFetch('/api/watchlists', { signal: controller.signal });
       if (!res.ok) throw new Error('Watchlists unavailable');
       const data = await res.json();
-      if (current()) { setWatchlists(Array.isArray(data) ? data : []); setWatchlistDataOwner(requestedOwner); }
-    } catch { if (current()) setWatchlists([]); }
+      if (current()) {
+        const items = Array.isArray(data) ? data : [];
+        setWatchlists(items);
+        setWatchlistDataOwner(requestedOwner);
+        try {
+          localStorage.setItem('bse_nexus_watchlist_cache', JSON.stringify({ items, ts: Date.now(), owner: requestedOwner }));
+        } catch {}
+      }
+    } catch {
+      // Keep cached watchlists on network error
+    }
   };
 
   useEffect(() => {
-    setWatchlists([]);
     void fetchWatchlists();
     const changed = () => { void fetchWatchlists(); };
     window.addEventListener('watchlists-changed', changed);

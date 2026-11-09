@@ -73,18 +73,82 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
   const { user, profile, loading: accountLoading, authLoading, setIsAuthModalOpen } = useAuth();
   const { openIntelModal } = useIntelModal();
 
-  const [watchlists, setWatchlists] = useState<any[]>([]);
+  const [watchlists, setWatchlists] = useState<any[]>(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const raw = localStorage.getItem('bse_nexus_watchlist_cache');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          const items = Array.isArray(parsed?.items) ? parsed.items : Array.isArray(parsed) ? parsed : [];
+          if (items.length > 0) return items;
+        }
+      }
+    } catch {}
+    return [];
+  });
   const verifiedLists = useRef<{owner:string; lists:any[]} | null>(null);
   const [homeWarning, setHomeWarning] = useState('');
   const [homeRefresh, setHomeRefresh] = useState(0);
-  const [watchlistStatus, setWatchlistStatus] = useState<'loading' | 'ready' | 'error'>('loading');
-  const [watchlistSymbols, setWatchlistSymbols] = useState<Set<string>>(new Set());
+  const [watchlistStatus, setWatchlistStatus] = useState<'loading' | 'ready' | 'error'>(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const raw = localStorage.getItem('bse_nexus_watchlist_cache');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          const items = Array.isArray(parsed?.items) ? parsed.items : Array.isArray(parsed) ? parsed : [];
+          if (items.length > 0) return 'ready';
+        }
+      }
+    } catch {}
+    return 'loading';
+  });
+  const [watchlistSymbols, setWatchlistSymbols] = useState<Set<string>>(() => {
+    const syms = new Set<string>();
+    try {
+      if (typeof window !== 'undefined') {
+        const raw = localStorage.getItem('bse_nexus_watchlist_cache');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          const items = Array.isArray(parsed?.items) ? parsed.items : Array.isArray(parsed) ? parsed : [];
+          activeWatchlistIdentities(items).forEach(stock => {
+            syms.add(stock.symbol);
+            if (stock.scripCode) syms.add(stock.scripCode);
+          });
+        }
+      }
+    } catch {}
+    return syms;
+  });
   const [resultError, setResultError] = useState(false);
   const [upcomingResults, setUpcomingResults] = useState<any[]>([]);
   const [allAnnouncements, setAllAnnouncements] = useState<any[]>([]);
   const [filingError, setFilingError] = useState(false);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [hasLoaded, setHasLoaded] = useState(false);
+  const [loading, setLoading] = useState<boolean>(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const raw = localStorage.getItem('bse_nexus_watchlist_cache');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          const items = Array.isArray(parsed?.items) ? parsed.items : Array.isArray(parsed) ? parsed : [];
+          if (items.length > 0) return false;
+        }
+      }
+    } catch {}
+    return true;
+  });
+  const [hasLoaded, setHasLoaded] = useState(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const raw = localStorage.getItem('bse_nexus_watchlist_cache');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          const items = Array.isArray(parsed?.items) ? parsed.items : Array.isArray(parsed) ? parsed : [];
+          if (items.length > 0) return true;
+        }
+      }
+    } catch {}
+    return false;
+  });
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
   const [modalSearch, setModalSearch] = useState<string>('');
   const [addingStock, setAddingStock] = useState<string | null>(null);
@@ -129,11 +193,15 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
     return () => { window.removeEventListener('bse_nav_tab_refresh', refresh); window.removeEventListener('watchlists-changed', changed); };
   }, [isActive]);
   useEffect(() => {
-    if (!isActive || accountLoading || authLoading) return;
+    if (!isActive) return;
+    if ((accountLoading || authLoading) && (!user || user.isAnonymous)) return;
     const controller = new AbortController(), signal = controller.signal;
     if (loadedIdentity.current !== identity) {
       loadedIdentity.current = identity; verifiedLists.current = null; setHomeWarning('');
-      setWatchlistStatus('loading'); setFilingError(false); setWatchlists([]); setWatchlistSymbols(new Set()); setUpcomingResults([]); setAllAnnouncements([]); setHasLoaded(false);
+      if (!watchlists.length) {
+        setWatchlistStatus('loading'); setHasLoaded(false);
+      }
+      setFilingError(false); setUpcomingResults([]); setAllAnnouncements([]);
     }
     const fetchHomeData = async () => {
       setLoading(true); setWatchlistStatus(previous=>previous==='ready'?'ready':'loading');
@@ -147,9 +215,14 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
         let currentLists:any[] = [];
         if (wl.ok === true) {
           currentLists=wl.value; verifiedLists.current={owner:identity,lists:currentLists}; setHomeWarning(''); setWatchlistStatus('ready');
+          try {
+            localStorage.setItem('bse_nexus_watchlist_cache', JSON.stringify({ items: currentLists, ts: Date.now(), owner: identity }));
+          } catch {}
         } else if ('status' in wl && wl.status!==401 && wl.status!==403 && verifiedLists.current?.owner===identity) {
           currentLists=verifiedLists.current.lists; setWatchlistStatus('ready');
           setHomeWarning('Watchlist refresh unavailable. Showing your last verified list.');
+        } else if (watchlists.length > 0) {
+          currentLists=watchlists; setWatchlistStatus('ready');
         } else {
           verifiedLists.current=null; setWatchlistStatus('error'); setHomeWarning('');
         }
