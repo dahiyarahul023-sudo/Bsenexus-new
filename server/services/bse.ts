@@ -148,6 +148,10 @@ async function fetchWithHardenedRetries(url: string, timeoutMs: number = 5000, m
           lastBseErrorDetails = `HTTP ${res.status} response from BSE`;
         }
 
+        if (res.status === 400) {
+          // Off-market hours or non-trading days where BSE API returns 400 for query params
+          return [];
+        }
         console.warn(`[POLLER] BSE request failed: HTTP ${res.status}`);
         if (res.status === 403) {
           // If BSE Akamai Edge WAF returned 403 Forbidden, retrying immediately

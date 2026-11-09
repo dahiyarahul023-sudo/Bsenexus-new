@@ -539,14 +539,20 @@ authRouter.post('/login', authRateLimiter, requireAppCheck, authAttempt(async (r
     const assessment = await verifyRecaptchaToken(
       recaptchaToken,
       'ADMIN_PIN',
-      context
+      context,
+      { minScore: 0.3 }
     );
     if (!assessment.valid) {
-      return res.status(400).json({
-        success: false,
-        error: assessment.userMessage || 'Security verification failed. Please try again.',
-        code: assessment.errorCode
-      });
+      if (assessment.errorCode === 'SCORE_BELOW_THRESHOLD' || assessment.errorCode === 'BLOCKED_SCRIPT') {
+        const scoreInfo = assessment.score !== undefined ? ` (score: ${assessment.score})` : '';
+        console.warn(`[Auth] reCAPTCHA advisory warning: ${assessment.errorCode}${scoreInfo}, proceeding to PIN verification`);
+      } else {
+        return res.status(400).json({
+          success: false,
+          error: assessment.userMessage || 'Security verification failed. Please try again.',
+          code: assessment.errorCode
+        });
+      }
     }
   }
 
@@ -657,14 +663,20 @@ authRouter.post('/verify-pin', authRateLimiter, requireAppCheck, authAttempt(asy
     const assessment = await verifyRecaptchaToken(
       recaptchaToken,
       'ADMIN_PIN',
-      context
+      context,
+      { minScore: 0.3 }
     );
     if (!assessment.valid) {
-      return res.status(400).json({
-        success: false,
-        error: assessment.userMessage || 'Security verification failed. Please try again.',
-        code: assessment.errorCode
-      });
+      if (assessment.errorCode === 'SCORE_BELOW_THRESHOLD' || assessment.errorCode === 'BLOCKED_SCRIPT') {
+        const scoreInfo = assessment.score !== undefined ? ` (score: ${assessment.score})` : '';
+        console.warn(`[Auth] reCAPTCHA advisory warning: ${assessment.errorCode}${scoreInfo}, proceeding to PIN verification`);
+      } else {
+        return res.status(400).json({
+          success: false,
+          error: assessment.userMessage || 'Security verification failed. Please try again.',
+          code: assessment.errorCode
+        });
+      }
     }
   }
 

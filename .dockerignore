@@ -1,0 +1,9 @@
+.git
+.github
+.aistudio
+node_modules
+rule/changes
+docs
+server/tests
+scripts/*.test.*
+*.log

@@ -28,7 +28,7 @@ export function createRadarReactionLearning(overrides:Partial<Dependencies>={}) 
     }
     if(!failed&&!checkpoint)await deps.cursor(batch.cursor,now);
    } catch{failed=true;}
-   finally{if(failed||contextFailures)retryAt=deps.now()+60000;deps.log(`[RadarResearch] ${JSON.stringify({saved,failed,contextFailures})}`);running=null;}
+   finally{if(failed||contextFailures){retryAt=deps.now()+60000;deps.log(`[RadarResearch] ${JSON.stringify({saved,failed,contextFailures})}`);}running=null;}
   })();return running;
  };
 }
