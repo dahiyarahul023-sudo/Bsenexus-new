@@ -677,7 +677,7 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
     };
   }, [calendarKey]);
 
-  useForegroundRefresh(() => fetchCalendar(false), 60_000, isActive !== false, calendarKey);
+  useForegroundRefresh(() => fetchCalendar(false), 120_000, isActive !== false, calendarKey);
   useEffect(() => {
     const reconcile = (event: Event) => {
       const detail = (event as CustomEvent).detail;

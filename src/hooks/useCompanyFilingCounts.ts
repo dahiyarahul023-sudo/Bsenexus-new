@@ -34,7 +34,7 @@ export function useCompanyFilingCounts(keys: string[], owner: string) {
     void refresh();
     const changed = () => { void refresh(); };
     const visible = () => { if (!document.hidden) void refresh(); };
-    const timer = setInterval(visible, 90_000);
+    const timer = setInterval(visible, 180_000);
     window.addEventListener('company-filings-changed', changed);
     window.addEventListener('online', visible);
     return () => { alive = false; activeRequest?.abort(); clearInterval(timer); window.removeEventListener('company-filings-changed', changed); window.removeEventListener('online', visible); };

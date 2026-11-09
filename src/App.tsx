@@ -940,10 +940,13 @@ function AppContent() {
     } catch (e) {}
   };
 
-  const isUserAdmin = Boolean(isAdmin || adminUnlocked || user?.isAdmin || profile?.tier === 'admin');
+  // /api/logs requires an ACTIVE 15-minute PIN elevation (server requireAdmin),
+  // not just the admin role. Polling on role alone 403s ~4,900x/day once the
+  // elevation lapses, so gate the poll on adminUnlocked (== isElevated).
+  const isElevatedAdmin = Boolean(adminUnlocked);
 
   const fetchLogs = async () => {
-    if (!isUserAdmin) return;
+    if (!isElevatedAdmin) return;
     try {
       const res = await customFetch('/api/logs?limit=400');
       if (res.ok) {
@@ -974,13 +977,13 @@ function AppContent() {
   }, []);
 
   useEffect(() => {
-    if (isUserAdmin) {
+    if (isElevatedAdmin) {
       fetchLogs();
     }
-  }, [isUserAdmin]);
+  }, [isElevatedAdmin]);
 
-  // Only poll /api/logs every 20s when the user is admin, with visibility gating
-  useVisibilityInterval(fetchLogs, 20000, isUserAdmin);
+  // Only poll /api/logs every 20s while the admin PIN elevation is active, with visibility gating
+  useVisibilityInterval(fetchLogs, 20000, isElevatedAdmin);
 
   const handleLogout = async () => {
     await logout();

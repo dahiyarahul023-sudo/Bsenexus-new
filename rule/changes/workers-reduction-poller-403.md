@@ -1,0 +1,58 @@
+# Change: Workers reduction — secondary-poller slowdown + 403 fix for /api/logs and /api/storage/quota-mode
+
+- Starting commit: fab8ea40 (GitHub main after 9 Nov 2026 AI Studio→GitHub sync, 4/4)
+- User objective and acceptance cases:
+  - Cloudflare Workers free quota is ~98k req/day vs the 100k limit (8 Nov 2026: 98,692 invocations; 6 Nov: 101,372 — over limit). User approved (8 Nov 13:39 IST) slowing SECONDARY pollers ~2x while the announcements feed stays at 12s and server TTL stays 3s. Expected saving ~15–20k/day (worker 30s cache already absorbs part of polling).
+  - /api/logs (~4,891 of 7,256 req/day 403) and /api/storage/quota-mode (~3,346 of 4,783 req/day 403) fail ~100% combined (~12k wasted req/day). Acceptance: after the fix, both endpoints stop 403ing in normal use; the quota banner keeps working for all users; the logs poll runs only while an admin PIN elevation is active.
+- Verified facts (file + symbol):
+  - Announcements feed polls every 12s: src/components/Announcements.tsx:556 (`setInterval`, limit=300, cache no-store). STAYS.
+  - unread-count 15s: src/hooks/useUnreadNotificationCount.ts: `useVisibilityInterval(refresh, 15000, Boolean(owner))` → 60s.
+  - quota-mode 30s: src/components/Layout.tsx:225 `useVisibilityInterval(checkQuotaStatus, 30000)` → 120s. StorageManager.tsx only fetches on mount/manual change (no interval).
+  - indices 60s: src/hooks/useMarketIndices.ts:109 `useVisibilityInterval(..., 60000)` → 120s (comment there says "Reduced from 15s to 60s").
+  - HomeForYou 60s: src/components/HomeForYou.tsx:308 `useVisibilityInterval(...,60000,...)` → 120s.
+  - HomeMarketNews 60s: src/components/HomeMarketNews.tsx:66 `useVisibilityInterval(refresh, 60_000, ...)` → 120s.
+  - ImpactRadar 60s: src/components/ImpactRadar.tsx:149 `useVisibilityInterval(refresh, 60_000, active)` → 120s.
+  - Watchlist 60s: src/components/WatchlistManager.tsx:972 `}, 60_000, isActive, ...)` → 120s.
+  - ResultsCalendar 60s: src/components/ResultsCalendar.tsx:680 `useForegroundRefresh(..., 60_000, ...)` → 120s.
+  - filing-counts 90s: src/hooks/useCompanyFilingCounts.ts:37 `setInterval(visible, 90_000)` → 180s.
+  - NewsPortal 45s: src/components/NewsPortal.tsx:504 `}, 45000);` → 90s.
+  - /api/logs is admin-only: server/api/routes.ts:359 `apiRouter.get("/logs", requireAdmin, ...)`. Client gate src/App.tsx:943 `isUserAdmin = Boolean(isAdmin || adminUnlocked || user?.isAdmin || profile?.tier === 'admin')` — a ROLE check. Server server/security/auth.ts:214 `requireAdmin` additionally demands `Number(user.adminElevatedUntil || 0) > Date.now()` (15-minute PIN elevation, auth.ts:585) — else 403 `adminElevationRequired`. AuthContext (src/context/AuthContext.tsx:1518-1519) exposes `isElevated = isAdmin && elevationExpiresAt > elevationClock` and `adminUnlocked = isElevated`. Root cause: the client polls on role alone; once the 15-min elevation lapses, every 20s poll 403s.
+  - /api/storage/quota-mode GET is admin-only: server/api/routes.ts:2021 `apiRouter.get("/storage/quota-mode", requireAdmin, ...)`. Layout polls it for EVERY visitor (no admin gate) because the quota-exceeded banner (src/components/Layout.tsx:693 `{quotaExceeded && !quotaBannerDismissed && (...)}`) is shown to all users. Root cause: admin-only endpoint polled unconditionally. GET returns only operational status {mode, isQuotaExceeded, isPermissionDenied, effectiveStorage} — no secrets, no user data. POST (routes.ts:2033) mutates the mode and stays admin-only.
+- Assumptions/unknowns and how they will be resolved:
+  - None material. The 403 counts come from the 9 Nov 2026 Cloudflare GraphQL audit (zone httpRequestsAdaptiveGroups, 8 Nov). Post-deploy verification: re-run the same GraphQL queries and compare daily 403 counts for these two paths.
+- Changed source of truth: poll intervals listed above (client); GET /storage/quota-mode authorization (server); /api/logs poll gating (client). No API contract shape changes; no schema changes.
+- Impact command and affected semantic domains: `npm run map:impact -- src/App.tsx src/components/Layout.tsx src/hooks/useUnreadNotificationCount.ts src/hooks/useCompanyFilingCounts.ts src/hooks/useMarketIndices.ts src/components/HomeForYou.tsx src/components/HomeMarketNews.tsx src/components/ImpactRadar.tsx src/components/WatchlistManager.tsx src/components/ResultsCalendar.tsx src/components/NewsPortal.tsx server/api/routes.ts`
+- Related consumers: API, UI, storage/RPC, jobs, caches, manual copy:
+  - /api/logs consumers: LogsTab (admin-only viewer), App health state (bse/telegram health shown in admin UI). No public consumer.
+  - /api/storage/quota-mode consumers: Layout quota banner (all users), StorageManager (admin panel, mount + manual POST). POST unchanged.
+  - Pollers: all are visibility-gated (useVisibilityInterval / useForegroundRefresh / setInterval with document.hidden check); hidden tabs already pause.
+- For each relevant consumer: changed / reviewed-and-compatible / blocked, with evidence:
+  - LogsTab: compatible — data loads only while elevated; the PIN dialog path is unchanged (Settings → Administration → Admin Master Key).
+  - Layout quota banner: compatible — still fed by the same GET, now 200 for all users at 120s.
+  - StorageManager: compatible — same GET/POST, POST still requireAdmin.
+  - Announcements feed: unchanged (12s) — the product's speed edge is preserved.
+- Assignment scope: frontend (poll intervals + logs gate) + backend (quota-mode GET authorization). No API contract change.
+- Frontend: routes — none added/removed; state owner — each poller keeps its own refresh state; events — no new browser events; styles/tokens — none.
+- UI state/device matrix: interval-only change; no visual change. Browser verification is the Cloudflare request-count check after deploy (no screenshot proves a poll interval). Local tsc + build + map checks run before push.
+- Expected user-visible effect: no visible change except the quota banner now actually works for non-admin users (it previously never received a 200). Admin logs view loads only during an active PIN elevation (as the server already enforced); outside it, no wasted 403 polls.
+- Failure/security/concurrency cases relevant to this change:
+  - requireAdmin for GET /storage/quota-mode is REMOVED deliberately: the response is app-level operational status, not user data or a secret; the mutation (POST) keeps requireAdmin. The pen-test guard list (server/security/hardening.ts) does not include quota-mode.
+  - /api/logs keeps requireAdmin (role + elevation) unchanged on the server; only the client stops polling when not elevated. Elevation-boundary races may still produce a handful of 403s per PIN session — negligible vs ~4,900/day.
+  - No retry/idempotency concerns: all changed calls are idempotent GETs or interval timers.
+- Implementation and coordinated updates:
+  - 11 interval edits (list above) + App.tsx logs gate (`isUserAdmin` → elevation-gated `adminUnlocked` for the logs poll only) + routes.ts GET quota-mode (drop requireAdmin, comment why).
+  - This change record + `npm run map:generate` in the same commit. No domain membership changes (no new files/symbols).
+- Commands actually run and results:
+  - `npm run map:impact -- <12 changed paths>` — ran before editing; domains touched: identity, trial-quota, storage, operations, user-data, frontend-session, frontend-feed, feed-alerts, market-data, impact-radar (+ others); relevant candidate tests: adminPin, adminQuotaFlow, storageQuotaSwitch, notificationCountApi.
+  - `npm run map:generate` — exit 0; 673 files, 1748 import edges, 27 semantic domains; 4 computed imports need manual review (standing note).
+  - `npm run map:check` — exit 0; verified 673 files / 1748 edges / 27 domains.
+  - `npm run test:map` — 6 pass, 0 fail.
+  - Targeted server tests (adminPin, adminQuotaFlow, storageQuotaSwitch, notificationCountApi) — 26 pass, 0 fail.
+  - `npx tsc --noEmit` (lint) — 0 errors.
+  - `npm run build` — exit 0; startup budget passed (634,385 raw / 177,599 gzip), Public Home budget passed. (Build bumped local version.ts to 2.6.86 via prebuild; reverted to 2.6.85 in the work tree — version.ts is NOT part of this push.)
+- Required checks unavailable (reason; do not mark passed): live Cloudflare verification needs deploy + a day of traffic; browser matrix not applicable (no visual change).
+- Deployment/migration requirements and rollback: push to GitHub main; AI Studio is NOT linked to any repo (verified 9 Nov 2026), so Republish needs a separate decision. Rollback: revert the commit; intervals and gates return to previous values.
+- Remaining risks and next bounded step: 504 origin slowness (18,006 on 8 Nov) is a separate investigation, not this change. Next: re-run Cloudflare GraphQL after deploy to confirm the daily drop.
+- Graph/domain/documentation refreshed: spider-map.json + spider-map.html regenerated via `npm run map:generate` (673 files, 1748 edges, 27 domains); `map:check` + `test:map` pass. No domain membership changes (no new files/symbols).
+
+- Delivery status: commit / merge / CI / deployment, reported separately.

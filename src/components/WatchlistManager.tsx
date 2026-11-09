@@ -969,7 +969,7 @@ export function WatchlistManager({ isActive = true }: { isActive?: boolean } = {
         setResultCalendar({owner: account, items: data.items});
       } catch { if (!controller.signal.aborted && accountRef.current === account) setResultCalendar({owner: account, items: []}); }
     })()]);
-  }, 60_000, isActive, `${accountId}:${activeSymbols.join(',')}`);
+  }, 120_000, isActive, `${accountId}:${activeSymbols.join(',')}`);
   useEffect(() => () => { feedRequest.current?.abort(); resultRead.current?.abort(); }, [accountId]);
 
   useEffect(() => {

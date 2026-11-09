@@ -146,7 +146,7 @@ export function ImpactRadar({ active, identity, onNavigate, density, watched = [
     window.addEventListener('online', resume); window.addEventListener('pageshow', resume);
     return () => { feed.dispose(); document.removeEventListener('visibilitychange', visibility); window.removeEventListener('bse_nav_tab_refresh', nav); window.removeEventListener('online', resume); window.removeEventListener('pageshow', resume); };
   }, [active, feed, refresh]);
-  useVisibilityInterval(refresh, 60_000, active);
+  useVisibilityInterval(refresh, 120_000, active);
   useVisibilityInterval(() => setNow(Date.now()), 15_000, active);
   const tracked = useMemo(() => new Set(state.following), [state.following]);
   const watchedSet = useMemo(() => new Set(watched.map(s => s.toUpperCase())), [watched]);

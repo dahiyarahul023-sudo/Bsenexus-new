@@ -21,7 +21,7 @@ export function useUnreadNotificationCount(owner: string | null) {
     return () => counter.current!.setOwner(null);
   }, [owner, refresh]);
 
-  useVisibilityInterval(refresh, 15000, Boolean(owner));
+  useVisibilityInterval(refresh, 60000, Boolean(owner));
   const count = owner && snapshot.owner === owner ? snapshot.count : null;
   useEffect(() => {
     // Installed iPhone apps and supporting desktop browsers use the same

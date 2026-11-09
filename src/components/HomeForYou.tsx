@@ -305,7 +305,7 @@ export function HomeForYou({ onNavigate, isActive = true }: HomeForYouProps) {
     finally { clearTimeout(timeout); if(addingRef.current===token)addingRef.current=null; if (current()) setAddingStock(null); }
   };
 
-  useVisibilityInterval(()=>setHomeRefresh(value=>value+1),60000,isActive);
+  useVisibilityInterval(()=>setHomeRefresh(value=>value+1),120000,isActive);
   const sameIdentity = loadedIdentity.current === identity;
   const trackedCompanyCount = activeWatchlistIdentities(watchlists).length;
   const personalTerms = sameIdentity && watchlistStatus==='ready' ? watchlistTerms(watchlists) : [];

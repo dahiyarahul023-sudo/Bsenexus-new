@@ -494,14 +494,14 @@ export const NewsPortal: React.FC<NewsPortalProps> = ({
     }
   });
 
-  // Shared 45s visibility-gated background polling
+  // Shared 90s visibility-gated background polling
   useVisibilityInterval(() => {
     if (activeSubTab === 'general') {
       fetchGeneralNewsData(false, selectedSource);
     } else {
       fetchWatchlistNewsData(selectedSource);
     }
-  }, 45000);
+  }, 90000);
 
   // Reset pagination on filter change
   useEffect(() => {

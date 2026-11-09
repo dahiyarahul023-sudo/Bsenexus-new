@@ -222,7 +222,7 @@ export function Layout({
     checkQuotaStatus();
   }, []);
 
-  useVisibilityInterval(checkQuotaStatus, 30000);
+  useVisibilityInterval(checkQuotaStatus, 120000);
 
   const handleOpenCompanyIntel = (scripCode?: string, symbol?: string, companyName?: string) => {
     openIntelModal({ scripCode, symbol, companyName });

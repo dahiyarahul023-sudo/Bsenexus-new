@@ -103,10 +103,11 @@ export function useMarketIndices() {
     fetchIndices();
   }, [fetchIndices]);
 
-  // Reduced from 15s to 60s smooth live polling with visibility gating
+  // Reduced from 15s to 120s smooth live polling with visibility gating
+  // (Workers quota: secondary pollers run at half rate; feed stays 12s)
   useVisibilityInterval(() => {
     fetchIndices(true);
-  }, 60000);
+  }, 120000);
 
   return {
     ...data,

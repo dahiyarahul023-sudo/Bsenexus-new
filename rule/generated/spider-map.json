@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "4b5d3fa12545d369bca3e6ef7bfd10415844559ef5f872864412c9a05fe904da",
+  "sourceDigest": "c0d3b95951db1c57db44f1e7106e72a5a7fed46f0890cce55c8734e15ae10fdf",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -30,7 +30,7 @@
     },
     {
       "path": "index.html",
-      "sha256": "8423a9a92bdc696132cf12768ab672300bb4e3c164e8ab9f26374e340dbe03da",
+      "sha256": "32bfcc6d94884d932a7b5ed88eec4c27f1916ab840089773305bc372dbd0494a",
       "importedBy": []
     },
     {
@@ -40,12 +40,12 @@
     },
     {
       "path": "package-lock.json",
-      "sha256": "00d8e2fa9446d65cf7a43c9b979872f5d79e9707f30b297263988a6632c183e0",
+      "sha256": "46ee315e02ba3c45f9f1eb6f33ab369118d0f679e136dd97b4aace78c73ef3f5",
       "importedBy": []
     },
     {
       "path": "package.json",
-      "sha256": "4e896c136498c2f12967440dde0e0140760646cd94d800a410c23cab63711eec",
+      "sha256": "1287e97c647e543131ed327dc0aacd748c4c7803b0cd814e453b826ad8767b50",
       "importedBy": []
     },
     {
@@ -145,7 +145,7 @@
     },
     {
       "path": "scripts/check-performance-budget.mjs",
-      "sha256": "b0a8532feb56ae22fcba19cc390ab7e0e5a84b84cdb063d3288f564ebefa1276",
+      "sha256": "1c3c9de2e0f3b4a4eb55a986d4ef47695caa5e08e914bd74f79a44cc800d7d5f",
       "importedBy": [
         "server/tests/performanceBudget.test.ts"
       ]
@@ -157,12 +157,12 @@
     },
     {
       "path": "scripts/generateIcons.ts",
-      "sha256": "37accaf2d33bca44a0567f13643bcbd3719e2ca8b978c9249efc88622d226f35",
+      "sha256": "8eb91045c5fe7e6d7aa64a6d30b13b1739634f1a4df4340935bf0b1648123d07",
       "importedBy": []
     },
     {
       "path": "scripts/generateScreenshots.ts",
-      "sha256": "31e302abd3690c037f26166026099ed51c3e2d77f72ae442c7e0a873ff6aefe9",
+      "sha256": "a4e2c496ef79b2d737a99e87bd78b813751d8939711fe39e2078448c4b3328b0",
       "importedBy": []
     },
     {
@@ -493,7 +493,7 @@
     },
     {
       "path": "server/api/routes.ts",
-      "sha256": "eda3becda235272198d703d3173c6afc30daed88f7102654225c29c023f92bdb",
+      "sha256": "8c668d1fdab9ccc03a66c7514a92dadd9e4374be5110eae5b0154c4cd9a4beeb",
       "importedBy": [
         "server.ts",
         "server/tests/aiQuotaAdmin.test.ts",
@@ -1002,7 +1002,7 @@
     },
     {
       "path": "server/security/auth.ts",
-      "sha256": "6a12c2b32a09eddb417fffc990bc50dd9043a877a86693ff9abb66f1f9c9b542",
+      "sha256": "383d99749383ac2c082f8851b43a4cf6ea8871fab610be6beedc8c847d2b30c6",
       "importedBy": [
         "server.ts",
         "server/ai/http.ts",
@@ -1197,7 +1197,7 @@
     },
     {
       "path": "server/services/bse.ts",
-      "sha256": "3b958bd8df8f479eab66b7721f534ef9421489a8141b151e221aaf410e0401c4",
+      "sha256": "12f1b63ec6aa31010ea9999c3808c53fddc295aefe8d17c7b2ec397c8a229602",
       "importedBy": [
         "server.ts",
         "server/api/routes.ts",
@@ -1501,7 +1501,7 @@
     },
     {
       "path": "server/services/radarReactionLearning.ts",
-      "sha256": "f24ef746088f6898a99c8fce82efcd980c7a30ba4a1b9c3e46b55748e3bdd8d6",
+      "sha256": "2b436cb0de5ccad1156e3a557ae2d0930cb2f1dee7a8614fd501821eaabdb6b7",
       "importedBy": [
         "server/services/radarPriceSync.ts",
         "server/tests/radarMateriality.test.ts",
@@ -1825,7 +1825,7 @@
     },
     {
       "path": "server/tests/avatar.test.ts",
-      "sha256": "bb01673785aa66d211275433ac34447676928cfcb89883d3dee4d42d99c9b148",
+      "sha256": "e1996d236f8d5a36c426a98d14d0e4413aff362e648835ddde7b040063882b5f",
       "importedBy": []
     },
     {
@@ -2832,7 +2832,7 @@
     },
     {
       "path": "src/App.tsx",
-      "sha256": "528ffa9b758496b3433454e89671c49604e611f2b0876bd7fc64500a60e7e938",
+      "sha256": "d8c69624b913f750c1d1cb14a26bfea7459852b2c31ee1f5ba6b418403ba0281",
       "importedBy": [
         "src/main.tsx"
       ]
@@ -3036,7 +3036,7 @@
     },
     {
       "path": "src/components/HomeForYou.tsx",
-      "sha256": "d92dd3c2ef67b00571aa7ada2b4a72217c24423b7456ae1d15d6b6ea7012993a",
+      "sha256": "7a7cfd13482708bd36acf25cc90cd2dc3d36c4ee24ba8e44bc03061ba7a8b470",
       "importedBy": [
         "src/App.tsx",
         "src/components/Layout.tsx"
@@ -3044,14 +3044,14 @@
     },
     {
       "path": "src/components/HomeMarketNews.tsx",
-      "sha256": "39e399dcbbd33f1040ce0e4a14dadb5d2edbd2032b06092f2a244aa97470bf58",
+      "sha256": "79e0736a2e9b9dae72133928714405041144acc782e2ea9e540bb4f2af3d8b4c",
       "importedBy": [
         "src/components/HomeForYou.tsx"
       ]
     },
     {
       "path": "src/components/ImpactRadar.tsx",
-      "sha256": "85497f441a97e43756c309214aa9e9a17f4edc110f74488d4d444fe9ca02dada",
+      "sha256": "944b6cd23fc4400e195041e85ea12a027f79e78d9c3ef20f63348671dafbc433",
       "importedBy": [
         "src/components/HomeForYou.tsx"
       ]
@@ -3065,7 +3065,7 @@
     },
     {
       "path": "src/components/Layout.tsx",
-      "sha256": "a02cdf209bfebc462ad35072857db6e7ab3b20a183ebde6e7db7b0c8bc1510c9",
+      "sha256": "5403e3526eac049b470669151519577830aefb74637d218f236cb986a540c94c",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -3091,7 +3091,7 @@
     },
     {
       "path": "src/components/NewsPortal.tsx",
-      "sha256": "c5ff66a5f524ee0cf4857957e33c053205425d4efb7105113a9c75b3665cc8a5",
+      "sha256": "f5944f54d21b9a93fe01bb4e4cdf9aa9715b59b33b28d7a9c15f5dfd4eeed675",
       "importedBy": [
         "src/App.tsx",
         "src/components/Layout.tsx"
@@ -3201,7 +3201,7 @@
     },
     {
       "path": "src/components/ResultsCalendar.tsx",
-      "sha256": "784f3f51587be3121b754b21897ccbde684cc55ff2da21ce4eb1f64268b7ea33",
+      "sha256": "547994be9c4d11465ac2e74daaaad7e7f066ff93f8031ad7608ef9b1e905a0a1",
       "importedBy": [
         "src/App.tsx",
         "src/components/Layout.tsx"
@@ -3290,7 +3290,7 @@
     },
     {
       "path": "src/components/WatchlistManager.tsx",
-      "sha256": "954ddd74506bd2bae679b4c6ccfe6df5593a79482872a650a5a96300bf927f5d",
+      "sha256": "79bd5549b111eedb231c6ab0edaae02200e13f5e23abf9eb42418e410377a1a2",
       "importedBy": [
         "src/App.tsx",
         "src/components/Layout.tsx"
@@ -3539,6 +3539,27 @@
       ]
     },
     {
+      "path": "src/components/special/SpecialDayBanner.tsx",
+      "sha256": "2ddd53f90f8444f05ee16596b116f22df9c39708a5dd99290dd36508858aed3f",
+      "importedBy": [
+        "src/components/Layout.tsx"
+      ]
+    },
+    {
+      "path": "src/components/special/SpecialDayCardTemplate.tsx",
+      "sha256": "d874da7cf338cba90b60e6a80382ff721c6708451004833b81972feb25432886",
+      "importedBy": [
+        "src/components/special/SpecialDayStoryModal.tsx"
+      ]
+    },
+    {
+      "path": "src/components/special/SpecialDayStoryModal.tsx",
+      "sha256": "54ebf4bdbb693ec78edbe4d1bebf731f259d941c450da380b7afb74c3348204d",
+      "importedBy": [
+        "src/components/Layout.tsx"
+      ]
+    },
+    {
       "path": "src/components/story/StoryArtwork.tsx",
       "sha256": "ae95079f1d3cea84168be222c3838b72b747904daf1f408976695811f47fc612",
       "importedBy": [
@@ -3721,6 +3742,7 @@
         "src/components/TrustPages.tsx",
         "src/components/landing/CreativeHero.tsx",
         "src/components/landing/LandingFooterAbout.tsx",
+        "src/components/special/SpecialDayStoryModal.tsx",
         "src/components/ui/ModernAuthCard.tsx"
       ]
     },
@@ -4102,6 +4124,16 @@
       ]
     },
     {
+      "path": "src/config/specialDay.ts",
+      "sha256": "c5a47b0faa873102a098373851e9463e13d30eb5b3e51c2d91f0b567c5b7fa40",
+      "importedBy": [
+        "src/components/Layout.tsx",
+        "src/components/special/SpecialDayBanner.tsx",
+        "src/components/special/SpecialDayCardTemplate.tsx",
+        "src/components/special/SpecialDayStoryModal.tsx"
+      ]
+    },
+    {
       "path": "src/config/topCompanies.ts",
       "sha256": "c0ee163dd0f2e89252acb45d1583ab4955e163d3e7d719e0b4dae9c8aedab6b2",
       "importedBy": [
@@ -4121,7 +4153,7 @@
     },
     {
       "path": "src/context/AuthContext.tsx",
-      "sha256": "ac44155b172a4afd81967cf91e5b48510f866cef1ca653ca8d7b0fc0f3eb4706",
+      "sha256": "f6b57a2d75010bcafc68c59ff6e6386aa2a45c6130cc490c85aa17331cc2b605",
       "importedBy": [
         "src/App.tsx",
         "src/components/AdminDiagnostics.tsx",
@@ -4228,6 +4260,7 @@
         "src/components/UserProfileModal.tsx",
         "src/components/WatchlistManager.tsx",
         "src/components/notes/useNoteDialog.ts",
+        "src/components/special/SpecialDayStoryModal.tsx",
         "src/components/ui/CommandPalette.tsx",
         "src/components/ui/ConfirmModal.tsx",
         "src/components/ui/MarketHolidaysModal.tsx",
@@ -4245,7 +4278,7 @@
     },
     {
       "path": "src/hooks/useCompanyFilingCounts.ts",
-      "sha256": "8f3cd0d3d996bf1755fe6bca2b11fdfc339a15d3db2e0111f71091e041cd9421",
+      "sha256": "cb5fdf0bb5b38d00baa89167f4020d72e2d46e8c0b0bd4171f61318a9b8e56ae",
       "importedBy": [
         "src/components/WatchlistManager.tsx"
       ]
@@ -4282,7 +4315,7 @@
     },
     {
       "path": "src/hooks/useMarketIndices.ts",
-      "sha256": "533ed2f6622e63ffa0f5c19bb6f2d1adfe6a7af36eae80224458d956c571f8fc",
+      "sha256": "315b11072c581d08dceee6edd38411ac6701516e2830ba871da1a7e51368b597",
       "importedBy": [
         "src/components/ui/MarketTickerTape.tsx"
       ]
@@ -4336,7 +4369,7 @@
     },
     {
       "path": "src/hooks/useUnreadNotificationCount.ts",
-      "sha256": "6b21a547e0725220be0277911d5a5b75aa3c8c4c22ea4dd4d8ec3485743920b3",
+      "sha256": "8f505ccaf057e855adc0934aae460c684ec75c0dcb6aea1706630013588a1569",
       "importedBy": [
         "src/components/Layout.tsx"
       ]
@@ -5319,7 +5352,7 @@
     },
     {
       "path": "src/version.ts",
-      "sha256": "4a919ed1cde4f330fd8bdccdac4db5316a1f49222fc0e7aad325d44cdadcf1e6",
+      "sha256": "ede5195c4b2d306690463266b94e2c1505e0c8f5dffd8f81bc46e79a477075a4",
       "importedBy": [
         "src/components/SettingsTab.tsx",
         "src/lib/sentry.ts"
@@ -11648,13 +11681,13 @@
       "source": "src/App.tsx",
       "target": "src/components/AuthModal.tsx",
       "kind": "dynamic",
-      "line": 938
+      "line": 973
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/Layout.tsx",
       "kind": "dynamic",
-      "line": 939
+      "line": 974
     },
     {
       "source": "src/api.ts",
@@ -13026,39 +13059,57 @@
     },
     {
       "source": "src/components/Layout.tsx",
-      "target": "src/components/SettingsTab.tsx",
-      "kind": "dynamic",
+      "target": "src/components/special/SpecialDayBanner.tsx",
+      "kind": "import",
+      "line": 63
+    },
+    {
+      "source": "src/components/Layout.tsx",
+      "target": "src/components/special/SpecialDayStoryModal.tsx",
+      "kind": "import",
+      "line": 64
+    },
+    {
+      "source": "src/components/Layout.tsx",
+      "target": "src/config/specialDay.ts",
+      "kind": "import",
       "line": 65
     },
     {
       "source": "src/components/Layout.tsx",
-      "target": "src/components/Announcements.tsx",
-      "kind": "dynamic",
-      "line": 66
-    },
-    {
-      "source": "src/components/Layout.tsx",
-      "target": "src/components/HomeForYou.tsx",
-      "kind": "dynamic",
-      "line": 67
-    },
-    {
-      "source": "src/components/Layout.tsx",
-      "target": "src/components/WatchlistManager.tsx",
+      "target": "src/components/SettingsTab.tsx",
       "kind": "dynamic",
       "line": 68
     },
     {
       "source": "src/components/Layout.tsx",
-      "target": "src/components/ResultsCalendar.tsx",
+      "target": "src/components/Announcements.tsx",
       "kind": "dynamic",
       "line": 69
     },
     {
       "source": "src/components/Layout.tsx",
-      "target": "src/components/NewsPortal.tsx",
+      "target": "src/components/HomeForYou.tsx",
       "kind": "dynamic",
       "line": 70
+    },
+    {
+      "source": "src/components/Layout.tsx",
+      "target": "src/components/WatchlistManager.tsx",
+      "kind": "dynamic",
+      "line": 71
+    },
+    {
+      "source": "src/components/Layout.tsx",
+      "target": "src/components/ResultsCalendar.tsx",
+      "kind": "dynamic",
+      "line": 72
+    },
+    {
+      "source": "src/components/Layout.tsx",
+      "target": "src/components/NewsPortal.tsx",
+      "kind": "dynamic",
+      "line": 73
     },
     {
       "source": "src/components/Login.tsx",
@@ -14979,6 +15030,42 @@
       "target": "src/components/seo/types.ts",
       "kind": "import",
       "line": 1
+    },
+    {
+      "source": "src/components/special/SpecialDayBanner.tsx",
+      "target": "src/config/specialDay.ts",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "src/components/special/SpecialDayCardTemplate.tsx",
+      "target": "src/config/specialDay.ts",
+      "kind": "import",
+      "line": 13
+    },
+    {
+      "source": "src/components/special/SpecialDayStoryModal.tsx",
+      "target": "src/hooks/useBodyScrollLock.ts",
+      "kind": "import",
+      "line": 14
+    },
+    {
+      "source": "src/components/special/SpecialDayStoryModal.tsx",
+      "target": "src/components/ui/BseNexusLogo.tsx",
+      "kind": "import",
+      "line": 15
+    },
+    {
+      "source": "src/components/special/SpecialDayStoryModal.tsx",
+      "target": "src/components/special/SpecialDayCardTemplate.tsx",
+      "kind": "import",
+      "line": 16
+    },
+    {
+      "source": "src/components/special/SpecialDayStoryModal.tsx",
+      "target": "src/config/specialDay.ts",
+      "kind": "import",
+      "line": 17
     },
     {
       "source": "src/components/story/StoryArtwork.tsx",
@@ -19554,18 +19641,17 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2021,
+      "line": 2025,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/storage/quota-mode",
       "middleware": [
-        "requireAdmin",
         "<handler>"
       ]
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2033,
+      "line": 2037,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/storage/quota-mode",
@@ -19576,7 +19662,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2058,
+      "line": 2062,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/storage/reset-quota",
@@ -19587,7 +19673,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2071,
+      "line": 2075,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/storage/reset-permission",
@@ -19598,7 +19684,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2084,
+      "line": 2088,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/admin/announcements/prune-percentage",
@@ -19609,7 +19695,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2115,
+      "line": 2119,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/stock-results-history",
@@ -19619,7 +19705,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2134,
+      "line": 2138,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/stocks/:scripCode/fetch-deep-history",
@@ -19631,7 +19717,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2147,
+      "line": 2151,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/stocks/:scripCode/fetch-deep-history",
@@ -19642,7 +19728,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2157,
+      "line": 2161,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/watchlist/fetch-deep-history",
@@ -19654,7 +19740,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2168,
+      "line": 2172,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/stocks/:scripCode/boost-runup-priority",
@@ -19665,7 +19751,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2180,
+      "line": 2184,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/stocks/:scripCode/runup-announcements",
@@ -19675,7 +19761,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2194,
+      "line": 2198,
       "receiver": "apiRouter",
       "method": "PATCH",
       "path": "/watchlists/symbols/:symbol/priority-sync",
@@ -19686,7 +19772,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2211,
+      "line": 2215,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/help/ask-ai",
@@ -19698,7 +19784,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2228,
+      "line": 2232,
       "receiver": "apiRouter",
       "method": "USE",
       "path": "pdfOpenRouter",
@@ -19706,7 +19792,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2234,
+      "line": 2238,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/company-filing-counts",
@@ -19716,7 +19802,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2246,
+      "line": 2250,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/company-intel/:identifier",
@@ -19726,7 +19812,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2259,
+      "line": 2263,
       "receiver": "apiRouter",
       "method": "ALL",
       "path": "/company-intel/:identifier/ai-overview",
@@ -19738,7 +19824,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2324,
+      "line": 2328,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/stocks/:symbol/quote",
@@ -19748,7 +19834,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2340,
+      "line": 2344,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/material-events",
@@ -19758,7 +19844,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2378,
+      "line": 2382,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/notifications",
@@ -19768,7 +19854,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2408,
+      "line": 2412,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/notifications/unread-count",
@@ -19779,7 +19865,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2427,
+      "line": 2431,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/notifications/:id/read",
@@ -19790,7 +19876,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2437,
+      "line": 2441,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/notifications/read-batch",
@@ -19801,7 +19887,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2448,
+      "line": 2452,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/notifications/read-all",
@@ -19812,7 +19898,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2458,
+      "line": 2462,
       "receiver": "apiRouter",
       "method": "DELETE",
       "path": "/notifications",
@@ -19823,7 +19909,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2468,
+      "line": 2472,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/notifications/toggle-mute",
@@ -19834,7 +19920,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2527,
+      "line": 2531,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/alert-rules",
@@ -19845,7 +19931,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2538,
+      "line": 2542,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/alert-rules",
@@ -19856,7 +19942,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2548,
+      "line": 2552,
       "receiver": "apiRouter",
       "method": "PATCH",
       "path": "/alert-rules/:id/toggle",
@@ -19867,7 +19953,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2559,
+      "line": 2563,
       "receiver": "apiRouter",
       "method": "DELETE",
       "path": "/alert-rules/:id",
@@ -19878,7 +19964,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2569,
+      "line": 2573,
       "receiver": "apiRouter",
       "method": "PUT",
       "path": "/alert-rules/presets",
@@ -19889,7 +19975,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2578,
+      "line": 2582,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/market/indices",
@@ -19900,7 +19986,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2591,
+      "line": 2595,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/market/status",
@@ -19911,7 +19997,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2613,
+      "line": 2617,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/telemetry/event",
@@ -19922,7 +20008,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2648,
+      "line": 2652,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/admin/diagnostics",
@@ -19933,7 +20019,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2674,
+      "line": 2678,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/admin/diagnostics/clear",
@@ -19944,7 +20030,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2684,
+      "line": 2688,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/admin/diagnostics/test-alert",
@@ -19955,7 +20041,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2721,
+      "line": 2725,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/admin/diagnostics/approved-bugs",
@@ -19966,7 +20052,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2731,
+      "line": 2735,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/admin/diagnostics/approved-bugs",
@@ -19977,7 +20063,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2745,
+      "line": 2749,
       "receiver": "apiRouter",
       "method": "DELETE",
       "path": "/admin/diagnostics/approved-bugs/:id",
@@ -19988,7 +20074,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2755,
+      "line": 2759,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/admin/diagnostics/toggle-mute-alerts",
@@ -19999,7 +20085,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2772,
+      "line": 2776,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/security/audit",
@@ -20010,7 +20096,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2783,
+      "line": 2787,
       "receiver": "apiRouter",
       "method": "POST",
       "path": "/security/pen-test",
@@ -20021,7 +20107,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2794,
+      "line": 2798,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/admin/bloom-stats",
@@ -20032,7 +20118,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2804,
+      "line": 2808,
       "receiver": "apiRouter",
       "method": "GET",
       "path": "/admin/bloom-test",
@@ -20251,7 +20337,7 @@
     },
     {
       "file": "server/security/auth.ts",
-      "line": 612,
+      "line": 618,
       "receiver": "authRouter",
       "method": "POST",
       "path": "/verify-pin",
@@ -20263,7 +20349,7 @@
     },
     {
       "file": "server/security/auth.ts",
-      "line": 725,
+      "line": 737,
       "receiver": "authRouter",
       "method": "POST",
       "path": "/logout",
@@ -20273,7 +20359,7 @@
     },
     {
       "file": "server/security/auth.ts",
-      "line": 730,
+      "line": 742,
       "receiver": "authRouter",
       "method": "GET",
       "path": "/status",
@@ -21602,37 +21688,37 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 470,
+      "line": 488,
       "function": "fetch",
       "target": "'/api/referrals/track-visit'"
     },
     {
       "file": "src/App.tsx",
-      "line": 869,
+      "line": 893,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/App.tsx",
-      "line": 886,
+      "line": 918,
       "function": "customFetch",
       "target": "'/auth/status'"
     },
     {
       "file": "src/App.tsx",
-      "line": 906,
+      "line": 938,
       "function": "customFetch",
       "target": "'/api/settings'"
     },
     {
       "file": "src/App.tsx",
-      "line": 916,
+      "line": 951,
       "function": "customFetch",
       "target": "'/api/logs?limit=400'"
     },
     {
       "file": "src/App.tsx",
-      "line": 960,
+      "line": 995,
       "function": "customFetch",
       "target": "'/api/toggle'"
     },
@@ -21860,19 +21946,19 @@
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 191,
+      "line": 264,
       "function": "customFetch",
       "target": "`/api/search-company?q=${encodeURIComponent(modalSearch.trim())}`"
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 215,
+      "line": 288,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 224,
+      "line": 297,
       "function": "customFetch",
       "target": "`/api/watchlists/${encodeURIComponent(target.id)}/symbols`"
     },
@@ -21896,13 +21982,13 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 205,
+      "line": 209,
       "function": "customFetch",
       "target": "'/api/storage/quota-mode'"
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 676,
+      "line": 680,
       "function": "customFetch",
       "target": "'/api/health'"
     },
@@ -22250,133 +22336,133 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 718,
+      "line": 726,
       "function": "customFetch",
       "target": "'/api/watchlists/sync?mode=background'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 776,
+      "line": 784,
       "function": "customFetch",
       "target": "'/api/send-to-telegram-manual'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 827,
+      "line": 835,
       "function": "customFetch",
       "target": "`/api/announcements/${id}/generate-summary`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 880,
+      "line": 888,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 923,
+      "line": 934,
       "function": "customFetch",
       "target": "url"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 954,
+      "line": 965,
       "function": "customFetch",
       "target": "'/api/results-calendar?filter=today&scope=watchlist'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 989,
+      "line": 1000,
       "function": "customFetch",
       "target": "'/api/stock-master'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1019,
+      "line": 1030,
       "function": "customFetch",
       "target": "`/api/search-company?q=${encodeURIComponent(query)}`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1058,
+      "line": 1069,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1081,
+      "line": 1092,
       "function": "customFetch",
       "target": "`/api/watchlists/${id}/name`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1101,
+      "line": 1112,
       "function": "customFetch",
       "target": "`/api/watchlists/${id}`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1113,
+      "line": 1124,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1126,
+      "line": 1137,
       "function": "customFetch",
       "target": "`/api/watchlists/${created.id}/symbols`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1166,
+      "line": 1177,
       "function": "customFetch",
       "target": "`/api/watchlists/${id}/toggle`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1264,
+      "line": 1275,
       "function": "customFetch",
       "target": "`/api/watchlists/${targetList.id}/symbols`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1294,
+      "line": 1305,
       "function": "customFetch",
       "target": "'/api/watchlists/sync-stock'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1354,
+      "line": 1365,
       "function": "customFetch",
       "target": "`/api/watchlists/${targetId}/symbols/bulk`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1381,
+      "line": 1392,
       "function": "customFetch",
       "target": "'/api/watchlists/sync-stock'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1422,
+      "line": 1433,
       "function": "customFetch",
       "target": "`/api/watchlists/symbols/${encodeURIComponent(currentItem.symbol)}/priority-sync`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1468,
+      "line": 1479,
       "function": "customFetch",
       "target": "`/api/watchlists/${listId}/symbols`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1488,
+      "line": 1499,
       "function": "customFetch",
       "target": "`/api/watchlists/${listId}/symbols/${encodeURIComponent(symbol)}`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 3428,
+      "line": 3439,
       "function": "customFetch",
       "target": "url"
     },
@@ -22484,79 +22570,79 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 239,
+      "line": 330,
       "function": "customFetch",
       "target": "'/auth/status'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 367,
+      "line": 488,
       "function": "customFetch",
       "target": "'/auth/session'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 397,
+      "line": 512,
       "function": "customFetch",
       "target": "'/api/users/profile'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 870,
+      "line": 1016,
       "function": "customFetch",
       "target": "'/auth/verify-pin'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 913,
+      "line": 1059,
       "function": "customFetch",
       "target": "'/auth/session'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 938,
+      "line": 1084,
       "function": "customFetch",
       "target": "'/auth/logout'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 999,
+      "line": 1145,
       "function": "customFetch",
       "target": "`/api/users/check-username?username=${encodeURIComponent(clean)}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1097,
+      "line": 1243,
       "function": "customFetch",
       "target": "'/api/users/profile'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1165,
+      "line": 1311,
       "function": "customFetch",
       "target": "'/api/users/profile'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1241,
+      "line": 1387,
       "function": "customFetch",
       "target": "'/api/users/telegram/settings'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1263,
+      "line": 1409,
       "function": "customFetch",
       "target": "'/api/users/profile'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1320,
+      "line": 1466,
       "function": "customFetch",
       "target": "'/api/users/profile'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1348,
+      "line": 1494,
       "function": "customFetch",
       "target": "'/api/users/profile'"
     },
@@ -22654,31 +22740,31 @@
     },
     {
       "file": "scripts/generateIcons.ts",
-      "line": 147,
+      "line": 153,
       "function": "Buffer.from",
       "key": "pureSymbolSquareSvg"
     },
     {
       "file": "scripts/generateIcons.ts",
-      "line": 148,
+      "line": 154,
       "function": "Buffer.from",
       "key": "pureSymbolMaskableSvg"
     },
     {
       "file": "scripts/generateIcons.ts",
-      "line": 149,
+      "line": 155,
       "function": "Buffer.from",
       "key": "ogSvgStr"
     },
     {
       "file": "scripts/generateScreenshots.ts",
-      "line": 310,
+      "line": 316,
       "function": "Buffer.from",
       "key": "getDesktopSvg()"
     },
     {
       "file": "scripts/generateScreenshots.ts",
-      "line": 311,
+      "line": 317,
       "function": "Buffer.from",
       "key": "getMobileSvg()"
     },
@@ -23692,7 +23778,7 @@
     },
     {
       "file": "server/services/bse.ts",
-      "line": 449,
+      "line": 453,
       "function": "Array.from",
       "key": "uniqueMap.values()"
     },
@@ -24216,55 +24302,79 @@
       "file": "src/App.tsx",
       "line": 441,
       "function": "localStorage.getItem",
+      "key": "'bse_nexus_auth_session'"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 447,
+      "function": "localStorage.getItem",
       "key": "'theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 469,
+      "line": 457,
+      "function": "localStorage.getItem",
+      "key": "'bse_nexus_watchlist_cache'"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 487,
       "function": "localStorage.setItem",
       "key": "'bse_referral_code'"
     },
     {
       "file": "src/App.tsx",
-      "line": 640,
+      "line": 658,
       "function": "sessionStorage.setItem",
       "key": "'bse_shared_query'"
     },
     {
       "file": "src/App.tsx",
-      "line": 783,
+      "line": 801,
       "function": "localStorage.setItem",
       "key": "'theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 798,
+      "line": 816,
+      "function": "localStorage.getItem",
+      "key": "'bse_nexus_auth_session'"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 822,
       "function": "localStorage.getItem",
       "key": "'bse_design_theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 815,
+      "line": 839,
       "function": "localStorage.setItem",
       "key": "'bse_design_theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 816,
+      "line": 840,
       "function": "localStorage.setItem",
       "key": "`bse_design_theme_${user.uid}`"
     },
     {
       "file": "src/App.tsx",
-      "line": 848,
+      "line": 872,
       "function": "localStorage.getItem",
       "key": "user?.uid ? `bse_design_theme_${user.uid}` : 'bse_design_theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 857,
+      "line": 881,
       "function": "localStorage.setItem",
       "key": "user?.uid ? `bse_design_theme_${user.uid}` : 'bse_design_theme'"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 901,
+      "function": "localStorage.setItem",
+      "key": "'bse_nexus_watchlist_cache'"
     },
     {
       "file": "src/api.ts",
@@ -24345,6 +24455,42 @@
       "key": "new Set(DIRECTORY_COMPANIES.map(c => c.sector.split(' / ')[0].split(' & ')[0]))"
     },
     {
+      "file": "src/components/HomeForYou.tsx",
+      "line": 79,
+      "function": "localStorage.getItem",
+      "key": "'bse_nexus_watchlist_cache'"
+    },
+    {
+      "file": "src/components/HomeForYou.tsx",
+      "line": 95,
+      "function": "localStorage.getItem",
+      "key": "'bse_nexus_watchlist_cache'"
+    },
+    {
+      "file": "src/components/HomeForYou.tsx",
+      "line": 109,
+      "function": "localStorage.getItem",
+      "key": "'bse_nexus_watchlist_cache'"
+    },
+    {
+      "file": "src/components/HomeForYou.tsx",
+      "line": 129,
+      "function": "localStorage.getItem",
+      "key": "'bse_nexus_watchlist_cache'"
+    },
+    {
+      "file": "src/components/HomeForYou.tsx",
+      "line": 142,
+      "function": "localStorage.getItem",
+      "key": "'bse_nexus_watchlist_cache'"
+    },
+    {
+      "file": "src/components/HomeForYou.tsx",
+      "line": 219,
+      "function": "localStorage.setItem",
+      "key": "'bse_nexus_watchlist_cache'"
+    },
+    {
       "file": "src/components/ImpactRadar.tsx",
       "line": 175,
       "function": "Array.from",
@@ -24352,7 +24498,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 146,
+      "line": 149,
       "function": "localStorage.setItem",
       "key": "sessionKey"
     },
@@ -24472,43 +24618,55 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 628,
+      "line": 59,
+      "function": "localStorage.getItem",
+      "key": "'bse_nexus_watchlist_cache'"
+    },
+    {
+      "file": "src/components/WatchlistManager.tsx",
+      "line": 636,
       "function": "localStorage.getItem",
       "key": "`bsenexus_watchlist_feed:${accountId}`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 666,
+      "line": 674,
       "function": "localStorage.setItem",
       "key": "'nexus_watchlist_view_mode'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 886,
+      "line": 895,
       "function": "localStorage.setItem",
       "key": "`bsenexus_watchlists_cache:${owner}`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 899,
+      "line": 896,
+      "function": "localStorage.setItem",
+      "key": "'bse_nexus_watchlist_cache'"
+    },
+    {
+      "file": "src/components/WatchlistManager.tsx",
+      "line": 910,
       "function": "Array.from",
       "key": "new Set(watchlists.flatMap(l => (l.items || []).map((it: any) => parseSymbolItem(it).symbol).filter(Boolean)))"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 916,
+      "line": 927,
       "function": "Array.from",
       "key": "new Set(watchlists.flatMap(l => (l.items || []).map((it: any) => parseSymbolItem(it).symbol).filter(Boolean)))"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 934,
+      "line": 945,
       "function": "localStorage.setItem",
       "key": "`bsenexus_watchlist_feed:${accountId}`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1210,
+      "line": 1221,
       "function": "Array.from",
       "key": "new Set(watchlists.flatMap(l => (l.items || []).map((it: any) => parseSymbolItem(it).symbol)))"
     },
@@ -24639,188 +24797,242 @@
       "key": "menuRef.current?.querySelectorAll<HTMLButtonElement>('button:not(:disabled)') || []"
     },
     {
-      "file": "src/context/AuthContext.tsx",
-      "line": 229,
-      "function": "localStorage.removeItem",
-      "key": "STORAGE_SESSION_KEY"
+      "file": "src/config/specialDay.ts",
+      "line": 209,
+      "function": "localStorage.getItem",
+      "key": "`bse_special_day_dismissed_${dayId}`"
     },
     {
-      "file": "src/context/AuthContext.tsx",
-      "line": 230,
-      "function": "localStorage.removeItem",
-      "key": "'bse_nexus_fb_id_token'"
-    },
-    {
-      "file": "src/context/AuthContext.tsx",
-      "line": 297,
-      "function": "localStorage.removeItem",
-      "key": "STORAGE_SESSION_KEY"
-    },
-    {
-      "file": "src/context/AuthContext.tsx",
-      "line": 308,
-      "function": "localStorage.removeItem",
-      "key": "STORAGE_SESSION_KEY"
-    },
-    {
-      "file": "src/context/AuthContext.tsx",
-      "line": 318,
+      "file": "src/config/specialDay.ts",
+      "line": 219,
       "function": "localStorage.setItem",
-      "key": "STORAGE_SESSION_KEY"
+      "key": "`bse_special_day_dismissed_${dayId}`"
+    },
+    {
+      "file": "src/config/specialDay.ts",
+      "line": 221,
+      "function": "localStorage.removeItem",
+      "key": "`bse_special_day_dismissed_${dayId}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 332,
+      "line": 189,
       "function": "localStorage.getItem",
       "key": "`bse_user_handle_${uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 333,
+      "line": 220,
+      "function": "localStorage.getItem",
+      "key": "STORAGE_SESSION_KEY"
+    },
+    {
+      "file": "src/context/AuthContext.tsx",
+      "line": 238,
+      "function": "localStorage.getItem",
+      "key": "'theme'"
+    },
+    {
+      "file": "src/context/AuthContext.tsx",
+      "line": 239,
+      "function": "localStorage.getItem",
+      "key": "'bse_design_theme'"
+    },
+    {
+      "file": "src/context/AuthContext.tsx",
+      "line": 320,
+      "function": "localStorage.removeItem",
+      "key": "STORAGE_SESSION_KEY"
+    },
+    {
+      "file": "src/context/AuthContext.tsx",
+      "line": 321,
+      "function": "localStorage.removeItem",
+      "key": "'bse_nexus_fb_id_token'"
+    },
+    {
+      "file": "src/context/AuthContext.tsx",
+      "line": 388,
+      "function": "localStorage.removeItem",
+      "key": "STORAGE_SESSION_KEY"
+    },
+    {
+      "file": "src/context/AuthContext.tsx",
+      "line": 399,
+      "function": "localStorage.removeItem",
+      "key": "STORAGE_SESSION_KEY"
+    },
+    {
+      "file": "src/context/AuthContext.tsx",
+      "line": 409,
+      "function": "localStorage.getItem",
+      "key": "'theme'"
+    },
+    {
+      "file": "src/context/AuthContext.tsx",
+      "line": 410,
+      "function": "localStorage.getItem",
+      "key": "'bse_design_theme'"
+    },
+    {
+      "file": "src/context/AuthContext.tsx",
+      "line": 423,
+      "function": "localStorage.setItem",
+      "key": "'bse_design_theme'"
+    },
+    {
+      "file": "src/context/AuthContext.tsx",
+      "line": 424,
+      "function": "localStorage.setItem",
+      "key": "'theme'"
+    },
+    {
+      "file": "src/context/AuthContext.tsx",
+      "line": 427,
+      "function": "localStorage.setItem",
+      "key": "STORAGE_SESSION_KEY"
+    },
+    {
+      "file": "src/context/AuthContext.tsx",
+      "line": 449,
+      "function": "localStorage.getItem",
+      "key": "`bse_user_handle_${uid}`"
+    },
+    {
+      "file": "src/context/AuthContext.tsx",
+      "line": 450,
       "function": "localStorage.getItem",
       "key": "`bse_user_tg_chat_id_${uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 334,
+      "line": 451,
       "function": "localStorage.getItem",
       "key": "`bse_user_tg_username_${uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 355,
+      "line": 476,
       "function": "localStorage.setItem",
       "key": "'bse_nexus_fb_id_token'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 357,
+      "line": 478,
       "function": "localStorage.removeItem",
       "key": "'bse_nexus_fb_id_token'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 405,
+      "line": 532,
       "function": "localStorage.setItem",
       "key": "`bse_user_handle_${uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 467,
+      "line": 594,
       "function": "localStorage.getItem",
       "key": "STORAGE_SESSION_KEY"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 573,
+      "line": 700,
       "function": "sessionStorage.getItem",
       "key": "'bse_guest_active_session'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 583,
-      "function": "localStorage.getItem",
-      "key": "STORAGE_SESSION_KEY"
-    },
-    {
-      "file": "src/context/AuthContext.tsx",
-      "line": 583,
-      "function": "localStorage.getItem",
-      "key": "'bse_nexus_fb_id_token'"
-    },
-    {
-      "file": "src/context/AuthContext.tsx",
-      "line": 679,
+      "line": 825,
       "function": "sessionStorage.setItem",
       "key": "'bse_guest_active_session'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 909,
+      "line": 1055,
       "function": "localStorage.getItem",
       "key": "'bse_nexus_fb_id_token'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 942,
+      "line": 1088,
       "function": "localStorage.removeItem",
       "key": "STORAGE_SESSION_KEY"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 943,
+      "line": 1089,
       "function": "localStorage.removeItem",
       "key": "'bse_nexus_auth_token'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 944,
+      "line": 1090,
       "function": "localStorage.removeItem",
       "key": "'bse_nexus_fb_id_token'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 945,
+      "line": 1091,
       "function": "localStorage.removeItem",
       "key": "'bse_user_tg_chat_id_global'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 946,
+      "line": 1092,
       "function": "localStorage.removeItem",
       "key": "'bse_user_tg_username_global'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 947,
+      "line": 1093,
       "function": "localStorage.removeItem",
       "key": "'bse_telegram_chat_id'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 948,
+      "line": 1094,
       "function": "localStorage.removeItem",
       "key": "'bse_chat_id'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 953,
+      "line": 1099,
       "function": "localStorage.removeItem",
       "key": "k"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1090,
+      "line": 1236,
       "function": "localStorage.setItem",
       "key": "`bse_user_handle_${user.uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1228,
+      "line": 1374,
       "function": "localStorage.setItem",
       "key": "`bse_user_tg_chat_id_${profile.uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1230,
+      "line": 1376,
       "function": "localStorage.removeItem",
       "key": "`bse_user_tg_chat_id_${profile.uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1233,
+      "line": 1379,
       "function": "localStorage.setItem",
       "key": "`bse_user_tg_username_${profile.uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1235,
+      "line": 1381,
       "function": "localStorage.removeItem",
       "key": "`bse_user_tg_username_${profile.uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1316,
+      "line": 1462,
       "function": "localStorage.setItem",
       "key": "`bse_trial_used_${trialUid}`"
     },
@@ -25620,7 +25832,7 @@
     },
     {
       "file": "server/api/routes.ts",
-      "line": 2785,
+      "line": 2789,
       "name": "PORT"
     },
     {
@@ -25970,42 +26182,42 @@
     },
     {
       "file": "server/security/auth.ts",
-      "line": 559,
+      "line": 565,
       "name": "APP_PIN"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 563,
+      "line": 569,
       "name": "APP_PIN"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 585,
+      "line": 591,
       "name": "NODE_ENV"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 651,
+      "line": 657,
       "name": "NODE_ENV"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 651,
+      "line": 657,
       "name": "RECAPTCHA_ENFORCE"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 677,
+      "line": 689,
       "name": "APP_PIN"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 681,
+      "line": 693,
       "name": "APP_PIN"
     },
     {
       "file": "server/security/auth.ts",
-      "line": 702,
+      "line": 714,
       "name": "NODE_ENV"
     },
     {
@@ -27495,12 +27707,12 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 790,
+      "line": 808,
       "name": "DEV"
     },
     {
       "file": "src/App.tsx",
-      "line": 797,
+      "line": 815,
       "name": "DEV"
     },
     {
@@ -27556,7 +27768,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 641,
+      "line": 659,
       "target": "window",
       "kind": "dispatch",
       "name": "bse-share-target",
@@ -27564,7 +27776,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 650,
+      "line": 668,
       "target": "window",
       "kind": "listen",
       "name": "popstate",
@@ -27572,7 +27784,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 651,
+      "line": 669,
       "target": "window",
       "kind": "remove",
       "name": "popstate",
@@ -27580,7 +27792,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 765,
+      "line": 783,
       "target": "window",
       "kind": "listen",
       "name": "popstate",
@@ -27588,7 +27800,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 767,
+      "line": 785,
       "target": "window",
       "kind": "remove",
       "name": "popstate",
@@ -27596,7 +27808,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 880,
+      "line": 912,
       "target": "window",
       "kind": "listen",
       "name": "watchlists-changed",
@@ -27604,7 +27816,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 881,
+      "line": 913,
       "target": "window",
       "kind": "remove",
       "name": "watchlists-changed",
@@ -27612,7 +27824,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 900,
+      "line": 932,
       "target": "window",
       "kind": "listen",
       "name": "auth-expired",
@@ -27620,7 +27832,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 901,
+      "line": 933,
       "target": "window",
       "kind": "remove",
       "name": "auth-expired",
@@ -27868,7 +28080,7 @@
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 127,
+      "line": 191,
       "target": "window",
       "kind": "listen",
       "name": "bse_nav_tab_refresh",
@@ -27876,7 +28088,7 @@
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 128,
+      "line": 192,
       "target": "window",
       "kind": "listen",
       "name": "watchlists-changed",
@@ -27884,7 +28096,7 @@
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 129,
+      "line": 193,
       "target": "window",
       "kind": "remove",
       "name": "bse_nav_tab_refresh",
@@ -27892,7 +28104,7 @@
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 129,
+      "line": 193,
       "target": "window",
       "kind": "remove",
       "name": "watchlists-changed",
@@ -27900,7 +28112,7 @@
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 181,
+      "line": 254,
       "target": "window",
       "kind": "listen",
       "name": "online",
@@ -27908,7 +28120,7 @@
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 181,
+      "line": 254,
       "target": "document",
       "kind": "listen",
       "name": "visibilitychange",
@@ -27916,7 +28128,7 @@
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 182,
+      "line": 255,
       "target": "window",
       "kind": "remove",
       "name": "online",
@@ -27924,7 +28136,7 @@
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 182,
+      "line": 255,
       "target": "document",
       "kind": "remove",
       "name": "visibilitychange",
@@ -27932,7 +28144,7 @@
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 221,
+      "line": 294,
       "target": "window",
       "kind": "dispatch",
       "name": "watchlists-changed",
@@ -27940,7 +28152,7 @@
     },
     {
       "file": "src/components/HomeForYou.tsx",
-      "line": 230,
+      "line": 303,
       "target": "window",
       "kind": "dispatch",
       "name": "watchlists-changed",
@@ -28044,7 +28256,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 113,
+      "line": 116,
       "target": "window",
       "kind": "listen",
       "name": "open-referral-modal",
@@ -28052,7 +28264,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 114,
+      "line": 117,
       "target": "window",
       "kind": "remove",
       "name": "open-referral-modal",
@@ -28060,7 +28272,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 191,
+      "line": 195,
       "target": "window",
       "kind": "listen",
       "name": "network-status",
@@ -28068,7 +28280,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 194,
+      "line": 198,
       "target": "window",
       "kind": "listen",
       "name": "online",
@@ -28076,7 +28288,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 195,
+      "line": 199,
       "target": "window",
       "kind": "listen",
       "name": "offline",
@@ -28084,7 +28296,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 197,
+      "line": 201,
       "target": "window",
       "kind": "remove",
       "name": "network-status",
@@ -28092,7 +28304,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 198,
+      "line": 202,
       "target": "window",
       "kind": "remove",
       "name": "online",
@@ -28100,7 +28312,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 199,
+      "line": 203,
       "target": "window",
       "kind": "remove",
       "name": "offline",
@@ -28108,7 +28320,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 232,
+      "line": 236,
       "target": "window",
       "kind": "dispatch",
       "name": "bse_nav_tab_refresh",
@@ -28380,7 +28592,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 594,
+      "line": 602,
       "target": "document",
       "kind": "listen",
       "name": "pointerdown",
@@ -28388,7 +28600,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 595,
+      "line": 603,
       "target": "document",
       "kind": "listen",
       "name": "keydown",
@@ -28396,7 +28608,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 597,
+      "line": 605,
       "target": "document",
       "kind": "remove",
       "name": "pointerdown",
@@ -28404,7 +28616,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 598,
+      "line": 606,
       "target": "document",
       "kind": "remove",
       "name": "keydown",
@@ -28412,7 +28624,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 620,
+      "line": 628,
       "target": "document",
       "kind": "listen",
       "name": "keydown",
@@ -28420,7 +28632,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 621,
+      "line": 629,
       "target": "document",
       "kind": "remove",
       "name": "keydown",
@@ -28428,7 +28640,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 887,
+      "line": 898,
       "target": "window",
       "kind": "dispatch",
       "name": "watchlists-changed",
@@ -28436,7 +28648,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 969,
+      "line": 980,
       "target": "window",
       "kind": "listen",
       "name": "focus",
@@ -28444,7 +28656,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 970,
+      "line": 981,
       "target": "window",
       "kind": "listen",
       "name": "watchlists-changed",
@@ -28452,7 +28664,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 971,
+      "line": 982,
       "target": "document",
       "kind": "listen",
       "name": "visibilitychange",
@@ -28460,7 +28672,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 972,
+      "line": 983,
       "target": "window",
       "kind": "remove",
       "name": "focus",
@@ -28468,7 +28680,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 972,
+      "line": 983,
       "target": "window",
       "kind": "remove",
       "name": "watchlists-changed",
@@ -28476,7 +28688,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 972,
+      "line": 983,
       "target": "document",
       "kind": "remove",
       "name": "visibilitychange",
@@ -28484,7 +28696,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 983,
+      "line": 994,
       "target": "window",
       "kind": "listen",
       "name": "auth-state-changed",
@@ -28492,7 +28704,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 984,
+      "line": 995,
       "target": "window",
       "kind": "remove",
       "name": "auth-state-changed",
@@ -28585,6 +28797,22 @@
       "kind": "remove",
       "name": "resize",
       "expression": "window.removeEventListener('resize', resize)"
+    },
+    {
+      "file": "src/components/special/SpecialDayStoryModal.tsx",
+      "line": 107,
+      "target": "window",
+      "kind": "listen",
+      "name": "keydown",
+      "expression": "window.addEventListener('keydown', handleKeyDown)"
+    },
+    {
+      "file": "src/components/special/SpecialDayStoryModal.tsx",
+      "line": 108,
+      "target": "window",
+      "kind": "remove",
+      "name": "keydown",
+      "expression": "window.removeEventListener('keydown', handleKeyDown)"
     },
     {
       "file": "src/components/story/StoryCarouselBar.tsx",
@@ -29012,7 +29240,7 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 596,
+      "line": 734,
       "target": "window",
       "kind": "listen",
       "name": "auth-expired",
@@ -29020,7 +29248,7 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 597,
+      "line": 735,
       "target": "window",
       "kind": "listen",
       "name": "focus",
@@ -29028,7 +29256,7 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 598,
+      "line": 736,
       "target": "document",
       "kind": "listen",
       "name": "visibilitychange",
@@ -29036,7 +29264,7 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 602,
+      "line": 740,
       "target": "window",
       "kind": "remove",
       "name": "auth-expired",
@@ -29044,7 +29272,7 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 603,
+      "line": 741,
       "target": "window",
       "kind": "remove",
       "name": "focus",
@@ -29052,7 +29280,7 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 604,
+      "line": 742,
       "target": "document",
       "kind": "remove",
       "name": "visibilitychange",
@@ -29060,7 +29288,7 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1353,
+      "line": 1499,
       "target": "window",
       "kind": "dispatch",
       "name": "notes-changed",
@@ -29068,7 +29296,7 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1356,
+      "line": 1502,
       "target": "window",
       "kind": "listen",
       "name": "focus",
@@ -29076,7 +29304,7 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1356,
+      "line": 1502,
       "target": "document",
       "kind": "listen",
       "name": "visibilitychange",
@@ -29084,7 +29312,7 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1357,
+      "line": 1503,
       "target": "window",
       "kind": "remove",
       "name": "focus",
@@ -29092,7 +29320,7 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1357,
+      "line": 1503,
       "target": "document",
       "kind": "remove",
       "name": "visibilitychange",

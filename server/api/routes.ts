@@ -2018,7 +2018,11 @@ apiRouter.post("/storage/test-alert", requireAdmin, async (req, res) => {
 });
 
 // Storage Quota Mode Controls (Automatic vs Manual Override)
-apiRouter.get("/storage/quota-mode", requireAdmin, (req, res) => {
+// GET is intentionally public: it returns only app-level operational status
+// (mode / quota-exceeded / effective storage) that the quota banner shows to
+// every visitor. It was requireAdmin while Layout polled it for everyone,
+// which 403d ~3,300x/day. The mutation below stays admin-only.
+apiRouter.get("/storage/quota-mode", (req, res) => {
   const mode = getManualStorageMode();
   const isQuotaExceeded = isFirestoreQuotaExceeded();
   const isPermissionDenied = isAdminPermissionDenied();

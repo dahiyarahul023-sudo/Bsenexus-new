@@ -63,7 +63,7 @@ export function HomeMarketNews({ active, identity, watched, onNavigate, density,
       window.removeEventListener('bse_nav_tab_refresh', onNavRefresh);
     };
   }, [active, feed, refresh, watchlistStatus, watched.length, watchlistOnly]);
-  useVisibilityInterval(refresh, 60_000, active && (!watchlistOnly || (watchlistStatus==='ready' && !!watched.length)));
+  useVisibilityInterval(refresh, 120_000, active && (!watchlistOnly || (watchlistStatus==='ready' && !!watched.length)));
 
   if (watchlistOnly && (watchlistStatus !== 'ready' || !watched.length)) return <section className="home-news"><h2>Your stock news</h2><p className="home-news-status">{watchlistStatus==='loading'?'Checking your watchlist…':watchlistStatus==='error'?'Your watchlist could not be checked.':'Add stocks to see matching company news.'}</p></section>;
   const initial = state.checkedAt === null && !state.error;
