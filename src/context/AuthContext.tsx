@@ -175,10 +175,101 @@ function resetAuthEventDebounce() {
   lastAuthEventAt = 0;
 }
 
+function buildImmediateProfile(fbUser: any, existingProfile?: UserProfile | null): UserProfile {
+  const uid = fbUser.uid;
+  if (existingProfile && existingProfile.uid === uid) {
+    return {
+      ...existingProfile,
+      displayName: fbUser.displayName || existingProfile.displayName,
+      photoURL: fbUser.photoURL ?? existingProfile.photoURL,
+      email: fbUser.email ?? existingProfile.email
+    };
+  }
+  const emailPrefix = fbUser.email ? fbUser.email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '_').toLowerCase() : 'trader';
+  const savedHandle = typeof window !== 'undefined' ? localStorage.getItem(`bse_user_handle_${uid}`) : null;
+  const isOwner = isAdminEmail(fbUser.email);
+  const now = Date.now();
+  return {
+    uid,
+    email: fbUser.email || null,
+    displayName: fbUser.displayName || (fbUser.email ? fbUser.email.split('@')[0] : 'Trader'),
+    username: savedHandle || emailPrefix,
+    photoURL: fbUser.photoURL || null,
+    tier: isOwner ? 'admin' : 'free',
+    proExpiresAt: 0,
+    notificationPreferences: defaultNotificationPreferences,
+    createdAt: now,
+    lastLoginAt: now,
+    maxWatchlistStocks: isOwner ? 9999 : 5
+  };
+}
+
+interface CachedSessionSnapshot {
+  user: any;
+  profile: UserProfile;
+  isPro?: boolean;
+  isAdmin?: boolean;
+  isPaidProActive?: boolean;
+  theme?: string;
+  designTheme?: string;
+}
+
+function readCachedSession(): CachedSessionSnapshot | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(STORAGE_SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    const u = parsed?.user;
+    const p = parsed?.profile;
+    if (!u || !u.uid || !p || p.uid !== u.uid) return null;
+    const isGuest = Boolean(
+      u.isAnonymous ||
+      !u.email ||
+      typeof u.email !== 'string' ||
+      u.email.endsWith('@bse-trader.local') ||
+      u.uid.startsWith('guest_') ||
+      u.uid.startsWith('trader_')
+    );
+    if (isGuest) return null;
+
+    // Synchronously apply the cached theme preference before first paint
+    if (typeof document !== 'undefined') {
+      const targetTheme = parsed.theme || localStorage.getItem('theme') || 'dark';
+      const targetDesignTheme = parsed.designTheme || p.notificationPreferences?.designTheme || localStorage.getItem('bse_design_theme') || 'classic';
+      const root = document.documentElement;
+      if (targetDesignTheme === 'softglass') {
+        root.dataset.designTheme = 'softglass';
+        root.classList.remove('dark');
+      } else {
+        delete root.dataset.designTheme;
+        if (targetTheme === 'dark') {
+          root.classList.add('dark');
+        } else {
+          root.classList.remove('dark');
+        }
+      }
+    }
+
+    return {
+      user: u,
+      profile: p,
+      isPro: parsed.isPro ?? (p.tier === 'pro' || p.tier === 'admin'),
+      isAdmin: parsed.isAdmin ?? (p.tier === 'admin'),
+      isPaidProActive: parsed.isPaidProActive ?? (p.tier === 'admin' || Boolean(p.lastPaymentAt || (p as any).proPlanId)),
+      theme: parsed.theme,
+      designTheme: parsed.designTheme
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const initialCached = React.useRef<CachedSessionSnapshot | null>(readCachedSession());
   // A saved UI snapshot is never an authenticated identity or a role grant.
-  const [user, setUser] = useState<any | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [user, setUser] = useState<any | null>(() => initialCached.current?.user || null);
+  const [profile, setProfile] = useState<UserProfile | null>(() => initialCached.current?.profile || null);
   const avatarStateRef = React.useRef({ user, profile });
   avatarStateRef.current = { user, profile };
   const avatarSaveRef = React.useRef<ReturnType<typeof createAvatarSaveController> | null>(null);
@@ -242,7 +333,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!response.ok || !data.isAuthenticated || data.user?.uid !== uid) {
         clearAdminStatus();
         finishElevation(false);
-        if (response.ok && (!data.isAuthenticated || data.user?.uid !== uid)) clearUnverifiedSession(true);
+        if (response.ok && data.user?.uid && data.user.uid !== uid) clearUnverifiedSession(false);
         return null;
       }
       const session = { uid, isAdmin: data.isAdmin === true, isOwner: data.isOwner === true,
@@ -315,7 +406,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         photoURL: u.photoURL || null,
         isAnonymous: false
       };
-      localStorage.setItem(STORAGE_SESSION_KEY, JSON.stringify({ user: sanitizedUser, profile: p }));
+      const currentTheme = (typeof window !== 'undefined' ? localStorage.getItem('theme') : null) || 'dark';
+      const currentDesignTheme = p?.notificationPreferences?.designTheme || (typeof window !== 'undefined' ? localStorage.getItem('bse_design_theme') : null) || 'classic';
+      const isOwnerOrAdmin = p?.tier === 'admin' || Boolean(adminSessionRef.current?.isAdmin);
+      const isPaid = Boolean(p?.lastPaymentAt || (p as any)?.proPlanId);
+      const isProNow = Boolean(
+        isOwnerOrAdmin ||
+        (p?.tier === 'pro' && p?.proExpiresAt && p.proExpiresAt > Date.now())
+      );
+      const isPaidProNow = Boolean(
+        isOwnerOrAdmin ||
+        (isProNow && isPaid && (p?.subscriptionAccess ? p.subscriptionAccess.paidExpiresAt > Date.now() : p?.proExpiresAt && p.proExpiresAt > Date.now()))
+      );
+
+      if (currentDesignTheme === 'softglass') {
+        localStorage.setItem('bse_design_theme', 'softglass');
+        localStorage.setItem('theme', 'light');
+      }
+
+      localStorage.setItem(STORAGE_SESSION_KEY, JSON.stringify({
+        user: sanitizedUser,
+        profile: p,
+        theme: currentTheme,
+        designTheme: currentDesignTheme,
+        isPro: isProNow,
+        isAdmin: isOwnerOrAdmin,
+        isPaidProActive: isPaidProNow
+      }));
     } catch (e) {
       console.warn('Could not save auth session locally', e);
     }
@@ -347,29 +464,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Extract fresh Firebase ID token (no force) and sync session with backend for authenticated users
       let idToken = '';
-      if (!isGuestUser && typeof firebaseUser.getIdToken === 'function') {
+      let sessionSecurity: any = null;
+      if (!isGuestUser) {
         try {
-          const rawToken = await firebaseUser.getIdToken(false);
+          const [rawToken, sec] = await Promise.all([
+            typeof firebaseUser.getIdToken === 'function' ? firebaseUser.getIdToken(false).catch(() => '') : Promise.resolve(''),
+            executeRecaptcha('SESSION').catch(() => ({ bypassed: true, token: '' }))
+          ]);
           if (rawToken && rawToken.split('.').length === 3) {
             idToken = rawToken;
             localStorage.setItem('bse_nexus_fb_id_token', idToken);
           } else {
             localStorage.removeItem('bse_nexus_fb_id_token');
           }
+          sessionSecurity = sec;
         } catch (tokErr) {
-          console.warn('Could not get idToken from Firebase User:', tokErr);
+          console.warn('Could not get idToken or recaptcha for session sync:', tokErr);
         }
       }
 
       if (idToken && idToken.split('.').length === 3) {
         try {
-          const sessionSecurity = await executeRecaptcha('SESSION');
           const sessionRes = await customFetch('/auth/session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               idToken: idToken,
-              recaptchaToken: sessionSecurity.bypassed ? undefined : sessionSecurity.token,
+              recaptchaToken: sessionSecurity?.bypassed ? undefined : sessionSecurity?.token,
               uid: uid,
               email: firebaseUser.email,
               displayName: firebaseUser.displayName || 'Trader'
@@ -386,7 +507,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (!current()) return null;
-      const verifiedSession = await refreshAdminStatus(uid);
+      const [verifiedSession, profileRes] = await Promise.all([
+        refreshAdminStatus(uid).catch(() => null),
+        customFetch('/api/users/profile').catch((profileErr) => {
+          console.warn('Backend profile fetch notice:', profileErr);
+          return null;
+        })
+      ]);
       const isOwnerAccount = verifiedSession?.isAdmin === true;
       if (!current()) return null;
       const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
@@ -394,8 +521,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       let userProfile: UserProfile | null = null;
       try {
-        const res = await customFetch('/api/users/profile');
-        if (res.ok) {
+        const res = profileRes;
+        if (res && res.ok) {
           const data = await res.json();
           if (data && data.profile) {
             const rawFirestoreUsername = typeof data.profile.username === 'string' ? data.profile.username.trim().replace(/^@/, '') : '';
@@ -575,13 +702,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             clearUnverifiedSession();
             await signOut(auth).catch(() => {});
           } else {
-            // Clear previous account display before any asynchronous reads.
-            setUser(null); setProfile(null);
+            // Immediately show signed-in identity from currentUser or cache without waiting for syncUserProfile
+            const cached = readCachedSession();
+            const existing = cached?.profile?.uid === currentUser.uid ? cached.profile : null;
+            const immediateProfile = buildImmediateProfile(currentUser, existing);
+            setUser((prev: any) => (prev?.uid === currentUser.uid ? prev : currentUser));
+            setProfile((prev: UserProfile | null) => (prev?.uid === currentUser.uid ? prev : immediateProfile));
+            saveLocalSession(currentUser, immediateProfile);
             await syncUserProfile(currentUser);
           }
         } else {
-          const hadCachedIdentity = Boolean(localStorage.getItem(STORAGE_SESSION_KEY) || localStorage.getItem('bse_nexus_fb_id_token'));
-          clearUnverifiedSession(hadCachedIdentity);
+          clearUnverifiedSession(false);
         }
         if (active) { setLoading(false); setAuthLoading(false); }
       });
@@ -589,7 +720,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       clearUnverifiedSession();
       setLoading(false); setAuthLoading(false);
     }
-    const expired = () => { clearUnverifiedSession(true); };
+    const expired = () => {
+      if (!auth.currentUser) {
+        clearUnverifiedSession(true);
+      } else {
+        clearAdminStatus();
+        finishElevation(false);
+      }
+    };
     const refresh = () => {
       if (document.visibilityState === 'visible' && auth.currentUser && !auth.currentUser.isAnonymous) void refreshAdminStatus();
     };
@@ -613,8 +751,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       if (result && result.user) {
-        await syncUserProfile(result.user);
+        const fbUser = result.user;
+        const cached = readCachedSession();
+        const immediateProfile = buildImmediateProfile(fbUser, cached?.profile?.uid === fbUser.uid ? cached.profile : null);
+        setUser(fbUser);
+        setProfile(immediateProfile);
+        saveLocalSession(fbUser, immediateProfile);
         setIsAuthModalOpen(false);
+        syncUserProfile(fbUser).catch(err => {
+          console.warn('Background profile sync notice after popup sign-in:', err);
+        });
         return { success: true };
       }
       return { success: false, error: 'Google sign-in was cancelled.' };
@@ -1357,9 +1503,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return()=>{pending?.abort();window.removeEventListener('focus',refresh);document.removeEventListener('visibilitychange',refresh);};
   },[user?.uid,user?.isAnonymous]);
 
-  const isOwner = Boolean(user && !user.isAnonymous && auth.currentUser?.uid === user.uid && adminSession?.uid === user.uid && adminSession.isOwner);
-  const isAdmin = Boolean(user && !user.isAnonymous && auth.currentUser?.uid === user.uid && adminSession?.uid === user.uid && adminSession.isAdmin);
-  const elevationExpiresAt = isAdmin ? adminSession?.elevationExpiresAt || 0 : 0;
+  const cachedRoles = initialCached.current?.user?.uid === user?.uid ? initialCached.current : null;
+
+  const isOwner = Boolean(user && !user.isAnonymous && (
+    (auth.currentUser?.uid === user.uid && adminSession?.uid === user.uid && adminSession.isOwner) ||
+    (!adminSession && cachedRoles?.profile?.tier === 'admin')
+  ));
+  const isAdmin = Boolean(user && !user.isAnonymous && (
+    (auth.currentUser?.uid === user.uid && adminSession?.uid === user.uid && adminSession?.isAdmin) ||
+    (!adminSession && (cachedRoles?.isAdmin || cachedRoles?.profile?.tier === 'admin'))
+  ));
+  const elevationExpiresAt = (adminSession?.uid === user?.uid && adminSession?.isAdmin) ? adminSession?.elevationExpiresAt || 0 : 0;
   const elevationClock = useExpiryClock(elevationExpiresAt, user?.uid);
   const isElevated = isAdmin && elevationExpiresAt > elevationClock;
   const adminUnlocked = isElevated;
@@ -1379,7 +1533,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     (
       isOwner ||
       isAdmin ||
-      (profile?.tier === 'pro' && profile?.proExpiresAt && profile.proExpiresAt > now)
+      (profile?.tier === 'admin') ||
+      (profile?.tier === 'pro' && profile?.proExpiresAt && profile.proExpiresAt > now) ||
+      (cachedRoles?.isPro && (!profile || profile.tier !== 'free'))
     )
   );
 
@@ -1393,6 +1549,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // excluded by design. Auto on at grant, auto off at expiry.
   const isPaidProActive = Boolean(
     isAdmin ||
+    (profile?.tier === 'admin') ||
+    (cachedRoles?.isPaidProActive && (!profile || profile.tier !== 'free')) ||
     (isPro && isPaidPro && (profile?.subscriptionAccess ? profile.subscriptionAccess.paidExpiresAt > now : profile?.proExpiresAt && profile.proExpiresAt > now))
   );
 
