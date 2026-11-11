@@ -10,10 +10,15 @@ export interface SpecialDayPoint {
   tag?: string;
 }
 
+export type SpecialDayCardKind = 'cover' | 'timing' | 'timeline' | 'history' | 'sectors' | 'safety';
+
 export interface SpecialDayCard {
   id: string;
+  kind: SpecialDayCardKind;
   tag: string;
   title: string;
+  /** Trailing part of the title rendered on its own line in gold (e.g. "Focus Sectors"). */
+  titleAccent?: string;
   subtitle?: string;
   badge?: string;
   themeTone?: 'amber' | 'emerald' | 'purple' | 'blue' | 'rose';
@@ -33,7 +38,7 @@ export interface SpecialDayConfig {
   bannerNotice: string;
   sessionDate: string; // ISO string e.g. "2027-02-01T09:15:00+05:30"
   sessionLabel: string; // e.g. "Mon, 1 Feb 2027 · 09:15 AM IST"
-  startsAt: string; // Active window start e.g. "2026-11-01T00:00:00+05:30"
+  startsAt: string; // Active window start e.g. "2027-01-29T15:30:00+05:30" (after last trading day ends)
   endsAt: string; // Auto-hide after session end e.g. "2027-02-01T17:00:00+05:30"
   ctaText: string;
   disclaimer: string;
@@ -50,13 +55,45 @@ export const SPECIAL_DAYS: SpecialDayConfig[] = [
     bannerNotice: 'Union Budget 2027 Special Session · Live policy impact, sector radars & volatility briefing',
     sessionDate: '2027-02-01T09:15:00+05:30',
     sessionLabel: '1 Feb 2027 · 09:15 AM – 03:30 PM IST',
-    startsAt: '2026-11-01T00:00:00+05:30',
+    startsAt: '2027-01-29T15:30:00+05:30',
     endsAt: '2027-02-01T17:00:00+05:30',
     ctaText: 'View Special Story',
     disclaimer: 'Market data disclaimer: BSE Nexus provides information and analytical tools for research and educational purposes only. Market investments are subject to market risks. Not financial advice.',
     cards: [
       {
+        id: 'budget-cover',
+        kind: 'cover',
+        tag: 'Special Session',
+        title: 'Budget Day',
+        subtitle: 'SPECIAL • 2027',
+        badge: 'SPECIAL SESSION',
+        themeTone: 'amber',
+        points: [],
+        actionLabel: 'View Special Story',
+        actionTab: 'home'
+      },
+      {
+        id: 'budget-timing',
+        kind: 'timing',
+        tag: 'Session & Timings',
+        title: 'Budget Day',
+        // Display strings transcribed from sessionDate / sessionLabel above;
+        // update them together with those fields at the pre-event content review.
+        subtitle: 'Monday, 1 Feb',
+        badge: 'TRADING',
+        themeTone: 'purple',
+        headlineStat: {
+          value: '09:15 AM – 03:30 PM',
+          label: 'Continuous Trading Window',
+          trend: 'neutral'
+        },
+        points: [],
+        actionLabel: 'Market Calendar',
+        actionTab: 'results-calendar'
+      },
+      {
         id: 'budget-timings',
+        kind: 'timeline',
         tag: 'Session & Timings',
         title: 'Special Trading Session Timings',
         subtitle: 'BSE & NSE live order matching schedule for the Union Budget announcement day',
@@ -70,17 +107,17 @@ export const SPECIAL_DAYS: SpecialDayConfig[] = [
         points: [
           {
             title: 'Pre-Open Session',
-            text: '09:00 AM – 09:08 AM IST for order entry and price discovery across all market segments.',
+            text: 'Order entry & price discovery, 09:00–09:08 AM IST.',
             tag: '09:00 AM'
           },
           {
             title: 'Finance Minister Address',
-            text: 'Speech commences at 11:00 AM IST with real-time fiscal deficit and capital expenditure announcements.',
+            text: 'Speech with fiscal deficit & capex announcements.',
             tag: '11:00 AM'
           },
           {
             title: 'Settlement & Margins',
-            text: 'Standard T+1 settlement rules apply. Peak margin requirements enforced throughout the day.',
+            text: 'Standard T+1 settlement. Peak margins all day.',
             tag: 'RISK'
           }
         ],
@@ -90,14 +127,15 @@ export const SPECIAL_DAYS: SpecialDayConfig[] = [
       },
       {
         id: 'budget-history',
+        kind: 'history',
         tag: 'Historical Market Patterns',
-        title: 'How SENSEX & NIFTY React to Budget Day',
+        title: 'How SENSEX & NIFTY react on Budget Day',
         subtitle: '10-Year historical volatility and post-speech market trajectories',
         badge: 'HISTORICAL PATTERNS',
         themeTone: 'amber',
         headlineStat: {
           value: '±2.4%',
-          label: 'Average Intraday SENSEX Range',
+          label: 'Average Intraday SENSEX Range · 10-year pattern',
           trend: 'up'
         },
         points: [
@@ -119,12 +157,14 @@ export const SPECIAL_DAYS: SpecialDayConfig[] = [
         ],
         actionLabel: 'View Market News',
         actionTab: 'news',
-        footerNote: 'Past performance does not guarantee future market behavior.'
+        footerNote: 'First hour stays narrow · Volatility peaks mid-session'
       },
       {
         id: 'budget-sectors',
+        kind: 'sectors',
         tag: 'Sectors to Watch',
         title: 'Key Policy Focus Sectors',
+        titleAccent: 'Focus Sectors',
         subtitle: 'Industries with high sensitivity to government expenditure and taxation shifts',
         badge: 'SECTOR INTEL',
         themeTone: 'emerald',
@@ -156,9 +196,11 @@ export const SPECIAL_DAYS: SpecialDayConfig[] = [
       },
       {
         id: 'budget-guidelines',
+        kind: 'safety',
         tag: 'Execution & Safety',
-        title: 'Disciplined Trading Guidelines',
-        subtitle: 'Institutional risk management best practices for high-volatility special sessions',
+        title: 'Trade Budget Day with discipline',
+        titleAccent: 'with discipline',
+        subtitle: 'Institutional risk management for a high-volatility session',
         badge: 'SAFETY PLAYBOOK',
         themeTone: 'blue',
         headlineStat: {

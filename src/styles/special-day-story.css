@@ -1,0 +1,181 @@
+/* Special Day story (Budget Day) — pure-black Groww-style story canvas.
+   Scoped under .sds-story with an sds- prefix; no selector here may touch
+   the app shell or the daily market story system. Fonts are self-hosted
+   (see src/index.css @font-face): Archivo for headlines/UI, Fraunces for
+   the wordmark only. */
+
+.sds-story {
+  font-family: 'Archivo', system-ui, -apple-system, sans-serif;
+  background: #000;
+  color: #f4f5fa;
+  -webkit-tap-highlight-color: transparent;
+}
+.sds-story button { font: inherit; -webkit-tap-highlight-color: transparent; }
+.sds-story button:active { transform: scale(.97); }
+.sds-story :is(button, a, [tabindex]):focus-visible {
+  outline: 2px solid #fbbf24;
+  outline-offset: 3px;
+}
+
+/* Floating gold embers (all cards) */
+.sds-embers { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+.sds-ember {
+  position: absolute; bottom: -8px; border-radius: 50%;
+  background: radial-gradient(circle, #fde68a, #f59e0b 60%, transparent 75%);
+  opacity: 0; animation: sds-ember-up linear infinite;
+}
+@keyframes sds-ember-up {
+  0% { transform: translateY(0) translateX(0) scale(.6); opacity: 0; }
+  12% { opacity: .9; }
+  50% { transform: translateY(-46vh) translateX(8px) scale(1); opacity: .7; }
+  100% { transform: translateY(-88vh) translateX(-6px) scale(.4); opacity: 0; }
+}
+
+/* Header: minimal, Groww style */
+.sds-progress-row { display: flex; gap: 4px; }
+.sds-seg { flex: 1; height: 3px; border-radius: 99px; background: rgba(255,255,255,.3); overflow: hidden; }
+.sds-seg i {
+  display: block; height: 100%; width: 0%; border-radius: 99px; background: #fff;
+  box-shadow: 0 0 8px rgba(255,255,255,.85);
+}
+.sds-icon-btn {
+  width: 36px; height: 36px; border: 0; border-radius: 50%; background: transparent; color: #fff;
+  display: grid; place-items: center; cursor: pointer;
+}
+.sds-icon-btn:hover { background: rgba(255,255,255,.1); }
+
+/* Story body */
+.sds-card {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center;
+  text-align: center; padding: 26px 24px 0;
+}
+.sds-card.sds-slide-next { animation: sds-card-in-next .5s cubic-bezier(.2,.75,.25,1) both; }
+.sds-card.sds-slide-prev { animation: sds-card-in-prev .5s cubic-bezier(.2,.75,.25,1) both; }
+@keyframes sds-card-in-next { from { opacity: 0; transform: translateX(30px) scale(.985); } to { opacity: 1; transform: none; } }
+@keyframes sds-card-in-prev { from { opacity: 0; transform: translateX(-30px) scale(.985); } to { opacity: 1; transform: none; } }
+
+.sds-rise { opacity: 0; animation: sds-rise .65s cubic-bezier(.2,.75,.25,1) forwards; animation-delay: var(--d, 0ms); }
+@keyframes sds-rise { from { opacity: 0; transform: translateY(18px); filter: blur(8px); } to { opacity: 1; transform: none; filter: blur(0); } }
+.sds-fadein { opacity: 0; animation: sds-fadein .9s ease forwards; animation-delay: var(--d, 0ms); }
+@keyframes sds-fadein { from { opacity: 0; } to { opacity: 1; } }
+
+.sds-kicker {
+  font-size: 11px; font-weight: 800; letter-spacing: .22em; text-transform: uppercase;
+  color: #f59e0b;
+}
+.sds-headline {
+  font-size: 28px; line-height: 1.2; font-weight: 800; letter-spacing: -.03em; color: #fff;
+  margin-top: 12px; text-wrap: pretty;
+}
+.sds-wordmark {
+  font-family: 'Fraunces', Georgia, serif; font-weight: 900; line-height: 1.02;
+  font-size: 60px; letter-spacing: -0.01em;
+  background: linear-gradient(100deg, #f97316, #fbbf24 35%, #f97316 60%, #fde68a 80%, #f97316);
+  background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: sds-shimmer 5s linear infinite, sds-glow-pulse 3.2s ease-in-out infinite;
+}
+@keyframes sds-shimmer { to { background-position: 200% 0; } }
+@keyframes sds-glow-pulse { 0%,100% { filter: drop-shadow(0 0 0 rgba(251,191,36,0)); } 50% { filter: drop-shadow(0 0 18px rgba(251,191,36,.35)); } }
+.sds-wordmark-sub {
+  font-size: 15px; font-weight: 800; letter-spacing: .34em; color: #818cf8; margin-top: 8px;
+}
+.sds-gold-text { color: #fbbf24; }
+.sds-sub { font-size: 13.5px; line-height: 1.6; color: #aab0c3; margin-top: 10px; max-width: 300px; font-weight: 500; }
+
+.sds-hero-art { position: relative; flex: 1; width: 100%; display: flex; align-items: center; justify-content: center; min-height: 0; }
+.sds-hero-art.sds-kb { animation: sds-kb 8s ease-out both; }
+@keyframes sds-kb { from { transform: scale(1); } to { transform: scale(1.05); } }
+.sds-lotus { width: min(78vw, 320px); height: auto; }
+.sds-lotus path {
+  stroke-dasharray: 100; stroke-dashoffset: 100;
+  animation: sds-draw-petal .8s cubic-bezier(.4,0,.2,1) forwards; animation-delay: var(--d, 200ms);
+}
+@keyframes sds-draw-petal { to { stroke-dashoffset: 0; } }
+
+.sds-sway { animation: sds-sway 3.4s ease-in-out infinite; transform-origin: 50% 0; }
+.sds-sway-slow { animation-duration: 4.2s; animation-delay: .6s; }
+@keyframes sds-sway { 0%,100% { transform: rotate(-2.2deg); } 50% { transform: rotate(2.2deg); } }
+
+.sds-big-stat {
+  font-size: 56px; font-weight: 800; letter-spacing: -.04em; color: #fbbf24;
+  font-variant-numeric: tabular-nums; line-height: 1; margin-top: 6px;
+}
+/* The pop MUST live on this inner span, never on the .sds-rise wrapper:
+   stacking a second `animation` on the wrapper overrode its rise animation
+   and hid the stat (opacity 0) — see rule/changes/special-day-story-redesign-groww-v3.md. */
+.sds-stat-value { display: inline-block; }
+.sds-stat-value.sds-pop { animation: sds-pop .45s cubic-bezier(.2,1.4,.4,1) both; }
+@keyframes sds-pop { 0% { transform: scale(.86); } 100% { transform: scale(1); } }
+.sds-stat-label { font-size: 13px; font-weight: 600; color: #aab0c3; margin-top: 8px; }
+
+.sds-squiggle { width: 100%; max-width: 320px; height: 90px; margin-top: 14px; }
+.sds-squiggle path {
+  fill: none; stroke: #fbbf24; stroke-width: 2.5; stroke-linecap: round;
+  stroke-dasharray: 420; stroke-dashoffset: 420;
+  animation: sds-draw 1.6s ease forwards; animation-delay: 350ms;
+}
+@keyframes sds-draw { to { stroke-dashoffset: 0; } }
+
+.sds-mini-rows { width: 100%; max-width: 320px; margin-top: 18px; display: flex; flex-direction: column; gap: 2px; }
+.sds-mini-row {
+  display: flex; align-items: center; gap: 12px; padding: 13px 4px; text-align: left;
+  border-bottom: 1px solid rgba(255,255,255,.09);
+}
+.sds-mini-row:last-child { border-bottom: 0; }
+.sds-mini-row .sds-t {
+  flex: none; font-size: 11px; font-weight: 800; letter-spacing: .05em; color: #fbbf24;
+  min-width: 74px;
+}
+.sds-mini-row .sds-b { font-size: 15px; font-weight: 700; color: #fff; line-height: 1.35; letter-spacing: -.01em; }
+.sds-mini-row .sds-s { font-size: 12.5px; color: #aab0c3; line-height: 1.45; margin-top: 2px; font-weight: 500; }
+
+.sds-sector-rows { width: 100%; max-width: 320px; margin-top: 16px; display: flex; flex-direction: column; }
+.sds-sector-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 16px 4px; border-bottom: 1px solid rgba(255,255,255,.09); text-align: left;
+}
+.sds-sector-row:last-child { border-bottom: 0; }
+.sds-sector-row .sds-name { font-size: 17.5px; font-weight: 800; color: #fff; letter-spacing: -.02em; line-height: 1.3; }
+.sds-sector-row .sds-tag {
+  flex: none; font-size: 10px; font-weight: 800; letter-spacing: .08em; color: #fbbf24;
+  border: 1px solid rgba(251,191,36,.45); background: rgba(251,191,36,.1);
+  padding: 5px 9px; border-radius: 999px;
+}
+
+.sds-bottom-illus { position: relative; width: 100%; display: flex; justify-content: space-between; align-items: flex-end; padding: 0 6px; margin-top: auto; }
+.sds-flame { animation: sds-flick 1.6s ease-in-out infinite; transform-origin: 50% 100%; }
+@keyframes sds-flick { 0%,100% { transform: scaleY(1); opacity: 1; } 50% { transform: scaleY(1.12) scaleX(.94); opacity: .85; } }
+
+/* Footer: disclaimer + one link */
+.sds-disclaimer { font-size: 10px; color: rgba(255,255,255,.42); text-align: center; line-height: 1.5; max-width: 320px; font-weight: 500; }
+.sds-bottom-link {
+  border: 0; background: transparent; color: #fff; font-size: 14px; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; gap: 5px; padding: 6px 10px; letter-spacing: -.01em;
+}
+.sds-pause-note { font-size: 11px; color: #fbbf24; font-weight: 700; min-height: 14px; }
+
+.sds-toast {
+  position: absolute; top: 74px; left: 50%; transform: translateX(-50%); z-index: 5;
+  background: #fff; color: #111; font-size: 11.5px; font-weight: 700; padding: 7px 13px;
+  border-radius: 999px; box-shadow: 0 8px 24px rgba(0,0,0,.4); opacity: 0; pointer-events: none;
+  transition: opacity .2s ease; white-space: nowrap;
+}
+.sds-toast.sds-show { opacity: 1; }
+.sds-end-screen {
+  position: absolute; inset: 0; z-index: 6; display: none; flex-direction: column;
+  align-items: center; justify-content: center; gap: 14px; text-align: center; padding: 30px; background: #000;
+}
+.sds-end-screen.sds-show { display: flex; }
+.sds-end-screen h2 { font-size: 24px; font-weight: 800; }
+.sds-end-screen p { font-size: 13.5px; color: #aab0c3; line-height: 1.6; font-weight: 500; }
+.sds-end-screen button {
+  border: 0; border-radius: 13px; padding: 13px 22px; font-size: 13.5px; font-weight: 800;
+  background: #fff; color: #0b0b12; cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sds-rise, .sds-fadein, .sds-card.sds-slide-next, .sds-card.sds-slide-prev,
+  .sds-wordmark, .sds-flame, .sds-squiggle path, .sds-lotus path,
+  .sds-sway, .sds-ember, .sds-hero-art.sds-kb { animation: none; opacity: 1; }
+  .sds-squiggle path, .sds-lotus path { stroke-dashoffset: 0; }
+}

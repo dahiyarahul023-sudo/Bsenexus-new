@@ -1,0 +1,81 @@
+# Change: special-day-story-redesign-groww-v3
+
+- Starting commit: GitHub main tip 91af26b2 (work dir `~/workspace/bse-sync-work`, plain extracted copy, not a git repo).
+- User objective and acceptance cases:
+  1. Implement the APPROVED Special Day story redesign (preview v3 at `~/workspace/story-redesign/preview/index.html`) in the app: pure-black 6-card story in Groww's Muhurat language, pushed further with Instagram/CRED-style motion.
+  2. User verdict on v2 (10 Nov ~01:53 IST): "thoda bahut better, zyada nahi" — must be much better; take inspiration from more places; story must be ENGLISH only; font felt off; animation can be better; small improvements everywhere. V3 (approved 11 Nov ~02:26 IST) fixes all of that: all-English, new fonts (Archivo 800 headlines/UI + Fraunces 900 wordmark), richer motion (rising gold embers, swaying lanterns, lotus petal draw-in, blur-in text, squiggle with traveling dot, count-up + pop, Ken Burns hero zoom).
+  3. Banner timing: banner appears ~1 day before the event, after the last trading day ends — NOT months before. 31 Jan 2027 is a Sunday, so the last trading day before Budget Mon 1 Feb is Fri 29 Jan 2027; `startsAt` becomes 29 Jan 2027 15:30 IST.
+  4. Acceptance: `npx tsc --noEmit` zero errors; `npm run build` succeeds; headless-screenshot verification of the ported story (clock-mocked to the active window); all 6 cards fit with no clipping; ±2.4% count-up visible; no invented numbers — same Budget facts as the current config.
+- Verified facts (file + symbol):
+  - `src/config/specialDay.ts`: 4 cards, `startsAt: '2026-11-01T00:00:00+05:30'` (wrong — causes the 83-day countdown the user saw in his video), `sessionDate: '2027-02-01T09:15:00+05:30'`, `sessionLabel: '1 Feb 2027 · 09:15 AM – 03:30 PM IST'`, disclaimer verbatim, cards `budget-timings` / `budget-history` (±2.4%, 'Average Intraday SENSEX Range') / `budget-sectors` (CAPEX/ENERGY/BANKING) / `budget-guidelines` (RULE 1/2/3).
+  - `src/components/special/SpecialDayBanner.tsx`: reads the active window only via `getActiveSpecialDay()` (config `startsAt`/`endsAt`); no hardcoded dates. Countdown is to `sessionDate`. No banner change needed.
+  - `src/components/Layout.tsx:720,827-836`: mounts `SpecialDayBanner onOpenStory={(cfg) => setSpecialDayConfig(cfg)}` and `SpecialDayStoryModal config={specialDayConfig} isOpen onClose={() => setSpecialDayConfig(null)} onNavigateTab={(tab) => { setSpecialDayConfig(null); handleTabClick(tab); }}`.
+  - `src/components/special/SpecialDayStoryModal.tsx`: 8s auto-advance, tap/swipe/hold-pause, keyboard (arrows/space/Escape), share (navigator.share/clipboard + toast), `useReducedMotion` + `useBodyScrollLock`, portal to `document.body`, white/dark card panel, Previous/Next footer + session-label bar (both removed by this change).
+  - `src/components/special/SpecialDayCardTemplate.tsx`: generic template (tag chip, title, headline-stat box, point rows, dark action button, disclaimer). Replaced by per-kind renderers.
+  - `src/index.css:3-9`: self-hosted variable fonts via `@font-face` (GDPR: no Google requests), one file per family in `public/fonts/` (JetBrainsMono, Outfit, PlusJakartaSans, PlayfairDisplay). `index.html:119-120` preloads only the two app-wide fonts (PlusJakartaSans, Outfit).
+  - `src/components/TodayMarketStoryModal.tsx:17`: precedent for component-scoped story CSS — `import '../styles/market-stories.css'`.
+- Assumptions/unknowns and how they will be resolved:
+  - Archivo + Fraunces woff2 files did not exist anywhere on the machine (filesystem search empty) and `browser.open` to `fonts.googleapis.com/css2` is 403 via the fetch proxy (not retried). Resolved via npm registry instead: `npm pack @fontsource-variable/archivo @fontsource-variable/fraunces` (v5.3.0), latin `wght`-axis variable files copied to `public/fonts/Archivo.woff2` (34,928 B) and `public/fonts/Fraunces.woff2` (36,620 B); both verified `wOF2` magic bytes; scratch dir removed. No package.json/lockfile change (pack only downloads tarballs).
+  - Fraunces `wght`-only file pins optical size at its default (the `full` multi-axis file is 121 KB); the wordmark uses weight 900 only, so the 37 KB wght file matches the app's one-small-file-per-family pattern.
+  - Story-only fonts are NOT preloaded in `index.html` (unlike the two app-wide fonts): the story opens ~1 day/year, so preloading on every page would waste bandwidth; `@font-face font-display: swap` loads them on first story open with a system-serif/sans fallback.
+  - Timing card display strings ('Monday, 1 Feb' / '09:15 AM – 03:30 PM') are transcribed from `sessionDate`/`sessionLabel` onto the timing card; the banner countdown still derives from `sessionDate`. The pre-1-Feb-2027 content review (already recorded) covers updating them together.
+  - History/sectors/safety cards keep their `points` and `headlineStat` data in config even though the new renderers don't show all of it (history shows the stat + bottom line; sectors show titles + tags; safety shows titles only) — preserved as the researched facts for the pre-event review.
+- Changed source of truth:
+  - `src/config/specialDay.ts` is the single source for event facts, card content and the active window. `SpecialDayCard.kind` (`'cover' | 'timing' | 'timeline' | 'history' | 'sectors' | 'safety'`) selects the renderer; `actionLabel`/`actionTab` still own the per-card bottom link; `disclaimer` is unchanged and renders on every card footer.
+- Impact command and affected semantic domains:
+  - `npm run map:impact -- src/config/specialDay.ts src/components/special/SpecialDayStoryModal.tsx src/components/special/SpecialDayCardTemplate.tsx src/components/special/SpecialDayBanner.tsx src/components/Layout.tsx src/index.css` (run BEFORE editing; output saved to `/tmp/impact.json`).
+  - Direct import consumers of the changed files: `src/App.tsx`, `src/main.tsx` (via Layout / index.css). Relevant semantic domains: `frontend-stories` (Layout, HomeForYou, api.ts), `frontend-design` (index.css global CSS), `frontend-navigation` (Layout, App), `user-data` (Layout). No browser-event peers dispatch/listen on these components; the modal's only outbound wiring is `onNavigateTab` → Layout `handleTabClick`.
+- Related consumers: API, UI, storage/RPC, jobs, caches, manual copy:
+  - UI: `Layout.tsx` (mounts banner + modal; UNCHANGED — same props contract), `SpecialDayBanner.tsx` (reads `startsAt` from config; UNCHANGED), `TodayMarketStoryModal.tsx` + `src/styles/market-stories.css` (separate daily story system; UNCHANGED, only used as a pattern reference).
+  - Storage: banner dismissal key `bse_special_day_dismissed_<id>` unchanged; no new storage.
+  - Fonts: `public/fonts/` gains two files; `src/index.css` gains two `@font-face` rules; no global `--font-*` token changes (the rest of the app keeps Plus Jakarta Sans / Outfit / Playfair).
+  - No API, server, job, cache or manual-copy consumer.
+- For each relevant consumer: changed / reviewed-and-compatible / blocked, with evidence:
+  - `Layout.tsx`: reviewed-and-compatible — modal props (`config`, `isOpen`, `onClose`, `onNavigateTab`) unchanged; banner props unchanged.
+  - `SpecialDayBanner.tsx`: reviewed-and-compatible — `getActiveSpecialDay()` now returns the event only from 29 Jan 2027 15:30 IST (verified by reading the function; no hardcoded dates).
+  - `TodayMarketStoryModal.tsx` / `market-stories.css`: reviewed-and-compatible — separate system, untouched; new `special-day-story.css` uses an `sds-` class prefix so no selector can collide.
+  - `src/index.css` global tokens: reviewed-and-compatible — only additive `@font-face` rules; `--font-sans/--font-display/--font-serif` untouched.
+  - `App.tsx` / `main.tsx`: reviewed-and-compatible — import closure only; no behavior change (tsc + build verify).
+- Assignment scope: frontend; requested visual + behavior change (story redesign + banner window fix).
+- Frontend: routes, state owner, events, styles/tokens, focus/scroll and related screens:
+  - No route change. State owner stays `Layout.tsx` (`specialDayConfig`); modal owns playback state (index/progress/paused/holding/finished) and scroll lock via existing `useBodyScrollLock`.
+  - Events: same pointer/keyboard/share handlers; last-card advance now shows an in-modal end screen with Replay instead of closing (matches the approved preview).
+  - Styles: new scoped `src/styles/special-day-story.css` (`sds-` prefix), imported by the modal; keyframes for embers/sway/petal-draw/blur-in rise/shimmer/flick/pop/Ken Burns; `@media (prefers-reduced-motion: reduce)` disables all story motion (auto-advance also stays paused under reduced motion, as before).
+  - Focus/scroll: same portal + close-button focus + `useBodyScrollLock`; Escape closes; end-screen Replay button is a normal button.
+- UI state/device matrix: actual browser checks, screenshots and untested cases:
+  - Headless Chromium (playwright-core 1.65.0, 390×844 @2x) against the PRODUCTION BUILD served by `vite preview` on localhost:4173, clock mocked to Fri 29 Jan 2027 16:00 IST, entered as Guest (Open terminal → Guest): banner renders with countdown "2d 17h 14m 45s" (not 83 days); tapping it opens the story; all 6 cards measured 0px clipped (card 783px = stage 783px); `document.fonts.check` true for Archivo 800 and Fraunces 900; card 1 wordmark "BudgetDay", card 2 "Budget Day", card 4 count-up ends at "±2.4%" and stays visible; end screen appears after card 6 ("Story finished ✨ You have seen all 6 cards…"); Replay returns to card 1. Screenshots: `~/workspace/story-redesign/preview/live-banner.png`, `live-card1.png` … `live-card6.png`, `live-end.png` (read and checked by the implementer).
+  - Cosmetic observation (not a defect): on open, the close button shows its focus-visible ring (gold outline from the new scoped CSS + the app's own focus style) because the modal focuses it on open — pre-existing focus behavior, ring clears on first tap.
+  - Untested: physical iOS/Android device; signed-in/admin states (guest state verified — the modal is identical for all roles); live deployment (parent's step).
+- Expected user-visible effect:
+  - From 29 Jan 2027 15:30 IST the banner appears with a ~1-day countdown (not 83 days). Tapping it opens a pure-black 6-card story: cover, timing, timeline, history (±2.4% count-up), sectors, safety — minimal chrome, one bottom link per card, no Previous/Next buttons.
+- Failure/security/concurrency cases relevant to this change:
+  - Count-up pop MUST apply to the inner span only — in preview v3 the pop stacked on the `.rise` element overrode its animation and hid the ±2.4% (opacity 0). Never stack two `animation` rules on one element.
+  - Font files missing → `@font-face` falls back to Georgia/system serif for the wordmark and system sans for headlines (graceful; verified by the build including the files in `dist/`).
+  - Reduced-motion users get a static story with no auto-advance (pre-existing contract).
+- Implementation and coordinated updates:
+  - `src/config/specialDay.ts`: `startsAt` → `2027-01-29T15:30:00+05:30`; 4 → 6 cards with `kind`; cover + timing cards added; timeline/history/sectors/safety restructured per the preview.
+  - `src/components/special/SpecialDayArtwork.tsx` (new): original inline-SVG `LotusArt`, `DiyaArt`, `LanternArt`, `StringLights` (drawn from the preview; never Groww's artwork).
+  - `src/styles/special-day-story.css` (new): all story keyframes + reduced-motion support.
+  - `src/components/special/SpecialDayCardTemplate.tsx`: per-kind renderers.
+  - `src/components/special/SpecialDayStoryModal.tsx`: pure-black panel, minimal header, footer = disclaimer + one bottom link, end screen with replay.
+  - `src/index.css`: Archivo + Fraunces `@font-face`. `public/fonts/`: two new woff2 files.
+- Commands actually run and results:
+  - `npm run map:impact -- src/config/specialDay.ts src/components/special/SpecialDayStoryModal.tsx src/components/special/SpecialDayCardTemplate.tsx src/components/special/SpecialDayBanner.tsx src/components/Layout.tsx src/index.css` — ran BEFORE editing; direct import consumers `src/App.tsx`, `src/main.tsx`; domains: frontend-stories, frontend-design, frontend-navigation, user-data (plus others via Layout/index.css); no SpecialDay browser-event peers.
+  - `npx tsc --noEmit` — zero errors (run twice: after edits and at the end). `npm run lint` — exit 0.
+  - `npm run build` — exit 0 (vite built in 13.04s; startup budget passed 634,346 raw / 177,595 gzip; public Home budget passed; `dist/server.cjs` 1.5 MB). Prebuild auto-bumped `src/version.ts` to 2.6.86 — left as-is per standing rule.
+  - `npm run map:generate` — 675 files, 1751 import edges, 27 semantic domains; 4 computed imports need manual review (all pre-existing: 3 verify scripts + `server/tests/adrInbox.test.ts`; none involve the changed files).
+  - `npm run map:check` — Verified 675 files, 1751 import edges, 27 semantic domains; exit 0.
+  - `npm run test:map` — 6 pass, 0 fail.
+  - Runtime: `vite preview` + headless Chromium, clock-mocked guest run — see UI state/device matrix above. No existing test references SpecialDay (grep over `server/tests/` + `src/`), so no test suite covers this change; the full `npm test` was not run (server tests untouched by this frontend-only change).
+  - Font sourcing: `browser.open` to `fonts.googleapis.com/css2` returned 403 via the fetch proxy (not retried); resolved via `npm pack @fontsource-variable/archivo @fontsource-variable/fraunces` (v5.3.0) — latin `wght`-axis files verified `wOF2` magic, copied to `public/fonts/`, scratch removed. No package.json/lockfile change.
+- Required checks unavailable (reason; do not mark passed):
+  - Physical-device check (no device in this environment); live deployment + live retest (parent handles push/merge/republish).
+- Deployment/migration requirements and rollback:
+  - No migration. Rollback = revert this change's files; the config shape is additive (`kind` field) and the old template/modal are replaced wholesale, so a revert restores the previous 4-card story exactly.
+- Remaining risks and next bounded step:
+  - Budget 2027 content (dates, sector calls, ±2.4% stat) is still the agent's draft — review/update before 1 Feb 2027 (pre-existing caveat, unchanged).
+  - Parent: review → push to GitHub → one Gemini merge instruction → Republish → live verify (guest state included).
+- Graph/domain/documentation refreshed:
+  - `npm run map:generate` + `npm run map:check` + `npm run test:map` all pass after the change (see above). `rule/generated/spider-map.json` now includes `SpecialDayArtwork.tsx` and `special-day-story.css`. No `domains.json` change needed (no new cross-file contract; the story contract lives in `src/config/specialDay.ts` + this change record).
+
+- Delivery status: implemented locally in `~/workspace/bse-sync-work` (NOT a git repo — no commit here); push/merge/CI/deployment are the parent's next steps, reported separately.

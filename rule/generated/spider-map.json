@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "c0d3b95951db1c57db44f1e7106e72a5a7fed46f0890cce55c8734e15ae10fdf",
+  "sourceDigest": "71ec6e3aaea1a084546ecffc6d61fb9f180c139f56d475b82d10ebe5d721c82c",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -3539,6 +3539,14 @@
       ]
     },
     {
+      "path": "src/components/special/SpecialDayArtwork.tsx",
+      "sha256": "02e49ce996a73d02aa930064e208b9513457c57a7d41b9c13ef1f50addfe594f",
+      "importedBy": [
+        "src/components/special/SpecialDayCardTemplate.tsx",
+        "src/components/special/SpecialDayStoryModal.tsx"
+      ]
+    },
+    {
       "path": "src/components/special/SpecialDayBanner.tsx",
       "sha256": "2ddd53f90f8444f05ee16596b116f22df9c39708a5dd99290dd36508858aed3f",
       "importedBy": [
@@ -3547,14 +3555,14 @@
     },
     {
       "path": "src/components/special/SpecialDayCardTemplate.tsx",
-      "sha256": "d874da7cf338cba90b60e6a80382ff721c6708451004833b81972feb25432886",
+      "sha256": "e823cf8eb7009d64ec4fca7527442ce8c8545dcddc2d29535aa8a634a7efc460",
       "importedBy": [
         "src/components/special/SpecialDayStoryModal.tsx"
       ]
     },
     {
       "path": "src/components/special/SpecialDayStoryModal.tsx",
-      "sha256": "54ebf4bdbb693ec78edbe4d1bebf731f259d941c450da380b7afb74c3348204d",
+      "sha256": "2a2582a168a54e62890239a54b05048bf5015a980a2889274b187eaff865b407",
       "importedBy": [
         "src/components/Layout.tsx"
       ]
@@ -4125,7 +4133,7 @@
     },
     {
       "path": "src/config/specialDay.ts",
-      "sha256": "c5a47b0faa873102a098373851e9463e13d30eb5b3e51c2d91f0b567c5b7fa40",
+      "sha256": "aa420d302eb7ec89021e92529012d4f30ed2e7a27f0083912306da5a287e7fab",
       "importedBy": [
         "src/components/Layout.tsx",
         "src/components/special/SpecialDayBanner.tsx",
@@ -4394,7 +4402,7 @@
     },
     {
       "path": "src/index.css",
-      "sha256": "06270e0904769047efdefbfbba24d0fdf445ac9c62e61a62d23aeed1463b2320",
+      "sha256": "14198221ac3226606a09b1fa6ef3442c3959e32ad530e5154518a574168b8081",
       "importedBy": [
         "src/main.tsx"
       ]
@@ -4867,6 +4875,13 @@
       "importedBy": [
         "src/components/ui/RichVisual.tsx",
         "src/main.tsx"
+      ]
+    },
+    {
+      "path": "src/styles/special-day-story.css",
+      "sha256": "42ed3e58e2bd0b6d08651d591fd8efe199dc2ca4c3a07b23edec2d4e07ba596b",
+      "importedBy": [
+        "src/components/special/SpecialDayStoryModal.tsx"
       ]
     },
     {
@@ -5352,7 +5367,7 @@
     },
     {
       "path": "src/version.ts",
-      "sha256": "ede5195c4b2d306690463266b94e2c1505e0c8f5dffd8f81bc46e79a477075a4",
+      "sha256": "ada3da2cbf8961f3daa19061f100ce41ac31c98c0b128cb2af06d2ad9d8df91a",
       "importedBy": [
         "src/components/SettingsTab.tsx",
         "src/lib/sentry.ts"
@@ -15039,33 +15054,51 @@
     },
     {
       "source": "src/components/special/SpecialDayCardTemplate.tsx",
+      "target": "src/components/special/SpecialDayArtwork.tsx",
+      "kind": "import",
+      "line": 2
+    },
+    {
+      "source": "src/components/special/SpecialDayCardTemplate.tsx",
       "target": "src/config/specialDay.ts",
       "kind": "import",
-      "line": 13
+      "line": 3
     },
     {
       "source": "src/components/special/SpecialDayStoryModal.tsx",
       "target": "src/hooks/useBodyScrollLock.ts",
       "kind": "import",
-      "line": 14
+      "line": 5
     },
     {
       "source": "src/components/special/SpecialDayStoryModal.tsx",
       "target": "src/components/ui/BseNexusLogo.tsx",
       "kind": "import",
-      "line": 15
+      "line": 6
     },
     {
       "source": "src/components/special/SpecialDayStoryModal.tsx",
       "target": "src/components/special/SpecialDayCardTemplate.tsx",
       "kind": "import",
-      "line": 16
+      "line": 7
+    },
+    {
+      "source": "src/components/special/SpecialDayStoryModal.tsx",
+      "target": "src/components/special/SpecialDayArtwork.tsx",
+      "kind": "import",
+      "line": 8
+    },
+    {
+      "source": "src/components/special/SpecialDayStoryModal.tsx",
+      "target": "src/styles/special-day-story.css",
+      "kind": "import",
+      "line": 9
     },
     {
       "source": "src/components/special/SpecialDayStoryModal.tsx",
       "target": "src/config/specialDay.ts",
       "kind": "import",
-      "line": 17
+      "line": 10
     },
     {
       "source": "src/components/story/StoryArtwork.tsx",
@@ -24689,6 +24722,12 @@
       "key": "element?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), textarea:not(:disabled), [tabindex=\"0\"]') ?? []"
     },
     {
+      "file": "src/components/special/SpecialDayStoryModal.tsx",
+      "line": 50,
+      "function": "Array.from",
+      "key": "{ length: 12 }"
+    },
+    {
       "file": "src/components/story/StoryCarouselBar.tsx",
       "line": 39,
       "function": "localStorage.getItem",
@@ -24798,19 +24837,19 @@
     },
     {
       "file": "src/config/specialDay.ts",
-      "line": 209,
+      "line": 251,
       "function": "localStorage.getItem",
       "key": "`bse_special_day_dismissed_${dayId}`"
     },
     {
       "file": "src/config/specialDay.ts",
-      "line": 219,
+      "line": 261,
       "function": "localStorage.setItem",
       "key": "`bse_special_day_dismissed_${dayId}`"
     },
     {
       "file": "src/config/specialDay.ts",
-      "line": 221,
+      "line": 263,
       "function": "localStorage.removeItem",
       "key": "`bse_special_day_dismissed_${dayId}`"
     },
@@ -28800,7 +28839,7 @@
     },
     {
       "file": "src/components/special/SpecialDayStoryModal.tsx",
-      "line": 107,
+      "line": 134,
       "target": "window",
       "kind": "listen",
       "name": "keydown",
@@ -28808,7 +28847,7 @@
     },
     {
       "file": "src/components/special/SpecialDayStoryModal.tsx",
-      "line": 108,
+      "line": 135,
       "target": "window",
       "kind": "remove",
       "name": "keydown",
