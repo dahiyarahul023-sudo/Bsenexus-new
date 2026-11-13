@@ -1,0 +1,40 @@
+# Change: Calendar history restore — per-page timeout + bounded retry (false 'Stored calendar history' warning)
+
+- Starting commit: 46ffa71e (GitHub main, 11 Nov 2026 fonts commit; local source of truth ~/workspace/bse-sync-work)
+- User objective and acceptance cases:
+  - User saw the yellow Earnings-calendar warning "Stored calendar history could not be fully recovered. Retry to check missing archive dates. Previously loaded entries are still shown." on his phone (13 Nov 2026, 01:30 IST screenshot) and asked for it to be fixed end-to-end (GitHub → AI Studio → Republish) with one final report when the site is live.
+  - Acceptance: the warning no longer appears for a healthy-but-slow database restore; a genuine storage outage still raises the warning and keeps previously loaded entries (no silent truncation, no fake-empty history).
+- Verified facts (file + symbol):
+  - UI: src/components/ResultsCalendar.tsx:581 sets the warning when the API response carries `calendarHistoryUnavailable`; API computes it as `calendarHistoryUnavailable || snapshot.outcomesUnavailable` (server/services/resultsCalendarService.ts:939).
+  - Source 1 (history): hydrateStoredCalendar() (resultsCalendarService.ts:187) → readStoredCalendarMeetings() in server/database/calendarHistoryDao.ts. The DAO created ONE `AbortSignal.timeout(10_000)` before the pagination loop and passed it to every page query (old lines 6, 13). The `results_calendar` table holds every stored meeting (the repo's own recovery test exercises 1,110 rows = 3 pages); a single slow page, or cumulative time past 10s, aborted the whole restore → catch sets calendarHistoryUnavailable = true.
+  - Source 2 (outcomes): getResultsCalendarSnapshot() (resultsCalendarService.ts:746) → readCalendarOutcomes() in server/services/calendarOutcomeRead.ts. Same pattern, worse: ONE `AbortSignal.timeout(12000)` shared across all 60-code batches and up to 8 pages per batch (old line 13, 22). In results season the recent-meetings set spans many batches, so the shared deadline could expire mid-read → outcomesUnavailable = true → same UI warning.
+  - Live evidence of intermittency: user screenshot shows the warning at 01:30 IST 13 Nov; a guest GET /api/results-calendar at 03:50 IST the same night returned calendarHistoryUnavailable=false with 176 items — the restore succeeds when it is fast enough, fails when it is not. No data loss in either state (previously loaded entries are retained by design).
+  - Not related to the 13 Nov Cloudflare changes (Worker TTL / cache rules / Bot Fight Mode / Speed Brain): the screenshot predates them (01:30 vs 01:56 IST) and the flag is computed inside the origin server from its own Supabase reads.
+- Assumptions/unknowns and how they will be resolved:
+  - Exact live trigger (one slow page vs cumulative timeout vs a transient PostgREST error) cannot be distinguished from outside — the server log line is generic. The fix removes all three causes at once: fresh per-page timeout + bounded retries per page. Post-deploy resolution: watch the live flag on /api/results-calendar and the user's Earnings tab over the following days.
+  - The live `results_calendar` row count is unknown (direct Supabase read from this environment returned 401 on 7 Nov); the fix does not depend on it.
+- Changed source of truth: server/database/calendarHistoryDao.ts (new readStoredCalendarPage helper: fresh 10s AbortSignal per attempt, max 3 attempts per page, same 'Stored calendar history unavailable' error after the last attempt; row validation and pagination-stall guard unchanged) and server/services/calendarOutcomeRead.ts (new readOutcomePage helper: fresh 12s per attempt, max 3 attempts per page, same 'Calendar outcome storage unavailable' error; the shared 12s deadline is removed). No API shape, flag semantics, or UI text changes.
+- Impact command and affected semantic domains: `npm run map:impact -- server/database/calendarHistoryDao.ts server/services/calendarOutcomeRead.ts` (run 13 Nov). Direct consumer of both modules is only server/services/resultsCalendarService.ts (imports at lines 30 and 2); its response contract is unchanged.
+- Related consumers: API, UI, storage/RPC, jobs, caches, manual copy:
+  - API GET /api/results-calendar (+ /refresh): response fields unchanged.
+  - UI ResultsCalendar warning banner: unchanged logic; it will simply stop firing on slow-but-healthy restores.
+  - Storage: reads only (results_calendar, announcements) — retries are safe, no writes, no idempotency concern (BACKEND_RULES R05 is about side effects; R11 bounded timeouts/backoff satisfied: per-page timeout + max 3 attempts; R12 satisfied: a real failure still throws and stays visible).
+- For each relevant consumer: changed / reviewed-and-compatible / blocked, with evidence:
+  - resultsCalendarService hydrateStoredCalendar: reviewed-and-compatible — same throw contract (Error with the same message after all attempts), same merge/flag behavior.
+  - getResultsCalendarSnapshot outcomes path: reviewed-and-compatible — same throw contract and coverage guard (`complete` logic untouched); pending-request dedupe untouched.
+  - server/tests/calendarRecovery.test.ts: reviewed-and-compatible — success path still fetches exactly 3 pages for 1,110 rows; the mocked-503 path still ends with calendarHistoryUnavailable=true and retained items (retries fail fast against the mock, no timers involved).
+- Assignment scope: backend only; no visual or behavior change requested beyond removing the false warning.
+- Expected user-visible effect: the yellow warning stops appearing after server restarts / slow restores; archive history loads fully as before. In a genuine database outage the warning still appears (truthful signal) and entries are retained.
+- Failure/security/concurrency cases relevant to this change:
+  - Page fails all 3 attempts → restore throws → flag true → warning (same as before, by design).
+  - Slow page succeeds on attempt 2/3 → full restore, no warning (the fix's purpose).
+  - Pagination stall guard and row validation untouched; no silent truncation introduced (partial pages are never returned as a complete set).
+  - No auth, secrets, or public-surface changes; both modules are internal server code.
+- Implementation and coordinated updates: the two files above + this record + regenerated spider map (map:generate). No domains.json contract change (no contract changed).
+- Commands actually run and results: `npm run map:impact` (consumers confirmed: only resultsCalendarService); `npm run map:generate` ✓ (675 files, 1751 edges); `npm run map:check` ✓; `npm run test:map` ✓ (0 fail); calendar suite `node --test server/tests/calendarRecovery.test.ts` ✓ 2/2 (incl. >1000-row restore across 3 pages and the outage case: flag true, rows retained); full `npm test` = 1028/1031 pass — the 3 failures (cspNonce inline boot scripts; deepAuditAuth PIN-elevation cookie; deepAuditAuth Telegram webhook) are PRE-EXISTING, proven by A/B: the identical 3 fail on pristine pre-fix copies of both changed files; `npm run build` ✓ exit 0 (tsc --noEmit 0 errors + vite + esbuild). Diff of both changed files reviewed line-by-line against the pristine copies — only the intended timeout/retry changes.
+- Required checks unavailable (reason; do not mark passed): live Supabase row count / direct DB timing (no working key from this environment — 401 on 7 Nov).
+- Deployment/migration requirements and rollback: ship via GitHub → AI Studio apply → Republish of the existing Bse app. No migration. Rollback = republish the previous AI Studio version (Settings → Versions).
+- Remaining risks and next bounded step: if the live database itself is down for >3 attempts x page count, the warning still shows — intended. If warnings persist after this fix, next step is server-log timing around hydrateStoredCalendar on the live instance.
+- Graph/domain/documentation refreshed: spider map regenerated in this change; domains.json unchanged (no contract change).
+
+- Delivery status: commit / merge / CI / deployment, reported separately: (filled at delivery)
