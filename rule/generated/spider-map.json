@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "71ec6e3aaea1a084546ecffc6d61fb9f180c139f56d475b82d10ebe5d721c82c",
+  "sourceDigest": "e29bceec3d8e544d6d7b3d46d3768cc706a90bedfcf114ed0e266c1ce3a0b2b1",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -606,7 +606,7 @@
     },
     {
       "path": "server/database/calendarHistoryDao.ts",
-      "sha256": "22af9f958d1f12128f103f1e266bbf1485ff826f688b6bae28e5e6b18116a695",
+      "sha256": "a962c8ae7a67a06d639d711068f55e966f340c4c2f930071eb2f0e78ca353556",
       "importedBy": [
         "server/services/resultsCalendarService.ts"
       ]
@@ -1207,7 +1207,7 @@
     },
     {
       "path": "server/services/calendarOutcomeRead.ts",
-      "sha256": "56fa1792a5326941729903e7fe958f7fcbb8887dd06e742201c041245de2f0ad",
+      "sha256": "131493cf93e80f8d72dcb75bb6108878ef0eeb79ed7d350bbe21f218a6c89647",
       "importedBy": [
         "server/services/resultsCalendarService.ts"
       ]
@@ -23217,7 +23217,7 @@
     },
     {
       "file": "server/database/calendarHistoryDao.ts",
-      "line": 9,
+      "line": 17,
       "function": "getSupabase().from",
       "key": "'results_calendar'"
     },
@@ -23817,7 +23817,7 @@
     },
     {
       "file": "server/services/calendarOutcomeRead.ts",
-      "line": 19,
+      "line": 22,
       "function": "getSupabase().from",
       "key": "'announcements'"
     },
