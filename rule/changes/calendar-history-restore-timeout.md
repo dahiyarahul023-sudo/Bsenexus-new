@@ -37,4 +37,9 @@
 - Remaining risks and next bounded step: if the live database itself is down for >3 attempts x page count, the warning still shows — intended. If warnings persist after this fix, next step is server-log timing around hydrateStoredCalendar on the live instance.
 - Graph/domain/documentation refreshed: spider map regenerated in this change; domains.json unchanged (no contract change).
 
-- Delivery status: commit / merge / CI / deployment, reported separately: (filled at delivery)
+- Delivery status: commit / merge / CI / deployment, reported separately:
+  - Code (local): implemented in ~/workspace/bse-sync-work on top of 46ffa71e; tsc 0 errors, build pass, calendar suite 2/2, full suite 1028/1031 (3 failures pre-existing, A/B-proven on pristine copies).
+  - GitHub: pushed 13 Nov 2026 ~06:24 IST via github.com web upload (the connector OAuth refresh token was failing with bad_refresh_token) — commits edbb8f0 (DAO), 195cbda (outcome read), d55a0d8 (this record), 84ebe5d (spider map regen). Main tip 84ebe5d.
+  - AI Studio: Gemini agent applied both files from supplied content (one instruction), re-ran tsc 0 errors / build pass / calendarRecovery 2/2 in AI Studio, then the existing Bse app was Republished 13 Nov 2026 07:04:58 IST — live version v2.6.93.
+  - Live verification (independent, 13 Nov ~07:06 IST): homepage 200; /health ok on a fresh instance (uptime ~2 min — cold start after publish); guest GET /api/results-calendar returned calendarHistoryUnavailable=false with 176 items on that cold-started instance.
+  - Post-publish audit: fresh AI Studio ZIP (version dated 13 Nov 07:01 IST) diffed against the GitHub state — both fix files byte-identical; no other functional divergence (only the known 9 Nov comment/formatting drift, version.ts auto-bump, and generated spider maps). The agent's remark about an extra edit in src/pages/BulkFilingGPT.tsx left no content difference — file is identical on both sides.
