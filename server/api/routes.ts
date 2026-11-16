@@ -537,9 +537,9 @@ apiRouter.post("/test-gemini", requireAdmin, aiRateLimiter, async (req, res) => 
 });
 
 apiRouter.get("/announcements", 
-  apiResponseCache.middleware({ ttlMs: 3 * 1000, publicCache: false }),
+  apiResponseCache.middleware({ ttlMs: 6 * 1000, publicCache: true }),
   async (req, res) => {
-    res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+    res.setHeader('Cache-Control', 'public, max-age=5, s-maxage=6, stale-while-revalidate=4');
     // Surface BSE source-block state so the UI can show a subtle "feed delayed"
     // indicator instead of silently showing stale data. Header (not body) keeps
     // the array response shape unchanged for existing clients.
