@@ -772,7 +772,7 @@ export function Announcements({
 
   useVisibilityInterval(() => {
     fetchData(false);
-  }, 30000);
+  }, 12000);
 
   // Prefetch an announcement's detail data on hover intent so the detail view
   // opens instantly. Skips ids already fresh/prefetched.
