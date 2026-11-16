@@ -195,7 +195,8 @@ async function generateLocalizedSummary(company: string, subject: string, detail
               }
             } catch (pErr: any) {
               addLog('WARNING', 'GEMINI', `[${company}] pdf-parse text extraction failed: ${pErr.message}`);
-            }
+            } 
+            if (extractedPdfText.trim().length < 100 && buffer.length <= 6 * 1024 * 1024) pdfData = { inlineData: { data: buffer.toString("base64"), mimeType: "application/pdf" } };
           }
         } else {
           addLog('WARNING', 'GEMINI', `[${company}] BSE PDF returned HTTP status ${res.status}. Proceeding with headline.`);
