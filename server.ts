@@ -5550,6 +5550,12 @@ app.get(['/.well-known/ai-plugin.json', '/ai-plugin.json'], (_req, res) => {
 // Permanent 301 Redirects for Legacy / Unindexed URLs (Fix 2)
 const PERMANENT_301_REDIRECTS: Record<string, string> = {
   '/privacy': '/privacy-policy',
+  '/company/BAJAJAUTO': '/company/BAJAJ-AUTO',
+  '/company/bajajauto': '/company/BAJAJ-AUTO',
+  '/company/JBMMA': '/company/JBMA',
+  '/company/ZOMATO': '/company/ETERNAL',
+  '/company/zomato': '/company/ETERNAL',
+  '/company/jbmma': '/company/JBMA',
   '/guides/what-is-sebi-lodr-regulation-30': '/guides/sebi-lodr-regulation-30',
   '/guides/bse-corporate-actions-explained': '/guides',
   '/guides/how-to-track-bse-corporate-announcements': '/guides',
@@ -5590,7 +5596,7 @@ app.get('/filing/:symbol/:newsId', async (req, res) => {
       // Confirmed-dead test URLs can never become real content: 410 Gone so
       // Google drops them from the index faster instead of retrying them as 404.
       // Legacy UUID-style IDs are likewise permanent misses (never minted now).
-      if (isBatchTest || LEGACY_UUID_ID_RE.test(newsId)) {
+      if (isBatchTest || LEGACY_UUID_ID_RE.test(newsId) || /^ann_\d+_202609\d+_\d+$/i.test(newsId)) {
         return res.status(410).setHeader('Content-Type', 'text/html; charset=utf-8').send(renderAnnouncement404Page(true));
       }
       return res.status(404).setHeader('Content-Type', 'text/html; charset=utf-8').send(renderAnnouncement404Page(isBatchTest));
@@ -6304,7 +6310,7 @@ app.get('/sitemap-companies.xml', (_req, res) => {
   let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
   for (const entry of [...DIRECTORY_COMPANIES, ...stockEntries]) {
     const sym = entry.symbol?.trim().toUpperCase();
-    if (!sym || seenSymbols.has(sym) || !/^[A-Z0-9-]{2,15}$/.test(sym)) continue;
+    if (!sym || seenSymbols.has(sym)  || sym === 'BAJAJAUTO' || sym === 'JBMMA' || sym === 'ZOMATO'|| !/^[A-Z0-9-]{2,15}$/.test(sym)) continue;
     seenSymbols.add(sym);
     xml += `  <url>\n    <loc>https://bsenexus.in/company/${escapeHtmlAttr(sym)}</loc>\n    <lastmod>${todayStr}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
   }
