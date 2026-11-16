@@ -204,7 +204,8 @@ export function Layout({
     };
   }, []);
 
-  const checkQuotaStatus = async () => {
+  const checkQuotaStatus = async () => { 
+    if (!isAdmin) return;
     try {
       const res = await customFetch('/api/storage/quota-mode');
       if (res.ok) {
