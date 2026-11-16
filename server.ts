@@ -834,8 +834,8 @@ function renderCompanyPage(data: any, symbol: string, scripCode?: string): strin
   const aiSnapshot = (data.aiSnapshot || '').trim();
 
   // High-CTR Stock Page Title formula:
-  // <Clean Company Name> (<SYMBOL>) ${venue} Announcements & Filings Live | Bsenexus
-  const pageTitle = `${cleanCompanyName} (${symbol}) ${venue} Announcements & Filings Live | Bsenexus`;
+  // <Clean Company Name> (<SYMBOL>) Announcements & Filings | BSE Nexus
+  const pageTitle = `${cleanCompanyName} (${symbol}) Announcements & Filings | BSE Nexus`;
   const canonicalUrl = `https://bsenexus.in/company/${encodeURIComponent(symbol)}`;
 
   const latestFiling = recentFilings[0];
