@@ -590,13 +590,7 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
         }
 
         // Reconcile with the view selected when the response arrives, not the old request closure.
-        setStatusFilter(selected => {
-          if (selected === 'all' || selected === 'declared' || selected === 'ai') return selected;
-          if (todayCount === 0 && upcomingFutureCount === 0) return 'declared';
-          if (selected === 'today' && todayCount === 0) return upcomingFutureCount > 0 ? 'upcoming' : 'declared';
-          if (selected === 'upcoming' && upcomingFutureCount === 0) return todayCount > 0 ? 'today' : 'declared';
-          return selected;
-        });
+       
       }
     } catch (err) {
       if (!isCurrent()) return;
@@ -1056,7 +1050,9 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
         const upcoming = result.filter(i => i.daysLeft >= 0).sort((a, b) => a.meetingTimestamp - b.meetingTimestamp);
         const past = result.filter(i => i.daysLeft < 0).sort((a, b) => b.meetingTimestamp - a.meetingTimestamp);
         result = [...upcoming, ...past];
-      } else {
+      } else if (statusFilter === 'declared') {
+        result.sort((a, b) => b.meetingTimestamp - a.meetingTimestamp);
+        } else {
         result.sort((a, b) => a.meetingTimestamp - b.meetingTimestamp);
       }
     } else if (sortBy === 'date_desc') {
@@ -1888,16 +1884,18 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
               <div className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">
                 {searchQuery.trim()
                   ? `No board meetings matching "${searchQuery.trim()}"`
-                  : uniqueWatchlistStocksCount === 0 
+                  : (calendarScope === 'watchlist' && uniqueWatchlistStocksCount === 0) 
                   ? "Your Watchlist is Empty" 
                   : statusFilter === 'today' 
                   ? "No Board Meetings Scheduled for Today" 
+                    : statusFilter === 'upcoming'
+                  ? "No upcoming board meetings scheduled yet"
                   : "No Matching Results in this View"}
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                 {searchQuery.trim()
                   ? `No board meetings matching "${searchQuery.trim()}". Try a different company name or symbol.`
-                  : uniqueWatchlistStocksCount === 0
+                  : (calendarScope === 'watchlist' && uniqueWatchlistStocksCount === 0)
                   ? "You have removed all stocks from your watchlist. Add companies to your watchlist or restore defaults to track their upcoming and past board meetings and quarterly financial results."
                   : searchQuery 
                   ? `No board meetings matching "${searchQuery}".`
@@ -2074,7 +2072,7 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
                 <div className="calendar-stock-info flex flex-col gap-2.5 min-w-0 flex-1">
                   {/* Top row in Grid view OR Header strip in List view */}
                   <div className="calendar-card-header flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
                       {/* Select Checkbox */}
                       <button
                         type="button"
@@ -2098,7 +2096,7 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
                         );
                       })()}
 
-                      <div className="calendar-identity flex flex-col items-start gap-0.5 min-w-0">
+                      <div className="calendar-identity flex flex-col items-start gap-0.5 flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 min-w-0 w-full">
                         {/* Pulsing Live Dot for today's scheduled or active meetings */}
                         {isToday && (
