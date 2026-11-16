@@ -197,7 +197,7 @@ test('BSE and NSE render stored official disclosures through the regular company
   const bseHtml=renderer.renderCompanyPage({...intel,companyName:'BSE Limited'},'BSE','');
   assert.match(bseHtml,/EXCHANGE OPERATOR DISCLOSURE/);
   assert.doesNotMatch(bseHtml,/UNRELATED ENZYME DISCLOSURE|BSE:540025/);
-  assert.match(bseHtml,/NSE Announcements &amp; Filings Live|NSE Announcements & Filings Live/);
+  assert.match(bseHtml,/Announcements &amp; Filings \| BSE Nexus|Announcements & Filings \| BSE Nexus/);
   assert.match(bseHtml,/NSE:BSE/);
   assert.match(bseHtml,/Meeting dates for BSE Limited are available from NSE/);
   const nseHtml=renderer.renderCompanyPage({companyName:'National Stock Exchange of India Limited',recentFilings:[{id:'nse',scripCode:'544937',subject:'NSE STORED FILING'},wrong]},'NSE','544937');
