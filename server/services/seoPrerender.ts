@@ -224,7 +224,7 @@ export function prerenderCompanyHtml(
   const companyName = data?.companyName || symbol;
   const cleanCompanyName = companyName.replace(/\s+(Limited|Ltd\.?)$/i, '').trim();
   const canonicalUrl = `https://bsenexus.in/company/${encodeURIComponent(symbol)}`;
-  const pageTitle = `${cleanCompanyName} (${symbol}) BSE Announcements & Filings Live | Bsenexus`;
+  const pageTitle = `${cleanCompanyName} (${symbol}) Announcements & Filings | BSE Nexus`;
 
   const recentFilings = Array.isArray(data?.recentFilings) ? data.recentFilings : [];
   const latestFiling = recentFilings[0];
