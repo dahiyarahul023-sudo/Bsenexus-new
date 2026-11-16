@@ -782,3 +782,4 @@ body {
 .calendar-declared-today .calendar-list-status { color:var(--rich-selected-ink,#065f46); font-weight:750; }
 .result-timing { color:var(--rich-ink,#162333); }
 .result-timing svg { width:100%; max-width:640px; height:auto; display:block; min-height:110px; }
+@media(min-width:768px) { .calendar-entry .calendar-identity { min-width:0; } .calendar-stock-info { flex:1 1 0%; width:auto; min-width:0; } .calendar-card-footer { width:auto; flex-shrink:0; } .calendar-card-actions { width:auto; } }
