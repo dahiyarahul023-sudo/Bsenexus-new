@@ -797,7 +797,7 @@ export function Announcements({
     try {
       const res = await customFetch('/api/announcements?limit=300', {
         signal: controller.signal,
-        cache: 'no-store',
+        cache: isInitial ? 'no-store' : 'default',
         ...(isInitial ? { fetchpriority: 'high' } : {})
       } as RequestInit);
       if (!res.ok) throw new Error(`Filings request failed (${res.status})`);
