@@ -77,7 +77,7 @@ test('cache retains a private placeholder; every hit and conditional read gets a
 }));
 test('all trusted source inline boot scripts are explicitly marked; JSON-LD remains data', () => {
   const scripts = [...fs.readFileSync('index.html', 'utf8').matchAll(/<script\b([^>]*)>/g)];
-  assert.equal(scripts.filter(m => !m[1].includes('src=') && !m[1].includes('application/ld+json')).length, 5);
+  assert.equal(scripts.filter(m => !m[1].includes('src=') && !m[1].includes('application/ld+json')).length, 6);
   for (const script of scripts) if (!script[1].includes('application/ld+json')) assert.match(script[1], /nonce="__CSP_NONCE__"/);
 });
 test('report endpoint strips URL secrets, caps bodies and rate limits without auth', () => fixture(async (request, _cache, logs) => {
