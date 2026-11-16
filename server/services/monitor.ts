@@ -450,7 +450,7 @@ export async function processAnnouncements(): Promise<AnnouncementPollResult> {
                 addLog('SUCCESS', 'TELEGRAM', `Dispatched Admin ${priority.level} alert for ${companyName} (${priority.category})`);
                 
                 // Telegram Alert Purity: Only dispatch AI summary reply if explicitly opted-in by user/admin
-                if (priority.category === 'RESULTS' && result.messageId && settings.telegramAiSummaryEnabled === true) {
+                if (priority.category === 'RESULTS' && result.messageId && settings.telegramAiSummaryEnabled !== false) {
                   generateAndSendSummary(result.messageId, companyName, subject, details, priority.category, pdfLink, newsId, adminChatId, 'english', scrip_cd)
                     .catch(e => addLog('ERROR', 'GEMINI', `[${companyName}] Summary dispatch exception: ${e.message}`));
                 }
@@ -612,7 +612,7 @@ export async function processAnnouncements(): Promise<AnnouncementPollResult> {
                     if (userRes.success && userRes.messageId) {
                       const viaRule = !prefsMatch && userRuleEval.shouldSendTelegram;
                       await addLog('SUCCESS', 'TELEGRAM', `Personal alert -> user ${u.uid}: ${companyName} [${priority.category}] via ${viaRule ? 'alert-rule(telegram-on)' : 'watchlist-prefs'}`);
-                      const userWantsAiSummary = uPrefs?.telegramAiSummaryEnabled === true;
+                      const userWantsAiSummary = uPrefs?.telegramAiSummaryEnabled !== false;
                       if (priority.category === 'RESULTS' && userWantsAiSummary) {
                         const userSummaryLang = (uPrefs as any)?.aiSummaryLang === 'hinglish' ? 'hinglish' : 'english';
                         generateAndSendSummary(userRes.messageId, companyName, subject, details, priority.category, pdfLink, newsId, rawUserChatId, userSummaryLang, scrip_cd, u.uid)
@@ -645,7 +645,7 @@ export async function processAnnouncements(): Promise<AnnouncementPollResult> {
     }
     // Retain request-based hosting CPU through plain filing delivery. AI work is
     // tracked separately and never holds the poller's ingestion mutex.
-    if (pendingDeliveries.length) await cycle.step('delivery-drain', () => Promise.allSettled(pendingDeliveries), 12_000);
+    if (pendingDeliveries.length) await cycle.step('delivery-drain', () => Promise.race([Promise.allSettled(pendingDeliveries), new Promise(r => setTimeout(r, 4000))]), 12_000);
     // Keep the existing DAO writes on request CPU until drained (bounded stage).
     await cycle.step('write-drain', () => flushSupabaseWriteQueue(3000));
     flushLocalDiskSave();
