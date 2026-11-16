@@ -2203,10 +2203,10 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
                       <SaveNoteButton
                         link={{
                           type: 'result',
-                          label: `${item.symbol} · ${item.meetingDate}`,
+                          label: `${getCorrectCompanyName(item)} · ${item.meetingDate}`,
                           symbol: item.symbol,
                         }}
-                        label={`Save note on ${item.symbol} results`}
+                        label={`Save note on ${getCorrectCompanyName(item)} results`}
                       />
                     </div>
 
@@ -2426,7 +2426,7 @@ function ResultsCalendarView({ isActive }: { isActive?: boolean } = {}) {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 id="calendar-details-title" className="text-base font-extrabold text-slate-900 dark:text-white truncate">
-                      {getCorrectCompanyName(selectedModalItem)} ({selectedModalItem.symbol})
+                      {getCorrectCompanyName(selectedModalItem)}{selectedModalItem.symbol && !/^[0-9]+$/.test(selectedModalItem.symbol) ? ` (${selectedModalItem.symbol})` : ''}
                     </h3>
                     <span className="text-[10px] font-mono px-1.5 py-0.5 bg-slate-200/80 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded font-bold shrink-0">
                       BSE: {selectedModalItem.scripCode}
