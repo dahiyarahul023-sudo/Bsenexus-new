@@ -77,3 +77,55 @@ export function triggerNavigationHaptic() {
     try { navigator.vibrate(8); } catch { /* Device may not support vibration. */ }
   }
 }
+
+/**
+ * Instant pointer-down / tap micro-haptic (Apple Taptic Engine light tap).
+ */
+export function triggerTapHaptic() {
+  if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+    try { navigator.vibrate(6); } catch {}
+  }
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, now);
+    osc.frequency.exponentialRampToValueAtTime(180, now + 0.009);
+    gain.gain.setValueAtTime(0.025, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.009);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.01);
+  } catch {}
+}
+
+/**
+ * Distinct two-pulse stage-step haptic when crossing or selecting a new page section.
+ */
+export function triggerStageHaptic(stageIndex: number = 0) {
+  if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+    try { navigator.vibrate([7, 20, 11]); } catch {}
+  }
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const baseFreq = 320 + (stageIndex % 5) * 45;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(baseFreq, now);
+    osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.35, now + 0.018);
+    gain.gain.setValueAtTime(0.03, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.022);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.024);
+  } catch {}
+}
+

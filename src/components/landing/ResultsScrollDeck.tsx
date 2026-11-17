@@ -1,301 +1,452 @@
-import { EXAMPLE_DATA_COPY } from '../../shared/productFacts';
-import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { 
-  BarChart3, Sparkles, TrendingUp, TrendingDown, ArrowUpRight, 
-  ChevronRight, ChevronLeft, FileText, CheckCircle2, Eye, ShieldCheck,
-  Building2, Layers
+import React, { useState, useEffect, useRef } from 'react';
+import { m, AnimatePresence } from 'framer-motion';
+import {
+  FileText,
+  Sparkles,
+  TrendingUp,
+  CheckCircle2,
+  ArrowUpRight,
+  Layers,
+  ShieldCheck,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
-import { CompanyLogo, type CompanySymbol } from './CompanyLogos';
-import { springStandard, springSnappy } from '../../utils/motionTokens';
 
-interface ResultsScrollDeckProps {
-  onEnterTerminal: (tab?: string) => void;
-}
-
-interface QuarterResultCard {
-  symbol: CompanySymbol;
-  name: string;
+interface ResultShowcaseCard {
+  id: string;
+  symbol: string;
+  companyName: string;
+  scripCode: string;
+  logoUrl: string;
   quarter: string;
-  revenue: string;
-  revenueYoY: string;
-  revenueTrend: 'up' | 'down';
-  pat: string;
-  patYoY: string;
-  patTrend: 'up' | 'down';
-  ebitdaMargin: string;
-  marginChange: string;
-  eps: string;
-  aiExecutiveSummary: string;
-  pdfPages: string;
+  filingType: string;
   filingTime: string;
+  sentiment: 'Bullish' | 'Strong Beat' | 'Resilient';
+  headline: string;
+  metrics: {
+    label: string;
+    value: string;
+    yoy: string;
+    qoq: string;
+    positive: boolean;
+  }[];
+  aiTakeaways: string[];
+  pdfPages: number;
 }
 
-const QUARTER_RESULTS: QuarterResultCard[] = [
+const SHOWCASE_CARDS: ResultShowcaseCard[] = [
   {
-    symbol: 'TCS',
-    name: 'Tata Consultancy Services',
-    quarter: 'Q1 FY27',
-    revenue: '₹62,613 Cr',
-    revenueYoY: '+5.4%',
-    revenueTrend: 'up',
-    pat: '₹12,040 Cr',
-    patYoY: '+8.7%',
-    patTrend: 'up',
-    ebitdaMargin: '24.1%',
-    marginChange: '+110 bps',
-    eps: '₹33.20',
-    aiExecutiveSummary: 'Operating margin expanded 110 bps to 24.1% on cloud transformation and AI-led deal migrations. Order book total contract value stood robust at $8.3 Billion.',
-    pdfPages: '42 Pages',
-    filingTime: 'Sample filing · 11:24 AM IST'
-  },
-  {
+    id: 'reliance-q2',
     symbol: 'RELIANCE',
-    name: 'Reliance Industries',
-    quarter: 'Q1 FY27',
-    revenue: '₹2,48,200 Cr',
-    revenueYoY: '+9.8%',
-    revenueTrend: 'up',
-    pat: '₹19,650 Cr',
-    patYoY: '+11.2%',
-    patTrend: 'up',
-    ebitdaMargin: '17.6%',
-    marginChange: '+60 bps',
-    eps: '₹29.08',
-    aiExecutiveSummary: 'Jio 5G subscriber base crossed 500M milestone with ARPU scaling to ₹198/mo. Retail footfall expanded 18% with steady O2C downstream margins.',
-    pdfPages: '86 Pages',
-    filingTime: 'Sample filing · 4:30 PM IST'
+    companyName: 'Reliance Industries Limited',
+    scripCode: '500325',
+    logoUrl: '/company-logos/reliance.svg',
+    quarter: 'Q2 FY27 Consolidated',
+    filingType: 'SEBI Reg 33 · Unaudited Financial Results',
+    filingTime: 'Example filing · 48 pages',
+    sentiment: 'Strong Beat',
+    headline:
+      'Record Jio & Retail operating leverage drives 14.2% YoY EBITDA expansion; O2C margins stabilize.',
+    metrics: [
+      { label: 'Revenue', value: '₹2,48,200 Cr', yoy: '+11.4% YoY', qoq: '+3.8% QoQ', positive: true },
+      { label: 'Net Profit (PAT)', value: '₹21,940 Cr', yoy: '+16.8% YoY', qoq: '+6.2% QoQ', positive: true },
+      { label: 'EBITDA', value: '₹46,180 Cr', yoy: '+14.2% YoY', qoq: '+4.9% QoQ', positive: true },
+      { label: 'EBITDA Margin', value: '18.6%', yoy: '+45 bps YoY', qoq: '+20 bps QoQ', positive: true },
+    ],
+    aiTakeaways: [
+      'Digital Services (Jio) ARPU rose to ₹204.5 with 5G subscriber additions accelerating across Tier-2 cities.',
+      'Reliance Retail footfalls grew 19% YoY; operating EBITDA margin expanded 60 bps to 8.5%.',
+      'Net debt-to-EBITDA improved to 0.58x following disciplined capex moderation in telecom rollout.',
+    ],
+    pdfPages: 48,
   },
   {
-    symbol: 'INFY',
-    name: 'Infosys Limited',
-    quarter: 'Q1 FY27',
-    revenue: '₹40,890 Cr',
-    revenueYoY: '+7.8%',
-    revenueTrend: 'up',
-    pat: '₹6,840 Cr',
-    patYoY: '+9.4%',
-    patTrend: 'up',
-    ebitdaMargin: '21.5%',
-    marginChange: '+80 bps',
-    eps: '₹16.40',
-    aiExecutiveSummary: 'Generative AI Topaz enterprise deals contributed $380M in large contract wins. Attrition stabilized at 12.1% with operating margin expansion.',
-    pdfPages: '54 Pages',
-    filingTime: 'Illustrative filing'
+    id: 'tcs-q2',
+    symbol: 'TCS',
+    companyName: 'Tata Consultancy Services Ltd',
+    scripCode: '532540',
+    logoUrl: '/company-logos/tcs.svg',
+    quarter: 'Q2 FY27 Consolidated',
+    filingType: 'SEBI Reg 33 · Audited Quarterly Results',
+    filingTime: 'Example filing · 34 pages',
+    sentiment: 'Bullish',
+    headline:
+      'BFSI recovery in North America and $9.8B Order Book TCV power operating margin expansion to 25.4%.',
+    metrics: [
+      { label: 'Revenue', value: '₹64,980 Cr', yoy: '+7.9% YoY', qoq: '+2.6% QoQ', positive: true },
+      { label: 'Net Profit (PAT)', value: '₹12,840 Cr', yoy: '+11.2% YoY', qoq: '+4.1% QoQ', positive: true },
+      { label: 'Operating EBIT', value: '₹16,505 Cr', yoy: '+10.6% YoY', qoq: '+3.9% QoQ', positive: true },
+      { label: 'Operating Margin', value: '25.4%', yoy: '+65 bps YoY', qoq: '+30 bps QoQ', positive: true },
+    ],
+    aiTakeaways: [
+      'Total Contract Value (TCV) stood at $9.8 Billion with 3 mega-deals in AI-led cloud modernization.',
+      'Interim dividend of ₹11.00 per equity share declared; cash conversion ratio exceeded 104% of PAT.',
+      'LTM IT Services attrition cooled further to 11.8%, supporting utilization gains.',
+    ],
+    pdfPages: 34,
   },
   {
+    id: 'hdfc-q2',
     symbol: 'HDFCBANK',
-    name: 'HDFC Bank Limited',
-    quarter: 'Q1 FY27',
-    revenue: '₹84,200 Cr',
-    revenueYoY: '+16.2%',
-    revenueTrend: 'up',
-    pat: '₹16,810 Cr',
-    patYoY: '+18.5%',
-    patTrend: 'up',
-    ebitdaMargin: '3.6% NIM',
-    marginChange: '+12 bps',
-    eps: '₹22.10',
-    aiExecutiveSummary: 'Post-merger loan-to-deposit ratio calibrated downward to 98%. Net Interest Margin expanded to 3.62% with gross NPA stable at 1.24%.',
-    pdfPages: '68 Pages',
-    filingTime: 'Illustrative filing'
-  }
+    companyName: 'HDFC Bank Limited',
+    scripCode: '500180',
+    logoUrl: '/company-logos/hdfc-bank.svg',
+    quarter: 'Q2 FY27 Standalone',
+    filingType: 'SEBI Reg 33 · Banking Disclosure & Pillar 3',
+    filingTime: 'Example filing · 39 pages',
+    sentiment: 'Resilient',
+    headline:
+      'CASA deposits surge ₹68,000 Cr QoQ while Gross NPA holds pristine at 1.24%; NIM expands 8 bps.',
+    metrics: [
+      { label: 'Net Interest Income', value: '₹31,420 Cr', yoy: '+13.8% YoY', qoq: '+3.4% QoQ', positive: true },
+      { label: 'Net Profit (PAT)', value: '₹17,650 Cr', yoy: '+15.4% YoY', qoq: '+4.6% QoQ', positive: true },
+      { label: 'Core NIM', value: '3.56%', yoy: '+10 bps YoY', qoq: '+8 bps QoQ', positive: true },
+      { label: 'Gross NPA', value: '1.24%', yoy: '-10 bps YoY', qoq: '-6 bps QoQ', positive: true },
+    ],
+    aiTakeaways: [
+      'Credit-Deposit (CD) ratio improved by 190 bps sequentially as retail term and CASA deposits outpaced loan growth.',
+      'Provision Coverage Ratio (PCR) remains strong at 72.4% with contingent buffers intact.',
+      'CRAR (Capital Adequacy Ratio) stands at 19.6% under Basel III norms.',
+    ],
+    pdfPages: 39,
+  },
 ];
 
-export function ResultsScrollDeck({ onEnterTerminal }: ResultsScrollDeckProps) {
+interface ResultsScrollDeckProps {
+  onEnterTerminal: () => void;
+}
+
+export const ResultsScrollDeck: React.FC<ResultsScrollDeckProps> = ({ onEnterTerminal }) => {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
-  const reducedMotion = useReducedMotion();
+  const [isPaused, setIsPaused] = useState(false);
+  const touchStartX = useRef<number | null>(null);
 
-  const nextSlide = () => {
-    setActiveIndex((prev) => (prev + 1) % QUARTER_RESULTS.length);
-  };
-
-  const prevSlide = () => {
-    setActiveIndex((prev) => (prev - 1 + QUARTER_RESULTS.length) % QUARTER_RESULTS.length);
-  };
-
-  // Subtle auto-advance when not hovered
   useEffect(() => {
-    if (!isAutoPlaying) return;
+    if (isPaused) return;
     const timer = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % QUARTER_RESULTS.length);
-    }, 7000);
+      setActiveIndex(prev => (prev + 1) % SHOWCASE_CARDS.length);
+    }, 8000);
     return () => clearInterval(timer);
-  }, [isAutoPlaying]);
+  }, [isPaused]);
 
-  const current = QUARTER_RESULTS[activeIndex];
+  const activeCard = SHOWCASE_CARDS[activeIndex];
+
+  const goPrev = () => {
+    setIsPaused(true);
+    setActiveIndex(prev => (prev - 1 + SHOWCASE_CARDS.length) % SHOWCASE_CARDS.length);
+  };
+
+  const goNext = () => {
+    setIsPaused(true);
+    setActiveIndex(prev => (prev + 1) % SHOWCASE_CARDS.length);
+  };
 
   return (
-    <section 
-      className="relative py-24 sm:py-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto"
-      onMouseEnter={() => setIsAutoPlaying(false)}
-      onMouseLeave={() => setIsAutoPlaying(true)}
-      aria-label="Quarterly Results Analysis Showcase"
+    <section
+      className="relative py-8 sm:py-12 px-3 sm:px-6 lg:px-8 overflow-hidden border-t border-slate-200/80 dark:border-slate-800/80"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      onPointerDown={() => setIsPaused(true)}
+      onTouchStart={e => {
+        setIsPaused(true);
+        touchStartX.current = e.touches[0]?.clientX ?? null;
+      }}
+      onTouchEnd={e => {
+        if (touchStartX.current === null) return;
+        const endX = e.changedTouches[0]?.clientX ?? touchStartX.current;
+        const deltaX = endX - touchStartX.current;
+        touchStartX.current = null;
+        if (Math.abs(deltaX) > 42) {
+          if (deltaX < 0) goNext();
+          else goPrev();
+        }
+      }}
     >
-      {/* Section Header */}
-      <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 text-xs font-semibold text-slate-700 dark:text-slate-300 mb-4">
-          <BarChart3 className="w-3.5 h-3.5 text-emerald-500" />
-          <span>Demo · Quarterly Earnings Deck</span>
-        </div>
-        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tight leading-[1.15]">
-          80-page financial disclosure.<br />
-          <span className="bg-gradient-to-r from-emerald-500 via-teal-500 to-sky-500 bg-clip-text text-transparent">
-            Explore four sample YoY metrics with their source context.
-          </span>
-        </h2>
-        <p className="mt-4 text-base sm:text-lg text-slate-600 dark:text-slate-400 font-normal leading-relaxed">
-          Stop digging through complex footnotes and unaudited financial schedules. 
-          BSE Nexus extracts verified Revenue, PAT, and EBITDA margins with immediate year-over-year comps.
-        </p>
-
-        {/* Company Quick-Select Tabs */}
-        <div className="flex flex-wrap items-center justify-center gap-2 mt-8">
-          {QUARTER_RESULTS.map((item, idx) => {
-            const isActive = activeIndex === idx;
-            return (
-              <button
-                key={item.symbol}
-                onClick={() => setActiveIndex(idx)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 border ${
-                  isActive
-                    ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-500/40 shadow-sm'
-                    : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
-                }`}
-              >
-                <CompanyLogo symbol={item.symbol} size={24} />
-                <span>{item.symbol}</span>
-                <span className="text-[10px] font-mono opacity-60">· {item.quarter}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Main Results Presentation Card */}
-      <div className="relative max-w-4xl mx-auto">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={current.symbol}
-            initial={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 16, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={reducedMotion ? { opacity: 0 } : { opacity: 0, y: -16, scale: 0.98 }}
-            transition={springStandard}
-            className="rounded-3xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 p-6 sm:p-10 shadow-2xl relative overflow-hidden"
-          >
-            {/* Top metadata row */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
-              <div className="flex items-center gap-3">
-                <CompanyLogo symbol={current.symbol} size={36} />
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">{current.name}</h3>
-                    <span className="text-xs font-mono font-semibold text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-500/20">
-                      {current.quarter}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
-                    <span>{current.filingTime}</span>
-                    <span>·</span>
-                    <span className="flex items-center gap-1 font-mono text-slate-400">
-                      <FileText className="w-3 h-3" />
-                      {current.pdfPages}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Navigation arrows */}
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={prevSlide}
-                  aria-label="Previous company"
-                  className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-center transition-colors"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <span className="text-xs font-mono text-slate-400 px-1">
-                  {activeIndex + 1} / {QUARTER_RESULTS.length}
-                </span>
-                <button
-                  onClick={nextSlide}
-                  aria-label="Next company"
-                  className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-center transition-colors"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
+      <div className="max-w-7xl mx-auto relative z-10">
+        {/* Section Header */}
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-5 mb-7 sm:mb-9">
+          <div className="max-w-2xl min-w-0">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-700 dark:text-sky-300 text-xs font-semibold mb-3 shadow-xs">
+              <Layers size={13} className="text-sky-500 shrink-0" />
+              <span>Demo · Quarterly Earnings Deck</span>
             </div>
-
-            {/* 4 Essential Financial Metrics Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 my-6">
-              {/* Metric 1: Revenue */}
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800/80">
-                <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Total Revenue</span>
-                <span className="block text-lg sm:text-2xl font-black text-slate-900 dark:text-white tabular-nums">{current.revenue}</span>
-                <div className="flex items-center gap-1 mt-1 text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                  <TrendingUp className="w-3.5 h-3.5" />
-                  <span>{current.revenueYoY} YoY</span>
-                </div>
-              </div>
-
-              {/* Metric 2: PAT */}
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800/80">
-                <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Net Profit (PAT)</span>
-                <span className="block text-lg sm:text-2xl font-black text-slate-900 dark:text-white tabular-nums">{current.pat}</span>
-                <div className="flex items-center gap-1 mt-1 text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                  <TrendingUp className="w-3.5 h-3.5" />
-                  <span>{current.patYoY} YoY</span>
-                </div>
-              </div>
-
-              {/* Metric 3: EBITDA Margin */}
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800/80">
-                <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Operating Margin</span>
-                <span className="block text-lg sm:text-2xl font-black text-slate-900 dark:text-white tabular-nums">{current.ebitdaMargin}</span>
-                <div className="flex items-center gap-1 mt-1 text-xs font-bold text-sky-600 dark:text-sky-400">
-                  <span>{current.marginChange}</span>
-                </div>
-              </div>
-
-              {/* Metric 4: Diluted EPS */}
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800/80">
-                <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Basic / Diluted EPS</span>
-                <span className="block text-lg sm:text-2xl font-black text-slate-900 dark:text-white tabular-nums">{current.eps}</span>
-                <div className="flex items-center gap-1 mt-1 text-xs font-semibold text-slate-500">
-                  <span>Face Value ₹1.00</span>
-                </div>
-              </div>
-            </div>
-
-            {/* AI Executive Summary Banner */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-sky-500/5 border border-emerald-500/30 space-y-2">
-              <div className="flex items-center gap-2 text-xs font-bold text-emerald-700 dark:text-emerald-300">
-                <Sparkles className="w-4 h-4 text-emerald-500" />
-                <span>AI Operating Takeaway</span>
-              </div>
-              <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
-                {current.aiExecutiveSummary}
-              </p>
-            </div>
-
-            {/* Bottom CTA */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t border-slate-200 dark:border-slate-800 text-xs">
-              <span className="text-slate-500">
-                {EXAMPLE_DATA_COPY}
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white tracking-tight leading-tight font-display">
+              48-page exchange PDFs distilled into{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-600 via-emerald-500 to-indigo-600 dark:from-sky-400 dark:via-emerald-300 dark:to-indigo-400">
+                structured financial intelligence.
               </span>
+            </h2>
+            <p className="mt-2.5 text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed">
+              Example output showing how BSE Nexus extracts Revenue, PAT, EBITDA, YoY/QoQ deltas, and executive takeaways from a Reg 33 filing.
+            </p>
+          </div>
+
+          {/* Company Switcher Pills + Prev/Next Controls */}
+          <div className="flex flex-wrap items-center gap-2 self-start lg:self-auto">
+            {SHOWCASE_CARDS.map((card, idx) => {
+              const isActive = idx === activeIndex;
+              return (
+                <button
+                  key={card.id}
+                  type="button"
+                  aria-pressed={isActive}
+                  onClick={() => {
+                    setIsPaused(true);
+                    setActiveIndex(idx);
+                  }}
+                  className={`min-h-10 flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-bold transition-all duration-150 active:scale-[0.97] cursor-pointer ${
+                    isActive
+                      ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm'
+                      : 'bg-slate-100/90 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/70 hover:bg-slate-200/70 dark:hover:bg-slate-800'
+                  }`}
+                >
+                  <img
+                    src={card.logoUrl}
+                    alt={card.symbol}
+                    width={16}
+                    height={16}
+                    loading="lazy"
+                    decoding="async"
+                    className="w-4 h-4 object-contain rounded-xs shrink-0"
+                    onError={e => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                  <span>{card.symbol}</span>
+                </button>
+              );
+            })}
+
+            <div className="inline-flex items-center gap-1 ml-1">
               <button
-                onClick={() => onEnterTerminal('dashboard')}
-                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-semibold transition-colors flex items-center justify-center gap-2 shadow-sm"
+                type="button"
+                onClick={goPrev}
+                aria-label="Previous company filing example"
+                className="w-10 h-10 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 inline-flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-[0.95] transition-all cursor-pointer"
               >
-                <span>Track Live Results Feed</span>
-                <ArrowUpRight className="w-4 h-4" />
+                <ChevronLeft size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={goNext}
+                aria-label="Next company filing example"
+                className="w-10 h-10 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 inline-flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-[0.95] transition-all cursor-pointer"
+              >
+                <ChevronRight size={16} />
               </button>
             </div>
-          </motion.div>
-        </AnimatePresence>
+          </div>
+        </div>
+
+        {/* Main Showcase Deck Container */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-7 items-stretch">
+          {/* Left Column: Raw PDF vs Structured Pipeline Visual */}
+          <div className="lg:col-span-4 flex flex-col justify-between rounded-2xl bg-slate-50/90 dark:bg-slate-900/75 border border-slate-200/90 dark:border-slate-800/90 p-5 sm:p-6 shadow-xs min-w-0">
+            <div>
+              <div className="flex items-center justify-between gap-2 mb-5">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold">
+                  Source Ingestion Pipeline
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-[11px] font-bold border border-emerald-500/20">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Example Pipeline
+                </span>
+              </div>
+
+              {/* Step 1: Raw BSE Filing */}
+              <div className="p-3.5 rounded-xl bg-white dark:bg-slate-950/80 border border-slate-200/80 dark:border-slate-800/80 mb-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-500 shrink-0 mt-0.5">
+                    <FileText size={17} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                        BSE_{activeCard.scripCode}_Q2FY27.pdf
+                      </span>
+                      <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 shrink-0">
+                        {activeCard.pdfPages}p
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      {activeCard.filingType}
+                    </p>
+                    <div className="mt-1.5 flex items-center gap-1.5 text-[10px] font-mono text-emerald-600 dark:text-emerald-400">
+                      <CheckCircle2 size={11} className="shrink-0" />
+                      <span>{activeCard.filingTime}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Connector */}
+              <div className="flex items-center justify-center my-1.5">
+                <div className="h-5 w-px bg-gradient-to-b from-emerald-500/50 to-sky-500/50" />
+              </div>
+
+              {/* Step 2: Gemini Flash Extraction */}
+              <div className="p-3.5 rounded-xl bg-gradient-to-br from-emerald-500/10 via-sky-500/5 to-indigo-500/10 border border-emerald-500/25">
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-emerald-500 text-slate-950 flex items-center justify-center shrink-0 shadow-xs">
+                    <Sparkles size={17} />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-xs font-bold text-slate-900 dark:text-white block">
+                      Structured Table &amp; Note Synthesis
+                    </span>
+                    <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+                      Normalizes standalone vs. consolidated tables, auditor notes, and segment margins.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-5 pt-4 border-t border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                <ShieldCheck size={14} className="text-emerald-500 shrink-0" />
+                <span>Direct BSE PDF citation linked</span>
+              </div>
+              <button
+                type="button"
+                onClick={onEnterTerminal}
+                className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline inline-flex items-center gap-1 shrink-0 cursor-pointer"
+              >
+                <span>Try Live</span>
+                <ArrowUpRight size={13} />
+              </button>
+            </div>
+          </div>
+
+          {/* Right Column: Animated Result Card Deck */}
+          <div className="lg:col-span-8 min-w-0">
+            <AnimatePresence mode="wait">
+              <m.div
+                key={activeCard.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.22 }}
+                className="h-full rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800/90 p-5 sm:p-7 shadow-sm flex flex-col justify-between relative overflow-hidden min-w-0"
+              >
+                <div>
+                  {/* Card Top Header */}
+                  <div className="flex flex-wrap items-start justify-between gap-3 mb-5 pb-4 border-b border-slate-100 dark:border-slate-800/80">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 p-2 flex items-center justify-center shrink-0">
+                        <img
+                          src={activeCard.logoUrl}
+                          alt={activeCard.symbol}
+                          width={32}
+                          height={32}
+                          loading="lazy"
+                          decoding="async"
+                          className="w-full h-full object-contain"
+                          onError={e => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight break-words">
+                            {activeCard.companyName}
+                          </h3>
+                          <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-[11px] font-mono font-bold text-slate-600 dark:text-slate-300">
+                            BSE: {activeCard.scripCode}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+                          {activeCard.quarter} · {activeCard.filingType}
+                        </p>
+                      </div>
+                    </div>
+
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-700 dark:text-emerald-300 text-xs font-bold shrink-0">
+                      <TrendingUp size={13} />
+                      {activeCard.sentiment}
+                    </span>
+                  </div>
+
+                  {/* Headline Summary */}
+                  <p className="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-snug mb-5">
+                    “{activeCard.headline}”
+                  </p>
+
+                  {/* 4-Metric Financial Grid (Responsive across 360px, 768px, 1440px) */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3.5 mb-6">
+                    {activeCard.metrics.map(mItem => (
+                      <div
+                        key={mItem.label}
+                        className="p-3 sm:p-3.5 rounded-xl bg-slate-50/90 dark:bg-slate-950/60 border border-slate-200/70 dark:border-slate-800/80 min-w-0"
+                      >
+                        <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 block truncate">
+                          {mItem.label}
+                        </span>
+                        <span className="text-sm sm:text-base xl:text-lg font-extrabold text-slate-900 dark:text-white mt-1 block font-mono tracking-tight tabular-nums break-words">
+                          {mItem.value}
+                        </span>
+                        <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                          <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded font-mono">
+                            {mItem.yoy}
+                          </span>
+                          <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">
+                            {mItem.qoq}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* AI Executive Takeaways */}
+                  <div className="rounded-xl bg-slate-50/70 dark:bg-slate-950/40 border border-slate-200/60 dark:border-slate-800/70 p-4">
+                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 mb-2.5">
+                      <Sparkles size={13} className="shrink-0" />
+                      <span>Key Filing Takeaways</span>
+                    </div>
+                    <ul className="space-y-2">
+                      {activeCard.aiTakeaways.map((point, i) => (
+                        <li
+                          key={i}
+                          className="flex items-start gap-2.5 text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed"
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0" />
+                          <span>{point}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Deck Footer Progress Indicators */}
+                <div className="mt-5 pt-3.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    {SHOWCASE_CARDS.map((c, idx) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => {
+                          setIsPaused(true);
+                          setActiveIndex(idx);
+                        }}
+                        aria-label={`View ${c.companyName} result showcase`}
+                        className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                          idx === activeIndex
+                            ? 'w-8 bg-emerald-500'
+                            : 'w-2.5 bg-slate-300 dark:bg-slate-700 hover:bg-slate-400'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                    {activeIndex + 1} / {SHOWCASE_CARDS.length} · Swipe or tap to switch
+                  </span>
+                </div>
+              </m.div>
+            </AnimatePresence>
+          </div>
+        </div>
       </div>
     </section>
   );
-}
+};

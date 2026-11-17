@@ -1,14 +1,8 @@
--- Forward-only: exact columns/defaults observed read-only on Bsenexus-staging
--- on 2026-10-30. Existing relations/counters are never rewritten.
--- Rollback: retain protection data; do not drop while runtime/RPCs depend on it.
-BEGIN;
-CREATE TABLE IF NOT EXISTS public.auth_account_limits (
-  id text PRIMARY KEY,
-  data jsonb NOT NULL DEFAULT '{}'::jsonb,
-  updated_at timestamptz NOT NULL DEFAULT now()
+create table if not exists public.auth_account_limits (
+  id text primary key,
+  data jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
 );
-ALTER TABLE public.auth_account_limits ENABLE ROW LEVEL SECURITY;
-REVOKE ALL ON public.auth_account_limits FROM PUBLIC, anon, authenticated;
-GRANT ALL ON public.auth_account_limits TO service_role;
-NOTIFY pgrst, 'reload schema';
-COMMIT;
+alter table public.auth_account_limits enable row level security;
+revoke all on table public.auth_account_limits from public, anon, authenticated;
+grant select, insert, update, delete on table public.auth_account_limits to service_role;

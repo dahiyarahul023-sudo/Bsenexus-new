@@ -1,77 +1,149 @@
--- Forward-only, additive; rehearse on staging BEFORE runtime rollout.
--- Rollback: revert/disable runtime first; retain counters/receipts to prevent
--- quota resets. Drop isolated objects only in a separately reviewed migration.
-BEGIN;
-CREATE TABLE IF NOT EXISTS public.faq_quota_days (
-  identity_hash text NOT NULL CHECK (identity_hash ~ '^[a-f0-9]{64}$'),
-  usage_day date NOT NULL,
-  used integer NOT NULL DEFAULT 0 CHECK (used BETWEEN 0 AND 4),
-  PRIMARY KEY (identity_hash, usage_day)
+create table if not exists public.faq_quota_days (
+  identity_hash text not null check (length(identity_hash) = 64),
+  usage_day date not null,
+  used integer not null default 0 check (used between 0 and 4),
+  primary key (identity_hash, usage_day)
 );
-CREATE TABLE IF NOT EXISTS public.faq_quota_reservations (
-  id uuid PRIMARY KEY,
-  identity_hash text NOT NULL,
-  usage_day date NOT NULL,
-  refunded boolean NOT NULL DEFAULT false,
-  FOREIGN KEY (identity_hash, usage_day) REFERENCES public.faq_quota_days ON DELETE CASCADE
+create table if not exists public.faq_quota_reservations (
+  id uuid primary key,
+  identity_hash text not null check (length(identity_hash) = 64),
+  usage_day date not null,
+  refunded boolean not null default false,
+  created_at timestamptz not null default now()
 );
-CREATE INDEX IF NOT EXISTS faq_quota_days_retention ON public.faq_quota_days(usage_day);
-CREATE INDEX IF NOT EXISTS faq_quota_reservations_day ON public.faq_quota_reservations(identity_hash, usage_day);
-ALTER TABLE public.faq_quota_days ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.faq_quota_reservations ENABLE ROW LEVEL SECURITY;
-REVOKE ALL ON public.faq_quota_days, public.faq_quota_reservations FROM PUBLIC, anon, authenticated;
-GRANT SELECT,INSERT,UPDATE,DELETE ON public.faq_quota_days, public.faq_quota_reservations TO service_role;
+create index if not exists faq_quota_days_usage_day_idx on public.faq_quota_days (usage_day);
+create index if not exists faq_quota_reservations_day_idx on public.faq_quota_reservations (usage_day);
+alter table public.faq_quota_days enable row level security;
+alter table public.faq_quota_reservations enable row level security;
+revoke all on table public.faq_quota_days, public.faq_quota_reservations from public, anon, authenticated;
+grant select, insert, update, delete on table public.faq_quota_days, public.faq_quota_reservations to service_role;
 
-CREATE OR REPLACE FUNCTION public.manage_faq_quota(p_identity_hash text, p_action text, p_reservation_id uuid DEFAULT NULL)
-RETURNS jsonb LANGUAGE plpgsql SECURITY INVOKER SET search_path = '' AS $$
-DECLARE
-  v_day date := (pg_catalog.now() AT TIME ZONE 'Asia/Kolkata')::date;
+create or replace function public.manage_faq_quota(
+  p_identity_hash text,
+  p_action text,
+  p_reservation_id uuid default null
+) returns jsonb
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+declare
+  v_day date := (pg_catalog.now() at time zone 'Asia/Kolkata')::date;
   v_used integer := 0;
+  v_res public.faq_quota_reservations%rowtype;
   v_allowed boolean := true;
-  v_res public.faq_quota_reservations%ROWTYPE;
-BEGIN
-  IF p_identity_hash IS NULL OR p_identity_hash !~ '^[a-f0-9]{64}$' THEN RAISE EXCEPTION 'Invalid FAQ identity'; END IF;
-  IF p_action IS NULL OR p_action NOT IN ('status','reserve','refund') THEN RAISE EXCEPTION 'Invalid FAQ operation'; END IF;
-  PERFORM pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended('faq:' || p_identity_hash, 0));
-  IF p_action = 'reserve' THEN
-    IF p_reservation_id IS NULL THEN RAISE EXCEPTION 'FAQ receipt required'; END IF;
-    SELECT * INTO v_res FROM public.faq_quota_reservations WHERE id = p_reservation_id;
-    IF FOUND THEN
-      IF v_res.identity_hash <> p_identity_hash THEN RAISE EXCEPTION 'FAQ receipt owner mismatch'; END IF;
-      v_allowed := NOT v_res.refunded AND v_res.usage_day = v_day;
-    ELSE
-      INSERT INTO public.faq_quota_days(identity_hash,usage_day) VALUES(p_identity_hash,v_day) ON CONFLICT DO NOTHING;
-      UPDATE public.faq_quota_days SET used = used + 1 WHERE identity_hash = p_identity_hash AND usage_day = v_day AND used < 4;
-      v_allowed := FOUND;
-      IF v_allowed THEN INSERT INTO public.faq_quota_reservations(id,identity_hash,usage_day) VALUES(p_reservation_id,p_identity_hash,v_day); END IF;
-    END IF;
-  ELSIF p_action = 'refund' THEN
-    IF p_reservation_id IS NULL THEN RAISE EXCEPTION 'FAQ receipt required'; END IF;
-    SELECT * INTO v_res FROM public.faq_quota_reservations WHERE id = p_reservation_id AND identity_hash = p_identity_hash;
-    IF FOUND AND NOT v_res.refunded THEN
-      UPDATE public.faq_quota_days SET used = GREATEST(0,used-1) WHERE identity_hash=p_identity_hash AND usage_day=v_res.usage_day;
-      UPDATE public.faq_quota_reservations SET refunded=true WHERE id=v_res.id;
-    END IF;
-  END IF;
-  SELECT COALESCE((SELECT used FROM public.faq_quota_days WHERE identity_hash=p_identity_hash AND usage_day=v_day),0) INTO v_used;
-  IF p_action = 'status' THEN v_allowed := v_used < 4; END IF;
-  RETURN pg_catalog.jsonb_build_object('allowed',v_allowed,'used',v_used,'remaining',4-v_used,'dailyLimit',4,'reservationId',p_reservation_id);
-END;
+begin
+  if p_identity_hash is null or pg_catalog.length(p_identity_hash) <> 64 then
+    raise exception 'Invalid FAQ identity hash';
+  end if;
+  if p_action is null or p_action not in ('status', 'reserve', 'refund') then
+    raise exception 'Invalid FAQ quota action';
+  end if;
+  perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended('bsenexus-faq:' || p_identity_hash, 0));
+
+  if p_action = 'refund' then
+    if p_reservation_id is null then
+      raise exception 'Reservation ID required';
+    end if;
+    select * into v_res from public.faq_quota_reservations where id = p_reservation_id;
+    if found then
+      if v_res.identity_hash <> p_identity_hash then
+        raise exception 'FAQ reservation owner mismatch';
+      end if;
+      if not v_res.refunded then
+        update public.faq_quota_days
+           set used = greatest(0, used - 1)
+         where identity_hash = p_identity_hash and usage_day = v_res.usage_day;
+        update public.faq_quota_reservations
+           set refunded = true
+         where id = v_res.id;
+      end if;
+    end if;
+  elsif p_action = 'reserve' then
+    if p_reservation_id is null then
+      raise exception 'Reservation ID required';
+    end if;
+    select * into v_res from public.faq_quota_reservations where id = p_reservation_id;
+    if found then
+      if v_res.identity_hash <> p_identity_hash then
+        raise exception 'FAQ reservation owner mismatch';
+      end if;
+      v_allowed := (not v_res.refunded) and (v_res.usage_day = v_day);
+    else
+      insert into public.faq_quota_days (identity_hash, usage_day, used)
+      values (p_identity_hash, v_day, 0)
+      on conflict (identity_hash, usage_day) do nothing;
+      select used into v_used
+        from public.faq_quota_days
+       where identity_hash = p_identity_hash and usage_day = v_day
+         for update;
+      v_allowed := coalesce(v_used, 0) < 4;
+      if v_allowed then
+        insert into public.faq_quota_reservations (id, identity_hash, usage_day, refunded)
+        values (p_reservation_id, p_identity_hash, v_day, false);
+        update public.faq_quota_days
+           set used = used + 1
+         where identity_hash = p_identity_hash and usage_day = v_day;
+      end if;
+    end if;
+  end if;
+
+  select coalesce(used, 0) into v_used
+    from public.faq_quota_days
+   where identity_hash = p_identity_hash and usage_day = v_day;
+  v_used := coalesce(v_used, 0);
+  if p_action = 'status' then
+    v_allowed := v_used < 4;
+  end if;
+
+  return pg_catalog.jsonb_build_object(
+    'allowed', v_allowed,
+    'used', v_used,
+    'remaining', greatest(0, 4 - v_used),
+    'dailyLimit', 4,
+    'reservationId', p_reservation_id
+  );
+end;
 $$;
--- Run periodically as service_role, in batches until result = 0. Never removes
--- today/yesterday's counters, even if a caller passes a future date.
-CREATE OR REPLACE FUNCTION public.prune_faq_quota(p_batch integer DEFAULT 1000)
-RETURNS integer LANGUAGE plpgsql SECURITY INVOKER SET search_path = '' AS $$
-DECLARE v_deleted integer;
-BEGIN
-  IF p_batch IS NULL OR p_batch NOT BETWEEN 1 AND 1000 THEN RAISE EXCEPTION 'Invalid FAQ prune batch'; END IF;
-  DELETE FROM public.faq_quota_days WHERE (identity_hash,usage_day) IN
-    (SELECT identity_hash,usage_day FROM public.faq_quota_days WHERE usage_day < (pg_catalog.now() AT TIME ZONE 'Asia/Kolkata')::date - 2 ORDER BY usage_day LIMIT p_batch FOR UPDATE SKIP LOCKED);
-  GET DIAGNOSTICS v_deleted = ROW_COUNT;
-  RETURN v_deleted;
-END;
+
+create or replace function public.prune_faq_quota(p_limit integer default 200)
+returns integer
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+declare
+  v_cutoff date := (pg_catalog.now() at time zone 'Asia/Kolkata')::date - 1;
+  v_deleted integer := 0;
+begin
+  if p_limit is null or p_limit < 1 or p_limit > 1000 then
+    raise exception 'Invalid prune limit';
+  end if;
+  delete from public.faq_quota_reservations
+   where id in (
+     select id from public.faq_quota_reservations
+      where usage_day < v_cutoff
+      order by usage_day asc
+      limit p_limit
+   );
+
+  with deleted as (
+    delete from public.faq_quota_days
+     where (identity_hash, usage_day) in (
+       select identity_hash, usage_day from public.faq_quota_days
+        where usage_day < v_cutoff
+        order by usage_day asc
+        limit p_limit
+     )
+     returning 1
+  )
+  select count(*)::integer into v_deleted from deleted;
+
+  return v_deleted;
+end;
 $$;
-REVOKE ALL ON FUNCTION public.manage_faq_quota(text,text,uuid),public.prune_faq_quota(integer) FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.manage_faq_quota(text,text,uuid),public.prune_faq_quota(integer) TO service_role;
-NOTIFY pgrst, 'reload schema';
-COMMIT;
+
+revoke all on function public.manage_faq_quota(text, text, uuid) from public, anon, authenticated;
+revoke all on function public.prune_faq_quota(integer) from public, anon, authenticated;
+grant execute on function public.manage_faq_quota(text, text, uuid) to service_role;
+grant execute on function public.prune_faq_quota(integer) to service_role;

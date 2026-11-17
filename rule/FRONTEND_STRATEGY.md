@@ -1,3 +1,5 @@
+2026-11-16 landing live touch & Radar follow-up: pre-login LandingPage mounts an interactive touch/pointer-responsive ParticleRibbons canvas with light/dark mode palettes, Google Material Design 3 Filled Sign In CTA, and unstuck responsive calendar/filing preview decks across phone/tablet/desktop viewports. ImpactRadar separates error feedback (with in-place Retry) from empty copy while preserving backend durability contracts. See changes/landing-live-touch-material-radar.md.
+
 2026-11-05 admin quota repair: server-confirmed admin identity is distinct from expiring PIN elevation; all quota-reset entry points share cancellable PIN recovery. Cached sessions cannot restore admin UI without Firebase and server verification. Tests, local browser fixtures and post-deployment owner/PIN acceptance remain distinct; see changes/admin-quota-elevation.md.
 
 2026-11-03 Radar volatility: company-relative size/exposure groups, explicit unavailable context, range-first metrics and historical volatility-watch filtering. Signed direction stays secondary; saved source/price/method ownership remains in the existing modal.

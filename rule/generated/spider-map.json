@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "e29bceec3d8e544d6d7b3d46d3768cc706a90bedfcf114ed0e266c1ce3a0b2b1",
+  "sourceDigest": "8d1459b80e443b12d19d8235a853e7272b064b553a123cf8c590d38cde38c503",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -10,7 +10,7 @@
   "files": [
     {
       "path": ".env.example",
-      "sha256": "be22b261cc00097e0f58edaa32c3882fd30ebc3fe1b23298f947b64d751b3209",
+      "sha256": "ec85608ef2955f90128d42596dbfb08c8e39096eb582ca7b970bee7d11189f2c",
       "importedBy": []
     },
     {
@@ -39,13 +39,8 @@
       "importedBy": []
     },
     {
-      "path": "package-lock.json",
-      "sha256": "46ee315e02ba3c45f9f1eb6f33ab369118d0f679e136dd97b4aace78c73ef3f5",
-      "importedBy": []
-    },
-    {
       "path": "package.json",
-      "sha256": "1287e97c647e543131ed327dc0aacd748c4c7803b0cd814e453b826ad8767b50",
+      "sha256": "fed50e9a9950089bcd57a9d9f50d9e5967d9f147e4b80559ebc429bed3b9149e",
       "importedBy": []
     },
     {
@@ -105,7 +100,7 @@
     },
     {
       "path": "public/robots.txt",
-      "sha256": "993a46e66f045e4f373255b182b72629dc62d14ad670ce6ea9f161509aa840f5",
+      "sha256": "a9915b523ac7ab8176fc96a9890cff7d1c4d35215f87eea45694a36ec7962023",
       "importedBy": []
     },
     {
@@ -145,7 +140,7 @@
     },
     {
       "path": "scripts/check-performance-budget.mjs",
-      "sha256": "1c3c9de2e0f3b4a4eb55a986d4ef47695caa5e08e914bd74f79a44cc800d7d5f",
+      "sha256": "b0a8532feb56ae22fcba19cc390ab7e0e5a84b84cdb063d3288f564ebefa1276",
       "importedBy": [
         "server/tests/performanceBudget.test.ts"
       ]
@@ -157,12 +152,12 @@
     },
     {
       "path": "scripts/generateIcons.ts",
-      "sha256": "8eb91045c5fe7e6d7aa64a6d30b13b1739634f1a4df4340935bf0b1648123d07",
+      "sha256": "37accaf2d33bca44a0567f13643bcbd3719e2ca8b978c9249efc88622d226f35",
       "importedBy": []
     },
     {
       "path": "scripts/generateScreenshots.ts",
-      "sha256": "a4e2c496ef79b2d737a99e87bd78b813751d8939711fe39e2078448c4b3328b0",
+      "sha256": "31e302abd3690c037f26166026099ed51c3e2d77f72ae442c7e0a873ff6aefe9",
       "importedBy": []
     },
     {
@@ -289,7 +284,7 @@
     },
     {
       "path": "server.ts",
-      "sha256": "0e6434b06af3d6c1ca2b2dff2aae3efba95c38224b5e08d8f34a807e04029670",
+      "sha256": "20df5d305057f2688a61456e33ea3a4c960ae212f711b509b13aeaa7fca2d969",
       "importedBy": [
         "server/tests/routeResolution.test.ts"
       ]
@@ -493,7 +488,7 @@
     },
     {
       "path": "server/api/routes.ts",
-      "sha256": "8c668d1fdab9ccc03a66c7514a92dadd9e4374be5110eae5b0154c4cd9a4beeb",
+      "sha256": "dbdaf40e543774b4bb7d597acec720247d09220ff48b1c4f53f537c7764fac7e",
       "importedBy": [
         "server.ts",
         "server/tests/aiQuotaAdmin.test.ts",
@@ -1293,7 +1288,7 @@
     },
     {
       "path": "server/services/gemini.ts",
-      "sha256": "eb232a6cb858dd178a30664c1dcd9033ddbd9c1d81abdc7964023a96663e35ec",
+      "sha256": "341be121cfd4e7f7b2f02f6ab8b1d40fbfd5a4921ac0c89af1af572584d59285",
       "importedBy": [
         "server.ts",
         "server/api/faq.ts",
@@ -1405,7 +1400,7 @@
     },
     {
       "path": "server/services/monitor.ts",
-      "sha256": "2ffac2c5341dec666514fa8bffa7b2c4139a458474c599199b323e484f324947",
+      "sha256": "7231cd98a3a6283fd88ba4878b5c7f4cd875204d9d5b6ef49cd02f6aab40dcfb",
       "importedBy": [
         "server.ts",
         "server/ai/tools.ts",
@@ -1574,7 +1569,7 @@
     },
     {
       "path": "server/services/seoPrerender.ts",
-      "sha256": "092582511beb29507f2c53ee282198a3e9a286f530a9691438249ca1f499db74",
+      "sha256": "2c8913d6542673d3ca29cb477a7caac296a4a80cb0a22ab8b754fa6b99fde965",
       "importedBy": [
         "server.ts",
         "server/tests/routeHeading.test.ts",
@@ -1825,7 +1820,7 @@
     },
     {
       "path": "server/tests/avatar.test.ts",
-      "sha256": "e1996d236f8d5a36c426a98d14d0e4413aff362e648835ddde7b040063882b5f",
+      "sha256": "bb01673785aa66d211275433ac34447676928cfcb89883d3dee4d42d99c9b148",
       "importedBy": []
     },
     {
@@ -1955,7 +1950,7 @@
     },
     {
       "path": "server/tests/cspNonce.test.ts",
-      "sha256": "8360a5b0f80fba5e13a763cf45d2d5bab7181bd2dab05171af4e86a08ce2854f",
+      "sha256": "f1efb32592482af5a997ea00ee49397ddb4cab7b337a28600eb34b9b81135792",
       "importedBy": []
     },
     {
@@ -2075,7 +2070,7 @@
     },
     {
       "path": "server/tests/impactRadarRender.test.ts",
-      "sha256": "5f787a0f4540669f0a3598885037be56ad9c9a432384446a1ada13ea57ee015b",
+      "sha256": "be7cc3dec5e0cef5fe9547bbdf81ab67b1c9144ef883e53e1271800d7f0893b9",
       "importedBy": []
     },
     {
@@ -2445,7 +2440,7 @@
     },
     {
       "path": "server/tests/sevenFixes.test.ts",
-      "sha256": "d4444a0ddfd1a6115f5a696d78889712375d3172610b2c455f03cd30dd7a2645",
+      "sha256": "79287d2a0e690002920a0a36afc1649478b57c2d700d54bd402fda9c1d85125f",
       "importedBy": []
     },
     {
@@ -2954,7 +2949,7 @@
     },
     {
       "path": "src/components/Announcements.tsx",
-      "sha256": "9667f779638bbbd9ba8fc8323d536ffa0605234c4a45bef400e3eb58997c60bb",
+      "sha256": "53bb957acd902374dfac68960c0633e45b0c5e985eddcb9dbd7b8d957fe3e74a",
       "importedBy": [
         "src/App.tsx",
         "src/components/Layout.tsx"
@@ -3051,21 +3046,21 @@
     },
     {
       "path": "src/components/ImpactRadar.tsx",
-      "sha256": "944b6cd23fc4400e195041e85ea12a027f79e78d9c3ef20f63348671dafbc433",
+      "sha256": "8b1129a1f25c18f195c94b9f1362eda4362ee106bb7eaf7f3f53da861d0598de",
       "importedBy": [
         "src/components/HomeForYou.tsx"
       ]
     },
     {
       "path": "src/components/LandingPage.tsx",
-      "sha256": "7fd54f59e17c0eb810c030d10755f3c693be4688445dcd6cee9541ef1323eace",
+      "sha256": "9e3921fd45840c5180976e73fdafa0625680752a1cd6cddc62187fe737aee306",
       "importedBy": [
         "src/App.tsx"
       ]
     },
     {
       "path": "src/components/Layout.tsx",
-      "sha256": "5403e3526eac049b470669151519577830aefb74637d218f236cb986a540c94c",
+      "sha256": "c9ffed6ce0109df005cea11d6d34f050601f2465d6f44481491a6f260bb98ea2",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -3201,7 +3196,7 @@
     },
     {
       "path": "src/components/ResultsCalendar.tsx",
-      "sha256": "547994be9c4d11465ac2e74daaaad7e7f066ff93f8031ad7608ef9b1e905a0a1",
+      "sha256": "56e557f83c20caabbe0bf4569885e3a4d7274b26afe1d6b8307d1fd03736afc9",
       "importedBy": [
         "src/App.tsx",
         "src/components/Layout.tsx"
@@ -3349,19 +3344,21 @@
     },
     {
       "path": "src/components/landing/CompanyLogos.tsx",
-      "sha256": "e0cb53aeb64abaf499e16fe3e95817896b9171617f20c1b08c33f200d717e3fa",
+      "sha256": "ad792220cdb24cd6beea90c3b6045a16bbcc843e2d89407dd152ea899935ecc5",
       "importedBy": [
+        "src/components/LandingPage.tsx",
         "src/components/landing/CalendarTelegramMorph.tsx",
+        "src/components/landing/CoreCapabilitiesBento.tsx",
         "src/components/landing/CreativeHero.tsx",
         "src/components/landing/FeatureTabs.tsx",
         "src/components/landing/FilingJourney.tsx",
-        "src/components/landing/ResultsScrollDeck.tsx",
+        "src/components/landing/LandingFooterAbout.tsx",
         "src/components/landing/UpcomingCatalystsGrid.tsx"
       ]
     },
     {
       "path": "src/components/landing/CoreCapabilitiesBento.tsx",
-      "sha256": "4874c426c27b00f7baa42bfae87a452671e6261a8d915c2408d98c753d4f2e20",
+      "sha256": "a1b2b8aef198113d339ba9c1dc0e970c28922c2191450e1d66c809fcaceba3f2",
       "importedBy": [
         "src/components/LandingPage.tsx"
       ]
@@ -3375,7 +3372,10 @@
       "path": "src/components/landing/FeatureIcons.tsx",
       "sha256": "1d194944ed0d489adb1756366ee78482683941541f6b5ecb0812b576b320759f",
       "importedBy": [
-        "src/components/landing/FeatureTabs.tsx"
+        "src/components/LandingPage.tsx",
+        "src/components/landing/CoreCapabilitiesBento.tsx",
+        "src/components/landing/FeatureTabs.tsx",
+        "src/components/landing/UpcomingCatalystsGrid.tsx"
       ]
     },
     {
@@ -3397,7 +3397,7 @@
     },
     {
       "path": "src/components/landing/LandingFooterAbout.tsx",
-      "sha256": "0cc0e083eb28f6ea2a51d226a142e52c399c5645980b1a896d65febad4aa9e42",
+      "sha256": "8fc7be66ac5bca1c513ebf5c6d44db8ec7486ffeeb001b500e97a9d8585e11ea",
       "importedBy": [
         "server/tests/searchEngineDiscovery.test.ts",
         "src/components/LandingPage.tsx"
@@ -3405,14 +3405,14 @@
     },
     {
       "path": "src/components/landing/ResultsScrollDeck.tsx",
-      "sha256": "b35e233da0e8822acade9a9fc87c67223ee86bfc9627baa0560541d85fb27224",
+      "sha256": "b4d78a25927303a63c53f52ea3a5081a985c93b984e3649f31f6893d1693f875",
       "importedBy": [
         "src/components/landing/LandingExamples.tsx"
       ]
     },
     {
       "path": "src/components/landing/UpcomingCatalystsGrid.tsx",
-      "sha256": "0a506c1225ef17283e8f41aac5c1e55eb9e03b970fddd1fd2b59f803b6025783",
+      "sha256": "b525d10231016f9b49dbf2d0c7c20cbe5fa4821e52fddfe9b7cf4c5b1484f26c",
       "importedBy": [
         "src/components/landing/LandingExamples.tsx"
       ]
@@ -3711,7 +3711,7 @@
       "sha256": "aeca4819d02cb7e1c5ff630d74a6239b49f86a0f44ec222ce199aace8ce341c4",
       "importedBy": [
         "src/components/LandingPage.tsx",
-        "src/components/landing/UpcomingCatalystsGrid.tsx"
+        "src/components/landing/LandingFooterAbout.tsx"
       ]
     },
     {
@@ -3737,7 +3737,7 @@
     },
     {
       "path": "src/components/ui/BseNexusLogo.tsx",
-      "sha256": "137c5d6f94b8427208e5ff73faa5e35a48697c2bf593d9f88a4472c36080b0e6",
+      "sha256": "74f573540c6a82062612c9cfbdb0720a9d2a9b909456984096029b1ea3465cc5",
       "importedBy": [
         "src/components/AiPluginPage.tsx",
         "src/components/CompaniesPage.tsx",
@@ -3758,8 +3758,10 @@
       "path": "src/components/ui/CalendarDateBadge3D.tsx",
       "sha256": "032c67bd1afd38b5d377c4f7db4463ca5e2ad407b00a64fa7c0822b1a023a2b5",
       "importedBy": [
+        "src/components/LandingPage.tsx",
         "src/components/Layout.tsx",
         "src/components/landing/CalendarTelegramMorph.tsx",
+        "src/components/landing/CoreCapabilitiesBento.tsx",
         "src/components/landing/FeatureIcons.tsx",
         "src/components/landing/UpcomingCatalystsGrid.tsx",
         "src/components/ui/RichVisual.tsx"
@@ -3897,8 +3899,10 @@
     },
     {
       "path": "src/components/ui/ParticleRibbons.tsx",
-      "sha256": "0a2507ab4201a6827181769144a4bb46447880c69caa342e97cadf3321d81e36",
-      "importedBy": []
+      "sha256": "56766b24fd8abc4561ef326e76164d448560ee0da042ceddd55aa99df57301ce",
+      "importedBy": [
+        "src/components/LandingPage.tsx"
+      ]
     },
     {
       "path": "src/components/ui/PlanCard.tsx",
@@ -3967,8 +3971,7 @@
         "src/components/GuidesPage.tsx",
         "src/components/Layout.tsx",
         "src/components/NotFoundPage.tsx",
-        "src/components/TrustPages.tsx",
-        "src/components/landing/LandingFooterAbout.tsx"
+        "src/components/TrustPages.tsx"
       ]
     },
     {
@@ -4402,7 +4405,7 @@
     },
     {
       "path": "src/index.css",
-      "sha256": "14198221ac3226606a09b1fa6ef3442c3959e32ad530e5154518a574168b8081",
+      "sha256": "ff4c12e31414dd84eaed6904d58831a1e4aa91769dfdc1f878cdc7bdb70943ea",
       "importedBy": [
         "src/main.tsx"
       ]
@@ -4641,7 +4644,6 @@
         "src/components/LandingPage.tsx",
         "src/components/ProCheckoutView.tsx",
         "src/components/landing/CalendarTelegramMorph.tsx",
-        "src/components/landing/ResultsScrollDeck.tsx",
         "src/components/landing/UpcomingCatalystsGrid.tsx",
         "src/utils/aiQuota.ts"
       ]
@@ -5055,9 +5057,13 @@
     },
     {
       "path": "src/utils/haptics.ts",
-      "sha256": "d5e16c97fbfb777eb4affdfbeef0d1f241cf6e54c2524ce76abff61653397421",
+      "sha256": "4cbb0fbe50289593c4a9d3b524cf4161409faeef58c44bedb6b2e25555bf5249",
       "importedBy": [
+        "src/components/LandingPage.tsx",
         "src/components/Layout.tsx",
+        "src/components/landing/CoreCapabilitiesBento.tsx",
+        "src/components/landing/LandingFooterAbout.tsx",
+        "src/components/landing/UpcomingCatalystsGrid.tsx",
         "src/hooks/usePullToRefresh.ts"
       ]
     },
@@ -5115,7 +5121,6 @@
         "src/components/UserProfileModal.tsx",
         "src/components/WatchlistManager.tsx",
         "src/components/landing/CalendarTelegramMorph.tsx",
-        "src/components/landing/ResultsScrollDeck.tsx",
         "src/components/ui/AutosaveIndicator.tsx",
         "src/components/ui/BackToTop.tsx",
         "src/components/ui/CommandPalette.tsx",
@@ -5367,7 +5372,7 @@
     },
     {
       "path": "src/version.ts",
-      "sha256": "ada3da2cbf8961f3daa19061f100ce41ac31c98c0b128cb2af06d2ad9d8df91a",
+      "sha256": "da9b7dda97085d48d0a8e5e62ba9a8e4bece8570abd2950eb0aa7ee9af533970",
       "importedBy": [
         "src/components/SettingsTab.tsx",
         "src/lib/sentry.ts"
@@ -5465,37 +5470,37 @@
     },
     {
       "path": "supabase/migrations/20261026192403_gift_pro_access.sql",
-      "sha256": "f47b3bfe703ec404be4577191bcb372817ebc361199f2c8ae6916b2a42401560",
+      "sha256": "0c6a74c1657608375d05da016ad7f03f1385edd464e1c8c018f7d7e5b1db6ca2",
       "importedBy": []
     },
     {
       "path": "supabase/migrations/20261030114813_durable_faq_quota.sql",
-      "sha256": "a67ce8329c53cc7e5e7ee42f266a4df0d0800831e73ac9c3673d01610b4ddda5",
+      "sha256": "c5aedd0041c4cc20d8a307c840f94100df25fcbb69a25452c11552ddbef7431c",
       "importedBy": []
     },
     {
       "path": "supabase/migrations/20261030120109_auth_account_limits_schema.sql",
-      "sha256": "2123fa915d231e887e51bcc1eab19b0bcc9c1a558a2fefce1fb4a54fb3352800",
+      "sha256": "dad455fb9ec7a1fd308ab614d9a495c74ad86711a7c0087185200908efd196b8",
       "importedBy": []
     },
     {
       "path": "supabase/migrations/20261103152432_radar_reaction_learning.sql",
-      "sha256": "1d9d580a28acbefa615fb8a2a7d4ff90785a6a59b002022087a62b34dfaa8115",
+      "sha256": "5f24a224b1dd28c47f6d0135c24eec73f4eea8aea9b4818f7b868847090ab335",
       "importedBy": []
     },
     {
       "path": "supabase/migrations/20261103161436_radar_company_relative_volatility.sql",
-      "sha256": "6a4031e6754f47e4488402f978fb26368ab556a3e01bc1ca0be8fba307dffe53",
+      "sha256": "04301d556ce4beb73ec6058a44ac640b486f9cd2aed6c5193a5834fc7c3c0145",
       "importedBy": []
     },
     {
       "path": "tsconfig.json",
-      "sha256": "e93e15c3794e43a117964ea191ae985cbedea70c41d3d82b2e20aa8d07374fe4",
+      "sha256": "10322542d4082e5e3685a44dfedd178c3f35940e7639fb8b682f4563927b5be8",
       "importedBy": []
     },
     {
       "path": "vite.config.ts",
-      "sha256": "1e4e2892157d6eb771bc5b7ab6ceed667125928da89e58900f74654c12befce8",
+      "sha256": "f4a8a4639f71100859b6bd7ef3162cd4552e25eeaef78643e655514d2ffcdc68",
       "importedBy": []
     }
   ],
@@ -12768,63 +12773,93 @@
     },
     {
       "source": "src/components/LandingPage.tsx",
-      "target": "src/shared/productFacts.ts",
-      "kind": "import",
-      "line": 1
-    },
-    {
-      "source": "src/components/LandingPage.tsx",
       "target": "src/components/ui/BseNexusLogo.tsx",
       "kind": "import",
-      "line": 4
-    },
-    {
-      "source": "src/components/LandingPage.tsx",
-      "target": "src/components/ui/MarketTickerTape.tsx",
-      "kind": "import",
-      "line": 5
-    },
-    {
-      "source": "src/components/LandingPage.tsx",
-      "target": "src/components/landing/CoreCapabilitiesBento.tsx",
-      "kind": "import",
-      "line": 6
-    },
-    {
-      "source": "src/components/LandingPage.tsx",
-      "target": "src/components/landing/CommunitySocialBanner.tsx",
-      "kind": "import",
-      "line": 7
-    },
-    {
-      "source": "src/components/LandingPage.tsx",
-      "target": "src/components/landing/LandingFooterAbout.tsx",
-      "kind": "import",
-      "line": 8
-    },
-    {
-      "source": "src/components/LandingPage.tsx",
-      "target": "src/config/plans.ts",
-      "kind": "import",
-      "line": 9
-    },
-    {
-      "source": "src/components/LandingPage.tsx",
-      "target": "src/components/ui/PlanCard.tsx",
-      "kind": "import",
-      "line": 10
+      "line": 13
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/ui/AiIntelligenceLogo.tsx",
       "kind": "import",
-      "line": 11
+      "line": 14
+    },
+    {
+      "source": "src/components/LandingPage.tsx",
+      "target": "src/components/ui/CalendarDateBadge3D.tsx",
+      "kind": "import",
+      "line": 15
+    },
+    {
+      "source": "src/components/LandingPage.tsx",
+      "target": "src/components/ui/MarketTickerTape.tsx",
+      "kind": "import",
+      "line": 16
+    },
+    {
+      "source": "src/components/LandingPage.tsx",
+      "target": "src/components/ui/ParticleRibbons.tsx",
+      "kind": "import",
+      "line": 17
+    },
+    {
+      "source": "src/components/LandingPage.tsx",
+      "target": "src/components/landing/CoreCapabilitiesBento.tsx",
+      "kind": "import",
+      "line": 18
+    },
+    {
+      "source": "src/components/LandingPage.tsx",
+      "target": "src/components/landing/CommunitySocialBanner.tsx",
+      "kind": "import",
+      "line": 19
+    },
+    {
+      "source": "src/components/LandingPage.tsx",
+      "target": "src/components/landing/LandingFooterAbout.tsx",
+      "kind": "import",
+      "line": 20
+    },
+    {
+      "source": "src/components/LandingPage.tsx",
+      "target": "src/components/landing/CompanyLogos.tsx",
+      "kind": "import",
+      "line": 21
+    },
+    {
+      "source": "src/components/LandingPage.tsx",
+      "target": "src/components/landing/FeatureIcons.tsx",
+      "kind": "import",
+      "line": 26
+    },
+    {
+      "source": "src/components/LandingPage.tsx",
+      "target": "src/components/ui/PlanCard.tsx",
+      "kind": "import",
+      "line": 31
+    },
+    {
+      "source": "src/components/LandingPage.tsx",
+      "target": "src/config/plans.ts",
+      "kind": "import",
+      "line": 32
+    },
+    {
+      "source": "src/components/LandingPage.tsx",
+      "target": "src/shared/productFacts.ts",
+      "kind": "import",
+      "line": 33
+    },
+    {
+      "source": "src/components/LandingPage.tsx",
+      "target": "src/utils/haptics.ts",
+      "kind": "import",
+      "line": 34
     },
     {
       "source": "src/components/LandingPage.tsx",
       "target": "src/components/landing/LandingExamples.tsx",
       "kind": "dynamic",
-      "line": 36
+      "line": 150
     },
     {
       "source": "src/components/Layout.tsx",
@@ -14657,6 +14692,30 @@
       "line": 11
     },
     {
+      "source": "src/components/landing/CoreCapabilitiesBento.tsx",
+      "target": "src/components/ui/CalendarDateBadge3D.tsx",
+      "kind": "import",
+      "line": 3
+    },
+    {
+      "source": "src/components/landing/CoreCapabilitiesBento.tsx",
+      "target": "src/components/landing/FeatureIcons.tsx",
+      "kind": "import",
+      "line": 4
+    },
+    {
+      "source": "src/components/landing/CoreCapabilitiesBento.tsx",
+      "target": "src/components/landing/CompanyLogos.tsx",
+      "kind": "import",
+      "line": 11
+    },
+    {
+      "source": "src/components/landing/CoreCapabilitiesBento.tsx",
+      "target": "src/utils/haptics.ts",
+      "kind": "import",
+      "line": 12
+    },
+    {
       "source": "src/components/landing/CreativeHero.tsx",
       "target": "src/utils/scrollState.ts",
       "kind": "import",
@@ -14732,55 +14791,55 @@
       "source": "src/components/landing/LandingFooterAbout.tsx",
       "target": "src/components/ui/BseNexusLogo.tsx",
       "kind": "import",
-      "line": 6
-    },
-    {
-      "source": "src/components/landing/LandingFooterAbout.tsx",
-      "target": "src/components/ui/SocialLinks.tsx",
-      "kind": "import",
-      "line": 7
-    },
-    {
-      "source": "src/components/landing/ResultsScrollDeck.tsx",
-      "target": "src/shared/productFacts.ts",
-      "kind": "import",
-      "line": 1
-    },
-    {
-      "source": "src/components/landing/ResultsScrollDeck.tsx",
-      "target": "src/components/landing/CompanyLogos.tsx",
-      "kind": "import",
       "line": 9
     },
     {
-      "source": "src/components/landing/ResultsScrollDeck.tsx",
-      "target": "src/utils/motionTokens.ts",
+      "source": "src/components/landing/LandingFooterAbout.tsx",
+      "target": "src/components/ui/AiIntelligenceLogo.tsx",
       "kind": "import",
       "line": 10
     },
     {
-      "source": "src/components/landing/UpcomingCatalystsGrid.tsx",
-      "target": "src/shared/productFacts.ts",
-      "kind": "import",
-      "line": 1
-    },
-    {
-      "source": "src/components/landing/UpcomingCatalystsGrid.tsx",
+      "source": "src/components/landing/LandingFooterAbout.tsx",
       "target": "src/components/landing/CompanyLogos.tsx",
       "kind": "import",
-      "line": 6
+      "line": 11
     },
     {
-      "source": "src/components/landing/UpcomingCatalystsGrid.tsx",
-      "target": "src/components/ui/AiIntelligenceLogo.tsx",
+      "source": "src/components/landing/LandingFooterAbout.tsx",
+      "target": "src/utils/haptics.ts",
       "kind": "import",
-      "line": 7
+      "line": 12
     },
     {
       "source": "src/components/landing/UpcomingCatalystsGrid.tsx",
       "target": "src/components/ui/CalendarDateBadge3D.tsx",
       "kind": "import",
-      "line": 8
+      "line": 3
+    },
+    {
+      "source": "src/components/landing/UpcomingCatalystsGrid.tsx",
+      "target": "src/components/landing/CompanyLogos.tsx",
+      "kind": "import",
+      "line": 4
+    },
+    {
+      "source": "src/components/landing/UpcomingCatalystsGrid.tsx",
+      "target": "src/components/landing/FeatureIcons.tsx",
+      "kind": "import",
+      "line": 5
+    },
+    {
+      "source": "src/components/landing/UpcomingCatalystsGrid.tsx",
+      "target": "src/shared/productFacts.ts",
+      "kind": "import",
+      "line": 6
+    },
+    {
+      "source": "src/components/landing/UpcomingCatalystsGrid.tsx",
+      "target": "src/utils/haptics.ts",
+      "kind": "import",
+      "line": 7
     },
     {
       "source": "src/components/notes/NoteCharacter.tsx",
@@ -17698,7 +17757,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5563,
+      "line": 5569,
       "receiver": "app",
       "method": "GET",
       "path": "[sourcePath, sourcePath + '/']",
@@ -17708,7 +17767,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5570,
+      "line": 5576,
       "receiver": "app",
       "method": "GET",
       "path": "/filing/:symbol/:newsId",
@@ -17718,7 +17777,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5630,
+      "line": 5636,
       "receiver": "app",
       "method": "GET",
       "path": "/filing/:symbol",
@@ -17728,7 +17787,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5641,
+      "line": 5647,
       "receiver": "app",
       "method": "GET",
       "path": "['/filing', '/filing/']",
@@ -17738,7 +17797,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5647,
+      "line": 5653,
       "receiver": "app",
       "method": "GET",
       "path": "/announcement/:newsId",
@@ -17748,7 +17807,7 @@
     },
     {
       "file": "server.ts",
-      "line": 5977,
+      "line": 5983,
       "receiver": "app",
       "method": "GET",
       "path": "/results/:symbol/:quarterKey",
@@ -17758,7 +17817,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6032,
+      "line": 6038,
       "receiver": "app",
       "method": "GET",
       "path": "/ai-docs",
@@ -17768,7 +17827,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6035,
+      "line": 6041,
       "receiver": "app",
       "method": "GET",
       "path": "['/company/:symbol', '/stock/:symbol']",
@@ -17778,7 +17837,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6110,
+      "line": 6116,
       "receiver": "app",
       "method": "GET",
       "path": "/guides/:slug",
@@ -17788,7 +17847,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6156,
+      "line": 6162,
       "receiver": "app",
       "method": "GET",
       "path": "['/faq', '/faqs']",
@@ -17798,7 +17857,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6163,
+      "line": 6169,
       "receiver": "app",
       "method": "GET",
       "path": "['/pricing', '/pricing/']",
@@ -17808,7 +17867,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6170,
+      "line": 6176,
       "receiver": "app",
       "method": "GET",
       "path": "['/plans', '/plans/']",
@@ -17818,7 +17877,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6175,
+      "line": 6181,
       "receiver": "app",
       "method": "GET",
       "path": "['/guides', '/guides/']",
@@ -17828,7 +17887,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6182,
+      "line": 6188,
       "receiver": "app",
       "method": "GET",
       "path": "['/market-guides', '/market-guides/']",
@@ -17838,7 +17897,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6187,
+      "line": 6193,
       "receiver": "app",
       "method": "GET",
       "path": "['/companies', '/companies/']",
@@ -17848,7 +17907,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6194,
+      "line": 6200,
       "receiver": "app",
       "method": "GET",
       "path": "['/company-directory', '/company-directory/']",
@@ -17858,7 +17917,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6199,
+      "line": 6205,
       "receiver": "app",
       "method": "GET",
       "path": "['/about', '/about/']",
@@ -17868,7 +17927,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6206,
+      "line": 6212,
       "receiver": "app",
       "method": "GET",
       "path": "['/contact', '/contact/']",
@@ -17878,7 +17937,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6213,
+      "line": 6219,
       "receiver": "app",
       "method": "GET",
       "path": "['/disclaimer', '/disclaimer/']",
@@ -17888,7 +17947,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6220,
+      "line": 6226,
       "receiver": "app",
       "method": "GET",
       "path": "['/privacy-policy', '/privacy-policy/']",
@@ -17898,7 +17957,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6227,
+      "line": 6233,
       "receiver": "app",
       "method": "GET",
       "path": "['/privacy', '/privacy/']",
@@ -17908,7 +17967,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6233,
+      "line": 6239,
       "receiver": "app",
       "method": "GET",
       "path": "['/terms', '/terms/']",
@@ -17918,7 +17977,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6240,
+      "line": 6246,
       "receiver": "app",
       "method": "GET",
       "path": "['/terms-of-service', '/terms-of-service/']",
@@ -17928,7 +17987,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6245,
+      "line": 6251,
       "receiver": "app",
       "method": "GET",
       "path": "/embed/widget",
@@ -17938,7 +17997,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6299,
+      "line": 6305,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-companies.xml",
@@ -17948,7 +18007,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6319,
+      "line": 6325,
       "receiver": "app",
       "method": "GET",
       "path": "/sitemap-guides.xml",
@@ -17958,7 +18017,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6337,
+      "line": 6343,
       "receiver": "app",
       "method": "GET",
       "path": "/llms.txt",
@@ -17968,7 +18027,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6342,
+      "line": 6348,
       "receiver": "app",
       "method": "GET",
       "path": "/llms-full.txt",
@@ -17978,7 +18037,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6352,
+      "line": 6358,
       "receiver": "app",
       "method": "GET",
       "path": "/^\\/google([a-zA-Z0-9_-]+)\\.html$/",
@@ -17988,7 +18047,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6362,
+      "line": 6368,
       "receiver": "app",
       "method": "GET",
       "path": "/",
@@ -17998,7 +18057,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6365,
+      "line": 6371,
       "receiver": "app",
       "method": "USE",
       "path": "express.static(path.join(process.cwd(), 'public'), { maxAge: '1d', immutable: false, setHeaders: (res, filePath) => { if (filePath.includes(`${path.sep}fonts${path.sep}`)) res.setHeader('Cache-Control', 'public, max-age=2592000'); if (fileP",
@@ -18006,7 +18065,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6375,
+      "line": 6381,
       "receiver": "app",
       "method": "USE",
       "path": "['/api', '/auth']",
@@ -18016,7 +18075,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6381,
+      "line": 6387,
       "receiver": "app",
       "method": "USE",
       "path": "/auth",
@@ -18026,7 +18085,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6384,
+      "line": 6390,
       "receiver": "app",
       "method": "POST",
       "path": "/api/security/verify-recaptcha",
@@ -18037,7 +18096,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6425,
+      "line": 6431,
       "receiver": "app",
       "method": "USE",
       "path": "/api",
@@ -18048,7 +18107,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6429,
+      "line": 6435,
       "receiver": "app",
       "method": "USE",
       "path": "['/api/*', '/auth/*']",
@@ -18058,7 +18117,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6434,
+      "line": 6440,
       "receiver": "app",
       "method": "USE",
       "path": "(err: any, req: express.Request, res: express.Response, next: express.NextFunction) => { if (req.path.startsWith('/api') || req.path.startsWith('/auth')) { console.error(\"API Error handler caught:\", err?.message || err); const isProd = proc",
@@ -18066,7 +18125,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6849,
+      "line": 6855,
       "receiver": "app",
       "method": "GET",
       "path": "SPA_PATHS",
@@ -18076,7 +18135,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6883,
+      "line": 6889,
       "receiver": "app",
       "method": "USE",
       "path": "(req, res, next) => { if (req.method !== 'GET' && req.method !== 'HEAD') return next(); const p = normalizeSpaPath(req.path); if ( p === '/' || p === '/announcements' || p === '/results-calendar' || p === '/watchlist' || p === '/watchlists'",
@@ -18084,7 +18143,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6921,
+      "line": 6927,
       "receiver": "app",
       "method": "USE",
       "path": "vite.middlewares",
@@ -18092,7 +18151,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6932,
+      "line": 6938,
       "receiver": "app",
       "method": "GET",
       "path": "/index.html",
@@ -18102,7 +18161,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6935,
+      "line": 6941,
       "receiver": "app",
       "method": "USE",
       "path": "express.static(distPath, { maxAge: '1y', immutable: true, index: false, setHeaders: (res, filePath) => { if (filePath.endsWith('.html')) { res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600'); } } }",
@@ -18110,7 +18169,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6955,
+      "line": 6961,
       "receiver": "app",
       "method": "GET",
       "path": "['/announcements', '/announcements/']",
@@ -18120,7 +18179,7 @@
     },
     {
       "file": "server.ts",
-      "line": 7002,
+      "line": 7008,
       "receiver": "app",
       "method": "GET",
       "path": "*",
@@ -19054,7 +19113,7 @@
       "method": "GET",
       "path": "/announcements",
       "middleware": [
-        "apiResponseCache.middleware({ ttlMs: 3 * 1000, publicCache: false })",
+        "apiResponseCache.middleware({ ttlMs: 6 * 1000, publicCache: true })",
         "<handler>"
       ]
     },
@@ -21055,7 +21114,7 @@
     },
     {
       "file": "server.ts",
-      "line": 6552,
+      "line": 6558,
       "function": "fetch",
       "target": "`http://127.0.0.1:${port}/api/health`"
     },
@@ -22015,13 +22074,13 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 209,
+      "line": 210,
       "function": "customFetch",
       "target": "'/api/storage/quota-mode'"
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 680,
+      "line": 681,
       "function": "customFetch",
       "target": "'/api/health'"
     },
@@ -22195,31 +22254,31 @@
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 632,
+      "line": 626,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 734,
+      "line": 728,
       "function": "customFetch",
       "target": "`/api/announcements/${announcementId}/generate-summary`"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 800,
+      "line": 794,
       "function": "customFetch",
       "target": "'/api/send-to-telegram-manual'"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 932,
+      "line": 926,
       "function": "customFetch",
       "target": "'/api/send-to-telegram-manual'"
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 985,
+      "line": 979,
       "function": "customFetch",
       "target": "'/api/results-calendar/telegram-broadcast'"
     },
@@ -22773,31 +22832,31 @@
     },
     {
       "file": "scripts/generateIcons.ts",
-      "line": 153,
+      "line": 147,
       "function": "Buffer.from",
       "key": "pureSymbolSquareSvg"
     },
     {
       "file": "scripts/generateIcons.ts",
-      "line": 154,
+      "line": 148,
       "function": "Buffer.from",
       "key": "pureSymbolMaskableSvg"
     },
     {
       "file": "scripts/generateIcons.ts",
-      "line": 155,
+      "line": 149,
       "function": "Buffer.from",
       "key": "ogSvgStr"
     },
     {
       "file": "scripts/generateScreenshots.ts",
-      "line": 316,
+      "line": 310,
       "function": "Buffer.from",
       "key": "getDesktopSvg()"
     },
     {
       "file": "scripts/generateScreenshots.ts",
-      "line": 317,
+      "line": 311,
       "function": "Buffer.from",
       "key": "getMobileSvg()"
     },
@@ -24603,7 +24662,7 @@
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 1201,
+      "line": 1197,
       "function": "Array.from",
       "key": "map.values()"
     },
@@ -24798,12 +24857,6 @@
       "line": 61,
       "function": "Array.from",
       "key": "{ length: rows }"
-    },
-    {
-      "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 269,
-      "function": "Array.from",
-      "key": "{ length: SEG + 1 }"
     },
     {
       "file": "src/components/ui/TabErrorBoundary.tsx",
@@ -25576,52 +25629,52 @@
     },
     {
       "file": "server.ts",
-      "line": 6350,
+      "line": 6356,
       "name": "GOOGLE_SITE_VERIFICATION_HASH"
     },
     {
       "file": "server.ts",
-      "line": 6350,
+      "line": 6356,
       "name": "GOOGLE_SITE_VERIFICATION_HASH"
     },
     {
       "file": "server.ts",
-      "line": 6437,
+      "line": 6443,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6838,
+      "line": 6844,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 6843,
+      "line": 6849,
       "name": "DISABLE_HMR"
     },
     {
       "file": "server.ts",
-      "line": 7063,
+      "line": 7069,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 7115,
+      "line": 7121,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 7130,
+      "line": 7136,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 7144,
+      "line": 7150,
       "name": "NODE_ENV"
     },
     {
       "file": "server.ts",
-      "line": 7144,
+      "line": 7150,
       "name": "TEST_RUNNER"
     },
     {
@@ -26471,12 +26524,12 @@
     },
     {
       "file": "server/services/gemini.ts",
-      "line": 686,
+      "line": 687,
       "name": "TELEGRAM_CHAT_ID"
     },
     {
       "file": "server/services/gemini.ts",
-      "line": 698,
+      "line": 699,
       "name": "TELEGRAM_CHAT_ID"
     },
     {
@@ -27771,12 +27824,12 @@
     },
     {
       "file": "vite.config.ts",
-      "line": 49,
-      "name": "DISABLE_HMR"
+      "line": 10,
+      "name": "NODE_ENV"
     },
     {
       "file": "vite.config.ts",
-      "line": 51,
+      "line": 12,
       "name": "DISABLE_HMR"
     }
   ],
@@ -28359,7 +28412,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 236,
+      "line": 237,
       "target": "window",
       "kind": "dispatch",
       "name": "bse_nav_tab_refresh",
@@ -28455,7 +28508,7 @@
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 649,
+      "line": 643,
       "target": "window",
       "kind": "listen",
       "name": "watchlists-changed",
@@ -28463,7 +28516,7 @@
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 650,
+      "line": 644,
       "target": "window",
       "kind": "remove",
       "name": "watchlists-changed",
@@ -28471,7 +28524,7 @@
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 687,
+      "line": 681,
       "target": "window",
       "kind": "listen",
       "name": "company-intel-updated",
@@ -28479,7 +28532,7 @@
     },
     {
       "file": "src/components/ResultsCalendar.tsx",
-      "line": 688,
+      "line": 682,
       "target": "window",
       "kind": "remove",
       "name": "company-intel-updated",
@@ -29063,99 +29116,131 @@
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 131,
+      "line": 597,
       "target": "window",
       "kind": "listen",
       "name": "resize",
-      "expression": "window.addEventListener('resize', resize, { passive: true })"
+      "expression": "window.addEventListener('resize', handleStaticResize, { passive: true })"
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 138,
-      "target": "window",
-      "kind": "listen",
-      "name": "mousemove",
-      "expression": "window.addEventListener('mousemove', onMouse, { passive: true })"
-    },
-    {
-      "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 146,
-      "target": "window",
-      "kind": "listen",
-      "name": "scroll",
-      "expression": "window.addEventListener('scroll', onScroll, { passive: true })"
-    },
-    {
-      "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 156,
-      "target": "document",
-      "kind": "listen",
-      "name": "visibilitychange",
-      "expression": "document.addEventListener('visibilitychange', onVis)"
-    },
-    {
-      "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 360,
-      "target": "window",
-      "kind": "remove",
-      "name": "mousemove",
-      "expression": "window.removeEventListener('mousemove', onMouse)"
-    },
-    {
-      "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 361,
-      "target": "window",
-      "kind": "remove",
-      "name": "scroll",
-      "expression": "window.removeEventListener('scroll', onScroll)"
-    },
-    {
-      "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 362,
-      "target": "document",
-      "kind": "remove",
-      "name": "visibilitychange",
-      "expression": "document.removeEventListener('visibilitychange', onVis)"
-    },
-    {
-      "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 365,
+      "line": 599,
       "target": "window",
       "kind": "remove",
       "name": "resize",
-      "expression": "window.removeEventListener('resize', resize)"
+      "expression": "window.removeEventListener('resize', handleStaticResize)"
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 380,
+      "line": 610,
+      "target": "window",
+      "kind": "listen",
+      "name": "resize",
+      "expression": "window.addEventListener('resize', updateCanvasSize, { passive: true })"
+    },
+    {
+      "file": "src/components/ui/ParticleRibbons.tsx",
+      "line": 612,
+      "target": "window",
+      "kind": "listen",
+      "name": "pointerdown",
+      "expression": "window.addEventListener('pointerdown', onPointerDown, { passive: true })"
+    },
+    {
+      "file": "src/components/ui/ParticleRibbons.tsx",
+      "line": 613,
+      "target": "window",
+      "kind": "listen",
+      "name": "pointermove",
+      "expression": "window.addEventListener('pointermove', onPointerMove, { passive: true })"
+    },
+    {
+      "file": "src/components/ui/ParticleRibbons.tsx",
+      "line": 614,
+      "target": "window",
+      "kind": "listen",
+      "name": "pointerup",
+      "expression": "window.addEventListener('pointerup', onPointerUp, { passive: true })"
+    },
+    {
+      "file": "src/components/ui/ParticleRibbons.tsx",
+      "line": 615,
+      "target": "window",
+      "kind": "listen",
+      "name": "touchstart",
+      "expression": "window.addEventListener('touchstart', onTouchStart, { passive: true })"
+    },
+    {
+      "file": "src/components/ui/ParticleRibbons.tsx",
+      "line": 616,
+      "target": "window",
+      "kind": "listen",
+      "name": "touchmove",
+      "expression": "window.addEventListener('touchmove', onTouchMove, { passive: true })"
+    },
+    {
+      "file": "src/components/ui/ParticleRibbons.tsx",
+      "line": 617,
+      "target": "window",
+      "kind": "listen",
+      "name": "touchend",
+      "expression": "window.addEventListener('touchend', onTouchEnd, { passive: true })"
+    },
+    {
+      "file": "src/components/ui/ParticleRibbons.tsx",
+      "line": 621,
       "target": "window",
       "kind": "remove",
       "name": "resize",
-      "expression": "window.removeEventListener('resize', resize)"
+      "expression": "window.removeEventListener('resize', updateCanvasSize)"
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 381,
+      "line": 623,
       "target": "window",
       "kind": "remove",
-      "name": "mousemove",
-      "expression": "window.removeEventListener('mousemove', onMouse)"
+      "name": "pointerdown",
+      "expression": "window.removeEventListener('pointerdown', onPointerDown)"
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 382,
+      "line": 624,
       "target": "window",
       "kind": "remove",
-      "name": "scroll",
-      "expression": "window.removeEventListener('scroll', onScroll)"
+      "name": "pointermove",
+      "expression": "window.removeEventListener('pointermove', onPointerMove)"
     },
     {
       "file": "src/components/ui/ParticleRibbons.tsx",
-      "line": 383,
-      "target": "document",
+      "line": 625,
+      "target": "window",
       "kind": "remove",
-      "name": "visibilitychange",
-      "expression": "document.removeEventListener('visibilitychange', onVis)"
+      "name": "pointerup",
+      "expression": "window.removeEventListener('pointerup', onPointerUp)"
+    },
+    {
+      "file": "src/components/ui/ParticleRibbons.tsx",
+      "line": 626,
+      "target": "window",
+      "kind": "remove",
+      "name": "touchstart",
+      "expression": "window.removeEventListener('touchstart', onTouchStart)"
+    },
+    {
+      "file": "src/components/ui/ParticleRibbons.tsx",
+      "line": 627,
+      "target": "window",
+      "kind": "remove",
+      "name": "touchmove",
+      "expression": "window.removeEventListener('touchmove', onTouchMove)"
+    },
+    {
+      "file": "src/components/ui/ParticleRibbons.tsx",
+      "line": 628,
+      "target": "window",
+      "kind": "remove",
+      "name": "touchend",
+      "expression": "window.removeEventListener('touchend', onTouchEnd)"
     },
     {
       "file": "src/components/ui/ScrollProgressBar.tsx",

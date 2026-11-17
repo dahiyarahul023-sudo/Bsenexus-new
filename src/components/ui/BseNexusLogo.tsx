@@ -26,7 +26,10 @@ export function BseNexusLogo({
     xl: 'w-16 h-16'
   };
 
-  const iconClass = className || sizeClasses[size] || 'w-8 h-8';
+  const hasExplicitDimensions = Boolean(className && /\b(?:w|h|size)-\d/.test(className));
+  const iconClass = hasExplicitDimensions
+    ? className!
+    : `${sizeClasses[size] || 'w-8 h-8 sm:w-9 sm:h-9'} ${className || ''}`.trim();
 
   return (
     <div className={`inline-flex items-center shrink-0 ${effectiveVariant === 'stacked' ? 'flex-col gap-1.5 text-center' : 'gap-2.5'}`}>
@@ -34,6 +37,8 @@ export function BseNexusLogo({
       <div className={`relative flex items-center justify-center shrink-0 ${iconClass}`}>
         <svg 
           viewBox="0 0 100 100" 
+          width="36"
+          height="36"
           fill="none" 
           xmlns="http://www.w3.org/2000/svg"
           className="w-full h-full drop-shadow-sm select-none"

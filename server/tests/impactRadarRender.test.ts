@@ -66,3 +66,32 @@ test('Home Radar renders only two previews and keeps the full dashboard out of t
   assert.ok(!html.includes('impact-radar-dashboard-title'));
   assert.ok(!html.includes('Event period'));
 });
+
+test('Impact Radar error state renders Retry action and does not duplicate empty state copy', () => {
+  const source = fs.readFileSync('src/components/ImpactRadar.tsx', 'utf8');
+  const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText;
+  const actualRequire = createRequire(new URL('../../src/components/ImpactRadar.tsx', import.meta.url));
+  class ErrorFeed {
+    getSnapshot = () => ({ items: [], following: [], followingReady: true, saving: [], loading: false, checkedAt: null, error: 'Impact Radar could not be updated.' });
+    subscribe = () => () => {};
+    refresh = () => Promise.resolve();
+  }
+  const exports: any = {};
+  vm.runInNewContext(code, { exports, console, require(path: string) {
+    if (path.endsWith('/impactRadar')) return contract;
+    if (path.endsWith('/radarReaction')) return actualRequire(path);
+    if (path.endsWith('/impactRadarFeed')) return { ImpactRadarFeed: ErrorFeed };
+    if (path.endsWith('/radarCompanyGroups')) return {groupRadarCompanies};
+    if (path.endsWith('/AuthContext')) return { useAuth: () => ({ setIsAuthModalOpen() {} }) };
+    if (path.endsWith('/useVisibilityInterval')) return { useVisibilityInterval() {} };
+    if (path === './ui/ActionButton') return actualRequire(path);
+    if (path === './RadarReactionBrief') return actualRequire(path);
+    if (path.startsWith('.')) return {};
+    return actualRequire(path);
+  } });
+  const html = renderToStaticMarkup(React.createElement(exports.ImpactRadar, { active: true, identity: 'guest', onNavigate() {}, density: 'standard' }));
+  assert.ok(html.includes('Impact Radar could not be updated.'));
+  assert.ok(html.includes('Retry'));
+  assert.ok(!html.includes('No sourced events available yet'));
+});
+
