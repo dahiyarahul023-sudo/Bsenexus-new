@@ -220,6 +220,63 @@ const COMMON_HEADERS = {
   "Cache-Control": "no-cache"
 };
 
+const BSE_FORTHCOMING_RESULTS_URL = 'https://api.bseindia.com/BseIndiaAPI/api/Corpforthresults/w';
+const CALENDAR_SYNC_VERSION = `${FNO_CALENDAR_VERSION}:forthcoming-v1`;
+
+/** Fetch official BSE market-wide forthcoming financial results board meetings (Reg 29 intimations). */
+export async function fetchBseForthcomingResults(todayStartTs = getIstMidnightTs(new Date())): Promise<{ ok: boolean; items: ResultCalendarItem[] }> {
+  try {
+    const res = await fetch(BSE_FORTHCOMING_RESULTS_URL, { headers: COMMON_HEADERS, signal: AbortSignal.timeout(9000) });
+    if (!res.ok) return { ok: false, items: [] };
+    const text = await res.text();
+    if (!text || text.includes("No Record") || text.trim() === "[]") return { ok: true, items: [] };
+    const json = JSON.parse(text);
+    if (!Array.isArray(json)) return { ok: false, items: [] };
+    const updatedAt = new Date().toISOString();
+    const items: ResultCalendarItem[] = [];
+    for (const row of json) {
+      if (!row || typeof row !== 'object') continue;
+      const scripCode = String(row.scrip_Code ?? row.scrip_code ?? row.SCRIP_CD ?? '').trim();
+      if (!/^\d{6}$/.test(scripCode)) continue;
+      const meetingDateStr = String(row.meeting_date ?? row.Meeting_Date ?? '').trim();
+      const meetingTs = parseMeetingDateToIstMidnight(meetingDateStr);
+      if (!meetingDateStr || !Number.isFinite(meetingTs) || meetingTs <= 0) continue;
+
+      const daysLeft = Math.round((meetingTs - todayStartTs) / (1000 * 60 * 60 * 24));
+      let status: 'TODAY' | 'UPCOMING' | 'RECENT' | 'PAST' = 'PAST';
+      if (daysLeft === 0) status = 'TODAY';
+      else if (daysLeft > 0) status = 'UPCOMING';
+      else if (daysLeft >= -30) status = 'RECENT';
+
+      const rawShort = String(row.short_name ?? row.Short_name ?? '').trim().toUpperCase();
+      const rawLong = String(row.Long_Name ?? row.LONG_NAME ?? '').trim();
+      const identity = calendarIdentity({ symbol: rawShort || scripCode, scripCode, companyName: rawLong });
+      const symbol = (identity?.symbol && !/^\d+$/.test(identity.symbol)) ? identity.symbol : (rawShort || scripCode);
+      let companyName = (rawLong || identity?.companyName || symbol).trim();
+      if (scripCode === '500034' || symbol === 'BAJFINANCE' || companyName.toUpperCase() === 'BAJAJ AUTO F') {
+        companyName = 'Bajaj Finance Ltd';
+      }
+
+      items.push({
+        id: `${scripCode}_${meetingTs}_Results`,
+        symbol,
+        scripCode,
+        companyName,
+        purpose: 'Results',
+        meetingDate: meetingDateStr,
+        meetingTimestamp: meetingTs,
+        daysLeft,
+        status,
+        updatedAt,
+        marketUniverse: true,
+      });
+    }
+    return { ok: true, items };
+  } catch {
+    return { ok: false, items: [] };
+  }
+}
+
 const NSE_HEADERS = {
   "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
   "Accept": "application/json, text/plain, */*",
@@ -471,7 +528,7 @@ async function performCalendarSync(
   options?: { quick?: boolean; symbols?: string[] }
 ): Promise<ResultCalendarItem[]> {
   const now = Date.now();
-  if (!force && calendarUniverseVersion === FNO_CALENDAR_VERSION && lastCalendarAttemptTime > 0 &&
+  if (!force && calendarUniverseVersion === CALENDAR_SYNC_VERSION && lastCalendarAttemptTime > 0 &&
       now - lastCalendarAttemptTime < (lastCalendarSyncIncomplete ? 60000 : 60 * 60 * 1000)) {
     return cachedCalendar;
   }
@@ -486,6 +543,7 @@ async function performCalendarSync(
     const successfulCodes = new Set<string>();
 
     const todayStartTs = getIstMidnightTs(new Date());
+    const forthcomingPromise = subset ? Promise.resolve({ ok: true, items: [] as ResultCalendarItem[] }) : fetchBseForthcomingResults(todayStartTs);
     const fetchedItems: ResultCalendarItem[] = [];
     const scripEntries = Array.from(targets.entries());
 
@@ -568,6 +626,11 @@ async function performCalendarSync(
       }
     }
 
+    const forthcoming = await forthcomingPromise;
+    if (forthcoming.items.length > 0) {
+      fetchedItems.push(...forthcoming.items);
+    }
+
     // Deduplicate fetched items by scripCode + meetingTimestamp, combining multi-purposes (e.g. Financial Results & Dividend)
     const uniqueMap = new Map<string, ResultCalendarItem>();
     for (const item of fetchedItems) {
@@ -579,15 +642,26 @@ async function performCalendarSync(
         if (item.purpose && !existing.purpose.toLowerCase().includes(item.purpose.toLowerCase())) {
           existing.purpose = `${existing.purpose} & ${item.purpose}`;
         }
+        if (item.marketUniverse) existing.marketUniverse = true;
+      }
+    }
+
+    const targetsIncomplete = [...targets.keys()].some(code => !successfulCodes.has(code));
+    if (!subset && forthcoming.ok) {
+      // Replace superseded future public forthcoming dates while preserving archive (< todayStartTs) and failed target schedules.
+      for (const prev of cachedCalendar) {
+        if (prev.marketUniverse === true && !targets.has(prev.scripCode) && prev.meetingTimestamp >= todayStartTs) {
+          successfulCodes.add(prev.scripCode);
+        }
       }
     }
 
     cachedCalendar = mergeCalendarMeetings(cachedCalendar, Array.from(uniqueMap.values()), successfulCodes, todayStartTs);
-    lastCalendarSyncIncomplete = successfulCodes.size < targets.size;
-    if (!subset) calendarUniverseVersion = FNO_CALENDAR_VERSION;
-    if (successfulCodes.size > 0) lastCalendarFetchTime = now;
+    lastCalendarSyncIncomplete = targetsIncomplete || (!subset && !forthcoming.ok);
+    if (!subset) calendarUniverseVersion = CALENDAR_SYNC_VERSION;
+    if (successfulCodes.size > 0 || (!subset && forthcoming.ok)) lastCalendarFetchTime = now;
     invalidateEnrichedCalendarCache();
-    if (lastCalendarSyncIncomplete) await addLog('WARN', 'RESULTS_CALENDAR', `BSE calendar unavailable for ${targets.size - successfulCodes.size} securities; previous entries retained.`);
+    if (lastCalendarSyncIncomplete) await addLog('WARN', 'RESULTS_CALENDAR', `BSE calendar unavailable for ${targets.size - [...targets.keys()].filter(code => successfulCodes.has(code)).length} securities${!subset && !forthcoming.ok ? ' and forthcoming results feed' : ''}; previous entries retained.`);
 
     // Save to disk cache
     try {
@@ -725,7 +799,7 @@ export function readCachedResultsCalendar() {
 export async function getResultsCalendarSnapshot(): Promise<{items:ResultCalendarItem[];lastUpdated:number;resultsCheckedAt?:number;outcomesUnavailable?:boolean}> {
   await hydrateStoredCalendar();
   const now = Date.now();
-  if (calendarUniverseVersion !== FNO_CALENDAR_VERSION || cachedCalendar.length === 0 ||
+  if (calendarUniverseVersion !== CALENDAR_SYNC_VERSION || cachedCalendar.length === 0 ||
       (lastCalendarSyncIncomplete && now - lastCalendarAttemptTime >= 60000) || now - lastCalendarFetchTime > 12 * 60 * 60 * 1000) {
     await fetchAndSyncResultsCalendar(false);
   }

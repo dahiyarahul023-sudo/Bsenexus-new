@@ -267,13 +267,18 @@ export function ModernAuthCard({
   const handleGuestLogin = async () => {
     if (isLoading) return;
     setIsLoading(true);
+    setError('');
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('bse_guest_active_session', 'true');
     }
     try {
-      await quickDemoLogin('Guest');
-      handleClose();
-      onSuccess?.();
+      const res = await quickDemoLogin('Guest');
+      if (res?.success) {
+        handleClose();
+        onSuccess?.();
+      } else {
+        setError(res?.error || 'Could not start guest session.');
+      }
     } finally {
       setIsLoading(false);
     }

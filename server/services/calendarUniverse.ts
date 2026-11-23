@@ -53,7 +53,7 @@ export function calendarWatchlistCodes(lists: any[], selectedId?: string): Set<s
     .map(calendarIdentity).filter((stock): stock is NonNullable<typeof stock> => Boolean(stock)).map(stock => stock.scripCode));
 }
 
-interface Meeting { id: string; scripCode: string; meetingTimestamp: number; purpose: string; isNotified?: boolean }
+interface Meeting { id: string; scripCode: string; meetingTimestamp: number; purpose: string; isNotified?: boolean; marketUniverse?: boolean }
 /** Replace future schedules for successful securities; a rolling source cannot erase recorded past meetings. */
 export function mergeCalendarMeetings<T extends Meeting>(previous: T[], fetched: T[], successfulCodes: Set<string>, retainBefore = 0): T[] {
   const old = new Map(previous.map(item => [`${item.scripCode}:${item.meetingTimestamp}`, item]));
@@ -63,6 +63,7 @@ export function mergeCalendarMeetings<T extends Meeting>(previous: T[], fetched:
     const existing = result.get(key);
     if (existing) {
       if (item.purpose && !existing.purpose.toLowerCase().includes(item.purpose.toLowerCase())) existing.purpose += ` & ${item.purpose}`;
+      if (item.marketUniverse) existing.marketUniverse = true;
     } else {
       const saved = old.get(key);
       result.set(key, { ...item, id: saved?.id || item.id, ...(saved?.isNotified ? { isNotified: true } : {}) });
@@ -74,7 +75,7 @@ export function mergeCalendarMeetings<T extends Meeting>(previous: T[], fetched:
 export function selectCalendarScope<T extends Meeting>(items: T[], scope: CalendarScope, ownCodes: Set<string>): T[] {
   const selected = items.filter(item => scope === 'watchlist' ? ownCodes.has(item.scripCode)
     : scope === 'fno' ? isFnoCalendarCode(item.scripCode)
-    : ownCodes.has(item.scripCode) || isFnoCalendarCode(item.scripCode));
+    : ownCodes.has(item.scripCode) || isFnoCalendarCode(item.scripCode) || item.marketUniverse === true);
   return mergeCalendarMeetings([], selected, new Set());
 }
 

@@ -30,14 +30,17 @@ test('Vishal and other stocks outside the symbol master survive code-based calen
   assert.equal(buildCalendarTargets(['RELIANCE', { symbol: 'RIL-ALIAS', scripCode: '500325' }]).size, 211);
 });
 
-test('All is own active watchlists union F&O; F&O retains overlap; another owner is excluded', () => {
-  const rows = [meeting('500325'), meeting('507685'), meeting('512345'), meeting('543711'), meeting('500325', 1, 'Dividend'), meeting('500325', 2)];
+test('All is own active watchlists union F&O union public forthcoming results; F&O retains overlap; another owner is excluded', () => {
+  const publicForthcoming = { ...meeting('545018'), marketUniverse: true };
+  const rows = [meeting('500325'), meeting('507685'), meeting('512345'), meeting('543711'), meeting('500325', 1, 'Dividend'), meeting('500325', 2), publicForthcoming];
   const own = new Set(['500325', '512345']);
-  assert.deepEqual(selectCalendarScope(rows, 'all', own).map(row => row.id), ['500325_1', '507685_1', '512345_1', '500325_2']);
+  assert.deepEqual(selectCalendarScope(rows, 'all', own).map(row => row.id), ['500325_1', '507685_1', '512345_1', '500325_2', '545018_1']);
   assert.equal(selectCalendarScope(rows, 'fno', own).filter(row => row.scripCode === '500325').length, 2, 'separate meeting dates survive');
+  assert.equal(selectCalendarScope(rows, 'fno', own).some(row => row.scripCode === '545018'), false, 'non-F&O forthcoming results stay out of F&O scope');
   assert.deepEqual(selectCalendarScope(rows, 'watchlist', own).map(row => row.id), ['500325_1', '512345_1', '500325_2']);
   assert.deepEqual(selectCalendarScope(rows, 'watchlist', new Set()), []);
-  assert.equal(selectCalendarScope(rows, 'all', new Set()).some(row => row.scripCode === '512345'), false);
+  assert.equal(selectCalendarScope(rows, 'all', new Set()).some(row => row.scripCode === '512345'), false, 'another owner private watchlist stock stays excluded');
+  assert.equal(selectCalendarScope(rows, 'all', new Set()).some(row => row.scripCode === '545018'), true, 'public forthcoming results appear in All for guest/signed-in users');
 });
 
 test('watchlist membership respects inactive lists, explicit codes and missing list IDs', () => {

@@ -704,6 +704,7 @@
         "server/tests/deepAuditAuth.test.ts",
         "server/tests/calendarFeedback.test.ts",
         "server/tests/signOutFeedback.test.ts",
+        "server/tests/guestTerminalEntry.test.ts",
         "server/tests/foregroundRefresh.test.ts",
         "server/tests/resultFreshness.test.ts",
         "server/tests/adminQuotaFlow.test.ts",

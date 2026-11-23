@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "8d1459b80e443b12d19d8235a853e7272b064b553a123cf8c590d38cde38c503",
+  "sourceDigest": "04e5f9d1efdc7dd5d8aae5e03edaa045d0c1ffd36bff7955cae2a86b858c52e9",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -1216,7 +1216,7 @@
     },
     {
       "path": "server/services/calendarUniverse.ts",
-      "sha256": "fe8d61ed7c44b6cbeeb8cb6fe910bb952069b6cc75698f165f697b48cd5c629e",
+      "sha256": "972d49287a1379a010e4c306d6d154b5c9c6b3e5fd4d4394fefe47d3dec25bc6",
       "importedBy": [
         "server/ai/calendarRead.ts",
         "server/services/calendarTelegramDelivery.ts",
@@ -1544,7 +1544,7 @@
     },
     {
       "path": "server/services/resultsCalendarService.ts",
-      "sha256": "11b9016d6e2df3a6fe1ffbfecfd28805029edb7c5cb6bfa18e52a89e68d72947",
+      "sha256": "72f242e6781836f60a8a12240bf807475ad3ecd87493326dbb476112a0dedacd",
       "importedBy": [
         "server.ts",
         "server/ai/calendarRead.ts",
@@ -1870,7 +1870,7 @@
     },
     {
       "path": "server/tests/calendarFno.test.ts",
-      "sha256": "68cee4414c676c25854069c114c87cbbd08f95a963da1bcaa13890700692e711",
+      "sha256": "efd5bad8ec068d1bb0715fc4ad6e9c7f169008ea5a418c62e6fdbcf16470b103",
       "importedBy": []
     },
     {
@@ -1900,7 +1900,7 @@
     },
     {
       "path": "server/tests/calendarSync.test.ts",
-      "sha256": "d10a313a474c95dd7d72a612e0a8b6a578a37f129a6b3f0628753bcf49b0cbb2",
+      "sha256": "0f04a141eb2c21e65c88176aa9eed848b05acdbd8ffa41b5bc43572e798267b4",
       "importedBy": []
     },
     {
@@ -2046,6 +2046,11 @@
     {
       "path": "server/tests/giftAccessSql.test.ts",
       "sha256": "f3f41e502c434da98ee951082b9147a85f40f4e23b6f37d2070b5177d540df4b",
+      "importedBy": []
+    },
+    {
+      "path": "server/tests/guestTerminalEntry.test.ts",
+      "sha256": "7e01a739076f61dbcbb9f6767884e05bb696e18ccbcefb73aa7c313c4ddab992",
       "importedBy": []
     },
     {
@@ -2827,7 +2832,7 @@
     },
     {
       "path": "src/App.tsx",
-      "sha256": "d8c69624b913f750c1d1cb14a26bfea7459852b2c31ee1f5ba6b418403ba0281",
+      "sha256": "b8c433864c686927d81093cc9d26005ef2772bf032fbafcf6aca39d678f87d7e",
       "importedBy": [
         "src/main.tsx"
       ]
@@ -3872,7 +3877,7 @@
     },
     {
       "path": "src/components/ui/ModernAuthCard.tsx",
-      "sha256": "48575a6e822bdd4b0189d1f74723005c7c7374c6dd851f12c941ebb01bca4792",
+      "sha256": "1b0b5938277c6bcf2b546108f532a55fa59ed849ff41a42c62e9f412050627d8",
       "importedBy": [
         "src/components/AuthModal.tsx",
         "src/components/Login.tsx"
@@ -4164,7 +4169,7 @@
     },
     {
       "path": "src/context/AuthContext.tsx",
-      "sha256": "f6b57a2d75010bcafc68c59ff6e6386aa2a45c6130cc490c85aa17331cc2b605",
+      "sha256": "7557f41ca8777fb585f1e4c05ce9702d8997da5f7054cf8b26b4bcddd0ac2cd7",
       "importedBy": [
         "src/App.tsx",
         "src/components/AdminDiagnostics.tsx",
@@ -5372,7 +5377,7 @@
     },
     {
       "path": "src/version.ts",
-      "sha256": "da9b7dda97085d48d0a8e5e62ba9a8e4bece8570abd2950eb0aa7ee9af533970",
+      "sha256": "2b4b48dae601e220991a78193fbfac924c8f792e717a13c33cba29ef3fb8aace",
       "importedBy": [
         "src/components/SettingsTab.tsx",
         "src/lib/sentry.ts"
@@ -9697,7 +9702,7 @@
       "source": "server/tests/calendarSync.test.ts",
       "target": "server/services/resultsCalendarService.ts",
       "kind": "dynamic",
-      "line": 26
+      "line": 35
     },
     {
       "source": "server/tests/calendarTelegramDelivery.test.ts",
@@ -11701,13 +11706,13 @@
       "source": "src/App.tsx",
       "target": "src/components/AuthModal.tsx",
       "kind": "dynamic",
-      "line": 973
+      "line": 981
     },
     {
       "source": "src/App.tsx",
       "target": "src/components/Layout.tsx",
       "kind": "dynamic",
-      "line": 974
+      "line": 982
     },
     {
       "source": "src/api.ts",
@@ -16769,6 +16774,7 @@
         "server/tests/deepAuditAuth.test.ts",
         "server/tests/calendarFeedback.test.ts",
         "server/tests/signOutFeedback.test.ts",
+        "server/tests/guestTerminalEntry.test.ts",
         "server/tests/foregroundRefresh.test.ts",
         "server/tests/resultFreshness.test.ts",
         "server/tests/adminQuotaFlow.test.ts",
@@ -21234,25 +21240,31 @@
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 244,
+      "line": 229,
+      "function": "fetch",
+      "target": "BSE_FORTHCOMING_RESULTS_URL"
+    },
+    {
+      "file": "server/services/resultsCalendarService.ts",
+      "line": 301,
       "function": "fetch",
       "target": "url"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 261,
+      "line": 318,
       "function": "fetch",
       "target": "url"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 357,
+      "line": 414,
       "function": "fetch",
       "target": "url"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 499,
+      "line": 557,
       "function": "fetch",
       "target": "url"
     },
@@ -21786,31 +21798,31 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 893,
+      "line": 901,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/App.tsx",
-      "line": 918,
+      "line": 926,
       "function": "customFetch",
       "target": "'/auth/status'"
     },
     {
       "file": "src/App.tsx",
-      "line": 938,
+      "line": 946,
       "function": "customFetch",
       "target": "'/api/settings'"
     },
     {
       "file": "src/App.tsx",
-      "line": 951,
+      "line": 959,
       "function": "customFetch",
       "target": "'/api/logs?limit=400'"
     },
     {
       "file": "src/App.tsx",
-      "line": 995,
+      "line": 1003,
       "function": "customFetch",
       "target": "'/api/toggle'"
     },
@@ -22644,13 +22656,13 @@
     },
     {
       "file": "src/components/ui/ModernAuthCard.tsx",
-      "line": 371,
+      "line": 376,
       "function": "fetch",
       "target": "'/api/security/verify-recaptcha'"
     },
     {
       "file": "src/components/ui/ModernAuthCard.tsx",
-      "line": 444,
+      "line": 449,
       "function": "fetch",
       "target": "'/api/security/verify-recaptcha'"
     },
@@ -22668,73 +22680,73 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 488,
+      "line": 519,
       "function": "customFetch",
       "target": "'/auth/session'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 512,
+      "line": 543,
       "function": "customFetch",
       "target": "'/api/users/profile'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1016,
+      "line": 1063,
       "function": "customFetch",
       "target": "'/auth/verify-pin'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1059,
+      "line": 1106,
       "function": "customFetch",
       "target": "'/auth/session'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1084,
+      "line": 1131,
       "function": "customFetch",
       "target": "'/auth/logout'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1145,
+      "line": 1192,
       "function": "customFetch",
       "target": "`/api/users/check-username?username=${encodeURIComponent(clean)}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1243,
+      "line": 1290,
       "function": "customFetch",
       "target": "'/api/users/profile'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1311,
+      "line": 1358,
       "function": "customFetch",
       "target": "'/api/users/profile'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1387,
+      "line": 1434,
       "function": "customFetch",
       "target": "'/api/users/telegram/settings'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1409,
+      "line": 1456,
       "function": "customFetch",
       "target": "'/api/users/profile'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1466,
+      "line": 1513,
       "function": "customFetch",
       "target": "'/api/users/profile'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1494,
+      "line": 1541,
       "function": "customFetch",
       "target": "'/api/users/profile'"
     },
@@ -23930,31 +23942,31 @@
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 425,
+      "line": 482,
       "function": "Array.from",
       "key": "uniqueStockItems.values()"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 490,
+      "line": 548,
       "function": "Array.from",
       "key": "targets.entries()"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 585,
+      "line": 659,
       "function": "Array.from",
       "key": "uniqueMap.values()"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 623,
+      "line": 697,
       "function": "getSupabase()\n              .from",
       "key": "'results_calendar'"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 1399,
+      "line": 1473,
       "function": "Array.from",
       "key": "quarterOutcomesMap.values()"
     },
@@ -24044,7 +24056,7 @@
     },
     {
       "file": "server/tests/calendarFno.test.ts",
-      "line": 91,
+      "line": 94,
       "function": "storage.setItem",
       "key": "calendarPreferenceKey('rahul')"
     },
@@ -24416,55 +24428,55 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 658,
+      "line": 666,
       "function": "sessionStorage.setItem",
       "key": "'bse_shared_query'"
     },
     {
       "file": "src/App.tsx",
-      "line": 801,
+      "line": 809,
       "function": "localStorage.setItem",
       "key": "'theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 816,
+      "line": 824,
       "function": "localStorage.getItem",
       "key": "'bse_nexus_auth_session'"
     },
     {
       "file": "src/App.tsx",
-      "line": 822,
+      "line": 830,
       "function": "localStorage.getItem",
       "key": "'bse_design_theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 839,
+      "line": 847,
       "function": "localStorage.setItem",
       "key": "'bse_design_theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 840,
+      "line": 848,
       "function": "localStorage.setItem",
       "key": "`bse_design_theme_${user.uid}`"
     },
     {
       "file": "src/App.tsx",
-      "line": 872,
+      "line": 880,
       "function": "localStorage.getItem",
       "key": "user?.uid ? `bse_design_theme_${user.uid}` : 'bse_design_theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 881,
+      "line": 889,
       "function": "localStorage.setItem",
       "key": "user?.uid ? `bse_design_theme_${user.uid}` : 'bse_design_theme'"
     },
     {
       "file": "src/App.tsx",
-      "line": 901,
+      "line": 909,
       "function": "localStorage.setItem",
       "key": "'bse_nexus_watchlist_cache'"
     },
@@ -24842,7 +24854,7 @@
     },
     {
       "file": "src/components/ui/ModernAuthCard.tsx",
-      "line": 271,
+      "line": 272,
       "function": "sessionStorage.setItem",
       "key": "'bse_guest_active_session'"
     },
@@ -25004,127 +25016,139 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 476,
+      "line": 507,
       "function": "localStorage.setItem",
       "key": "'bse_nexus_fb_id_token'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 478,
+      "line": 509,
       "function": "localStorage.removeItem",
       "key": "'bse_nexus_fb_id_token'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 532,
+      "line": 563,
       "function": "localStorage.setItem",
       "key": "`bse_user_handle_${uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 594,
+      "line": 625,
       "function": "localStorage.getItem",
       "key": "STORAGE_SESSION_KEY"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 700,
+      "line": 731,
       "function": "sessionStorage.getItem",
       "key": "'bse_guest_active_session'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 825,
+      "line": 751,
+      "function": "sessionStorage.getItem",
+      "key": "'bse_guest_active_session'"
+    },
+    {
+      "file": "src/context/AuthContext.tsx",
+      "line": 766,
+      "function": "sessionStorage.getItem",
+      "key": "'bse_guest_active_session'"
+    },
+    {
+      "file": "src/context/AuthContext.tsx",
+      "line": 869,
       "function": "sessionStorage.setItem",
       "key": "'bse_guest_active_session'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1055,
+      "line": 1102,
       "function": "localStorage.getItem",
       "key": "'bse_nexus_fb_id_token'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1088,
+      "line": 1135,
       "function": "localStorage.removeItem",
       "key": "STORAGE_SESSION_KEY"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1089,
+      "line": 1136,
       "function": "localStorage.removeItem",
       "key": "'bse_nexus_auth_token'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1090,
+      "line": 1137,
       "function": "localStorage.removeItem",
       "key": "'bse_nexus_fb_id_token'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1091,
+      "line": 1138,
       "function": "localStorage.removeItem",
       "key": "'bse_user_tg_chat_id_global'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1092,
+      "line": 1139,
       "function": "localStorage.removeItem",
       "key": "'bse_user_tg_username_global'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1093,
+      "line": 1140,
       "function": "localStorage.removeItem",
       "key": "'bse_telegram_chat_id'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1094,
+      "line": 1141,
       "function": "localStorage.removeItem",
       "key": "'bse_chat_id'"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1099,
+      "line": 1146,
       "function": "localStorage.removeItem",
       "key": "k"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1236,
+      "line": 1283,
       "function": "localStorage.setItem",
       "key": "`bse_user_handle_${user.uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1374,
+      "line": 1421,
       "function": "localStorage.setItem",
       "key": "`bse_user_tg_chat_id_${profile.uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1376,
+      "line": 1423,
       "function": "localStorage.removeItem",
       "key": "`bse_user_tg_chat_id_${profile.uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1379,
+      "line": 1426,
       "function": "localStorage.setItem",
       "key": "`bse_user_tg_username_${profile.uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1381,
+      "line": 1428,
       "function": "localStorage.removeItem",
       "key": "`bse_user_tg_username_${profile.uid}`"
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1462,
+      "line": 1509,
       "function": "localStorage.setItem",
       "key": "`bse_trial_used_${trialUid}`"
     },
@@ -27799,12 +27823,12 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 808,
+      "line": 816,
       "name": "DEV"
     },
     {
       "file": "src/App.tsx",
-      "line": 815,
+      "line": 823,
       "name": "DEV"
     },
     {
@@ -27860,7 +27884,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 659,
+      "line": 667,
       "target": "window",
       "kind": "dispatch",
       "name": "bse-share-target",
@@ -27868,7 +27892,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 668,
+      "line": 676,
       "target": "window",
       "kind": "listen",
       "name": "popstate",
@@ -27876,7 +27900,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 669,
+      "line": 677,
       "target": "window",
       "kind": "remove",
       "name": "popstate",
@@ -27884,7 +27908,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 783,
+      "line": 791,
       "target": "window",
       "kind": "listen",
       "name": "popstate",
@@ -27892,7 +27916,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 785,
+      "line": 793,
       "target": "window",
       "kind": "remove",
       "name": "popstate",
@@ -27900,7 +27924,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 912,
+      "line": 920,
       "target": "window",
       "kind": "listen",
       "name": "watchlists-changed",
@@ -27908,7 +27932,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 913,
+      "line": 921,
       "target": "window",
       "kind": "remove",
       "name": "watchlists-changed",
@@ -27916,7 +27940,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 932,
+      "line": 940,
       "target": "window",
       "kind": "listen",
       "name": "auth-expired",
@@ -27924,7 +27948,7 @@
     },
     {
       "file": "src/App.tsx",
-      "line": 933,
+      "line": 941,
       "target": "window",
       "kind": "remove",
       "name": "auth-expired",
@@ -29364,7 +29388,7 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 734,
+      "line": 778,
       "target": "window",
       "kind": "listen",
       "name": "auth-expired",
@@ -29372,7 +29396,7 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 735,
+      "line": 779,
       "target": "window",
       "kind": "listen",
       "name": "focus",
@@ -29380,7 +29404,7 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 736,
+      "line": 780,
       "target": "document",
       "kind": "listen",
       "name": "visibilitychange",
@@ -29388,7 +29412,7 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 740,
+      "line": 784,
       "target": "window",
       "kind": "remove",
       "name": "auth-expired",
@@ -29396,7 +29420,7 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 741,
+      "line": 785,
       "target": "window",
       "kind": "remove",
       "name": "focus",
@@ -29404,7 +29428,7 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 742,
+      "line": 786,
       "target": "document",
       "kind": "remove",
       "name": "visibilitychange",
@@ -29412,7 +29436,7 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1499,
+      "line": 1546,
       "target": "window",
       "kind": "dispatch",
       "name": "notes-changed",
@@ -29420,7 +29444,7 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1502,
+      "line": 1549,
       "target": "window",
       "kind": "listen",
       "name": "focus",
@@ -29428,7 +29452,7 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1502,
+      "line": 1549,
       "target": "document",
       "kind": "listen",
       "name": "visibilitychange",
@@ -29436,7 +29460,7 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1503,
+      "line": 1550,
       "target": "window",
       "kind": "remove",
       "name": "focus",
@@ -29444,7 +29468,7 @@
     },
     {
       "file": "src/context/AuthContext.tsx",
-      "line": 1503,
+      "line": 1550,
       "target": "document",
       "kind": "remove",
       "name": "visibilitychange",

@@ -520,6 +520,14 @@ function AppContent() {
       openCheckout(planId);
     }
   }, [user]);
+  useEffect(() => {
+    if (user && pendingTerminalTabRef.current) {
+      const t = pendingTerminalTabRef.current;
+      pendingTerminalTabRef.current = null;
+      setIsAuthModalOpen(false);
+      handleTabChange(t);
+    }
+  }, [user]);
   const prevAuthModalOpenRef = useRef(false);
   useEffect(() => {
     // If the modal was closed without a successful login, drop the pending intent
@@ -1166,7 +1174,7 @@ function AppContent() {
               // No silent entry for logged-out visitors: open the auth modal so they
               // explicitly choose Sign in / Create account / Continue as Guest.
               if (!user) {
-                pendingTerminalTabRef.current = tab || 'home';
+                pendingTerminalTabRef.current = tab || 'dashboard';
                 setIsAuthModalOpen(true);
                 return;
               }
@@ -1215,7 +1223,7 @@ function AppContent() {
               // No silent entry for logged-out visitors: open the auth modal so they
               // explicitly choose Sign in / Create account / Continue as Guest.
               if (!user) {
-                pendingTerminalTabRef.current = tab || 'home';
+                pendingTerminalTabRef.current = tab || 'dashboard';
                 setIsAuthModalOpen(true);
                 return;
               }

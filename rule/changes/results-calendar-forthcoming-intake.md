@@ -1,0 +1,19 @@
+# Results calendar forthcoming BSE intake
+
+- Date: 2026-11-20.
+- Request: Fix `/results-calendar` Upcoming tab showing only 1–2 F&O entries (e.g., Siemens Energy 25 Nov) while 21–28 Nov 2026 has 26+ BSE-listed quarterly results board meetings (such as Bombay Coated 23 Nov, Setco Automotive 24 Nov, Ajwa Projects 25 Nov, GB Logistics 26 Nov). Keep Archive newest-first sort, List View, and layout/design unchanged.
+- Root cause: `server/services/resultsCalendarService.ts::performCalendarSync` only queried BSE per-scrip `BoardMeeting/w?scripcode=` for the 211 F&O stocks plus active watchlist stocks. Once Q2 FY27 F&O results concluded around 14 Nov 2026, upcoming non-F&O Regulation 29 results meetings were never ingested. Additionally, `server/services/calendarUniverse.ts::selectCalendarScope` excluded non-F&O public market-wide items from `scope === 'all'`.
+- Impact analysis: Ran `npm run map:impact -- server/services/resultsCalendarService.ts server/services/calendarUniverse.ts` before editing. Reviewed REST routes (`/api/results-calendar`, `/api/results-calendar/refresh`), public SSR renderer (`server/services/publicCalendar.ts`), AI calendar reader (`server/ai/calendarRead.ts`), `ResultsCalendar.tsx`, Supabase persistence (`results_calendar`), and Telegram auto-delivery (`automaticCalendarMeetings`).
+- Implementation:
+  - Added `fetchBseForthcomingResults` in `server/services/resultsCalendarService.ts` calling BSE's official market-wide `Corpforthresults/w` endpoint (validating 6-digit scrip codes and IST midnight meeting dates, tagging entries `marketUniverse: true`) and merging them in `performCalendarSync` alongside F&O and watchlist targets.
+  - Bumped `CALENDAR_SYNC_VERSION` (`${FNO_CALENDAR_VERSION}:forthcoming-v1`) so existing caches immediately sync forthcoming entries without altering the exported `FNO_CALENDAR_VERSION` SHA256.
+  - Updated `server/services/calendarUniverse.ts::selectCalendarScope` so `scope === 'all'` admits `item.marketUniverse === true` alongside own watchlist and F&O stocks, and `mergeCalendarMeetings` preserves `marketUniverse: true` on deduplicated overlaps.
+  - Preserved strict isolation: `scope === 'fno'` remains F&O-only, `scope === 'watchlist'` remains own-watchlist-only, private watchlist stocks of other users stay excluded from `all`, archive dates (`< todayStartTs`) stay retained on rolling refreshes, and `automaticCalendarMeetings` still sends only for active watchlist stocks.
+  - Note on NSE-SME-only companies (e.g., Mono Pharmacare, Kore Digital, Sabar Flex, Anya Polytech, RBM Infracon): NSE's `event-calendar` endpoint returns Akamai HTTP 403 from this host; BSE's official `Corpforthresults/w` endpoint provides all BSE-listed upcoming results meetings (26 companies across 21–26 Nov 2026 as of 20 Nov 2026).
+- Consumer dispositions:
+  - Changed: `server/services/resultsCalendarService.ts`, `server/services/calendarUniverse.ts`, `server/tests/calendarSync.test.ts`, `server/tests/calendarFno.test.ts`.
+  - Reviewed-and-compatible: `src/components/ResultsCalendar.tsx` (unchanged design/layout, Archive newest-first sort, List View), `server/api/routes.ts`, `server/services/publicCalendar.ts`, `server/ai/calendarRead.ts`, `server/database/calendarHistoryDao.ts`.
+- Verification:
+  - Calendar unit/integration/render test suite (56/56 passed): `calendarFno`, `calendarSync`, `calendarScope`, `calendarRecovery`, `calendarRender`, `publicCalendarCoverage`, `calendarAudit`, `calendarDiscovery`, `calendarAlertTiming`, `calendarBroadcast`, `calendarOutcomeRead`.
+  - Spider map regeneration/check/tests, applet lint & build, and live dev server verification on `/api/results-calendar?filter=all&scope=all`.
+- Rollback: Revert `server/services/resultsCalendarService.ts` and `server/services/calendarUniverse.ts` (no database migration or schema change).

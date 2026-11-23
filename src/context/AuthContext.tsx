@@ -459,6 +459,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         uid.startsWith('trader_')
       );
 
+      if (isGuestUser) {
+        // Guest sessions are local-only by design (no server profile or token
+        // exchange). Never let a stale guest sync overwrite a real signed-in user.
+        if (auth?.currentUser && auth.currentUser.uid !== uid) return null;
+        const now = Date.now();
+        const resolvedUsername = savedLocalUsername || emailPrefix;
+        const guestProfile: UserProfile = {
+          uid,
+          email: firebaseUser.email || null,
+          displayName: firebaseUser.displayName || 'Trader',
+          username: resolvedUsername,
+          photoURL: firebaseUser.photoURL || null,
+          tier: 'free',
+          proExpiresAt: 0,
+          telegramChatId: null,
+          telegramUsername: null,
+          notificationPreferences: defaultNotificationPreferences,
+          createdAt: now,
+          lastLoginAt: now,
+          maxWatchlistStocks: 5
+        };
+        clearAdminStatus();
+        finishElevation(false);
+        setProfileUnavailable(false);
+        setUser(firebaseUser);
+        setProfile(guestProfile);
+        saveLocalSession(firebaseUser, guestProfile);
+        dispatchAuthChanged(uid, firebaseUser, guestProfile);
+        return guestProfile;
+      }
+
       const syncEpoch = sessionEpoch.current;
       const current = () => auth.currentUser?.uid === uid && sessionEpoch.current === syncEpoch;
 
@@ -712,7 +743,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             await syncUserProfile(currentUser);
           }
         } else {
-          clearUnverifiedSession(false);
+          const currentLocalGuest = avatarStateRef.current.user;
+          const keepLocalGuest = Boolean(
+            currentLocalGuest?.isAnonymous &&
+            String(currentLocalGuest.uid || '').startsWith('trader_') &&
+            typeof window !== 'undefined' &&
+            sessionStorage.getItem('bse_guest_active_session') === 'true'
+          );
+          if (!keepLocalGuest) clearUnverifiedSession(false);
         }
         if (active) { setLoading(false); setAuthLoading(false); }
       });
@@ -721,7 +759,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false); setAuthLoading(false);
     }
     const expired = () => {
-      if (!auth.currentUser) {
+      const isActiveLocalGuest = Boolean(
+        avatarStateRef.current.user?.isAnonymous &&
+        String(avatarStateRef.current.user?.uid || '').startsWith('trader_') &&
+        typeof window !== 'undefined' &&
+        sessionStorage.getItem('bse_guest_active_session') === 'true'
+      );
+      if (!auth.currentUser && !isActiveLocalGuest) {
         clearUnverifiedSession(true);
       } else {
         clearAdminStatus();
@@ -864,7 +908,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         if (firebaseUser) {
-          await syncUserProfile(firebaseUser);
+          const synced = await syncUserProfile(firebaseUser);
+          if (!synced) {
+            return { success: false, error: 'Could not initialize guest session.' };
+          }
           setIsAuthModalOpen(false);
           return { success: true };
         }
