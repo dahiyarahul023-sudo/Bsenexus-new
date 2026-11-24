@@ -5,6 +5,15 @@ import { isBseFiling } from '../../src/shared/filingSource.js';
 import { isVerifiedResultFiling } from '../../src/shared/resultFiling.js';
 const pending = new Map<string, Promise<any[]>>();
 
+// Egress round 2 (Nov 2026): snapshot rebuilds previously re-downloaded the
+// full outcome evidence on every rebuild. Filed results are immutable, so a
+// verified outcome set stays valid; 15 min bounds how late a just-filed
+// result can appear in the calendar. Failures are never cached (the loader
+// throws before anything is stored). Kept inline — this module is loaded
+// standalone by its contract tests, so it must not gain new imports.
+const OUTCOME_CACHE_TTL_MS = 15 * 60 * 1000;
+const completed = new Map<string, { value: any[]; expiresAt: number }>();
+
 const PAGE_TIMEOUT_MS = 12_000;
 const PAGE_ATTEMPTS = 3;
 
@@ -34,6 +43,15 @@ export async function readCalendarOutcomes(codes: string[], since: number): Prom
   const exact = [...new Set(codes.map(String).filter(code => /^\d{6}$/.test(code)))].sort();
   if (!exact.length || !Number.isFinite(since) || !isSupabaseConfigured()) return [];
   const key = `${since}:${exact.join(',')}`;
+  const hit = completed.get(key);
+  if (hit && hit.expiresAt > Date.now()) return hit.value;
+  const value = await loadCalendarOutcomes(exact, since, key);
+  if (completed.size >= 8) completed.delete(completed.keys().next().value!);
+  completed.set(key, { value, expiresAt: Date.now() + OUTCOME_CACHE_TTL_MS });
+  return value;
+}
+
+async function loadCalendarOutcomes(exact: string[], since: number, key: string): Promise<any[]> {
   if (pending.has(key)) return pending.get(key)!;
   const work = (async () => {
     const results: any[] = [];
