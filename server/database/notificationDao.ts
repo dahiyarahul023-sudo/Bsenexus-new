@@ -46,7 +46,11 @@ function scheduleSave() {
 const NOTIFICATIONS_TABLE = 'notifications';
 const MAX_CACHED = 500;
 // Short, same-owner coalescing for inbox + badge; hits never renew freshness.
-const inboxReads = new ReadCache<AppNotification[]>({ maxEntries: 50, ttlMs: () => 2000 });
+const inboxReads = new ReadCache<AppNotification[]>({ maxEntries: 50, ttlMs: () => 60 * 1000 });
+// Egress round 2 (Nov 2026): cloud inbox fetches cap at the newest 250 rows.
+// The client displays at most 100; 500-row pulls on a 2s cache were a top
+// egress source. Same-instance writes still invalidate via invalidateInbox.
+const INBOX_CLOUD_FETCH_LIMIT = 250;
 function invalidateInbox(owner: string) {
   if (owner === 'system' || owner === 'all') inboxReads.clear();
   else inboxReads.invalidate(owner);
@@ -157,7 +161,7 @@ async function loadInbox(userId: string): Promise<AppNotification[]> {
       if (state.error) throw state.error;
       const cutoff = Number(state.data?.cleared_before ?? 0);
       if (!Number.isSafeInteger(cutoff) || cutoff < 0) throw new Error('Invalid inbox clear state');
-      const {data,error}=await getSupabase().from(NOTIFICATIONS_TABLE).select('*').in('user_id',[userId,'system','all']).gt('timestamp',cutoff).order('timestamp',{ascending:false}).limit(MAX_CACHED);
+      const {data,error}=await getSupabase().from(NOTIFICATIONS_TABLE).select('*').in('user_id',[userId,'system','all']).gt('timestamp',cutoff).order('timestamp',{ascending:false}).limit(INBOX_CLOUD_FETCH_LIMIT);
       if(error)throw error;
       if(!data?.length)return {items:[],readIds:[]};
       const readIds = await readNotificationReceiptIds(data.map(row=>row.id), async ids => {

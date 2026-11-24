@@ -57,14 +57,17 @@ function fromRow(r: any): UserProfile {
 }
 
 const USERS_FILE = 'users.json';
-const USER_CACHE_TTL_MS = 2500; // Fast cache invalidation for fresh Firestore reads
+const USER_CACHE_TTL_MS = 20 * 1000; // Egress round 2 (Nov 2026): 2.5s -> 20s; own-instance writes still invalidate instantly
 // Quota-bachao (1 Oct): the ALL-users list is consumed only by background
 // scans (monitor cycle, news worker). A full `users` collection scan on every
 // poll cycle burned thousands of reads/day for data that changes rarely — and
 // every profile save already nulls this cache (saveUserProfile /
 // invalidateUserProfileCache), so OFF/payment/preference changes still punch
 // through instantly. Per-UID profile reads keep the short TTL above.
-const ALL_USERS_LIST_CACHE_TTL_MS = 5 * 60 * 1000;
+// Egress round 2 (Nov 2026): 5 min -> 30 min. This list is a full-table
+// `select('*')` and the second-largest Supabase egress source; background
+// consumers tolerate 30-min staleness, per-request reads are unaffected.
+const ALL_USERS_LIST_CACHE_TTL_MS = 30 * 60 * 1000;
 export const ADMIN_EMAIL = 'dahiyarahul023@gmail.com';
 export const ADMIN_EMAILS = new Set(['dahiyarahul023@gmail.com', 'rahrohdah@gmail.com']);
 

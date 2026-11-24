@@ -61,7 +61,7 @@ function sanitizeSettings(raw: Partial<AppSettings> | null | undefined): AppSett
 
 let cachedSettings: AppSettings | null = null;
 let lastSettingsFetchTime = 0;
-const SETTINGS_CACHE_TTL_MS = 15000; // 15 seconds TTL for multi-instance sync
+const SETTINGS_CACHE_TTL_MS = 60000; // 60 seconds TTL for multi-instance sync (egress round 2, Nov 2026: was 15s)
 
 async function readCloudSettings(): Promise<Partial<AppSettings> | null> {
   const sb = getSupabase();
