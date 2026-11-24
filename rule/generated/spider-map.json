@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "04e5f9d1efdc7dd5d8aae5e03edaa045d0c1ffd36bff7955cae2a86b858c52e9",
+  "sourceDigest": "0a3cf0194a903f4d87af14c76a9d9b11b6966a70078df6d9c904b5c292ff14e3",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -36,6 +36,11 @@
     {
       "path": "metadata.json",
       "sha256": "ac2598b6aaa999a40b1a001a27752a4f684c896ccf7494ed934af6742c1e6303",
+      "importedBy": []
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "00d8e2fa9446d65cf7a43c9b979872f5d79e9707f30b297263988a6632c183e0",
       "importedBy": []
     },
     {
@@ -741,7 +746,7 @@
     },
     {
       "path": "server/database/notificationDao.ts",
-      "sha256": "d583ae1494124980d8ad23cdddf7529cdbf2c6152f75bdc8fd7bb5417f3bba9e",
+      "sha256": "f107a641c6305c4c05b600a6c467efa9a04e00cb8594b3d23a30d8c9f7e8973a",
       "importedBy": [
         "server/ai/tools.ts",
         "server/api/routes.ts",
@@ -839,7 +844,7 @@
     },
     {
       "path": "server/database/settingsDao.ts",
-      "sha256": "0e0b01415aa863c703d9833e27dc678e5fc625a8a1cecf070b9d496a5f213d52",
+      "sha256": "6b1b17f089ee859d622f305d57f68feb490b21bf93df1db7f236140796724f90",
       "importedBy": [
         "server/api/routes.ts",
         "server/api/telegramLinks.ts",
@@ -932,7 +937,7 @@
     },
     {
       "path": "server/database/usersDao.ts",
-      "sha256": "ef5210a90c64b4d0648cd2e59dae3aa2f7ad5a33911e1e24be7146fec6a2b393",
+      "sha256": "39d385bacf730a462fb06e368f2fe73249117768013ed73ca119db4c55ce6bb2",
       "importedBy": [
         "server/ai/tools.ts",
         "server/api/payments.ts",
@@ -1202,7 +1207,7 @@
     },
     {
       "path": "server/services/calendarOutcomeRead.ts",
-      "sha256": "131493cf93e80f8d72dcb75bb6108878ef0eeb79ed7d350bbe21f218a6c89647",
+      "sha256": "81a0ffdbee4f000568c61393788178fdb80eddee403865352fe280dedd021d01",
       "importedBy": [
         "server/services/resultsCalendarService.ts"
       ]
@@ -5377,7 +5382,7 @@
     },
     {
       "path": "src/version.ts",
-      "sha256": "2b4b48dae601e220991a78193fbfac924c8f792e717a13c33cba29ef3fb8aace",
+      "sha256": "ada3da2cbf8961f3daa19061f100ce41ac31c98c0b128cb2af06d2ad9d8df91a",
       "importedBy": [
         "src/components/SettingsTab.tsx",
         "src/lib/sentry.ts"
@@ -23492,49 +23497,49 @@
     },
     {
       "file": "server/database/notificationDao.ts",
-      "line": 101,
+      "line": 105,
       "function": "getSupabase().from",
       "key": "NOTIFICATIONS_TABLE"
     },
     {
       "file": "server/database/notificationDao.ts",
-      "line": 113,
+      "line": 117,
       "function": "getSupabase()\n      .from",
       "key": "NOTIFICATIONS_TABLE"
     },
     {
       "file": "server/database/notificationDao.ts",
-      "line": 156,
+      "line": 160,
       "function": "getSupabase().from",
       "key": "'user_notification_inbox_state'"
     },
     {
       "file": "server/database/notificationDao.ts",
-      "line": 160,
+      "line": 164,
       "function": "getSupabase().from",
       "key": "NOTIFICATIONS_TABLE"
     },
     {
       "file": "server/database/notificationDao.ts",
-      "line": 164,
+      "line": 168,
       "function": "getSupabase().from",
       "key": "'user_notification_receipts'"
     },
     {
       "file": "server/database/notificationDao.ts",
-      "line": 248,
+      "line": 252,
       "function": "getSupabase().from",
       "key": "'user_notification_receipts'"
     },
     {
       "file": "server/database/notificationDao.ts",
-      "line": 277,
+      "line": 281,
       "function": "getSupabase().rpc",
       "key": "'clear_user_notification_inbox'"
     },
     {
       "file": "server/database/notificationDao.ts",
-      "line": 294,
+      "line": 298,
       "function": "getSupabase().from",
       "key": "NOTIFICATIONS_TABLE"
     },
@@ -23744,49 +23749,49 @@
     },
     {
       "file": "server/database/usersDao.ts",
-      "line": 134,
+      "line": 137,
       "function": "getSupabase()\n      .from",
       "key": "USERS_TABLE"
     },
     {
       "file": "server/database/usersDao.ts",
-      "line": 189,
+      "line": 192,
       "function": "getSupabase().from",
       "key": "USERS_TABLE"
     },
     {
       "file": "server/database/usersDao.ts",
-      "line": 383,
+      "line": 386,
       "function": "getSupabase()\n          .from",
       "key": "USERS_TABLE"
     },
     {
       "file": "server/database/usersDao.ts",
-      "line": 413,
+      "line": 416,
       "function": "getSupabase()\n        .from",
       "key": "USERS_TABLE"
     },
     {
       "file": "server/database/usersDao.ts",
-      "line": 486,
+      "line": 489,
       "function": "getSupabase()\n          .from",
       "key": "USERS_TABLE"
     },
     {
       "file": "server/database/usersDao.ts",
-      "line": 523,
+      "line": 526,
       "function": "getSupabase()\n          .from",
       "key": "USERS_TABLE"
     },
     {
       "file": "server/database/usersDao.ts",
-      "line": 565,
+      "line": 568,
       "function": "getSupabase().rpc",
       "key": "'claim_free_summary_demo'"
     },
     {
       "file": "server/database/usersDao.ts",
-      "line": 620,
+      "line": 623,
       "function": "getSupabase().rpc",
       "key": "'claim_trial_atomic'"
     },
@@ -23888,7 +23893,7 @@
     },
     {
       "file": "server/services/calendarOutcomeRead.ts",
-      "line": 22,
+      "line": 31,
       "function": "getSupabase().from",
       "key": "'announcements'"
     },
@@ -26148,12 +26153,12 @@
     },
     {
       "file": "server/database/usersDao.ts",
-      "line": 455,
+      "line": 458,
       "name": "NODE_ENV"
     },
     {
       "file": "server/database/usersDao.ts",
-      "line": 555,
+      "line": 558,
       "name": "NODE_ENV"
     },
     {
