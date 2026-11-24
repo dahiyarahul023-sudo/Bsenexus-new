@@ -1,0 +1,39 @@
+# Change: Supabase egress round 2 — cache the three uncached heavy readers
+
+- Starting commit: 37221ff
+- User objective and acceptance cases: Supabase org egress 11.5 GB vs 5.5 GB free-plan limit (Supabase mail 23 Nov 2026); grace reduced, projects restricted after 26 Nov 2026. User refused the Pro upgrade — run-rate must fall below the free cap. Acceptance: the three heaviest uncached/repeated Supabase read paths gain bounded caches or longer TTLs; the 12s feed poll and server feed cache are NOT touched; tsc + build + tests pass.
+- Verified facts (file + symbol):
+  - `readCalendarOutcomes` (server/services/calendarOutcomeRead.ts) had NO result cache — in-flight dedupe only; every `getResultsCalendarSnapshot` rebuild (45s enriched cache, server/services/resultsCalendarService.ts:799) re-downloaded full `data` jsonb of RESULTS filings for all scrips with meetings in the last 31 days. `since` is derived from meeting timestamps (resultsCalendarService.ts:820), so the read key is stable across rebuilds.
+  - `getAllUserProfiles` (server/database/usersDao.ts:189) does `select('*')` on the whole users table behind a 5-min shared cache, consumed by background workers only; every profile save nulls the cache (comment at usersDao.ts:60-67). The function also writes the local users.json fallback and seeds the per-UID cache from full rows — therefore column projection was REJECTED (would persist partial profiles); TTL raise only.
+  - `loadInbox` (server/database/notificationDao.ts:160) fetched up to MAX_CACHED=500 `select('*')` rows per read behind a 2s ReadCache TTL; writes already invalidate via `invalidateInbox`. Client display limit is 100; unread count reads the same in-memory list.
+  - PR #54 (merge 7bec7c4) fixed only watchlistDao global readers and `getAnnouncementById` caching; none of the above paths.
+  - `getAnnouncementsForScrip` callers (companyIntelService.ts:162,355; resultsCalendarService.ts:1241) pass `Number.MAX_SAFE_INTEGER` explicitly — the per-scrip history cap from the analysis was REJECTED for this round (would break full-history contracts).
+- Assumptions/unknowns: per-table billed bytes are not measurable from here (Supabase API key returns 401); savings are arithmetic estimates from EGRESS_ANALYSIS.md. The user should confirm on the org usage dashboard that no OTHER project in the org burns the same quota.
+- Changed source of truth: none — cache TTLs/coverage only, no data contract changes.
+- Impact command and affected semantic domains: `npm run map:impact` on the four edited files (run below, results recorded after run).
+- Related consumers: API (results calendar, inbox, background monitor/news/AI-quota workers), storage/RPC (Supabase reads only), jobs (monitor cycle), caches (ReadCache, in-process TTL caches).
+- For each relevant consumer: changed / reviewed-and-compatible / blocked:
+  - Results calendar outcome evidence: changed (15-min result cache) — outcomes are immutable once filed; a just-filed result can appear ≤15 min late in the calendar.
+  - Background users-list consumers (monitor, stock news, AI quota, ADR): changed (TTL 5→30 min) — same-instance profile saves still invalidate instantly; per-UID request reads unaffected except their own TTL 2.5s→20s.
+  - Notification inbox: changed (TTL 2s→60s; cloud fetch cap 500→250 rows) — same-instance writes invalidate immediately; unread count now computed over the newest 250 rows instead of 500 (edge: a user with >250 inbox rows and unread items older than the newest 250 would undercount until read).
+  - Settings reads: changed (TTL 15s→60s) — settings writes update the local cache first.
+  - Live feed (/api/announcements, 12s poll, server cache): reviewed-and-compatible — served from memory, untouched.
+- Assignment scope: backend only; no visual or API-shape change.
+- Expected user-visible effect: none, except bounded staleness above (calendar outcome ≤15 min, inbox cross-instance ≤60 s, background user data ≤30 min).
+- Failure/security/concurrency cases: ReadCache never caches failures (verified in server/utils/readCache.ts); in-flight dedupe preserved in calendarOutcomeRead; no auth/entitlement path uses the background users list for authorization.
+- Implementation and coordinated updates: this record + EGRESS_ANALYSIS.md kept in workspace (analysis file is NOT committed; it lives with the working clone).
+- Commands actually run and results (24 Nov 2026, this clone):
+  - `npm ci` — completed clean (fresh clone of 37221ff).
+  - `npm run map:impact` on the four edited files — ran; consumers reviewed (calendar snapshot, inbox API, background workers, settings readers).
+  - `npx tsc --noEmit` — 0 errors.
+  - Full suite `npm test`: 1034 tests, 1020 pass, 14 fail. A/B proof: the 5 implicated test files (calendarOutcomeRead, resultEarliestTime, resultHistory, deepAuditAuth, seoPrehydration) fail 11 on PRISTINE 37221ff in this offline sandbox (pre-existing environment failures, incl. the recorded deepAuditAuth/seoPrehydration ones) and 11 with this change — identical set. An intermediate version that imported ReadCache into calendarOutcomeRead broke its 3 VM-harness contract tests (the harness loads the module standalone with a fixed dependency map); the cache was therefore implemented inline with no new imports, after which the subset returned to the pristine 11.
+  - Consumer subsets: notification/quota/calendar-telegram files — 41/41 pass. `npm run test:map` — 6/6 pass.
+  - `npm run map:generate` + `map:check` — verified 676 files, map fresh.
+  - `npm run build` — exit 0 (tsc + vite + perf budget + esbuild bundle).
+  - src/version.ts build bump deliberately excluded from this commit: AI Studio's copy is ahead (display 2.6.97) and its own prebuild bumps on republish; pushing the local 2.6.87 would downgrade the displayed version.
+- Required checks unavailable: live Supabase egress measurement (API 401) — post-publish verification is the org usage dashboard trend over the following days.
+- Deployment/migration requirements and rollback: no migration. Deploy = GitHub push → AI Studio sync + Republish (standing flow). Rollback = revert this commit and republish.
+- Remaining risks and next bounded step: if egress still exceeds the cap, round 3 = write-queue merge-from-memory (announcementDao) and dashboard-guided targeting.
+- Graph/domain/documentation refreshed: `npm run map:generate` + `map:check` in this commit.
+
+- Delivery status: committed + pushed to GitHub main by Muse (this change record ships in that commit). Deployment = PENDING the standing AI Studio sync + Republish step; egress reduction is only observable after republish, on the Supabase org usage dashboard over the following days. Local pass is NOT a live verification.
