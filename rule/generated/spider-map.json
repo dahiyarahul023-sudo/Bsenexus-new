@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "0a3cf0194a903f4d87af14c76a9d9b11b6966a70078df6d9c904b5c292ff14e3",
+  "sourceDigest": "0ba7a2adf1c51f7cd9aab52a36e00667f7ad20d36760106d3e89de27fa39af53",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -570,7 +570,7 @@
     },
     {
       "path": "server/database/alertRulesDao.ts",
-      "sha256": "8007dcf657edc016053e3123daa03a1ae91380461a41a58e7a5ca8d6ad6b5a60",
+      "sha256": "e6ade3f6cf0a8b3a3a95ea4d5cfc9a5bdce808d6beb5d68fdfee5875c6630395",
       "importedBy": [
         "server/api/routes.ts",
         "server/services/monitor.ts",
@@ -580,7 +580,7 @@
     },
     {
       "path": "server/database/announcementDao.ts",
-      "sha256": "3b09b29df67713a23bf52b68024aaa0e7db42522f7e0eca456c75dfdb334a05a",
+      "sha256": "3224c7fd965881da8cd1ddbfb24ddaaef6d22bbb80a39f7caad09be0b8924a1d",
       "importedBy": [
         "server.ts",
         "server/ai/market.ts",
@@ -746,7 +746,7 @@
     },
     {
       "path": "server/database/notificationDao.ts",
-      "sha256": "f107a641c6305c4c05b600a6c467efa9a04e00cb8594b3d23a30d8c9f7e8973a",
+      "sha256": "8acbe06e5ebae94e9ad907ff6051df5b3cda580f394689a7162c7529ce139f67",
       "importedBy": [
         "server/ai/tools.ts",
         "server/api/routes.ts",
@@ -937,7 +937,7 @@
     },
     {
       "path": "server/database/usersDao.ts",
-      "sha256": "39d385bacf730a462fb06e368f2fe73249117768013ed73ca119db4c55ce6bb2",
+      "sha256": "9136a8f5a715b20c039b70439555577bdba0759f021f0b3b9b609d32111a0ccc",
       "importedBy": [
         "server/ai/tools.ts",
         "server/api/payments.ts",
@@ -1770,7 +1770,7 @@
     },
     {
       "path": "server/tests/alertRulesReliability.test.ts",
-      "sha256": "0ff071de14ae3fb0b54a5a5b3cef139c7cf63b8715b61c4d9de327d10362be5f",
+      "sha256": "9936c7717b45f29255e8eae5667b6bc920a38da80cb97c8ec51f89c4b358aef7",
       "importedBy": []
     },
     {
@@ -1785,7 +1785,7 @@
     },
     {
       "path": "server/tests/announcementEgress.test.ts",
-      "sha256": "1153a3fffcb008c65a87296400d1569a0346d97524b8f5b92e204e1672f8420a",
+      "sha256": "9f84fdae266ef4b72a988ae6660e311181cbc961ee7c646b7800cb43e457ef15",
       "importedBy": []
     },
     {
@@ -2025,7 +2025,7 @@
     },
     {
       "path": "server/tests/followupAudit.test.ts",
-      "sha256": "387af58e79cf1d48dab2c2f978abaf6d5f0ece8648ce642a7b1a3048640ecb13",
+      "sha256": "c87bff0c33b36d9f2b84ddcd983dbf5834736ea78b99013c0d3aeea325f998f9",
       "importedBy": []
     },
     {
@@ -2090,7 +2090,7 @@
     },
     {
       "path": "server/tests/indexNowIngestion.test.ts",
-      "sha256": "7754aefc5ae4c9bae1bea32e790f07fe4b60d5fa6ad8db6f0b8d00dee3a327d0",
+      "sha256": "3312f94a2890e37c4ffa6842d6f4f487b7fa8781bd723a0d71a5d255af808369",
       "importedBy": []
     },
     {
@@ -5382,7 +5382,7 @@
     },
     {
       "path": "src/version.ts",
-      "sha256": "ada3da2cbf8961f3daa19061f100ce41ac31c98c0b128cb2af06d2ad9d8df91a",
+      "sha256": "2b4b48dae601e220991a78193fbfac924c8f792e717a13c33cba29ef3fb8aace",
       "importedBy": [
         "src/components/SettingsTab.tsx",
         "src/lib/sentry.ts"
@@ -6965,7 +6965,7 @@
       "source": "server/database/announcementDao.ts",
       "target": "server/services/storageMonitor.ts",
       "kind": "dynamic",
-      "line": 701
+      "line": 728
     },
     {
       "source": "server/database/calendarHistoryDao.ts",
@@ -10001,67 +10001,67 @@
       "source": "server/tests/followupAudit.test.ts",
       "target": "src/components/story/storyData.ts",
       "kind": "dynamic",
-      "line": 83
+      "line": 86
     },
     {
       "source": "server/tests/followupAudit.test.ts",
       "target": "server/utils/renderCache.ts",
       "kind": "dynamic",
-      "line": 96
+      "line": 99
     },
     {
       "source": "server/tests/followupAudit.test.ts",
       "target": "server/database/announcementDao.ts",
       "kind": "dynamic",
-      "line": 97
+      "line": 100
     },
     {
       "source": "server/tests/followupAudit.test.ts",
       "target": "server/utils/renderCache.ts",
       "kind": "dynamic",
-      "line": 106
+      "line": 109
     },
     {
       "source": "server/tests/followupAudit.test.ts",
       "target": "server/services/marketIndicesService.ts",
       "kind": "dynamic",
-      "line": 129
+      "line": 132
     },
     {
       "source": "server/tests/followupAudit.test.ts",
       "target": "server/database/notificationDao.ts",
       "kind": "dynamic",
-      "line": 141
+      "line": 144
     },
     {
       "source": "server/tests/followupAudit.test.ts",
       "target": "server/database/notificationDao.ts",
       "kind": "dynamic",
-      "line": 157
+      "line": 160
     },
     {
       "source": "server/tests/followupAudit.test.ts",
       "target": "server/database/supabase.ts",
       "kind": "dynamic",
-      "line": 164
+      "line": 167
     },
     {
       "source": "server/tests/followupAudit.test.ts",
       "target": "server/database/notificationDao.ts",
       "kind": "dynamic",
-      "line": 165
+      "line": 168
     },
     {
       "source": "server/tests/followupAudit.test.ts",
       "target": "server/database/watchlistDao.ts",
       "kind": "dynamic",
-      "line": 184
+      "line": 187
     },
     {
       "source": "server/tests/followupAudit.test.ts",
       "target": "server/database/supabase.ts",
       "kind": "dynamic",
-      "line": 185
+      "line": 188
     },
     {
       "source": "server/tests/forYouPersonal.test.ts",
@@ -20880,7 +20880,7 @@
     },
     {
       "file": "server/tests/followupAudit.test.ts",
-      "line": 108,
+      "line": 111,
       "receiver": "app",
       "method": "USE",
       "path": "(req,_res,next)=>{(req as any).user={uid:req.headers['x-fixture-uid'] || 'guest'};next();}",
@@ -20888,7 +20888,7 @@
     },
     {
       "file": "server/tests/followupAudit.test.ts",
-      "line": 109,
+      "line": 112,
       "receiver": "app",
       "method": "GET",
       "path": "/feed",
@@ -21671,31 +21671,31 @@
     },
     {
       "file": "server/tests/followupAudit.test.ts",
-      "line": 116,
-      "function": "fetch",
-      "target": "base+'/feed?symbol=A'"
-    },
-    {
-      "file": "server/tests/followupAudit.test.ts",
-      "line": 118,
-      "function": "fetch",
-      "target": "base+'/feed?symbol=B'"
-    },
-    {
-      "file": "server/tests/followupAudit.test.ts",
       "line": 119,
       "function": "fetch",
       "target": "base+'/feed?symbol=A'"
     },
     {
       "file": "server/tests/followupAudit.test.ts",
-      "line": 120,
+      "line": 121,
+      "function": "fetch",
+      "target": "base+'/feed?symbol=B'"
+    },
+    {
+      "file": "server/tests/followupAudit.test.ts",
+      "line": 122,
       "function": "fetch",
       "target": "base+'/feed?symbol=A'"
     },
     {
       "file": "server/tests/followupAudit.test.ts",
-      "line": 122,
+      "line": 123,
+      "function": "fetch",
+      "target": "base+'/feed?symbol=A'"
+    },
+    {
+      "file": "server/tests/followupAudit.test.ts",
+      "line": 125,
       "function": "fetch",
       "target": "base+'/feed?symbol=A'"
     },
@@ -23203,31 +23203,31 @@
     },
     {
       "file": "server/database/alertRulesDao.ts",
-      "line": 129,
+      "line": 155,
       "function": "getSupabase().from",
       "key": "'alert_rules'"
     },
     {
       "file": "server/database/alertRulesDao.ts",
-      "line": 140,
+      "line": 167,
       "function": "getSupabase().from",
       "key": "'alert_rules'"
     },
     {
       "file": "server/database/alertRulesDao.ts",
-      "line": 144,
+      "line": 171,
       "function": "getSupabase().from",
       "key": "'alert_rules'"
     },
     {
       "file": "server/database/alertRulesDao.ts",
-      "line": 147,
+      "line": 174,
       "function": "getSupabase().from",
       "key": "'alert_rules'"
     },
     {
       "file": "server/database/alertRulesDao.ts",
-      "line": 166,
+      "line": 194,
       "function": "getSupabase().from",
       "key": "'alert_rules'"
     },
@@ -23257,37 +23257,37 @@
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 337,
+      "line": 359,
       "function": "getSupabase()\n          .from",
       "key": "ANNOUNCEMENTS_TABLE"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 356,
+      "line": 379,
       "function": "getSupabase()\n          .from",
       "key": "ANNOUNCEMENTS_TABLE"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 511,
+      "line": 538,
       "function": "getSupabase()\n          .from",
       "key": "ANNOUNCEMENTS_TABLE"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 782,
+      "line": 809,
       "function": "getSupabase().from",
       "key": "ANNOUNCEMENTS_TABLE"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 804,
+      "line": 831,
       "function": "Array.from",
       "key": "byId.values()"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 828,
+      "line": 855,
       "function": "getSupabase().from",
       "key": "ANNOUNCEMENTS_TABLE"
     },
@@ -23497,49 +23497,49 @@
     },
     {
       "file": "server/database/notificationDao.ts",
-      "line": 105,
+      "line": 113,
       "function": "getSupabase().from",
       "key": "NOTIFICATIONS_TABLE"
     },
     {
       "file": "server/database/notificationDao.ts",
-      "line": 117,
+      "line": 128,
       "function": "getSupabase()\n      .from",
       "key": "NOTIFICATIONS_TABLE"
     },
     {
       "file": "server/database/notificationDao.ts",
-      "line": 160,
+      "line": 171,
       "function": "getSupabase().from",
       "key": "'user_notification_inbox_state'"
     },
     {
       "file": "server/database/notificationDao.ts",
-      "line": 164,
+      "line": 175,
       "function": "getSupabase().from",
       "key": "NOTIFICATIONS_TABLE"
     },
     {
       "file": "server/database/notificationDao.ts",
-      "line": 168,
+      "line": 179,
       "function": "getSupabase().from",
       "key": "'user_notification_receipts'"
     },
     {
       "file": "server/database/notificationDao.ts",
-      "line": 252,
+      "line": 263,
       "function": "getSupabase().from",
       "key": "'user_notification_receipts'"
     },
     {
       "file": "server/database/notificationDao.ts",
-      "line": 281,
+      "line": 292,
       "function": "getSupabase().rpc",
       "key": "'clear_user_notification_inbox'"
     },
     {
       "file": "server/database/notificationDao.ts",
-      "line": 298,
+      "line": 309,
       "function": "getSupabase().from",
       "key": "NOTIFICATIONS_TABLE"
     },
@@ -26013,12 +26013,12 @@
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 768,
+      "line": 795,
       "name": "NODE_ENV"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 820,
+      "line": 847,
       "name": "NODE_ENV"
     },
     {
@@ -27388,72 +27388,72 @@
     },
     {
       "file": "server/tests/followupAudit.test.ts",
-      "line": 78,
+      "line": 81,
       "name": "SUPABASE_URL"
     },
     {
       "file": "server/tests/followupAudit.test.ts",
-      "line": 78,
+      "line": 81,
       "name": "SUPABASE_SERVICE_ROLE_KEY"
     },
     {
       "file": "server/tests/followupAudit.test.ts",
-      "line": 158,
+      "line": 161,
       "name": "NODE_ENV"
     },
     {
       "file": "server/tests/followupAudit.test.ts",
-      "line": 160,
+      "line": 163,
       "name": "NODE_ENV"
     },
     {
       "file": "server/tests/followupAudit.test.ts",
-      "line": 166,
+      "line": 169,
       "name": "SUPABASE_URL"
     },
     {
       "file": "server/tests/followupAudit.test.ts",
-      "line": 167,
+      "line": 170,
       "name": "SUPABASE_SERVICE_ROLE_KEY"
     },
     {
       "file": "server/tests/followupAudit.test.ts",
-      "line": 179,
+      "line": 182,
       "name": "SUPABASE_URL"
     },
     {
       "file": "server/tests/followupAudit.test.ts",
-      "line": 179,
+      "line": 182,
       "name": "SUPABASE_SERVICE_ROLE_KEY"
     },
     {
       "file": "server/tests/followupAudit.test.ts",
-      "line": 188,
+      "line": 191,
       "name": "SUPABASE_URL"
     },
     {
       "file": "server/tests/followupAudit.test.ts",
-      "line": 189,
+      "line": 192,
       "name": "SUPABASE_SERVICE_ROLE_KEY"
     },
     {
       "file": "server/tests/followupAudit.test.ts",
-      "line": 195,
+      "line": 198,
       "name": "SUPABASE_URL"
     },
     {
       "file": "server/tests/followupAudit.test.ts",
-      "line": 195,
+      "line": 198,
       "name": "SUPABASE_SERVICE_ROLE_KEY"
     },
     {
       "file": "server/tests/followupAudit.test.ts",
-      "line": 197,
+      "line": 200,
       "name": "NODE_ENV"
     },
     {
       "file": "server/tests/followupAudit.test.ts",
-      "line": 199,
+      "line": 202,
       "name": "NODE_ENV"
     },
     {
