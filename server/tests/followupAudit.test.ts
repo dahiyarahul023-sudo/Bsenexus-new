@@ -67,16 +67,19 @@ test('shared notification reads are isolated per user and personal inbox remains
   assert.equal((await n.getAllNotifications('reader-b')).some(x=>x.id==='private-audit'),false);
 });
 
-test('configured cloud notification failure is returned instead of pretending a local notification is durable', async t => {
+test('configured cloud notification failure keeps the local inbox copy instead of aborting the poll-cycle caller', async t => {
   const storage=await import('../database/supabase.js');
   const n=await import('../database/notificationDao.js');
   process.env.SUPABASE_URL='https://audit-fixture.supabase.co';process.env.SUPABASE_SERVICE_ROLE_KEY='synthetic-test-key';
   storage.resetSupabaseClient();
-  t.mock.method(storage.getSupabase(),'from',()=>({upsert:async()=>({error:new Error('synthetic missing table')})}) as any);
+  t.mock.method(storage.getSupabase(),'from',()=>({upsert:()=>({abortSignal:async()=>({error:new Error('synthetic missing table')})})}) as any);
   try {
-    await assert.rejects(n.addNotification({id:'must-not-save',userId:'reader-a',title:'Synthetic failed persistence',message:'Test',type:'GENERAL',priority:'LOW',symbol:'ERR',scripCode:'0'}),(e:any)=>e.code==='PAYMENT_STORE_UNAVAILABLE');
+    // Cache-first contract: the cloud failure is logged, not propagated, and
+    // the notification remains visible from the local cache.
+    const saved=await n.addNotification({id:'cache-first-save',userId:'reader-a',title:'Synthetic failed persistence',message:'Test',type:'GENERAL',priority:'LOW',symbol:'ERR',scripCode:'0'});
+    assert.equal(saved.id,'cache-first-save');
   } finally {delete process.env.SUPABASE_URL;delete process.env.SUPABASE_SERVICE_ROLE_KEY;storage.resetSupabaseClient();}
-  assert.equal((await n.getAllNotifications('reader-a',100,{watchlistOnly:false})).some(x=>x.id==='must-not-save'),false);
+  assert.equal((await n.getAllNotifications('reader-a',100,{watchlistOnly:false})).some(x=>x.id==='cache-first-save'),true);
 });
 
 test('closing story edition starts at 15:30 IST, and trading hours exclude pre-open and the closing boundary', async () => {

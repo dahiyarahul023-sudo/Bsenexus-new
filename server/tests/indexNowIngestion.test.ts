@@ -12,13 +12,13 @@ test('actual filing writer queues one drain of public changes only after storage
   const rows=new Map<string,any>();const notified:{url:string;version:string}[]=[];let release!:()=>void;
   const gate=new Promise<void>(resolve=>{release=resolve});let resolveNotified!:()=>void;const ready=new Promise<void>(resolve=>{resolveNotified=resolve});
   const db={from(){return {
-    select(){return {async in(_:string,ids:string[]){return {data:ids.filter(id=>rows.has(id)).map(id=>({id,data:rows.get(id)})),error:null}}}},
-    async upsert(values:any[]){await gate;values.forEach(row=>rows.set(row.id,row.data));return {error:null}},
+    select(){return {in(_:string,ids:string[]){const run=async()=>({data:ids.filter(id=>rows.has(id)).map(id=>({id,data:rows.get(id)})),error:null});return {abortSignal:()=>run(),then:(res:any,rej:any)=>run().then(res,rej)}}}},
+    upsert(values:any[]){const run=async()=>{await gate;values.forEach(row=>rows.set(row.id,row.data));return {error:null}};return {abortSignal:()=>run(),then:(res:any,rej:any)=>run().then(res,rej)}},
   }}};
   const exports:any={};
-  vm.runInNewContext(source,{exports,console,setTimeout,clearTimeout,Date,URL,process:{env:{NODE_ENV:'test'}},require(spec:string){
+  vm.runInNewContext(source,{exports,console,setTimeout,clearTimeout,Date,URL,AbortSignal,process:{env:{NODE_ENV:'test'}},require(spec:string){
     if(spec.endsWith('/supabase.js'))return {getSupabase:()=>db,isSupabaseConfigured:()=>true};
-    if(spec.endsWith('/localStore.js'))return {readLocalJson:()=>[],writeLocalJson(){},isOfflineOrNetworkError:()=>false};
+    if(spec.endsWith('/localStore.js'))return {readLocalJson:()=>[],writeLocalJson(){},isOfflineOrNetworkError:()=>false,isQuotaError:()=>false};
     if(spec.endsWith('/logDao.js'))return {addLog:async()=>{}};
     if(spec.endsWith('/helpers.js'))return {determinePriority:()=>({level:'LOW',category:'GENERAL'}),parseBseDate:()=>0,isSymbolMatch:()=>false};
     if(spec.endsWith('/renderCache.js'))return {pageRenderCache:{invalidate(){}},apiResponseCache:{invalidate(){}}};

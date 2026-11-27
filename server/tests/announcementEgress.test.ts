@@ -14,13 +14,13 @@ function harness() {
     order(){return this},limit(){return this},gt(){return this},
     async abortSignal(){companyReads++;if(failCompany)return {data:null,error:new Error('offline')};return {data:[...rows].filter(([,value])=>value.scrip_cd===scrip).map(([id,data])=>({id,scrip_cd:scrip,data:structuredClone(data)})),error:null}},
     async maybeSingle(){reads++;return {data:rows.has(id)?{id,data:structuredClone(rows.get(id))}:null,error:null}},
-    async in(_field:string,ids:string[]){if(deleting){ids.forEach(id=>rows.delete(id));return {error:null}}return {data:ids.filter(id=>rows.has(id)).map(id=>({id,data:structuredClone(rows.get(id))})),error:null}},
-    delete(){deleting=true;return this},async upsert(values:any[]){if(hold)await hold;for(const row of values)rows.set(row.id,structuredClone(row.data));return {error:null}}
+    in(_field:string,ids:string[]){const run=async()=>{if(deleting){ids.forEach(id=>rows.delete(id));return {error:null}}return {data:ids.filter(id=>rows.has(id)).map(id=>({id,data:structuredClone(rows.get(id))})),error:null}};return {abortSignal:()=>run(),then:(res:any,rej:any)=>run().then(res,rej)}},
+    delete(){deleting=true;return this},upsert(values:any[]){const run=async()=>{if(hold)await hold;for(const row of values)rows.set(row.id,structuredClone(row.data));return {error:null}};return {abortSignal:()=>run(),then:(res:any,rej:any)=>run().then(res,rej)}}
   }}};
   const deps:any={
     './supabase.js':{getSupabase:()=>db,isSupabaseConfigured:()=>true},
     '../utils/helpers.js':{parseBseDate:()=>0,determinePriority:()=>({level:'LOW',category:'GENERAL'})},
-    './logDao.js':{addLog:async()=>{}},'./localStore.js':{readLocalJson:()=>[],writeLocalJson(){},isOfflineOrNetworkError:()=>false},
+    './logDao.js':{addLog:async()=>{}},'./localStore.js':{readLocalJson:()=>[],writeLocalJson(){},isOfflineOrNetworkError:()=>false,isQuotaError:()=>false},
     '../utils/bloomFilter.js':{BloomFilter:class{add(){}has(){return false}}},
     '../utils/renderCache.js':{pageRenderCache:{invalidate(){}},apiResponseCache:{invalidate(){}}},
     '../services/indexNow.js':{notifySearchEnginesOfNewPages(){}},

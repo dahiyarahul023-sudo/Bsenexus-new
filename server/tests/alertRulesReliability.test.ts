@@ -48,11 +48,20 @@ test('custom create retry/edit does not duplicate, is owner-scoped and refresh s
  assert.equal(await dao.deleteAlertRule(custom.id,'bob'),false);
  assert.equal((await dao.getAllAlertRules('bob')).some(r=>r.id===custom.id),false);
  await dao.initAlertRulesFromCloud();rows.delete(custom.id);
+ // Within the 15-min safety TTL the poll refresh serves the last-known
+ // snapshot (minimum-reads contract); a same-instance write invalidates it
+ // and the next refresh re-reads, seeing the external deletion:
+ assert.equal((await dao.initAlertRulesFromCloud()).some(r=>r.id===custom.id),true);
+ await dao.saveAlertPresets(values,'alice');
  const snapshot=await dao.initAlertRulesFromCloud();assert.equal(snapshot.some(r=>r.id===custom.id),false);
 });
 test('durable failures never claim local success or empty settings',async()=>{
+ await dao.saveAlertPresets(values,'alice'); // same-instance write invalidates the poll cache, forcing a re-read below
  fail=true;
- try {await assert.rejects(()=>dao.saveAlertPresets(values,'alice'),{status:503});await assert.rejects(()=>dao.getAllAlertRules('alice'),{status:503});await assert.rejects(()=>dao.initAlertRulesFromCloud(),{status:503});}
+ try {await assert.rejects(()=>dao.saveAlertPresets(values,'alice'),{status:503});await assert.rejects(()=>dao.getAllAlertRules('alice'),{status:503});
+ // Poll-cycle refresh degrades to the last-known snapshot (never fabricated
+ // empty settings) so a store outage cannot abort the filing cycle:
+ const snapshot=await dao.initAlertRulesFromCloud();assert.equal(snapshot.length,3);assert.equal(snapshot.every(r=>r.userId==='alice'),true);assert.equal(snapshot.some(r=>r.id===custom.id),false);}
  finally{fail=false;}
 });
 test('specific ticker resolves company scrip; unrelated scrip and keywords are rejected',()=>{
