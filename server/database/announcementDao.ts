@@ -2,7 +2,7 @@ import { hasExactScripCode, isBseOperatorFiling, projectFilingIdentity } from '.
 import { getSupabase, isSupabaseConfigured } from './supabase.js';
 import { determinePriority, parseBseDate, isSymbolMatch } from '../utils/helpers.js';
 import { addLog } from './logDao.js';
-import { readLocalJson, writeLocalJson, isOfflineOrNetworkError } from './localStore.js';
+import { readLocalJson, writeLocalJson, isOfflineOrNetworkError, isQuotaError } from './localStore.js';
 import { BloomFilter } from '../utils/bloomFilter.js';
 import { pageRenderCache, apiResponseCache } from '../utils/renderCache.js';
 import { notifySearchEnginesOfNewPages } from '../services/indexNow.js';
@@ -244,6 +244,7 @@ export async function isAnnouncementSent(newsId: string): Promise<boolean> {
       .from(ANNOUNCEMENTS_TABLE)
       .select('data')
       .eq('id', newsId)
+      .abortSignal(AbortSignal.timeout(10000))
       .maybeSingle();
     if (error) throw error;
     if (data) {
@@ -286,8 +287,29 @@ interface WriteTask {
   lastAttemptAt?: number;
 }
 
-const MAX_WRITE_ATTEMPTS = 10;
+const MAX_WRITE_ATTEMPTS = 200;
 const BACKOFF_DELAYS = [1000, 3000, 5000, 10000, 20000, 30000];
+
+// Store-unavailable class errors (quota restriction, rate limit, gateway 5xx,
+// network failure, our own abort timeouts) must NOT consume write attempts:
+// during a multi-day store outage the retry pacing alone would burn any
+// fixed attempt budget and drop queued filings before replay. Genuine poison
+// tasks (validation/constraint 4xx from PostgREST) still count toward
+// MAX_WRITE_ATTEMPTS and are dropped as before.
+function isTransientStoreError(err: any): boolean {
+  if (!err) return false;
+  const name = String(err.name || '');
+  if (name === 'AbortError' || name === 'TimeoutError') return true;
+  if (err instanceof TypeError) return true; // undici fetch network failure
+  if (isOfflineOrNetworkError(err) || isQuotaError(err)) return true;
+  const text = `${err.code ?? ''} ${err.message ?? err}`.toLowerCase();
+  return /(^|\D)(402|408|425|429|500|502|503|504)(\D|$)/.test(text)
+    || text.includes('restricted') || text.includes('quota')
+    || text.includes('rate limit') || text.includes('rate-limit')
+    || text.includes('fetch failed') || text.includes('timed out') || text.includes('timeout')
+    || text.includes('econnreset') || text.includes('econnrefused') || text.includes('enotfound')
+    || text.includes('socket') || text.includes('network');
+}
 const ANNOUNCEMENT_WRITE_BATCH_SIZE = 50;
 
 const supabaseWriteQueue: Map<string, WriteTask> = new Map();
@@ -337,7 +359,8 @@ async function processSupabaseQueue() {
         const { data: existingRows, error: readError } = await getSupabase()
           .from(ANNOUNCEMENTS_TABLE)
           .select('id, data')
-          .in('id', ids);
+          .in('id', ids)
+          .abortSignal(AbortSignal.timeout(15000));
         if (readError) throw readError;
 
         const existingById = new Map<string, any>();
@@ -355,7 +378,8 @@ async function processSupabaseQueue() {
 
         const { error: upsertError } = await getSupabase()
           .from(ANNOUNCEMENTS_TABLE)
-          .upsert(rowsToUpsert, { onConflict: 'id' });
+          .upsert(rowsToUpsert, { onConflict: 'id' })
+          .abortSignal(AbortSignal.timeout(15000));
         if (upsertError) throw upsertError;
         // Discard any read that raced the queued write before it committed.
         for (const row of rowsToUpsert) {
@@ -377,10 +401,13 @@ async function processSupabaseQueue() {
         consecutiveBatchErrors = 0;
         nextBatchRetryTime = 0;
       } catch (err: any) {
-        // Transient error: KEEP the queue, track attempts, and back off exponentially
+        // Transient error: KEEP the queue, track attempts, and back off exponentially.
+        // Store-unavailable errors do not consume attempts (see isTransientStoreError),
+        // so filings queued during an outage survive until replay after recovery.
         consecutiveBatchErrors++;
+        const transientStoreError = isTransientStoreError(err);
         for (const t of tasksToProcess) {
-          t.attempts = (t.attempts || 0) + 1;
+          if (!transientStoreError) t.attempts = (t.attempts || 0) + 1;
           t.lastAttemptAt = Date.now();
         }
 

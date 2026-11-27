@@ -95,17 +95,28 @@ function fromRow(r: any): AppNotification {
   };
 }
 
-// Cloud writes are awaited; a configured store failure is never reported as success.
-// The local JSON file lives on Cloud Run's ephemeral filesystem, so without
-// this the inbox goes empty on every restart/republish.
+// Cloud writes are awaited with a bounded timeout. The local JSON file lives
+// on Cloud Run's ephemeral filesystem, so without the cloud copy the inbox
+// goes empty on every restart/republish; persistNotificationToCloud therefore
+// still attempts the cloud write on every add, but a failure no longer aborts
+// the caller (see the cache-first note there).
 
 async function persistNotificationToCloud(n: AppNotification): Promise<void> {
   if (!needsCloud()) return;
-  await cloud('persist notification', async () => {
-    const { error } = await getSupabase().from(NOTIFICATIONS_TABLE).upsert(toRow(n), { onConflict: 'id' });
-    if (error) throw error;
-  });
-  invalidateInbox(n.userId || 'system');
+  // Cache-first: addNotification runs inside the poll cycle, so a store
+  // outage (or hang) must never propagate and abort the cycle. The
+  // notification stays in the in-memory cache + local JSON; only the cloud
+  // copy is missed until the store recovers. addNotificationOnce keeps the
+  // strict durable contract for private stable-ID events.
+  try {
+    await cloud('persist notification', async () => {
+      const { error } = await getSupabase().from(NOTIFICATIONS_TABLE).upsert(toRow(n), { onConflict: 'id' }).abortSignal(AbortSignal.timeout(10000));
+      if (error) throw error;
+    });
+    invalidateInbox(n.userId || 'system');
+  } catch (err: any) {
+    console.warn('[Notifications] cloud persist failed; keeping local copy:', err?.message || err);
+  }
 }
 
 let notificationsCloudInitDone = false;

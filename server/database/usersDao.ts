@@ -189,7 +189,7 @@ export async function getAllUserProfiles(): Promise<UserProfile[]> {
   }
 
   try {
-    const { data, error } = await getSupabase().from(USERS_TABLE).select('*');
+    const { data, error } = await getSupabase().from(USERS_TABLE).select('*').abortSignal(AbortSignal.timeout(15000));
     if (error) throw error;
     const result: UserProfile[] = [];
     const updatedMap: Record<string, UserProfile> = { ...localUsersMap };

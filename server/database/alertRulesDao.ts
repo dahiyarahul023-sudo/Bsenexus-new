@@ -104,10 +104,36 @@ async function readCloudRules(uid?: string): Promise<AlertRule[]> {
   }
   return all;
 }
+// Poll-cycle rules cache: the monitor refreshes alert rules once per cycle
+// (15s-60s), which used to mean a full alert_rules table read every cycle.
+// Serve the in-memory snapshot and re-read only at boot, after the 15-min
+// safety TTL, or after a same-instance write invalidates it (all writes pass
+// through this DAO, so local edits stay instantly correct; cross-instance
+// edits lag at most one TTL). A store outage (e.g. Supabase quota
+// restriction) degrades to the last-known rules and logs once per episode —
+// it must never abort the cycle before filing-save. Write paths and
+// per-user reads still fail visibly with 503.
+const RULES_CACHE_TTL_MS = 15 * 60 * 1000;
+let rulesCacheLoadedAt = 0;
+let alertRulesCloudFallbackLogged = false;
+function invalidateRulesCache() { rulesCacheLoadedAt = 0; }
 export async function initAlertRulesFromCloud(): Promise<AlertRule[]> {
   if (!durable()) return [...rulesCache];
-  rulesCache = await readCloudRules();
-  return [...rulesCache];
+  if (rulesCacheLoadedAt > 0 && Date.now() - rulesCacheLoadedAt < RULES_CACHE_TTL_MS) {
+    return [...rulesCache];
+  }
+  try {
+    rulesCache = await readCloudRules();
+    rulesCacheLoadedAt = Date.now();
+    alertRulesCloudFallbackLogged = false;
+    return [...rulesCache];
+  } catch (err: any) {
+    if (!alertRulesCloudFallbackLogged) {
+      alertRulesCloudFallbackLogged = true;
+      console.warn('[AlertRules] Cloud refresh failed; serving last-known rules until the store recovers:', err?.message || err);
+    }
+    return [...rulesCache];
+  }
 }
 function requireOwner(uid:string) {if(!uid||uid==='guest'||uid==='system')throw new AlertRuleError(401,'Sign in to manage alerts.');}
 function validate(rule:any):void {
@@ -127,6 +153,7 @@ export async function saveAlertPresets(values:AlertPresets,uid:string):Promise<A
   if(durable()) {
     // One bulk SQL statement: all three presets commit together; stable IDs make retries safe.
     await cloud(()=>getSupabase().from('alert_rules').upsert(rules.map(rule=>({id:rule.id,user_id:uid,rule})),{onConflict:'id'}).select('id').abortSignal(AbortSignal.timeout(10000)));
+    invalidateRulesCache();
   } else { rulesCache=[...rulesCache.filter(r=>!rules.some(n=>n.id===r.id)),...rules];writeLocalJson(ALERT_RULES_FILE,rulesCache); }
   return rules;
 }
@@ -146,6 +173,7 @@ export async function saveAlertRule(input:any,uid='guest'):Promise<AlertRule> {
     } else {
       await cloud(()=>getSupabase().from('alert_rules').insert({id,user_id:uid,rule}).select('id').abortSignal(AbortSignal.timeout(10000)));
     }
+    invalidateRulesCache();
   } else {
     const existing=rulesCache.find(r=>r.id===id);
     if(existing&&existing.userId!==uid)throw new AlertRuleError(404,'Alert rule not found.');
@@ -164,6 +192,7 @@ export async function deleteAlertRule(id:string,uid='guest'):Promise<boolean> {
   requireOwner(uid); if(id.startsWith('preset_'))return false;
   if(durable()) {
     const data=await cloud<any[]>(()=>getSupabase().from('alert_rules').delete().eq('id',id).eq('user_id',uid).select('id').abortSignal(AbortSignal.timeout(10000)));
+    invalidateRulesCache();
     return !!data?.length;
   }
   const before=rulesCache.length;rulesCache=rulesCache.filter(r=>!(r.id===id&&r.userId===uid));writeLocalJson(ALERT_RULES_FILE,rulesCache);return before!==rulesCache.length;
