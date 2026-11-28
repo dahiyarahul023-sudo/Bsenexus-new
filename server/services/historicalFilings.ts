@@ -3,7 +3,7 @@ import { checkResultDocument } from './resultDocumentEvidence.js';
 import { withHttpDeadline } from '../utils/httpDeadline.js';
 import { randomUUID } from 'node:crypto';
 import { hasExactScripCode } from '../../src/shared/scripMatching.js';
-import { saveAnnouncementsBatch, getAnnouncementsForScrip, flushLocalDiskSave, flushSupabaseWriteQueue } from '../database/announcementDao.js';
+import { saveAnnouncementsBatch, getExistingFilingProofsForScrip, flushLocalDiskSave, flushSupabaseWriteQueue } from '../database/announcementDao.js';
 import { getSupabase, isSupabaseConfigured } from '../database/supabase.js';
 import { parseBseDate, determinePriority } from '../utils/helpers.js';
 
@@ -46,7 +46,7 @@ export async function importHistoricalFilings(scripCode: string, years: number, 
         throw new Error('Result evidence storage confirmation pending; retry sync');
     }
   });
-  const existing = new Map((await (dependencies.existing || (() => getAnnouncementsForScrip(scripCode)))()).map(item => [String(item.id || item.newsId), item]));
+  const existing = new Map((await (dependencies.existing || (() => getExistingFilingProofsForScrip(scripCode)))()).map(item => [String(item.id || item.newsId), item]));
   let documentChecks = 0;
   const seen = new Set<string>();
   let firstRequest = true;

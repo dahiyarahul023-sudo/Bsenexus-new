@@ -142,7 +142,10 @@ export async function durableRadarIntakeStatus() {
 }
 export async function refreshRadarIntake(): Promise<void> {
   if (running) return running;
-  if (Date.now() - lastAttempt < 60_000) return;
+  // Egress round 3: radar intake is background discovery, not the live feed;
+  // a five-minute cadence keeps its Supabase reads (intake rules) off the
+  // per-minute watchdog path without any user-visible lag.
+  if (Date.now() - lastAttempt < 5 * 60_000) return;
   lastAttempt = Date.now();
   running = (async () => {
     try {

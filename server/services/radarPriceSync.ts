@@ -15,7 +15,7 @@ export function createRadarPriceSync(overrides: Partial<SyncDependencies> = {}) 
   return function refresh(): Promise<void> {
     if(running)return running;
     if(deps.now()<nextAttempt)return Promise.resolve();
-    nextAttempt=deps.now()+5*60_000;
+    nextAttempt=deps.now()+15*60_000;
     running=(async()=>{
       let savedCount=0, readFailures=0, writeFailures=0, sourceMisses=0;
       const started=deps.now();

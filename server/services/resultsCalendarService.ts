@@ -13,7 +13,7 @@ import { getScripCodeForSymbolOrName, parseBseDate, resolveStockDetails } from '
 import { addLog } from '../database/logDao.js';
 import {
   getRecentAnnouncements,
-  getAnnouncementsForScrip,
+  getCachedAnnouncementsForScrip,
   saveAnnouncement,
   saveAnnouncementsBatch,
   flushLocalDiskSave,
@@ -186,6 +186,12 @@ let calendarHistoryUnavailable = false;
 /** Recover durable meeting evidence after restart and from other instances, without reviving replaced future schedules. */
 async function hydrateStoredCalendar(): Promise<void> {
   if (!isSupabaseConfigured()) return;
+  // Egress round 3: boot recovery is the only cross-instance read that matters.
+  // Once it has succeeded, the local 12 h BSE sync is the writer, so re-reading
+  // the whole results_calendar table on later snapshots only burns egress.
+  // The retry path below stays active until the first successful load, and
+  // calendarHistoryUnavailable keeps surfacing while recovery has not succeeded.
+  if (storedCalendarLoaded) return;
   if (storedCalendarHydration) return storedCalendarHydration;
   if (storedCalendarAttempt && Date.now() - storedCalendarAttempt < 60_000) return;
   storedCalendarAttempt = Date.now();
@@ -1238,7 +1244,7 @@ export async function getStockResultsHistory(
   const todayStartTs = getIstMidnightTs(new Date());
 
   // 1. Fetch announcements for this stock from Dao
-  const recentAnnouncements = await verifyCurrentResultFilings(preparedFilings || await getAnnouncementsForScrip(targetScrip, Number.MAX_SAFE_INTEGER, true));
+  const recentAnnouncements = await verifyCurrentResultFilings(preparedFilings || await getCachedAnnouncementsForScrip(targetScrip));
   const stockAnns = recentAnnouncements.filter((ann: any) => hasExactScripCode(ann, targetScrip));
 
   // Group announcements strictly by calendar date in IST

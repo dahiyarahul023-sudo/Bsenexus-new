@@ -4,7 +4,7 @@ import { hasExactScripCode, matchesCompanyFiling } from '../../src/shared/scripM
 import YahooFinance from 'yahoo-finance2';
 import { getStockResultsHistory, getResultsCalendarSnapshot } from './resultsCalendarService.js';
 import { classifyMaterialEvent, MaterialEvent } from './timelineClassifier.js';
-import { getRecentAnnouncements, getAnnouncementsForScrip, getBseOperatorAnnouncements } from '../database/announcementDao.js';
+import { getRecentAnnouncements, getCachedAnnouncementsForScrip, getBseOperatorAnnouncements } from '../database/announcementDao.js';
 import { generateDirectSummary } from './gemini.js';
 import { parseBseDate } from '../utils/helpers.js';
 import { getAllStockEntries } from '../utils/stockResolver.js';
@@ -159,7 +159,7 @@ export async function getCompanyIntelligence(scripCode: string, symbol: string):
   const nseOnly = targetSym === 'BSE';
 
   // Independent providers run together; the company read has no user-watchlist dependency.
-  const filingsRead = nseOnly ? getBseOperatorAnnouncements(true) : getAnnouncementsForScrip(targetScrip, Number.MAX_SAFE_INTEGER, true);
+  const filingsRead = nseOnly ? getBseOperatorAnnouncements(true) : getCachedAnnouncementsForScrip(targetScrip);
   const [quote, rawHistory, calendarData, storedFilings] = await Promise.all([
     targetSym ? fetchStockQuote(targetSym).catch(() => null) : Promise.resolve(null),
     nseOnly ? Promise.resolve([]) : filingsRead.then(rows => getStockResultsHistory(targetScrip, targetSym, undefined, rows)).then(rows => rows.filter(h => hasExactScripCode(h, targetScrip))),
@@ -352,6 +352,6 @@ ${filingsSummary || 'None'}
 
 /** Lightweight public card read; no quotes, AI, calendar import or paid work. */
 export async function getCompanyFilingCount(scripCode: string, symbol: string) {
-  const rows = symbol === 'BSE' ? await getBseOperatorAnnouncements(true) : await getAnnouncementsForScrip(scripCode, Number.MAX_SAFE_INTEGER, true);
+  const rows = symbol === 'BSE' ? await getBseOperatorAnnouncements(true) : await getCachedAnnouncementsForScrip(scripCode);
   return companyFilingStats(rows.filter(row => matchesCompanyFiling(row, scripCode, symbol)));
 }
