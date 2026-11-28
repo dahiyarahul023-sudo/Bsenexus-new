@@ -1,4 +1,4 @@
-import { APP_VERSION_LABEL } from '../version';
+import { APP_VERSION, APP_VERSION_LABEL } from '../version';
 import { sourceHealthLabel } from '../utils/sourceHealth';
 import { CalendarDateBadge3D } from './ui/CalendarDateBadge3D';
 import { triggerNavigationHaptic } from '../utils/haptics';
@@ -500,21 +500,20 @@ export function Layout({
                 </motion.button>
               )}
 
-              {/* Settings stays directly accessible after mobile News takes its dock slot */}
-              <motion.button
+              {/* The phone toolbar owns this shortcut; desktop has its Settings tab. */}
+              {activeTab !== 'settings' && <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={buttonTap}
                 transition={springSnappy}
                 onMouseEnter={() => preloadTabChunk('settings')}
                 onFocus={() => preloadTabChunk('settings')}
-                onClick={() => { triggerNavigationHaptic(); onTabChange('settings'); }}
-                aria-pressed={activeTab === 'settings'}
+                onClick={() => onTabChange('settings')}
                 aria-label="Open Settings and Preferences"
-                className="shell-settings-button flex items-center justify-center p-2 sm:p-1.5 rounded-lg bg-slate-100 dark:bg-[#252233] hover:bg-slate-200 dark:hover:bg-[#2F2B40] border border-slate-200/90 dark:border-[#352F48] text-slate-700 dark:text-slate-200 cursor-pointer select-none shadow-xs shrink-0 min-w-[44px] min-h-[44px] sm:min-w-[32px] sm:min-h-[32px] pointer-coarse:min-w-11 pointer-coarse:min-h-11"
+                className="shell-settings-button flex md:hidden items-center justify-center p-2 sm:p-1.5 rounded-lg bg-slate-100 dark:bg-[#252233] hover:bg-slate-200 dark:hover:bg-[#2F2B40] border border-slate-200/90 dark:border-[#352F48] text-slate-700 dark:text-slate-200 cursor-pointer select-none shadow-xs shrink-0 min-w-[44px] min-h-[44px] sm:min-w-[32px] sm:min-h-[32px] pointer-coarse:min-w-11 pointer-coarse:min-h-11"
                 title="Open Settings & Preferences"
               >
                 <Settings size={15} className="text-slate-600 dark:text-slate-300" />
-              </motion.button>
+              </motion.button>}
 
               {/* Pro Upgrade Quick Button for Free/Guest Users */}
               {!isPro && (
@@ -990,7 +989,10 @@ export function Layout({
             )}
           </div>
         </div>
-        <p className="mt-2 px-4 text-center text-[11px] text-slate-600 dark:text-slate-400">{APP_VERSION_LABEL}</p>
+        <details className="mt-2 px-4 text-center text-xs text-slate-600 dark:text-slate-400">
+          <summary className="mx-auto w-fit cursor-pointer px-2 py-1">v{APP_VERSION}</summary>
+          <p>{APP_VERSION_LABEL}</p>
+        </details>
       </footer>
 
       {/* Item 12: Tactile Floating Back to Top with Scroll Progress Ring */}

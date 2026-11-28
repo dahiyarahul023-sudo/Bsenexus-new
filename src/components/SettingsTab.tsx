@@ -73,9 +73,9 @@ const SETTINGS_REGISTRY = [
   { id: 'saved-notes', title: 'Saved Notes', description: 'Personal notes linked to stocks, news and results', category: 'Account & Identity', keywords: ['notes', 'saved notes', 'notebook', 'memo', 'personal notes', 'diary'] },
   { id: 'export-csv', title: 'Export to CSV', description: 'Download tracked tickers and priorities in spreadsheet format', category: 'Watchlist & Data', keywords: ['export', 'csv', 'excel', 'spreadsheet', 'download', 'watchlist'] },
   { id: 'export-json', title: 'Export backup (JSON)', description: 'Full structured backup for porting or syncing', category: 'Watchlist & Data', keywords: ['export', 'json', 'backup', 'data', 'port', 'sync'] },
-  { id: 'security-audit', title: '20-Point Launch Security & Pen-Test', description: 'IDOR defense, API key hardening, SQLi and red-team test harness', category: 'Advanced Engine', keywords: ['security', 'audit', 'pen-test', 'penetration', 'hardened', 'keys', 'idor'] },
+  { id: 'security-audit', title: 'Security checks', description: 'Access controls and security test tools', category: 'Advanced Engine', keywords: ['security', 'audit', 'pen-test', 'penetration', 'hardened', 'keys', 'idor'] },
   { id: 'diagnostics', title: 'System Diagnostics & Telemetry', description: 'Bloom filter telemetry, crash-free rates, device health and memory stats', category: 'Advanced Engine', keywords: ['diagnostics', 'telemetry', 'bloom', 'health', 'memory', 'cpu'] },
-  { id: 'logs', title: 'Engine Activity Logs', description: 'Live stream of BSE ingestion, Gemini AI summaries and workers', category: 'Advanced Engine', keywords: ['logs', 'activity', 'engine', 'terminal', 'stream', 'gemini'] },
+  { id: 'logs', title: 'Engine Activity Logs', description: 'On-demand BSE, AI and worker logs', category: 'Advanced Engine', keywords: ['logs', 'activity', 'engine', 'terminal', 'stream', 'gemini'] },
   { id: 'storage', title: 'Storage Manager & Quotas', description: 'Firestore quotas, backup downloads, and cache health', category: 'Advanced Engine', keywords: ['storage', 'quotas', 'firestore', 'database', 'cache'] },
   { id: 'gift-access', title: 'Gift Pro Access', description: 'Email invitations, custom days, resend and revoke', category: 'Advanced Engine', keywords: ['gift', 'subscription', 'invite', 'complimentary'] },
   { id: 'server-keys', title: 'Server Keys & Ingestion Config', description: 'Bot token, Master PIN, AI summarizer test, and live toggle', category: 'Advanced Engine', keywords: ['server', 'admin', 'pin', 'keys', 'token', 'ingestion'] },
@@ -2011,13 +2011,8 @@ export function SettingsTab({
                         </div>
                         <div>
                           {renderSearchBreadcrumb('Advanced Engine')}
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-slate-900 dark:text-white">20-Point Launch Security &amp; Pen-Test</span>
-                            <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
-                              20/20 Hardened
-                            </span>
-                          </div>
-                          <div className="text-[11px] text-slate-500 dark:text-slate-400">IDOR defense, RLS verification, and live red-team harness</div>
+                          <span className="font-semibold text-slate-900 dark:text-white">Security checks</span>
+                          <div className="text-[11px] text-slate-500 dark:text-slate-400">Access controls and security test tools</div>
                         </div>
                       </div>
                       <ChevronRight size={14} className="text-slate-400" />
@@ -2059,7 +2054,7 @@ export function SettingsTab({
                         <div>
                           {renderSearchBreadcrumb('Advanced Engine')}
                           <span className="font-semibold text-slate-900 dark:text-white">Engine Activity Logs</span>
-                          <div className="text-[11px] text-slate-500 dark:text-slate-400">Live stream of BSE ingestion, Gemini AI summaries &amp; workers</div>
+                          <div className="text-[11px] text-slate-500 dark:text-slate-400">On-demand BSE, AI and worker logs</div>
                         </div>
                       </div>
                       <ChevronRight size={14} className="text-slate-400" />

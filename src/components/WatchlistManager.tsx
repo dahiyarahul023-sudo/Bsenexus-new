@@ -685,6 +685,7 @@ export function WatchlistManager({ isActive = true }: { isActive?: boolean } = {
   
   // Async states
   const [isSyncingWatchlists, setIsSyncingWatchlists] = useState(false);
+  const isManualRefreshPending = useRef(false);
   const [editingListId, setEditingListId] = useState<string | null>(null);
   const [editListName, setEditListName] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -712,43 +713,25 @@ export function WatchlistManager({ isActive = true }: { isActive?: boolean } = {
 
   const { openIntelModal } = useIntelModal();
 
-  // Sync Watchlists historical data
   const handleOpenIntel = (scripCode?: string, symbol?: string, companyName?: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     openIntelModal({ scripCode, symbol: symbol || companyName, companyName: companyName || symbol });
   };
 
-  const handleSyncWatchlists = async (mode: 'quick' | 'full' = 'quick') => {
+  const refreshWatchlist = async () => {
+    if (isManualRefreshPending.current) return false;
+    isManualRefreshPending.current = true;
     setIsSyncingWatchlists(true);
+    const owner = accountId;
     try {
-      if (mode === 'full') {
-        // Run full library historical sync in background non-blocking
-        await customFetch('/api/watchlists/sync?mode=background', { method: 'POST' });
-        await fetchAnnouncements();
-        setLastAddedInfo({
-          symbol: 'Background Sync Started',
-          companyName: 'Full BSE deep sync running seamlessly in background',
-          listName: 'BSE India Feed',
-          priority: 'HIGH',
-          timestamp: Date.now()
-        });
-        setTimeout(() => setLastAddedInfo(null), 5000);
-      } else {
-        // Quick reload & refresh
-        await fetchAnnouncements();
-        await fetchWatchlists();
-        setLastAddedInfo({
-          symbol: 'Watchlist Refreshed',
-          companyName: 'Instant fresh feed & active stock sync complete',
-          listName: 'Live Stream',
-          priority: 'HIGH',
-          timestamp: Date.now()
-        });
-        setTimeout(() => setLastAddedInfo(null), 3000);
-      }
-    } catch (e) {
-      console.error(e);
+      const feedReady = await fetchAnnouncements();
+      if (accountRef.current !== owner) return false;
+      const listsReady = await fetchWatchlists();
+      if (accountRef.current !== owner) return false;
+      if (!feedReady && listsReady) setWatchlistsError('Filings could not be refreshed. Please retry.');
+      return feedReady && listsReady;
     } finally {
+      isManualRefreshPending.current = false;
       setIsSyncingWatchlists(false);
     }
   };
@@ -761,9 +744,7 @@ export function WatchlistManager({ isActive = true }: { isActive?: boolean } = {
     isRefreshing: isWatchlistRefreshing, 
     progress: watchlistPullProg 
   } = usePullToRefresh<HTMLDivElement>({
-    onRefresh: async () => {
-      await handleSyncWatchlists('quick');
-    }
+    onRefresh: refreshWatchlist
   });
 
   const isProOrAdmin = Boolean(isAdmin || (isPro && !user?.isAnonymous));
@@ -881,7 +862,7 @@ export function WatchlistManager({ isActive = true }: { isActive?: boolean } = {
   const fetchWatchlists = async () => {
     const owner = accountId;
     watchlistsRead.current?.abort();
-    if (!user && !profile) { setWatchlists([]); setWatchlistOwner(owner); return; }
+    if (!user && !profile) { setWatchlists([]); setWatchlistOwner(owner); return false; }
     const controller = new AbortController(); watchlistsRead.current = controller;
     setWatchlistsError(null);
     try {
@@ -889,15 +870,17 @@ export function WatchlistManager({ isActive = true }: { isActive?: boolean } = {
       if (!res.ok) throw new Error('Your watchlists could not be loaded.');
       const data = await res.json();
       if (!Array.isArray(data)) throw new Error('Invalid watchlist response.');
-      if (controller.signal.aborted || accountRef.current !== owner) return;
+      if (controller.signal.aborted || accountRef.current !== owner) return false;
       setWatchlists(data); setWatchlistOwner(owner); setWatchlistsReady(true);
       try {
         localStorage.setItem(`bsenexus_watchlists_cache:${owner}`, JSON.stringify({ ts: Date.now(), items: data }));
         localStorage.setItem('bse_nexus_watchlist_cache', JSON.stringify({ ts: Date.now(), items: data, owner }));
       } catch {}
       window.dispatchEvent(new CustomEvent('watchlists-changed', { detail: { source: 'watchlist-manager' } }));
+      return true;
     } catch (error) {
       if (!controller.signal.aborted && accountRef.current === owner) setWatchlistsError('Your watchlists could not be loaded. Please retry.');
+      return false;
     } finally { if (watchlistsRead.current === controller) watchlistsRead.current = null; }
   };
 
@@ -934,7 +917,7 @@ export function WatchlistManager({ isActive = true }: { isActive?: boolean } = {
       const res = await customFetch(url, { signal: AbortSignal.any([controller.signal, AbortSignal.timeout(12_000)]), cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
-        if (!current() || !Array.isArray(data)) return;
+        if (!current() || !Array.isArray(data)) return false;
         // Merge, never replace: right after a server restart/republish the API
         // returns only a handful of freshly-polled filings — replacing would
         // shrink the feed AND poison the 12h on-device cache with thin data.
@@ -947,15 +930,18 @@ export function WatchlistManager({ isActive = true }: { isActive?: boolean } = {
           } catch { /* storage full or unavailable */ }
           return merged;
         });
+        return true;
       }
+      return false;
     } catch (e) {
       console.warn("Error fetching announcements in WatchlistManager:", e);
+      return false;
     } finally {
       if (current()) setIsFeedRefreshing(false);
     }
   }, [activeSymbols, watchlists, accountId]);
 
-  // Refresh active Watchlist evidence together on entry, resume and each minute.
+  // Refresh active Watchlist evidence on entry, resume and at the existing foreground interval.
   useForegroundRefresh(async () => {
     await Promise.allSettled([fetchAnnouncements(), (async () => {
       resultRead.current?.abort();
@@ -1958,10 +1944,19 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
 
   return (
     <div ref={watchlistContainerRef} className="space-y-2 overscroll-y-contain relative">
-      {/* Pull to Refresh Animated Indicator for Watchlists */}
-
-
-      <PageHeading active={isActive} className="text-base sm:text-lg font-bold text-slate-900 dark:text-white font-display">Your Stock Watchlist</PageHeading>
+      <div className="flex items-center justify-between gap-2">
+        <PageHeading active={isActive} className="text-base font-bold text-slate-900 dark:text-white font-display sm:text-lg">Your Stock Watchlist</PageHeading>
+        <ActionButton
+          onClick={() => void refreshWatchlist()}
+          isLoading={isSyncingWatchlists}
+          loadingText="Refreshing…"
+          variant="secondary"
+          size="sm"
+          className="min-h-11 shrink-0"
+        >
+          Refresh
+        </ActionButton>
+      </div>
 
       {/* Consolidated High-Density Navigation & Filter Bar - Sticky below navbar */}
       <div className="sticky top-14 md:top-[89px] z-30 bg-white/95 dark:bg-[#1A1926]/95 backdrop-blur-md border border-slate-200/90 dark:border-[#2D283E] rounded-xl p-2 sm:p-2.5 shadow-xs space-y-2">
@@ -2101,8 +2096,10 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
                   whileTap={buttonTap}
                   transition={springSnappy}
                   onClick={() => setIsAddCompanyOpen(prev => !prev)}
+                  aria-expanded={isAddCompanyOpen}
+                  aria-label="Add company"
                   className={cn(
-                    "flex items-center gap-1.5 px-3.5 min-h-[36px] py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs whitespace-nowrap select-none active:scale-[0.96]",
+                    "flex items-center gap-1.5 px-3.5 min-h-11 sm:min-h-9 pointer-coarse:min-h-11 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer shadow-xs whitespace-nowrap select-none",
                     isAddCompanyOpen
                       ? "bg-slate-800 text-white dark:bg-[#322C4A]"
                       : "rich-action rich-action-primary"
@@ -2176,17 +2173,6 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
                   ))}
                 </select>
 
-                <ActionButton
-                  onClick={() => handleSyncWatchlists('quick')}
-                  isLoading={isSyncingWatchlists}
-                  loadingText="Syncing..."
-                  variant="primary"
-                  size="sm"
-                  className="min-h-[36px]"
-                  title="Instant Quick Refresh"
-                >
-                  Sync
-                </ActionButton>
               </div>
             )}
           </div>
@@ -2199,8 +2185,8 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
 
             {announcementPriorityFilter !== 'ALL' && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-[#222030] text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-[#352F48]">
-                <span>Tier: {announcementPriorityFilter === 'HIGH_STOCK' ? '🔴 High' : announcementPriorityFilter === 'MEDIUM_STOCK' ? '🟡 Med' : '⚪ Low'}</span>
-                <button type="button" onClick={() => setAnnouncementPriorityFilter('ALL')} className="hover:text-rose-500">
+                <span>{announcementPriorityFilter === 'HIGH_STOCK' ? 'High' : announcementPriorityFilter === 'MEDIUM_STOCK' ? 'Medium' : 'Low'} priority</span>
+                <button type="button" aria-label="Remove priority filter" onClick={() => setAnnouncementPriorityFilter('ALL')} className="grid h-8 w-8 place-items-center rounded-full hover:bg-slate-200 dark:hover:bg-slate-700">
                   <X size={10} />
                 </button>
               </span>
@@ -2208,8 +2194,8 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
 
             {announcementCategory !== 'ALL' && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
-                <span>Cat: {announcementCategory === 'RESULTS' ? 'Results' : announcementCategory === 'CONFERENCE_CALL' ? 'Concall' : 'Priority'}</span>
-                <button type="button" onClick={() => setAnnouncementCategory('ALL')} className="hover:text-rose-500">
+                <span>{announcementCategory === 'RESULTS' ? 'Results' : announcementCategory === 'CONFERENCE_CALL' ? 'Concall' : 'Priority'}</span>
+                <button type="button" aria-label="Remove filing category filter" onClick={() => setAnnouncementCategory('ALL')} className="grid h-8 w-8 place-items-center rounded-full hover:bg-slate-200 dark:hover:bg-slate-700">
                   <X size={10} />
                 </button>
               </span>
@@ -2217,8 +2203,8 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
 
             {selectedStockFilter && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                <span>Symbol: {selectedStockFilter}</span>
-                <button type="button" onClick={() => setSelectedStockFilter(null)} className="hover:text-rose-500">
+                <span>{selectedStockFilter}</span>
+                <button type="button" aria-label="Remove company filter" onClick={() => setSelectedStockFilter(null)} className="grid h-8 w-8 place-items-center rounded-full hover:bg-slate-200 dark:hover:bg-slate-700">
                   <X size={10} />
                 </button>
               </span>
@@ -2227,9 +2213,9 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
             <button
               type="button"
               onClick={clearAllFeedFilters}
-              className="text-[10px] font-bold text-rose-600 dark:text-rose-400 hover:underline ml-auto cursor-pointer"
+              className="min-h-8 px-1 font-semibold text-slate-700 dark:text-slate-200 hover:underline ml-auto cursor-pointer"
             >
-              Clear All
+              Clear filters
             </button>
           </div>
         )}
@@ -2243,7 +2229,12 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
         label="Watchlist & Filings"
       />
 
-      {watchlistsError && <p role="alert" className="text-sm text-rose-600">{watchlistsError} <button type="button" onClick={() => void fetchWatchlists()} className="underline">Retry</button></p>}
+      {watchlistsError && (
+        <div className="flex flex-wrap items-center gap-x-2 text-sm text-rose-700 dark:text-rose-300">
+          <p role="alert">{watchlistsError}</p>
+          <button type="button" disabled={isSyncingWatchlists} onClick={() => void refreshWatchlist()} className="min-h-11 px-2 font-semibold underline">Retry</button>
+        </div>
+      )}
 
       {/* FILTER BOTTOM SHEET / DRAWER */}
       {isFilterDrawerOpen && (
@@ -2570,7 +2561,8 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
                     <button
                       type="button"
                       onClick={() => setIsAddCompanyOpen(false)}
-                      className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-[#201E2E] cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center"
+                      aria-label="Close add company"
+                      className="p-1.5 text-slate-600 dark:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-[#201E2E] cursor-pointer min-h-11 min-w-11 flex items-center justify-center"
                     >
                       <X size={15} />
                     </button>
@@ -2734,7 +2726,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
                         <span role="status" className="text-xs text-slate-600 dark:text-slate-300">Checking filings…</span>
                       ) : (
                         <button type="button"
-                          className="inline-flex min-h-9 items-center gap-1 text-xs font-semibold text-emerald-700 hover:underline dark:text-emerald-300 cursor-pointer"
+                          className="inline-flex min-h-11 items-center gap-1 rounded-lg text-xs font-semibold text-slate-800 hover:underline active:bg-slate-100 dark:text-slate-100 dark:active:bg-slate-800 cursor-pointer sm:min-h-9 pointer-coarse:min-h-11"
                           onClick={() => company.filingCountStatus === 'error' ? retryFilingCounts() : openIntelModal({
                             scripCode: company.scripCode,
                             symbol: company.symbol,
@@ -2748,7 +2740,7 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
 
                       <div className="flex items-center gap-1">
                         <button type="button"
-                          className="min-h-9 px-1 text-xs text-slate-600 hover:underline dark:text-slate-300 cursor-pointer"
+                          className="min-h-11 rounded-lg px-2 text-xs font-medium text-slate-700 hover:underline active:bg-slate-100 dark:text-slate-200 dark:active:bg-slate-800 cursor-pointer sm:min-h-9 pointer-coarse:min-h-11"
                           aria-label={`Change priority for ${company.name}. Current priority: ${priorityLabel}`}
                           onClick={() => handleCyclePriority(listId, { symbol: company.symbol, priority: company.priority })}>
                           {priorityLabel} priority
@@ -2756,12 +2748,12 @@ Upgrade to Pro (one-time plans from ₹${getLowestPlanPrice()}) to create unlimi
                         <SaveNoteButton
                           link={{ type: 'stock', label: company.name || company.symbol, symbol: company.symbol }}
                           label={`Save note on ${company.name || company.symbol}`}
-                          className="min-h-9 min-w-9"
+                          className="min-h-11 min-w-11 sm:min-h-9 sm:min-w-9 pointer-coarse:min-h-11 pointer-coarse:min-w-11"
                         />
                         <button type="button"
                           onClick={() => handleRemoveSymbol(listId, company.symbol)}
                           aria-label={`Remove ${company.name} from watchlist`}
-                          className="grid min-h-9 min-w-9 place-items-center rounded-lg text-slate-600 hover:bg-rose-50 hover:text-rose-600 dark:text-slate-300 dark:hover:bg-rose-950/40 dark:hover:text-rose-300 cursor-pointer">
+                          className="grid min-h-11 min-w-11 place-items-center rounded-lg text-slate-600 hover:bg-rose-50 hover:text-rose-700 active:bg-rose-100 dark:text-slate-300 dark:hover:bg-rose-950/40 dark:hover:text-rose-300 dark:active:bg-rose-950 cursor-pointer sm:min-h-9 sm:min-w-9 pointer-coarse:min-h-11 pointer-coarse:min-w-11">
                           <Trash2 size={14} aria-hidden="true" />
                         </button>
                       </div>

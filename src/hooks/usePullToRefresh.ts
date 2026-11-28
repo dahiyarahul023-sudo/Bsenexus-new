@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { triggerThresholdTick, triggerSuccessHaptic } from '../utils/haptics';
 
 export interface UsePullToRefreshOptions {
-  onRefresh: () => Promise<void> | void;
+  onRefresh: () => Promise<void | boolean> | void | boolean;
   pullThreshold?: number;
   restingHeight?: number;
   disabled?: boolean;
@@ -110,9 +110,6 @@ export function usePullToRefresh<T extends HTMLElement = HTMLDivElement>({
       if (resistedDistance >= pullThreshold && !hasTickedRef.current) {
         hasTickedRef.current = true;
         triggerThresholdTick();
-      } else if (resistedDistance < pullThreshold && hasTickedRef.current) {
-        // User reversed motion above threshold - re-arm for next potential cross
-        hasTickedRef.current = false;
       }
     } else if (rawDiffY <= 0) {
       isDraggingRef.current = false;
@@ -141,8 +138,8 @@ export function usePullToRefresh<T extends HTMLElement = HTMLDivElement>({
       pullDistanceRef.current = restingHeight;
 
       try {
-        await Promise.resolve(onRefresh());
-        triggerSuccessHaptic();
+        const refreshed = await onRefresh();
+        if (refreshed !== false) triggerSuccessHaptic();
       } catch (err) {
         console.error('Pull to refresh failed:', err);
       } finally {
@@ -211,8 +208,6 @@ export function usePullToRefresh<T extends HTMLElement = HTMLDivElement>({
       if (resistedDistance >= pullThreshold && !hasTickedRef.current) {
         hasTickedRef.current = true;
         triggerThresholdTick();
-      } else if (resistedDistance < pullThreshold && hasTickedRef.current) {
-        hasTickedRef.current = false;
       }
     } else if (rawDiffY <= 0) {
       isDraggingRef.current = false;

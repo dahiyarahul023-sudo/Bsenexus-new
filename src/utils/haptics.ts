@@ -28,36 +28,10 @@ function getAudioContext(): AudioContext | null {
  * Arms the user's thumb before they release.
  */
 export function triggerThresholdTick() {
-  // 1. Hardware vibration for mobile devices
-  if (typeof window !== 'undefined' && 'vibrate' in navigator) {
-    try {
-      navigator.vibrate(10);
-    } catch {}
+  // The on-screen indicator also works on devices without vibration support.
+  if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+    try { navigator.vibrate(10); } catch {}
   }
-
-  // 2. Synthesized 12ms acoustic micro-tick (resembling Apple Taptic click)
-  try {
-    const ctx = getAudioContext();
-    if (!ctx) return;
-
-    const now = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    osc.type = 'triangle';
-    // Crisp pitch drop from 1200Hz to 250Hz in 12ms
-    osc.frequency.setValueAtTime(1200, now);
-    osc.frequency.exponentialRampToValueAtTime(250, now + 0.012);
-
-    gain.gain.setValueAtTime(0.04, now);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.012);
-
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-
-    osc.start(now);
-    osc.stop(now + 0.014);
-  } catch {}
 }
 
 /**
