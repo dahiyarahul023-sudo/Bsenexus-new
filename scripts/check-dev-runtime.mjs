@@ -107,7 +107,7 @@ try {
       const landingHeight=await page.evaluate(()=>document.documentElement.scrollHeight);
       assert.ok(landingHeight < 6500, 'landing remains compact with examples collapsed');
       console.log('Landing height at 500 × 736:',landingHeight);
-      assert.equal(await page.getByRole('link',{name:'Earnings calendar',exact:true}).first().getAttribute('href'),'/results-calendar');
+      assert.equal(await page.getByRole('link',{name:/\bEarnings calendar\b/i}).getAttribute('href'),'/results-calendar');
       const preview=page.getByText('Preview the calendar and filing analysis',{exact:true});
       assert.equal(await page.getByText('Demo · Quarterly Earnings Deck',{exact:true}).count(),0);
       await preview.click();
