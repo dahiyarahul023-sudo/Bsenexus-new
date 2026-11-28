@@ -23797,7 +23797,7 @@
     },
     {
       "file": "server/database/watchlistDao.ts",
-      "line": 267,
+      "line": 36,
       "function": "getSupabase()\n    .from",
       "key": "WATCHLISTS_TABLE"
     },
