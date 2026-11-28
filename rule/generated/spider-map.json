@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "ebc50719bc5d39ce38887993faae1f277938cb2bfbef209afbd1c3645766f68e",
+  "sourceDigest": "f8b4a365797f6f461b2ae413afc0dc32c935621a88588e5fb446c7a325525c89",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -243,7 +243,7 @@
     },
     {
       "path": "scripts/verify-mobile-ui.mjs",
-      "sha256": "ee875d2ad47097035c396c38bc6b751e18c712f8e88d8f805db0dabda6eb9641",
+      "sha256": "f6b3c290bbb8d6f0f2effb912bb70d57fea02184021e7c38ddceb92f1ef60110",
       "importedBy": []
     },
     {
@@ -3070,7 +3070,7 @@
     },
     {
       "path": "src/components/Layout.tsx",
-      "sha256": "36d378a96102ee86cda99aa8b4d48dd513faa4689cd5a98b8345f8a04ae81552",
+      "sha256": "c52929aca8526a9aba8799fa8f9215722dbc9339cac0559e4ff346cdbe34e7e3",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -3222,7 +3222,7 @@
     },
     {
       "path": "src/components/SettingsTab.tsx",
-      "sha256": "8cb3ae4fb741d0cb7c9dfdf38b76d8b510e21110beb647fb402e67f526f32be3",
+      "sha256": "27b1b3a8543f7ba8dc877449c08a2bf98aa0fa142154a89a8f21e9ed50ec8aba",
       "importedBy": [
         "src/App.tsx",
         "src/components/Layout.tsx"
@@ -3295,7 +3295,7 @@
     },
     {
       "path": "src/components/WatchlistManager.tsx",
-      "sha256": "79bd5549b111eedb231c6ab0edaae02200e13f5e23abf9eb42418e410377a1a2",
+      "sha256": "c911c7c894a1d00304a49e2296514c5aea338aa76f3a91f117bc591ce659fa9e",
       "importedBy": [
         "src/App.tsx",
         "src/components/Layout.tsx"
@@ -3407,7 +3407,7 @@
     },
     {
       "path": "src/components/landing/LandingFooterAbout.tsx",
-      "sha256": "0937eda0e051951cd68fa35d5ed047d021b1f20f1f78c5837dbb12105fba5733",
+      "sha256": "330072e7252712d90f16263e9f270235f9ec5c4696cbe7c29a072681dbd5c949",
       "importedBy": [
         "server/tests/searchEngineDiscovery.test.ts",
         "src/components/LandingPage.tsx"
@@ -4358,7 +4358,7 @@
     },
     {
       "path": "src/hooks/usePullToRefresh.ts",
-      "sha256": "35c4da7518964e81a9eae1b7d0ce27349ab8aa635de1de145025c7648c156637",
+      "sha256": "8805322fd5783f2360c21d64f8cb4866c89fcc9fb126864bbcc27aebe59218b9",
       "importedBy": [
         "src/components/Announcements.tsx",
         "src/components/NewsPortal.tsx",
@@ -5065,7 +5065,7 @@
     },
     {
       "path": "src/utils/haptics.ts",
-      "sha256": "4cbb0fbe50289593c4a9d3b524cf4161409faeef58c44bedb6b2e25555bf5249",
+      "sha256": "46003b4670c8be1b2f5da004d56709d37500437503405a0fae8261dcc1ac96e6",
       "importedBy": [
         "src/components/LandingPage.tsx",
         "src/components/Layout.tsx",
@@ -22091,7 +22091,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 681,
+      "line": 680,
       "function": "customFetch",
       "target": "'/api/health'"
     },
@@ -22439,133 +22439,127 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 726,
-      "function": "customFetch",
-      "target": "'/api/watchlists/sync?mode=background'"
-    },
-    {
-      "file": "src/components/WatchlistManager.tsx",
-      "line": 784,
+      "line": 765,
       "function": "customFetch",
       "target": "'/api/send-to-telegram-manual'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 835,
+      "line": 816,
       "function": "customFetch",
       "target": "`/api/announcements/${id}/generate-summary`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 888,
+      "line": 869,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 934,
+      "line": 917,
       "function": "customFetch",
       "target": "url"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 965,
+      "line": 951,
       "function": "customFetch",
       "target": "'/api/results-calendar?filter=today&scope=watchlist'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1000,
+      "line": 986,
       "function": "customFetch",
       "target": "'/api/stock-master'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1030,
+      "line": 1016,
       "function": "customFetch",
       "target": "`/api/search-company?q=${encodeURIComponent(query)}`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1069,
+      "line": 1055,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1092,
+      "line": 1078,
       "function": "customFetch",
       "target": "`/api/watchlists/${id}/name`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1112,
+      "line": 1098,
       "function": "customFetch",
       "target": "`/api/watchlists/${id}`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1124,
+      "line": 1110,
       "function": "customFetch",
       "target": "'/api/watchlists'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1137,
+      "line": 1123,
       "function": "customFetch",
       "target": "`/api/watchlists/${created.id}/symbols`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1177,
+      "line": 1163,
       "function": "customFetch",
       "target": "`/api/watchlists/${id}/toggle`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1275,
+      "line": 1261,
       "function": "customFetch",
       "target": "`/api/watchlists/${targetList.id}/symbols`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1305,
+      "line": 1291,
       "function": "customFetch",
       "target": "'/api/watchlists/sync-stock'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1365,
+      "line": 1351,
       "function": "customFetch",
       "target": "`/api/watchlists/${targetId}/symbols/bulk`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1392,
+      "line": 1378,
       "function": "customFetch",
       "target": "'/api/watchlists/sync-stock'"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1433,
+      "line": 1419,
       "function": "customFetch",
       "target": "`/api/watchlists/symbols/${encodeURIComponent(currentItem.symbol)}/priority-sync`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1479,
+      "line": 1465,
       "function": "customFetch",
       "target": "`/api/watchlists/${listId}/symbols`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1499,
+      "line": 1485,
       "function": "customFetch",
       "target": "`/api/watchlists/${listId}/symbols/${encodeURIComponent(symbol)}`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 3439,
+      "line": 3431,
       "function": "customFetch",
       "target": "url"
     },
@@ -22951,25 +22945,25 @@
     },
     {
       "file": "scripts/verify-mobile-ui.mjs",
-      "line": 10,
+      "line": 12,
       "function": "Array.from",
       "key": "{length:27}"
     },
     {
       "file": "scripts/verify-mobile-ui.mjs",
-      "line": 15,
+      "line": 17,
       "function": "Array.from",
       "key": "{length:8}"
     },
     {
       "file": "scripts/verify-mobile-ui.mjs",
-      "line": 15,
+      "line": 17,
       "function": "Array.from",
       "key": "{length:5}"
     },
     {
       "file": "scripts/verify-mobile-ui.mjs",
-      "line": 20,
+      "line": 22,
       "function": "Array.from",
       "key": "{length:3}"
     },
@@ -24751,15 +24745,21 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 895,
+      "line": 876,
       "function": "localStorage.setItem",
       "key": "`bsenexus_watchlists_cache:${owner}`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 896,
+      "line": 877,
       "function": "localStorage.setItem",
       "key": "'bse_nexus_watchlist_cache'"
+    },
+    {
+      "file": "src/components/WatchlistManager.tsx",
+      "line": 893,
+      "function": "Array.from",
+      "key": "new Set(watchlists.flatMap(l => (l.items || []).map((it: any) => parseSymbolItem(it).symbol).filter(Boolean)))"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
@@ -24769,19 +24769,13 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 927,
-      "function": "Array.from",
-      "key": "new Set(watchlists.flatMap(l => (l.items || []).map((it: any) => parseSymbolItem(it).symbol).filter(Boolean)))"
-    },
-    {
-      "file": "src/components/WatchlistManager.tsx",
-      "line": 945,
+      "line": 928,
       "function": "localStorage.setItem",
       "key": "`bsenexus_watchlist_feed:${accountId}`"
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 1221,
+      "line": 1207,
       "function": "Array.from",
       "key": "new Set(watchlists.flatMap(l => (l.items || []).map((it: any) => parseSymbolItem(it).symbol)))"
     },
@@ -25589,12 +25583,12 @@
     },
     {
       "file": "scripts/verify-mobile-ui.mjs",
-      "line": 25,
+      "line": 27,
       "name": "PLAYWRIGHT_CHROMIUM_EXECUTABLE"
     },
     {
       "file": "scripts/verify-mobile-ui.mjs",
-      "line": 25,
+      "line": 27,
       "name": "PLAYWRIGHT_CHROMIUM_EXECUTABLE"
     },
     {
@@ -27887,7 +27881,7 @@
     },
     {
       "file": "scripts/verify-mobile-ui.mjs",
-      "line": 86,
+      "line": 88,
       "target": "window",
       "kind": "dispatch",
       "name": "pageshow",
@@ -28767,7 +28761,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 898,
+      "line": 879,
       "target": "window",
       "kind": "dispatch",
       "name": "watchlists-changed",
@@ -28775,7 +28769,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 980,
+      "line": 966,
       "target": "window",
       "kind": "listen",
       "name": "focus",
@@ -28783,7 +28777,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 981,
+      "line": 967,
       "target": "window",
       "kind": "listen",
       "name": "watchlists-changed",
@@ -28791,7 +28785,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 982,
+      "line": 968,
       "target": "document",
       "kind": "listen",
       "name": "visibilitychange",
@@ -28799,7 +28793,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 983,
+      "line": 969,
       "target": "window",
       "kind": "remove",
       "name": "focus",
@@ -28807,7 +28801,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 983,
+      "line": 969,
       "target": "window",
       "kind": "remove",
       "name": "watchlists-changed",
@@ -28815,7 +28809,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 983,
+      "line": 969,
       "target": "document",
       "kind": "remove",
       "name": "visibilitychange",
@@ -28823,7 +28817,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 994,
+      "line": 980,
       "target": "window",
       "kind": "listen",
       "name": "auth-state-changed",
@@ -28831,7 +28825,7 @@
     },
     {
       "file": "src/components/WatchlistManager.tsx",
-      "line": 995,
+      "line": 981,
       "target": "window",
       "kind": "remove",
       "name": "auth-state-changed",
@@ -29759,7 +29753,7 @@
     },
     {
       "file": "src/hooks/usePullToRefresh.ts",
-      "line": 242,
+      "line": 237,
       "target": "window",
       "kind": "listen",
       "name": "pointermove",
@@ -29767,7 +29761,7 @@
     },
     {
       "file": "src/hooks/usePullToRefresh.ts",
-      "line": 243,
+      "line": 238,
       "target": "window",
       "kind": "listen",
       "name": "pointerup",
@@ -29775,7 +29769,7 @@
     },
     {
       "file": "src/hooks/usePullToRefresh.ts",
-      "line": 244,
+      "line": 239,
       "target": "window",
       "kind": "listen",
       "name": "pointercancel",
@@ -29783,7 +29777,7 @@
     },
     {
       "file": "src/hooks/usePullToRefresh.ts",
-      "line": 245,
+      "line": 240,
       "target": "window",
       "kind": "listen",
       "name": "blur",
@@ -29791,7 +29785,7 @@
     },
     {
       "file": "src/hooks/usePullToRefresh.ts",
-      "line": 253,
+      "line": 248,
       "target": "window",
       "kind": "remove",
       "name": "pointermove",
@@ -29799,7 +29793,7 @@
     },
     {
       "file": "src/hooks/usePullToRefresh.ts",
-      "line": 254,
+      "line": 249,
       "target": "window",
       "kind": "remove",
       "name": "pointerup",
@@ -29807,7 +29801,7 @@
     },
     {
       "file": "src/hooks/usePullToRefresh.ts",
-      "line": 255,
+      "line": 250,
       "target": "window",
       "kind": "remove",
       "name": "pointercancel",
@@ -29815,7 +29809,7 @@
     },
     {
       "file": "src/hooks/usePullToRefresh.ts",
-      "line": 256,
+      "line": 251,
       "target": "window",
       "kind": "remove",
       "name": "blur",
@@ -30074,7 +30068,7 @@
   "dynamic": [
     {
       "file": "scripts/verify-mobile-ui.mjs",
-      "line": 16,
+      "line": 18,
       "expression": "import(root+'/node_modules/esbuild/lib/main.js')"
     },
     {

@@ -10,7 +10,7 @@ import { BseNexusLogo } from '../ui/BseNexusLogo';
 import { AiIntelligenceLogo } from '../ui/AiIntelligenceLogo';
 import { CompanyLogo, GoogleGLogo, type CompanySymbol } from './CompanyLogos';
 import { triggerTapHaptic } from '../../utils/haptics';
-import { APP_VERSION_LABEL } from '../../version';
+import { APP_VERSION, APP_VERSION_LABEL } from '../../version';
 
 interface LandingFooterAboutProps {
   onEnterTerminal: (tab?: string) => void;
@@ -277,7 +277,10 @@ export function LandingFooterAbout({ onEnterTerminal }: LandingFooterAboutProps)
             </button>
           </div>
         </div>
-        <p className="mt-4 text-center text-[11px] text-slate-600 dark:text-slate-400">{APP_VERSION_LABEL}</p>
+        <details className="mt-4 text-center text-xs text-slate-600 dark:text-slate-400">
+          <summary className="mx-auto w-fit cursor-pointer px-2 py-1">v{APP_VERSION}</summary>
+          <p>{APP_VERSION_LABEL}</p>
+        </details>
       </div>
     </footer>
   );
