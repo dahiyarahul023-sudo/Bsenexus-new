@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "0ba7a2adf1c51f7cd9aab52a36e00667f7ad20d36760106d3e89de27fa39af53",
+  "sourceDigest": "acb8cdaa46cffa560e3fd6580cbf86caf33ec59094699c562c8edcf2b49ef9ac",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -580,7 +580,7 @@
     },
     {
       "path": "server/database/announcementDao.ts",
-      "sha256": "3224c7fd965881da8cd1ddbfb24ddaaef6d22bbb80a39f7caad09be0b8924a1d",
+      "sha256": "117a685bf90193588cacbc0dd94729913f488705b4140991daf1cba9cf875dac",
       "importedBy": [
         "server.ts",
         "server/ai/market.ts",
@@ -660,7 +660,7 @@
     },
     {
       "path": "server/database/impactRadarDao.ts",
-      "sha256": "a6d017258766fd4945777d66b65360286ab708d5d46d061df0c4c32377032e31",
+      "sha256": "778e3999868a9ed6b72cd6f9352a4d267bcb519c6032e35d1916b92d6694890d",
       "importedBy": [
         "server/api/impactRadar.ts",
         "server/services/impactRadarService.ts",
@@ -1207,7 +1207,7 @@
     },
     {
       "path": "server/services/calendarOutcomeRead.ts",
-      "sha256": "81a0ffdbee4f000568c61393788178fdb80eddee403865352fe280dedd021d01",
+      "sha256": "f47607125781aebd8d2e74851745e49f606d333ce1278df7bd961cc8fcdf4e11",
       "importedBy": [
         "server/services/resultsCalendarService.ts"
       ]
@@ -1234,7 +1234,7 @@
     },
     {
       "path": "server/services/companyIntelService.ts",
-      "sha256": "151931d2e12e5ceb67c6500640a185952c16d1b46752c5cc24fd13e12c7e2e6a",
+      "sha256": "faa75f90833bb33df1791a076170597c780986441ded81d15b284a7021248afe",
       "importedBy": [
         "server.ts",
         "server/api/routes.ts"
@@ -1324,7 +1324,7 @@
     },
     {
       "path": "server/services/historicalFilings.ts",
-      "sha256": "268176e2e4d903029492b725e668d15eac88d0ddc4dee423bdb4d934a0924ef1",
+      "sha256": "c21f2b199a0dc2ffc78d6660aa233e86ce0ecfded8d3fd80cb5d9de29afc1b4b",
       "importedBy": [
         "server/api/routes.ts",
         "server/services/resultHistoryRead.ts",
@@ -1335,7 +1335,7 @@
     },
     {
       "path": "server/services/impactRadarService.ts",
-      "sha256": "c933d2f436f58078c77c73b4e7d800c11be850b6475a054375443cd0b4637ca1",
+      "sha256": "9abfb18127792a4c841a77e8bf1f1468793d0330125a74b39dbf6d80b4034b98",
       "importedBy": [
         "server.ts",
         "server/api/impactRadar.ts",
@@ -1486,7 +1486,7 @@
     },
     {
       "path": "server/services/radarPriceSync.ts",
-      "sha256": "92c16916bfb0c49ad7d29c3aa7053b9719e1005b626f345b3adc2a0d319de178",
+      "sha256": "15bf905fb9576d4fbcaff7c84d299c08ebc5a5506b192d0f10020cbb75bf6efa",
       "importedBy": [
         "server.ts",
         "server/tests/radarPriceContext.test.ts"
@@ -1549,7 +1549,7 @@
     },
     {
       "path": "server/services/resultsCalendarService.ts",
-      "sha256": "72f242e6781836f60a8a12240bf807475ad3ecd87493326dbb476112a0dedacd",
+      "sha256": "a13ca277d05839a4d44eba92c85621e48c193c5fa9db26a0d0631906c7843ae4",
       "importedBy": [
         "server.ts",
         "server/ai/calendarRead.ts",
@@ -1890,7 +1890,7 @@
     },
     {
       "path": "server/tests/calendarRecovery.test.ts",
-      "sha256": "f70bc19846e2dcc585a38fcdc1913472aedfbfa47ef7077e5918aa846e7bef4d",
+      "sha256": "a8ad8f0d768497670495edaeb651e6f14b44a75af5f2413239c1cb26ae04c79d",
       "importedBy": []
     },
     {
@@ -2285,7 +2285,7 @@
     },
     {
       "path": "server/tests/radarIntakeIntegration.test.ts",
-      "sha256": "ad3c1690d02731e06a3d26131f112a1585963480d91afcc543bee4482348eb4a",
+      "sha256": "5aaa4da1eb62372df8b54493988483d0ec2f6080477c107e0019c4d2fdfee22e",
       "importedBy": []
     },
     {
@@ -2405,7 +2405,7 @@
     },
     {
       "path": "server/tests/resultEarliestTime.test.ts",
-      "sha256": "59b3ede1a53d02688f3595f6abb2cc3fb69430ec5dc8d09cd96d7c9b7db1b3a8",
+      "sha256": "a50410c7739a3a2f6b3b75d77621a212db0854b2345983b490fc046a2aa4e8ef",
       "importedBy": []
     },
     {
@@ -2415,7 +2415,7 @@
     },
     {
       "path": "server/tests/resultHistory.test.ts",
-      "sha256": "17964ec0a38510bdbb4d27f76e3f94e7bb84224d64ce1bf73081ef388f815c3b",
+      "sha256": "8499649af5f1d9e8b392ed79107a0322d02128c71eec813e8674fadd870b813b",
       "importedBy": []
     },
     {
@@ -2450,7 +2450,7 @@
     },
     {
       "path": "server/tests/sevenFixes.test.ts",
-      "sha256": "79287d2a0e690002920a0a36afc1649478b57c2d700d54bd402fda9c1d85125f",
+      "sha256": "125503fe57a6f086c5db9307aa39f7eef1dd540a456cec9a6ecb81f7ab5e3cc1",
       "importedBy": []
     },
     {
@@ -5382,7 +5382,7 @@
     },
     {
       "path": "src/version.ts",
-      "sha256": "2b4b48dae601e220991a78193fbfac924c8f792e717a13c33cba29ef3fb8aace",
+      "sha256": "ada3da2cbf8961f3daa19061f100ce41ac31c98c0b128cb2af06d2ad9d8df91a",
       "importedBy": [
         "src/components/SettingsTab.tsx",
         "src/lib/sentry.ts"
@@ -6965,7 +6965,7 @@
       "source": "server/database/announcementDao.ts",
       "target": "server/services/storageMonitor.ts",
       "kind": "dynamic",
-      "line": 728
+      "line": 754
     },
     {
       "source": "server/database/calendarHistoryDao.ts",
@@ -11117,13 +11117,13 @@
       "source": "server/tests/resultHistory.test.ts",
       "target": "src/components/QuarterlyResultsLedger.tsx",
       "kind": "dynamic",
-      "line": 126
+      "line": 128
     },
     {
       "source": "server/tests/resultHistory.test.ts",
       "target": "src/components/QuarterlyResultsLedger.tsx",
       "kind": "dynamic",
-      "line": 200
+      "line": 202
     },
     {
       "source": "server/tests/resultTelegramClassification.test.ts",
@@ -21245,31 +21245,31 @@
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 229,
+      "line": 235,
       "function": "fetch",
       "target": "BSE_FORTHCOMING_RESULTS_URL"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 301,
+      "line": 307,
       "function": "fetch",
       "target": "url"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 318,
+      "line": 324,
       "function": "fetch",
       "target": "url"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 414,
+      "line": 420,
       "function": "fetch",
       "target": "url"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 557,
+      "line": 563,
       "function": "fetch",
       "target": "url"
     },
@@ -23233,61 +23233,67 @@
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 105,
+      "line": 127,
       "function": "getSupabase()\n      .from",
       "key": "ANNOUNCEMENTS_TABLE"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 139,
+      "line": 161,
       "function": "Array.from",
       "key": "mergedMap.values()"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 206,
+      "line": 228,
       "function": "getSupabase()\n        .from",
       "key": "ANNOUNCEMENTS_TABLE"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 243,
+      "line": 265,
       "function": "getSupabase()\n      .from",
       "key": "ANNOUNCEMENTS_TABLE"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 359,
+      "line": 381,
       "function": "getSupabase()\n          .from",
       "key": "ANNOUNCEMENTS_TABLE"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 379,
+      "line": 401,
       "function": "getSupabase()\n          .from",
       "key": "ANNOUNCEMENTS_TABLE"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 538,
+      "line": 562,
       "function": "getSupabase()\n          .from",
       "key": "ANNOUNCEMENTS_TABLE"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 809,
+      "line": 835,
       "function": "getSupabase().from",
       "key": "ANNOUNCEMENTS_TABLE"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 831,
+      "line": 857,
       "function": "Array.from",
       "key": "byId.values()"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 855,
+      "line": 902,
+      "function": "getSupabase().from",
+      "key": "ANNOUNCEMENTS_TABLE"
+    },
+    {
+      "file": "server/database/announcementDao.ts",
+      "line": 940,
       "function": "getSupabase().from",
       "key": "ANNOUNCEMENTS_TABLE"
     },
@@ -23365,67 +23371,67 @@
     },
     {
       "file": "server/database/impactRadarDao.ts",
-      "line": 18,
+      "line": 25,
       "function": "getSupabase().from",
       "key": "'impact_intake_rules'"
     },
     {
       "file": "server/database/impactRadarDao.ts",
-      "line": 33,
+      "line": 40,
       "function": "getSupabase().from",
       "key": "'impact_categories'"
     },
     {
       "file": "server/database/impactRadarDao.ts",
-      "line": 51,
+      "line": 58,
       "function": "getSupabase().from",
       "key": "'announcements'"
     },
     {
       "file": "server/database/impactRadarDao.ts",
-      "line": 65,
+      "line": 75,
       "function": "getSupabase().from",
       "key": "'impact_radar_events'"
     },
     {
       "file": "server/database/impactRadarDao.ts",
-      "line": 71,
+      "line": 86,
       "function": "getSupabase().from",
       "key": "'impact_radar_events'"
     },
     {
       "file": "server/database/impactRadarDao.ts",
-      "line": 79,
+      "line": 94,
       "function": "getSupabase().from",
       "key": "'impact_radar_events'"
-    },
-    {
-      "file": "server/database/impactRadarDao.ts",
-      "line": 87,
-      "function": "getSupabase().from",
-      "key": "'impact_radar_updates'"
-    },
-    {
-      "file": "server/database/impactRadarDao.ts",
-      "line": 93,
-      "function": "getSupabase().from",
-      "key": "'impact_radar_updates'"
     },
     {
       "file": "server/database/impactRadarDao.ts",
       "line": 102,
+      "function": "getSupabase().from",
+      "key": "'impact_radar_updates'"
+    },
+    {
+      "file": "server/database/impactRadarDao.ts",
+      "line": 108,
+      "function": "getSupabase().from",
+      "key": "'impact_radar_updates'"
+    },
+    {
+      "file": "server/database/impactRadarDao.ts",
+      "line": 117,
       "function": "getSupabase().rpc",
       "key": "'publish_impact_radar_records'"
     },
     {
       "file": "server/database/impactRadarDao.ts",
-      "line": 107,
+      "line": 123,
       "function": "getSupabase().from",
       "key": "'impact_radar_follows'"
     },
     {
       "file": "server/database/impactRadarDao.ts",
-      "line": 117,
+      "line": 133,
       "function": "getSupabase().from",
       "key": "'impact_radar_follows'"
     },
@@ -23893,7 +23899,7 @@
     },
     {
       "file": "server/services/calendarOutcomeRead.ts",
-      "line": 31,
+      "line": 42,
       "function": "getSupabase().from",
       "key": "'announcements'"
     },
@@ -23947,31 +23953,31 @@
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 482,
+      "line": 488,
       "function": "Array.from",
       "key": "uniqueStockItems.values()"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 548,
+      "line": 554,
       "function": "Array.from",
       "key": "targets.entries()"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 659,
+      "line": 665,
       "function": "Array.from",
       "key": "uniqueMap.values()"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 697,
+      "line": 703,
       "function": "getSupabase()\n              .from",
       "key": "'results_calendar'"
     },
     {
       "file": "server/services/resultsCalendarService.ts",
-      "line": 1473,
+      "line": 1479,
       "function": "Array.from",
       "key": "quarterOutcomesMap.values()"
     },
@@ -26013,12 +26019,12 @@
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 795,
+      "line": 821,
       "name": "NODE_ENV"
     },
     {
       "file": "server/database/announcementDao.ts",
-      "line": 847,
+      "line": 932,
       "name": "NODE_ENV"
     },
     {
@@ -27168,22 +27174,22 @@
     },
     {
       "file": "server/tests/calendarRecovery.test.ts",
-      "line": 95,
+      "line": 99,
       "name": "SUPABASE_URL"
     },
     {
       "file": "server/tests/calendarRecovery.test.ts",
-      "line": 95,
+      "line": 99,
       "name": "SUPABASE_URL"
     },
     {
       "file": "server/tests/calendarRecovery.test.ts",
-      "line": 96,
+      "line": 100,
       "name": "SUPABASE_SERVICE_ROLE_KEY"
     },
     {
       "file": "server/tests/calendarRecovery.test.ts",
-      "line": 96,
+      "line": 100,
       "name": "SUPABASE_SERVICE_ROLE_KEY"
     },
     {
