@@ -9,7 +9,6 @@ import { NoteEditorProvider, useNoteEditor } from './context/NoteEditorContext';
 import { ToastProvider, useToast } from './context/ToastContext';
 import { customFetch } from './api';
 import { verifyProPayment, clearPendingOrderId, getPlanDisplayFromOrderId, isValidPlanId } from './utils/cashfree';
-import { useVisibilityInterval } from './hooks/useVisibilityInterval';
 import { usePaymentDialog } from './hooks/usePaymentDialog';
 import type { DesignTheme } from './types';
 
@@ -468,7 +467,7 @@ function AppContent() {
   const [health, setHealth] = useState({ bse: { status: 'unknown', latency: 0 }, telegram: { status: 'unknown', latency: 0 } });
   
   const { user, profile, authLoading, isAdmin, isPro, adminUnlocked, logout, 
-    setIsAuthModalOpen, setIsProModalOpen, setCheckoutPlanId,
+    setIsAuthModalOpen, setIsProModalOpen, setCheckoutPlanId, setIsAdminPinModalOpen,
     isAuthModalOpen, isProModalOpen, isAdminPinModalOpen,
     isPaidProActive, updateNotificationPreferences, openCheckout
   } = useAuth();
@@ -948,13 +947,9 @@ function AppContent() {
     } catch (e) {}
   };
 
-  // /api/logs requires an ACTIVE 15-minute PIN elevation (server requireAdmin),
-  // not just the admin role. Polling on role alone 403s ~4,900x/day once the
-  // elevation lapses, so gate the poll on adminUnlocked (== isElevated).
-  const isElevatedAdmin = Boolean(adminUnlocked);
-
+  // Engine logs are an on-demand view and require an active admin PIN elevation.
   const fetchLogs = async () => {
-    if (!isElevatedAdmin) return;
+    if (!adminUnlocked) return;
     try {
       const res = await customFetch('/api/logs?limit=400');
       if (res.ok) {
@@ -985,13 +980,8 @@ function AppContent() {
   }, []);
 
   useEffect(() => {
-    if (isElevatedAdmin) {
-      fetchLogs();
-    }
-  }, [isElevatedAdmin]);
-
-  // Only poll /api/logs every 20s while the admin PIN elevation is active, with visibility gating
-  useVisibilityInterval(fetchLogs, 20000, isElevatedAdmin);
+    if (activeTab === 'logs' && adminUnlocked) void fetchLogs();
+  }, [activeTab, adminUnlocked]);
 
   const handleLogout = async () => {
     await logout();
@@ -1347,7 +1337,7 @@ function AppContent() {
           <div data-screen-page="diagnostics" hidden={tabMotion.displayedKey !== 'diagnostics'}>
             <TabErrorBoundary label="diagnostics">
             <Suspense fallback={<PageSkeleton page="diagnostics" />}>
-              <AdminDiagnostics />
+              <AdminDiagnostics active={activeTab === 'diagnostics'} />
             </Suspense>
             </TabErrorBoundary>
           </div>
@@ -1356,7 +1346,17 @@ function AppContent() {
           <div data-screen-page="logs" hidden={tabMotion.displayedKey !== 'logs'}>
             <TabErrorBoundary label="logs">
             <Suspense fallback={<PageSkeleton page="logs" />}>
-              <LogsTab logs={logs} onRefreshLogs={fetchLogs} />
+              {adminUnlocked ? (
+                <LogsTab logs={logs} onRefreshLogs={fetchLogs} />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIsAdminPinModalOpen(true)}
+                  className="rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 underline dark:text-slate-300"
+                >
+                  Unlock engine logs
+                </button>
+              )}
             </Suspense>
             </TabErrorBoundary>
           </div>

@@ -8,7 +8,6 @@ import {
 import { customFetch } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
-import { useVisibilityInterval } from '../hooks/useVisibilityInterval';
 import { ActionButton } from './ui/ActionButton';
 
 function DiagnosticsMetricSkeleton() {
@@ -88,11 +87,10 @@ interface DiagnosticsData {
   };
 }
 
-export function AdminDiagnostics() {
-  const { isAdmin, adminUnlocked } = useAuth();
+export function AdminDiagnostics({ active }: { active: boolean }) {
+  const { adminUnlocked, setIsAdminPinModalOpen } = useAuth();
   const [data, setData] = useState<DiagnosticsData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [autoRefresh, setAutoRefresh] = useState(true);
   const [selectedError, setSelectedError] = useState<any | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [severityFilter, setSeverityFilter] = useState<'ALL' | 'CRITICAL' | 'ERROR'>('ALL');
@@ -146,14 +144,6 @@ export function AdminDiagnostics() {
         }
       }
 
-      // Fetch settings to get mute status
-      const settingsRes = await customFetch('/api/settings');
-      if (settingsRes.ok) {
-        const setJson = await settingsRes.json();
-        if (typeof setJson.muteCrashAlerts === 'boolean') {
-          setMuteCrashAlerts(setJson.muteCrashAlerts);
-        }
-      }
     } catch (e) {
       console.error("Failed to fetch diagnostics:", e);
     } finally {
@@ -174,12 +164,10 @@ export function AdminDiagnostics() {
   };
 
   useEffect(() => {
-    if (!isAdmin && !adminUnlocked) return;
-    fetchDiagnostics();
-    fetchApprovedRules();
-  }, [isAdmin, adminUnlocked]);
-
-  useVisibilityInterval(fetchDiagnostics, 15000, Boolean((isAdmin || adminUnlocked) && autoRefresh));
+    if (!active || !adminUnlocked) return;
+    void fetchDiagnostics();
+    void fetchApprovedRules();
+  }, [active, adminUnlocked]);
 
   const handleToggleMuteAlerts = async () => {
     try {
@@ -307,16 +295,21 @@ export function AdminDiagnostics() {
     setTimeout(() => setCopiedStack(false), 2000);
   };
 
-  if (!isAdmin && !adminUnlocked) {
+  if (!adminUnlocked) {
     return (
       <div className="p-8 max-w-4xl mx-auto text-center space-y-4">
         <div className="w-16 h-16 bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 rounded-2xl flex items-center justify-center mx-auto">
           <ShieldCheck className="w-8 h-8" />
         </div>
         <h2 className="text-xl font-bold text-slate-900 dark:text-white">Admin Access Required</h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-          System Health, Bug Diagnostics & Performance Telemetry are strictly reserved for the Administrator.
-        </p>
+        <ActionButton
+          type="button"
+          onClick={() => setIsAdminPinModalOpen(true)}
+          variant="secondary"
+          size="sm"
+        >
+          Unlock diagnostics
+        </ActionButton>
       </div>
     );
   }
@@ -361,7 +354,7 @@ export function AdminDiagnostics() {
             </span>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Real-Time Bug Diagnostics • Telegram Crash Alert Control • Whitelist Safe Bugs
+            On-demand diagnostics and Telegram crash alert controls
           </p>
         </div>
 
@@ -407,17 +400,17 @@ export function AdminDiagnostics() {
             Test Alert
           </ActionButton>
 
-          <button
-            onClick={() => setAutoRefresh(!autoRefresh)}
-            className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-xl border transition-all cursor-pointer active:scale-95 ${
-              autoRefresh 
-                ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800" 
-                : "bg-slate-100 text-slate-700 border-slate-200 dark:bg-[#2A263D] dark:text-slate-300 dark:border-[#3E3854]"
-            }`}
+          <ActionButton
+            type="button"
+            onClick={fetchDiagnostics}
+            isLoading={loading}
+            loadingText="Refreshing..."
+            variant="secondary"
+            size="sm"
+            icon={<RefreshCw className="w-3.5 h-3.5" />}
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${autoRefresh ? "animate-spin" : ""}`} />
-            <span>{autoRefresh ? "Live 15s" : "Off"}</span>
-          </button>
+            Refresh
+          </ActionButton>
 
           <button
             onClick={handleClearLogs}

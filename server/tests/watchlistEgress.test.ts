@@ -11,10 +11,12 @@ function harness(size=2) {
   const rows=new Map<string,any>();
   for(let i=0;i<size;i++) rows.set(`owner-${String(i).padStart(4,'0')}`,{uid:`owner-${String(i).padStart(4,'0')}`,revision:0,updated_at:'initial',lists:[{id:'list',name:'Saved',is_active:1,items:[{symbol:i===0?'TCS':'INFY',priority:i===0?'HIGH':'MEDIUM',scripCode:i===0?'532540':'500209'}]}]});
   const queries:any[]=[];
+  let quotaRestricted=false;
   const from=()=>{
     let columns='*',uids:string[]|undefined,uid:string|undefined,after='',limit=1000,patch:any,expected:number|undefined;
     const execute=()=>{
       queries.push({columns,uids,uid,after,patch});
+      if(quotaRestricted)return {data:[],error:new Error('quota restricted'),status:402};
       if(patch){const row=rows.get(uid!);if(!row||row.revision!==expected)return {data:[],error:null};rows.set(uid!,{...row,...structuredClone(patch),revision:row.revision+1});return {data:[{revision:row.revision+1}],error:null};}
       let selected=[...rows.values()].filter(row=>(!uid||row.uid===uid)&&(!uids||uids.includes(row.uid))&&row.uid.localeCompare(after)>0).sort((a,b)=>a.uid.localeCompare(b.uid)).slice(0,limit);
       selected=selected.map(row=>columns==='*'?row:Object.fromEntries(columns.split(',').map(c=>[c.trim(),row[c.trim()]])));
@@ -38,7 +40,7 @@ function harness(size=2) {
   const source=readFileSync(new URL('../database/watchlistDao.ts',import.meta.url),'utf8');
   const code=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
   vm.runInNewContext(code,{exports,require:(p:string)=>{assert.ok(deps[p],`unmocked dependency ${p}`);return deps[p]},Date:Clock,AbortSignal,structuredClone,process:{env:{}},console:{log(){},info(){},warn(){}}});
-  return {dao:exports,rows,queries,advance:(ms:number)=>{now+=ms}};
+  return {dao:exports,rows,queries,advance:(ms:number)=>{now+=ms},setQuotaRestricted:(value:boolean)=>{quotaRestricted=value}};
 }
 const plain=(value:any)=>JSON.parse(JSON.stringify(value));
 const bodies=(h:ReturnType<typeof harness>)=>h.queries.filter(q=>q.columns.includes('lists'));
@@ -107,4 +109,23 @@ test('keyset pagination follows database collation across mixed-case owner IDs',
   });
   assert.equal((await h.dao.getCalendarWatchlistStocks()).length,1001);
   assert.equal(h.queries.filter(q=>!q.columns.includes('lists')).length,3);
+});
+
+test('quota denial shares a cooldown across aggregate and owner reads without blocking durable mutations',async()=>{
+  const h=harness();
+  await h.dao.getActiveWatchlistSymbols('all',{noCreate:true});
+  h.advance(60_000);
+  h.setQuotaRestricted(true);
+  const before=h.queries.length;
+  await h.dao.getActiveWatchlistSymbols('all',{noCreate:true});
+  assert.equal(h.queries.length,before+1,'aggregate failing over must not fan out');
+  assert.equal((await h.dao.getAllWatchlists('owner-0000',{noCreate:true}))[0].name,'Saved');
+  await h.dao.getCalendarWatchlistStocks();
+  assert.equal(h.queries.length,before+1,'known owner reads use the existing snapshot fallback');
+  await assert.rejects(h.dao.renameWatchlist('list','Changed','owner-0000'));
+  assert.equal(h.queries.length,before+2,'durable mutation still attempts its fresh read');
+  h.setQuotaRestricted(false);
+  h.advance(60_000);
+  assert.deepEqual(plain(await h.dao.getActiveWatchlistSymbols('all',{noCreate:true})),['TCS','INFY']);
+  assert.equal(h.queries.length,before+3,'metadata probing resumes after the cooldown');
 });
