@@ -6,7 +6,7 @@ import { UserAvatar } from './ui/UserAvatar';
 import '../styles/mobile-repairs.css';
 import { RichIcon } from './ui/RichVisual';
 import React, { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { 
   Activity, Settings, List, Star,
   CalendarDays, Zap, Sparkles, Scale,
@@ -37,8 +37,6 @@ import { twMerge } from 'tailwind-merge';
 import { 
   springSnappy, 
   springMorph, 
-  springBouncy,
-  springSmoothPill,
   tabIconBounceVariants,
   buttonTap, 
   subtleHover 
@@ -104,6 +102,7 @@ export function Layout({
   isRunning = true,
   onToggleEngine
 }: LayoutProps) {
+  const reduceMotion = useReducedMotion();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [helpModalOpen, setHelpModalOpen] = useState(false);
@@ -426,7 +425,7 @@ export function Layout({
                 transition={springSnappy}
                 onClick={() => setCommandPaletteOpen(true)}
                 aria-label="Search companies, filings, commands (Command + K)"
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-[#252233] hover:bg-slate-200 dark:hover:bg-[#2F2B40] border border-slate-200/90 dark:border-[#352F48] text-slate-700 dark:text-slate-200 cursor-pointer select-none shadow-xs shrink-0 min-h-[36px] sm:min-h-[32px]"
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-[#252233] hover:bg-slate-200 dark:hover:bg-[#2F2B40] border border-slate-200/90 dark:border-[#352F48] text-slate-700 dark:text-slate-200 cursor-pointer select-none shadow-xs shrink-0 min-w-11 min-h-11 sm:min-w-0 sm:min-h-[32px] pointer-coarse:min-w-11 pointer-coarse:min-h-11"
                 title="Search companies & commands (⌘K)"
               >
                 <Search size={14} className="text-emerald-500 shrink-0" />
@@ -452,7 +451,7 @@ export function Layout({
                 transition={springSnappy}
                 onClick={() => setNotificationInboxOpen(true)}
                 aria-label={unreadNotifCount > 0 ? `In-app notifications (${unreadNotifCount} unread)` : "In-app notifications"}
-                className="relative flex items-center justify-center p-2 sm:px-2.5 sm:py-1 rounded-lg bg-slate-100 dark:bg-[#252233] hover:bg-slate-200 dark:hover:bg-[#2F2B40] border border-slate-200/90 dark:border-[#352F48] text-slate-700 dark:text-slate-200 cursor-pointer select-none shadow-xs shrink-0 min-h-[36px] sm:min-h-[32px] min-w-[36px] sm:min-w-auto"
+                className="relative flex items-center justify-center p-2 sm:px-2.5 sm:py-1 rounded-lg bg-slate-100 dark:bg-[#252233] hover:bg-slate-200 dark:hover:bg-[#2F2B40] border border-slate-200/90 dark:border-[#352F48] text-slate-700 dark:text-slate-200 cursor-pointer select-none shadow-xs shrink-0 min-h-11 sm:min-h-[32px] min-w-11 sm:min-w-auto pointer-coarse:min-w-11 pointer-coarse:min-h-11"
                 title="In-App Notifications & Alerts"
               >
                 <Bell size={15} className="text-slate-600 dark:text-slate-300 shrink-0" />
@@ -511,7 +510,7 @@ export function Layout({
                 onClick={() => { triggerNavigationHaptic(); onTabChange('settings'); }}
                 aria-pressed={activeTab === 'settings'}
                 aria-label="Open Settings and Preferences"
-                className="shell-settings-button flex items-center justify-center p-2 sm:p-1.5 rounded-lg bg-slate-100 dark:bg-[#252233] hover:bg-slate-200 dark:hover:bg-[#2F2B40] border border-slate-200/90 dark:border-[#352F48] text-slate-700 dark:text-slate-200 cursor-pointer select-none shadow-xs shrink-0 min-w-[44px] min-h-[44px] sm:min-w-[32px] sm:min-h-[32px]"
+                className="shell-settings-button flex items-center justify-center p-2 sm:p-1.5 rounded-lg bg-slate-100 dark:bg-[#252233] hover:bg-slate-200 dark:hover:bg-[#2F2B40] border border-slate-200/90 dark:border-[#352F48] text-slate-700 dark:text-slate-200 cursor-pointer select-none shadow-xs shrink-0 min-w-[44px] min-h-[44px] sm:min-w-[32px] sm:min-h-[32px] pointer-coarse:min-w-11 pointer-coarse:min-h-11"
                 title="Open Settings & Preferences"
               >
                 <Settings size={15} className="text-slate-600 dark:text-slate-300" />
@@ -541,7 +540,7 @@ export function Layout({
                 onClick={() => (user || profile ? setProfileModalOpen(true) : setIsAuthModalOpen(true))}
                 aria-label={user || profile ? `User: ${profile?.displayName || 'Guest User'}` : 'Guest Profile & Sign In'}
                 className={cn(
-                  "relative w-8.5 h-8.5 sm:w-8 sm:h-8 rounded-full flex items-center justify-center cursor-pointer select-none shrink-0 transition-all",
+                  "relative w-11 h-11 sm:w-8 sm:h-8 pointer-coarse:w-11 pointer-coarse:h-11 rounded-full flex items-center justify-center cursor-pointer select-none shrink-0 transition-all",
                   isPro ? "p-[2px] bg-gradient-to-tr from-emerald-500 via-teal-500 to-indigo-500 shadow-xs hover:shadow-md" : "p-[2px] bg-slate-200 dark:bg-slate-700"
                 )}
                 title={user || profile ? `${profile?.displayName || 'User'} (${isAdmin ? 'Admin' : isPro ? 'Pro' : 'Guest'})` : 'Guest / Sign In'}
@@ -734,27 +733,25 @@ export function Layout({
 
       {/* Mobile bottom navigation with active indicator */}
       <nav aria-label="Mobile Navigation" className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#1A1926]/95 backdrop-blur-xl border-t border-slate-200/90 dark:border-[#2D283E] py-1 px-1 sm:px-2 safe-area-bottom shadow-[0_-4px_20px_rgba(0,0,0,0.25)]">
-        <div className="flex items-center justify-around gap-1">
+        <div className="flex items-stretch justify-around gap-1">
           {mobileNavItems.map((item) => {
             const isActive = activeTab === item.id;
             return (
               <motion.button
                 key={item.id}
-                whileTap={isActive ? undefined : { scale: 0.88 }}
-                transition={springBouncy}
+                whileTap={isActive || reduceMotion ? undefined : buttonTap}
+                transition={springSnappy}
                 onClick={() => handleTabClick(item.id)}
                 aria-label={item.label}
                 aria-current={isActive ? 'page' : undefined}
                 className={cn(
-                  "relative flex flex-col items-center justify-center flex-1 min-h-[48px] py-1 px-0.5 rounded-xl select-none touch-manipulation",
+                  "relative flex flex-col items-center justify-center flex-1 min-h-[64px] py-1 px-0.5 rounded-xl select-none touch-manipulation",
                   isActive
                     ? "text-slate-900 dark:text-white font-bold cursor-default"
                     : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium cursor-pointer"
                 )}
               >
-                <motion.div 
-                  animate={isActive ? { scale: 1.05 } : { scale: 1 }}
-                  transition={springSmoothPill}
+                <div
                   className={cn(
                     "p-1.5 rounded-xl transition-all relative flex items-center justify-center min-w-[34px] min-h-[34px] pointer-events-none",
                     isActive && "rich-nav-surface rich-nav-label-active"
@@ -762,22 +759,21 @@ export function Layout({
                 >
                   {renderNavIcon(item.id, isActive)}
                   {item.id === 'dashboard' && isRunning && (
-                    <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                    <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-emerald-500 motion-safe:animate-ping" />
                   )}
                   {item.badge && item.id !== 'dashboard' && (
                     <span className="absolute -top-1 -right-1 text-[8px] font-bold px-1 rounded-full text-white leading-tight bg-slate-700 dark:bg-[#3D3754]">
                       {item.badge}
                     </span>
                   )}
-                </motion.div>
+                </div>
                 <span className="text-[11px] font-medium tracking-tight mt-0.5 whitespace-nowrap pointer-events-none">
                   {item.shortLabel || item.label}
                 </span>
-                {isActive && (
-                  <span
-                    className="rich-nav-active-indicator w-5 h-1 rounded-full mt-0.5 pointer-events-none"
-                  />
-                )}
+                <span
+                  aria-hidden="true"
+                  className={cn("rich-nav-active-indicator w-5 h-1 rounded-full mt-0.5 pointer-events-none", !isActive && "invisible")}
+                />
               </motion.button>
             );
           })}

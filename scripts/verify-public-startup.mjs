@@ -34,6 +34,22 @@ try{
   assert.equal(earlyLanding,true,'landing discovery precedes main-bundle completion');
   assert.equal(requests.some(url=>url.endsWith('/'+examples)),false,'closed demos stay off the network');
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+  const signIn = page.getByRole('button',{name:'Sign In',exact:true});
+  await signIn.focus();
+  await signIn.click();
+  const authDialog = page.getByRole('dialog',{name:'Login to your account'});
+  await authDialog.waitFor();
+  assert.equal(await authDialog.evaluate(el => el.contains(document.activeElement)),true);
+  assert.equal(await authDialog.getByRole('textbox',{name:'Email or username'}).evaluate(el => getComputedStyle(el).fontSize),'16px');
+  const closeBox = await authDialog.getByRole('button',{name:'Close',exact:true}).boundingBox();
+  assert.ok(closeBox && closeBox.height >= 44 && closeBox.width >= 44);
+  for (let index = 0; index < 14; index++) {
+   await page.keyboard.press('Tab');
+   assert.equal(await authDialog.evaluate(el => el.contains(document.activeElement)),true);
+  }
+  await page.keyboard.press('Escape');
+  await authDialog.waitFor({state:'hidden'});
+  assert.equal(await signIn.evaluate(el => el === document.activeElement),true);
   await page.getByText('Preview the calendar and filing analysis',{exact:true}).click();
   if(failExamples){
    await page.getByRole('button',{name:'Reload preview',exact:true}).waitFor();
@@ -45,9 +61,7 @@ try{
   }
   await page.getByRole('heading',{name:'Explore Board Meetings & Catalysts',exact:true}).waitFor();
   assert.equal(requests.some(url=>url.endsWith('/'+examples)),true,'opening details loads the demo chunk');
-  await page.getByRole('button',{name:'Sign In',exact:true}).click();
-  await page.locator('[role="dialog"][aria-labelledby="auth-modal-title"]').waitFor();
-  console.log(JSON.stringify({width,earlyLanding:true,closedDemosDeferred:true,openDemosLoaded:true,signInDialog:true,noOverflow:true}));
+  console.log(JSON.stringify({width,earlyLanding:true,closedDemosDeferred:true,openDemosLoaded:true,signInDialog:true,dialogFocusRestored:true,noOverflow:true}));
   await context.close();
  }
 }finally{await browser?.close();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}

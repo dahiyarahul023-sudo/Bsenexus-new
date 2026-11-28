@@ -14,63 +14,11 @@ interface ModernAuthCardProps {
   onSuccess?: () => void;
 }
 
-// ---- Wavy hero animation (pure CSS, no external assets) ----
-const WAVY_CSS = `
-@keyframes wavy-slide {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
-}
-`;
-
-function WavyHero() {
+function AuthBrand() {
   return (
-    <div
-      className="relative overflow-hidden shrink-0 h-[168px] sm:h-[188px]"
-      style={{
-        background:
-          'radial-gradient(ellipse at 50% 18%, #eaf5fd 0%, #cfe7fa 45%, #55acee 100%)',
-      }}
-    >
-      <style>{WAVY_CSS}</style>
-      {/* Brand mark */}
-      <div className="absolute inset-x-0 top-0 z-10 flex flex-col items-center pt-6 sm:pt-7">
-        <div className="p-2 rounded-2xl bg-white/85 shadow-sm">
-          <BseNexusLogo className="w-7 h-7" />
-        </div>
-        <p className="mt-2 text-[11px] font-black tracking-[0.3em] text-slate-700">
-          BSENEXUS
-        </p>
-        <p className="text-[10px] text-slate-500 mt-0.5">
-          Capital Markets Intelligence
-        </p>
-      </div>
-      {/* Back wave (slower, translucent) */}
-      <svg
-        className="absolute bottom-0 left-0 h-[84px] w-[200%] opacity-60"
-        style={{ animation: 'wavy-slide 11s linear infinite' }}
-        viewBox="0 0 1440 84"
-        preserveAspectRatio="none"
-        aria-hidden="true"
-      >
-        <path
-          fill="#ffffff"
-          fillOpacity="0.55"
-          d="M0,46 C240,86 480,8 720,46 C960,86 1200,8 1440,46 L1440,84 L0,84 Z"
-        />
-      </svg>
-      {/* Front wave (faster, solid — melts into the white form) */}
-      <svg
-        className="absolute bottom-0 left-0 h-[62px] w-[200%]"
-        style={{ animation: 'wavy-slide 7s linear infinite' }}
-        viewBox="0 0 1440 62"
-        preserveAspectRatio="none"
-        aria-hidden="true"
-      >
-        <path
-          fill="#ffffff"
-          d="M0,34 C240,62 480,8 720,34 C960,62 1200,8 1440,34 L1440,62 L0,62 Z"
-        />
-      </svg>
+    <div className="flex items-center gap-2.5 bg-slate-100 px-5 py-3 pr-16 sm:px-8">
+      <BseNexusLogo className="h-7 w-7 shrink-0" />
+      <span className="text-sm font-bold tracking-tight text-slate-800">BSE Nexus</span>
     </div>
   );
 }
@@ -88,11 +36,11 @@ function GoogleIcon({ className = 'w-5 h-5' }: { className?: string }) {
 
 // Shared field / button styling (wavy.ai card language)
 const inputCls =
-  'w-full h-[52px] px-4 rounded-[14px] border border-slate-200 bg-white text-[15px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition';
+  'w-full h-[52px] px-4 rounded-[14px] border border-slate-200 bg-white text-base text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition';
 const submitCls =
-  'w-full h-[52px] rounded-[14px] bg-[#1c1917] hover:bg-black text-white font-semibold text-[15px] flex items-center justify-center gap-2 transition active:scale-[0.98] disabled:opacity-60 cursor-pointer focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2';
+  'w-full h-[52px] rounded-[14px] bg-[#1c1917] hover:bg-black text-white font-semibold text-[15px] flex items-center justify-center gap-2 transition motion-safe:active:scale-[0.98] disabled:opacity-60 cursor-pointer focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2';
 const socialCls =
-  'h-[52px] rounded-[14px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm flex items-center justify-center gap-2 transition active:scale-[0.98] disabled:opacity-60 cursor-pointer focus:outline-none focus:ring-2 focus:ring-slate-300';
+  'h-[52px] rounded-[14px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm flex items-center justify-center gap-2 transition motion-safe:active:scale-[0.98] disabled:opacity-60 cursor-pointer focus:outline-none focus:ring-2 focus:ring-slate-300';
 
 function OrDivider() {
   return (
@@ -292,7 +240,7 @@ export function ModernAuthCard({
     const currentHost = unauthorizedDomain || (typeof window !== 'undefined' ? window.location.hostname : '');
 
     return (
-      <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-[14px] font-medium space-y-2.5">
+      <div role="alert" className="p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-[14px] font-medium space-y-2.5">
         <div className="flex items-start gap-2">
           <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
           <p className="leading-relaxed font-semibold text-rose-900">{error}</p>
@@ -494,7 +442,7 @@ export function ModernAuthCard({
   const isSignIn = authMode === 'signin';
 
   return (
-    <div className="relative w-full max-w-[500px] mx-auto bg-white rounded-[28px] shadow-[0_25px_60px_-15px_rgba(30,80,160,0.28)] overflow-hidden max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain">
+    <div className={mode === 'modal' ? 'relative w-full bg-white' : 'relative mx-auto w-full max-w-[500px] overflow-hidden rounded-[24px] bg-white shadow-xl'}>
 
       {/* Close button (modal mode) */}
       {mode === 'modal' && (
@@ -502,29 +450,27 @@ export function ModernAuthCard({
           type="button"
           onClick={handleClose}
           aria-label="Close"
-          className="absolute top-3 right-3 z-30 p-2 rounded-full bg-white/70 hover:bg-white text-slate-600 hover:text-slate-900 shadow-sm transition-colors cursor-pointer"
+          className="absolute right-1.5 top-1 z-10 flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-white hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-slate-700"
         >
           <X className="w-4 h-4" />
         </button>
       )}
 
-      {/* Animated wave hero */}
-      <WavyHero />
+      <AuthBrand />
 
       {/* Form body */}
-      <div className="px-5 sm:px-8 pt-4 sm:pt-5 pb-6 sm:pb-8">
-        <h3 className="text-center text-lg font-bold text-slate-900">
+      <div className="px-4 pb-5 pt-3 sm:px-8 sm:pb-8 sm:pt-5">
+        <h2 id={mode === 'modal' ? 'auth-modal-title' : undefined} className="text-center text-lg font-bold text-slate-900">
           {isSignIn ? 'Login to your account' : 'Create your account'}
-        </h3>
+        </h2>
 
         {/* Sign in / Create account tabs */}
-        <div className="grid grid-cols-2 gap-1 p-1 rounded-2xl bg-slate-100 mt-4 mb-5" role="tablist" aria-label="Authentication mode">
+        <div className="grid grid-cols-2 gap-1 p-1 rounded-2xl bg-slate-100 mt-3 mb-3" role="group" aria-label="Authentication mode">
           <button
             type="button"
-            role="tab"
-            aria-selected={isSignIn}
+            aria-pressed={isSignIn}
             onClick={() => { setAuthMode('signin'); setError(null); }}
-            className={`py-2 rounded-xl text-sm transition-all cursor-pointer ${
+            className={`min-h-11 py-2 rounded-xl text-sm transition-colors cursor-pointer ${
               isSignIn
                 ? 'bg-white text-slate-900 shadow-sm font-bold'
                 : 'text-slate-500 hover:text-slate-800 font-medium'
@@ -534,10 +480,9 @@ export function ModernAuthCard({
           </button>
           <button
             type="button"
-            role="tab"
-            aria-selected={!isSignIn}
+            aria-pressed={!isSignIn}
             onClick={() => { setAuthMode('signup'); setError(null); }}
-            className={`py-2 rounded-xl text-sm transition-all cursor-pointer ${
+            className={`min-h-11 py-2 rounded-xl text-sm transition-colors cursor-pointer ${
               !isSignIn
                 ? 'bg-white text-slate-900 shadow-sm font-bold'
                 : 'text-slate-500 hover:text-slate-800 font-medium'
@@ -555,6 +500,10 @@ export function ModernAuthCard({
               type="text"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              name="username"
+              autoComplete="username"
+              autoCapitalize="none"
+              spellCheck={false}
               placeholder="Email or username"
               aria-label="Email or username"
               className={inputCls}
@@ -566,6 +515,8 @@ export function ModernAuthCard({
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                name="password"
+                autoComplete="current-password"
                 placeholder="Password"
                 aria-label="Password"
                 className={`${inputCls} pr-12`}
@@ -575,7 +526,7 @@ export function ModernAuthCard({
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 cursor-pointer items-center justify-center rounded-lg text-slate-500 hover:text-slate-700 focus-visible:outline-2 focus-visible:outline-slate-700"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -596,7 +547,7 @@ export function ModernAuthCard({
                 onClick={() => setError('Please sign in using Google or enter your registered account credentials.')}
                 className="text-slate-500 hover:text-slate-800 cursor-pointer"
               >
-                Forgot password?
+                Sign-in help
               </button>
             </div>
 
@@ -656,6 +607,8 @@ export function ModernAuthCard({
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              name="name"
+              autoComplete="name"
               placeholder="Full name"
               aria-label="Full name"
               className={inputCls}
@@ -665,6 +618,10 @@ export function ModernAuthCard({
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              name="email"
+              autoComplete="email"
+              autoCapitalize="none"
+              spellCheck={false}
               placeholder="Email address"
               aria-label="Email address"
               className={inputCls}
@@ -678,6 +635,10 @@ export function ModernAuthCard({
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                  name="username"
+                  autoComplete="username"
+                  autoCapitalize="none"
+                  spellCheck={false}
                   placeholder="username"
                   aria-label="Username"
                   className={`${inputCls} pl-9`}
@@ -715,6 +676,8 @@ export function ModernAuthCard({
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                name="password"
+                autoComplete="new-password"
                 placeholder="Password (8+ characters)"
                 aria-label="Password"
                 className={`${inputCls} pr-12`}
@@ -724,7 +687,7 @@ export function ModernAuthCard({
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 cursor-pointer items-center justify-center rounded-lg text-slate-500 hover:text-slate-700 focus-visible:outline-2 focus-visible:outline-slate-700"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
