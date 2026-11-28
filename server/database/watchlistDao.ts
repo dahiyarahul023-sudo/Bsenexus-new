@@ -9,6 +9,12 @@ import { addLog } from './logDao.js';
 import { VersionedSnapshot, type SnapshotRow, type SnapshotVersion } from '../utils/versionedSnapshot.js';
 
 const WATCHLISTS_TABLE = 'user_watchlists';
+const WATCHLIST_QUOTA_COOLDOWN_MS = 60_000;
+let watchlistQuotaRetryAt = 0;
+
+function noteWatchlistQuotaStatus(status: number) {
+  if (status === 402) watchlistQuotaRetryAt = Date.now() + WATCHLIST_QUOTA_COOLDOWN_MS;
+}
 const mutationContext = new AsyncLocalStorage<{uid:string; revision?:number|null}>();
 const durableMutation = (uid:string) => mutationContext.getStore()?.uid === uid;
 class WatchlistConflict extends Error {}
@@ -27,11 +33,12 @@ async function upsertWatchlistsQuiet(uid: string, lists: any[]): Promise<void> {
 
 /** Read one user's lists from Supabase; null when no row / no lists. */
 async function readWatchlistsRow(uid: string): Promise<any[] | null> {
-  const { data, error } = await getSupabase()
+  const { data, error, status } = await getSupabase()
     .from(WATCHLISTS_TABLE)
     .select(connectionsEnabled() ? 'lists,revision' : 'lists')
     .eq('uid', uid)
     .maybeSingle();
+  noteWatchlistQuotaStatus(status);
   if (error) throw error;
   const row=data as unknown as {lists:any[];revision?:number}|null;
   const context=mutationContext.getStore();
@@ -241,7 +248,8 @@ const globalWatchlistSnapshot = new VersionedSnapshot<any[]>({
       let query = getSupabase().from(WATCHLISTS_TABLE).select('uid,revision,updated_at')
         .order('uid', { ascending: true }).limit(500);
       if (after) query = query.gt('uid', after);
-      const { data, error } = await query.abortSignal(deadline);
+      const { data, error, status } = await query.abortSignal(deadline);
+      noteWatchlistQuotaStatus(status);
       if (error) throw error;
       if (!Array.isArray(data)) throw new Error('Watchlist inventory unavailable');
       versions.push(...data.map(row => ({ id: row.uid, version: watchlistVersion(row) })));
@@ -256,8 +264,9 @@ const globalWatchlistSnapshot = new VersionedSnapshot<any[]>({
     const rows: SnapshotRow<any[]>[] = [];
     const deadline = AbortSignal.timeout(12_000);
     for (let offset = 0; offset < ids.length; offset += 50) {
-      const { data, error } = await getSupabase().from(WATCHLISTS_TABLE)
+      const { data, error, status } = await getSupabase().from(WATCHLISTS_TABLE)
         .select('uid,lists,revision,updated_at').in('uid', ids.slice(offset, offset + 50)).abortSignal(deadline);
+      noteWatchlistQuotaStatus(status);
       if (error) throw error;
       if (!Array.isArray(data)) throw new Error('Watchlist bodies unavailable');
       rows.push(...data.map(row => ({ id: row.uid, version: watchlistVersion(row),
@@ -268,6 +277,7 @@ const globalWatchlistSnapshot = new VersionedSnapshot<any[]>({
 });
 
 async function getCloudWatchlistRows(): Promise<{ lists: any[] }[]> {
+  if (Date.now() < watchlistQuotaRetryAt) throw new Error('Watchlist cloud reads are cooling down after a quota restriction');
   let batch = await globalWatchlistSnapshot.get();
   while (!globalWatchlistSnapshot.isCurrent(batch)) batch = await globalWatchlistSnapshot.get();
   const { rows, checkedAt } = batch;
@@ -465,8 +475,15 @@ export async function getAllWatchlists(userId?: string, opts?: GetWatchlistsOpti
 
   const localFile = getWatchlistFilename(uid);
 
+  // Ordinary reads use the existing outage fallback during a quota restriction.
+  // Durable mutations above still require a fresh read and revision check.
+  const quotaRestricted = now < watchlistQuotaRetryAt;
+  if (quotaRestricted && userWatchlistsCache[uid] !== undefined) {
+    return JSON.parse(JSON.stringify(userWatchlistsCache[uid].lists));
+  }
+
   // 2. For logged-in users and admin, Supabase is the Single Source of Truth
-  if (uid !== 'guest' && isSupabaseConfigured()) {
+  if (!quotaRestricted && uid !== 'guest' && isSupabaseConfigured()) {
     try {
       const cloudLists = await readWatchlistsRow(uid);
       // Connected AI and website writers share CAS. Reads never upload old local

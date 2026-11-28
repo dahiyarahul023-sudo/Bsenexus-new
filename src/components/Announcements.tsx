@@ -761,18 +761,19 @@ export function Announcements({
     openIntelModal({ scripCode, symbol: symbol || companyName, companyName: companyName || symbol });
   };
 
-  // Real-time 12s background polling with visibility gating and immediate resume on active
+  // Refresh immediately when the feed opens, then every 12s while it is active.
   useEffect(() => {
-    fetchData(true);
+    if (!isActive) return;
+    void fetchData(true);
     return () => {
       feedRequestSequence.current++;
       feedRequestController.current?.abort();
     };
-  }, []);
+  }, [isActive]);
 
   useVisibilityInterval(() => {
     fetchData(false);
-  }, 12000);
+  }, 12000, isActive);
 
   // Prefetch an announcement's detail data on hover intent so the detail view
   // opens instantly. Skips ids already fresh/prefetched.

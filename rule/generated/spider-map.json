@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "665ca85a1c21fa1093dc1d14c4adba3929809ff1f9d460e01d7dab37f44aa368",
+  "sourceDigest": "ced2b7d03ad01e2ceeaa3a6e0dd327d8b02f67eeb08018cf94302ed821a71ab7",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -959,7 +959,7 @@
     },
     {
       "path": "server/database/watchlistDao.ts",
-      "sha256": "d7ee42a1f313aa4764196cd7366c68ddff7fc830293991062f656f9309179d33",
+      "sha256": "885603b57018840cf6b63093c1bdf324aec3033a1365cf214a42bbcf6d2ef3ad",
       "importedBy": [
         "server.ts",
         "server/ai/tools.ts",
@@ -2540,7 +2540,7 @@
     },
     {
       "path": "server/tests/watchlistEgress.test.ts",
-      "sha256": "217cd96f1112ebc3c859dfd516c779f7ba4c204d6d6684090acc1dc5142b08b0",
+      "sha256": "66a6cb000a2614d6077ef8a1d0dc2a711aaf978c6e00c57953af1cdd4bc515d4",
       "importedBy": []
     },
     {
@@ -2959,7 +2959,7 @@
     },
     {
       "path": "src/components/Announcements.tsx",
-      "sha256": "53bb957acd902374dfac68960c0633e45b0c5e985eddcb9dbd7b8d957fe3e74a",
+      "sha256": "37f27b6a863445d3dd3aa115371ed188bc49c938a9ceaaacdc65fb8ce7e09f17",
       "importedBy": [
         "src/App.tsx",
         "src/components/Layout.tsx"
@@ -22001,13 +22001,13 @@
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 783,
+      "line": 784,
       "function": "customFetch",
       "target": "`/api/announcements/${encodeURIComponent(String(id))}`"
     },
     {
       "file": "src/components/Announcements.tsx",
-      "line": 798,
+      "line": 799,
       "function": "customFetch",
       "target": "'/api/announcements?limit=300'"
     },
@@ -23791,49 +23791,49 @@
     },
     {
       "file": "server/database/watchlistDao.ts",
-      "line": 20,
+      "line": 26,
       "function": "getSupabase()\n      .from",
       "key": "WATCHLISTS_TABLE"
     },
     {
       "file": "server/database/watchlistDao.ts",
-      "line": 30,
+      "line": 267,
       "function": "getSupabase()\n    .from",
       "key": "WATCHLISTS_TABLE"
     },
     {
       "file": "server/database/watchlistDao.ts",
-      "line": 241,
+      "line": 248,
       "function": "getSupabase().from",
       "key": "WATCHLISTS_TABLE"
     },
     {
       "file": "server/database/watchlistDao.ts",
-      "line": 259,
+      "line": 267,
       "function": "getSupabase().from",
       "key": "WATCHLISTS_TABLE"
     },
     {
       "file": "server/database/watchlistDao.ts",
-      "line": 397,
+      "line": 407,
       "function": "getSupabase().from",
       "key": "WATCHLISTS_TABLE"
     },
     {
       "file": "server/database/watchlistDao.ts",
-      "line": 398,
+      "line": 408,
       "function": "getSupabase().from",
       "key": "WATCHLISTS_TABLE"
     },
     {
       "file": "server/database/watchlistDao.ts",
-      "line": 420,
+      "line": 430,
       "function": "getSupabase()\n        .from",
       "key": "WATCHLISTS_TABLE"
     },
     {
       "file": "server/database/watchlistDao.ts",
-      "line": 593,
+      "line": 610,
       "function": "getSupabase().from",
       "key": "WATCHLISTS_TABLE"
     },
@@ -26157,22 +26157,22 @@
     },
     {
       "file": "server/database/watchlistDao.ts",
-      "line": 319,
+      "line": 329,
       "name": "LEGACY_ADMIN_UID"
     },
     {
       "file": "server/database/watchlistDao.ts",
-      "line": 319,
+      "line": 329,
       "name": "LEGACY_ADMIN_UID"
     },
     {
       "file": "server/database/watchlistDao.ts",
-      "line": 500,
+      "line": 517,
       "name": "LEGACY_ADMIN_UID"
     },
     {
       "file": "server/database/watchlistDao.ts",
-      "line": 584,
+      "line": 601,
       "name": "NODE_ENV"
     },
     {
