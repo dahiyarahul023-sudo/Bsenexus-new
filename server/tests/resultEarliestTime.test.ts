@@ -36,6 +36,7 @@ function loadService(rows: any[]) {
       if (path.endsWith('/circuitBreaker.js')) return { externalFeedsCircuitBreaker: { execute: async (run: any) => run() } };
       if (path.endsWith('/announcementDao.js')) return {
         getAnnouncementsForScrip: async () => rows,
+        getCachedAnnouncementsForScrip: async () => rows,
         getRecentAnnouncements: async () => rows,
       };
       return {};

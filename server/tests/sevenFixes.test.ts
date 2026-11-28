@@ -88,7 +88,7 @@ for (const [symbol, scrip] of targets) {
           getResultsCalendarSnapshot: async () => ({ items: [{ scripCode: '500001', symbol, status: 'UPCOMING', daysLeft: 2, meetingDate: '2099-01-01' }] }),
           autoFetchDeepHistoricalResults: async () => false,
         };
-        if (path.endsWith('/announcementDao.js')) return { getRecentAnnouncements: async () => [wrong, missing, good], getAnnouncementsForScrip: async () => [wrong] };
+        if (path.endsWith('/announcementDao.js')) return { getRecentAnnouncements: async () => [wrong, missing, good], getAnnouncementsForScrip: async () => [wrong], getCachedAnnouncementsForScrip: async () => [wrong] };
         if (path.endsWith('/timelineClassifier.js')) return { classifyMaterialEvent: () => null };
         if (path.endsWith('/helpers.js')) return { parseBseDate: () => 0 };
         if (path.endsWith('/stockResolver.js')) return { getAllStockEntries: () => [] };
