@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "7ec6bf1b2ab8eac59febcf0837016fb0bd39eaa0e7f4ccbff207715a66e40230",
+  "sourceDigest": "ebc50719bc5d39ce38887993faae1f277938cb2bfbef209afbd1c3645766f68e",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -1880,7 +1880,7 @@
     },
     {
       "path": "server/tests/calendarNavigation.test.ts",
-      "sha256": "6cceef61c56ba4e0655db15775470691c1e0625a9d1c2b09209b1731f5cdeeb9",
+      "sha256": "3aec4c228f0f3d37e2a31fa4165e68a07af19f04e893244040dda28c07290dbd",
       "importedBy": []
     },
     {
@@ -24067,7 +24067,7 @@
     },
     {
       "file": "server/tests/calendarNavigation.test.ts",
-      "line": 74,
+      "line": 75,
       "function": "Array.from",
       "key": "{ length: 60 }"
     },
