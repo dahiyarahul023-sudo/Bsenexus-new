@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "f8b4a365797f6f461b2ae413afc0dc32c935621a88588e5fb446c7a325525c89",
+  "sourceDigest": "9092b6b6cd2444c076eaec89e1c2d1c07e5525710a928121d402381615d4ace0",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -258,7 +258,7 @@
     },
     {
       "path": "scripts/verify-public-startup.mjs",
-      "sha256": "d909e54d9837f5c78b8f66d2bfecfc5ead907529959c9727450ef88586c7455c",
+      "sha256": "fa5fd4eb0c44727cb548b12b65136f2b72738a1fb6b6d3156ee566d59e0dd380",
       "importedBy": []
     },
     {

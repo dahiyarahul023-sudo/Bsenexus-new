@@ -11,3 +11,9 @@
 - The mobile browser fixture now covers a failed feed refresh, preservation of the loaded company row, retry, and a 44px priority control at 360px and 390px. It uses synthetic providers. This turn had no usable executor for running Playwright or npm locally. GitHub CI checks source-map freshness and application builds independently.
 - Still to verify in a browser are the Settings Back and focus path, the real note button inside the card, actual contrast pairs, iPhone Safari, Android Chrome/PWA and desktop behavior. The new in-repo skills capture the color and feedback checks for successive passes. No device haptic measurements or production freshness measurements were taken.
 - Rollback is a frontend Git revert and republish. No schema or data migration is included. Commit, merge, checks and production publish are separate delivery states.
+
+## Follow-up browser verification
+
+- Playwright passed the Watchlist fixture with synthetic data across phone, tablet and desktop widths. The run covered 44px priority controls at phone widths and the failed-filings-read, previous-row retention and Retry path.
+- The public startup fixture referred to an obsolete retry label and example heading. The actual `Retry preview` button works in place after a failed demo fetch. The fixture now exercises that control and waits for the example filters, with a check that the document's entry bundle is not re-requested. The production UI and lazy loading behavior are unchanged.
+- Production-build preview verification at 390px and 1440px covers sign-in modal focus trapping and return, no horizontal overflow, lazy demo loading and recovery. Physical device behavior and production filing latency require separate evidence.

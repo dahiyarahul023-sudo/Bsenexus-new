@@ -51,15 +51,18 @@ try{
   await authDialog.waitFor({state:'hidden'});
   assert.equal(await signIn.evaluate(el => el === document.activeElement),true);
   await page.getByText('Preview the calendar and filing analysis',{exact:true}).click();
+  const exampleFilters=page.getByRole('group',{name:'Filter example catalysts',exact:true});
   if(failExamples){
-   await page.getByRole('button',{name:'Reload preview',exact:true}).waitFor();
+   const retryPreview=page.getByRole('button',{name:'Retry preview',exact:true});
+   await retryPreview.waitFor();
    assert.equal(await page.getByRole('heading',{name:'BSE filings and earnings, in one place',exact:true}).isVisible(),true,'demo failure keeps the page usable');
    failExamples=false;
-   await page.getByRole('button',{name:'Reload preview',exact:true}).click();
-   await page.getByRole('heading',{name:'BSE filings and earnings, in one place',exact:true}).waitFor();
-   await page.getByText('Preview the calendar and filing analysis',{exact:true}).click();
+   const entryRequestCount=requests.filter(url=>url===`${origin}/${entry}`).length;
+   await retryPreview.click();
+   await exampleFilters.waitFor();
+   assert.equal(requests.filter(url=>url===`${origin}/${entry}`).length,entryRequestCount,'preview retry stays in the current document');
   }
-  await page.getByRole('heading',{name:'Explore Board Meetings & Catalysts',exact:true}).waitFor();
+  await exampleFilters.waitFor();
   assert.equal(requests.some(url=>url.endsWith('/'+examples)),true,'opening details loads the demo chunk');
   console.log(JSON.stringify({width,earlyLanding:true,closedDemosDeferred:true,openDemosLoaded:true,signInDialog:true,dialogFocusRestored:true,noOverflow:true}));
   await context.close();
