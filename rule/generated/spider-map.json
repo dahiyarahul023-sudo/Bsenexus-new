@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "471de83dba94962168fa7c4856820a457af0fe21e60ad8c6d590e270a4be47f3",
+  "sourceDigest": "7ec6bf1b2ab8eac59febcf0837016fb0bd39eaa0e7f4ccbff207715a66e40230",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -243,7 +243,7 @@
     },
     {
       "path": "scripts/verify-mobile-ui.mjs",
-      "sha256": "f19386020e4115612491cd746b955596b380a16062a6a2c8d20c6ab886d29324",
+      "sha256": "ee875d2ad47097035c396c38bc6b751e18c712f8e88d8f805db0dabda6eb9641",
       "importedBy": []
     },
     {
@@ -258,7 +258,7 @@
     },
     {
       "path": "scripts/verify-public-startup.mjs",
-      "sha256": "b0d75771445b3a1d73a51f07bb7a8f10c48cc14375b0ed5f65a241b63839ca9f",
+      "sha256": "d909e54d9837f5c78b8f66d2bfecfc5ead907529959c9727450ef88586c7455c",
       "importedBy": []
     },
     {
@@ -2967,7 +2967,7 @@
     },
     {
       "path": "src/components/AuthModal.tsx",
-      "sha256": "fb575a89e01b569027d59aff022d5c17a4ccb2cea88d9fe05c4581ee7d462f22",
+      "sha256": "880fc96ac7371143ef84710765394bc28d5a90551d152213dfabf0712dfa119a",
       "importedBy": [
         "src/App.tsx",
         "src/components/Layout.tsx"
@@ -3070,7 +3070,7 @@
     },
     {
       "path": "src/components/Layout.tsx",
-      "sha256": "f63de72f1a09013047f3ef3c484804223b3fc070e2b47aed3956970056e3714e",
+      "sha256": "36d378a96102ee86cda99aa8b4d48dd513faa4689cd5a98b8345f8a04ae81552",
       "importedBy": [
         "src/App.tsx"
       ]
@@ -3882,7 +3882,7 @@
     },
     {
       "path": "src/components/ui/ModernAuthCard.tsx",
-      "sha256": "1b0b5938277c6bcf2b546108f532a55fa59ed849ff41a42c62e9f412050627d8",
+      "sha256": "4982675e2eba88d4b22028034f71019dd155eac48331dc7239937e36277c9f28",
       "importedBy": [
         "src/components/AuthModal.tsx",
         "src/components/Login.tsx"
@@ -13013,157 +13013,157 @@
       "source": "src/components/Layout.tsx",
       "target": "src/components/UserProfileModal.tsx",
       "kind": "import",
-      "line": 47
+      "line": 45
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/AuthModal.tsx",
       "kind": "import",
-      "line": 48
+      "line": 46
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/ProUpgradeModal.tsx",
       "kind": "import",
-      "line": 49
+      "line": 47
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/ui/SocialLinks.tsx",
       "kind": "import",
-      "line": 50
+      "line": 48
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/AdminPinModal.tsx",
       "kind": "import",
-      "line": 51
+      "line": 49
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/HelpModal.tsx",
       "kind": "import",
-      "line": 52
+      "line": 50
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/TermsModal.tsx",
       "kind": "import",
-      "line": 53
+      "line": 51
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/SecurityAuditModal.tsx",
       "kind": "import",
-      "line": 54
+      "line": 52
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/CookieConsentBanner.tsx",
       "kind": "import",
-      "line": 55
+      "line": 53
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/NotificationInbox.tsx",
       "kind": "import",
-      "line": 56
+      "line": 54
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/AlertRulesModal.tsx",
       "kind": "import",
-      "line": 57
+      "line": 55
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/CompanyIntelligenceModal.tsx",
       "kind": "import",
-      "line": 58
+      "line": 56
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/notes/NoteEditor.tsx",
       "kind": "import",
-      "line": 59
+      "line": 57
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/TodayMarketStoryModal.tsx",
       "kind": "import",
-      "line": 60
+      "line": 58
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/PushNotificationPrompt.tsx",
       "kind": "import",
-      "line": 61
+      "line": 59
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/ReferralDashboardModal.tsx",
       "kind": "import",
-      "line": 62
+      "line": 60
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/story/storyData.ts",
       "kind": "import",
-      "line": 63
+      "line": 61
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/special/SpecialDayBanner.tsx",
       "kind": "import",
-      "line": 64
+      "line": 62
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/special/SpecialDayStoryModal.tsx",
       "kind": "import",
-      "line": 65
+      "line": 63
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/config/specialDay.ts",
       "kind": "import",
-      "line": 66
+      "line": 64
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/SettingsTab.tsx",
       "kind": "dynamic",
-      "line": 69
+      "line": 67
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/Announcements.tsx",
       "kind": "dynamic",
-      "line": 70
+      "line": 68
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/HomeForYou.tsx",
       "kind": "dynamic",
-      "line": 71
+      "line": 69
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/WatchlistManager.tsx",
       "kind": "dynamic",
-      "line": 72
+      "line": 70
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/ResultsCalendar.tsx",
       "kind": "dynamic",
-      "line": 73
+      "line": 71
     },
     {
       "source": "src/components/Layout.tsx",
       "target": "src/components/NewsPortal.tsx",
       "kind": "dynamic",
-      "line": 74
+      "line": 72
     },
     {
       "source": "src/components/Login.tsx",
@@ -22085,13 +22085,13 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 211,
+      "line": 210,
       "function": "customFetch",
       "target": "'/api/storage/quota-mode'"
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 682,
+      "line": 681,
       "function": "customFetch",
       "target": "'/api/health'"
     },
@@ -22655,13 +22655,13 @@
     },
     {
       "file": "src/components/ui/ModernAuthCard.tsx",
-      "line": 376,
+      "line": 324,
       "function": "fetch",
       "target": "'/api/security/verify-recaptcha'"
     },
     {
       "file": "src/components/ui/ModernAuthCard.tsx",
-      "line": 449,
+      "line": 397,
       "function": "fetch",
       "target": "'/api/security/verify-recaptcha'"
     },
@@ -24558,6 +24558,12 @@
       "key": "next"
     },
     {
+      "file": "src/components/AuthModal.tsx",
+      "line": 56,
+      "function": "Array.from",
+      "key": "event.currentTarget.querySelectorAll<HTMLElement>( 'a[href], button:not(:disabled), input:not(:disabled):not([type=\"hidden\"]), [tabindex=\"0\"]', )"
+    },
+    {
       "file": "src/components/CompaniesPage.tsx",
       "line": 47,
       "function": "Array.from",
@@ -24607,7 +24613,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 150,
+      "line": 149,
       "function": "localStorage.setItem",
       "key": "sessionKey"
     },
@@ -24859,7 +24865,7 @@
     },
     {
       "file": "src/components/ui/ModernAuthCard.tsx",
-      "line": 272,
+      "line": 220,
       "function": "sessionStorage.setItem",
       "key": "'bse_guest_active_session'"
     },
@@ -28065,19 +28071,19 @@
     },
     {
       "file": "src/components/AuthModal.tsx",
-      "line": 21,
+      "line": 25,
       "target": "window",
       "kind": "listen",
-      "name": "keydown",
-      "expression": "window.addEventListener('keydown', handleKeyDown)"
+      "name": "resize",
+      "expression": "window.addEventListener('resize', updateViewport)"
     },
     {
       "file": "src/components/AuthModal.tsx",
-      "line": 22,
+      "line": 32,
       "target": "window",
       "kind": "remove",
-      "name": "keydown",
-      "expression": "window.removeEventListener('keydown', handleKeyDown)"
+      "name": "resize",
+      "expression": "window.removeEventListener('resize', updateViewport)"
     },
     {
       "file": "src/components/CompanyIntelligenceModal.tsx",
@@ -28377,7 +28383,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 117,
+      "line": 116,
       "target": "window",
       "kind": "listen",
       "name": "open-referral-modal",
@@ -28385,7 +28391,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 118,
+      "line": 117,
       "target": "window",
       "kind": "remove",
       "name": "open-referral-modal",
@@ -28393,7 +28399,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 196,
+      "line": 195,
       "target": "window",
       "kind": "listen",
       "name": "network-status",
@@ -28401,7 +28407,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 199,
+      "line": 198,
       "target": "window",
       "kind": "listen",
       "name": "online",
@@ -28409,7 +28415,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 200,
+      "line": 199,
       "target": "window",
       "kind": "listen",
       "name": "offline",
@@ -28417,7 +28423,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 202,
+      "line": 201,
       "target": "window",
       "kind": "remove",
       "name": "network-status",
@@ -28425,7 +28431,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 203,
+      "line": 202,
       "target": "window",
       "kind": "remove",
       "name": "online",
@@ -28433,7 +28439,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 204,
+      "line": 203,
       "target": "window",
       "kind": "remove",
       "name": "offline",
@@ -28441,7 +28447,7 @@
     },
     {
       "file": "src/components/Layout.tsx",
-      "line": 238,
+      "line": 237,
       "target": "window",
       "kind": "dispatch",
       "name": "bse_nav_tab_refresh",
