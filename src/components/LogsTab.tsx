@@ -96,7 +96,7 @@ export function LogsTab({ logs, onRefreshLogs }: { logs: any[]; onRefreshLogs?: 
             <Activity className="w-5 h-5 text-slate-700 dark:text-slate-300" />
             <span>Engine Activity & Diagnostics</span>
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400">Live operational logs for AI summarization, BSE feed ingestion, and Telegram alerts</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">On-demand logs for AI summarization, BSE feed ingestion, and Telegram alerts</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">

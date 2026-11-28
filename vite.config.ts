@@ -18,6 +18,9 @@ export default defineConfig(({ command }) => {
       disabledHmrClient(),
       publicLandingPreload(),
     ],
+    define: {
+      __APP_BUILD_ID__: JSON.stringify(command === 'build' ? new Date().toISOString() : ''),
+    },
     resolve: {
       dedupe: ['react', 'react-dom'],
       alias: {

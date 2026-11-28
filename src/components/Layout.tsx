@@ -1,3 +1,4 @@
+import { APP_VERSION_LABEL } from '../version';
 import { sourceHealthLabel } from '../utils/sourceHealth';
 import { CalendarDateBadge3D } from './ui/CalendarDateBadge3D';
 import { triggerNavigationHaptic } from '../utils/haptics';
@@ -993,6 +994,7 @@ export function Layout({
             )}
           </div>
         </div>
+        <p className="mt-2 px-4 text-center text-[11px] text-slate-600 dark:text-slate-400">{APP_VERSION_LABEL}</p>
       </footer>
 
       {/* Item 12: Tactile Floating Back to Top with Scroll Progress Ring */}
