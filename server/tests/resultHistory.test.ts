@@ -33,6 +33,8 @@ function service(rows: any[], events: any[] = [], meetings: any[] = [], fail = f
     if (path.endsWith('/announcementDao.js')) return {
       getAnnouncementsForScrip: async (_code: string, _limit: number, strict: boolean) => {
         assert.equal(strict, true); if (fail) throw new Error('Stored filing history unavailable'); return rows;
+      }, getCachedAnnouncementsForScrip: async () => {
+        if (fail) throw new Error('Stored filing history unavailable'); return rows;
       }, getRecentAnnouncements: async () => rows,
     };
     return {};

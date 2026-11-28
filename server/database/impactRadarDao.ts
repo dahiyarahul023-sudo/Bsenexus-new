@@ -10,6 +10,13 @@ let categoryCache: { until: number; rows: RadarCategoryOption[] } | null = null;
 let categoryRead: Promise<RadarCategoryOption[]> | null = null;
 let rulesCache: { until: number; rows: RadarIntakeRule[] } | null = null;
 let rulesRead: Promise<RadarIntakeRule[]> | null = null;
+let eventsCache: { until: number; rows: RadarEvent[] } | null = null;
+let eventsRead: Promise<RadarEvent[]> | null = null;
+// Egress round 3: radar is background research, not the live feed. Rules,
+// categories and the event list refresh on a five-minute cadence (matching
+// the intake gate) instead of every minute; publishing invalidates the
+// event list so new records still appear immediately.
+const RADAR_READ_TTL_MS = 5 * 60_000;
 export async function getRadarIntakeRules(): Promise<RadarIntakeRule[]> {
   if (rulesCache && rulesCache.until > Date.now()) return rulesCache.rows;
   if (rulesRead) return rulesRead;
@@ -19,7 +26,7 @@ export async function getRadarIntakeRules(): Promise<RadarIntakeRule[]> {
       const categories = new Set((await getRadarCategories()).filter(c => c.active).map(c => c.id));
       if (!Array.isArray(rows) || rows.some(r => !isRadarIntakeRule(r))) throw new RadarStorageError();
       const active = rows.filter(r => r.active && categories.has(r.category));
-      rulesCache = { until: Date.now() + 60_000, rows: active }; return active;
+      rulesCache = { until: Date.now() + RADAR_READ_TTL_MS, rows: active }; return active;
     } catch { throw new RadarStorageError(); }
     finally { rulesRead = null; }
   })();
@@ -32,7 +39,7 @@ export async function getRadarCategories(): Promise<RadarCategoryOption[]> {
     try {
       const rows = checked(await getSupabase().from('impact_categories').select('id,label,sort_order,active').order('sort_order').limit(200).abortSignal(AbortSignal.timeout(6000)));
       if (!Array.isArray(rows) || rows.some(c => !isRadarCategoryOption(c))) throw new RadarStorageError();
-      categoryCache = { until: Date.now() + 60_000, rows }; return rows;
+      categoryCache = { until: Date.now() + RADAR_READ_TTL_MS, rows }; return rows;
     } catch { throw new RadarStorageError(); }
     finally { categoryRead = null; }
   })();
@@ -61,10 +68,18 @@ async function repairRadarIdentities(events: RadarEvent[]): Promise<RadarEvent[]
   return projected.map(resolvedRadarEvent);
 }
 export async function listRadarEvents(): Promise<RadarEvent[]> {
-  try {
-    const rows = checked(await getSupabase().from('impact_radar_events').select('data').order('updated_at', { ascending: false }).limit(200).abortSignal(AbortSignal.timeout(6000)));
-    return repairRadarIdentities((rows || []).map(r => r.data).filter(e => isRadarEvent(e) && isRadarEventInScope(e)));
-  } catch { throw new RadarStorageError(); }
+  if (eventsCache && eventsCache.until > Date.now()) return structuredClone(eventsCache.rows);
+  if (eventsRead) return eventsRead;
+  eventsRead = (async () => {
+    try {
+      const rows = checked(await getSupabase().from('impact_radar_events').select('data').order('updated_at', { ascending: false }).limit(200).abortSignal(AbortSignal.timeout(6000)));
+      const events = await repairRadarIdentities((rows || []).map(r => r.data).filter(e => isRadarEvent(e) && isRadarEventInScope(e)));
+      eventsCache = { until: Date.now() + RADAR_READ_TTL_MS, rows: events };
+      return events;
+    } catch { throw new RadarStorageError(); }
+    finally { eventsRead = null; }
+  })();
+  return eventsRead;
 }
 export async function getRadarEvent(id: string): Promise<RadarEvent | null> {
   try {
@@ -101,6 +116,7 @@ export async function publishRadarRecords(records: RadarRecord[]): Promise<void>
   const safeRecords = records.map(r => ({ event: publicRadarEvent(r.event), update: publicRadarUpdate(r.update), origin: r.origin === 'intake' ? 'intake' : 'editorial' }));
   try { checked(await getSupabase().rpc('publish_impact_radar_records', { p_records: safeRecords }).abortSignal(AbortSignal.timeout(6000))); }
   catch { throw new RadarStorageError(); }
+  eventsCache = null; // Freshly published records must list immediately.
 }
 export async function getRadarFollowing(uid: string): Promise<{ ids: string[]; events: RadarEvent[] }> {
   try {

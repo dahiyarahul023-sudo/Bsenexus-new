@@ -12,7 +12,18 @@ const pending = new Map<string, Promise<any[]>>();
 // throws before anything is stored). Kept inline — this module is loaded
 // standalone by its contract tests, so it must not gain new imports.
 const OUTCOME_CACHE_TTL_MS = 15 * 60 * 1000;
-const completed = new Map<string, { value: any[]; expiresAt: number }>();
+
+// Egress round 3: the round-2 whole-set cache keyed on `${since}:${codes}`
+// churned whenever the rolling 31-day window's earliest meeting moved, so
+// every scrip was re-downloaded even though filed outcomes never change.
+// Cache per scrip instead: a scrip with a verified outcome is never queried
+// again in this process (its entry covers any later, narrower window); a
+// scrip with no verified outcome yet is re-checked at most every 15 min.
+// An entry fetched with a wider window (smaller `since`) also covers later
+// calls; a call with an earlier `since` re-queries, so no outcome is missed.
+const verifiedByScrip = new Map<string, { value: any[]; since: number }>();
+const negativeByScrip = new Map<string, number>();
+const VERIFIED_SCRIP_CACHE_MAX = 10_000;
 
 const PAGE_TIMEOUT_MS = 12_000;
 const PAGE_ATTEMPTS = 3;
@@ -42,16 +53,44 @@ async function readOutcomePage(batch: string[], since: number, after: string): P
 export async function readCalendarOutcomes(codes: string[], since: number): Promise<any[]> {
   const exact = [...new Set(codes.map(String).filter(code => /^\d{6}$/.test(code)))].sort();
   if (!exact.length || !Number.isFinite(since) || !isSupabaseConfigured()) return [];
-  const key = `${since}:${exact.join(',')}`;
-  const hit = completed.get(key);
-  if (hit && hit.expiresAt > Date.now()) return hit.value;
-  const value = await loadCalendarOutcomes(exact, since, key);
-  if (completed.size >= 8) completed.delete(completed.keys().next().value!);
-  completed.set(key, { value, expiresAt: Date.now() + OUTCOME_CACHE_TTL_MS });
-  return value;
+  const now = Date.now();
+  const needed = exact.filter(code => {
+    const hit = verifiedByScrip.get(code);
+    if (hit && hit.since <= since) return false;
+    const negativeUntil = negativeByScrip.get(code);
+    return !(negativeUntil && negativeUntil > now);
+  });
+  if (needed.length) {
+    const loaded = await loadCalendarOutcomes(needed, since);
+    const byScrip = new Map<string, any[]>();
+    for (const item of loaded) {
+      const code = String(item?.scrip_cd || item?.scripCode || '');
+      if (!byScrip.has(code)) byScrip.set(code, []);
+      byScrip.get(code)!.push(item);
+    }
+    for (const code of needed) {
+      const items = byScrip.get(code);
+      if (items?.length) {
+        if (verifiedByScrip.size >= VERIFIED_SCRIP_CACHE_MAX && !verifiedByScrip.has(code)) {
+          verifiedByScrip.delete(verifiedByScrip.keys().next().value!);
+        }
+        verifiedByScrip.set(code, { value: items, since });
+        negativeByScrip.delete(code);
+      } else {
+        negativeByScrip.set(code, Date.now() + OUTCOME_CACHE_TTL_MS);
+      }
+    }
+  }
+  const outcomes: any[] = [];
+  for (const code of exact) {
+    const hit = verifiedByScrip.get(code);
+    if (hit && hit.since <= since) outcomes.push(...hit.value);
+  }
+  return outcomes;
 }
 
-async function loadCalendarOutcomes(exact: string[], since: number, key: string): Promise<any[]> {
+async function loadCalendarOutcomes(exact: string[], since: number): Promise<any[]> {
+  const key = `${since}:${exact.join(',')}`;
   if (pending.has(key)) return pending.get(key)!;
   const work = (async () => {
     const results: any[] = [];

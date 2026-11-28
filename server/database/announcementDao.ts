@@ -16,10 +16,30 @@ const ANNOUNCEMENTS_TABLE = 'announcements';
 const companyFilingReadCache = new ReadCache<any[]>({
   maxEntries: 16, ttlMs: () => 30_000, now: () => Date.now()
 });
+// Egress round 3: callers that demonstrably need full stored history
+// (quarter-by-quarter result history, honest total filing counts) cannot use
+// the 400-row connector window above. They get the same 30 s cache and write
+// invalidation at full depth instead of re-downloading the whole history on
+// every company-page or filing-count request.
+const deepCompanyFilingReadCache = new ReadCache<any[]>({
+  maxEntries: 8, ttlMs: () => 30_000, now: () => Date.now()
+});
+// BSE operator filings are few and slow-changing; the full operator scan per
+// call is replaced by the same 30 s read cache (strict/lenient kept apart so
+// a degraded lenient read can never satisfy a strict caller).
+const operatorFilingReadCache = new ReadCache<any[]>({
+  maxEntries: 2, ttlMs: () => 30_000, now: () => Date.now()
+});
 function invalidateCompanyFilingReads(code?: unknown) {
   const target = String(code || '');
-  if (/^\d{6}$/.test(target)) companyFilingReadCache.invalidate(target);
-  else companyFilingReadCache.clear(); // Partial writes/deletes may lack identity.
+  if (/^\d{6}$/.test(target)) {
+    companyFilingReadCache.invalidate(target);
+    deepCompanyFilingReadCache.invalidate(target);
+  } else {
+    companyFilingReadCache.clear(); // Partial writes/deletes may lack identity.
+    deepCompanyFilingReadCache.clear();
+    operatorFilingReadCache.clear(); // Operator filings carry no scrip code.
+  }
 }
 const announcementLookupCache = new ReadCache<any | null>({
   maxEntries: 2000, ttlMs: value => value === null ? 15_000 : 60_000, now: () => Date.now()
@@ -90,6 +110,8 @@ for (const item of announcementsMemoryCache) {
 
 export async function initAnnouncementCache() {
   companyFilingReadCache.clear();
+  deepCompanyFilingReadCache.clear();
+  operatorFilingReadCache.clear();
   if (!isSupabaseConfigured()) {
     console.warn("[Announcements] Using local file store (Supabase not configured). Items loaded:", announcementsMemoryCache.length);
     return;
@@ -514,6 +536,8 @@ export async function deleteAnnouncementsFromStorageAndCloud(idsToDelete: string
 
   const idSet = new Set(idsToDelete);
   companyFilingReadCache.clear();
+  deepCompanyFilingReadCache.clear();
+  operatorFilingReadCache.clear();
   apiResponseCache.invalidate('/api/announcements');
 
   // 1. Remove from in-memory cache & local sets
@@ -542,6 +566,8 @@ export async function deleteAnnouncementsFromStorageAndCloud(idsToDelete: string
         if (error) throw error;
         for (const id of chunk) announcementLookupCache.invalidate(id);
         companyFilingReadCache.clear();
+        deepCompanyFilingReadCache.clear();
+        operatorFilingReadCache.clear();
       }
     } catch (err: any) {
       console.warn("Supabase delete batch notice:", err?.message || err);
@@ -842,8 +868,67 @@ export async function getCachedCompanyFilings(scripCode: string): Promise<any[]>
   return structuredClone(rows);
 }
 
+/** Full stored history for one scrip behind the same 30 s read cache, for
+ * callers that need every quarter / honest totals (egress round 3). Mirrors
+ * getAnnouncementsForScrip's leniency: an empty or malformed code reads as
+ * no filings instead of throwing. */
+export async function getCachedAnnouncementsForScrip(scripCode: string): Promise<any[]> {
+  const target = String(scripCode || '').trim();
+  if (!/^\d{6}$/.test(target)) return [];
+  const rows = await deepCompanyFilingReadCache.get(target, () =>
+    getAnnouncementsForScrip(target, Number.MAX_SAFE_INTEGER, true));
+  return structuredClone(rows);
+}
+
+/** Existing filing ids plus their stored result-document proofs for one
+ * scrip, without downloading full filing documents (egress round 3).
+ * Archive sync only needs to know which filings already exist and to reuse
+ * their document proofs; like the non-strict full read, a storage failure
+ * degrades to the memory view instead of failing the sync. */
+export async function getExistingFilingProofsForScrip(scripCode: string): Promise<{ id: string; resultDocumentCheck?: any }[]> {
+  const target = String(scripCode || '').trim();
+  if (!target) return [];
+  const byId = new Map<string, { id: string; resultDocumentCheck?: any }>();
+  for (const ann of announcementsMemoryCache) {
+    if (!hasExactScripCode(ann, target)) continue;
+    const id = String(ann.id || ann.newsId || '');
+    if (id) byId.set(id, { id, resultDocumentCheck: ann.resultDocumentCheck });
+  }
+  if (isSupabaseConfigured()) {
+    try {
+      const deadline = AbortSignal.timeout(12_000);
+      let after = '';
+      while (true) {
+        let query = getSupabase().from(ANNOUNCEMENTS_TABLE).select('id,data->resultDocumentCheck')
+          .eq('scrip_cd', target).order('id', { ascending: true }).limit(500);
+        if (after) query = query.gt('id', after);
+        const { data, error } = await query.abortSignal(deadline);
+        if (error) throw error;
+        for (const row of data || []) {
+          const id = String(row.id || '');
+          if (!id) continue;
+          const proof = (row as any).resultDocumentCheck ?? (row as any).data?.resultDocumentCheck;
+          byId.set(id, { id, resultDocumentCheck: proof ?? byId.get(id)?.resultDocumentCheck });
+        }
+        if (!data?.length || data.length < 500) break;
+        const next = String(data[data.length - 1].id);
+        if (next <= after) throw new Error('Filing proof pagination did not advance');
+        after = next;
+      }
+    } catch {
+      // Existing callers may explicitly use the memory fallback.
+    }
+  }
+  return [...byId.values()];
+}
+
 /** BSE equity has no BSE scrip. Read exact NSE identity, including verified legacy PDFs. */
 export async function getBseOperatorAnnouncements(strict = false): Promise<any[]> {
+  const rows = await operatorFilingReadCache.get(strict ? 'strict' : 'lenient', () => readBseOperatorAnnouncements(strict));
+  return structuredClone(rows);
+}
+
+async function readBseOperatorAnnouncements(strict: boolean): Promise<any[]> {
   if (strict && process.env.NODE_ENV === 'production' && !isSupabaseConfigured()) throw new Error('BSE operator filings unavailable');
   const byId = new Map<string, any>();
   for (const item of announcementsMemoryCache) if (isBseOperatorFiling(item)) byId.set(item.id, item);

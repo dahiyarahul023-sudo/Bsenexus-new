@@ -17,7 +17,7 @@ test('a saved Today row becomes Archive exactly at IST midnight, regardless of b
   assert.equal(projectCalendarTiming(meeting, after + 31 * 86400000).status, 'PAST');
 });
 
-test('cold boot restores more than 1000 durable meetings, keeps Oct 22 across rolling refresh, and reports history outages without erasing rows', async context => {
+test('cold boot restores more than 1000 durable meetings, keeps Oct 22 across rolling refresh, and keeps recovered rows through later outages', async context => {
   const cwd = process.cwd(), directory = fs.mkdtempSync(path.join(os.tmpdir(), 'calendar-recovery-'));
   const originalFetch = globalThis.fetch;
   const previousUrl = process.env.SUPABASE_URL, previousKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -88,7 +88,11 @@ test('cold boot restores more than 1000 durable meetings, keeps Oct 22 across ro
     unavailable = true;
     context.mock.timers.setTime(initialNow + 61000);
     const failed = await service.getResultsCalendarData('recent', undefined, 'guest', 'all');
-    assert.equal(failed.calendarHistoryUnavailable, true);
+    // Egress round 3: durable history is recovered once at boot and later
+    // snapshots never re-read the store, so a post-recovery outage neither
+    // erases rows nor reports the recovered history as unavailable. The
+    // outage flag still surfaces while boot recovery has not succeeded.
+    assert.equal(failed.calendarHistoryUnavailable, false);
     assert.equal(failed.items.filter(item => item.meetingDate === '22 Oct 2026').length, 7);
   } finally {
     globalThis.fetch = originalFetch;

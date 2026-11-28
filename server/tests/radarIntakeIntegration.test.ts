@@ -25,7 +25,7 @@ test('background intake publishes an attributed news-only event, coalesces calls
   assert.ok(news,'a news-only original must reach the publishing RPC without a filing');
   assert.equal(news.event.category,'governance'); assert.equal(news.event.publishedAt,'2026-10-17T04:00:00.000Z');
   assert.match(news.event.information,/reported:/); assert.equal(radarIntakeStatus().unavailable,false);
-  const count=published.length; t.mock.timers.tick(61_000); denied=true;
+  const count=published.length; t.mock.timers.tick(301_000); denied=true;
   await refreshRadarIntake(); assert.equal(published.length,count,'failed registry reads must not silently restore default terms');
   assert.equal(radarIntakeStatus().unavailable,true);
  } finally {t.mock.timers.reset();}
