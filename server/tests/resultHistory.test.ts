@@ -22,7 +22,7 @@ function service(rows: any[], events: any[] = [], meetings: any[] = [], fail = f
   return load('server/services/resultsCalendarService.ts', path => {
     if (path.endsWith('/currentResultEvidence.js')) return { verifyCurrentResultFilings: async (rows: any[]) => rows };
     if (path.endsWith('/resultFiling.js')) return resultFiling;
-    if (path === 'fs') return { existsSync: () => true, readFileSync: () => JSON.stringify({ items: meetings, lastUpdated: clock, lastAttempt: clock, universeVersion: 'fixture' }) };
+    if (path === 'fs') return { existsSync: () => true, readFileSync: () => JSON.stringify({ items: meetings, lastUpdated: clock, lastAttempt: clock, universeVersion: 'fixture:forthcoming-v1' }) };
     if (path === 'path') return { join: (...parts: string[]) => parts.join('/'), dirname: () => '/tmp' };
     if (path.endsWith('/scripMatching.js')) return { hasExactScripCode };
     if (path.endsWith('/calendarTiming.js')) return { calendarDayKey, projectCalendarTiming };

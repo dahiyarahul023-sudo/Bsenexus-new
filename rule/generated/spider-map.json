@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceDigest": "9092b6b6cd2444c076eaec89e1c2d1c07e5525710a928121d402381615d4ace0",
+  "sourceDigest": "4ca1dcf2816d10b8cf8fa9c5b23a3495e9bb75e170f17e4e30a2cbf5824760f2",
   "limitations": [
     "Static call sites and reviewed domain membership, not a complete runtime graph.",
     "Mount middleware, computed references, SQL effects, external systems and production state require manual verification.",
@@ -140,7 +140,7 @@
     },
     {
       "path": "scripts/check-dev-runtime.mjs",
-      "sha256": "37ab879daefd12c15aa95ac48864474219b032c4414939c62b7da528723e8712",
+      "sha256": "157ba219cd3f0a65bd786787f602036e0b19076f1c09a9107aa614c8994d6e9d",
       "importedBy": []
     },
     {
@@ -208,7 +208,7 @@
     },
     {
       "path": "scripts/verify-admin-quota.mjs",
-      "sha256": "5c75d286e7340c926f6fdeb519491db73c206a1f0020b4b476747b9858b8da92",
+      "sha256": "8d35d4c266e8fa779f2fd8f5a740aeb109a682661dd938f358ff322d6748ac24",
       "importedBy": []
     },
     {
@@ -2405,7 +2405,7 @@
     },
     {
       "path": "server/tests/resultEarliestTime.test.ts",
-      "sha256": "a50410c7739a3a2f6b3b75d77621a212db0854b2345983b490fc046a2aa4e8ef",
+      "sha256": "d9c97d86227c82011f3a4ce02276e07f4acff790fe3178e7d93fb46ab6290771",
       "importedBy": []
     },
     {
@@ -2415,7 +2415,7 @@
     },
     {
       "path": "server/tests/resultHistory.test.ts",
-      "sha256": "8499649af5f1d9e8b392ed79107a0322d02128c71eec813e8674fadd870b813b",
+      "sha256": "ab3b9636815a9a4aa67adda88071d70dab0f78b79e4d5510e225168bc3ccb7a0",
       "importedBy": []
     },
     {
@@ -2445,7 +2445,7 @@
     },
     {
       "path": "server/tests/seoPrehydration.test.ts",
-      "sha256": "2d9b5a0d4492b5be861fb82b1299accd53355b56e28b998b0ed4b0ed9e757095",
+      "sha256": "169be322a9fa598171687b7b956c6646c5ee9d8e4e7c4d6b65e5ce7cf55b457f",
       "importedBy": []
     },
     {
@@ -22939,7 +22939,7 @@
     },
     {
       "file": "scripts/verify-admin-quota.mjs",
-      "line": 45,
+      "line": 49,
       "function": "localStorage.getItem",
       "key": "'bse_nexus_fb_id_token'"
     },
@@ -27865,7 +27865,7 @@
   "browserEvents": [
     {
       "file": "scripts/verify-admin-quota.mjs",
-      "line": 57,
+      "line": 61,
       "target": "window",
       "kind": "dispatch",
       "name": "focus",
@@ -27873,7 +27873,7 @@
     },
     {
       "file": "scripts/verify-admin-quota.mjs",
-      "line": 57,
+      "line": 61,
       "target": "window",
       "kind": "dispatch",
       "name": "focus",

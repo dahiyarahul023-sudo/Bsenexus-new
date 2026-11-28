@@ -11,7 +11,7 @@ window.setFixtureAccount=on=>{account=on?person:null;listeners.forEach(fn=>fn(ac
 export const signInWithPopup=async()=>{window.setFixtureAccount(true);return{user:person}};export const signOut=async()=>window.setFixtureAccount(false);
 export const signInWithEmailAndPassword=signInWithPopup,createUserWithEmailAndPassword=signInWithPopup,fetchSignInMethodsForEmail=async()=>[],updateProfile=async()=>{},sendEmailVerification=async()=>{},signInAnonymously=signInWithPopup;`;
 const entry=`import React from 'react';import{createRoot}from'react-dom/client';import{AuthProvider,useAuth}from'/src/context/AuthContext.tsx';import{AiUsageCard}from'/src/components/AiUsageCard.tsx';import{AdminPinModal}from'/src/components/AdminPinModal.tsx';import'/src/index.css';
-function Probe(){const a=useAuth();return <><button onClick={()=>a.loginWithGoogle()}>Fixture Google sign-in</button><button onClick={()=>window.setFixtureAccount(false)}>End Firebase session</button><pre id="identity">{JSON.stringify({uid:a.user?.uid||null,admin:a.isAdmin,owner:a.isOwner,elevated:a.isElevated,signin:a.isAuthModalOpen})}</pre><AiUsageCard/><AdminPinModal/></>};createRoot(document.getElementById('root')).render(<AuthProvider><Probe/></AuthProvider>);`;
+function Probe(){const a=useAuth();return <><button onClick={()=>a.loginWithGoogle()}>Fixture Google sign-in</button><button onClick={()=>window.setFixtureAccount(false)}>End Firebase session</button><pre id="identity">{JSON.stringify({uid:a.user?.uid||null,admin:a.isAdmin,owner:a.isOwner,elevated:a.isElevated,signin:a.isAuthModalOpen,loading:a.loading})}</pre><AiUsageCard/><AdminPinModal/></>};createRoot(document.getElementById('root')).render(<AuthProvider><Probe/></AuthProvider>);`;
 let until=0,resetCalls=0,verifyCalls=0,failStatus=false;
 const server=await createServer({root,configFile:root+'/vite.config.ts',server:{host:'127.0.0.1',port:0,hmr:false},plugins:[{
  name:'quota-fixture',enforce:'pre',resolveId(s,i){
@@ -41,7 +41,11 @@ try{await server.listen();const origin='http://127.0.0.1:'+server.httpServer.add
   browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE}:{}),...(process.env.PLAYWRIGHT_CHROMIUM_ARGS?{args:JSON.parse(process.env.PLAYWRIGHT_CHROMIUM_ARGS)}:{})});
   until=0;resetCalls=0;verifyCalls=0;failStatus=false;const context=await browser.newContext({viewport:{width,height:844},reducedMotion:'reduce'});const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.route('**/*',r=>r.request().url().startsWith(origin)?r.continue():r.abort());
   await page.addInitScript(()=>{localStorage.setItem('bse_nexus_auth_session',JSON.stringify({user:{uid:'cached-owner',email:'dahiyarahul023@gmail.com'},profile:{uid:'cached-owner',tier:'admin'}}));localStorage.setItem('bse_nexus_fb_id_token','header.'+btoa(JSON.stringify({exp:1}))+'.signature')});
-  await page.goto(origin+'/fixture');await page.waitForFunction(()=>JSON.parse(document.querySelector('#identity')?.textContent||'{}').signin===true);
+  await page.goto(origin+'/fixture');
+  await page.waitForFunction(()=>JSON.parse(document.querySelector('#identity')?.textContent||'{}').loading===false);
+  assert.deepEqual(JSON.parse(await page.locator('#identity').textContent()),{
+   uid:null,admin:false,owner:false,elevated:false,signin:false,loading:false,
+  });
   assert.equal(await page.getByRole('button',{name:'Reset All Daily Quotas'}).count(),0);assert.equal(await page.evaluate(()=>localStorage.getItem('bse_nexus_fb_id_token')),null);
   await page.getByRole('button',{name:'Fixture Google sign-in'}).click();await page.getByRole('button',{name:'Reset All Daily Quotas'}).waitFor();
   assert.equal(JSON.parse(await page.locator('#identity').textContent()).elevated,false);
